@@ -19,7 +19,6 @@ mark eclipse
 
 TODO:
 
-skip static trials (look at eclipse type var)
 process & save toe standing + unipedal trials
 last eclipse key not always written?
 handle sessions with kinematics only
@@ -66,7 +65,7 @@ LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
 DESCRIPTIONS = {'short': 'lyhyt', 'context_right': 'o', 'context_left': 'v',
                 'no_context': 'ei kontaktia', 'dir_front': 'e',
                 'dir_back': 't', 'ok': 'ok',
-                'automark_failure': 'not automarked', 'gaps': 'gappeja'}
+                'automark_failure': 'not automarked', 'gaps': 'gaps'}
 # gaps min distance from center frame
 GAPS_MIN_DIST = 100
 # max. tolerated frames with gaps
@@ -107,7 +106,7 @@ class Trial:
 
 """ 1st pass - reconstruct, label, sanity check, check forceplate and gait
 direction """
-print('\n1st pass - processing %d trials' % len(enffiles))
+print('\n1st pass - processing %d trials\n' % len(enffiles))
 for filepath_ in enffiles:
     filepath__ = os.path.splitext(filepath_)[0]  # rm extension
     filepath = filepath__[:filepath__.find('.Trial')]  # rm .Trial
@@ -134,10 +133,7 @@ for filepath_ in enffiles:
         if (trange[1] - trange[0]) < MIN_TRIAL_DURATION:
             print('trial too short, skipping')
             vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
-            time.sleep(1)            
-            eclipse.set_eclipse_key(filepath_, 'DESCRIPTION',
-                                    DESCRIPTIONS['short'],
-                                    update_existing=True)
+            trials[filepath].description = DESCRIPTIONS['short']
             continue
         else:
             # check gaps
@@ -155,10 +151,7 @@ for filepath_ in enffiles:
         if gaps_found:
             print('trial has problematic gaps, skipping')
             vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
-            time.sleep(1)
-            eclipse.set_eclipse_key(filepath_, 'DESCRIPTION',
-                                    DESCRIPTIONS['gaps'],
-                                    update_existing=True)
+            trials[filepath].description = DESCRIPTIONS['gaps']
             continue
         else:
             trials[filepath].recon_ok = True
@@ -185,8 +178,6 @@ for filepath_ in enffiles:
         vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
         # time.sleep(1)
         trials[filepath].description = eclipse_str
-        eclipse.set_eclipse_key(filepath_, 'DESCRIPTION',
-                                eclipse_str, update_existing=True)
 
 # compute velocity thresholds
 vel_th = {}
@@ -218,30 +209,28 @@ for filepath, trial in sel_trials.items():
                               mark_window_hw=AUTOMARK_HW)
         trial.events = True
     except ValueError:  # cannot automark
-        eclipse_str = (trials[filepath].description +
+        eclipse_str = (trials[filepath].description + ',' +
                        DESCRIPTIONS['automark_failure'])
         vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
-        # set Eclipse key after saving trial to prevent overwrite
-        # time.sleep(1)
-        eclipse.set_eclipse_key(filepath_, 'DESCRIPTION',
-                                eclipse_str, update_existing=True)
         continue  # next trial
     # events ok - run model pipeline and save
     eclipse_str = DESCRIPTIONS['ok'] + ',' + trial.description
     vicon.RunPipeline(MODEL_PIPELINE, '', PIPELINE_TIMEOUT)
     vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
-    # set Eclipse key after saving trial to prevent overwrite
-    time.sleep(1)
-    print(eclipse_str)
-    eclipse.set_eclipse_key(filepath_, 'DESCRIPTION',
-                            eclipse_str, update_existing=True)
+    trials[filepath].description = eclipse_str
 
 
-vicon.OpenTrial(filepath, TRIAL_OPEN_TIMEOUT)
-time.sleep(2)  # to fix enf writing glitch?
+# update Eclipse
+    for filepath, trial in trials.items():
+        enf_file = filepath + '.Trial.enf'
+        eclipse.set_eclipse_key(enf_file, 'DESCRIPTION',
+                                trial.description, update_existing=True)
+
+# vicon.OpenTrial(filepath, TRIAL_OPEN_TIMEOUT)
+# time.sleep(2)  # to fix enf writing glitch?
+
 
 n_events = len([tr for tr in trials.values() if tr.events])
-
 print('\nComplete\n')
 print('Trials opened: %d' % len(trials))
 print('Trials with recon ok: %d' % len(sel_trials))

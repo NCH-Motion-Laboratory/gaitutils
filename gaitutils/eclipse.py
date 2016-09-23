@@ -6,6 +6,8 @@ Hacking Eclipse
 
 @author: jnu@iki.fi
 """
+from __future__ import print_function
+import os.path
 
 
 def get_eclipse_key(fname_enf, keyname):
@@ -28,6 +30,7 @@ def get_eclipse_key(fname_enf, keyname):
 def set_eclipse_key(fname_enf, keyname, newval, update_existing=False):
     """ Update specified Eclipse file, changing 'keyname' to 'value'.
     If update_existing=True, update existing keys. """
+    fname_enf_ = os.path.split(fname_enf)[1]
     with open(fname_enf, 'r') as f:
         eclipselines = f.read().splitlines()
     linesnew = []
@@ -44,5 +47,7 @@ def set_eclipse_key(fname_enf, keyname, newval, update_existing=False):
             newline = line
         linesnew.append(newline)
     with open(fname_enf, 'w') as f:
+        # print('set_eclipse_key: writing %s' % fname_enf_)
         for li in linesnew:
+            # print('set_eclipse_key: new line %s' % li)
             f.write(li + '\n')

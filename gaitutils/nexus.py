@@ -89,8 +89,8 @@ def get_marker_data(vicon, markers):
     specified markers.
     Return dict mdata keyed with marker names followed by _P, _V or _A
     (position, velocity, acceleration). Values are Nx3 matrices of marker
-    data, e.g. mdata['RHEE_V']. """
-
+    data, e.g. mdata['RHEE_V']. Also computes gaps with keys as e.g.
+    'RHEE_gaps' """
     if not isinstance(markers, list):
         markers = [markers]
     subjectnames = vicon.GetSubjectNames()
@@ -101,17 +101,14 @@ def get_marker_data(vicon, markers):
         x, y, z, _ = vicon.GetTrajectory(subjectnames[0], marker)
         if len(x) == 0:
             raise ValueError('Cannot get marker trajectory: %s' % marker)
-        mdata[marker + '_P'] = np.array([x, y, z]).transpose()
-        mdata[marker + '_V'] = np.gradient(mdata[marker+'_P'])[0]
+        mP = np.array([x, y, z]).transpose()
+        mdata[marker + '_P'] = mP
+        mdata[marker + '_V'] = np.gradient(mP)[0]
         mdata[marker + '_A'] = np.gradient(mdata[marker+'_V'])[0]
+        # find gaps
+        allzero = np.logical_and(mP[:, 0] == 0, mP[:, 1] == 0, mP[:, 2] == 0)
+        mdata[marker + '_gaps'] = np.where(allzero)[0]
     return mdata
-
-
-def gaps(vicon, marker):
-    """ Get gaps for a marker """
-    mP = get_marker_data(vicon, marker)[marker + '_P']
-    allzero = np.logical_and(mP[:, 0] == 0, mP[:, 1] == 0, mP[:, 2] == 0)
-    return np.where(allzero)[0]
 
 
 def get_roi(vicon):
@@ -137,11 +134,11 @@ def get_fp_strike_and_toeoff(vicon):
             int(np.round(fptoeoff / ftot.samplesperframe)))
 
 
-def center_frame(vicon):
-    """ Return frame where subject crosses x axis of coordinate system
+def get_center_frame(vicon, marker='LASI'):
+    """ Return frame where marker crosses x axis of coordinate system
     (y = 0) """
-    mrkdata = get_marker_data(vicon, ['LASI', 'RASI'])
-    P = (mrkdata['LASI_P'] + mrkdata['RASI_P'])/2.
+    mrkdata = get_marker_data(vicon, marker)
+    P = mrkdata[marker + '_P']
     y = P[:, 1]
     zx = np.append(rising_zerocross(y), falling_zerocross(y))
     ycross = list()
@@ -253,6 +250,7 @@ def kinetics_available(vicon):
     ok = True
     for marker in RIGHT_FOOT_MARKERS:
         marker += '_P'
+        print(marker)
         # ankle marker gets extra tolerance in x dir
         if marker == 'RANK_P':
             FP_XMIN_ = FP_XMIN - X_ANKLE_TOL
@@ -458,7 +456,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
             strikes = strikes_
         # else mark around 'center frame' if specified
         elif mark_window_hw:
-            ctr = center_frame(vicon)
+            ctr = get_center_frame(vicon)
             if not ctr:
                 raise ValueError('Cannot find center frame (y crossing)')
             strikes = [fr for fr in strikes if abs(fr - ctr) <= mark_window_hw]
@@ -495,4 +493,3 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
 
     return (strikes_all['R'], strikes_all['L'],
             toeoffs_all['R'], toeoffs_all['L'])
-

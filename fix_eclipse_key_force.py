@@ -2,7 +2,7 @@
 """
 Created on Thu Oct 29 11:17:45 2015
 
-Utility to fix unwanted Eclipse entries.
+Utility to fix Eclipse entries.
 Fixes all enf files in given directory.
 
 Be careful! Overwrites files without asking anything.

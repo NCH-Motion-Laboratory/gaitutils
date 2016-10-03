@@ -79,6 +79,7 @@ WRITE_ECLIPSE_DESC = True
 # work around a bug in Nexus 2.5 - Eclipse FP1 field is unreliable
 ECLIPSE_FP1_FIX = True
 
+
 if not nexus.pid():
     raise Exception('Vicon Nexus not running')
 
@@ -88,6 +89,16 @@ trialname_ = vicon.GetTrialName()
 subjectname = vicon.GetSubjectNames()[0]
 sessionpath = trialname_[0]
 enffiles = glob.glob(sessionpath+'*Trial*.enf')
+
+# work around a bug in Nexus 2.5 - Eclipse FP1 field is unreliable
+# note: needs eclipse refresh
+if ECLIPSE_FP1_FIX:
+    print('WARNING: changing all Eclipse FP1 entries (WORKAROUND)')
+    KEY = 'FP1'
+    NEWVAL = 'Auto'
+    for enffile in enffiles:
+        eclipse.set_eclipse_key(enffile, KEY, NEWVAL, update_existing=True)
+    time.sleep(2)
 
 contact_v = {'L_strike': [], 'R_strike': [], 'L_toeoff': [], 'R_toeoff': []}
 trials = {}
@@ -244,15 +255,6 @@ for filepath, trial in sel_trials.items():
     roistart = max(min(evs)-CROP_LEAVE_FRAMES, minfr)
     roiend = min(max(evs)+CROP_LEAVE_FRAMES, maxfr)
     vicon.SetTrialRegionOfInterest(roistart, roiend)
-    # work around Nexus 2.5 bug - Eclipse FP1 field is invalid, often causing
-    # kinetic outputs to fail
-    if ECLIPSE_FP1_FIX:
-        fp_status = eclipse.get_eclipse_key(enf_file, 'FP1')
-        if fp_status is not 'Auto':
-            print('WARNING: resetting Eclipse forceplate field (WORKAROUND)')
-            eclipse.set_eclipse_key(enf_file, 'FP1', 'Auto',
-                                    update_existing=True)
-
     # run model pipeline and save
     eclipse_str = DESCRIPTIONS['ok'] + ',' + trial.description
     vicon.RunPipeline(MODEL_PIPELINE, '', PIPELINE_TIMEOUT)
@@ -260,11 +262,11 @@ for filepath, trial in sel_trials.items():
     trials[filepath].description = eclipse_str
 
 # update Eclipse descriptions
-    if WRITE_ECLIPSE_DESC:
-        for filepath, trial in trials.items():
-            enf_file = filepath + '.Trial.enf'
-            eclipse.set_eclipse_key(enf_file, 'DESCRIPTION',
-                                    trial.description, update_existing=True)
+if WRITE_ECLIPSE_DESC:
+    for filepath, trial in trials.items():
+        enf_file = filepath + '.Trial.enf'
+        eclipse.set_eclipse_key(enf_file, 'DESCRIPTION',
+                                trial.description, update_existing=True)
 
 # prints stats
 n_events = len([tr for tr in trials.values() if tr.events])

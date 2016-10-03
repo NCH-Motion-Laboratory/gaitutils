@@ -13,6 +13,9 @@ import sys
 import numpy as np
 from scipy import signal
 import os.path as op
+import psutil
+from numutils import rising_zerocross, falling_zerocross
+import matplotlib.pyplot as plt
 # Version should be bumped on Nexus update to get the latest API
 NEXUS_VER = "2.5"
 NEXUS_PATH = "C:/Program Files (x86)/Vicon/Nexus"
@@ -24,9 +27,6 @@ if not NEXUS_PATH + "/SDK/Python" in sys.path:
     # needed at least when running outside Nexus
     sys.path.append(NEXUS_PATH + "/SDK/Win32")
 import ViconNexus
-import psutil
-from numutils import rising_zerocross, falling_zerocross
-import matplotlib.pyplot as plt
 
 
 def pid():

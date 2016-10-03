@@ -75,6 +75,8 @@ GAPS_MAX = 10
 TRIAL_SPECIFIC_VELOCITY = False
 # write Eclipse descriptions
 WRITE_ECLIPSE_DESC = True
+# work around a bug in Nexus 2.5 - Eclipse FP1 field is unreliable
+ECLIPSE_FP1_FIX = True
 
 if not nexus.pid():
     raise Exception('Vicon Nexus not running')
@@ -230,7 +232,7 @@ for filepath, trial in sel_trials.items():
                        DESCRIPTIONS['automark_failure'])
         vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
         continue  # next trial
-    # events ok - run model pipeline and save
+    # events ok
     # crop trial
     evs = vicon.GetEvents(subjectname, "Left", "Foot Strike")[0]
     evs += vicon.GetEvents(subjectname, "Right", "Foot Strike")[0]
@@ -241,6 +243,16 @@ for filepath, trial in sel_trials.items():
     roistart = max(min(evs)-CROP_LEAVE_FRAMES, minfr)
     roiend = min(max(evs)+CROP_LEAVE_FRAMES, maxfr)
     vicon.SetTrialRegionOfInterest(roistart, roiend)
+    # work around Nexus 2.5 bug - Eclipse FP1 field is invalid, often causing
+    # kinetic outputs to fail
+    if ECLIPSE_FP1_FIX:
+        fp_status = eclipse.get_eclipse_key(enf_file, 'FP1')
+        if fp_status is not 'Auto':
+            print('WARNING: resetting Eclipse forceplate field (WORKAROUND)')
+            eclipse.set_eclipse_key(enf_file, 'FP1', 'Auto',
+                                    update_existing=True)
+
+    # run model pipeline and save
     eclipse_str = DESCRIPTIONS['ok'] + ',' + trial.description
     vicon.RunPipeline(MODEL_PIPELINE, '', PIPELINE_TIMEOUT)
     vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)

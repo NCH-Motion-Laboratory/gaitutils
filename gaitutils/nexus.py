@@ -253,7 +253,6 @@ def kinetics_available(vicon):
     ok = True
     for marker in RIGHT_FOOT_MARKERS:
         marker += '_P'
-        print(marker)
         # ankle marker gets extra tolerance in x dir
         if marker == 'RANK_P':
             FP_XMIN_ = FP_XMIN - X_ANKLE_TOL

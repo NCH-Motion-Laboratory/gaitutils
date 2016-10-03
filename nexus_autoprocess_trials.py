@@ -51,6 +51,8 @@ TYPE_SKIP = 'Static'
 DESC_SKIP = ['Unipedal right', 'Unipedal left', 'Toe standing']
 # min. trial duration (frames)
 MIN_TRIAL_DURATION = 200
+# how many frames to leave before/after first/last events
+CROP_LEAVE_FRAMES = 10
 # marker for tracking overall body position (to get gait dir)
 TRACK_MARKERS = ['RASI', 'LASI', 'RPSI', 'LPSI']
 # automark frames around forceplate region (half-width)
@@ -225,6 +227,13 @@ for filepath, trial in sel_trials.items():
         vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
         continue  # next trial
     # events ok - run model pipeline and save
+    # crop trial
+    evs = vicon.GetEvents(subjectname, "Left", "Foot Strike")[0]
+    evs += vicon.GetEvents(subjectname, "Right", "Foot Strike")[0]
+    evs += vicon.GetEvents(subjectname, "Left", "Foot Off")[0]
+    evs += vicon.GetEvents(subjectname, "Right", "Foot Off")[0]
+    vicon.SetTrialRegionOfInterest(min(evs)-CROP_LEAVE_FRAMES,
+                                   max(evs)+CROP_LEAVE_FRAMES)
     eclipse_str = DESCRIPTIONS['ok'] + ',' + trial.description
     vicon.RunPipeline(MODEL_PIPELINE, '', PIPELINE_TIMEOUT)
     vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)

@@ -19,9 +19,6 @@ mark eclipse
 
 TODO:
 
-RPSI + LPSI markers may be absent (SACR used instead) so don't require them
-process & save toe standing + unipedal trials
-crop trial based on events (Nexus 2.5)
 
 
 @author: Jussi
@@ -49,16 +46,17 @@ PIPELINE_TIMEOUT = 45
 TYPE_SKIP = 'Static'
 # trial descriptions to skip (Eclipse description field) (not case sensitive)
 DESC_SKIP = ['Unipedal right', 'Unipedal left', 'Toe standing']
+# run preprocess & save for trials skipped based on description
+PREPROC_DESC_SKIP = True
 # min. trial duration (frames)
 MIN_TRIAL_DURATION = 200
 # how many frames to leave before/after first/last events
 CROP_LEAVE_FRAMES = 10
-# marker for tracking overall body position (to get gait dir)
-TRACK_MARKERS = ['RASI', 'LASI', 'RPSI', 'LPSI']
 # automark frames around forceplate region (half-width)
 AUTOMARK_HW = 150
-PIG_ = ['HEE', 'TOE', 'TIB', 'ANK', 'ASI', 'PSI', 'KNE', 'THI']
-PIG_MARKERS = ['R' + s for s in PIG_] + ['L' + s for s in PIG_]
+# marker for tracking overall body position (to get gait dir)
+# do not use RPSI and LPSI since they are not always present
+TRACK_MARKERS = ['RASI', 'LASI']
 # right feet markers
 RIGHT_FOOT_MARKERS = ['RHEE', 'RTOE', 'RANK']
 # left foot markers
@@ -124,10 +122,15 @@ for filepath_ in enffiles:
             continue
         if trial_desc.upper() in [s.upper() for s in DESC_SKIP]:
             print('Skipping based on description')
+            if PREPROC_DESC_SKIP:
+                for PIPELINE in PRE_PIPELINES:
+                    vicon.RunPipeline(PIPELINE, '', PIPELINE_TIMEOUT)
+                vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
             continue
         eclipse_str = ''
         trials[filepath] = Trial()
         vicon.OpenTrial(filepath, TRIAL_OPEN_TIMEOUT)
+        allmarkers = vicon.GetMarkerNames(subjectname)
         # preprocessing pipelines
         for PIPELINE in PRE_PIPELINES:
             vicon.RunPipeline(PIPELINE, '', PIPELINE_TIMEOUT)
@@ -151,7 +154,7 @@ for filepath_ in enffiles:
                 trials[filepath].description = DESCRIPTIONS['gaps_or_short']
                 continue
             gaps_found = False
-            for marker in PIG_MARKERS:
+            for marker in allmarkers:
                 gaps = nexus.get_marker_data(vicon, marker)[marker + '_gaps']
                 # check for gaps nearby the center frame
                 if gaps.size > 0:
@@ -232,8 +235,11 @@ for filepath, trial in sel_trials.items():
     evs += vicon.GetEvents(subjectname, "Right", "Foot Strike")[0]
     evs += vicon.GetEvents(subjectname, "Left", "Foot Off")[0]
     evs += vicon.GetEvents(subjectname, "Right", "Foot Off")[0]
-    vicon.SetTrialRegionOfInterest(min(evs)-CROP_LEAVE_FRAMES,
-                                   max(evs)+CROP_LEAVE_FRAMES)
+    # when setting roi, do not go beyond trial range
+    minfr, maxfr = vicon.GetTrialRange()
+    roistart = max(min(evs)-CROP_LEAVE_FRAMES, minfr)
+    roiend = min(max(evs)+CROP_LEAVE_FRAMES, maxfr)
+    vicon.SetTrialRegionOfInterest(roistart, roiend)
     eclipse_str = DESCRIPTIONS['ok'] + ',' + trial.description
     vicon.RunPipeline(MODEL_PIPELINE, '', PIPELINE_TIMEOUT)
     vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)

@@ -386,7 +386,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     # loop: same operations for left / right foot
     for ind, footctrv in enumerate((rfootctrv, lfootctrv)):
         this_side = 'R' if ind == 0 else 'L'
-
+        print('automark: side ', this_side)
         # filter to scalar velocity data to suppress noise and spikes
         footctrv = signal.medfilt(footctrv, MEDIAN_WIDTH)
 

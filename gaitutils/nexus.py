@@ -12,10 +12,13 @@ from __future__ import print_function
 import sys
 import numpy as np
 from scipy import signal
+import os.path as op
 # Version should be bumped on Nexus update to get the latest API
-NEXUS_VER = "Nexus2.3"
-NEXUS_PATH = "C:/Program Files (x86)/Vicon/"
+NEXUS_VER = "2.5"
+NEXUS_PATH = "C:/Program Files (x86)/Vicon/Nexus"
 NEXUS_PATH += NEXUS_VER
+if not op.isdir(NEXUS_PATH):
+    raise ValueError('Cannot find Nexus SDK dir: ' + NEXUS_PATH)
 if not NEXUS_PATH + "/SDK/Python" in sys.path:
     sys.path.append(NEXUS_PATH + "/SDK/Python")
     # needed at least when running outside Nexus

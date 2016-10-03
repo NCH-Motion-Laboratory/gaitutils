@@ -73,7 +73,8 @@ GAPS_MIN_DIST = 100
 GAPS_MAX = 10
 # whether to use trial specific velocity threshold data when available
 TRIAL_SPECIFIC_VELOCITY = False
-
+# write Eclipse descriptions
+WRITE_ECLIPSE_DESC = True
 
 if not nexus.pid():
     raise Exception('Vicon Nexus not running')
@@ -246,10 +247,11 @@ for filepath, trial in sel_trials.items():
     trials[filepath].description = eclipse_str
 
 # update Eclipse descriptions
-    for filepath, trial in trials.items():
-        enf_file = filepath + '.Trial.enf'
-        eclipse.set_eclipse_key(enf_file, 'DESCRIPTION',
-                                trial.description, update_existing=True)
+    if WRITE_ECLIPSE_DESC:
+        for filepath, trial in trials.items():
+            enf_file = filepath + '.Trial.enf'
+            eclipse.set_eclipse_key(enf_file, 'DESCRIPTION',
+                                    trial.description, update_existing=True)
 
 # prints stats
 n_events = len([tr for tr in trials.values() if tr.events])

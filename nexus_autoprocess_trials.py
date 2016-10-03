@@ -19,8 +19,9 @@ mark eclipse
 
 TODO:
 
+RPSI + LPSI markers may be absent (SACR used instead) so don't require them
 process & save toe standing + unipedal trials
-integrate into getdata
+crop trial based on events (Nexus 2.5)
 
 
 @author: Jussi
@@ -31,10 +32,11 @@ from gaitutils import nexus, eclipse
 import glob
 import os
 import numpy as np
+from numpy import inf
 import time
 
 # range of trials to process
-TRIALS_RANGE = (1, 40)
+TRIALS_RANGE = (1, inf)
 
 # list of pipelines to run
 PRE_PIPELINES = ['Reconstruct and label (legacy)', 'AutoGapFill_mod', 'filter']

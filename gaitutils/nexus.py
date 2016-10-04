@@ -368,6 +368,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
     # tolerance between forceplate strike (parameter) and detected event
     FP_STRIKE_TOL = 7
+    # marker for finding trial center frame
+    TRACK_MARKER = 'LASI'
 
     # get subject info
     subjectnames = vicon.GetSubjectNames()
@@ -464,7 +466,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
             strikes = strikes_
         # else mark around 'center frame' if specified
         elif mark_window_hw:
-            ctr = get_center_frame(vicon)
+            ctr = get_center_frame(vicon, TRACK_MARKER)
             if not ctr:
                 raise ValueError('Cannot find center frame (y crossing)')
             strikes = [fr for fr in strikes if abs(fr - ctr) <= mark_window_hw]

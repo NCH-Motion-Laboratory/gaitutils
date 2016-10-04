@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 
-Auto processing pipeline for Nexus
+Auto processing pipeline for Nexus.
 
-1st pass (all trials)
+1st pass (all trials):
 recon+label
 filter
 get fp context + strike/toeoff velocities
@@ -11,7 +11,7 @@ get gait dir
 mark eclipse (context, gait dir) or (no context, gait dir)
 
 
-2nd pass (trials with valid fp contact)
+2nd pass:
 automark (with velocity data)
 dynmod+save
 mark eclipse
@@ -20,6 +20,9 @@ mark eclipse
 TODO:
 gap detection, false positives?
 
+
+NOTES:
+ROI operations only work for Nexus >= 2.5
 
 
 @author: Jussi
@@ -34,7 +37,7 @@ from numpy import inf
 import time
 
 # range of trials to process
-TRIALS_RANGE = (1, inf)
+TRIALS_RANGE = (14, 14)
 
 # list of pipelines to run
 PRE_PIPELINES = ['Reconstruct and label (legacy)', 'AutoGapFill_mod', 'filter']
@@ -76,10 +79,16 @@ GAPS_MAX = 10
 TRIAL_SPECIFIC_VELOCITY = False
 # write Eclipse descriptions
 WRITE_ECLIPSE_DESC = True
+# reset ROI before processing; otherwise trajectories won't get reconstructed
+# outside ROI
+RESET_ROI = True
 
 
 if not nexus.pid():
     raise Exception('Vicon Nexus not running')
+    
+nexus_ver = float(nexus.NEXUS_VER)
+
 
 # get session path from Nexus, find processed trials
 vicon = nexus.viconnexus()
@@ -135,6 +144,10 @@ for filepath_ in enffiles:
         trials[filepath] = Trial()
         vicon.OpenTrial(filepath, TRIAL_OPEN_TIMEOUT)
         allmarkers = vicon.GetMarkerNames(subjectname)
+        # reset ROI before operations
+        if RESET_ROI and nexus_ver >= 2.5:
+            (fstart, fend) = vicon.GetTrialRange()
+            vicon.SetTrialRegionOfInterest(fstart, fend)
         # preprocessing pipelines
         for PIPELINE in PRE_PIPELINES:
             vicon.RunPipeline(PIPELINE, '', PIPELINE_TIMEOUT)
@@ -162,6 +175,8 @@ for filepath_ in enffiles:
                 gaps = nexus.get_marker_data(vicon, marker)[marker + '_gaps']
                 # check for gaps nearby the center frame
                 if gaps.size > 0:
+                    print('gaps: %s' % marker)
+                    print(gaps)
                     if (np.where(abs(gaps - ctr) <
                        GAPS_MIN_DIST)[0].size > GAPS_MAX):
                         gaps_found = True
@@ -235,15 +250,16 @@ for filepath, trial in sel_trials.items():
         continue  # next trial
     # events ok
     # crop trial
-    evs = vicon.GetEvents(subjectname, "Left", "Foot Strike")[0]
-    evs += vicon.GetEvents(subjectname, "Right", "Foot Strike")[0]
-    evs += vicon.GetEvents(subjectname, "Left", "Foot Off")[0]
-    evs += vicon.GetEvents(subjectname, "Right", "Foot Off")[0]
-    # when setting roi, do not go beyond trial range
-    minfr, maxfr = vicon.GetTrialRange()
-    roistart = max(min(evs)-CROP_LEAVE_FRAMES, minfr)
-    roiend = min(max(evs)+CROP_LEAVE_FRAMES, maxfr)
-    vicon.SetTrialRegionOfInterest(roistart, roiend)
+    if nexus_ver >= 2.5:
+        evs = vicon.GetEvents(subjectname, "Left", "Foot Strike")[0]
+        evs += vicon.GetEvents(subjectname, "Right", "Foot Strike")[0]
+        evs += vicon.GetEvents(subjectname, "Left", "Foot Off")[0]
+        evs += vicon.GetEvents(subjectname, "Right", "Foot Off")[0]
+        # when setting roi, do not go beyond trial range
+        minfr, maxfr = vicon.GetTrialRange()
+        roistart = max(min(evs)-CROP_LEAVE_FRAMES, minfr)
+        roiend = min(max(evs)+CROP_LEAVE_FRAMES, maxfr)
+        vicon.SetTrialRegionOfInterest(roistart, roiend)
     # run model pipeline and save
     eclipse_str = DESCRIPTIONS['ok'] + ',' + trial.description
     vicon.RunPipeline(MODEL_PIPELINE, '', PIPELINE_TIMEOUT)

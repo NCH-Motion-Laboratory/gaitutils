@@ -46,6 +46,11 @@ def viconnexus():
     return ViconNexus.ViconNexus()
 
 
+def is_vicon_instance(obj):
+    """ Check if obj is an instance of ViconNexus """
+    return obj.__class__.__name__ == 'ViconNexus'
+
+
 def get_fpdata(vicon):
     """ Read forceplate data from Nexus. Supports only single plate for
     now. """

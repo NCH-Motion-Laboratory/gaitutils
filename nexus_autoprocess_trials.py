@@ -55,7 +55,7 @@ MIN_TRIAL_DURATION = 200
 CROP_LEAVE_FRAMES = 10
 # automark frames around forceplate region (half-width)
 AUTOMARK_HW = 150
-# marker for tracking overall body position (to get gait dir)
+# marker for tracking overall body position (to get gait dir) and center frame
 # do not use RPSI and LPSI since they are not always present
 TRACK_MARKERS = ['RASI', 'LASI']
 # right feet markers
@@ -76,8 +76,6 @@ GAPS_MAX = 10
 TRIAL_SPECIFIC_VELOCITY = False
 # write Eclipse descriptions
 WRITE_ECLIPSE_DESC = True
-# work around a bug in Nexus 2.5 - Eclipse FP1 field is unreliable
-ECLIPSE_FP1_FIX = True
 
 
 if not nexus.pid():
@@ -90,15 +88,6 @@ subjectname = vicon.GetSubjectNames()[0]
 sessionpath = trialname_[0]
 enffiles = glob.glob(sessionpath+'*Trial*.enf')
 
-# work around a bug in Nexus 2.5 - Eclipse FP1 field is unreliable
-# note: needs eclipse refresh
-if ECLIPSE_FP1_FIX:
-    print('WARNING: changing all Eclipse FP1 entries (WORKAROUND)')
-    KEY = 'FP1'
-    NEWVAL = 'Auto'
-    for enffile in enffiles:
-        eclipse.set_eclipse_key(enffile, KEY, NEWVAL, update_existing=True)
-    time.sleep(2)
 
 contact_v = {'L_strike': [], 'R_strike': [], 'L_toeoff': [], 'R_toeoff': []}
 trials = {}
@@ -157,7 +146,7 @@ for filepath_ in enffiles:
             trials[filepath].description = DESCRIPTIONS['short']
             continue
         else:
-            # check gaps
+            # try to figure out trial center frame
             for marker in TRACK_MARKERS:
                 ctr = nexus.get_center_frame(vicon, marker=marker)
                 if ctr:  # ok and no gaps
@@ -200,7 +189,7 @@ for filepath_ in enffiles:
         eclipse_str += ','
 
         # check direction of gait (y coordinate increase/decrease)
-        gait_dir = nexus.subject_ydir(vicon)
+        gait_dir = nexus.get_movement_direction(vicon, TRACK_MARKERS[0], 'y')
         gait_dir = (DESCRIPTIONS['dir_back'] if gait_dir == 1 else
                     DESCRIPTIONS['dir_front'])
         eclipse_str += gait_dir

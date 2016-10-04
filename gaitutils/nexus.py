@@ -51,7 +51,7 @@ def is_vicon_instance(obj):
     return obj.__class__.__name__ == 'ViconNexus'
 
 
-def get_fpdata(vicon):
+def get_forceplate_data(vicon):
     """ Read forceplate data from Nexus. Supports only single plate for
     now. """
     fpdevicename = 'Forceplate'
@@ -129,7 +129,7 @@ def get_fp_strike_and_toeoff(vicon):
     """ Return forceplate strike and toeoff frames. """
     FP_THRESHOLD = .02  # % of maximum force
     MEDIAN_FILTER_WIDTH = 5
-    ftot = get_fpdata(vicon)['ftot']
+    ftot = get_forceplate_data(vicon)['ftot']
     # try to remove forceplate noise & spikes with median filter
     ftot = signal.medfilt(ftot, MEDIAN_FILTER_WIDTH)
     frel = ftot/ftot.max()
@@ -142,7 +142,7 @@ def get_fp_strike_and_toeoff(vicon):
             int(np.round(fptoeoff / ftot.samplesperframe)))
 
 
-def get_center_frame(vicon, marker='LASI'):
+def get_center_frame(vicon, marker):
     """ Return frame where marker crosses x axis of coordinate system
     (y = 0) """
     mrkdata = get_marker_data(vicon, marker)
@@ -161,12 +161,13 @@ def get_center_frame(vicon, marker='LASI'):
     return ycross
 
 
-def subject_ydir(vicon):
-    """ Return direction of movement for subject (y derivative pos/neg) """
-    TRACK_MARKER = 'LASI'
-    mrkdata = get_marker_data(vicon, TRACK_MARKER)
-    P = mrkdata['LASI_P']
-    ydiff = np.median(np.diff(P[:, 1]))  # median of y derivative
+def get_movement_direction(vicon, marker, dir):
+    """ Return average direction of movement for given marker """
+    dir = dir.lower()
+    dir = {'x': 0, 'y': 1, 'z': 2}[dir]
+    mrkdata = get_marker_data(vicon, marker)
+    P = mrkdata[marker+'_P']
+    ydiff = np.median(np.diff(P[:, dir]))  # median of y derivative
     return 1 if ydiff > 0 else -1
 
 
@@ -199,7 +200,7 @@ def kinetics_available(vicon):
         Bodymass = Bodymass[0]
     subj_weight = Bodymass * 9.81
 
-    fp0 = get_fpdata(vicon)
+    fp0 = get_forceplate_data(vicon)
     forcetot = signal.medfilt(fp0['ftot'])  # remove spikes
 
     # autodetection parameters

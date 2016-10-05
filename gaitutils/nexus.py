@@ -71,24 +71,33 @@ def get_forceplate_data(vicon):
     # get list of channel names and IDs
     _, _, _, _, chnames, chids = vicon.GetDeviceOutputDetails(fpid, outputid)
     # read x,y,z forces
-    fxid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Fx')
-    fx, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, fxid)
-    fxid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Fy')
-    fy, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, fxid)
-    fxid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Fz')
-    fz, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, fxid)
+    chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Fx')
+    fx, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, chid)
+    chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Fy')
+    fy, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, chid)
+    chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Fz')
+    fz, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, chid)
+    # moments
+    outputid = outputids[1]
+    chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Mx')
+    mx, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, chid)
+    chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'My')
+    my, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, chid)
+    chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Mz')
+    mz, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, chid)
     # read CoP
     outputid = outputids[2]
-    fxid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Cx')
-    copx, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, fxid)
-    fxid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Cy')
-    copy, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, fxid)
-    fxid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Cz')
-    copz, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, fxid)
+    chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Cx')
+    copx, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, chid)
+    chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Cy')
+    copy, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, chid)
+    chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Cz')
+    copz, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, chid)
     cop = np.array([copx, copy, copz]).transpose()
     fall = np.array([fx, fy, fz]).transpose()
+    mall = np.array([mx, my, mz]).transpose()
     ftot = np.sqrt(np.sum(fall**2, axis=1))
-    return {'fall': fall, 'ftot': ftot, 'cop': cop,
+    return {'fall': fall, 'mall': mall, 'ftot': ftot, 'cop': cop,
             'samplesperframe': samplesperframe, 'sfrate': drate}
 
 

@@ -87,8 +87,6 @@ RESET_ROI = True
 if not nexus.pid():
     raise Exception('Vicon Nexus not running')
 
-nexus_ver = float(nexus.NEXUS_VER)
-
 
 # get session path from Nexus, find processed trials
 vicon = nexus.viconnexus()
@@ -145,7 +143,7 @@ for filepath_ in enffiles:
         vicon.OpenTrial(filepath, TRIAL_OPEN_TIMEOUT)
         allmarkers = vicon.GetMarkerNames(subjectname)
         # reset ROI before operations
-        if RESET_ROI and nexus_ver >= 2.5:
+        if RESET_ROI and nexus.nexus_ver >= 2.5:
             (fstart, fend) = vicon.GetTrialRange()
             vicon.SetTrialRegionOfInterest(fstart, fend)
         # preprocessing pipelines
@@ -250,7 +248,7 @@ for filepath, trial in sel_trials.items():
         continue  # next trial
     # events ok
     # crop trial
-    if nexus_ver >= 2.5:
+    if nexus.nexus_ver >= 2.5:
         evs = vicon.GetEvents(subjectname, "Left", "Foot Strike")[0]
         evs += vicon.GetEvents(subjectname, "Right", "Foot Strike")[0]
         evs += vicon.GetEvents(subjectname, "Left", "Foot Off")[0]

@@ -41,6 +41,10 @@ def pid():
     return None
 
 
+def nexus_ver():
+    return float(NEXUS_VER)
+
+
 def viconnexus():
     """ Return a ViconNexus instance. """
     return ViconNexus.ViconNexus()

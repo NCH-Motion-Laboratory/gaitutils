@@ -29,7 +29,7 @@ ROI operations only work for Nexus >= 2.5
 """
 
 from __future__ import print_function
-from gaitutils import nexus, eclipse
+from gaitutils import nexus, eclipse, utils
 import glob
 import os
 import numpy as np
@@ -161,7 +161,7 @@ for filepath_ in enffiles:
         else:
             # try to figure out trial center frame
             for marker in TRACK_MARKERS:
-                ctr = nexus.get_center_frame(vicon, marker=marker)
+                ctr = utils.get_center_frame(vicon, marker=marker)
                 if ctr:  # ok and no gaps
                     break
             # cannot find center frame - possible rasi or lasi gaps,
@@ -172,7 +172,7 @@ for filepath_ in enffiles:
                 continue
             gaps_found = False
             for marker in allmarkers:
-                gaps = nexus.get_marker_data(vicon, marker)[marker + '_gaps']
+                gaps = read_data.get_marker_data(vicon, marker)[marker + '_gaps']
                 # check for gaps nearby the center frame
                 if gaps.size > 0:
                     #print('gaps: %s' % marker)
@@ -190,7 +190,7 @@ for filepath_ in enffiles:
             trials[filepath].recon_ok = True
 
         # get kinetics info
-        fpdata = nexus.kinetics_available(vicon)
+        fpdata = utils.kinetics_available(vicon)
         context = fpdata['context']
         if context:
             eclipse_str += (DESCRIPTIONS['context_right'] if context == 'R'
@@ -204,7 +204,7 @@ for filepath_ in enffiles:
         eclipse_str += ','
 
         # check direction of gait (y coordinate increase/decrease)
-        gait_dir = nexus.get_movement_direction(vicon, TRACK_MARKERS[0], 'y')
+        gait_dir = utils.get_movement_direction(vicon, TRACK_MARKERS[0], 'y')
         gait_dir = (DESCRIPTIONS['dir_back'] if gait_dir == 1 else
                     DESCRIPTIONS['dir_front'])
         eclipse_str += gait_dir

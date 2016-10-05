@@ -15,7 +15,7 @@ import nexus
 import c3d
 
 
-def reader_module(source):
+def _reader_module(source):
     """ Determine the appropriate module to use """
     if nexus.is_vicon_instance(source):
         return nexus
@@ -27,27 +27,27 @@ def reader_module(source):
 
 def get_metadata(source):
     """ Get trial and subject info """
-    return reader_module(source).get_metadata(source)
+    return _reader_module(source).get_metadata(source)
 
 
 def get_forceplate_data(source):
     """ Get force, moment and center of pressure """
-    return reader_module(source).get_forceplate_data(source)
+    return _reader_module(source).get_forceplate_data(source)
 
 
 def get_marker_data(source, markers):
     """ Get position, velocity and acceleration for a given marker """
-    return reader_module(source).get_marker_data(source, markers)
+    return _reader_module(source).get_marker_data(source, markers)
 
 
 def get_emg_data(source):
     """ Get EMG data """
-    return reader_module(source).get_emg(source)
+    return _reader_module(source).get_emg(source)
 
 
 def get_variables(source, vars):
     """ Get other variables such as model outputs """
-    return reader_module(source).get_variables(source)
+    return _reader_module(source).get_variables(source)
 
 
 #def kinetics_available(source):

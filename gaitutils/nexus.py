@@ -158,6 +158,9 @@ def get_center_frame(vicon, marker):
                 # y must change sign also around p
                 if np.sign(y[p-10]) != np.sign(y[p+10]):
                         ycross.append(p)
+    if len(ycross) > 1:
+        print('Warning: multiple crossings detected')
+        ycross = ycross[0]
     return ycross
 
 

@@ -37,7 +37,7 @@ from numpy import inf
 import time
 
 # range of trials to process
-TRIALS_RANGE = (14, 14)
+TRIALS_RANGE = (1, inf)
 
 # list of pipelines to run
 PRE_PIPELINES = ['Reconstruct and label (legacy)', 'AutoGapFill_mod', 'filter']
@@ -86,7 +86,7 @@ RESET_ROI = True
 
 if not nexus.pid():
     raise Exception('Vicon Nexus not running')
-    
+
 nexus_ver = float(nexus.NEXUS_VER)
 
 
@@ -175,8 +175,8 @@ for filepath_ in enffiles:
                 gaps = nexus.get_marker_data(vicon, marker)[marker + '_gaps']
                 # check for gaps nearby the center frame
                 if gaps.size > 0:
-                    print('gaps: %s' % marker)
-                    print(gaps)
+                    #print('gaps: %s' % marker)
+                    #print(gaps)
                     if (np.where(abs(gaps - ctr) <
                        GAPS_MIN_DIST)[0].size > GAPS_MAX):
                         gaps_found = True

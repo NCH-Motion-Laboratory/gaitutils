@@ -23,6 +23,45 @@ def is_c3dfile(obj):
         return False
 
 
+def get_emg(c3dfile):
+    """ Read EMG from c3d file """
+    reader = btk.btkAcquisitionFileReader()
+    reader.SetFilename(str(c3dfile))  # check existence?
+    reader.Update()
+    acq = reader.GetOutput()
+    frame1 = acq.GetFirstFrame()  # start of ROI (1-based)
+    samplesperframe = acq.GetNumberAnalogSamplePerFrame()
+    self.sfrate = acq.GetAnalogFrequency()
+    # read physical EMG channels and cut data to L/R gait cycles
+    self.data = {}
+    self.elnames = []
+    for i in btk.Iterate(acq.GetAnalogs()):
+        if i.GetDescription().find('EMG') >= 0 and i.GetUnit() == 'V':
+            elname = i.GetLabel()
+            self.elnames.append(elname)
+            self.data[elname] = np.squeeze(i.GetValues())
+            if self.emg_auto_off and not self.is_valid_emg(self.data[elname]):
+                self.data[elname] = 'EMG_DISCONNECTED'
+    if self.elnames:
+        self.datalen = len(self.data[elname])
+    else:
+        raise GaitDataError('No EMG channels found in data!')
+    else:
+    raise GaitDataError('Invalid data source')
+    self.t = np.arange(self.datalen)/self.sfrate
+    self.map_data()
+    # set scales for plotting channels. Automatic scaling logic may
+    # be put here if needed
+    self.yscale = {}
+    for logch in self.ch_names:
+    self.yscale[logch] = .5e-3
+    # median scaling - beware of DC!
+    # self.yscale_gc1r[elname] = yscale_medians * np.median(np.abs(self.datagc1r[elname]))
+    # set flag if none of EMG channels contain data
+    self.no_emg = all([type(chandata) == str and chandata == 'EMG_DISCONNECTED' for chandata in self.data.values()])
+
+
+
 def get_metadata(c3dfile):
     """ Read trial and subject metadata """
     trialname = os.path.basename(os.path.splitext(c3dfile)[0])

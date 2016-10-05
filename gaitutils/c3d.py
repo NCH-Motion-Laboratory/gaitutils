@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-c3d functions
+c3d reader functions
 
 
 @author: Jussi (jnu@iki.fi)
@@ -11,6 +11,61 @@ c3d functions
 import btk
 import numpy as np
 from scipy.signal import medfilt
+import os
+
+
+def is_c3dfile(obj):
+    """ Check whether obj is a valid c3d file. Currently just checks
+    existence. """
+    try:
+        return os.path.isfile(obj)
+    except TypeError:
+        return False
+
+
+def get_metadata(c3dfile):
+    """ Read trial and subject metadata """
+    trialname = os.path.basename(os.path.splitext(c3dfile)[0])
+    sessionpath = os.path.dirname(c3dfile)
+    reader = btk.btkAcquisitionFileReader()
+    reader.SetFilename(str(c3dfile))  # check existence?
+    reader.Update()
+    acq = reader.GetOutput()
+    # frame offset (start of trial data in frames)
+    offset = acq.GetFirstFrame()
+    framerate = acq.GetPointFrequency()
+    analograte = acq.GetAnalogFrequency()
+    #  get events
+    rstrikes, lstrikes, rtoeoffs, ltoeoffs = [], [], [], []
+    for i in btk.Iterate(acq.GetEvents()):
+        if i.GetLabel() == "Foot Strike":
+            if i.GetContext() == "Right":
+                rstrikes.append(i.GetFrame())
+            elif i.GetContext() == "Left":
+                lstrikes.append(i.GetFrame())
+            else:
+                raise Exception("Unknown context on foot strike event")
+        elif i.GetLabel() == "Foot Off":
+            if i.GetContext() == "Right":
+                rtoeoffs.append(i.GetFrame())
+            elif i.GetContext() == "Left":
+                ltoeoffs.append(i.GetFrame())
+            else:
+                raise Exception("Unknown context on foot strike event")
+    # get subject info
+    metadata = acq.GetMetaData()
+    # don't ask
+    name = (metadata.FindChild("SUBJECTS").value().
+            FindChild("NAMES").value().GetInfo().ToString()[0].strip())
+    bodymass = (metadata.FindChild("PROCESSING").value().
+                FindChild("Bodymass").value().GetInfo().ToDouble()[0])
+    # sort events (may be in wrong temporal order, at least in c3d files)
+    for li in [lstrikes, rstrikes, ltoeoffs, rtoeoffs]:
+        li.sort()
+    return {'trialname': trialname, 'sessionpath': sessionpath,
+            'offset': offset, 'framerate': framerate, 'analograte': analograte,
+            'name': name, 'bodymass': bodymass, 'lstrikes': lstrikes,
+            'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs}
 
 
 def get_forceplate_data(c3dfile):
@@ -56,6 +111,4 @@ def get_forceplate_data(c3dfile):
     ftot = np.sqrt(np.sum(fall**2, axis=1))
     return {'fall': fall, 'ftot': ftot, 'cop': cop,
             'samplesperframe': samplesperframe, 'sfrate': sfrate}
-
-
 

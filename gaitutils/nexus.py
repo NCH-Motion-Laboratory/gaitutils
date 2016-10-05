@@ -51,6 +51,53 @@ def is_vicon_instance(obj):
     return obj.__class__.__name__ == 'ViconNexus'
 
 
+def get_metadata(vicon):
+    """ Read trial and subject metadata """
+    subjectnames = vicon.GetSubjectNames()
+    if len(subjectnames) > 1:
+        raise ValueError('Nexus returns multiple subjects')
+    if not subjectnames:
+        raise ValueError('No subject defined in Nexus')
+    name = subjectnames[0]
+    Bodymass = vicon.GetSubjectParam(name, 'Bodymass')
+    # for unknown reasons, above method may return tuple or float
+    # depending on whether script is run from Nexus or outside
+    if type(Bodymass) == tuple:
+        bodymass = vicon.GetSubjectParam(name, 'Bodymass')[0]
+    else:  # hopefully float
+        bodymass = vicon.GetSubjectParam(name, 'Bodymass')
+    trialname_ = vicon.GetTrialName()
+    sessionpath = trialname_[0]
+    trialname = trialname_[1]
+    if not trialname:
+        raise ValueError('No trial loaded')
+    # get events
+    lstrikes = vicon.GetEvents(name, "Left", "Foot Strike")[0]
+    rstrikes = vicon.GetEvents(name, "Right", "Foot Strike")[0]
+    ltoeoffs = vicon.GetEvents(name, "Left", "Foot Off")[0]
+    rtoeoffs = vicon.GetEvents(name, "Right", "Foot Off")[0]
+    # frame offset (start of trial data in frames)
+    offset = 1
+    framerate = vicon.GetFrameRate()
+    # Get analog rate. This may not be mandatory if analog devices
+    # are not used, but currently it needs to succeed.
+    devids = vicon.GetDeviceIDs()
+    if not devids:
+        raise ValueError('Cannot determine analog rate')
+    else:
+        devid = devids[0]
+        _, _, analograte, _, _, _ = vicon.GetDeviceDetails(devid)
+    # sort events (may be in wrong temporal order, at least in c3d files)
+    for li in [lstrikes, rstrikes, ltoeoffs, rtoeoffs]:
+        li.sort()
+    return {'trialname': trialname, 'sessionpath': sessionpath,
+            'offset': offset, 'framerate': framerate, 'analograte': analograte,
+            'name': name, 'bodymass': bodymass, 'lstrikes': lstrikes,
+            'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs}
+
+
+
+
 def get_forceplate_data(vicon):
     """ Read forceplate data from Nexus. Supports only single plate for
     now. """

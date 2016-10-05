@@ -25,6 +25,10 @@ def reader_module(source):
         raise ValueError('Unknown source')
 
 
+def get_metadata(source):
+    return reader_module(source).get_metadata(source)
+
+
 def get_forceplate_data(source):
     return reader_module(source).get_forceplate_data(source)
 
@@ -35,8 +39,6 @@ def get_marker_data(source, markers):
 
 def kinetics_available(source):
     return reader_module(source).kinetics_available(source)
-
-
 
 
 def get_roi(vicon):

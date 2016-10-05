@@ -69,7 +69,12 @@ def get_metadata(c3dfile):
 
 
 def get_forceplate_data(c3dfile):
-    """ Read forceplate data. """
+    """ Read forceplate data. Does not support multiple plates.
+    Force results differ somewhat from Nexus, not sure why. Calibration? """
+    FP_DZ = 41.3  # forceplate thickness in mm
+    # CoP calculation uses filter
+    FP_FILTFUN = medfilt  # filter function
+    FP_FILTW = 3  # median filter width
     reader = btk.btkAcquisitionFileReader()
     reader.SetFilename(str(c3dfile))  # btk does not tolerate unicode
     reader.Update()
@@ -78,6 +83,7 @@ def get_forceplate_data(c3dfile):
     samplesperframe = acq.GetNumberAnalogSamplePerFrame()
     sfrate = acq.GetAnalogFrequency()
     # TODO: raise DeviceNotFound if needed
+    fx, fy, fz, mx, my, mz = (None,) * 6
     for i in btk.Iterate(acq.GetAnalogs()):
         desc = i.GetLabel()
         if desc.find('Force.') >= 0 and i.GetUnit() == 'N':
@@ -88,21 +94,21 @@ def get_forceplate_data(c3dfile):
             elif desc.find('Fz') > 0:
                 fz = np.squeeze(i.GetValues())
         elif desc.find('Moment.') >= 0 and i.GetUnit() == 'Nmm':
-            print 'moment'
             if desc.find('Mx') > 0:
                 mx = np.squeeze(i.GetValues())  # rm singleton dimension
             elif desc.find('My') > 0:
                 my = np.squeeze(i.GetValues())
             elif desc.find('Mz') > 0:
                 mz = np.squeeze(i.GetValues())
+    if any([var is None for var in (fx, fy, fz, mx, my, mz)]):
+        raise ValueError('Cannot read force/moment variable')
     """ Compute CoP according to AMTI instructions. The results differ
-    slightly (about 1 mm max) from Nexus, for unknown reasons.
+    slightly (few mm) from Nexus, for unknown reasons (different filter?)
     See http://health.uottawa.ca/biomech/courses/apa6903/amticalc.pdf """
-    dz = 41.3  # fp thickness magical value
-    fz = medfilt(fz, 3)  # suppress noise by medfilt; not sure what Nexus uses
+    fz = FP_FILTFUN(fz, FP_FILTW)  # suppress noise by medfilt; not sure what Nexus uses
     fz_0_ind = np.where(fz == 0)
-    copx = (my + fx * dz)/fz
-    copy = (mx - fy * dz)/fz
+    copx = (my + fx * FP_DZ)/fz
+    copy = (mx - fy * FP_DZ)/fz
     copx[fz_0_ind] = 0
     copy[fz_0_ind] = 0
     copz = np.zeros(copx.shape)

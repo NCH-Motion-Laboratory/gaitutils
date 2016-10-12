@@ -170,7 +170,7 @@ for filepath_ in enffiles:
                 continue
             gaps_found = False
             for marker in allmarkers:
-                gaps = read_data.get_marker_data(vicon, marker)[marker + '_gaps']
+                gaps = nexus.get_marker_data(vicon, marker)[marker + '_gaps']
                 # check for gaps nearby the center frame
                 if gaps.size > 0:
                     #print('gaps: %s' % marker)

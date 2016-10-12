@@ -105,7 +105,8 @@ def get_forceplate_data(c3dfile):
     """ Compute CoP according to AMTI instructions. The results differ
     slightly (few mm) from Nexus, for unknown reasons (different filter?)
     See http://health.uottawa.ca/biomech/courses/apa6903/amticalc.pdf """
-    fz = FP_FILTFUN(fz, FP_FILTW)  # suppress noise by medfilt; not sure what Nexus uses
+    # suppress noise by medfilt; not sure what Nexus uses
+    fz = FP_FILTFUN(fz, FP_FILTW)
     fz_0_ind = np.where(fz == 0)
     copx = (my + fx * FP_DZ)/fz
     copy = (mx - fy * FP_DZ)/fz
@@ -117,4 +118,3 @@ def get_forceplate_data(c3dfile):
     ftot = np.sqrt(np.sum(fall**2, axis=1))
     return {'fall': fall, 'ftot': ftot, 'cop': cop,
             'samplesperframe': samplesperframe, 'sfrate': sfrate}
-

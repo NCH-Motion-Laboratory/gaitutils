@@ -63,7 +63,7 @@ PREPROC_DESC_SKIP = True
 # min. trial duration (frames)
 MIN_TRIAL_DURATION = 200
 # how many frames to leave before/after first/last events
-CROP_LEAVE_FRAMES = 10
+CROP_MARGIN = 10
 # automark frames around forceplate region (half-width)
 AUTOMARK_HW = 150
 # marker for tracking overall body position (to get gait dir) and center frame
@@ -91,7 +91,7 @@ WRITE_ECLIPSE_DESC = True
 # outside ROI
 RESET_ROI = True
 # check subject weight when analyzing forceplate data
-CHECK_WEIGHT = False
+CHECK_WEIGHT = True
 
 
 if not nexus.pid():
@@ -265,8 +265,8 @@ for filepath, trial in sel_trials.items():
         evs += vicon.GetEvents(subjectname, "Right", "Foot Off")[0]
         # when setting roi, do not go beyond trial range
         minfr, maxfr = vicon.GetTrialRange()
-        roistart = max(min(evs)-CROP_LEAVE_FRAMES, minfr)
-        roiend = min(max(evs)+CROP_LEAVE_FRAMES, maxfr)
+        roistart = max(min(evs)-CROP_MARGIN, minfr)
+        roiend = min(max(evs)+CROP_MARGIN, maxfr)
         vicon.SetTrialRegionOfInterest(roistart, roiend)
     # run model pipeline and save
     eclipse_str = DESCRIPTIONS['ok'] + ',' + trial.description

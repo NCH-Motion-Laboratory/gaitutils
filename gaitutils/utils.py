@@ -46,7 +46,7 @@ def get_movement_direction(source, marker, dir):
     return 1 if ydiff > 0 else -1
 
 
-def kinetics_available(source):
+def kinetics_available(source, check_weight=True):
     """ See whether the trial has valid forceplate contact (ground reaction
     forces available) for left/right side (or neither, or both).
     Uses forceplate data, gait events and marker positions.
@@ -95,7 +95,9 @@ def kinetics_available(source):
     fmaxind = np.where(forcetot == fmax)[0][0]  # first maximum
     print('kinetics_available: max force:', fmax, 'at:', fmaxind,
           'weight:', subj_weight)
-    if max(forcetot) < FMAX_REL_MIN * subj_weight:
+    if not check_weight:
+        print('(ignoring subject weight)')
+    elif max(forcetot) < FMAX_REL_MIN * subj_weight:
         print('kinetics_available: insufficient max. force on plate')
         return emptydi
     # find indices where force crosses threshold

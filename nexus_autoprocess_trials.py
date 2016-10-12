@@ -18,7 +18,15 @@ mark eclipse
 
 
 TODO:
-gap detection, false positives?
+
+
+AUTOMARK_HW does not work properly for slow walkers
+-should mark given number of events around ctr frame
+-use events_nocontext arg
+
+eclipse desc of last processed trial is not updated properly (overwritten
+by eclipse?)
+
 
 
 NOTES:
@@ -82,6 +90,8 @@ WRITE_ECLIPSE_DESC = True
 # reset ROI before processing; otherwise trajectories won't get reconstructed
 # outside ROI
 RESET_ROI = True
+# check subject weight when analyzing forceplate data
+CHECK_WEIGHT = False
 
 
 if not nexus.pid():
@@ -188,7 +198,7 @@ for filepath_ in enffiles:
             trials[filepath].recon_ok = True
 
         # get kinetics info
-        fpdata = utils.kinetics_available(vicon)
+        fpdata = utils.kinetics_available(vicon, CHECK_WEIGHT)
         context = fpdata['context']
         if context:
             eclipse_str += (DESCRIPTIONS['context_right'] if context == 'R'

@@ -27,6 +27,7 @@ if not NEXUS_PATH + "/SDK/Python" in sys.path:
     # needed at least when running outside Nexus
     sys.path.append(NEXUS_PATH + "/SDK/Win32")
 import ViconNexus
+import site_defs
 
 
 def pid():
@@ -102,10 +103,7 @@ def get_metadata(vicon):
 
 def get_emg_data(vicon):
     """ Read EMG data from Nexus """
-    framerate = vicon.GetFrameRate()
-    # framecount = vicon.GetFrameCount()
-    # TODO: move into config
-    emg_devname = 'Myon'
+    emg_devname = site_defs.emg_devname
     devnames = vicon.GetDeviceNames()
     if emg_devname in devnames:
         emg_id = vicon.GetDeviceIDFromName(emg_devname)
@@ -113,15 +111,12 @@ def get_emg_data(vicon):
         raise ValueError('EMG device not found')
     # DType should be 'other', drate is sampling rate
     dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(emg_id)
-    # samplesperframe = drate / framerate
-    # self.sfrate = drate
     # Myon should only have 1 output; if zero, EMG was not found (?)
     if len(outputids) != 1:
         raise ValueError('Expected single EMG output')
     outputid = outputids[0]
     # get list of channel names and IDs
     _, _, _, _, elnames, chids = vicon.GetDeviceOutputDetails(emg_id, outputid)
-    # read all (physical) EMG channels
     data = dict()
     for elid in chids:
         eldata, elready, elrate = vicon.GetDeviceChannel(emg_id, outputid,

@@ -29,10 +29,6 @@ def get_emgdata(c3dfile):
     reader.SetFilename(str(c3dfile))  # check existence?
     reader.Update()
     acq = reader.GetOutput()
-    # frame1 = acq.GetFirstFrame()  # start of ROI (1-based)
-    # samplesperframe = acq.GetNumberAnalogSamplePerFrame()
-    # sfrate = acq.GetAnalogFrequency()
-    # read physical EMG channels and cut data to L/R gait cycles
     data = dict()
     elnames = []
     for i in btk.Iterate(acq.GetAnalogs()):

@@ -41,8 +41,8 @@ def get_marker_data(source, markers):
 
 
 def get_emg_data(source):
-    """ Get EMG data """
-    return _reader_module(source).get_emg(source)
+    """ Get EMG data. Returns dict with keys """
+    return _reader_module(source).get_emg_data(source)
 
 
 def get_variables(source, vars):

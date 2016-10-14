@@ -100,41 +100,35 @@ def get_metadata(vicon):
             'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs}
 
 
-def get_emg(vicon):
-    """ Read EMG data from Nexus. """
+def get_emg_data(vicon):
+    """ Read EMG data from Nexus """
     framerate = vicon.GetFrameRate()
-    framecount = vicon.GetFrameCount()
-    emg_devname = site_defs.emg_devname
+    # framecount = vicon.GetFrameCount()
+    # TODO: move into config
+    emg_devname = 'Myon'
     devnames = vicon.GetDeviceNames()
     if emg_devname in devnames:
         emg_id = vicon.GetDeviceIDFromName(emg_devname)
     else:
-        raise GaitDataError('EMG device not found')
+        raise ValueError('EMG device not found')
     # DType should be 'other', drate is sampling rate
     dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(emg_id)
-    samplesperframe = drate / framerate
-    self.sfrate = drate
+    # samplesperframe = drate / framerate
+    # self.sfrate = drate
     # Myon should only have 1 output; if zero, EMG was not found (?)
     if len(outputids) != 1:
-        raise GaitDataError('Expected 1 EMG output')
+        raise ValueError('Expected single EMG output')
     outputid = outputids[0]
     # get list of channel names and IDs
-    _, _, _, _, self.elnames,self.chids = vicon.GetDeviceOutputDetails(emg_id, outputid)
+    _, _, _, _, elnames, chids = vicon.GetDeviceOutputDetails(emg_id, outputid)
     # read all (physical) EMG channels
-    self.data = {}
-    for elid in self.chids:
-        eldata, elready, elrate = vicon.GetDeviceChannel(emg_id,
-                                                         outputid,
+    data = dict()
+    for elid in chids:
+        eldata, elready, elrate = vicon.GetDeviceChannel(emg_id, outputid,
                                                          elid)
-        elname = self.elnames[elid-1]
-        self.data[elname] = np.array(eldata)
-        debug_print('electrode:', elname)
-        if self.emg_auto_off and not self.is_valid_emg(self.data[elname]):
-            self.data[elname] = 'EMG_DISCONNECTED'
-    self.datalen = len(eldata)
-    assert(self.datalen == framecount * samplesperframe)
-
-
+        elname = elnames[elid-1]  # chids start from 1
+        data[elname] = np.array(eldata)
+    return data
 
 
 def get_forceplate_data(vicon):

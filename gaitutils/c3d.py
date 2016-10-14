@@ -23,6 +23,29 @@ def is_c3dfile(obj):
         return False
 
 
+def get_emgdata(c3dfile):
+    """ Read EMG data from a c3d file. Returns a dict """
+    reader = btk.btkAcquisitionFileReader()
+    reader.SetFilename(str(c3dfile))  # check existence?
+    reader.Update()
+    acq = reader.GetOutput()
+    # frame1 = acq.GetFirstFrame()  # start of ROI (1-based)
+    # samplesperframe = acq.GetNumberAnalogSamplePerFrame()
+    # sfrate = acq.GetAnalogFrequency()
+    # read physical EMG channels and cut data to L/R gait cycles
+    data = dict()
+    elnames = []
+    for i in btk.Iterate(acq.GetAnalogs()):
+        if i.GetDescription().find('EMG') >= 0 and i.GetUnit() == 'V':
+            elname = i.GetLabel()
+            elnames.append(elname)
+            data[elname] = np.squeeze(i.GetValues())
+    if elnames:
+        return data
+    else:
+        raise ValueError('No EMG channels found in data!')
+
+
 def get_metadata(c3dfile):
     """ Read trial and subject metadata """
     trialname = os.path.basename(os.path.splitext(c3dfile)[0])

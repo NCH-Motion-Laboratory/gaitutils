@@ -2,7 +2,7 @@
 """
 
 Wrapper methods that read from either Vicon Nexus or c3d files.
-'source' argument can be either ViconNexus.ViconNexus instance or
+'source' argument can be either a ViconNexus.ViconNexus instance or
 a path to a c3d file.
 
 
@@ -50,8 +50,8 @@ def get_variables(source, vars):
     return _reader_module(source).get_variables(source)
 
 
-#def kinetics_available(source):
-#    return reader_module(source).kinetics_available(source)
+def kinetics_available(source):
+    return _reader_module(source).kinetics_available(source)
 
 
 #def get_roi(source, markers):

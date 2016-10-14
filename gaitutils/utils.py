@@ -41,8 +41,8 @@ def get_movement_direction(source, marker, dir):
     dir = {'x': 0, 'y': 1, 'z': 2}[dir]
     mrkdata = get_marker_data(source, marker)
     P = mrkdata[marker+'_P']
-    ydiff = np.median(np.diff(P[:, dir]))  # median of y derivative
-    return 1 if ydiff > 0 else -1
+    ddiff = np.median(np.diff(P[:, dir]))  # median of derivative
+    return 1 if ddiff > 0 else -1
 
 
 def kinetics_available(source, check_weight=True):
@@ -78,6 +78,7 @@ def kinetics_available(source, check_weight=True):
     # left foot markers
     LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
     # forceplate boundaries in world coords
+    # TODO: should be read from config / source
     FP_YMIN = 0
     FP_YMAX = 508
     FP_XMIN = 0

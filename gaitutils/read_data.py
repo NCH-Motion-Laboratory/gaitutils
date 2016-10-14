@@ -30,6 +30,11 @@ def get_metadata(source):
     return _reader_module(source).get_metadata(source)
 
 
+def get_data_rate(source):
+    """ Return frame rate, analog rate and samples per frame """
+    return _reader_module(source).get_data_rate(source)
+
+
 def get_forceplate_data(source):
     """ Get force, moment and center of pressure """
     return _reader_module(source).get_forceplate_data(source)

@@ -56,6 +56,10 @@ def is_vicon_instance(obj):
     return obj.__class__.__name__ == 'ViconNexus'
 
 
+def get_data_rate(vicon):
+    """ Return """
+
+
 def get_metadata(vicon):
     """ Read trial and subject metadata """
     subjectnames = vicon.GetSubjectNames()

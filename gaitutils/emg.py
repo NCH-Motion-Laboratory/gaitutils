@@ -109,7 +109,8 @@ class EMG:
         for datach in self.ch_names:
                 matches = [x for x in self.elnames if x.find(datach) >= 0]
                 if len(matches) == 0:
-                    raise GaitDataError('Cannot find a match for requested EMG channel '+datach)
+                    raise ValueError('Cannot find a match for requested EMG '
+                                     'channel ' + datach)
                 elname = min(matches, key=len)  # choose shortest matching name
                 if len(matches) > 1:
                     debug_print('map_data:', matches, '->', elname)

@@ -19,7 +19,13 @@ import site_defs
 
 class EMG:
     """ Class for handling EMG data. Convert logical names to physical,
-    filter data, etc. """
+    filter data, etc. Channel data can be accessed as emg[chname].
+    If passband property is set, data will be bandpass filtered first.
+    The ch_status property indicates whether data is OK for a given channel.
+    Logical channel names are read from site defs and can be substrings of
+    physical channel names read from source; e.g. logical name 'LGas' can
+    be mapped to 'Voltage.LGas8'; see map_data()
+    """
 
     def __init__(self, source):
         self.source = source
@@ -29,7 +35,7 @@ class EMG:
         self.buttord = 5
         # EMG passband
         self.passband = None
-        # whether to auto-find disconnected EMG channels
+        # whether to autodetect disconnected EMG channels. set before read()
         self.emg_auto_off = True
         # normal data and logical chs
         self.define_emg_names()
@@ -40,10 +46,6 @@ class EMG:
             return self.filt(data_, self.passband)
         else:
             return data_
-
-    def set_filter(self, passband):
-        """ Set EMG passband (in Hz). None for off. Affects get_channel. """
-        self.passband = passband
 
     def define_emg_names(self):
         """ Defines the electrode mapping. """
@@ -103,7 +105,7 @@ class EMG:
         self.elnames = self.data.keys()
         # check for invalid signal
         # map channel names
-        self.map_data()
+        self.logical_data = self.map_chs()
         # check for invalid channels
         self.ch_status = dict()
         if self.emg_auto_off:
@@ -116,20 +118,18 @@ class EMG:
         # be put here if needed
         self.yscale = {}
         for logch in self.ch_names:
-            self.yscale[logch] = .5e-3
-            # median scaling - beware of DC!
-            # self.yscale_gc1r[elname] = yscale_medians * np.median(np.abs(self.datagc1r[elname]))
+            self.yscale[logch] = site_defs.emg_yscale  # set a constant scale
         # set flag if none of EMG channels contain data
         self.no_emg = all([isinstance(chandata, str) and
                            chandata == 'EMG_DISCONNECTED' for chandata in
                            self.data.values()])
 
-    def map_data(self):
+    def map_chs(self):
         """ Map logical channels into physical ones. For example, the logical
         name can be  'LPer' and the physical channel 'LPer12' will be a match.
         Thus, the logical names can be shorter than the physical ones. The
         shortest matches will be found. """
-        self.logical_data = {}
+        logical_data = {}
         for datach in self.ch_names:
             matches = [x for x in self.elnames if x.find(datach) >= 0]
             if len(matches) == 0:
@@ -138,7 +138,9 @@ class EMG:
             elname = min(matches, key=len)  # choose shortest matching name
             if len(matches) > 1:
                 debug_print('map_data:', matches, '->', elname)
-            self.logical_data[datach] = self.data[elname]
+            logical_data[datach] = self.data[elname]
+        return logical_data
+        
 
 
 

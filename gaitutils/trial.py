@@ -127,8 +127,12 @@ class Trial:
             # get subject info
             metadata = acq.GetMetaData()
             # don't ask
-            self.subject['Name'] = metadata.FindChild("SUBJECTS").value().FindChild("NAMES").value().GetInfo().ToString()[0].strip()
-            self.subject['Bodymass'] = metadata.FindChild("PROCESSING").value().FindChild("Bodymass").value().GetInfo().ToDouble()[0]
+            self.subject['Name'] = (metadata.FindChild("SUBJECTS").value().
+                                    FindChild("NAMES").value().GetInfo().
+                                    ToString()[0].strip())
+            self.subject['Bodymass'] = (metadata.FindChild("PROCESSING").
+                                        value().FindChild("Bodymass").value().
+                                        GetInfo().ToDouble()[0])
             debug_print('Subject info read:\n', self.subject)
 
         elif nexus.is_vicon_instance(source):
@@ -148,7 +152,8 @@ class Trial:
             if type(Bodymass) == tuple:
                 self.subject['Bodymass'] = vicon.GetSubjectParam(self.subjectname, 'Bodymass')[0]
             else:  # hopefully float
-                self.subject['Bodymass'] = vicon.GetSubjectParam(self.subjectname, 'Bodymass')
+                self.subject['Bodymass'] = (vicon.GetSubjectParam(
+                                            self.subjectname, 'Bodymass'))
             trialname_ = vicon.GetTrialName()
             self.sessionpath = trialname_[0]
             self.trialname = trialname_[1]
@@ -242,76 +247,6 @@ class Trial:
         else:
             return cycles[ncycle-1]
 
-
-# TODO: partially duplicated in gaitutils.nexus
-class forceplate:
-    """ Read and process forceplate data. source may be a c3d file or a
-    ViconNexus instance. Gives x,y,z and total forces during the whole
-    trial (or ROI, for c3d files). Support only single (first) forceplate
-    for now. """
-    def __init__(self, source):
-        self.nplates = 1  # need to also implement reading multiple plates
-        if nexus.is_vicon_instance(source):
-            vicon = source
-            framecount = vicon.GetFrameCount()
-            self.framerate = vicon.GetFrameRate()
-            fpdevicename = 'Forceplate'
-            devicenames = vicon.GetDeviceNames()
-            if fpdevicename in devicenames:
-                fpid = vicon.GetDeviceIDFromName(fpdevicename)
-            else:
-               raise GaitDataError('Forceplate device not found')
-            # DType should be 'ForcePlate', drate is sampling rate
-            dname,dtype,drate,outputids,_,_ = vicon.GetDeviceDetails(fpid)
-            self.sfrate = drate
-            self.samplesperframe = drate / self.framerate  # fp samples per Vicon frame
-            assert(len(outputids)==3)
-            # outputs should be force, moment, cop. select force
-            outputid = outputids[0]
-            # get list of channel names and IDs
-            _,_,_,_,chnames,chids = vicon.GetDeviceOutputDetails(fpid, outputid)
-            # read x,y,z forces
-            Fxid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Fx')
-            self.forcex, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, Fxid)
-            Fxid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Fy')
-            self.forcey, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, Fxid)
-            Fxid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Fz')
-            self.forcez, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, Fxid)
-            # read CoP
-            outputid = outputids[2]
-            Fxid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Cx')
-            self.copx, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, Fxid)
-            Fxid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Cy')
-            self.copy, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, Fxid)
-            Fxid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Cz')
-            self.copz, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, Fxid)
-
-
-        elif is_c3dfile(source):
-            """ Read from c3d file. Note: gives force on ROI.
-            TODO: does not read CoP """
-            c3dfile = source
-            reader = btk.btkAcquisitionFileReader()
-            reader.SetFilename(str(c3dfile))  # btk does not tolerate unicode
-            reader.Update()
-            acq = reader.GetOutput()
-            self.frame1 = acq.GetFirstFrame()  # start of ROI (1-based)
-            self.samplesperframe = acq.GetNumberAnalogSamplePerFrame()
-            self.sfrate = acq.GetAnalogFrequency()
-            # TODO: raise DeviceNotFound if needed
-            for i in btk.Iterate(acq.GetAnalogs()):
-                desc = i.GetLabel()
-                if desc.find('Force.') >= 0 and i.GetUnit() == 'N':
-                    if desc.find('Fx') > 0:
-                        self.forcex = np.squeeze(i.GetValues())  # rm singleton dimension
-                    elif desc.find('Fy') > 0:
-                        self.forcey = np.squeeze(i.GetValues())
-                    elif desc.find('Fz') > 0:
-                        self.forcez = np.squeeze(i.GetValues())
-        else:
-            raise Exception('Invalid source')
-        self.forceall = np.array([self.forcex, self.forcey,self.forcez])
-        self.forcetot = np.sqrt(sum(self.forceall**2, 1))
 
 
 class ModelData:

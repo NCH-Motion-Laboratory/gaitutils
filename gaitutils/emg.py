@@ -12,24 +12,34 @@ from __future__ import division, print_function
 import numpy as np
 from scipy import signal
 import btk  # biomechanical toolkit for c3d reading
-from gaitutils import nexus
+from gaitutils import nexus, read_data
 from envutils import debug_print
 import site_defs
 
 
 class EMG:
-    """ Read and process EMG data. """
-    def __init__(self, source, emg_auto_off=True):
+    """ Class for handling EMG data. Convert logical names to physical,
+    filter data, etc. """
+
+    def __init__(self, source):
         self.source = source
         # default plotting scale in medians (channel-specific)
         self.yscale_medians = 1
         # order of Butterworth filter
         self.buttord = 5
+        # EMG passband
+        self.passband = None
         # whether to auto-find disconnected EMG channels
-        self.emg_auto_off = emg_auto_off
+        self.emg_auto_off = True
         # normal data and logical chs
         self.define_emg_names()
-        self.passband = None
+
+    def __getitem__(self, item):
+        data_ = self.logical_data[item]
+        if self.passband:
+            return self.filt(data_, self.passband)
+        else:
+            return data_
 
     def set_filter(self, passband):
         """ Set EMG passband (in Hz). None for off. Affects get_channel. """
@@ -37,9 +47,9 @@ class EMG:
 
     def define_emg_names(self):
         """ Defines the electrode mapping. """
-        self.ch_normals = site_defs.emg_normals
-        self.ch_names = site_defs.emg_names
-        self.ch_labels = site_defs.emg_labels
+        self.ch_normals = site_defs.emg_normals  # EMG normal data
+        self.ch_names = site_defs.emg_names  # EMG logical channel names
+        self.ch_labels = site_defs.emg_labels  # descriptive labels
 
     def is_logical_channel(self, chname):
         return chname in self.ch_names
@@ -86,10 +96,22 @@ class EMG:
         # yfilt = yfilt - signal.medfilt(yfilt, 21)
         return yfilt
 
-
-
-        self.t = np.arange(self.datalen)/self.sfrate
+    def read(self):
+        meta = read_data.get_metadata(self.source)
+        self.sfrate = meta['analograte']
+        self.t, self.data = read_data.get_emg_data(self.source)
+        self.elnames = self.data.keys()
+        # check for invalid signal
+        # map channel names
         self.map_data()
+        # check for invalid channels
+        self.ch_status = dict()
+        if self.emg_auto_off:
+            for elname, data in self.logical_data.items():
+                if not self.is_valid_emg(data):
+                    self.ch_status[elname] = 'DISCONNECTED'
+                else:
+                    self.ch_status[elname] = 'OK'
         # set scales for plotting channels. Automatic scaling logic may
         # be put here if needed
         self.yscale = {}
@@ -98,7 +120,9 @@ class EMG:
             # median scaling - beware of DC!
             # self.yscale_gc1r[elname] = yscale_medians * np.median(np.abs(self.datagc1r[elname]))
         # set flag if none of EMG channels contain data
-        self.no_emg = all([type(chandata) == str and chandata == 'EMG_DISCONNECTED' for chandata in self.data.values()])
+        self.no_emg = all([isinstance(chandata, str) and
+                           chandata == 'EMG_DISCONNECTED' for chandata in
+                           self.data.values()])
 
     def map_data(self):
         """ Map logical channels into physical ones. For example, the logical
@@ -107,12 +131,16 @@ class EMG:
         shortest matches will be found. """
         self.logical_data = {}
         for datach in self.ch_names:
-                matches = [x for x in self.elnames if x.find(datach) >= 0]
-                if len(matches) == 0:
-                    raise ValueError('Cannot find a match for requested EMG '
-                                     'channel ' + datach)
-                elname = min(matches, key=len)  # choose shortest matching name
-                if len(matches) > 1:
-                    debug_print('map_data:', matches, '->', elname)
-                self.logical_data[logch] = self.data[elname]
+            matches = [x for x in self.elnames if x.find(datach) >= 0]
+            if len(matches) == 0:
+                raise ValueError('Cannot find a match for requested EMG '
+                                 'channel ' + datach)
+            elname = min(matches, key=len)  # choose shortest matching name
+            if len(matches) > 1:
+                debug_print('map_data:', matches, '->', elname)
+            self.logical_data[datach] = self.data[elname]
+
+
+
+
 

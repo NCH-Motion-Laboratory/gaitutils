@@ -9,6 +9,7 @@ from . import site_defs
 from . import nexus
 from . import eclipse
 from . import read_data
+from .emg import EMG
 from .numutils import rising_zerocross, falling_zerocross
 
 

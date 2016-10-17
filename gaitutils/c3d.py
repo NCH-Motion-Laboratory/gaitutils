@@ -23,8 +23,9 @@ def is_c3dfile(obj):
         return False
 
 
-def get_emgdata(c3dfile):
-    """ Read EMG data from a c3d file. Returns a dict """
+def get_emg_data(c3dfile):
+    """ Read EMG data from a c3d file. Returns tuple: time vector + a dict
+    with the data, keys are electrode names """
     reader = btk.btkAcquisitionFileReader()
     reader.SetFilename(str(c3dfile))  # check existence?
     reader.Update()
@@ -37,7 +38,7 @@ def get_emgdata(c3dfile):
             elnames.append(elname)
             data[elname] = np.squeeze(i.GetValues())
     if elnames:
-        return data
+        return np.arange(len(data[elname])) / acq.GetAnalogFrequency(), data
     else:
         raise ValueError('No EMG channels found in data!')
 

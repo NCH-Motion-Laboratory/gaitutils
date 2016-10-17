@@ -127,7 +127,7 @@ def get_emg_data(vicon):
                                                          elid)
         elname = elnames[elid-1]  # chids start from 1
         data[elname] = np.array(eldata)
-    return data
+    return np.arange(len(eldata)) / drate, data
 
 
 def get_forceplate_data(vicon):

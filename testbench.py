@@ -5,7 +5,7 @@ Created on Mon Oct 17 14:06:22 2016
 @author: HUS20664877
 """
 
-from gaitutils import EMG, nexus
+from gaitutils import EMG, nexus, models
 import matplotlib.pyplot as plt
 
 

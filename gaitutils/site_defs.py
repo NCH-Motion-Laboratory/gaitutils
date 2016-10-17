@@ -9,6 +9,11 @@ Lab -specific stuff (electrode names etc.)
 
 import os.path as op
 
+
+emg_lowpass = '400'
+emg_highpass = '10'
+
+
 # Version should be bumped on Nexus update to get the latest API
 NEXUS_VER = "Nexus2.4"
 NEXUS_PATH = "C:/Program Files (x86)/Vicon/"
@@ -16,13 +21,21 @@ NEXUS_PATH += NEXUS_VER
 
 # App dir contains the config file and normal data
 pathprefix = op.expanduser('~')
-app = pathprefix + '.gaitutils'
+appdir = pathprefix + '/.gaitutils'
+
+# Plug-in Gait normal data
+pig_normaldata_path = appdir + '/Data/normal.gcd'
 
 # EMG device name
 emg_devname = 'Myon'
 
 # EMG y scale for plotting
 emg_yscale = .5e-3
+
+# default bandpass values for EMG
+emg_lowpass = '400'
+emg_highpass = '10'
+
 
 # EMG electrode names and descriptions
 emg_labels = {'RHam': 'Medial hamstrings (R)',

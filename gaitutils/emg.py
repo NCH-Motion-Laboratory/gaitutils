@@ -11,8 +11,7 @@ Class for reading EMG
 from __future__ import division, print_function
 import numpy as np
 from scipy import signal
-import btk  # biomechanical toolkit for c3d reading
-from gaitutils import nexus, read_data
+from gaitutils import read_data
 from envutils import debug_print
 import site_defs
 
@@ -103,19 +102,16 @@ class EMG:
         self.sfrate = meta['analograte']
         self.t, self.data = read_data.get_emg_data(self.source)
         self.elnames = self.data.keys()
-        # check for invalid signal
         # map channel names
-        self.logical_data = self.map_chs()
+        self.map_chs()
         # check for invalid channels
-        self.ch_status = dict()
         if self.emg_auto_off:
-            for elname, data in self.logical_data.items():
+            for chname, data in self.logical_data.items():
                 if not self.is_valid_emg(data):
-                    self.ch_status[elname] = 'DISCONNECTED'
+                    self.ch_status[chname] = 'DISCONNECTED'
                 else:
-                    self.ch_status[elname] = 'OK'
-        # set scales for plotting channels. Automatic scaling logic may
-        # be put here if needed
+                    self.ch_status[chname] = 'OK'
+        # set scales for plotting channels
         self.yscale = {}
         for logch in self.ch_names:
             self.yscale[logch] = site_defs.emg_yscale  # set a constant scale
@@ -126,21 +122,20 @@ class EMG:
 
     def map_chs(self):
         """ Map logical channels into physical ones. For example, the logical
-        name can be  'LPer' and the physical channel 'LPer12' will be a match.
-        Thus, the logical names can be shorter than the physical ones. The
-        shortest matches will be found. """
-        logical_data = {}
+        name can be  'LPer' and the physical channel 'Voltage.LPer12' will be
+        a match. The shortest matching physical channel will be used. """
+        self.logical_data = dict()
+        self.ch_status = dict()
         for datach in self.ch_names:
             matches = [x for x in self.elnames if x.find(datach) >= 0]
             if len(matches) == 0:
-                raise ValueError('Cannot find a match for requested EMG '
-                                 'channel ' + datach)
+                self.logical_data[datach] = None
+                self.ch_status[datach] = 'NOT_FOUND'
             elname = min(matches, key=len)  # choose shortest matching name
             if len(matches) > 1:
                 debug_print('map_data:', matches, '->', elname)
-            logical_data[datach] = self.data[elname]
-        return logical_data
-        
+            self.logical_data[datach] = self.data[elname]
+
 
 
 

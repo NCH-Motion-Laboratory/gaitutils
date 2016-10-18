@@ -19,19 +19,20 @@ class Config():
     """ Class to store and handle config data. Config variables are internally
     stored as text, but returned as float or boolean if applicable. """
 
-    def __init__(self, appdir):
+    def __init__(self):
         """ Initialize user-configurable values to default. """
 
         self.config = {}
-        self.config['emg_lowpass'] = site_defs.emg_lowpass
-        self.config['emg_highpass'] = site_defs.emg_highpass
-        self.config['emg_yscale'] = site_defs.emg_yscale
+        self.config['emg_lowpass'] = str(site_defs.emg_lowpass)
+        self.config['emg_highpass'] = str(site_defs.emg_highpass)
+        self.config['emg_yscale'] = str(site_defs.emg_yscale)
         self.config['pig_normaldata_path'] = site_defs.pig_normaldata_path
         self.config['videoplayer_path'] = ('C:/Program Files/VideoLAN'
                                            '/VLC/vlc.exe')
         self.config['videoplayer_opts'] = '--input-repeat=-1 --rate=.2'
         self.config['emg_auto_off'] = 'True'
         self.config['emg_apply_filter'] = 'True'
+        appdir = site_defs.appdir
         self.configfile = appdir + '/Config/Gaitplotter.ini'
         self.appdir = appdir
 
@@ -259,7 +260,7 @@ class Config():
             return None
         else:
             # create new tentative config instance, test validity first
-            newconfig = Config(self.appdir)
+            newconfig = Config()
             # from Tk variables to config
             newconfig.setval('emg_lowpass', emg_lowpass.get())
             newconfig.setval('emg_highpass', emg_highpass.get())

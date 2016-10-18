@@ -2,10 +2,12 @@
 """
 Created on Mon Oct 17 14:06:22 2016
 
+Test new gaitutils code
+
 @author: HUS20664877
 """
 
-from gaitutils import EMG, nexus, models
+from gaitutils import EMG, nexus, config
 import matplotlib.pyplot as plt
 
 

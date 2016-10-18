@@ -9,12 +9,7 @@ models_all.
 @author: Jussi
 """
 
-import config
 import site_defs
-
-# needed for normal data paths
-cfg = config.Config(site_defs.appdir)
-cfg.read()
 
 models_all = []
 

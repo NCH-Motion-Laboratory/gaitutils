@@ -16,10 +16,8 @@ import os.path as op
 import psutil
 from numutils import rising_zerocross, falling_zerocross
 import matplotlib.pyplot as plt
+from site_defs import NEXUS_PATH
 # Version should be bumped on Nexus update to get the latest API
-NEXUS_VER = "2.5"
-NEXUS_PATH = "C:/Program Files (x86)/Vicon/Nexus"
-NEXUS_PATH += NEXUS_VER
 if not op.isdir(NEXUS_PATH):
     raise ValueError('Cannot find Nexus SDK dir: ' + NEXUS_PATH)
 if not NEXUS_PATH + "/SDK/Python" in sys.path:
@@ -360,9 +358,12 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         threshold_rise_ = (vel_thresholds[this_side+'_toeoff'] or
                            maxv * REL_THRESHOLD_RISE)
 
-        print('automark: rel. thresholds: fall: %.2f rise %.2f' % (maxv * REL_THRESHOLD_FALL, maxv * REL_THRESHOLD_RISE))
-        print('automark: using fall threshold: %s=%.2f' % (this_side, threshold_fall_))
-        print('automark: using rise threshold: %s=%.2f' % (this_side, threshold_rise_))
+        print('automark: rel. thresholds: fall: %.2f rise %.2f' %
+              (maxv * REL_THRESHOLD_FALL, maxv * REL_THRESHOLD_RISE))
+        print('automark: using fall threshold: %s=%.2f' %
+              (this_side, threshold_fall_))
+        print('automark: using rise threshold: %s=%.2f' %
+              (this_side, threshold_rise_))
 
         # find point where velocity crosses threshold
         # strikes (velocity decreases)

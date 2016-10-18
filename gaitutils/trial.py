@@ -4,20 +4,6 @@ Created on Tue Mar 17 14:41:31 2015
 
 Read gait trials.
 
-Exceptions:
-
--for commonly encountered errors (e.g. device not found, channel not found)
-create and raise custom exception (GaitDataError). Caller may catch those
-
--for unexpected errors, raise Exception with description of the error
-
-Note: ROI on Vicon/c3d:
-x axis for c3d variables is ROI; i.e. first frame is beginning of ROI (=offset)
-However, event times are referred to whole trial. Thus offset needs to be
-subtracted from event times to put them on the common x axis.
-For Vicon Nexus data, x axis is the whole trial.
-
-
 @author: Jussi (jnu@iki.fi)
 """
 
@@ -150,7 +136,8 @@ class Trial:
             # for unknown reasons, above method may return tuple or float
             # depending on whether script is run from Nexus or outside
             if type(Bodymass) == tuple:
-                self.subject['Bodymass'] = vicon.GetSubjectParam(self.subjectname, 'Bodymass')[0]
+                self.subject['Bodymass'] = vicon.GetSubjectParam(
+                                            self.subjectname, 'Bodymass')[0]
             else:  # hopefully float
                 self.subject['Bodymass'] = (vicon.GetSubjectParam(
                                             self.subjectname, 'Bodymass'))
@@ -246,7 +233,6 @@ class Trial:
             return None
         else:
             return cycles[ncycle-1]
-
 
 
 class ModelData:

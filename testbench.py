@@ -25,6 +25,6 @@ ch = 'LGas'
 
 e1.passband = [40,400]
 plt.plot(e1.t, e1['LGas'])
-#plt.plot(e2.t, e2['LGas'])
+plt.plot(e2.t, e2['LGas'])
 
 

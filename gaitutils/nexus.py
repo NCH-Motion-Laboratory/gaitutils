@@ -16,7 +16,7 @@ import os.path as op
 import psutil
 from numutils import rising_zerocross, falling_zerocross
 import matplotlib.pyplot as plt
-from site_defs import NEXUS_PATH
+from site_defs import NEXUS_PATH, NEXUS_VER
 # Version should be bumped on Nexus update to get the latest API
 if not op.isdir(NEXUS_PATH):
     raise ValueError('Cannot find Nexus SDK dir: ' + NEXUS_PATH)
@@ -52,10 +52,6 @@ def viconnexus():
 def is_vicon_instance(obj):
     """ Check if obj is an instance of ViconNexus """
     return obj.__class__.__name__ == 'ViconNexus'
-
-
-def get_data_rate(vicon):
-    """ Return """
 
 
 def get_metadata(vicon):
@@ -175,7 +171,7 @@ def get_forceplate_data(vicon):
     mall = np.array([mx, my, mz]).transpose()
     ftot = np.sqrt(np.sum(fall**2, axis=1))
     return {'fall': fall, 'mall': mall, 'ftot': ftot, 'cop': cop,
-            'samplesperframe': samplesperframe, 'sfrate': drate}
+            'samplesperframe': samplesperframe, 'analograte': drate}
 
 
 def get_marker_data(vicon, markers):

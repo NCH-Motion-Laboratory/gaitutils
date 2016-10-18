@@ -26,17 +26,29 @@ def _reader_module(source):
 
 
 def get_metadata(source):
-    """ Get trial and subject info """
+    """ Get trial and subject info. Returns dict with:
+    trialname: name of trial
+    sessionpath: full path to directory where session is contained
+    offset: frame offset of returned data from beginning of trial
+    framerate: capture framerate
+    analograte: sampling rate for analog devices
+    name: subject name
+    bodymass: mass of subject
+    lstrikes, rstrikes: foot strike events l/r
+    ltoeoffs, rtoeoffs: toeoffs l/r
+    """
     return _reader_module(source).get_metadata(source)
 
 
-def get_data_rate(source):
-    """ Return frame rate, analog rate and samples per frame """
-    return _reader_module(source).get_data_rate(source)
-
-
 def get_forceplate_data(source):
-    """ Get force, moment and center of pressure """
+    """ Get forceplate data. Returns dict with:
+    fall: Nx3 array with force x,y,z components
+    mall: Nx3 array with moment x,y,z components
+    ftot: Nx1 array of total force
+    cop:  Nx3 array, center of pressure
+    analograte: sampling rate
+    samplesperframe: samples per capture frame
+    """
     return _reader_module(source).get_forceplate_data(source)
 
 
@@ -52,7 +64,7 @@ def get_emg_data(source):
 
 def get_variables(source, vars):
     """ Get other variables such as model outputs """
-    return _reader_module(source).get_variables(source)
+    return _reader_module(source).get_variables(source, vars)
 
 
 def kinetics_available(source):

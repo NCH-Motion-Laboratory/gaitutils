@@ -7,8 +7,11 @@ c3d reader functions
 @author: Jussi (jnu@iki.fi)
 """
 
-
-import btk
+try:
+    import btk
+except ImportError:
+    print('warning: cannot find btk module; unable to use btk functionality '
+          '(read c3d files)')
 import numpy as np
 from scipy.signal import medfilt
 import os
@@ -137,4 +140,4 @@ def get_forceplate_data(c3dfile):
     fall = np.array([fx, fy, fz]).transpose()
     ftot = np.sqrt(np.sum(fall**2, axis=1))
     return {'fall': fall, 'ftot': ftot, 'cop': cop,
-            'samplesperframe': samplesperframe, 'sfrate': sfrate}
+            'samplesperframe': samplesperframe, 'analograte': sfrate}

@@ -100,7 +100,9 @@ class EMG:
     def read(self):
         meta = read_data.get_metadata(self.source)
         self.sfrate = meta['analograte']
-        self.t, self.data = read_data.get_emg_data(self.source)
+        emgdi = read_data.get_emg_data(self.source)
+        self.data = emgdi['data']
+        self.t = emgdi['t']
         self.elnames = self.data.keys()
         # map channel names
         self.map_chs()

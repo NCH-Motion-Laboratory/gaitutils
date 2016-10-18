@@ -121,7 +121,7 @@ def get_emg_data(vicon):
                                                          elid)
         elname = elnames[elid-1]  # chids start from 1
         data[elname] = np.array(eldata)
-    return np.arange(len(eldata)) / drate, data
+    return {'t': np.arange(len(eldata)) / drate, 'data': data}
 
 
 def get_forceplate_data(vicon):
@@ -176,11 +176,7 @@ def get_forceplate_data(vicon):
 
 def get_marker_data(vicon, markers):
     """ From Nexus, get position, velocity and acceleration for
-    specified markers.
-    Return dict mdata keyed with marker names followed by _P, _V or _A
-    (position, velocity, acceleration). Values are Nx3 matrices of marker
-    data, e.g. mdata['RHEE_V']. Also computes gaps with keys as e.g.
-    'RHEE_gaps' """
+    specified markers.  """
     if not isinstance(markers, list):
         markers = [markers]
     subjectnames = vicon.GetSubjectNames()

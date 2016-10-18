@@ -41,7 +41,8 @@ def get_emg_data(c3dfile):
             elnames.append(elname)
             data[elname] = np.squeeze(i.GetValues())
     if elnames:
-        return np.arange(len(data[elname])) / acq.GetAnalogFrequency(), data
+        return {'t': np.arange(len(data[elname])) / acq.GetAnalogFrequency(),
+                'data': data}
     else:
         raise ValueError('No EMG channels found in data!')
 

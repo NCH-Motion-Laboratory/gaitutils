@@ -7,7 +7,7 @@ Test new gaitutils code
 @author: HUS20664877
 """
 
-from gaitutils import EMG, nexus, config, read_data, trial
+from gaitutils import EMG, nexus, config, read_data, trial, eclipse
 import matplotlib.pyplot as plt
 
 
@@ -35,3 +35,5 @@ vlasi = read_data.get_marker_data(vicon, 'LASI')
 ctri = trial.Trial(c3dfile)
 vtri = trial.Trial(vicon)
 
+ec = eclipse.get_eclipse_keys(enf)
+        

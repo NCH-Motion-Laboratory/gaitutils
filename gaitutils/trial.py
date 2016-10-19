@@ -15,6 +15,7 @@ from gaitutils import read_data, utils, eclipse
 from envutils import debug_print
 import numpy as np
 import os
+import os.path as op
 import btk  # biomechanical toolkit for c3d reading
 import models
 from emg import EMG
@@ -56,7 +57,7 @@ class Gaitcycle:
 
     def __repr__(self):
         s = '<Gaitcycle |'
-        s += ' offset %d' % self.offset
+        s += ' offset: %d' % self.offset
         s += ' start: %d' % self.start
         s += ' end: %d' % self.end
         s += ' context: %s' % self.context
@@ -90,6 +91,7 @@ class Trial:
 
     def __init__(self, source):
         # read metadata into instance attributes
+        self.source = source
         meta = read_data.get_metadata(source)
         self.__dict__.update(meta)
         # events may be in wrong temporal order, at least in c3d files
@@ -101,10 +103,8 @@ class Trial:
             self.sessionpath = self.sessionpath+('\\')
         self.trialdirname = self.sessionpath.split('\\')[-2]
         enfpath = self.sessionpath + self.trialname + '.Trial.enf'
-        self.eclipse_description = eclipse.get_eclipse_key(enfpath,
-                                                           'DESCRIPTION')
-        self.eclipse_notes = eclipse.get_eclipse_key(enfpath, 'NOTES')
-        self.source = source
+        if op.isfile(enfpath):
+            self.eclipse = eclipse.get_eclipse_keys(enfpath)
         # init emg
         self.emg = EMG(source)
         # TODO:
@@ -120,13 +120,11 @@ class Trial:
         #self.video_files = get_video_filenames(self.sessionpath+self.trialname)
 
     def scan_cycles(self):
-        """ Scan for foot strike events and create gait cycle objects. """
+        """ Create gait cycle instances. """
         for strikes in [self.lstrikes, self.rstrikes]:
             len_s = len(strikes)
             if len_s < 2:
-                raise GaitDataError('Insufficient number of foot strike '
-                                    'events detected. Check that the trial '
-                                    'has been processed.')
+                return
             if strikes == self.lstrikes:
                 toeoffs = self.ltoeoffs
                 context = 'L'
@@ -137,10 +135,8 @@ class Trial:
                 start = strikes[k]
                 end = strikes[k+1]
                 toeoff = [x for x in toeoffs if x > start and x < end]
-                if len(toeoff) != 1:
-                    raise GaitDataError('Expected a single toe-off event '
-                                        'during gait cycle')
-                yield Gaitcycle(start, end, self.offset, toeoff[0], context,
+                toeoff = toeoff[0] if len(toeoff) > 0 else None
+                yield Gaitcycle(start, end, self.offset, toeoff, context,
                                 self.samplesperframe)
 
     def get_cycle(self, context, ncycle):

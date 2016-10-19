@@ -136,8 +136,9 @@ for filepath_ in enffiles:
     trialn = filepath[-2:]
     if TRIALS_RANGE[0] <= int(trialn) <= TRIALS_RANGE[1]:
         print('processing:', filename)
-        trial_type = eclipse.get_eclipse_key(filepath_, 'TYPE')
-        trial_desc = eclipse.get_eclipse_key(filepath_, 'DESCRIPTION')
+        edi = eclipse.get_eclipse_keys(filepath_, return_empty=True)
+        trial_type = edi['TYPE']
+        trial_desc = edi['DESCRIPTION']
         if trial_type in TYPE_SKIP:
             print('Skipping based on type')
             continue

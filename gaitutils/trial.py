@@ -55,11 +55,12 @@ class Gaitcycle:
         self.toeoffn = round(100*((self.toeoff - self.start) / self.len))
 
     def __repr__(self):
-        s = '<Gaitcycle '
-        s += 'start: %d ' % self.start
-        s += 'end: %d ' % self.end
-        s += 'context: %s ' % self.context
-        s += 'toeoff: %d ' % self.toeoff
+        s = '<Gaitcycle |'
+        s += ' offset %d' % self.offset
+        s += ' start: %d' % self.start
+        s += ' end: %d' % self.end
+        s += ' context: %s' % self.context
+        s += ' toeoff: %d' % self.toeoff
         s += '>'
         return s
 
@@ -81,6 +82,11 @@ class Trial:
     -analog data (EMG, forceplate, etc.)
     -model output variables (Plug-in Gait, muscle length, etc.)
     """
+
+    def __repr__(self):
+        s = '<Trial |'
+        s += '>'
+        return s
 
     def __init__(self, source):
         # read metadata into instance attributes

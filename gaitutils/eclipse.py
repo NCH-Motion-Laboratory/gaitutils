@@ -2,7 +2,7 @@
 """
 Created on Fri Sep 23 10:59:28 2016
 
-Hacking Eclipse
+Eclipse (database) hacks.
 
 @author: jnu@iki.fi
 """
@@ -29,8 +29,7 @@ def get_eclipse_key(fname_enf, keyname):
 
 def set_eclipse_key(fname_enf, keyname, newval, update_existing=False):
     """ Update specified Eclipse file, changing 'keyname' to 'value'.
-    If update_existing=True, update existing keys. """
-    fname_enf_ = os.path.split(fname_enf)[1]
+    If update_existing=True, update also keys that already have a value. """
     with open(fname_enf, 'r') as f:
         eclipselines = f.read().splitlines()
     linesnew = []

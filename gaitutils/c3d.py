@@ -27,10 +27,9 @@ def is_c3dfile(obj):
 
 
 def get_emg_data(c3dfile):
-    """ Read EMG data from a c3d file. Returns tuple: time vector + a dict
-    with the data, keys are electrode names """
+    """ Read EMG data from a c3d file. """
     reader = btk.btkAcquisitionFileReader()
-    reader.SetFilename(str(c3dfile))  # check existence?
+    reader.SetFilename(str(c3dfile))
     reader.Update()
     acq = reader.GetOutput()
     data = dict()
@@ -45,6 +44,28 @@ def get_emg_data(c3dfile):
                 'data': data}
     else:
         raise ValueError('No EMG channels found in data!')
+
+
+def get_marker_data(c3dfile, markers):
+    if not isinstance(markers, list):  # listify if not already a list
+        markers = [markers]
+    reader = btk.btkAcquisitionFileReader()
+    reader.SetFilename(str(c3dfile))
+    reader.Update()
+    acq = reader.GetOutput()
+    mdata = dict()
+    for marker in markers:
+        try:
+            mP = np.squeeze(acq.GetPoint(marker).GetValues())
+        except RuntimeError:
+            raise ValueError('Cannot read variable %s from c3d file' % marker)
+        mdata[marker + '_P'] = mP
+        mdata[marker + '_V'] = np.gradient(mP)[0]
+        mdata[marker + '_A'] = np.gradient(mdata[marker+'_V'])[0]
+        # find gaps
+        allzero = np.logical_and(mP[:, 0] == 0, mP[:, 1] == 0, mP[:, 2] == 0)
+        mdata[marker + '_gaps'] = np.where(allzero)[0]
+    return mdata
 
 
 def get_metadata(c3dfile):

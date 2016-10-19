@@ -10,8 +10,8 @@ Read gait trials.
 
 from __future__ import division, print_function
 import copy
-from gaitutils import nexus, eclipse
-from fileutils import is_c3dfile
+from gaitutils import read_data, utils, eclipse
+#from fileutils import is_c3dfile
 from envutils import debug_print
 import numpy as np
 import os
@@ -30,7 +30,7 @@ class GaitDataError(Exception):
         return repr(self.msg)
 
 
-class GaitCycle:
+class Gaitcycle:
     """" Holds information about one gait cycle. Offset is the frame where
     the data begins; 1 for Vicon Nexus (which always returns whole trial) and
     start of the ROI for c3d files, which contain data only for the ROI. """
@@ -54,6 +54,15 @@ class GaitCycle:
         # normalize toe-off event to the cycle
         self.toeoffn = round(100*((self.toeoff - self.start) / self.len))
 
+    def __repr__(self):
+        s = '<Gaitcycle '
+        s += 'start: %d ' % self.start
+        s += 'end: %d ' % self.end
+        s += 'context: %s ' % self.context
+        s += 'toeoff: %d ' % self.toeoff
+        s += '>'
+        return s
+
     def normalize(self, var):
         """ Normalize frames-based variable var to the cycle.
         New interpolated x axis is 0..100% of the cycle. """
@@ -73,144 +82,46 @@ class Trial:
     -model output variables (Plug-in Gait, muscle length, etc.)
     """
 
-    def __init__(self, source, emg_mapping=None, emg_auto_off=None):
-        """ Open trial, read subject info, events etc. """
-        self.lfstrikes = []
-        self.rfstrikes = []
-        self.ltoeoffs = []
-        self.rtoeoffs = []
-        self.subject = {}
-
-        if is_c3dfile(source):
-            debug_print('trial: reading from ', source)
-            c3dfile = source
-            self.trialname = os.path.basename(os.path.splitext(c3dfile)[0])
-            self.sessionpath = os.path.dirname(c3dfile)
-            reader = btk.btkAcquisitionFileReader()
-            reader.SetFilename(str(c3dfile))  # check existence?
-            reader.Update()
-            acq = reader.GetOutput()
-            # frame offset (start of trial data in frames)
-            self.offset = acq.GetFirstFrame()
-            self.framerate = acq.GetPointFrequency()
-            self.analograte = acq.GetAnalogFrequency()
-            #  get events
-            for i in btk.Iterate(acq.GetEvents()):
-                if i.GetLabel() == "Foot Strike":
-                    if i.GetContext() == "Right":
-                        self.rfstrikes.append(i.GetFrame())
-                    elif i.GetContext() == "Left":
-                        self.lfstrikes.append(i.GetFrame())
-                    else:
-                        raise Exception("Unknown context on foot strike event")
-                elif i.GetLabel() == "Foot Off":
-                    if i.GetContext() == "Right":
-                        self.rtoeoffs.append(i.GetFrame())
-                    elif i.GetContext() == "Left":
-                        self.ltoeoffs.append(i.GetFrame())
-                    else:
-                        raise Exception("Unknown context on foot strike event")
-            # get subject info
-            metadata = acq.GetMetaData()
-            # don't ask
-            self.subject['Name'] = (metadata.FindChild("SUBJECTS").value().
-                                    FindChild("NAMES").value().GetInfo().
-                                    ToString()[0].strip())
-            self.subject['Bodymass'] = (metadata.FindChild("PROCESSING").
-                                        value().FindChild("Bodymass").value().
-                                        GetInfo().ToDouble()[0])
-            debug_print('Subject info read:\n', self.subject)
-
-        elif nexus.is_vicon_instance(source):
-            debug_print('trial: reading from Vicon Nexus')
-            vicon = source
-            subjectnames = vicon.GetSubjectNames()
-            debug_print('subject:', subjectnames)
-            if len(subjectnames) > 1:
-                raise GaitDataError('Nexus returns multiple subjects')
-            if not subjectnames:
-                raise GaitDataError('No subject defined')
-            self.subjectname = subjectnames[0]
-            self.subject['Name'] = self.subjectname
-            Bodymass = vicon.GetSubjectParam(self.subjectname, 'Bodymass')
-            # for unknown reasons, above method may return tuple or float
-            # depending on whether script is run from Nexus or outside
-            if type(Bodymass) == tuple:
-                self.subject['Bodymass'] = vicon.GetSubjectParam(
-                                            self.subjectname, 'Bodymass')[0]
-            else:  # hopefully float
-                self.subject['Bodymass'] = (vicon.GetSubjectParam(
-                                            self.subjectname, 'Bodymass'))
-            trialname_ = vicon.GetTrialName()
-            self.sessionpath = trialname_[0]
-            self.trialname = trialname_[1]
-            if not self.trialname:
-                raise GaitDataError('No trial loaded')
-            # get events
-            self.lfstrikes = vicon.GetEvents(self.subjectname,
-                                             "Left", "Foot Strike")[0]
-            self.rfstrikes = vicon.GetEvents(self.subjectname,
-                                             "Right", "Foot Strike")[0]
-            self.ltoeoffs = vicon.GetEvents(self.subjectname,
-                                            "Left", "Foot Off")[0]
-            self.rtoeoffs = vicon.GetEvents(self.subjectname,
-                                            "Right", "Foot Off")[0]
-            # frame offset (start of trial data in frames)
-            self.offset = 1
-            self.framerate = vicon.GetFrameRate()
-            # Get analog rate. This may not be mandatory if analog devices
-            # are not used, but currently it needs to succeed.
-            devids = vicon.GetDeviceIDs()
-            if not devids:
-                raise GaitDataError('No analog devices configured in Nexus, '
-                                    'cannot determine analog rate')
-            else:
-                devid = devids[0]
-                _, _, self.analograte, _, _, _ = vicon.GetDeviceDetails(devid)
-        else:
-            raise GaitDataError('Invalid data source specified')
-        debug_print('Foot strikes right:', self.rfstrikes, 'left:',
-                    self.lfstrikes)
-        debug_print('Toeoffs right:', self.rtoeoffs, 'left:', self.ltoeoffs)
-        if len(self.lfstrikes) < 2 or len(self.rfstrikes) < 2:
-            raise GaitDataError('Too few foot strike events detected, check '
-                                'that data has been processed')
-        # sort events (may be in wrong temporal order, at least in c3d files)
-        for li in [self.lfstrikes, self.rfstrikes, self.ltoeoffs,
+    def __init__(self, source):
+        # read metadata into instance attributes
+        meta = read_data.get_metadata(source)
+        self.__dict__.update(meta)
+        # events may be in wrong temporal order, at least in c3d files
+        for li in [self.lstrikes, self.rstrikes, self.ltoeoffs,
                    self.rtoeoffs]:
             li.sort()
         # get description and notes from Eclipse database
         if not self.sessionpath[-1] == '\\':
             self.sessionpath = self.sessionpath+('\\')
         self.trialdirname = self.sessionpath.split('\\')[-2]
-        trialpath = self.sessionpath + self.trialname
-        self.eclipse_description = eclipse.get_eclipse_key(trialpath,
+        enfpath = self.sessionpath + self.trialname + '.Trial.enf'
+        self.eclipse_description = eclipse.get_eclipse_key(enfpath,
                                                            'DESCRIPTION')
-        self.eclipse_notes = eclipse.get_eclipse_key(trialpath, 'NOTES')
+        self.eclipse_notes = eclipse.get_eclipse_key(enfpath, 'NOTES')
         self.source = source
         # init emg
-        self.emg = EMG(source, emg_auto_off=emg_auto_off,
-                       emg_mapping=emg_mapping)
-        self.model = model_outputs(self.source)
-        self.kinetics_side = nexus.kinetics_available()['context']
+        self.emg = EMG(source)
+        # TODO:
+        #self.model = model_outputs(self.source)
+        self.kinetics = utils.kinetics_available(source)
         # normalized x-axis of 0,1,2..100%
         self.tn = np.linspace(0, 100, 101)
-        self.smp_per_frame = self.analograte/self.framerate
+        self.samplesperframe = self.analograte/self.framerate
         # figure out gait cycles
         self.cycles = list(self.scan_cycles())
         self.ncycles = len(self.cycles)
-        # video files associated with trial
-        self.video_files = get_video_filenames(self.sessionpath+self.trialname)
+        # TODO: get names of video files associated with trial
+        #self.video_files = get_video_filenames(self.sessionpath+self.trialname)
 
     def scan_cycles(self):
         """ Scan for foot strike events and create gait cycle objects. """
-        for strikes in [self.lfstrikes, self.rfstrikes]:
+        for strikes in [self.lstrikes, self.rstrikes]:
             len_s = len(strikes)
             if len_s < 2:
-                raise GaitDataError('Insufficient number of foot strike events'
-                                    'detected. Check that the trial has been '
-                                    'processed.')
-            if strikes == self.lfstrikes:
+                raise GaitDataError('Insufficient number of foot strike '
+                                    'events detected. Check that the trial '
+                                    'has been processed.')
+            if strikes == self.lstrikes:
                 toeoffs = self.ltoeoffs
                 context = 'L'
             else:
@@ -223,8 +134,8 @@ class Trial:
                 if len(toeoff) != 1:
                     raise GaitDataError('Expected a single toe-off event '
                                         'during gait cycle')
-                yield gaitcycle(start, end, self.offset, toeoff[0], context,
-                                self.smp_per_frame)
+                yield Gaitcycle(start, end, self.offset, toeoff[0], context,
+                                self.samplesperframe)
 
     def get_cycle(self, context, ncycle):
         """ e.g. ncycle=2 and context='L' returns 2nd left gait cycle. """

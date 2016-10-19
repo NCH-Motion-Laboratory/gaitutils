@@ -8,7 +8,7 @@ Utility functions for processing gait data.
 
 from __future__ import print_function
 from read_data import get_marker_data, get_forceplate_data, get_metadata
-from gaitutils import rising_zerocross, falling_zerocross
+from numutils import rising_zerocross, falling_zerocross
 from scipy import signal
 import numpy as np
 

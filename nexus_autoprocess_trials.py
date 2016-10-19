@@ -77,8 +77,6 @@ GAPS_MIN_DIST = 100
 GAPS_MAX = 10
 # whether to use trial specific velocity threshold data when available
 TRIAL_SPECIFIC_VELOCITY = False
-# whether to compute velocity thresholds or to use "typical" ones
-COMPUTE_VELOCITY_THRESHOLDS = False
 # write Eclipse descriptions
 WRITE_ECLIPSE_DESC = True
 # reset ROI before processing; otherwise trajectories won't get reconstructed
@@ -240,8 +238,6 @@ for filepath, trial in sel_trials.items():
     try:
         vicon.ClearAllEvents()
         strike_frame = trial.fpdata['strike'] if trial.fpdata else None
-        if not COMPUTE_VELOCITY_THRESHOLDS:
-            vel_th_ = None
         nexus.automark_events(vicon, strike_frame=strike_frame,
                               context=context,
                               vel_thresholds=vel_th_,

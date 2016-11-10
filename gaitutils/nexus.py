@@ -132,8 +132,8 @@ def get_emg_data(vicon):
 
 
 def get_forceplate_data(vicon):
-    """ Read forceplate data from Nexus. Supports only single plate for
-    now. """
+    """ Read forceplate data from Nexus. Does not support multiple plates
+    yet. """
     fpdevicename = 'Forceplate'
     devicenames = vicon.GetDeviceNames()
     if fpdevicename in devicenames:

@@ -105,11 +105,12 @@ class Trial:
         enfpath = self.sessionpath + self.trialname + '.Trial.enf'
         if op.isfile(enfpath):
             self.eclipse_data = eclipse.get_eclipse_keys(enfpath)
-        # init emg
-        self.emg = EMG(source)
-        self.models_data = dict()  # for caching model data
         self.kinetics = utils.kinetics_available(source)
-        # normalized x-axis of 0,1,2..100%
+        # analog and model data are only read if requested
+        self._emg = None
+        self._forceplate = None
+        self._models_data = dict()
+        # normalized x-axis of 0, 1, 2 .. 100%
         self.tn = np.linspace(0, 100, 101)
         self.samplesperframe = self.analograte/self.framerate
         self.cycles = list(self._scan_cycles())
@@ -117,12 +118,25 @@ class Trial:
         self.video_files = nexus.get_video_filenames(self.sessionpath +
                                                      self.trialname)
 
+    @property
+    def emg(self):
+        if not self._emg:
+            self._emg = EMG(self.source)
+            self._emg.read()
+        return self._emg
+
+    @property
+    def forceplate(self):
+        if not self._forceplate:
+            self._forceplate = read_data.get_forceplate_data(self.source)
+        return self._forceplate
+
     def get_modelvar(self, var):
-        """ Load data for specified model if needed and return variable """
+        """ Return variable, load and cache data for model if needed """
         model_ = models.model_from_var(var)
         if not model_:
             raise ValueError('No model found for %s' % var)
-        if model_.desc not in self.models_data:
+        if model_.desc not in self._models_data:
             # read and cache model data
             print('loading model')
             modeldata = read_data.get_model_data(self.source, model_)

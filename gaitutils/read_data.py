@@ -48,6 +48,7 @@ def get_forceplate_data(source):
     cop:  Nx3 array, center of pressure
     analograte: sampling rate
     samplesperframe: samples per capture frame
+    TODO: return dict/list of dict for multiple forceplates
     """
     return _reader_module(source).get_forceplate_data(source)
 

@@ -133,7 +133,7 @@ def get_model_data(c3dfile, model):
 
 
 def get_forceplate_data(c3dfile):
-    """ Read forceplate data. Does not support multiple plates.
+    """ Read forceplate data. Does not support multiple plates yet.
     Force results differ somewhat from Nexus, not sure why. Calibration? """
     FP_DZ = 41.3  # forceplate thickness in mm
     # CoP calculation uses filter

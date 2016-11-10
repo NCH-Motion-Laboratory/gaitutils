@@ -3,8 +3,8 @@
 
 models.py - definitions for various models (PiG, muscle length, etc.)
 
-For a new model, create a GaitModel() instance, fill in the data and append to
-models_all.
+To create a new model, create a GaitModel() instance, fill in the data and
+append to models_all.
 
 @author: Jussi
 """
@@ -14,8 +14,39 @@ import site_defs
 models_all = []
 
 
+def model_from_var(var):
+    for model in models_all:
+        if var in model.varnames:
+            return model
+    return None
+
+
+# convenience methods for model creation
+def _list_with_side(vars):
+    """ Prepend variables in vars with 'L' and 'R', creating a new list of
+    variables. Many model variables share the same name, except for leading
+    'L' or 'R' that indicates side. """
+    return ['L'+var for var in vars]+['R'+var for var in vars]
+
+
+def _dict_with_side(dict, append_side=False):
+    """ Prepend dict keys with 'R' or 'L'. If append_side,
+    also append corresponding ' (R)' or ' (L)' to every dict value. """
+    di = {}
+    if append_side:
+        Rstr, Lstr = (' (R)', ' (L)')
+    else:
+        Rstr, Lstr = ('', '')
+    for key in dict:
+        di['R'+key] = dict[key]+Rstr
+        di['L'+key] = dict[key]+Lstr
+    return di
+
+
 class GaitModel:
-    """ A class for storing a model, e.g. Plug-in Gait. """
+    """ A class for storing a model information, e.g. Plug-in Gait. The data
+    indicates variable names etc. and is intended (currently not forced) to
+    be non-mutable. The actual data is stored elsewhere. """
 
     def __init__(self):
         self.read_vars = list()  # vars to be read from data
@@ -27,88 +58,62 @@ class GaitModel:
         self.desc = ''  # description of model
         self.varnames = list()   # resulting variable names
         self.varlabels = dict()  # descriptive label for each variable
-        # mapping from variable names to .gcd normaldata variables (optional)
+        # mapping from variable names to normal data variables (optional)
         self.normaldata_map = dict()
-        self.normaldata_path = None  # where to find normal data
         # y axis labels for plotting the variables (optional)
         self.ylabels = dict()
-        self.type = ''  # variable type, e.g. 'PiG'
-        # whether data has been read for this instance
-        self.was_read = False
 
-    # convenience methods for model creation
-    def list_with_side(self, vars):
-        """ Prepend variables in vars with 'L' and 'R', creating a new list of
-        variables. Many model variables share the same name, except for leading
-        'L' or 'R' that indicates side. """
-        return ['L'+var for var in vars]+['R'+var for var in vars]
 
-    def dict_with_side(self, dict, append_side=False):
-        """ Prepend dict keys with 'R' or 'L'. If append_side,
-        also append corresponding ' (R)' or ' (L)' to every dict value. """
-        di = {}
-        if append_side:
-            Rstr, Lstr = (' (R)', ' (L)')
-        else:
-            Rstr, Lstr = ('', '')
-        for key in dict:
-            di['R'+key] = dict[key]+Rstr
-            di['L'+key] = dict[key]+Lstr
-        return di
+""" Create models """
 
 #
 # Plug-in Gait lowerbody
 #
 pig_lowerbody = GaitModel()
-
 pig_lowerbody.desc = 'Plug-in Gait lower body'
-
 pig_lowerbody.type = 'PiG'
-
 pig_lowerbody.read_strategy = 'split_xyz'
+pig_lowerbody.read_vars = _list_with_side(['HipMoment',
+                                           'KneeMoment',
+                                           'AnkleMoment',
+                                           'HipPower',
+                                           'KneePower',
+                                           'AnklePower',
+                                           'HipAngles',
+                                           'KneeAngles',
+                                           'AbsAnkleAngle',
+                                           'AnkleAngles',
+                                           'PelvisAngles',
+                                           'FootProgressAngles'])
 
-pig_lowerbody.read_vars = pig_lowerbody.list_with_side(['HipMoment',
-                                                        'KneeMoment',
-                                                        'AnkleMoment',
-                                                        'HipPower',
-                                                        'KneePower',
-                                                        'AnklePower',
-                                                        'HipAngles',
-                                                        'KneeAngles',
-                                                        'AbsAnkleAngle',
-                                                        'AnkleAngles',
-                                                        'PelvisAngles',
-                                                        'FootProgressAngles'])
-
-
-pig_lowerbody.varlabels = pig_lowerbody.dict_with_side({
-                         'AnkleAnglesX': 'Ankle dorsi/plant',
-                         'AnkleAnglesZ': 'Ankle rotation',
-                         'AnkleMomentX': 'Ankle dors/plan moment',
-                         'AnklePowerZ': 'Ankle power',
-                         'FootProgressAnglesZ': 'Foot progress angles',
-                         'HipAnglesX': 'Hip flexion',
-                         'HipAnglesY': 'Hip adduction',
-                         'HipAnglesZ': 'Hip rotation',
-                         'HipMomentX': 'Hip flex/ext moment',
-                         'HipMomentY': 'Hip ab/add moment',
-                         'HipMomentZ': 'Hip rotation moment',
-                         'HipPowerZ': 'Hip power',
-                         'KneeAnglesX': 'Knee flexion',
-                         'KneeAnglesY': 'Knee adduction',
-                         'KneeAnglesZ': 'Knee rotation',
-                         'KneeMomentX': 'Knee flex/ext moment',
-                         'KneeMomentY': 'Knee ab/add moment',
-                         'KneeMomentZ': 'Knee rotation moment',
-                         'KneePowerZ': 'Knee power',
-                         'PelvisAnglesX': 'Pelvic tilt',
-                         'PelvisAnglesY': 'Pelvic obliquity',
-                         'PelvisAnglesZ': 'Pelvic rotation'},
-                         append_side=False)
+pig_lowerbody.varlabels = _dict_with_side({
+                             'AnkleAnglesX': 'Ankle dorsi/plant',
+                             'AnkleAnglesZ': 'Ankle rotation',
+                             'AnkleMomentX': 'Ankle dors/plan moment',
+                             'AnklePowerZ': 'Ankle power',
+                             'FootProgressAnglesZ': 'Foot progress angles',
+                             'HipAnglesX': 'Hip flexion',
+                             'HipAnglesY': 'Hip adduction',
+                             'HipAnglesZ': 'Hip rotation',
+                             'HipMomentX': 'Hip flex/ext moment',
+                             'HipMomentY': 'Hip ab/add moment',
+                             'HipMomentZ': 'Hip rotation moment',
+                             'HipPowerZ': 'Hip power',
+                             'KneeAnglesX': 'Knee flexion',
+                             'KneeAnglesY': 'Knee adduction',
+                             'KneeAnglesZ': 'Knee rotation',
+                             'KneeMomentX': 'Knee flex/ext moment',
+                             'KneeMomentY': 'Knee ab/add moment',
+                             'KneeMomentZ': 'Knee rotation moment',
+                             'KneePowerZ': 'Knee power',
+                             'PelvisAnglesX': 'Pelvic tilt',
+                             'PelvisAnglesY': 'Pelvic obliquity',
+                             'PelvisAnglesZ': 'Pelvic rotation'},
+                             append_side=False)
 
 pig_lowerbody.varnames = pig_lowerbody.varlabels.keys()
 
-pig_lowerbody.normaldata_map = pig_lowerbody.dict_with_side({
+pig_lowerbody.normaldata_map = _dict_with_side({
              'AnkleAnglesX': 'DorsiPlanFlex',
              'AnkleAnglesZ': 'FootRotation',
              'AnkleMomentX': 'DorsiPlanFlexMoment',
@@ -132,7 +137,7 @@ pig_lowerbody.normaldata_map = pig_lowerbody.dict_with_side({
              'PelvisAnglesY': 'PelvicObliquity',
              'PelvisAnglesZ': 'PelvicRotation'})
 
-pig_lowerbody.ylabels = pig_lowerbody.dict_with_side({
+pig_lowerbody.ylabels = _dict_with_side({
                          'AnkleAnglesX': 'Pla     ($^\\circ$)      Dor',
                          'AnkleAnglesZ': 'Ext     ($^\\circ$)      Int',
                          'AnkleMomentX': 'Int dors    Nm/kg    Int plan',
@@ -156,9 +161,7 @@ pig_lowerbody.ylabels = pig_lowerbody.dict_with_side({
                          'PelvisAnglesY': 'Dwn     ($^\\circ$)      Up',
                          'PelvisAnglesZ': 'Bak     ($^\\circ$)      For'})
 
-
 pig_lowerbody.normaldata_path = site_defs.pig_normaldata_path
-
 models_all.append(pig_lowerbody)
 
 #
@@ -166,14 +169,10 @@ models_all.append(pig_lowerbody)
 #
 
 musclelen = GaitModel()
-
 musclelen.desc = 'Muscle length (MuscleLength.mod)'
-
 musclelen.type = 'musclelen'
-
 musclelen.read_strategy = 'last'
-
-musclelen.varlabels = musclelen.dict_with_side({
+musclelen.varlabels = _dict_with_side({
                         'AdBrLength': 'AdBrLength',
                         'AdLoLength': 'AdLoLength',
                         'AdMaInfLength': 'AdMaInfLength',
@@ -218,7 +217,6 @@ musclelen.varlabels = musclelen.dict_with_side({
                         'VaMeLength': 'VaMeLength'}, append_side=False)
 
 musclelen.read_vars = musclelen.varlabels.keys()
-
 musclelen.varnames = musclelen.read_vars
 
 musclelen.ylabels = {}

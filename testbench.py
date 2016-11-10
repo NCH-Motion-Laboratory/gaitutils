@@ -14,6 +14,12 @@ import matplotlib.pyplot as plt
 c3dfile = u'c:\\Users\\hus20664877\\Desktop\\Vicon\\vicon_data\\test\\H0036_EV\\2015_9_21_seur_EV\\2015_9_21_seur_EV19.c3d'
 vicon = nexus.viconnexus()
 
+a = 0
+
+def return_a():
+    return a
+    
+
 """
 e1 = EMG(c3dfile)
 e2 = EMG(vicon)
@@ -40,3 +46,4 @@ pigmod = models.pig_lowerbody
 nmod = read_data.get_model_data(vicon, pigmod)
 cmod = read_data.get_model_data(c3dfile, pigmod)
 
+a = 2

@@ -107,7 +107,7 @@ class Trial:
             self.eclipse_data = eclipse.get_eclipse_keys(enfpath)
         # init emg
         self.emg = EMG(source)
-        #self.model = model_outputs(self.source)
+        self.models_data = dict()  # for caching model data
         self.kinetics = utils.kinetics_available(source)
         # normalized x-axis of 0,1,2..100%
         self.tn = np.linspace(0, 100, 101)
@@ -116,6 +116,18 @@ class Trial:
         self.ncycles = len(self.cycles)
         self.video_files = nexus.get_video_filenames(self.sessionpath +
                                                      self.trialname)
+
+    def get_modelvar(self, var):
+        """ Load data for specified model if needed and return variable """
+        model_ = models.model_from_var(var)
+        if not model_:
+            raise ValueError('No model found for %s' % var)
+        if model_.desc not in self.models_data:
+            # read and cache model data
+            print('loading model')
+            modeldata = read_data.get_model_data(self.source, model_)
+            self.models_data[model_.desc] = modeldata
+        return self.models_data[model_.desc][var]
 
     def get_cycle(self, context, ncycle):
         """ e.g. ncycle=2 and context='L' returns 2nd left gait cycle. """

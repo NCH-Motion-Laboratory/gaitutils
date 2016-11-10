@@ -113,6 +113,25 @@ def get_metadata(c3dfile):
             'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs}
 
 
+def get_model_data(c3dfile, model):
+    modeldata = dict()
+    reader = btk.btkAcquisitionFileReader()
+    reader.SetFilename(str(c3dfile))
+    reader.Update()
+    acq = reader.GetOutput()
+    for var in model.read_vars:
+        try:
+            vals = acq.GetPoint(var).GetValues()
+            modeldata[var] = np.transpose(np.squeeze(vals))
+        except RuntimeError:
+            raise ValueError('Cannot find model variable %s in c3d file' %
+                             var)
+        # c3d stores scalars as last dim of 3-d array
+        if model.read_strategy == 'last':
+            modeldata[var] = modeldata[var][2, :]
+    return modeldata
+
+
 def get_forceplate_data(c3dfile):
     """ Read forceplate data. Does not support multiple plates.
     Force results differ somewhat from Nexus, not sure why. Calibration? """

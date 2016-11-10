@@ -7,9 +7,8 @@ Test new gaitutils code
 @author: HUS20664877
 """
 
-from gaitutils import EMG, nexus, config, read_data, trial, eclipse
+from gaitutils import EMG, nexus, config, read_data, trial, eclipse, models
 import matplotlib.pyplot as plt
-
 
 
 c3dfile = u'c:\\Users\\hus20664877\\Desktop\\Vicon\\vicon_data\\test\\H0036_EV\\2015_9_21_seur_EV\\2015_9_21_seur_EV19.c3d'
@@ -28,12 +27,16 @@ plt.plot(e1.t, e1['LGas'])
 plt.plot(e2.t, e2['LGas'])
 """
 
-clasi = read_data.get_marker_data(c3dfile, 'LASI')
-vlasi = read_data.get_marker_data(vicon, 'LASI')
+#clasi = read_data.get_marker_data(c3dfile, 'LASI')
+#vlasi = read_data.get_marker_data(vicon, 'LASI')
 
 
 ctri = trial.Trial(c3dfile)
 vtri = trial.Trial(vicon)
 
-ec = eclipse.get_eclipse_keys(enf)
-        
+pigmod = models.pig_lowerbody
+
+
+nmod = read_data.get_model_data(vicon, pigmod)
+cmod = read_data.get_model_data(c3dfile, pigmod)
+

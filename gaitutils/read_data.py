@@ -67,9 +67,22 @@ def get_emg_data(source):
     return _reader_module(source).get_emg_data(source)
 
 
-def get_variables(source, vars):
+def get_model_data(source, model):
     """ Get other variables such as model outputs """
-    return _reader_module(source).get_variables(source, vars)
+    modeldata = _reader_module(source).get_model_data(source, model)
+    for var in model.read_vars:
+            # convert Moment variables into SI units
+            if var.find('Moment') > 0:
+                modeldata[var] /= 1.0e3  # Nmm -> Nm
+            # split 3-d arrays into x,y,z variables
+            if model.read_strategy == 'split_xyz':
+                if modeldata[var].shape[0] == 3:
+                    modeldata[var+'X'] = modeldata[var][0, :]
+                    modeldata[var+'Y'] = modeldata[var][1, :]
+                    modeldata[var+'Z'] = modeldata[var][2, :]
+                else:
+                    raise ValueError('Expected 3d array')
+    return modeldata
 
 
 def kinetics_available(source):

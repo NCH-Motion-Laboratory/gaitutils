@@ -10,7 +10,7 @@ Read gait trials.
 
 from __future__ import division, print_function
 import copy
-from gaitutils import read_data, utils, eclipse
+from gaitutils import read_data, utils, eclipse, nexus
 #from fileutils import is_c3dfile
 from envutils import debug_print
 import numpy as np
@@ -79,7 +79,7 @@ class Gaitcycle:
 class Trial:
     """ A gait trial. Contains:
     -subject and trial info
-    -gait cycles (beginning and end frames)
+    -gait cycles
     -analog data (EMG, forceplate, etc.)
     -model output variables (Plug-in Gait, muscle length, etc.)
     """
@@ -104,23 +104,29 @@ class Trial:
         self.trialdirname = self.sessionpath.split('\\')[-2]
         enfpath = self.sessionpath + self.trialname + '.Trial.enf'
         if op.isfile(enfpath):
-            self.eclipse = eclipse.get_eclipse_keys(enfpath)
+            self.eclipse_data = eclipse.get_eclipse_keys(enfpath)
         # init emg
         self.emg = EMG(source)
-        # TODO:
         #self.model = model_outputs(self.source)
         self.kinetics = utils.kinetics_available(source)
         # normalized x-axis of 0,1,2..100%
         self.tn = np.linspace(0, 100, 101)
         self.samplesperframe = self.analograte/self.framerate
-        # figure out gait cycles
-        self.cycles = list(self.scan_cycles())
+        self.cycles = list(self._scan_cycles())
         self.ncycles = len(self.cycles)
-        # TODO: get names of video files associated with trial
-        #self.video_files = get_video_filenames(self.sessionpath+self.trialname)
+        self.video_files = nexus.get_video_filenames(self.sessionpath +
+                                                     self.trialname)
 
-    def scan_cycles(self):
-        """ Create gait cycle instances. """
+    def get_cycle(self, context, ncycle):
+        """ e.g. ncycle=2 and context='L' returns 2nd left gait cycle. """
+        cycles = [cycle for cycle in self.cycles if cycle.context == context]
+        if len(cycles) < ncycle:
+            return None
+        else:
+            return cycles[ncycle-1]
+
+    def _scan_cycles(self):
+        """ Create gait cycle instances based on strike/toeoff markers. """
         for strikes in [self.lstrikes, self.rstrikes]:
             len_s = len(strikes)
             if len_s < 2:
@@ -139,13 +145,6 @@ class Trial:
                 yield Gaitcycle(start, end, self.offset, toeoff, context,
                                 self.samplesperframe)
 
-    def get_cycle(self, context, ncycle):
-        """ e.g. ncycle=2 and context='L' returns 2nd left gait cycle. """
-        cycles = [cycle for cycle in self.cycles if cycle.context == context]
-        if len(cycles) < ncycle:
-            return None
-        else:
-            return cycles[ncycle-1]
 
 
 class ModelData:
@@ -175,61 +174,7 @@ class ModelData:
             if varname in model.varnames:
                 return model
 
-    def read_model(self, model):
-        """ Read variables of given model (instance of models.model) and normal data
-        into self.modeldata. """
-        if not model:
-            raise GaitDataError('Cannot read empty model')
-        debug_print('Reading model:', model.desc)
-        source = self.source
-        if is_vicon_instance(source):
-            # read from Nexus
-            vicon = source
-            SubjectName = vicon.GetSubjectNames()[0]
-            for Var in model.read_vars:
-                debug_print('Getting:', Var)
-                NumVals,BoolVals = vicon.GetModelOutput(SubjectName, Var)
-                if not NumVals:
-                    raise GaitDataError('Cannot read model variable: '+Var+
-                    '. \nMake sure that the appropriate model has been executed in Nexus.')
-                # remove singleton dimensions
-                self.modeldata[Var] = np.squeeze(np.array(NumVals))
-        elif is_c3dfile(source):
-            # read from c3d            
-            c3dfile = source
-            reader = btk.btkAcquisitionFileReader()
-            reader.SetFilename(str(c3dfile))
-            reader.Update()
-            acq = reader.GetOutput()
-            for Var in model.read_vars:
-                try:
-                    self.modeldata[Var] = np.transpose(np.squeeze(acq.GetPoint(Var).GetValues()))
-                except RuntimeError:
-                    raise GaitDataError('Cannot find model variable in c3d file: '+Var)
-                # c3d stores scalars as first dim of 3-d array
-                if model.read_strategy == 'last':
-                    debug_print(Var,'has shape:', self.modeldata[Var].shape)
-                    self.modeldata[Var] = self.modeldata[Var][2,:]
-        else:
-            raise GaitDataError('Invalid data source')
-        # postprocessing for certain variables
-        for Var in model.read_vars:
-                if Var.find('Moment') > 0:
-                    # moment variables have to be divided by 1000 -
-                    # apparently stored in Newton-millimeters
-                    debug_print('Normalizing:', Var)                    
-                    self.modeldata[Var] /= 1000.
-                #debug_print('read_raw:', Var, 'has shape', self.modeldata[Var].shape)
-                components = model.read_strategy
-                if components == 'split_xyz':
-                    if self.modeldata[Var].shape[0] == 3:
-                        # split 3-d arrays into x,y,z variables
-                        self.modeldata[Var+'X'] = self.modeldata[Var][0,:]
-                        self.modeldata[Var+'Y'] = self.modeldata[Var][1,:]
-                        self.modeldata[Var+'Z'] = self.modeldata[Var][2,:]
-                    else:
-                        raise GaitDataError('XYZ split requested but array is not 3-d')
-        # read normal data if it exists. only gcd files supported for now
+    def read_normaldata(self):
         gcdfile = model.normaldata_path
         if gcdfile:
             if not os.path.isfile(gcdfile):

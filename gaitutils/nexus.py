@@ -13,6 +13,7 @@ import sys
 import numpy as np
 from scipy import signal
 import os.path as op
+import glob
 import psutil
 from numutils import rising_zerocross, falling_zerocross
 import matplotlib.pyplot as plt
@@ -52,6 +53,12 @@ def viconnexus():
 def is_vicon_instance(obj):
     """ Check if obj is an instance of ViconNexus """
     return obj.__class__.__name__ == 'ViconNexus'
+
+
+def get_video_filenames(trialpath):
+    """ Get AVI files corresponding to given trial. """
+    trialpath = op.splitext(trialpath)[0]
+    return glob.glob(trialpath+'*avi')
 
 
 def get_metadata(vicon):
@@ -250,6 +257,20 @@ def get_movement_direction(vicon, marker, dir):
     P = mrkdata[marker+'_P']
     ydiff = np.median(np.diff(P[:, dir]))  # median of y derivative
     return 1 if ydiff > 0 else -1
+
+
+def get_model_data(vicon, model):
+    """ Read model output variables (e.g. Plug-in Gait) """
+    modeldata = dict()
+    subjectname = vicon.GetSubjectNames()[0]
+    for var in model.read_vars:
+        nums, bools = vicon.GetModelOutput(subjectname, var)
+        if not nums:
+            raise ValueError('Cannot read model variable %s. Make sure that '
+                             'the appropriate model has been run.' % var)
+        # remove singleton dimensions
+        modeldata[var] = np.squeeze(np.array(nums))
+    return modeldata
 
 
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,

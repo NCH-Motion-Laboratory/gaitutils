@@ -23,7 +23,7 @@ class GaitModel:
         # variable into x,y,z components and names them appropriately.
         # 'last' reads the last component only (c3d scalars are saved
         # as last component of 3-d array (??))
-        self.read_strategy = False
+        self.read_strategy = None
         self.desc = ''  # description of model
         self.varnames = list()   # resulting variable names
         self.varlabels = dict()  # descriptive label for each variable
@@ -37,7 +37,6 @@ class GaitModel:
         self.was_read = False
 
     # convenience methods for model creation
-
     def list_with_side(self, vars):
         """ Prepend variables in vars with 'L' and 'R', creating a new list of
         variables. Many model variables share the same name, except for leading

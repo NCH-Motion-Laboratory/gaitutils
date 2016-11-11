@@ -41,14 +41,13 @@ class EMG:
         self.ch_labels = site_defs.emg_labels  # descriptive labels
 
     def __getitem__(self, item):
+        if item not in self.ch_names:
+            raise KeyError('No such channel')
         data_ = self._logical_data[item]
         if self.passband:
             return self.filt(data_, self.passband)
         else:
             return data_
-
-    def is_logical_channel(self, chname):
-        return chname in self.ch_names
 
     def is_valid_emg(self, y):
         """ Check whether channel contains a valid EMG signal. Usually invalid
@@ -65,7 +64,6 @@ class EMG:
         nharm = 3  # number of harmonics to detect
         # detect 50 Hz harmonics
         linefreqs = (np.arange(nharm+1)+1) * powerline_freq
-        debug_print('Using linefreqs:', linefreqs)
         intvar = 0
         for f in linefreqs:
             intvar += np.var(self.filt(y, [f-power_bw/2.,
@@ -74,7 +72,7 @@ class EMG:
         emgvar = np.var(self.filt(y, [powerline_freq+10,
                                       powerline_freq+10+broadband_bw])) / broadband_bw
         intrel = 10*np.log10(intvar/emgvar)
-        debug_print('rel. interference: ', intrel)
+        # debug_print('rel. interference: ', intrel)
         return intrel < emg_max_interference
 
     def filt(self, y, passband):

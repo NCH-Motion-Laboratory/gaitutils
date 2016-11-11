@@ -9,14 +9,10 @@ Read gait trials.
 
 
 from __future__ import division, print_function
-import copy
 from gaitutils import read_data, utils, eclipse, nexus
-#from fileutils import is_c3dfile
 from envutils import debug_print
 import numpy as np
-import os
 import os.path as op
-import btk  # biomechanical toolkit for c3d reading
 import models
 from emg import EMG
 
@@ -70,7 +66,7 @@ class Gaitcycle:
         New interpolated x axis is 0..100% of the cycle. """
         return np.interp(self.tn, self.t, var[self.start:self.end])
 
-    def cut_analog_to_cycle(self, var):
+    def crop_analog(self, var):
         """ Crop analog variable (EMG, forceplate, etc. ) to the
         cycle; no interpolation. """
         return var[self.start_smp:self.end_smp]
@@ -82,16 +78,24 @@ class Trial:
     -gait cycles
     -analog data (EMG, forceplate, etc.)
     -model output variables (Plug-in Gait, muscle length, etc.)
+    TODO:
+    -lazy reads should check whether underlying trial has changed
+    (at least for Nexus)
     """
 
     def __repr__(self):
         s = '<Trial |'
+        s += ' trial: %s' % self.trialname
+        s += ', data source: %s' % self.source
+        s += ', subject: %s' % self.name
+        s += ', gait cycles: %s' % self.ncycles
+        s += ', kinetics: %s' % (self.kinetics if self.kinetics else 'None')
         s += '>'
         return s
 
     def __init__(self, source):
-        # read metadata into instance attributes
         self.source = source
+        # read metadata into instance attributes
         meta = read_data.get_metadata(source)
         self.__dict__.update(meta)
         # events may be in wrong temporal order, at least in c3d files
@@ -105,11 +109,13 @@ class Trial:
         enfpath = self.sessionpath + self.trialname + '.Trial.enf'
         if op.isfile(enfpath):
             self.eclipse_data = eclipse.get_eclipse_keys(enfpath)
-        self.kinetics = utils.kinetics_available(source)
-        # analog and model data are only read if requested
+        self.kinetics = utils.kinetics_available(source)['context']
+        # analog and model data are lazily read
         self._emg = None
         self._forceplate = None
         self._models_data = dict()
+        # whether to normalize data
+        self._normalize = None
         # normalized x-axis of 0, 1, 2 .. 100%
         self.tn = np.linspace(0, 100, 101)
         self.samplesperframe = self.analograte/self.framerate
@@ -117,6 +123,24 @@ class Trial:
         self.ncycles = len(self.cycles)
         self.video_files = nexus.get_video_filenames(self.sessionpath +
                                                      self.trialname)
+
+    def __getitem__(self, item):
+        """ Get model variable or EMG channel by indexing, normalized
+        according to normalization cycle. Does not check for duplicate names.
+        """
+        try:
+            data = self._get_modelvar(item)
+            if self._normalize:
+                data = self._normalize.normalize(data)
+            return data
+        except ValueError:
+            try:
+                data = self.emg[item]
+                if self._normalize:
+                    data = self._normalize.crop_analog(data)
+                return data
+            except KeyError:
+                    raise KeyError('Unknown variable %s' % item)
 
     @property
     def emg(self):
@@ -131,25 +155,33 @@ class Trial:
             self._forceplate = read_data.get_forceplate_data(self.source)
         return self._forceplate
 
-    def get_modelvar(self, var):
-        """ Return variable, load and cache data for model if needed """
+    def set_norm_cycle(self, cycle=None):
+        """ Set normalization cycle. None to get unnormalized data.
+        Will affect data returned by __getitem__ """
+        self._normalize = cycle if cycle else None
+
+    def get_cycle(self, context, ncycle):
+        """ e.g. ncycle=2 and context='L' returns 2nd left gait cycle. """
+        cycles = [cycle for cycle in self.cycles
+                  if cycle.context == context.upper()]
+        if ncycle < 1:
+            raise ValueError('Cycle index must be >= 1')
+        if len(cycles) < ncycle:
+            raise ValueError('No such gait cycle')
+        else:
+            return cycles[ncycle-1]
+
+    def _get_modelvar(self, var):
+        """ Return (unnormalized) model variable, load and cache data for
+        model if needed """
         model_ = models.model_from_var(var)
         if not model_:
             raise ValueError('No model found for %s' % var)
         if model_.desc not in self._models_data:
             # read and cache model data
-            print('loading model')
             modeldata = read_data.get_model_data(self.source, model_)
-            self.models_data[model_.desc] = modeldata
-        return self.models_data[model_.desc][var]
-
-    def get_cycle(self, context, ncycle):
-        """ e.g. ncycle=2 and context='L' returns 2nd left gait cycle. """
-        cycles = [cycle for cycle in self.cycles if cycle.context == context]
-        if len(cycles) < ncycle:
-            return None
-        else:
-            return cycles[ncycle-1]
+            self._models_data[model_.desc] = modeldata
+        return self._models_data[model_.desc][var]
 
     def _scan_cycles(self):
         """ Create gait cycle instances based on strike/toeoff markers. """
@@ -170,66 +202,3 @@ class Trial:
                 toeoff = toeoff[0] if len(toeoff) > 0 else None
                 yield Gaitcycle(start, end, self.offset, toeoff, context,
                                 self.samplesperframe)
-
-
-
-class ModelData:
-    """ Handles model output data, e.g. Plug-in Gait, muscle length etc. """
-
-    def __init__(self, source):
-        self.source = source
-        # local copy of models is mutable, so need a new copy
-        # instead of a binding
-        self.models = copy.deepcopy(models.models_all)
-        self.varnames = []
-        self.varlabels = {}
-        self.normaldata_map = {}
-        self.ylabels = {}
-        self.modeldata = {}  # read by read_model as necessary
-        self.normaldata = {}  # ditto
-        # update varnames etc. for this class
-        for model in self.models:
-            self.varnames += model.varnames
-            self.varlabels.update(model.varlabels)
-            self.normaldata_map.update(model.normaldata_map)
-            self.ylabels.update(model.ylabels)
-
-    def get_model(self, varname):
-        """ Returns model corresponding to varname. """
-        for model in self.models:
-            if varname in model.varnames:
-                return model
-
-    def read_normaldata(self):
-        gcdfile = model.normaldata_path
-        if gcdfile:
-            if not os.path.isfile(gcdfile):
-                raise Exception('Cannot find specified normal data file')
-            f = open(gcdfile, 'r')
-            lines = f.readlines()
-            f.close()
-            # normaldata variables are named as in the file. the model should have a corresponding map.
-            normaldata = {}
-            for li in lines:
-                if li[0] == '!':  # it's a variable name
-                    thisvar = li[1:li.find(' ')]  # set dict key
-                    normaldata[thisvar] = list()
-                # it's a number, so read into list
-                elif li[0].isdigit() or li[0] == '-':
-                    normaldata[thisvar].append([float(x) for x in li.split()])
-            self.normaldata.update(normaldata)
-
-    def is_kinetic_var(self, varname):
-        """ Tell whether a variable represents kinetics. Works at least for
-        PiG variables... """
-        return varname.find('Power') > -1 or varname.find('Moment') > -1
-
-    def get_normaldata(self, varname):
-        """ Return the normal data for variable varname, if available. """
-        model = self.get_model(varname)
-        if model and varname in model.normaldata_map:
-            normalkey = model.normaldata_map[varname]
-            return self.normaldata[normalkey]
-        else:
-            return None
-

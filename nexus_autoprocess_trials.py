@@ -18,7 +18,15 @@ mark eclipse
 
 
 TODO:
-gap detection, false positives?
+
+
+AUTOMARK_HW does not work properly for slow walkers
+-should mark given number of events around ctr frame
+-use events_nocontext arg
+
+eclipse desc of last processed trial is not updated properly (overwritten
+by eclipse?)
+
 
 
 NOTES:
@@ -29,7 +37,7 @@ ROI operations only work for Nexus >= 2.5
 """
 
 from __future__ import print_function
-from gaitutils import nexus, eclipse
+from gaitutils import nexus, eclipse, utils
 import glob
 import os
 import numpy as np
@@ -55,7 +63,7 @@ PREPROC_DESC_SKIP = True
 # min. trial duration (frames)
 MIN_TRIAL_DURATION = 120
 # how many frames to leave before/after first/last events
-CROP_LEAVE_FRAMES = 10
+CROP_MARGIN = 10
 # automark frames around forceplate region (half-width)
 AUTOMARK_HW = 150
 # marker for tracking overall body position (to get gait dir) and center frame
@@ -82,12 +90,12 @@ WRITE_ECLIPSE_DESC = True
 # reset ROI before processing; otherwise trajectories won't get reconstructed
 # outside ROI
 RESET_ROI = True
+# check subject weight when analyzing forceplate data
+CHECK_WEIGHT = True
 
 
 if not nexus.pid():
     raise Exception('Vicon Nexus not running')
-
-nexus_ver = float(nexus.NEXUS_VER)
 
 
 # get session path from Nexus, find processed trials
@@ -145,7 +153,7 @@ for filepath_ in enffiles:
         vicon.OpenTrial(filepath, TRIAL_OPEN_TIMEOUT)
         allmarkers = vicon.GetMarkerNames(subjectname)
         # reset ROI before operations
-        if RESET_ROI and nexus_ver >= 2.5:
+        if RESET_ROI and nexus.nexus_ver >= 2.5:
             (fstart, fend) = vicon.GetTrialRange()
             vicon.SetTrialRegionOfInterest(fstart, fend)
         # preprocessing pipelines
@@ -161,7 +169,7 @@ for filepath_ in enffiles:
         else:
             # try to figure out trial center frame
             for marker in TRACK_MARKERS:
-                ctr = nexus.get_center_frame(vicon, marker=marker)
+                ctr = utils.get_center_frame(vicon, marker=marker)
                 if ctr:  # ok and no gaps
                     break
             # cannot find center frame - possible rasi or lasi gaps,
@@ -190,7 +198,7 @@ for filepath_ in enffiles:
             trials[filepath].recon_ok = True
 
         # get kinetics info
-        fpdata = nexus.kinetics_available(vicon)
+        fpdata = utils.kinetics_available(vicon, CHECK_WEIGHT)
         context = fpdata['context']
         if context:
             eclipse_str += (DESCRIPTIONS['context_right'] if context == 'R'
@@ -204,7 +212,7 @@ for filepath_ in enffiles:
         eclipse_str += ','
 
         # check direction of gait (y coordinate increase/decrease)
-        gait_dir = nexus.get_movement_direction(vicon, TRACK_MARKERS[0], 'y')
+        gait_dir = utils.get_movement_direction(vicon, TRACK_MARKERS[0], 'y')
         gait_dir = (DESCRIPTIONS['dir_back'] if gait_dir == 1 else
                     DESCRIPTIONS['dir_front'])
         eclipse_str += gait_dir
@@ -250,15 +258,15 @@ for filepath, trial in sel_trials.items():
         continue  # next trial
     # events ok
     # crop trial
-    if nexus_ver >= 2.5:
+    if nexus.nexus_ver >= 2.5:
         evs = vicon.GetEvents(subjectname, "Left", "Foot Strike")[0]
         evs += vicon.GetEvents(subjectname, "Right", "Foot Strike")[0]
         evs += vicon.GetEvents(subjectname, "Left", "Foot Off")[0]
         evs += vicon.GetEvents(subjectname, "Right", "Foot Off")[0]
         # when setting roi, do not go beyond trial range
         minfr, maxfr = vicon.GetTrialRange()
-        roistart = max(min(evs)-CROP_LEAVE_FRAMES, minfr)
-        roiend = min(max(evs)+CROP_LEAVE_FRAMES, maxfr)
+        roistart = max(min(evs)-CROP_MARGIN, minfr)
+        roiend = min(max(evs)+CROP_MARGIN, maxfr)
         vicon.SetTrialRegionOfInterest(roistart, roiend)
     # run model pipeline and save
     eclipse_str = DESCRIPTIONS['ok'] + ',' + trial.description

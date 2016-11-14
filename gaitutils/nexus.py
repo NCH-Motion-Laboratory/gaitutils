@@ -4,7 +4,7 @@ Created on Fri Sep 23 10:27:56 2016
 
 @author: jnu@iki.fi
 
-Communication with Vicon Nexus.
+Data readers for Vicon Nexus.
 
 """
 
@@ -16,10 +16,8 @@ import os.path as op
 import psutil
 from numutils import rising_zerocross, falling_zerocross
 import matplotlib.pyplot as plt
+from site_defs import NEXUS_PATH, NEXUS_VER
 # Version should be bumped on Nexus update to get the latest API
-NEXUS_VER = "2.5"
-NEXUS_PATH = "C:/Program Files (x86)/Vicon/Nexus"
-NEXUS_PATH += NEXUS_VER
 if not op.isdir(NEXUS_PATH):
     raise ValueError('Cannot find Nexus SDK dir: ' + NEXUS_PATH)
 if not NEXUS_PATH + "/SDK/Python" in sys.path:
@@ -27,6 +25,7 @@ if not NEXUS_PATH + "/SDK/Python" in sys.path:
     # needed at least when running outside Nexus
     sys.path.append(NEXUS_PATH + "/SDK/Win32")
 import ViconNexus
+import site_defs
 
 
 def pid():
@@ -41,6 +40,10 @@ def pid():
     return None
 
 
+def nexus_ver():
+    return float(NEXUS_VER)
+
+
 def viconnexus():
     """ Return a ViconNexus instance. """
     return ViconNexus.ViconNexus()
@@ -49,6 +52,76 @@ def viconnexus():
 def is_vicon_instance(obj):
     """ Check if obj is an instance of ViconNexus """
     return obj.__class__.__name__ == 'ViconNexus'
+
+
+def get_metadata(vicon):
+    """ Read trial and subject metadata """
+    subjectnames = vicon.GetSubjectNames()
+    if len(subjectnames) > 1:
+        raise ValueError('Nexus returns multiple subjects')
+    if not subjectnames:
+        raise ValueError('No subject defined in Nexus')
+    name = subjectnames[0]
+    Bodymass = vicon.GetSubjectParam(name, 'Bodymass')
+    # for unknown reasons, above method may return tuple or float
+    # depending on whether script is run from Nexus or outside
+    if type(Bodymass) == tuple:
+        bodymass = vicon.GetSubjectParam(name, 'Bodymass')[0]
+    else:  # hopefully float
+        bodymass = vicon.GetSubjectParam(name, 'Bodymass')
+    trialname_ = vicon.GetTrialName()
+    sessionpath = trialname_[0]
+    trialname = trialname_[1]
+    if not trialname:
+        raise ValueError('No trial loaded')
+    # get events
+    lstrikes = vicon.GetEvents(name, "Left", "Foot Strike")[0]
+    rstrikes = vicon.GetEvents(name, "Right", "Foot Strike")[0]
+    ltoeoffs = vicon.GetEvents(name, "Left", "Foot Off")[0]
+    rtoeoffs = vicon.GetEvents(name, "Right", "Foot Off")[0]
+    # frame offset (start of trial data in frames)
+    offset = 1
+    framerate = vicon.GetFrameRate()
+    # Get analog rate. This may not be mandatory if analog devices
+    # are not used, but currently it needs to succeed.
+    devids = vicon.GetDeviceIDs()
+    if not devids:
+        raise ValueError('Cannot determine analog rate')
+    else:
+        devid = devids[0]
+        _, _, analograte, _, _, _ = vicon.GetDeviceDetails(devid)
+    # sort events (may be in wrong temporal order, at least in c3d files)
+    for li in [lstrikes, rstrikes, ltoeoffs, rtoeoffs]:
+        li.sort()
+    return {'trialname': trialname, 'sessionpath': sessionpath,
+            'offset': offset, 'framerate': framerate, 'analograte': analograte,
+            'name': name, 'bodymass': bodymass, 'lstrikes': lstrikes,
+            'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs}
+
+
+def get_emg_data(vicon):
+    """ Read EMG data from Nexus """
+    emg_devname = site_defs.emg_devname
+    devnames = vicon.GetDeviceNames()
+    if emg_devname in devnames:
+        emg_id = vicon.GetDeviceIDFromName(emg_devname)
+    else:
+        raise ValueError('EMG device not found')
+    # DType should be 'other', drate is sampling rate
+    dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(emg_id)
+    # Myon should only have 1 output; if zero, EMG was not found (?)
+    if len(outputids) != 1:
+        raise ValueError('Expected single EMG output')
+    outputid = outputids[0]
+    # get list of channel names and IDs
+    _, _, _, _, elnames, chids = vicon.GetDeviceOutputDetails(emg_id, outputid)
+    data = dict()
+    for elid in chids:
+        eldata, elready, elrate = vicon.GetDeviceChannel(emg_id, outputid,
+                                                         elid)
+        elname = elnames[elid-1]  # chids start from 1
+        data[elname] = np.array(eldata)
+    return {'t': np.arange(len(eldata)) / drate, 'data': data}
 
 
 def get_forceplate_data(vicon):
@@ -98,16 +171,12 @@ def get_forceplate_data(vicon):
     mall = np.array([mx, my, mz]).transpose()
     ftot = np.sqrt(np.sum(fall**2, axis=1))
     return {'fall': fall, 'mall': mall, 'ftot': ftot, 'cop': cop,
-            'samplesperframe': samplesperframe, 'sfrate': drate}
+            'samplesperframe': samplesperframe, 'analograte': drate}
 
 
 def get_marker_data(vicon, markers):
     """ From Nexus, get position, velocity and acceleration for
-    specified markers.
-    Return dict mdata keyed with marker names followed by _P, _V or _A
-    (position, velocity, acceleration). Values are Nx3 matrices of marker
-    data, e.g. mdata['RHEE_V']. Also computes gaps with keys as e.g.
-    'RHEE_gaps' """
+    specified markers.  """
     if not isinstance(markers, list):
         markers = [markers]
     subjectnames = vicon.GetSubjectNames()
@@ -181,153 +250,6 @@ def get_movement_direction(vicon, marker, dir):
     P = mrkdata[marker+'_P']
     ydiff = np.median(np.diff(P[:, dir]))  # median of y derivative
     return 1 if ydiff > 0 else -1
-
-
-def kinetics_available(vicon):
-    """ See whether trial has valid forceplate data (ground reaction
-    forces available) for left/right side (or neither, or both).
-    Uses forceplate data, gait events and marker positions.
-    For now support for one forceplate only.
-    May require modifications for c3d (ROI etc.)
-
-    General:
-    -check max total force, must correspond to subject weight
-    -center of pressure must not change too much during contact time
-
-    For each candidate strike:
-    -1st force increase must occur around the same time as foot strike
-    -max total force must occur in a window after the same strike
-    -heel & toe markers must not be outside plate edges at strike time
-    """
-
-    # get subject info
-    subjectnames = vicon.GetSubjectNames()
-    if not subjectnames:
-        raise ValueError('No subject defined in Nexus')
-    subjectname = subjectnames[0]
-    Bodymass = vicon.GetSubjectParam(subjectname, 'Bodymass')
-    # for unknown reasons, above method may return tuple or float, depending on
-    # whether script is run from Nexus or from IPython outside Nexus
-    if isinstance(Bodymass, tuple):
-        Bodymass = Bodymass[0]
-    subj_weight = Bodymass * 9.81
-
-    fp0 = get_forceplate_data(vicon)
-    forcetot = signal.medfilt(fp0['ftot'])  # remove spikes
-
-    # autodetection parameters
-    F_THRESHOLD = .1 * subj_weight  # rise threshold
-    FMAX_REL_MIN = .8  # maximum force as % of bodyweight must exceed this
-    MAX_COP_SHIFT = 300  # maximum CoP shift (in x or y dir) in mm
-    # time specified in seconds -> analog frames
-    # FRISE_WINDOW = .05 * fp0['sfrate']
-    # FMAX_MAX_DELAY = .95 * fp0['sfrate']
-    # right feet markers
-    RIGHT_FOOT_MARKERS = ['RHEE', 'RTOE', 'RANK']
-    # left foot markers
-    LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
-    # forceplate boundaries in world coords
-    FP_YMIN = 0
-    FP_YMAX = 508
-    FP_XMIN = 0
-    FP_XMAX = 465
-    # tolerance for toeoff in y dir
-    Y_TOEOFF_TOL = 20
-    # ankle marker tolerance in x dir
-    X_ANKLE_TOL = 20
-
-    emptydi = {'context': '', 'strike': None, 'strike_v': None,
-               'toeoff': None, 'toeoff_v': None}
-
-    fmax = max(forcetot)
-    fmaxind = np.where(forcetot == fmax)[0][0]  # first maximum
-    print('kinetics_available: max force:', fmax, 'at:', fmaxind,
-          'weight:', subj_weight)
-    if max(forcetot) < FMAX_REL_MIN * subj_weight:
-        print('kinetics_available: insufficient max. force on plate')
-        return emptydi
-    # find indices where force crosses threshold
-    try:
-        friseind = rising_zerocross(forcetot-F_THRESHOLD)[0]  # first rise
-        ffallind = falling_zerocross(forcetot-F_THRESHOLD)[-1]  # last fall
-    except IndexError:
-        print('kinetics_available: cannot detect force rise/fall')
-        return emptydi
-    # check shift of center of pressure during ROI; should not shift too much
-    cop_roi = np.arange(friseind, ffallind)
-    copx, copy = np.array(fp0['cop'][:, 0]), np.array(fp0['cop'][:, 1])
-    copx_shift = np.max(copx[cop_roi]) - np.min(copx[cop_roi])
-    copy_shift = np.max(copy[cop_roi]) - np.min(copy[cop_roi])
-    if copx_shift > MAX_COP_SHIFT or copy_shift > MAX_COP_SHIFT:
-        print('kinetics_available: center of pressure shifts too much',
-              '(double contact?)')
-        return emptydi
-
-    # check: markers inside forceplate region during strike/toeoff
-    strike_fr = int(np.round(friseind / fp0['samplesperframe']))
-    toeoff_fr = int(np.round(ffallind / fp0['samplesperframe']))
-    mrkdata = get_marker_data(vicon, RIGHT_FOOT_MARKERS + LEFT_FOOT_MARKERS)
-    kinetics = None
-    ok = True
-    for marker in RIGHT_FOOT_MARKERS:
-        marker += '_P'
-        # ankle marker gets extra tolerance in x dir
-        if marker == 'RANK_P':
-            FP_XMIN_ = FP_XMIN - X_ANKLE_TOL
-            FP_XMAX_ = FP_XMAX + X_ANKLE_TOL
-        else:
-            FP_XMIN_ = FP_XMIN
-            FP_XMAX_ = FP_XMAX
-        ok &= np.logical_and(mrkdata[marker][:, 0] > FP_XMIN,
-                             mrkdata[marker][:, 0] < FP_XMAX)[strike_fr]
-        ok &= np.logical_and(mrkdata[marker][:, 0] > FP_XMIN,
-                             mrkdata[marker][:, 0] < FP_XMAX)[toeoff_fr]
-        ok &= np.logical_and(mrkdata[marker][:, 1] > FP_YMIN,
-                             mrkdata[marker][:, 1] < FP_YMAX)[strike_fr]
-        ok &= np.logical_and(mrkdata[marker][:, 1] > FP_YMIN - Y_TOEOFF_TOL,
-                             mrkdata[marker][:, 1] < FP_YMAX + Y_TOEOFF_TOL)[toeoff_fr]
-        if not ok:
-            break
-    if ok:
-        kinetics = 'R'
-    ok = True
-    for marker in LEFT_FOOT_MARKERS:
-        marker += '_P'
-        if marker == 'LANK_P':
-            FP_XMIN_ = FP_XMIN - X_ANKLE_TOL
-            FP_XMAX_ = FP_XMAX + X_ANKLE_TOL
-        else:
-            FP_XMIN_ = FP_XMIN
-            FP_XMAX_ = FP_XMAX
-        ok &= np.logical_and(mrkdata[marker][:, 0] > FP_XMIN_,
-                             mrkdata[marker][:, 0] < FP_XMAX_)[strike_fr]
-        ok &= np.logical_and(mrkdata[marker][:, 0] > FP_XMIN_,
-                             mrkdata[marker][:, 0] < FP_XMAX_)[toeoff_fr]
-        ok &= np.logical_and(mrkdata[marker][:, 1] > FP_YMIN,
-                             mrkdata[marker][:, 1] < FP_YMAX)[strike_fr]
-        ok &= np.logical_and(mrkdata[marker][:, 1] > FP_YMIN - Y_TOEOFF_TOL,
-                             mrkdata[marker][:, 1] < FP_YMAX + Y_TOEOFF_TOL)[toeoff_fr]
-        if not ok:
-            break
-    if ok:
-        kinetics = 'L'
-
-    if not kinetics:
-        print('kinetics_available: markers off plate during strike/toeoff')
-        return emptydi
-
-    # kinetics ok, compute velocities at strike
-    markers = RIGHT_FOOT_MARKERS if kinetics == 'R' else LEFT_FOOT_MARKERS
-    footctrV = np.zeros(mrkdata[markers[0]+'_V'].shape)
-    for marker in markers:
-        footctrV += mrkdata[marker+'_V'] / len(markers)
-    footctrv = np.sqrt(np.sum(footctrV[:, 1:3]**2, 1))
-    strike_v = footctrv[int(strike_fr)]
-    toeoff_v = footctrv[int(toeoff_fr)]
-    print('kinetics_available: strike on %s at %d, toeoff at %d'
-          % (kinetics, strike_fr, toeoff_fr))
-    return {'context': kinetics, 'strike': strike_fr, 'strike_v': strike_v,
-            'toeoff': toeoff_fr, 'toeoff_v': toeoff_v}
 
 
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
@@ -428,9 +350,12 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         threshold_rise_ = (vel_thresholds[this_side+'_toeoff'] or
                            maxv * REL_THRESHOLD_RISE)
 
-        print('automark: rel. thresholds: fall: %.2f rise %.2f' % (maxv * REL_THRESHOLD_FALL, maxv * REL_THRESHOLD_RISE))
-        print('automark: using fall threshold: %s=%.2f' % (this_side, threshold_fall_))
-        print('automark: using rise threshold: %s=%.2f' % (this_side, threshold_rise_))
+        print('automark: rel. thresholds: fall: %.2f rise %.2f' %
+              (maxv * REL_THRESHOLD_FALL, maxv * REL_THRESHOLD_RISE))
+        print('automark: using fall threshold: %s=%.2f' %
+              (this_side, threshold_fall_))
+        print('automark: using rise threshold: %s=%.2f' %
+              (this_side, threshold_rise_))
 
         # find point where velocity crosses threshold
         # strikes (velocity decreases)

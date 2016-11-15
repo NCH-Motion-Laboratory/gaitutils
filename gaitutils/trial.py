@@ -109,7 +109,8 @@ class Trial:
         enfpath = self.sessionpath + self.trialname + '.Trial.enf'
         if op.isfile(enfpath):
             self.eclipse_data = eclipse.get_eclipse_keys(enfpath)
-        self.kinetics = utils.kinetics_available(source)['context']
+        self.kinetics_ = utils.kinetics_available(source)
+        self.kinetics = self.kinetics_['context']
         # analog and model data are lazily read
         self._emg = None
         self._forceplate = None
@@ -120,6 +121,12 @@ class Trial:
         self.tn = np.linspace(0, 100, 101)
         self.samplesperframe = self.analograte/self.framerate
         self.cycles = list(self._scan_cycles())
+        if self.kinetics:
+            kin_cyc = [cyc for cyc in self.cycles if
+                       abs(cyc.start-self.kinetics_['strike']) < 5]
+            self.kinetics_cycles = kin_cyc
+        else:
+            self.kinetics_cycles = []
         self.ncycles = len(self.cycles)
         self.video_files = nexus.get_video_filenames(self.sessionpath +
                                                      self.trialname)

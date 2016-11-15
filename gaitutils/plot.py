@@ -12,7 +12,7 @@
 @author: hus20664877
 """
 
-import read_data
+import models
 from trial import Trial
 import matplotlib.pyplot as plt
 from matplotlib import pylab
@@ -26,10 +26,11 @@ class Plotter():
         if (not isinstance(plotvars, list) or not
            all([isinstance(item, list)for item in plotvars])):
             raise ValueError('Plot variables must be a list of lists')
-        self.nrows = len(vars)
-        self.ncols = len(vars[0])
+        self.nrows = len(plotvars)
+        self.ncols = len(plotvars[0])
         self.plotvars = plotvars
         self.trial = None
+        self.fig = None
         self.allvars = [item for row in plotvars for item in row]
 
     def open_trial(self, source):
@@ -44,49 +45,72 @@ class Plotter():
             cman.window.setGeometry(x, y, dx, dy)
 
     def _var_type(self, var):
-        """ Helper function to return variable type """
-        try:
-            Trial._get_modelvar(var)
+        """ Helper to return variable type """
+        if var is None:
+            return None
+        elif models.model_from_var(var):
             return 'model'
-        except ValueError:
-            try:
-                Trial.emg[var]
-                return 'emg'
-            except KeyError:
-                raise ValueError('Unknown variable')
+        elif var in self.trial.emg.ch_names:
+            return 'emg'
+        else:
+            raise ValueError('Unknown variable')
 
-    def plot_trial(self, cycles=[1], t=None):
+    def plot_trial(self, cycles={'R': [1], 'L': [1]}, t=None,
+                   plotheightratios=None):
 
         """ Create plot of variables. Parameters:
-       
-        cycles  List of cycles to plot. Default is first cycle (1). Multiple
-                cycles will be overlaid. If None, plot unnormalized data.
-        t       Time axis for unnormalized data.
-        """        
-        
+
+        cycles  Lists of gait cycles to plot. Default is first cycle (1) for
+                both sides. Multiple cycles will be overlaid. If None, plot
+                unnormalized data. If 'all', plot all available cycles.
+                Model variable names are determined according to cycle, e.g.
+                'HipMomentX' will be 'LHipMomentX' for a left gait cycle.
+        t       Time axis for unnormalized data. If None, plot whole time
+                axis.
+        """
+
         if not self.trial:
-            raise ValueError('No trial to plot')
+            raise ValueError('No trial to plot, call open_trial() first')
+        if self.fig is None:
+            self.fig = plt.figure()
         if plotheightratios is None:
             plotheightratios = [1] * self.nrows  # set plot heights all equal
-        self.gridspec = gridspec.GridSpec(self.gridw, self.gridh,
+        self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                           height_ratios=plotheightratios)
-        # loop through variables and plot
         if cycles is None:
-            cycles = [None]                                          
+            pass  # TODO: plot unnormalized
+        elif cycles is 'all':
+            cycles = self.trial.cycles
+        else:  # pick cycles specified by argument
+            cycles = [self.trial.get_cycle(side, ncycle) for side in ['L', 'R']
+                      for ncycle in cycles[side]]
         for i, var in enumerate(self.allvars):
-            for cyclen in cycles:
-                if cyclen:
-                    rcycle = self.trial.get_cycle('R', cyclen)
-                    lcycle = self.trial.get_cycle('L', cyclen)
-                if _var_type == 'model':
-                    ax = plt.subplot(self.gridspec[i])
+            ax = plt.subplot(self.gridspec[i])
+            var_type = self._var_type(var)
+            if var_type is None:
+                continue
+            elif var_type == 'model':
+                for cycle in cycles:
+                    self.trial.set_norm_cycle(cycle)
+                    if (models.pig_lowerbody.is_kinetic_var(var) and
+                       cycle not in self.trial.kinetics_cycles):
+                            continue  # break if no kinetics for this cycle
+                    self.trial.set_norm_cycle(cycle)
+                    varname = cycle.context + var
+                    data = self.trial[varname]
+                    ax.plot(data)
+            elif var_type == 'emg':
+                for cycle in cycles:
+                    self.trial.set_norm_cycle(cycle)
                     data = self.trial[var]
-                
-                
-            
-            
-            
-                                
+                    ax.plot(data)
+        plt.show()
+
+
+
+
+
+
 
 
 

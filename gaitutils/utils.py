@@ -47,9 +47,11 @@ def get_movement_direction(source, marker, dir):
 
 def kinetics_available(source, check_weight=True):
     """ See whether the trial has valid forceplate contact (ground reaction
-    forces available) for left/right side (or neither, or both).
+    forces available) for left/right side.
     Uses forceplate data, gait events and marker positions.
     For now support for one forceplate only.
+    TODO: evaluate all forceplates and return e.g. 'RL' when kinetics
+    is available for both sides.
     Conditions:
     -check max total force, must correspond to subject weight
     -center of pressure must not change too much during contact time

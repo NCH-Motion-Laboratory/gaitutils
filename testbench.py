@@ -7,18 +7,12 @@ Test new gaitutils code
 @author: HUS20664877
 """
 
-from gaitutils import EMG, nexus, config, read_data, trial, eclipse, models
+from gaitutils import EMG, nexus, config, read_data, trial, eclipse, models, Plotter, layouts, utils
 import matplotlib.pyplot as plt
 
 
 c3dfile = u'c:\\Users\\hus20664877\\Desktop\\Vicon\\vicon_data\\test\\H0036_EV\\2015_9_21_seur_EV\\2015_9_21_seur_EV19.c3d'
 vicon = nexus.viconnexus()
-
-a = 0
-
-def return_a():
-    return a
-    
 
 """
 e1 = EMG(c3dfile)
@@ -42,8 +36,9 @@ vtri = trial.Trial(vicon)
 
 pigmod = models.pig_lowerbody
 
-
 nmod = read_data.get_model_data(vicon, pigmod)
 cmod = read_data.get_model_data(c3dfile, pigmod)
 
-a = 2
+pl = Plotter(layouts.std_emg)
+pl.open_trial(vicon)
+pl.plot_trial()

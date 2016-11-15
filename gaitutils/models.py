@@ -15,10 +15,21 @@ models_all = []
 
 
 def model_from_var(var):
+    """ Return model for specified variable.
+    model: model instance that has the specified variable. """
     for model in models_all:
-        if var in model.varnames:
+        if var in model.varnames or var in model.varnames_noside:
             return model
     return None
+
+
+def var_with_side(var):
+    for model in models_all:
+        if var in model.varnames:
+            return True
+        if var in model.varnames_noside:
+            return False
+    raise ValueError('Model variable not found')
 
 
 # convenience methods for model creation
@@ -57,12 +68,13 @@ class GaitModel:
         self.read_strategy = None
         self.desc = ''  # description of model
         self.varnames = list()   # resulting variable names
+        self.varnames_noside = list()  # variables without side
+        self.varlabels_noside = dict()  # variables without side
         self.varlabels = dict()  # descriptive label for each variable
         # mapping from variable names to normal data variables (optional)
         self.normaldata_map = dict()
         # y axis labels for plotting the variables (optional)
         self.ylabels = dict()
-
 
 """ Create models """
 
@@ -86,7 +98,7 @@ pig_lowerbody.read_vars = _list_with_side(['HipMoment',
                                            'PelvisAngles',
                                            'FootProgressAngles'])
 
-pig_lowerbody.varlabels = _dict_with_side({
+pig_lowerbody.varlabels_noside = {
                              'AnkleAnglesX': 'Ankle dorsi/plant',
                              'AnkleAnglesZ': 'Ankle rotation',
                              'AnkleMomentX': 'Ankle dors/plan moment',
@@ -108,10 +120,12 @@ pig_lowerbody.varlabels = _dict_with_side({
                              'KneePowerZ': 'Knee power',
                              'PelvisAnglesX': 'Pelvic tilt',
                              'PelvisAnglesY': 'Pelvic obliquity',
-                             'PelvisAnglesZ': 'Pelvic rotation'},
-                             append_side=False)
+                             'PelvisAnglesZ': 'Pelvic rotation'}
+
+pig_lowerbody.varlabels = _dict_with_side(pig_lowerbody.varlabels_noside)
 
 pig_lowerbody.varnames = pig_lowerbody.varlabels.keys()
+pig_lowerbody.varnames_noside = pig_lowerbody.varlabels_noside.keys()
 
 pig_lowerbody.normaldata_map = _dict_with_side({
              'AnkleAnglesX': 'DorsiPlanFlex',
@@ -162,6 +176,10 @@ pig_lowerbody.ylabels = _dict_with_side({
                          'PelvisAnglesZ': 'Bak     ($^\\circ$)      For'})
 
 pig_lowerbody.normaldata_path = site_defs.pig_normaldata_path
+
+pig_lowerbody.is_kinetic_var = (lambda varname: 'Moment' in varname or
+                                'Power' in varname)
+
 models_all.append(pig_lowerbody)
 
 #
@@ -172,7 +190,8 @@ musclelen = GaitModel()
 musclelen.desc = 'Muscle length (MuscleLength.mod)'
 musclelen.type = 'musclelen'
 musclelen.read_strategy = 'last'
-musclelen.varlabels = _dict_with_side({
+
+musclelen.varlabels_noside = {
                         'AdBrLength': 'AdBrLength',
                         'AdLoLength': 'AdLoLength',
                         'AdMaInfLength': 'AdMaInfLength',
@@ -214,10 +233,12 @@ musclelen.varlabels = _dict_with_side({
                         'TiPoLength': 'TiPoLength',
                         'VaInLength': 'VaInLength',
                         'VaLaLength': 'VaLaLength',
-                        'VaMeLength': 'VaMeLength'}, append_side=False)
+                        'VaMeLength': 'VaMeLength'}
 
+musclelen.varlabels = _dict_with_side(musclelen.varlabels_noside)
 musclelen.read_vars = musclelen.varlabels.keys()
 musclelen.varnames = musclelen.read_vars
+musclelen.varnames_noside = musclelen.varlabels_noside.keys()
 
 musclelen.ylabels = {}
 for var in musclelen.varnames:

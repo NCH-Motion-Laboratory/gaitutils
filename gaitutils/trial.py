@@ -69,7 +69,8 @@ class Gaitcycle:
     def crop_analog(self, var):
         """ Crop analog variable (EMG, forceplate, etc. ) to the
         cycle; no interpolation. """
-        return var[self.start_smp:self.end_smp]
+        tn = np.linspace(0, 100, self.len_smp)
+        return tn, var[self.start_smp:self.end_smp]
 
 
 class Trial:

@@ -5,12 +5,22 @@
 -separate methods for adding normal data?
 -exception handling?
 -plot unnormalized data
--overlay multiple cycles from same trial
 -plot avg/stddev?
 
 
-@author: hus20664877
+TODO:
+
+-return also appropriate time variable from Trial class __getitem__ (to be
+used for plotting)
+
+-config class to store all parameters
+
+
+
+
+@author: jnu@iki.fi
 """
+
 
 import models
 from trial import Trial
@@ -63,8 +73,8 @@ class Plotter():
         cycles  Lists of gait cycles to plot. Default is first cycle (1) for
                 both sides. Multiple cycles will be overlaid. If None, plot
                 unnormalized data. If 'all', plot all available cycles.
-                Model variable names are determined according to cycle, e.g.
-                'HipMomentX' will be 'LHipMomentX' for a left gait cycle.
+                Model variable names are modified according to context, e.g.
+                'HipMomentX' -> 'LHipMomentX' for a left side gait cycle.
         t       Time axis for unnormalized data. If None, plot whole time
                 axis.
         """

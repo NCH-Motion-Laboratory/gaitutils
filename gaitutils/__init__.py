@@ -5,7 +5,7 @@ Created on Fri Sep 23 11:19:07 2016
 @author: hus20664877
 """
 
-from .config import Config
+#from .config import Config
 from . import models
 from . import site_defs
 from . import nexus

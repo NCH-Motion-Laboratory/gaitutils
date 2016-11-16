@@ -15,8 +15,9 @@ emg_highpass = '10'
 
 
 # Version should be bumped on Nexus update to get the latest API
-NEXUS_VER = "Nexus2.4"
+NEXUS_VER = "2.5"
 NEXUS_PATH = "C:/Program Files (x86)/Vicon/"
+NEXUS_PATH += 'Nexus'
 NEXUS_PATH += NEXUS_VER
 
 # App dir contains the config file and normal data

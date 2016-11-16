@@ -88,10 +88,10 @@ class Plotter():
         self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                           height_ratios=plotheightratios)
         if cycles is None:
-            pass  # TODO: plot unnormalized
+            cycles = [None]  # make iterable
         elif cycles is 'all':
             cycles = self.trial.cycles
-        else:  # pick cycles specified by argument
+        else:
             cycles = [self.trial.get_cycle(side, ncycle) for side in ['L', 'R']
                       for ncycle in cycles[side]]
         for i, var in enumerate(self.allvars):
@@ -101,17 +101,18 @@ class Plotter():
                 continue
             elif var_type == 'model':
                 for cycle in cycles:
-                    self.trial.set_norm_cycle(cycle)
+                    if cycle is not None:  # plot normalized data
+                        self.trial.set_norm_cycle(cycle)
                     if (models.pig_lowerbody.is_kinetic_var(var) and
                        cycle not in self.trial.kinetics_cycles):
                             continue  # break if no kinetics for this cycle
-                    self.trial.set_norm_cycle(cycle)
                     varname = cycle.context + var
                     data = self.trial[varname]
                     ax.plot(data)
             elif var_type == 'emg':
                 for cycle in cycles:
-                    self.trial.set_norm_cycle(cycle)
+                    if cycle is not None:  # plot normalized data
+                        self.trial.set_norm_cycle(cycle)
                     data = self.trial[var]
                     ax.plot(data)
         plt.show()

@@ -61,11 +61,11 @@ DESC_SKIP = ['Unipedal right', 'Unipedal left', 'Toe standing']
 # run preprocess & save for trials skipped based on description
 PREPROC_DESC_SKIP = True
 # min. trial duration (frames)
-MIN_TRIAL_DURATION = 200
+MIN_TRIAL_DURATION = 100
 # how many frames to leave before/after first/last events
 CROP_MARGIN = 10
 # automark frames around forceplate region (half-width)
-AUTOMARK_HW = 150
+AUTOMARK_HW = 100
 # marker for tracking overall body position (to get gait dir) and center frame
 # do not use RPSI and LPSI since they are not always present
 TRACK_MARKERS = ['RASI', 'LASI']
@@ -74,13 +74,14 @@ RIGHT_FOOT_MARKERS = ['RHEE', 'RTOE', 'RANK']
 # left foot markers
 LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
 # Eclipse descriptions for various conditions
-DESCRIPTIONS = {'short': 'lyhyt', 'context_right': 'o', 'context_left': 'v',
+DESCRIPTIONS = {'short': 'short trial', 'context_right': 'o', 'context_left': 'v',
                 'no_context': 'ei kontaktia', 'dir_front': 'e',
                 'dir_back': 't', 'ok': 'ok',
                 'automark_failure': 'not automarked', 'gaps': 'gaps',
-                'gaps_or_short': 'gaps or short trial'}
+                'gaps_or_short': 'gaps or short trial',
+                'label_failure': 'labelling failed'}
 # gaps min distance from center frame
-GAPS_MIN_DIST = 100
+GAPS_MIN_DIST = 70
 # max. tolerated frames with gaps
 GAPS_MAX = 10
 # whether to use trial specific velocity threshold data when available
@@ -145,7 +146,7 @@ for filepath_ in enffiles:
         if trial_desc.upper() in [s.upper() for s in DESC_SKIP]:
             print('Skipping based on description')
             if PREPROC_DESC_SKIP:
-                for PIPELINE in PRE_PIPELINES:
+                for PIPELINE in PRE_PIPELINES + MODEL_PIPELINE:
                     vicon.RunPipeline(PIPELINE, '', PIPELINE_TIMEOUT)
                 vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
             continue
@@ -157,48 +158,51 @@ for filepath_ in enffiles:
         if RESET_ROI and nexus.nexus_ver >= 2.5:
             (fstart, fend) = vicon.GetTrialRange()
             vicon.SetTrialRegionOfInterest(fstart, fend)
-        # preprocessing pipelines
+
+        # try to run preprocessing pipelines
+        fail = None
         for PIPELINE in PRE_PIPELINES:
             vicon.RunPipeline(PIPELINE, '', PIPELINE_TIMEOUT)
         # trial sanity checks
         trange = vicon.GetTrialRange()
         if (trange[1] - trange[0]) < MIN_TRIAL_DURATION:
-            print('trial too short, skipping')
-            vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
-            trials[filepath].description = DESCRIPTIONS['short']
-            continue
-        else:
+            fail = 'short'
+        else:  # duration ok
             # try to figure out trial center frame
             for marker in TRACK_MARKERS:
                 ctr = utils.get_center_frame(vicon, marker=marker)
                 if ctr:  # ok and no gaps
                     break
-            # cannot find center frame - possible rasi or lasi gaps,
+            # cannot find center frame - possible rasi or lasi gaps
             if not ctr:
-                print('too many gaps or short trial, skipping')
-                vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
-                trials[filepath].description = DESCRIPTIONS['gaps_or_short']
-                continue
-            gaps_found = False
-            for marker in allmarkers:
-                gaps = nexus.get_marker_data(vicon, marker)[marker + '_gaps']
-                # check for gaps nearby the center frame
-                if gaps.size > 0:
-                    #print('gaps: %s' % marker)
-                    #print(gaps)
-                    if (np.where(abs(gaps - ctr) <
-                       GAPS_MIN_DIST)[0].size > GAPS_MAX):
-                        gaps_found = True
+                fail = 'gaps_or_short'
+            else:
+                gaps_found = False
+                for marker in allmarkers:  # check for gaps / labeling failures
+                    try:
+                        gaps = nexus.get_marker_data(vicon, marker)[marker + '_gaps']
+                    except ValueError:
+                        fail = 'label_failure'
                         break
+                    # check for gaps nearby the center frame
+                    if gaps.size > 0:
+                        if (np.where(abs(gaps - ctr) <
+                           GAPS_MIN_DIST)[0].size > GAPS_MAX):
+                            gaps_found = True
+                            break
         if gaps_found:
-            print('trial has problematic gaps, skipping')
+            fail = 'gaps'
+            
+        # move to next trial if preprocessing failed
+        if fail is not None:
+            print('preprocessing failed: %s' % DESCRIPTIONS[fail])
+            trials[filepath].description = DESCRIPTIONS[fail]
             vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
-            trials[filepath].description = DESCRIPTIONS['gaps']
             continue
         else:
             trials[filepath].recon_ok = True
 
-        # get kinetics info
+        # preprocessing ok, get kinetics info
         fpdata = utils.kinetics_available(vicon, CHECK_WEIGHT)
         context = fpdata['context']
         if context:
@@ -221,7 +225,7 @@ for filepath_ in enffiles:
         # time.sleep(1)
         trials[filepath].description = eclipse_str
 
-# compute velocity thresholds
+# compute velocity thresholds from preprocessed trial data
 vel_th = {}
 for key in contact_v:
     if contact_v[key]:
@@ -229,7 +233,7 @@ for key in contact_v:
     else:
         vel_th[key] = None
 
-""" 2nd pass - detect events, run models """
+""" 2nd pass - detect gait events, run models, crop """
 sel_trials = {k: v for k, v in trials.items() if v.recon_ok}
 print('\n2nd pass - processing %d trials\n' % len(sel_trials))
 for filepath, trial in sel_trials.items():

@@ -99,22 +99,21 @@ class Plotter():
             var_type = self._var_type(var)
             if var_type is None:
                 continue
-            elif var_type == 'model':
+            elif var_type == 'model' or var_type == 'emg':
                 for cycle in cycles:
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
-                    if (models.pig_lowerbody.is_kinetic_var(var) and
-                       cycle not in self.trial.kinetics_cycles):
-                            continue  # break if no kinetics for this cycle
-                    varname = cycle.context + var
-                    data = self.trial[varname]
-                    ax.plot(data)
-            elif var_type == 'emg':
-                for cycle in cycles:
-                    if cycle is not None:  # plot normalized data
-                        self.trial.set_norm_cycle(cycle)
+                    if var_type == 'model':
+                        if (models.pig_lowerbody.is_kinetic_var(var) and
+                           cycle not in self.trial.kinetics_cycles):
+                                continue  # break if no kinetics for this cycle
+                        varname = cycle.context + var
+                    elif var_type == 'emg':
+                        pass                        
                     data = self.trial[var]
                     ax.plot(data)
+
+
         plt.show()
 
 

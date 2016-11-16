@@ -431,7 +431,6 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         # mark toeoffs that are between strike events
         toeoffs = [fr for fr in toeoffs
                    if any(strikes < fr) and any(strikes > fr)]
-
         # create the events in Nexus
         side_str = 'Right' if this_side == 'R' else 'Left'
         for fr in strikes:

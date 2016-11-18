@@ -88,6 +88,9 @@ def get_metadata(vicon):
     rtoeoffs = vicon.GetEvents(name, "Right", "Foot Off")[0]
     # frame offset (start of trial data in frames)
     offset = 1
+    # trial length
+    rng = vicon.GetTrialRange()
+    length = rng[1] - rng[0] + 1
     framerate = vicon.GetFrameRate()
     # Get analog rate. This may not be mandatory if analog devices
     # are not used, but currently it needs to succeed.
@@ -97,13 +100,15 @@ def get_metadata(vicon):
     else:
         devid = devids[0]
         _, _, analograte, _, _, _ = vicon.GetDeviceDetails(devid)
+    samplesperframe = analograte / framerate
     # sort events (may be in wrong temporal order, at least in c3d files)
     for li in [lstrikes, rstrikes, ltoeoffs, rtoeoffs]:
         li.sort()
     return {'trialname': trialname, 'sessionpath': sessionpath,
             'offset': offset, 'framerate': framerate, 'analograte': analograte,
             'name': name, 'bodymass': bodymass, 'lstrikes': lstrikes,
-            'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs}
+            'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs,
+            'length': length, 'samplesperframe': samplesperframe}
 
 
 def get_emg_data(vicon):

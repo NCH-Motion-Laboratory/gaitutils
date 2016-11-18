@@ -46,6 +46,8 @@ class Gaitcycle:
         self.len_smp = self.end_smp - self.start_smp
         # normalized x-axis (% of gait cycle) of same length as cycle
         self.t = np.linspace(0, 100, self.len)
+        # same for analog variables
+        self.tn_analog = np.linspace(0, 100, self.len_smp)
         # normalized x-axis of 0,1,2..100%
         self.tn = np.linspace(0, 100, 101)
         # normalize toe-off event to the cycle
@@ -64,13 +66,12 @@ class Gaitcycle:
     def normalize(self, var):
         """ Normalize frames-based variable var to the cycle.
         New interpolated x axis is 0..100% of the cycle. """
-        return np.interp(self.tn, self.t, var[self.start:self.end])
+        return self.tn, np.interp(self.tn, self.t, var[self.start:self.end])
 
     def crop_analog(self, var):
         """ Crop analog variable (EMG, forceplate, etc. ) to the
         cycle; no interpolation. """
-        tn = np.linspace(0, 100, self.len_smp)
-        return tn, var[self.start_smp:self.end_smp]
+        return self.tn_analog, var[self.start_smp:self.end_smp]
 
 
 class Trial:
@@ -118,6 +119,10 @@ class Trial:
         self._models_data = dict()
         # whether to normalize data
         self._normalize = None
+        # frames 0...length
+        self.t = np.arange(self.length)
+        # analog frames 0...length
+        self.t_analog = np.arange(self.length * self.samplesperframe)
         # normalized x-axis of 0, 1, 2 .. 100%
         self.tn = np.linspace(0, 100, 101)
         self.samplesperframe = self.analograte/self.framerate
@@ -137,16 +142,18 @@ class Trial:
         according to normalization cycle. Does not check for duplicate names.
         """
         try:
+            t = self.t
             data = self._get_modelvar(item)
             if self._normalize:
-                data = self._normalize.normalize(data)
-            return data
+                t, data = self._normalize.normalize(data)
+            return t, data
         except ValueError:
             try:
+                t = self.t_analog
                 data = self.emg[item]
                 if self._normalize:
-                    data = self._normalize.crop_analog(data)
-                return data
+                    t, data = self._normalize.crop_analog(data)
+                return t, data
             except KeyError:
                     raise KeyError('Unknown variable %s' % item)
 

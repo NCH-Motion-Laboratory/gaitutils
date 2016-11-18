@@ -29,6 +29,7 @@ def get_metadata(source):
     """ Get trial and subject info. Returns dict with:
     trialname: name of trial
     sessionpath: full path to directory where session is contained
+    length: trial length in frames
     offset: frame offset of returned data from beginning of trial
     framerate: capture framerate
     analograte: sampling rate for analog devices

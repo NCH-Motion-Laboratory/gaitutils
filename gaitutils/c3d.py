@@ -78,8 +78,11 @@ def get_metadata(c3dfile):
     acq = reader.GetOutput()
     # frame offset (start of trial data in frames)
     offset = acq.GetFirstFrame()
+    lastfr = acq.GetLastFrame()
+    length = lastfr - offset + 1
     framerate = acq.GetPointFrequency()
     analograte = acq.GetAnalogFrequency()
+    samplesperframe = acq.GetNumberAnalogSamplePerFrame()
     #  get events
     rstrikes, lstrikes, rtoeoffs, ltoeoffs = [], [], [], []
     for i in btk.Iterate(acq.GetEvents()):
@@ -110,7 +113,8 @@ def get_metadata(c3dfile):
     return {'trialname': trialname, 'sessionpath': sessionpath,
             'offset': offset, 'framerate': framerate, 'analograte': analograte,
             'name': name, 'bodymass': bodymass, 'lstrikes': lstrikes,
-            'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs}
+            'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs,
+            'length': length, 'samplesperframe': samplesperframe}
 
 
 def get_model_data(c3dfile, model):

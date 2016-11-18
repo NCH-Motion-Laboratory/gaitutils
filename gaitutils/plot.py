@@ -67,7 +67,7 @@ class Plotter():
         else:
             raise ValueError('Unknown variable')
 
-    def plot_trial(self, cycles={'R': 1, 'L': 1}, t=None,
+    def plot_trial(self, cycles={'R': 1, 'L': 1}, context=None, t=None,
                    plotheightratios=None, model_tracecolor=None,
                    emg_tracecolor=None):
 
@@ -76,7 +76,7 @@ class Plotter():
         cycles  : dict of int | dict of list | 'all' | None
                 Gait cycles to plot. Default is first cycle (1) for
                 both sides. Multiple cycles can be given as lists.
-                If None, plot unnormalized data.
+                If None, plot unnormalized data. 'context' must be specified.
                 If 'all', plot all available cycles.
                 Model variable names are modified according to context, e.g.
                 'HipMomentX' -> 'LHipMomentX' for a left side gait cycle.
@@ -89,11 +89,16 @@ class Plotter():
         totalfigsize = (14, 12)
         model_tracecolors = {'R': 'lawngreen', 'L': 'red'}
         emg_tracecolor = 'black'
+        emg_ylabel = 'mV'
+        emg_multiplier = 1e3  # plot millivolts
 
         if not self.trial:
             raise ValueError('No trial to plot, call open_trial() first')
         if self.fig is None:
+            superposing = False
             self.fig = plt.figure(figsize=totalfigsize)
+        else:
+            superposing = True
         if plotheightratios is None:
             plotheightratios = [1] * self.nrows  # set plot heights all equal
         self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
@@ -107,6 +112,7 @@ class Plotter():
                           if isinstance(val, int)})  # int -> list
             cycles = [self.trial.get_cycle(side, ncycle) for side in ['L', 'R']
                       for ncycle in cycles[side]]
+
         for i, var in enumerate(self.allvars):
             ax = plt.subplot(self.gridspec[i])
             var_type = self._var_type(var)
@@ -117,13 +123,18 @@ class Plotter():
                 for cycle in cycles:
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
-                    if (models.pig_lowerbody.is_kinetic_var(var) and
-                       cycle not in self.trial.kinetics_cycles):
-                            continue  # break if no kinetics for this cycle
-                    varname = cycle.context + var
+                        context = cycle.context
+                        if (models.pig_lowerbody.is_kinetic_var(var) and
+                           cycle not in self.trial.kinetics_cycles):
+                                continue  # break if no kinetics for this cycle
+                    else:
+                        if context is None:
+                            raise ValueError('Must specify context if plotting '
+                                             'unnormalized model variables')
+                    varname = context + var
                     x, data = self.trial[varname]
                     tcolor = (model_tracecolor if model_tracecolor
-                              else model_tracecolors[cycle.context])
+                              else model_tracecolors[context])
                     ax.plot(x, data, tcolor)
                     # set labels, ticks, etc. after plotting last cycle
                     if cycle == cycles[-1]:
@@ -149,7 +160,15 @@ class Plotter():
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
                     x, data = self.trial[var]
+                    data *= emg_multiplier
                     ax.plot(x, data)
+                    ax.set(ylabel=emg_ylabel)
+                    ax.yaxis.label.set_fontsize(label_fontsize)
+                    plt.title(var, fontsize=self.fsize_titles)
+                    plt.locator_params(axis='y', nbins=4)
+                    # tick font size
+                    plt.tick_params(axis='both', which='major',
+                                    labelsize=ticks_fontsize)
 
         self.gridspec.update(left=.08, right=.98, top=.92, bottom=.03,
                              hspace=.37, wspace=.22)

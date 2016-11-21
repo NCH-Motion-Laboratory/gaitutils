@@ -73,7 +73,7 @@ class Plotter():
 
         """ Create plot of variables. Parameters:
 
-        cycles  : dict of int | dict of list | 'all' | None
+        cycles  : dict of int | int | dict of list | 'all' | None
                 Gait cycles to plot. Default is first cycle (1) for
                 both sides. Multiple cycles can be given as lists.
                 If None, plot unnormalized data. 'context' must be specified.
@@ -85,6 +85,7 @@ class Plotter():
         """
 
         label_fontsize = 10  # TODO: into config
+        title_fontsize = 12
         ticks_fontsize = 10
         totalfigsize = (14, 12)
         model_tracecolors = {'R': 'lawngreen', 'L': 'red'}
@@ -105,9 +106,11 @@ class Plotter():
                                           height_ratios=plotheightratios)
         if cycles is None:
             cycles = [None]  # make iterable
+        elif isinstance(cycles, int):
+            cycles = {'L': cycles, 'R': cycles}
         elif cycles == 'all':
             cycles = self.trial.cycles
-        elif isinstance(cycles, dict):
+        if isinstance(cycles, dict):  # not elif due to dict conversion above
             cycles.update({key: [val] for (key, val) in cycles.items()
                           if isinstance(val, int)})  # int -> list
             cycles = [self.trial.get_cycle(side, ncycle) for side in ['L', 'R']
@@ -141,6 +144,8 @@ class Plotter():
                         ax.set(ylabel=model.ylabels[varname])  # no xlabel for now
                         ax.xaxis.label.set_fontsize(label_fontsize)
                         ax.yaxis.label.set_fontsize(label_fontsize)
+                        ax.set_title(model.varlabels[varname])
+                        ax.title.set_fontsize(title_fontsize)
                         plt.axhline(0, color='black')  # zero line
                         ax.locator_params(axis='y', nbins=6)  # less y tick marks
                         # tick font size
@@ -154,6 +159,16 @@ class Plotter():
                             ax.set_ylim(ylim0, ylim1)
                         elif model == models.musclelen:
                             ax.set_ylim(ylim[0]-10, ylim[1]+10)
+                        # TODO: plot normal data, if available
+                        """    
+                        ndata = self.trial.model.get_normaldata(varname)
+                        if ndata:
+                            nor = np.array(ndata)[:, 0]
+                            nstd = np.array(ndata)[:, 1]
+                            plt.fill_between(tn_2, nor-nstd, nor+nstd,
+                                             color=self.normals_color,
+                                             alpha=self.normals_alpha) """
+
 
             elif var_type == 'emg':
                 for cycle in cycles:
@@ -172,7 +187,6 @@ class Plotter():
 
         self.gridspec.update(left=.08, right=.98, top=.92, bottom=.03,
                              hspace=.37, wspace=.22)
-
         plt.show()
 
     def create_pdf(self, pdf_name=None, pdf_prefix=None):

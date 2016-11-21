@@ -150,7 +150,6 @@ def get_forceplate_data(vicon):
     # DType should be 'ForcePlate', drate is sampling rate
     dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(fpid)
     samplesperframe = drate / framerate  # fp samples per Vicon frame
-    assert(len(outputids) == 3)
     # outputs should be force, moment, cop. select force
     outputid = outputids[0]
     # get list of channel names and IDs

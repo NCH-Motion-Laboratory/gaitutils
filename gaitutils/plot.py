@@ -34,7 +34,16 @@ import os.path as op
 
 class Plotter():
 
-    def __init__(self, plotvars):
+    def __init__(self, plotvars, normaldata=None):
+        """ Plot gait data.
+
+        plotvars: list of lists
+            Variables to be plotted. Each list is a row of variables.
+        normaldata: list of lists
+            Corresponding normal data files for each plot. Will override
+            default normal data settings.
+        """
+
         if (not isinstance(plotvars, list) or not
            all([isinstance(item, list)for item in plotvars])):
             raise ValueError('Plot variables must be a list of lists')
@@ -44,6 +53,7 @@ class Plotter():
         self.trial = None
         self.fig = None
         self.allvars = [item for row in plotvars for item in row]
+        self.normaldata = normaldata
 
     def open_trial(self, source):
         self.trial = Trial(source)
@@ -69,11 +79,11 @@ class Plotter():
 
     def plot_trial(self, cycles={'R': 1, 'L': 1}, context=None, t=None,
                    plotheightratios=None, model_tracecolor=None,
-                   emg_tracecolor=None):
+                   emg_tracecolor=None, plot_normaldata=True):
 
         """ Create plot of variables. Parameters:
 
-        cycles  : dict of int | int | dict of list | 'all' | None
+        cycles : dict of int | int | dict of list | 'all' | None
                 Gait cycles to plot. Default is first cycle (1) for
                 both sides. Multiple cycles can be given as lists.
                 If None, plot unnormalized data. 'context' must be specified.
@@ -82,6 +92,9 @@ class Plotter():
                 'HipMomentX' -> 'LHipMomentX' for a left side gait cycle.
         t       Time axis for unnormalized data. If None, plot whole time
                 axis.
+        plot_normaldata : bool
+                Whether to plot normal data. Uses either default normal data
+                or the data given when creating the class.
         """
 
         label_fontsize = 10  # TODO: into config
@@ -159,7 +172,9 @@ class Plotter():
                             ax.set_ylim(ylim0, ylim1)
                         elif model == models.musclelen:
                             ax.set_ylim(ylim[0]-10, ylim[1]+10)
-                        # TODO: plot normal data, if available
+                        if plot_normaldata:
+                            
+
                         """    
                         ndata = self.trial.model.get_normaldata(varname)
                         if ndata:

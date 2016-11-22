@@ -13,6 +13,7 @@ from gaitutils import read_data, utils, eclipse, nexus
 from envutils import debug_print
 import numpy as np
 import os.path as op
+import glob
 import models
 from emg import EMG
 
@@ -134,8 +135,7 @@ class Trial:
         else:
             self.kinetics_cycles = []
         self.ncycles = len(self.cycles)
-        self.video_files = nexus.get_video_filenames(self.sessionpath +
-                                                     self.trialname)
+        self.video_files = glob.glob(self.sessionpath+self.trialname+'*avi')
 
     def __getitem__(self, item):
         """ Get model variable or EMG channel by indexing, normalized

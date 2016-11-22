@@ -55,11 +55,6 @@ def is_vicon_instance(obj):
     return obj.__class__.__name__ == 'ViconNexus'
 
 
-def get_video_filenames(trialpath):
-    """ Get AVI files corresponding to given trial. """
-    trialpath = op.splitext(trialpath)[0]
-    return glob.glob(trialpath+'*avi')
-
 
 def get_metadata(vicon):
     """ Read trial and subject metadata """

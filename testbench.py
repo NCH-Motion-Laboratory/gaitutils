@@ -40,5 +40,5 @@ nmod = read_data.get_model_data(vicon, pigmod)
 cmod = read_data.get_model_data(c3dfile, pigmod)
 
 pl = Plotter(layouts.std_kinematics)
-pl.open_trial(vicon)
+pl.open_trial(c3dfile)
 pl.plot_trial(cycles=1, context='L')

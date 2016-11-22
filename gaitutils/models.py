@@ -109,6 +109,9 @@ class GaitModel:
             raise ValueError('Only .gcd normal data supported for now')
         return normaldata
 
+
+
+
 """ Create models """
 
 #

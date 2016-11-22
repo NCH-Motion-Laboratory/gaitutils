@@ -36,6 +36,7 @@ class Gaitcycle:
     def __init__(self, start, end, offset, toeoff, context, smp_per_frame):
         self.offset = offset
         self.len = end - start
+        # convert frame indices to 0-based
         self.start = start - offset
         self.end = end - offset
         self.toeoff = toeoff - offset

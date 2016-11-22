@@ -146,7 +146,7 @@ for filepath_ in enffiles:
         if trial_desc.upper() in [s.upper() for s in DESC_SKIP]:
             print('Skipping based on description')
             if PREPROC_DESC_SKIP:
-                for PIPELINE in PRE_PIPELINES + MODEL_PIPELINE:
+                for PIPELINE in PRE_PIPELINES + [MODEL_PIPELINE]:
                     vicon.RunPipeline(PIPELINE, '', PIPELINE_TIMEOUT)
                 vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
             continue

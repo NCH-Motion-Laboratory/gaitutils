@@ -10,6 +10,9 @@ append to models_all.
 """
 
 import site_defs
+import os.path as op
+import numpy as np
+
 
 models_all = []
 
@@ -71,10 +74,40 @@ class GaitModel:
         self.varnames_noside = list()  # variables without side
         self.varlabels_noside = dict()  # variables without side
         self.varlabels = dict()  # descriptive label for each variable
+        self.normaldata_path = None  # location of normal data
         # mapping from variable names to normal data variables (optional)
         self.normaldata_map = dict()
+        # the actual normal data
+        self._normaldata = dict()
         # y axis labels for plotting the variables (optional)
         self.ylabels = dict()
+
+    @property
+    def normaldata(self):
+        if self.normaldata_path is None:
+            return None
+        if not self._normaldata:  # not read yet
+            self._normaldata = self._read_normaldata()
+        return self._normaldata
+
+    def _read_normaldata(self):
+        normaldata = dict()
+        filename = self.normaldata_path
+        type = op.splitext(filename)[1].lower()
+        if type == '.gcd':
+            with open(filename, 'r') as f:
+                lines = f.readlines()
+            for li in lines:
+                if li[0] == '!':  # it's a variable name
+                    thisvar = li[1:li.find(' ')]  # set dict key
+                    data = list()
+                # read numbers into list. hopefully, n of columns remains same
+                elif li[0].isdigit() or li[0] == '-':
+                    data.append([float(x) for x in li.split()])
+            normaldata[thisvar] = np.array(data)
+        else:
+            raise ValueError('Only .gcd normal data supported for now')
+        return normaldata
 
 """ Create models """
 

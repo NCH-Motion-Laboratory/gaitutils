@@ -16,9 +16,7 @@ automark (with velocity data)
 dynmod+save
 mark eclipse
 
-
 TODO:
-
 
 AUTOMARK_HW does not work properly for slow walkers
 -should mark given number of events around ctr frame
@@ -27,11 +25,8 @@ AUTOMARK_HW does not work properly for slow walkers
 eclipse desc of last processed trial is not updated properly (overwritten
 by eclipse?)
 
-
-
 NOTES:
 ROI operations only work for Nexus >= 2.5
-
 
 @author: Jussi
 """
@@ -58,8 +53,6 @@ PIPELINE_TIMEOUT = 45
 TYPE_SKIP = 'Static'
 # trial descriptions to skip (Eclipse description field) (not case sensitive)
 DESC_SKIP = ['Unipedal right', 'Unipedal left', 'Toe standing']
-# run preprocess & save for trials skipped based on description
-PREPROC_DESC_SKIP = True
 # min. trial duration (frames)
 MIN_TRIAL_DURATION = 100
 # how many frames to leave before/after first/last events
@@ -74,7 +67,8 @@ RIGHT_FOOT_MARKERS = ['RHEE', 'RTOE', 'RANK']
 # left foot markers
 LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
 # Eclipse descriptions for various conditions
-DESCRIPTIONS = {'short': 'short trial', 'context_right': 'o', 'context_left': 'v',
+DESCRIPTIONS = {'short': 'short trial', 'context_right': 'o',
+                'context_left': 'v',
                 'no_context': 'ei kontaktia', 'dir_front': 'e',
                 'dir_back': 't', 'ok': 'ok',
                 'automark_failure': 'not automarked', 'gaps': 'gaps',
@@ -145,10 +139,8 @@ for filepath_ in enffiles:
             continue
         if trial_desc.upper() in [s.upper() for s in DESC_SKIP]:
             print('Skipping based on description')
-            if PREPROC_DESC_SKIP:
-                for PIPELINE in PRE_PIPELINES + [MODEL_PIPELINE]:
-                    vicon.RunPipeline(PIPELINE, '', PIPELINE_TIMEOUT)
-                vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
+            # run save pipeline here, so that trial is marked as processed
+            vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
             continue
         eclipse_str = ''
         trials[filepath] = Trial()
@@ -180,7 +172,8 @@ for filepath_ in enffiles:
                 gaps_found = False
                 for marker in allmarkers:  # check for gaps / labeling failures
                     try:
-                        gaps = nexus.get_marker_data(vicon, marker)[marker + '_gaps']
+                        gaps = nexus.get_marker_data(vicon,
+                                                     marker)[marker + '_gaps']
                     except ValueError:
                         fail = 'label_failure'
                         break
@@ -192,7 +185,7 @@ for filepath_ in enffiles:
                             break
         if gaps_found:
             fail = 'gaps'
-            
+
         # move to next trial if preprocessing failed
         if fail is not None:
             print('preprocessing failed: %s' % DESCRIPTIONS[fail])

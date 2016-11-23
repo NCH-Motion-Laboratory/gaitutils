@@ -23,6 +23,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.gridspec as gridspec
 from guiutils import error_exit, messagebox
 import os.path as op
+import site_defs
 
 
 class Plotter():
@@ -72,7 +73,8 @@ class Plotter():
 
     def plot_trial(self, cycles={'R': 1, 'L': 1}, context=None, t=None,
                    plotheightratios=None, model_tracecolor=None,
-                   emg_tracecolor=None, plot_normaldata=True):
+                   emg_tracecolor=None, plot_model_normaldata=True,
+                   plot_emg_normaldata=True):
 
         """ Create plot of variables. Parameters:
 
@@ -85,9 +87,15 @@ class Plotter():
                 'HipMomentX' -> 'LHipMomentX' for a left side gait cycle.
         t       Time axis for unnormalized data. If None, plot whole time
                 axis.
-        plot_normaldata : bool
+        plot_model_normaldata : bool
                 Whether to plot normal data. Uses either default normal data
-                or the data given when creating the class.
+                (in site_defs) or the data given when creating the plotter
+                instance.
+        plot_emg_normaldata : bool
+                Whether to plot normal data. Uses either default normal data
+                (in site_defs) or the data given when creating the plotter
+                instance.
+                
         """
 
         label_fontsize = 10  # TODO: into config
@@ -98,6 +106,10 @@ class Plotter():
         emg_tracecolor = 'black'
         emg_ylabel = 'mV'
         emg_multiplier = 1e3  # plot millivolts
+        emg_normals_alpha = .8
+        emg_alpha = .6
+        emg_normals_color = 'pink'
+        emg_ylabel = 'mV'
         normals_alpha = .3
         normals_color = 'gray'
 
@@ -141,8 +153,8 @@ class Plotter():
                                 continue  # break if no kinetics for this cycle
                     else:
                         if context is None:
-                            raise ValueError('Must specify context if plotting '
-                                             'unnormalized model variables')
+                            raise ValueError('Must specify context for '
+                                             'plotting unnormalized variable')
                     varname = context + var
                     x, data = self.trial[varname]
                     tcolor = (model_tracecolor if model_tracecolor
@@ -172,6 +184,7 @@ class Plotter():
                             tnor, ndata = model.get_normaldata(varname)
                             if ndata is not None:
                                 # assume (mean, stddev) for normal data
+                                # fill region between mean-stddev, mean+stddev
                                 nor = ndata[:, 0]
                                 if ndata.shape[1] == 2:
                                     nstd = ndata[:, 1]
@@ -180,6 +193,7 @@ class Plotter():
                                 ax.fill_between(tnor, nor-nstd, nor+nstd,
                                                 color=normals_color,
                                                 alpha=normals_alpha)
+
             elif var_type == 'emg':
                 for cycle in cycles:
                     if cycle is not None:  # plot normalized data
@@ -187,13 +201,24 @@ class Plotter():
                     x, data = self.trial[var]
                     data *= emg_multiplier
                     ax.plot(x, data)
-                    ax.set(ylabel=emg_ylabel)
-                    ax.yaxis.label.set_fontsize(label_fontsize)
-                    plt.title(var, fontsize=self.fsize_titles)
-                    plt.locator_params(axis='y', nbins=4)
-                    # tick font size
-                    plt.tick_params(axis='both', which='major',
-                                    labelsize=ticks_fontsize)
+                    if cycle == cycles[-1]:
+                        ax.set(ylabel=emg_ylabel)
+                        ax.yaxis.label.set_fontsize(label_fontsize)
+                        ax.set_title(var)
+                        ax.title.set_fontsize(title_fontsize)
+                        ax.locator_params(axis='y', nbins=4)
+                        # tick font size
+                        ax.tick_params(axis='both', which='major',
+                                       labelsize=ticks_fontsize)
+                        ax.set_xlim(min(x), max(x))
+                        # TODO: ax.set_ylim
+                        # plot EMG normal bars
+                        emgbar_ind = site_defs.emg_normals[var]
+                        for k in range(len(emgbar_ind)):
+                            inds = emgbar_ind[k]
+                            plt.axvspan(inds[0], inds[1],
+                                        alpha=emg_normals_alpha,
+                                        color=emg_normals_color)
 
         self.gridspec.update(left=.08, right=.98, top=.92, bottom=.03,
                              hspace=.37, wspace=.22)

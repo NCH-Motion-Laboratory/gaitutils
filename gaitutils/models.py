@@ -12,7 +12,7 @@ append to models_all.
 import site_defs
 import os.path as op
 import numpy as np
-
+from numutils import isfloat
 
 models_all = []
 
@@ -104,22 +104,20 @@ class GaitModel:
         normaldata = dict()
         filename = self.normaldata_path
         type = op.splitext(filename)[1].lower()
+        varname = None
         if type == '.gcd':
             with open(filename, 'r') as f:
                 lines = f.readlines()
-            data, thisvar = None, None
             for li in lines:
-                if li[0] == '!':  # new variable found
-                    if thisvar:  # save data for previous variable
-                        tn = np.linspace(0, 100, len(data))
-                        normaldata[thisvar] = tn, np.array(data)
-                    thisvar = li[1:li.find(' ')]  # set new variable name
-                    data = list()
-                elif li[0].isdigit() or li[0] == '-':
-                    # read new numeric vals into array
-                    data.append([float(x) for x in li.split()])
-            tn = np.linspace(0, 100, len(data))
-            normaldata[thisvar] = tn, np.array(data)
+                lis = li.split()
+                if li[0] == '!':
+                    varname = lis[0][1:]
+                    normaldata[varname] = list()
+                elif varname and isfloat(lis[0]):
+                    normaldata[varname].append([float(x) for x in lis])
+            for var, data in normaldata.items():
+                normaldata[var] = (np.linspace(0, 100, len(data)),
+                                   np.array(data))
         else:
             raise ValueError('Only .gcd file format supported for now')
         return normaldata

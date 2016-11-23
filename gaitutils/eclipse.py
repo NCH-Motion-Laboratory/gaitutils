@@ -7,8 +7,6 @@ Eclipse (database) hacks.
 @author: jnu@iki.fi
 """
 from __future__ import print_function
-import os.path
-
 
 
 def get_eclipse_keys(fname_enf, return_empty=False):
@@ -22,7 +20,7 @@ def get_eclipse_keys(fname_enf, return_empty=False):
         if eqpos > 0:
             key, val = line.split('=')
             if return_empty or val:
-                edi[key] = unicode(val, 'utf-8')  # Eclipse text is utf-8 (?)
+                edi[key] = unicode(val, 'utf-8')  # Eclipse text is utf-8
     return edi
 
 

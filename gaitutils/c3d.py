@@ -10,7 +10,7 @@ c3d reader functions
 try:
     import btk
 except ImportError:
-    print('warning: cannot find btk module; unable to use btk functionality '
+    print('Warning: cannot find btk module; unable to use btk functionality '
           '(read c3d files)')
 import numpy as np
 from scipy.signal import medfilt

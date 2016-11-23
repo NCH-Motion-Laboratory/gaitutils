@@ -8,13 +8,6 @@
 -plot avg/stddev?
 
 
-TODO:
-
--return also appropriate time variable from Trial class __getitem__ (to be
-used for plotting)
-
--config class to store all parameters
-
 
 
 
@@ -105,6 +98,9 @@ class Plotter():
         emg_tracecolor = 'black'
         emg_ylabel = 'mV'
         emg_multiplier = 1e3  # plot millivolts
+        normals_alpha = .3
+        normals_color = 'gray'
+
 
         if not self.trial:
             raise ValueError('No trial to plot, call open_trial() first')
@@ -173,19 +169,17 @@ class Plotter():
                         elif model == models.musclelen:
                             ax.set_ylim(ylim[0]-10, ylim[1]+10)
                         if plot_normaldata:
-			    pass
-                            
-
-                        """    
-                        ndata = self.trial.model.get_normaldata(varname)
-                        if ndata:
-                            nor = np.array(ndata)[:, 0]
-                            nstd = np.array(ndata)[:, 1]
-                            plt.fill_between(tn_2, nor-nstd, nor+nstd,
-                                             color=self.normals_color,
-                                             alpha=self.normals_alpha) """
-
-
+                            tnor, ndata = model.get_normaldata(varname)
+                            if ndata is not None:
+                                # assume (mean, stddev) for normal data
+                                nor = ndata[:, 0]
+                                if ndata.shape[1] == 2:
+                                    nstd = ndata[:, 1]
+                                else:
+                                    nstd = 0
+                                ax.fill_between(tnor, nor-nstd, nor+nstd,
+                                                color=normals_color,
+                                                alpha=normals_alpha)
             elif var_type == 'emg':
                 for cycle in cycles:
                     if cycle is not None:  # plot normalized data

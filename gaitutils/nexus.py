@@ -13,20 +13,22 @@ import sys
 import numpy as np
 from scipy import signal
 import os.path as op
-import glob
 import psutil
 from numutils import rising_zerocross, falling_zerocross
 import matplotlib.pyplot as plt
 from site_defs import NEXUS_PATH, NEXUS_VER
-# Version should be bumped on Nexus update to get the latest API
-if not op.isdir(NEXUS_PATH):
-    raise ValueError('Cannot find Nexus SDK dir: ' + NEXUS_PATH)
-if not NEXUS_PATH + "/SDK/Python" in sys.path:
-    sys.path.append(NEXUS_PATH + "/SDK/Python")
-    # needed at least when running outside Nexus
-    sys.path.append(NEXUS_PATH + "/SDK/Win32")
-import ViconNexus
 import site_defs
+if NEXUS_PATH:
+    if not op.isdir(NEXUS_PATH):
+        raise ValueError('Cannot find Nexus SDK dir: ' + NEXUS_PATH)
+    if not NEXUS_PATH + "/SDK/Python" in sys.path:
+        sys.path.append(NEXUS_PATH + "/SDK/Python")
+        # needed at least when running outside Nexus
+        sys.path.append(NEXUS_PATH + "/SDK/Win32")
+try:
+    import ViconNexus
+except ImportError:
+    print('Warning: cannot import Nexus SDK, unable to communicate with Nexus')
 
 
 def pid():

@@ -82,34 +82,47 @@ class GaitModel:
         # y axis labels for plotting the variables (optional)
         self.ylabels = dict()
 
-    @property
-    def normaldata(self):
+    def get_normaldata(self, var):
+        """ Get normal data for specified variable. Returns (t, data) tuple
+        (see below) """
         if self.normaldata_path is None:
             return None
         if not self._normaldata:  # not read yet
             self._normaldata = self._read_normaldata()
-        return self._normaldata
+        if var in self.normaldata_map:
+            nvar = self.normaldata_map[var]
+            return self._normaldata[nvar]
+        else:
+            return None
 
     def _read_normaldata(self):
+        """ Read normal data into dict. Dict keys are variables and dict
+        values are (t, data) tuples. t is the normalized x axis (0..100)
+        of length n and data has shape (n, ndim). The ndim columns may
+        represent e.g. mean and stddev etc. depending on the normal data
+        file. """
         normaldata = dict()
         filename = self.normaldata_path
         type = op.splitext(filename)[1].lower()
         if type == '.gcd':
             with open(filename, 'r') as f:
                 lines = f.readlines()
+            data, thisvar = None, None
             for li in lines:
-                if li[0] == '!':  # it's a variable name
-                    thisvar = li[1:li.find(' ')]  # set dict key
+                if li[0] == '!':  # new variable found
+                    if thisvar:  # save data for previous variable
+                        tn = np.linspace(0, 100, len(data))
+                        normaldata[thisvar] = tn, np.array(data)
+                    thisvar = li[1:li.find(' ')]  # set new variable name
                     data = list()
-                # read numbers into list. hopefully, n of columns remains same
                 elif li[0].isdigit() or li[0] == '-':
+                    # read new numeric vals into array
                     data.append([float(x) for x in li.split()])
-            normaldata[thisvar] = np.array(data)
+            tn = np.linspace(0, 100, len(data))
+            normaldata[thisvar] = tn, np.array(data)
         else:
-            raise ValueError('Only .gcd normal data supported for now')
+            raise ValueError('Only .gcd file format supported for now')
         return normaldata
-
-
 
 
 """ Create models """

@@ -31,14 +31,14 @@ plt.plot(e2.t, e2['LGas'])
 #vlasi = read_data.get_marker_data(vicon, 'LASI')
 
 
-ctri = trial.Trial(c3dfile)
-vtri = trial.Trial(vicon)
+#ctri = trial.Trial(c3dfile)
+#vtri = trial.Trial(vicon)
 
-pigmod = models.pig_lowerbody
+#pigmod = models.pig_lowerbody
 
-nmod = read_data.get_model_data(vicon, pigmod)
-cmod = read_data.get_model_data(c3dfile, pigmod)
+#nmod = read_data.get_model_data(vicon, pigmod)
+#cmod = read_data.get_model_data(c3dfile, pigmod)
 
 pl = Plotter(layouts.std_kinematics)
-pl.open_trial(c3dfile)
+pl.open_trial(vicon)
 pl.plot_trial(cycles=1, context='L')

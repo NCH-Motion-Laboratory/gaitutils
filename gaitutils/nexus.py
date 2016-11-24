@@ -4,7 +4,7 @@ Created on Fri Sep 23 10:27:56 2016
 
 @author: jnu@iki.fi
 
-Data readers for Vicon Nexus.
+Data readers & processing utils for Vicon Nexus.
 
 """
 
@@ -292,8 +292,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     strike_frame is the frame where forceplate contact occurs.
 
     events_context specified which events to mark for the side where forceplate
-    strike occurs. For example (-1, 1) would mark one event before forceplate
-    and one event after (forceplate strike event is always marked).
+    strike occurs. For example (-1, 0, 1) would mark one event before forceplate
+    and one event after (and the forceplate strike).
     events_nocontext is applied for the side where there is no forceplate
     contact.
     If plot=True, velocity curves and events are plotted.
@@ -409,7 +409,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                 auto_strike_ind = np.argmin(abs(strikes - strike_frame))
                 if abs(strikes[auto_strike_ind] -
                         strike_frame) > FP_STRIKE_TOL:
-                    raise ValueError('Detected strike event does not match',
+                    raise ValueError('Detected strike event does not match ',
                                      'strike_frame')
                 # add other events as required
                 for fr in events_context:

@@ -89,10 +89,8 @@ RESET_ROI = True
 # check subject weight when analyzing forceplate data
 CHECK_WEIGHT = True
 
-
 if not nexus.pid():
     raise Exception('Vicon Nexus not running')
-
 
 # get session path from Nexus, find processed trials
 vicon = nexus.viconnexus()
@@ -100,7 +98,6 @@ trialname_ = vicon.GetTrialName()
 subjectname = vicon.GetSubjectNames()[0]
 sessionpath = trialname_[0]
 enffiles = glob.glob(sessionpath+'*Trial*.enf')
-
 
 contact_v = {'L_strike': [], 'R_strike': [], 'L_toeoff': [], 'R_toeoff': []}
 trials = {}

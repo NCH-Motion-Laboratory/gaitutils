@@ -45,6 +45,7 @@ TRIALS_RANGE = (1, inf)
 # list of pipelines to run
 PRE_PIPELINES = ['Reconstruct and label (legacy)', 'AutoGapFill_mod', 'filter']
 MODEL_PIPELINE = 'Dynamic model + save (LEGACY)'
+SKIP_PIPELINES = ['Reconstruct and label (legacy)', 'Save trial']
 SAVE_PIPELINE = 'Save trial'
 # timeouts for Nexus (sec)
 TRIAL_OPEN_TIMEOUT = 45
@@ -135,12 +136,12 @@ for filepath_ in enffiles:
         trial_type = edi['TYPE']
         trial_desc = edi['DESCRIPTION']
         if trial_type in TYPE_SKIP:
-            print('Skipping based on type')
+            print('Not a dynamic trial, skipping')
             continue
         if trial_desc.upper() in [s.upper() for s in DESC_SKIP]:
             print('Skipping based on description')
-            # run save pipeline here, so that trial is marked as processed
-            vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
+            for pipeline in SKIP_PIPELINES:
+                vicon.RunPipeline(pipeline, '', PIPELINE_TIMEOUT)
             continue
         eclipse_str = ''
         trials[filepath] = Trial()
@@ -153,8 +154,8 @@ for filepath_ in enffiles:
 
         # try to run preprocessing pipelines
         fail = None
-        for PIPELINE in PRE_PIPELINES:
-            vicon.RunPipeline(PIPELINE, '', PIPELINE_TIMEOUT)
+        for pipeline in PRE_PIPELINES:
+            vicon.RunPipeline(pipeline, '', PIPELINE_TIMEOUT)
         # trial sanity checks
         trange = vicon.GetTrialRange()
         if (trange[1] - trange[0]) < MIN_TRIAL_DURATION:
@@ -272,14 +273,14 @@ for filepath, trial in sel_trials.items():
     vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
     trials[filepath].description = eclipse_str
 
-# update Eclipse descriptions
+# all done; update Eclipse descriptions
 if WRITE_ECLIPSE_DESC:
     for filepath, trial in trials.items():
         enf_file = filepath + '.Trial.enf'
         eclipse.set_eclipse_key(enf_file, 'DESCRIPTION',
                                 trial.description, update_existing=True)
 
-# prints stats
+# print stats
 n_events = len([tr for tr in trials.values() if tr.events])
 print('\nComplete\n')
 print('Trials opened: %d' % len(trials))

@@ -122,9 +122,12 @@ def _do_autoproc(vicon, enffiles):
                  'L_toeoff': [], 'R_toeoff': []}
     trials = {}
 
+    subjectname = vicon.GetSubjectNames()[0]
+
     """ 1st pass - reconstruct, label, sanity check, check forceplate and gait
     direction """
     print('\n1st pass - processing %d trial(s)\n' % len(enffiles))
+
     for filepath_ in enffiles:
         filepath__ = os.path.splitext(filepath_)[0]  # rm extension
         filepath = filepath__[:filepath__.find('.Trial')]  # rm .Trial
@@ -297,7 +300,6 @@ if __name__ == '__main__':
     # get session path from Nexus, find processed trials
     vicon = nexus.viconnexus()
     trialname_ = vicon.GetTrialName()
-    subjectname = vicon.GetSubjectNames()[0]
     sessionpath = trialname_[0]
     enffiles = glob.glob(sessionpath+'*Trial*.enf')
 

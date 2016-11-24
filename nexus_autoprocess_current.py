@@ -7,7 +7,7 @@ Note: does not use stats for event detection -> less accurate
 @author: Jussi
 """
 
-from nexus_automark_trial import _do_autoproc
+from nexus_autoprocess_trials import _do_autoproc
 from gaitutils import nexus
 
 if __name__ == '__main__':

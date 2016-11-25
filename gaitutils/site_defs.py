@@ -8,7 +8,15 @@ Lab -specific stuff (electrode names etc.)
 """
 
 import os.path as op
+# App dir contains the config file and normal data
+pathprefix = op.expanduser('~')
+appdir = pathprefix + '/.gaitutils'
+cfg_file = appdir + '/config.py'
 
+if op.isfile(cfg_file):
+    print 'importing user config'
+    from cfg_file import *
+    return
 
 emg_lowpass = '400'
 emg_highpass = '10'
@@ -20,9 +28,6 @@ NEXUS_PATH = "C:/Program Files (x86)/Vicon/"
 NEXUS_PATH += 'Nexus'
 NEXUS_PATH += NEXUS_VER
 
-# App dir contains the config file and normal data
-pathprefix = op.expanduser('~')
-appdir = pathprefix + '/.gaitutils'
 
 # Plug-in Gait normal data
 pig_normaldata_path = appdir + '/Data/normal.gcd'
@@ -31,7 +36,7 @@ pig_normaldata_path = appdir + '/Data/normal.gcd'
 emg_devname = 'Myon'
 
 # EMG y scale for plotting
-emg_yscale = .5e-3
+emg_yscale = (-.5e-3, .5e-3)
 
 # default bandpass values for EMG
 emg_lowpass = '400'
@@ -78,3 +83,27 @@ emg_normals = {'RGas': [[16, 50]],
 
 # put names into a separate variable
 emg_names = emg_labels.keys()
+
+
+class PlotParams:
+    pass
+
+plotparams = PlotParams()
+
+plotparams.label_fontsize = 10  # TODO: into config
+plotparams.title_fontsize = 12
+plotparams.ticks_fontsize = 10
+plotparams.totalfigsize = (14, 12)
+plotparams.model_tracecolors = {'R': 'lawngreen', 'L': 'red'}
+plotparams.normals_alpha = .3
+plotparams.normals_color = 'gray'
+plotparams.emg_tracecolor = 'black'
+plotparams.emg_ylabel = 'mV'
+plotparams.emg_multiplier = 1e3  # plot millivolts
+plotparams.emg_normals_alpha = .8
+plotparams.emg_alpha = .6
+plotparams.emg_normals_color = 'pink'
+plotparams.emg_ylabel = 'mV'
+
+
+

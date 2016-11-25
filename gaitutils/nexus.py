@@ -302,6 +302,10 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     Before automark, run reconstruct, label and gap fill pipelines.
     """
 
+    if not (context and strike_frame):
+        if not mark_window_hw:
+            raise ValueError('Need to specify either context or window for '
+                             'marking')
     frate = vicon.GetFrameRate()
     if not frate:
         raise Exception('Cannot get framerate from Nexus')
@@ -431,6 +435,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
             if not ctr:
                 raise ValueError('Cannot find center frame (y crossing)')
             strikes = [fr for fr in strikes if abs(fr - ctr) <= mark_window_hw]
+       
         # mark toeoffs that are between strike events
         toeoffs = [fr for fr in toeoffs
                    if any(strikes < fr) and any(strikes > fr)]

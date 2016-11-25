@@ -44,7 +44,7 @@ class Config:
         print('Config: reading from %s' % self.configfile)
         self.parser.read(self.configfile)
         cfgtxt = self.parser._sections[self.section]  # dict
-        self.cfg = self._untextify(cfgtxt)
+        self.cfg = self._untextify(cfgtxt)  # dict values -> Python types
         self.__dict__.update(self.cfg)
 
     def write(self):
@@ -53,7 +53,7 @@ class Config:
             inifile = open(self.configfile, 'wt')
         except IOError:
             raise ValueError('Cannot open config file for writing')
-        cfgtxt = self._textify(self.cfg)
+        cfgtxt = self._textify(self.cfg)  # dict values -> strings
         for key in sorted(cfgtxt):  # put keys into file in alphabetical order
             self.parser.set(self.section, key, cfgtxt[key])
         self.parser.write(inifile)

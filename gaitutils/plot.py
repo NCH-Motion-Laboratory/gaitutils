@@ -20,8 +20,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.gridspec as gridspec
 from guiutils import error_exit, messagebox
 import os.path as op
-import site_defs
-from site_defs import plotparams
+from config import Config
 
 
 class Plotter():
@@ -46,6 +45,7 @@ class Plotter():
         self.fig = None
         self.allvars = [item for row in plotvars for item in row]
         self.normaldata = normaldata
+        self.cfg = Config()
 
     def open_trial(self, source):
         self.trial = Trial(source)
@@ -102,7 +102,7 @@ class Plotter():
             raise ValueError('No trial to plot, call open_trial() first')
         if self.fig is None or not superpose:
             superposing = False
-            self.fig = plt.figure(figsize=plotparams.totalfigsize)
+            self.fig = plt.figure(figsize=self.cfg.totalfigsize)
         else:
             superposing = True
         if plotheightratios is None:
@@ -142,19 +142,19 @@ class Plotter():
                     varname = context + var
                     x, data = self.trial[varname]
                     tcolor = (model_tracecolor if model_tracecolor
-                              else plotparams.model_tracecolors[context])
+                              else self.cfg.model_tracecolors[context])
                     ax.plot(x, data, tcolor)
                     # set labels, ticks, etc. after plotting last cycle
                     if cycle == cycles[-1] and not superposing:
                         ax.set(ylabel=model.ylabels[varname])  # no xlabel for now
-                        ax.xaxis.label.set_fontsize(plotparams.label_fontsize)
-                        ax.yaxis.label.set_fontsize(plotparams.label_fontsize)
+                        ax.xaxis.label.set_fontsize(self.cfg.label_fontsize)
+                        ax.yaxis.label.set_fontsize(self.cfg.label_fontsize)
                         ax.set_title(model.varlabels[varname])
-                        ax.title.set_fontsize(plotparams.title_fontsize)
+                        ax.title.set_fontsize(self.cfg.title_fontsize)
                         ax.axhline(0, color='black')  # zero line
                         ax.locator_params(axis='y', nbins=6)  # less y tick marks
                         ax.tick_params(axis='both', which='major',
-                                       labelsize=plotparams.ticks_fontsize)
+                                       labelsize=self.cfg.ticks_fontsize)
                         ylim = ax.get_ylim()
                         # model specific adjustments
                         if model == models.pig_lowerbody:
@@ -172,37 +172,37 @@ class Plotter():
                                 nstd = (ndata[:, 1] if ndata.shape[1] == 2
                                         else 0)
                                 ax.fill_between(tnor, nor-nstd, nor+nstd,
-                                                color=plotparams.normals_color,
-                                                alpha=plotparams.normals_alpha)
+                                                color=self.cfg.normals_color,
+                                                alpha=self.cfg.normals_alpha)
 
             elif var_type == 'emg':
                 for cycle in cycles:
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
                     x, data = self.trial[var]
-                    data *= plotparams.emg_multiplier
+                    data *= self.cfg.emg_multiplier
                     # TODO: annotate
                     ax.plot(x, data)
                     if cycle == cycles[-1] and not superposing:
-                        ax.set(ylabel=plotparams.emg_ylabel)
-                        ax.yaxis.label.set_fontsize(plotparams.label_fontsize)
+                        ax.set(ylabel=self.cfg.emg_ylabel)
+                        ax.yaxis.label.set_fontsize(self.cfg.label_fontsize)
                         ax.set_title(var)
-                        ax.title.set_fontsize(plotparams.title_fontsize)
+                        ax.title.set_fontsize(self.cfg.title_fontsize)
                         ax.locator_params(axis='y', nbins=4)
                         # tick font size
                         ax.tick_params(axis='both', which='major',
-                                       labelsize=plotparams.ticks_fontsize)
+                                       labelsize=self.cfg.ticks_fontsize)
                         ax.set_xlim(min(x), max(x))
-                        ysc = site_defs.emg_yscale
+                        ysc = self.cfg.emg_yscale
                         ax.set_ylim(ysc[0], ysc[1])
                         if plot_emg_normaldata:
                             # plot EMG normal bars
-                            emgbar_ind = site_defs.emg_normals[var]
+                            emgbar_ind = self.cfg.emg_normals[var]
                             for k in range(len(emgbar_ind)):
                                 inds = emgbar_ind[k]
                                 plt.axvspan(inds[0], inds[1],
-                                            alpha=plotparams.emg_normals_alpha,
-                                            color=plotparams.emg_normals_color)
+                                            alpha=self.cfg.emg_normals_alpha,
+                                            color=self.cfg.emg_normals_color)
 
         self.gridspec.update(left=.08, right=.98, top=.92, bottom=.03,
                              hspace=.37, wspace=.22)

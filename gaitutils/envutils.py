@@ -8,12 +8,7 @@ Stuff related to Python environment
 """
 
 
-from __future__ import division, print_function
-import site_defs
-from gaitutils import nexus
-import numpy as np
-from scipy import signal
-import btk  # biomechanical toolkit for c3d reading
+from __future__ import print_function
 
 
 def run_from_ipython():

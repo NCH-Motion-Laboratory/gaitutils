@@ -20,12 +20,12 @@ from config import Config
 
 cfg = Config()
 
-if cfg.NEXUS_PATH:
-    if op.isdir(cfg.NEXUS_PATH):
-        if not cfg.NEXUS_PATH + "/SDK/Python" in sys.path:
-            sys.path.append(cfg.NEXUS_PATH + "/SDK/Python")
+if cfg.nexus_path:
+    if op.isdir(cfg.nexus_path):
+        if not cfg.nexus_path + "/SDK/Python" in sys.path:
+            sys.path.append(cfg.nexus_path + "/SDK/Python")
             # needed at least when running outside Nexus
-            sys.path.append(cfg.NEXUS_PATH + "/SDK/Win32")
+            sys.path.append(cfg.nexus_path + "/SDK/Win32")
 try:
     import ViconNexus
 except ImportError:

@@ -18,12 +18,12 @@ class Config:
     instance attributes or by indexing, but must be set by indexing.
 
     Uses configparser and auto conversion between string values and Python
-    types. Alternative might be to use configobj module.
-
+    types (based on __repr__ and ast.literal_eval).
+    Alternative might be to use configobj module.
     """
 
     def __init__(self, autoread=True):
-        self.cfg = defaultconfig.cfg.copy()
+        self.cfg = defaultconfig.cfg
         self.section = 'gaitutils'  # global section identifier
         self.configfile = op.expanduser('~') + '/gaitutils.cfg'
         self.parser = ConfigParser.SafeConfigParser()
@@ -34,7 +34,7 @@ class Config:
             try:
                 self.read()
             except ValueError:
-                print('Config: no config file, creating a default one')
+                print('Config: no config file, trying to create a default one')
                 self.write()
 
     def read(self):

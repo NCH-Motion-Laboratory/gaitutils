@@ -405,7 +405,6 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
 
         # if fp data available, mark only events around forceplate strike
         if context and strike_frame:
-            strikes_ = []
             if context == this_side:
                 # find event corresponding to forceplate strike
                 auto_strike_ind = np.argmin(abs(strikes - strike_frame))
@@ -414,18 +413,13 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                     raise ValueError('Detected strike event does not match ',
                                      'strike_frame')
                 # add other events as required
-                for fr in events_context:
-                    if 0 <= auto_strike_ind + fr <= len(strikes) - 1:
-                        strikes_.append(strikes[auto_strike_ind + fr])
+                strike_inds = np.array(events_context) + auto_strike_ind
             else:  # opposite side
                 # find the next strike following the (opposite) fp strike
                 diffv = strikes - strike_frame
                 nextdiff = [x for x in diffv if x > 0][0]
                 closest_next_ind = np.where(diffv == nextdiff)[0][0]
-                for fr in events_nocontext:
-                    if 0 <= closest_next_ind + fr <= len(strikes) - 1:
-                        strikes_ += [strikes[closest_next_ind + fr]]
-            strikes = strikes_
+                strike_inds = np.array(events_nocontext) + closest_next_ind
         # else mark around 'center frame'
         else:
             ctr_frame = get_center_frame(vicon, TRACK_MARKER)
@@ -435,7 +429,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
             ctr_strike_ind = np.argmin(abs(strikes - ctr_frame))
             # shift event indices
             strike_inds = np.array(events_nocontext) + ctr_strike_ind
-            strikes = strikes[strike_inds]
+        strikes = strikes[strike_inds]
 
         # mark toeoffs that are between strike events
         toeoffs = [fr for fr in toeoffs

@@ -13,7 +13,10 @@ import numpy as np
 from scipy import signal
 from gaitutils import read_data
 from envutils import debug_print
-import site_defs
+from config import Config
+
+
+cfg = Config()
 
 
 class EMG:
@@ -36,9 +39,9 @@ class EMG:
         self.passband = None
         # whether to autodetect disconnected EMG channels. set before read()
         self.emg_auto_off = True
-        self.ch_normals = site_defs.emg_normals  # EMG normal data
-        self.ch_names = site_defs.emg_names  # EMG logical channel names
-        self.ch_labels = site_defs.emg_labels  # descriptive labels
+        self.ch_normals = cfg.emg_normals  # EMG normal data
+        self.ch_names = cfg.emg_names  # EMG logical channel names
+        self.ch_labels = cfg.emg_labels  # descriptive labels
 
     def __getitem__(self, item):
         if item not in self.ch_names:
@@ -109,7 +112,7 @@ class EMG:
         # set scales for plotting channels
         self.yscale = {}
         for logch in self.ch_names:
-            self.yscale[logch] = site_defs.emg_yscale  # set a constant scale
+            self.yscale[logch] = cfg.emg_yscale  # set a constant scale
         # set flag if none of EMG channels contain data
         self.no_emg = all([isinstance(chandata, str) and
                            chandata == 'EMG_DISCONNECTED' for chandata in

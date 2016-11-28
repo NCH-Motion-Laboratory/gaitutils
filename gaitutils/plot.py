@@ -8,9 +8,6 @@
 -plot avg/stddev?
 
 
-
-
-
 @author: jnu@iki.fi
 """
 
@@ -23,7 +20,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.gridspec as gridspec
 from guiutils import error_exit, messagebox
 import os.path as op
-import site_defs
+from config import Config
 
 
 class Plotter():
@@ -48,6 +45,7 @@ class Plotter():
         self.fig = None
         self.allvars = [item for row in plotvars for item in row]
         self.normaldata = normaldata
+        self.cfg = Config()
 
     def open_trial(self, source):
         self.trial = Trial(source)
@@ -74,7 +72,7 @@ class Plotter():
     def plot_trial(self, cycles={'R': 1, 'L': 1}, context=None, t=None,
                    plotheightratios=None, model_tracecolor=None,
                    emg_tracecolor=None, plot_model_normaldata=True,
-                   plot_emg_normaldata=True):
+                   plot_emg_normaldata=True, superpose=True):
 
         """ Create plot of variables. Parameters:
 
@@ -95,30 +93,16 @@ class Plotter():
                 Whether to plot normal data. Uses either default normal data
                 (in site_defs) or the data given when creating the plotter
                 instance.
-                
+
+        If a plot already exists, new data will be superposed on it.
+
         """
-
-        label_fontsize = 10  # TODO: into config
-        title_fontsize = 12
-        ticks_fontsize = 10
-        totalfigsize = (14, 12)
-        model_tracecolors = {'R': 'lawngreen', 'L': 'red'}
-        emg_tracecolor = 'black'
-        emg_ylabel = 'mV'
-        emg_multiplier = 1e3  # plot millivolts
-        emg_normals_alpha = .8
-        emg_alpha = .6
-        emg_normals_color = 'pink'
-        emg_ylabel = 'mV'
-        normals_alpha = .3
-        normals_color = 'gray'
-
 
         if not self.trial:
             raise ValueError('No trial to plot, call open_trial() first')
-        if self.fig is None:
+        if self.fig is None or not superpose:
             superposing = False
-            self.fig = plt.figure(figsize=totalfigsize)
+            self.fig = plt.figure(figsize=self.cfg.totalfigsize)
         else:
             superposing = True
         if plotheightratios is None:
@@ -158,20 +142,19 @@ class Plotter():
                     varname = context + var
                     x, data = self.trial[varname]
                     tcolor = (model_tracecolor if model_tracecolor
-                              else model_tracecolors[context])
+                              else self.cfg.model_tracecolors[context])
                     ax.plot(x, data, tcolor)
                     # set labels, ticks, etc. after plotting last cycle
-                    if cycle == cycles[-1]:
+                    if cycle == cycles[-1] and not superposing:
                         ax.set(ylabel=model.ylabels[varname])  # no xlabel for now
-                        ax.xaxis.label.set_fontsize(label_fontsize)
-                        ax.yaxis.label.set_fontsize(label_fontsize)
+                        ax.xaxis.label.set_fontsize(self.cfg.label_fontsize)
+                        ax.yaxis.label.set_fontsize(self.cfg.label_fontsize)
                         ax.set_title(model.varlabels[varname])
-                        ax.title.set_fontsize(title_fontsize)
-                        plt.axhline(0, color='black')  # zero line
+                        ax.title.set_fontsize(self.cfg.title_fontsize)
+                        ax.axhline(0, color='black')  # zero line
                         ax.locator_params(axis='y', nbins=6)  # less y tick marks
-                        # tick font size
                         ax.tick_params(axis='both', which='major',
-                                       labelsize=ticks_fontsize)
+                                       labelsize=self.cfg.ticks_fontsize)
                         ylim = ax.get_ylim()
                         # model specific adjustments
                         if model == models.pig_lowerbody:
@@ -180,49 +163,52 @@ class Plotter():
                             ax.set_ylim(ylim0, ylim1)
                         elif model == models.musclelen:
                             ax.set_ylim(ylim[0]-10, ylim[1]+10)
-                        if plot_normaldata:
+                        if plot_model_normaldata:
                             tnor, ndata = model.get_normaldata(varname)
                             if ndata is not None:
                                 # assume (mean, stddev) for normal data
                                 # fill region between mean-stddev, mean+stddev
                                 nor = ndata[:, 0]
-                                if ndata.shape[1] == 2:
-                                    nstd = ndata[:, 1]
-                                else:
-                                    nstd = 0
+                                nstd = (ndata[:, 1] if ndata.shape[1] == 2
+                                        else 0)
                                 ax.fill_between(tnor, nor-nstd, nor+nstd,
-                                                color=normals_color,
-                                                alpha=normals_alpha)
+                                                color=self.cfg.normals_color,
+                                                alpha=self.cfg.normals_alpha)
 
             elif var_type == 'emg':
                 for cycle in cycles:
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
                     x, data = self.trial[var]
-                    data *= emg_multiplier
+                    data *= self.cfg.emg_multiplier
+                    # TODO: annotate
                     ax.plot(x, data)
-                    if cycle == cycles[-1]:
-                        ax.set(ylabel=emg_ylabel)
-                        ax.yaxis.label.set_fontsize(label_fontsize)
+                    if cycle == cycles[-1] and not superposing:
+                        ax.set(ylabel=self.cfg.emg_ylabel)
+                        ax.yaxis.label.set_fontsize(self.cfg.label_fontsize)
                         ax.set_title(var)
-                        ax.title.set_fontsize(title_fontsize)
+                        ax.title.set_fontsize(self.cfg.title_fontsize)
                         ax.locator_params(axis='y', nbins=4)
                         # tick font size
                         ax.tick_params(axis='both', which='major',
-                                       labelsize=ticks_fontsize)
+                                       labelsize=self.cfg.ticks_fontsize)
                         ax.set_xlim(min(x), max(x))
-                        # TODO: ax.set_ylim
-                        # plot EMG normal bars
-                        emgbar_ind = site_defs.emg_normals[var]
-                        for k in range(len(emgbar_ind)):
-                            inds = emgbar_ind[k]
-                            plt.axvspan(inds[0], inds[1],
-                                        alpha=emg_normals_alpha,
-                                        color=emg_normals_color)
+                        ysc = self.cfg.emg_yscale
+                        ax.set_ylim(ysc[0], ysc[1])
+                        if plot_emg_normaldata:
+                            # plot EMG normal bars
+                            emgbar_ind = self.cfg.emg_normals[var]
+                            for k in range(len(emgbar_ind)):
+                                inds = emgbar_ind[k]
+                                plt.axvspan(inds[0], inds[1],
+                                            alpha=self.cfg.emg_normals_alpha,
+                                            color=self.cfg.emg_normals_color)
 
         self.gridspec.update(left=.08, right=.98, top=.92, bottom=.03,
                              hspace=.37, wspace=.22)
         plt.show()
+
+
 
     def create_pdf(self, pdf_name=None, pdf_prefix=None):
         """ Make a pdf out of the created figure into the Nexus session dir.
@@ -245,7 +231,7 @@ class Plotter():
             with PdfPages(pdf_name) as pdf:
                 pdf.savefig(self.fig)
         except IOError:
-            messagebox('Error writing PDF file,'
+            messagebox('Error writing PDF file, '
                        'check that file is not already open.')
 
 

@@ -1,8 +1,16 @@
 # -*- coding: utf-8 -*-
 
 
--small discrepancies in c3d/Nexus cycles
+
+gaitutils TODO:
+
+
+-small discrepancies in c3d/Nexus cycles?
     -nexus returns smaller frame indices (sometimes)
+
+-config gets imported at too many places
+
+-packaging
 
 
 

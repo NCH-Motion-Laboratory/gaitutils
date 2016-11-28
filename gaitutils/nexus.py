@@ -16,15 +16,16 @@ import os.path as op
 import psutil
 from numutils import rising_zerocross, falling_zerocross
 import matplotlib.pyplot as plt
-from site_defs import NEXUS_PATH, NEXUS_VER
-import site_defs
-if NEXUS_PATH:
-    if not op.isdir(NEXUS_PATH):
-        raise ValueError('Cannot find Nexus SDK dir: ' + NEXUS_PATH)
-    if not NEXUS_PATH + "/SDK/Python" in sys.path:
-        sys.path.append(NEXUS_PATH + "/SDK/Python")
-        # needed at least when running outside Nexus
-        sys.path.append(NEXUS_PATH + "/SDK/Win32")
+from config import Config
+
+cfg = Config()
+
+if cfg.nexus_path:
+    if op.isdir(cfg.nexus_path):
+        if not cfg.nexus_path + "/SDK/Python" in sys.path:
+            sys.path.append(cfg.nexus_path + "/SDK/Python")
+            # needed at least when running outside Nexus
+            sys.path.append(cfg.nexus_path + "/SDK/Win32")
 try:
     import ViconNexus
 except ImportError:
@@ -111,7 +112,7 @@ def get_metadata(vicon):
 
 def get_emg_data(vicon):
     """ Read EMG data from Nexus """
-    emg_devname = site_defs.emg_devname
+    emg_devname = cfg.emg_devname
     devnames = vicon.GetDeviceNames()
     if emg_devname in devnames:
         emg_id = vicon.GetDeviceIDFromName(emg_devname)
@@ -292,8 +293,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     strike_frame is the frame where forceplate contact occurs.
 
     events_context specified which events to mark for the side where forceplate
-    strike occurs. For example (-1, 0, 1) would mark one event before forceplate
-    and one event after (and the forceplate strike).
+    strike occurs. For example (-1, 0, 1) would mark one event before strike
+    and one event after (and the strike).
     events_nocontext is applied for the side where there is no forceplate
     contact.
     If plot=True, velocity curves and events are plotted.

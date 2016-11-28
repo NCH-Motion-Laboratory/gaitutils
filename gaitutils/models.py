@@ -9,12 +9,14 @@ append to models_all.
 @author: Jussi
 """
 
-import site_defs
 import os.path as op
 import numpy as np
 from numutils import isfloat
+from config import Config
 
 models_all = []
+
+cfg = Config()
 
 
 def model_from_var(var):
@@ -222,7 +224,7 @@ pig_lowerbody.ylabels = _dict_with_side({
                          'PelvisAnglesY': 'Dwn     ($^\\circ$)      Up',
                          'PelvisAnglesZ': 'Bak     ($^\\circ$)      For'})
 
-pig_lowerbody.normaldata_path = site_defs.pig_normaldata_path
+pig_lowerbody.normaldata_path = cfg.pig_normaldata_path
 
 pig_lowerbody.is_kinetic_var = (lambda varname: 'Moment' in varname or
                                 'Power' in varname)

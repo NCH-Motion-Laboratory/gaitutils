@@ -278,6 +278,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     if not frate:
         raise Exception('Cannot get framerate from Nexus')
 
+    # TODO: into config?
     # relative thresholds (of maximum velocity)
     REL_THRESHOLD_FALL = .2
     REL_THRESHOLD_RISE = .5
@@ -322,7 +323,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     # loop: same operations for left / right foot
     for ind, footctrv in enumerate((rfootctrv, lfootctrv)):
         this_side = 'R' if ind == 0 else 'L'
-        print('automark: side ', this_side)
+
         # filter to scalar velocity data to suppress noise and spikes
         footctrv = signal.medfilt(footctrv, MEDIAN_WIDTH)
 
@@ -342,11 +343,11 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         threshold_rise_ = (vel_thresholds[this_side+'_toeoff'] or
                            maxv * REL_THRESHOLD_RISE)
 
-        print('automark: side: %s, rel. thresholds fall: %.2f rise %.2f' %
-              (this_side, maxv * REL_THRESHOLD_FALL,
-               maxv * REL_THRESHOLD_RISE))
-        print('automark: using fall threshold: %.2f' % threshold_fall_)
-        print('automark: using rise threshold: %.2f' % threshold_rise_)
+        print('automark_events: side: %s, rel. thresholds fall: %.2f '
+              'rise %.2f' % (this_side, maxv * REL_THRESHOLD_FALL,
+                             maxv * REL_THRESHOLD_RISE))
+        print('automark_events: using fall threshold: %.2f' % threshold_fall_)
+        print('automark_events: using rise threshold: %.2f' % threshold_rise_)
 
         # find point where velocity crosses threshold
         # strikes (velocity decreases)
@@ -370,7 +371,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         toeoffs = cross[np.logical_and(cind_min, cind_max)]
 
         # mark around center frame
-        events = events_context if this_side in context else events_nocontext
+        events = (events_context if context is not None and
+                  this_side in context else events_nocontext)
         ctr_strike_ind = np.argmin(abs(strikes - ctr_frame))
         # shift event indices
         strike_inds = np.array(events) + ctr_strike_ind

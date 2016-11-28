@@ -167,7 +167,8 @@ def _do_autoproc(vicon, enffiles):
                 # try to figure out trial center frame
                 for marker in TRACK_MARKERS:
                     ctr = utils.get_crossing_frame(vicon, marker=marker, dim=1,
-                                                   p0=Y_MIDPOINT)[0]
+                                                   p0=Y_MIDPOINT)
+                    ctr = ctr[0] if ctr else None
                     if ctr:  # ok and no gaps
                         break
                 # cannot find center frame - possible rasi or lasi gaps
@@ -259,7 +260,7 @@ def _do_autoproc(vicon, enffiles):
             continue  # next trial
         # events ok
         # crop trial
-        if nexus.nexus_ver >= 2.5:
+        if cfg.nexus_ver >= 2.5:
             evs = vicon.GetEvents(subjectname, "Left", "Foot Strike")[0]
             evs += vicon.GetEvents(subjectname, "Right", "Foot Strike")[0]
             evs += vicon.GetEvents(subjectname, "Left", "Foot Off")[0]

@@ -293,10 +293,11 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     strike_frame is the frame where forceplate contact occurs.
 
     events_context specified which events to mark for the side where forceplate
-    strike occurs. For example (-1, 0, 1) would mark one event before strike
-    and one event after (and the strike).
-    events_nocontext is applied for the side where there is no forceplate
-    contact.
+    strike occurs. For example (-1, 0, 1) would mark one event before the
+    strike and one event after (and the strike itself = 0).
+    events_nocontext is similarly interpreted and applied when there is no
+    forceplate contact.
+
     If plot=True, velocity curves and events are plotted.
 
     Before automark, run reconstruct, label and gap fill pipelines.

@@ -279,8 +279,8 @@ def get_model_data(vicon, model):
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                     'R_strike': None, 'R_toeoff': None}, context=None,
                     strike_frame=None,
-                    events_context=(0, 1), events_nocontext=(-1, 0, 1),
-                    mark_window_hw=None, plot=False):
+                    events_context=(-1, 0, 1), events_nocontext=(-1, 0, 1),
+                    plot=False):
     """ Mark events based on velocity thresholding. Absolute thresholds
     can be specified as arguments. Otherwise relative thresholds will be
     calculated based on the data. Optimal results will be obtained when
@@ -295,18 +295,14 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     events_context specified which events to mark for the side where forceplate
     strike occurs. For example (-1, 0, 1) would mark one event before the
     strike and one event after (and the strike itself = 0).
-    events_nocontext is similarly interpreted and applied when there is no
-    forceplate contact.
+    events_nocontext is similarly interpreted and applied for the side(s)
+    where there is no valid forceplate contact.
 
     If plot=True, velocity curves and events are plotted.
 
     Before automark, run reconstruct, label and gap fill pipelines.
     """
 
-    if not (context and strike_frame):
-        if not mark_window_hw:
-            raise ValueError('Need to specify either context or window for '
-                             'marking')
     frate = vicon.GetFrameRate()
     if not frate:
         raise Exception('Cannot get framerate from Nexus')
@@ -430,13 +426,17 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                     if 0 <= closest_next_ind + fr <= len(strikes) - 1:
                         strikes_ += [strikes[closest_next_ind + fr]]
             strikes = strikes_
-        # else mark around 'center frame' if specified
-        elif mark_window_hw:
-            ctr = get_center_frame(vicon, TRACK_MARKER)
-            if not ctr:
+        # else mark around 'center frame'
+        else:
+            ctr_frame = get_center_frame(vicon, TRACK_MARKER)
+            if not ctr_frame:
                 raise ValueError('Cannot find center frame (y crossing)')
-            strikes = [fr for fr in strikes if abs(fr - ctr) <= mark_window_hw]
-       
+            # strike nearest to ctr frame
+            ctr_strike_ind = np.argmin(abs(strikes - ctr_frame))
+            # shift event indices
+            strike_inds = np.array(events_nocontext) + ctr_strike_ind
+            strikes = strikes[strike_inds]
+
         # mark toeoffs that are between strike events
         toeoffs = [fr for fr in toeoffs
                    if any(strikes < fr) and any(strikes > fr)]

@@ -64,8 +64,6 @@ DESC_SKIP = ['Unipedal right', 'Unipedal left', 'Toe standing']
 MIN_TRIAL_DURATION = 100
 # how many frames to leave before/after first/last events
 CROP_MARGIN = 10
-# automark frames around forceplate region (half-width)
-AUTOMARK_HW = 100
 # marker for tracking overall body position (to get gait dir) and center frame
 # do not use RPSI and LPSI since they are not always present
 TRACK_MARKERS = ['RASI', 'LASI']
@@ -251,8 +249,7 @@ def _do_autoproc(vicon, enffiles):
             strike_frame = trial.fpdata['strike'] if trial.fpdata else None
             nexus.automark_events(vicon, strike_frame=strike_frame,
                                   context=context,
-                                  vel_thresholds=vel_th_,
-                                  mark_window_hw=AUTOMARK_HW)
+                                  vel_thresholds=vel_th_)
             trial.events = True
         except ValueError:  # cannot automark
             eclipse_str = (trials[filepath].description + ',' +
@@ -283,7 +280,6 @@ def _do_autoproc(vicon, enffiles):
             enf_file = filepath + '.Trial.enf'
             eclipse.set_eclipse_key(enf_file, 'DESCRIPTION',
                                     trial.description, update_existing=True)
-
     # print stats
     n_events = len([tr for tr in trials.values() if tr.events])
     print('\nComplete\n')

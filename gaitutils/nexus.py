@@ -44,10 +44,6 @@ def pid():
     return None
 
 
-def nexus_ver():
-    return float(NEXUS_VER)
-
-
 def viconnexus():
     """ Return a ViconNexus instance. """
     return ViconNexus.ViconNexus()
@@ -56,7 +52,6 @@ def viconnexus():
 def is_vicon_instance(obj):
     """ Check if obj is an instance of ViconNexus """
     return obj.__class__.__name__ == 'ViconNexus'
-
 
 
 def get_metadata(vicon):
@@ -230,38 +225,6 @@ def get_fp_strike_and_toeoff(vicon):
             int(np.round(fptoeoff / ftot.samplesperframe)))
 
 
-def get_center_frame(vicon, marker):
-    """ Return frame where marker crosses x axis of coordinate system
-    (y = 0) """
-    mrkdata = get_marker_data(vicon, marker)
-    P = mrkdata[marker + '_P']
-    y = P[:, 1]
-    zx = np.append(rising_zerocross(y), falling_zerocross(y))
-    ycross = list()
-    # sanity checks
-    for p in zx:
-        # y must be nonzero on either side of crossing (valid data)
-        if p-10 > 0 and p+10 < len(y):
-            if y[p-10] != 0 and y[p+10] != 0:
-                # y must change sign also around p
-                if np.sign(y[p-10]) != np.sign(y[p+10]):
-                        ycross.append(p)
-    if len(ycross) > 1:
-        print('Warning: multiple crossings detected')
-        ycross = ycross[0]
-    return ycross
-
-
-def get_movement_direction(vicon, marker, dir):
-    """ Return average direction of movement for given marker """
-    dir = dir.lower()
-    dir = {'x': 0, 'y': 1, 'z': 2}[dir]
-    mrkdata = get_marker_data(vicon, marker)
-    P = mrkdata[marker+'_P']
-    ydiff = np.median(np.diff(P[:, dir]))  # median of y derivative
-    return 1 if ydiff > 0 else -1
-
-
 def get_model_data(vicon, model):
     """ Read model output variables (e.g. Plug-in Gait) """
     modeldata = dict()
@@ -278,6 +241,7 @@ def get_model_data(vicon, model):
 
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                     'R_strike': None, 'R_toeoff': None}, context=None,
+                    ctr_frame=None,
                     events_context=(0, 1), events_nocontext=(-1, 0, 1),
                     plot=False):
     """ Mark events based on velocity thresholding. Absolute thresholds
@@ -288,20 +252,28 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     vel_threshold gives velocity thresholds for identifying events. These
     can be obtained from forceplate data.
 
-    context gives forceplate context for the trial: 'R', 'L', or None.
-    strike_frame is the frame where forceplate contact occurs.
+    context gives forceplate context for the trial: 'R', 'L', 'RL', or None.
 
-    events_context specified which events to mark for the side where forceplate
-    strike occurs. For example (-1, 0, 1) would mark one event before the
-    strike and one event after (and the strike itself = 0).
-    events_nocontext is similarly interpreted and applied for the side(s)
-    where there is no valid forceplate contact.
+    events_context and events_nocontext specify which events to mark (see
+    below).
+
+    ctr_frame is the reference frame for marking events. In events_context and
+    events_nocontext,
+    0 refers to the event nearest to the reference frame, -1 refers to the one
+    before that etc. The reference frame could be e.g. the frame where
+    forceplate strike occurs or the center of the walkway
+    (use nexus.get_crossing_frame() to compute it)
+
+    events_nocontext will be applied to the side which does not have
+    forceplate context (if any)
 
     If plot=True, velocity curves and events are plotted.
 
     Before automark, run reconstruct, label and gap fill pipelines.
     """
 
+    if not ctr_frame:
+        raise ValueError('Need to supply center frame')
     frate = vicon.GetFrameRate()
     if not frate:
         raise Exception('Cannot get framerate from Nexus')
@@ -324,10 +296,6 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     RIGHT_FOOT_MARKERS = ['RHEE', 'RTOE', 'RANK']
     # left foot markers
     LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
-    # tolerance between forceplate strike (parameter) and detected event
-    FP_STRIKE_TOL = 7
-    # marker for finding trial center frame
-    TRACK_MARKER = 'LASI'
 
     # get subject info
     subjectnames = vicon.GetSubjectNames()
@@ -374,12 +342,11 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         threshold_rise_ = (vel_thresholds[this_side+'_toeoff'] or
                            maxv * REL_THRESHOLD_RISE)
 
-        print('automark: rel. thresholds: fall: %.2f rise %.2f' %
-              (maxv * REL_THRESHOLD_FALL, maxv * REL_THRESHOLD_RISE))
-        print('automark: using fall threshold: %s=%.2f' %
-              (this_side, threshold_fall_))
-        print('automark: using rise threshold: %s=%.2f' %
-              (this_side, threshold_rise_))
+        print('automark: side: %s, rel. thresholds fall: %.2f rise %.2f' %
+              (this_side, maxv * REL_THRESHOLD_FALL,
+               maxv * REL_THRESHOLD_RISE))
+        print('automark: using fall threshold: %.2f' % threshold_fall_)
+        print('automark: using rise threshold: %.2f' % threshold_rise_)
 
         # find point where velocity crosses threshold
         # strikes (velocity decreases)
@@ -402,12 +369,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                                   footctrv[cross+1] > MIN_SLOPE_VELOCITY)
         toeoffs = cross[np.logical_and(cind_min, cind_max)]
 
-        # mark around 'center frame'
-        events = events_context if context else events_nocontext
-        ctr_frame = get_center_frame(vicon, TRACK_MARKER)
-        if not ctr_frame:
-            raise ValueError('Cannot find center frame (y crossing)')
-        # strike nearest to ctr frame
+        # mark around center frame
+        events = events_context if this_side in context else events_nocontext
         ctr_strike_ind = np.argmin(abs(strikes - ctr_frame))
         # shift event indices
         strike_inds = np.array(events) + ctr_strike_ind

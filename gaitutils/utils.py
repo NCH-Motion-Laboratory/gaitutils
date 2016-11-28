@@ -13,12 +13,15 @@ from scipy import signal
 import numpy as np
 
 
-def get_center_frame(source, marker):
-    """ Return frame where marker crosses x axis of coordinate system
-    (y = 0) """
+def get_crossing_frame(source, marker, dim=1, p0=0):
+    """ Return frame(s) where marker position (dimension dim) crosses r0
+    (units are as returned by Nexus, usually mm).
+    Dims are x=0, y=1, z=2. """
     mrkdata = get_marker_data(source, marker)
     P = mrkdata[marker + '_P']
-    y = P[:, 1]
+    y = P[:, dim]
+    nzind = np.where(y != 0)  # nonzero elements == valid data (not nice)
+    y[nzind] -= p0
     zx = np.append(rising_zerocross(y), falling_zerocross(y))
     ycross = list()
     # sanity checks
@@ -29,9 +32,6 @@ def get_center_frame(source, marker):
                 # y must change sign also around p
                 if np.sign(y[p-10]) != np.sign(y[p+10]):
                         ycross.append(p)
-    if len(ycross) > 1:
-        print('get_center_frame: multiple valid crossings detected')
-        ycross = ycross[0]
     return ycross
 
 

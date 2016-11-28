@@ -21,10 +21,7 @@ Process all trials in current session directory. Need to load a trial first
 
 TODO:
 
-AUTOMARK_HW does not work properly for slow walkers
--should mark given number of events around ctr frame
--use events_nocontext arg
-
+vars into config data
 
 
 NOTES:
@@ -38,7 +35,7 @@ by Eclipse?)
 """
 
 from __future__ import print_function
-from gaitutils import nexus, eclipse, utils
+from gaitutils import nexus, eclipse, utils, config
 import glob
 import os
 import numpy as np
@@ -67,6 +64,8 @@ CROP_MARGIN = 10
 # marker for tracking overall body position (to get gait dir) and center frame
 # do not use RPSI and LPSI since they are not always present
 TRACK_MARKERS = ['RASI', 'LASI']
+# center of walkway
+Y_MIDPOINT = 0
 # right feet markers
 RIGHT_FOOT_MARKERS = ['RHEE', 'RTOE', 'RANK']
 # left foot markers
@@ -92,6 +91,9 @@ WRITE_ECLIPSE_DESC = True
 RESET_ROI = True
 # check subject weight when analyzing forceplate data
 CHECK_WEIGHT = True
+
+# read config data
+cfg = config.Config()
 
 
 class Trial:
@@ -149,7 +151,7 @@ def _do_autoproc(vicon, enffiles):
             vicon.OpenTrial(filepath, TRIAL_OPEN_TIMEOUT)
             allmarkers = vicon.GetMarkerNames(subjectname)
             # reset ROI before operations
-            if RESET_ROI and nexus.nexus_ver >= 2.5:
+            if RESET_ROI and cfg.nexus_ver >= 2.5:
                 (fstart, fend) = vicon.GetTrialRange()
                 vicon.SetTrialRegionOfInterest(fstart, fend)
 
@@ -164,7 +166,8 @@ def _do_autoproc(vicon, enffiles):
             else:  # duration ok
                 # try to figure out trial center frame
                 for marker in TRACK_MARKERS:
-                    ctr = utils.get_center_frame(vicon, marker=marker)
+                    ctr = utils.get_crossing_frame(vicon, marker=marker, dim=1,
+                                                   p0=Y_MIDPOINT)[0]
                     if ctr:  # ok and no gaps
                         break
                 # cannot find center frame - possible rasi or lasi gaps
@@ -246,8 +249,7 @@ def _do_autoproc(vicon, enffiles):
             vel_th_[context+'_toeoff'] = trial.fpdata['toeoff_v']
         try:
             vicon.ClearAllEvents()
-            nexus.automark_events(vicon,
-                                  context=context,
+            nexus.automark_events(vicon, context=context, ctr_frame=ctr,
                                   vel_thresholds=vel_th_)
             trial.events = True
         except ValueError:  # cannot automark

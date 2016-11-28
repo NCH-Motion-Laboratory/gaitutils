@@ -86,7 +86,7 @@ GAPS_MIN_DIST = 70
 # max. tolerated frames with gaps
 GAPS_MAX = 10
 # whether to use trial specific velocity threshold data when available
-TRIAL_SPECIFIC_VELOCITY = False
+TRIAL_SPECIFIC_VELOCITY = True
 # write Eclipse descriptions
 WRITE_ECLIPSE_DESC = True
 # reset ROI before processing; otherwise trajectories won't get reconstructed

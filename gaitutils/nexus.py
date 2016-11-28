@@ -278,7 +278,6 @@ def get_model_data(vicon, model):
 
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                     'R_strike': None, 'R_toeoff': None}, context=None,
-                    strike_frame=None,
                     events_context=(0, 1), events_nocontext=(-1, 0, 1),
                     plot=False):
     """ Mark events based on velocity thresholding. Absolute thresholds
@@ -403,32 +402,15 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                                   footctrv[cross+1] > MIN_SLOPE_VELOCITY)
         toeoffs = cross[np.logical_and(cind_min, cind_max)]
 
-        # if fp data available, mark only events around forceplate strike
-        if context and strike_frame:
-            if context == this_side:
-                # find event corresponding to forceplate strike
-                auto_strike_ind = np.argmin(abs(strikes - strike_frame))
-                if abs(strikes[auto_strike_ind] -
-                        strike_frame) > FP_STRIKE_TOL:
-                    raise ValueError('Detected strike event does not match ',
-                                     'strike_frame')
-                # add other events as required
-                strike_inds = np.array(events_context) + auto_strike_ind
-            else:  # opposite side
-                # find the next strike following the (opposite) fp strike
-                diffv = strikes - strike_frame
-                nextdiff = [x for x in diffv if x > 0][0]
-                closest_next_ind = np.where(diffv == nextdiff)[0][0]
-                strike_inds = np.array(events_nocontext) + closest_next_ind
-        # else mark around 'center frame'
-        else:
-            ctr_frame = get_center_frame(vicon, TRACK_MARKER)
-            if not ctr_frame:
-                raise ValueError('Cannot find center frame (y crossing)')
-            # strike nearest to ctr frame
-            ctr_strike_ind = np.argmin(abs(strikes - ctr_frame))
-            # shift event indices
-            strike_inds = np.array(events_nocontext) + ctr_strike_ind
+        # mark around 'center frame'
+        events = events_context if context else events_nocontext
+        ctr_frame = get_center_frame(vicon, TRACK_MARKER)
+        if not ctr_frame:
+            raise ValueError('Cannot find center frame (y crossing)')
+        # strike nearest to ctr frame
+        ctr_strike_ind = np.argmin(abs(strikes - ctr_frame))
+        # shift event indices
+        strike_inds = np.array(events) + ctr_strike_ind
         strikes = strikes[strike_inds]
 
         # mark toeoffs that are between strike events

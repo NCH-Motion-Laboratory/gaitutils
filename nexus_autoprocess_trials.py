@@ -246,8 +246,7 @@ def _do_autoproc(vicon, enffiles):
             vel_th_[context+'_toeoff'] = trial.fpdata['toeoff_v']
         try:
             vicon.ClearAllEvents()
-            strike_frame = trial.fpdata['strike'] if trial.fpdata else None
-            nexus.automark_events(vicon, strike_frame=strike_frame,
+            nexus.automark_events(vicon,
                                   context=context,
                                   vel_thresholds=vel_th_)
             trial.events = True

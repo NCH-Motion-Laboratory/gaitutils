@@ -279,7 +279,7 @@ def get_model_data(vicon, model):
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                     'R_strike': None, 'R_toeoff': None}, context=None,
                     strike_frame=None,
-                    events_context=(-1, 0, 1), events_nocontext=(-1, 0, 1),
+                    events_context=(0, 1), events_nocontext=(-1, 0, 1),
                     plot=False):
     """ Mark events based on velocity thresholding. Absolute thresholds
     can be specified as arguments. Otherwise relative thresholds will be

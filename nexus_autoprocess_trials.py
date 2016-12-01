@@ -100,6 +100,7 @@ class Trial:
     """ Used as data holder """
     def __init__(self):
         self.recon_ok = False
+        self.ctr_frame = None
         self.context = None
         self.description = ''
         self.fpdata = None
@@ -170,6 +171,7 @@ def _do_autoproc(vicon, enffiles):
                                                    p0=Y_MIDPOINT)
                     ctr = ctr[0] if ctr else None
                     if ctr:  # ok and no gaps
+                        trials[filepath].ctr_frame = ctr
                         break
                 # cannot find center frame - possible rasi or lasi gaps
                 if not ctr:
@@ -245,12 +247,16 @@ def _do_autoproc(vicon, enffiles):
         # otherwise use statistics
         context = trial.context
         vel_th_ = vel_th.copy()
-        if TRIAL_SPECIFIC_VELOCITY and context:
+        if context:
             vel_th_[context+'_strike'] = trial.fpdata['strike_v']
             vel_th_[context+'_toeoff'] = trial.fpdata['toeoff_v']
+            ctr_frame = trial.fpdata['strike']  # mark around fp strike
+        else:
+            ctr_frame = trial.ctr_frame  # mark around walkway center
         try:
             vicon.ClearAllEvents()
-            nexus.automark_events(vicon, context=context, ctr_frame=ctr,
+            nexus.automark_events(vicon, context=context,
+                                  ctr_frame=ctr_frame,
                                   vel_thresholds=vel_th_)
             trial.events = True
         except ValueError:  # cannot automark
@@ -265,11 +271,12 @@ def _do_autoproc(vicon, enffiles):
             evs += vicon.GetEvents(subjectname, "Right", "Foot Strike")[0]
             evs += vicon.GetEvents(subjectname, "Left", "Foot Off")[0]
             evs += vicon.GetEvents(subjectname, "Right", "Foot Off")[0]
-            # when setting roi, do not go beyond trial range
-            minfr, maxfr = vicon.GetTrialRange()
-            roistart = max(min(evs)-CROP_MARGIN, minfr)
-            roiend = min(max(evs)+CROP_MARGIN, maxfr)
-            vicon.SetTrialRegionOfInterest(roistart, roiend)
+            if evs:
+                # when setting roi, do not go beyond trial range
+                minfr, maxfr = vicon.GetTrialRange()
+                roistart = max(min(evs)-CROP_MARGIN, minfr)
+                roiend = min(max(evs)+CROP_MARGIN, maxfr)
+                vicon.SetTrialRegionOfInterest(roistart, roiend)
         # run model pipeline and save
         eclipse_str = DESCRIPTIONS['ok'] + ',' + trial.description
         vicon.RunPipeline(MODEL_PIPELINE, '', PIPELINE_TIMEOUT)

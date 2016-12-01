@@ -378,7 +378,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         ctr_strike_ind = np.argmin(abs(strikes - ctr_frame))
         # shift event indices
         strike_inds = np.array(events) + ctr_strike_ind
-        inds = np.array([i for i in strike_inds if i < len(strikes)])
+        inds = np.array([i for i in strike_inds if i >= 0 and
+                        i < len(strikes)])
         print('all strike events:', strikes)
         strikes = strikes[inds]
         print('selected strike events:', strikes)

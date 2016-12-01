@@ -268,10 +268,11 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     forceplate context (if any)
 
     If plot=True, velocity curves and events are plotted.
-    
+
     If mark=False, no events will actually be marked.
 
-    Before automark, run reconstruct, label and gap fill pipelines.
+    Before automark, run reconstruct, label, gap fill and filter pipelines.
+    Filtering is important to get reasonably smooth derivatives.
     """
 
     if not ctr_frame:
@@ -376,7 +377,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         events = (events_context if context is not None and
                   this_side in context else events_nocontext)
         ctr_strike_ind = np.argmin(abs(strikes - ctr_frame))
-        # shift event indices
+
+        # compute indices of selected events
         strike_inds = np.array(events) + ctr_strike_ind
         inds = np.array([i for i in strike_inds if i >= 0 and
                         i < len(strikes)])
@@ -387,6 +389,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         # mark toeoffs that are between strike events
         toeoffs = [fr for fr in toeoffs
                    if any(strikes < fr) and any(strikes > fr)]
+
         # create the events in Nexus
         side_str = 'Right' if this_side == 'R' else 'Left'
         if mark:
@@ -394,7 +397,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                     vicon.CreateAnEvent(subjectname, side_str,
                                         'Foot Strike', fr, 0.0)
             for fr in toeoffs:
-                    vicon.CreateAnEvent(subjectname, side_str, 'Foot Off', fr, 0.0)
+                    vicon.CreateAnEvent(subjectname, side_str,
+                                        'Foot Off', fr, 0.0)
         strikes_all[this_side] = strikes
         toeoffs_all[this_side] = toeoffs
 

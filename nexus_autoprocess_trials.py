@@ -48,7 +48,6 @@ TRIALS_RANGE = (1, inf)
 # list of pipelines to run
 PRE_PIPELINES = ['Reconstruct and label (legacy)', 'AutoGapFill_mod', 'filter']
 MODEL_PIPELINE = 'Dynamic model + save (LEGACY)'
-SKIP_PIPELINES = ['Reconstruct and label (legacy)', 'Save trial']
 SAVE_PIPELINE = 'Save trial'
 # timeouts for Nexus (sec)
 TRIAL_OPEN_TIMEOUT = 45
@@ -144,8 +143,9 @@ def _do_autoproc(vicon, enffiles):
                 continue
             if trial_desc.upper() in [s.upper() for s in DESC_SKIP]:
                 print('Skipping based on description')
-                for pipeline in SKIP_PIPELINES:
+                for pipeline in PRE_PIPELINES:
                     vicon.RunPipeline(pipeline, '', PIPELINE_TIMEOUT)
+                vicon.SaveTrial()  # marks the trial processed
                 continue
             eclipse_str = ''
             trials[filepath] = Trial()

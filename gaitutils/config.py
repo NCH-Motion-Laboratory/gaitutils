@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-Manage config for hpimon.
+Manage config.
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -18,14 +18,15 @@ class Config:
     instance attributes or by indexing, but must be set by indexing.
 
     Uses configparser and auto conversion between string values and Python
-    types (based on __repr__ and ast.literal_eval).
+    types (based on __repr__ and ast.literal_eval). Values are converted to
+    text when saving to file and back to Python expressions when reading.
     Alternative might be to use configobj module.
     """
 
     def __init__(self, autoread=True):
         self.cfg = defaultconfig.cfg
         self.section = 'gaitutils'  # global section identifier
-        self.configfile = op.expanduser('~') + '/gaitutils.cfg'
+        self.configfile = defaultconfig.cfg_file
         self.parser = ConfigParser.SafeConfigParser()
         self.parser.optionxform = str  # make it case sensitive
         self.parser.add_section(self.section)
@@ -41,7 +42,6 @@ class Config:
         """ Read config dict from disk file. """
         if not op.isfile(self.configfile):
             raise ValueError('No config file')
-        print('Config: reading from %s' % self.configfile)
         self.parser.read(self.configfile)
         cfgtxt = self.parser._sections[self.section]  # dict
         self.cfg = self._untextify(cfgtxt)  # dict values -> Python types

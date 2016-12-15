@@ -14,6 +14,8 @@ import matplotlib.pyplot as plt
 c3dfile = u'c:\\Users\\hus20664877\\Desktop\\Vicon\\vicon_data\\test\\H0036_EV\\2015_9_21_seur_EV\\2015_9_21_seur_EV19.c3d'
 vicon = nexus.viconnexus()
 
+utils.kinetics_available(vicon)
+
 """
 e1 = EMG(c3dfile)
 e2 = EMG(vicon)
@@ -40,8 +42,8 @@ plt.plot(e2.t, e2['LGas'])
 #cmod = read_data.get_model_data(c3dfile, pigmod)
 
 #pl = Plotter(layouts.kinetics_emg('L'))
-pl = Plotter(layouts.std_kinematics)
-pl.open_trial(vicon)
-pl.plot_trial(cycles=1, context='L')
+#pl = Plotter(layouts.std_kinematics)
+#pl.open_trial(vicon)
+#pl.plot_trial(cycles=1, context='L')
 
 

@@ -48,10 +48,10 @@ TRIALS_RANGE = (1, inf)
 # list of pipelines to run
 PRE_PIPELINES = ['Reconstruct and label (legacy)', 'AutoGapFill_mod', 'filter']
 MODEL_PIPELINE = 'Dynamic model + save (LEGACY)'
-SAVE_PIPELINE = 'Save trial'
 # timeouts for Nexus (sec)
 TRIAL_OPEN_TIMEOUT = 45
 PIPELINE_TIMEOUT = 45
+SAVE_TIMEOUT = 100
 # trial types to skip (Eclipse type field) (case sensitive)
 TYPE_SKIP = 'Static'
 # trial descriptions to skip (Eclipse description field) (not case sensitive)
@@ -143,9 +143,11 @@ def _do_autoproc(vicon, enffiles):
                 continue
             if trial_desc.upper() in [s.upper() for s in DESC_SKIP]:
                 print('Skipping based on description')
+                # run preprocessing + save even for skipped trials, to mark
+                # them as processed
                 for pipeline in PRE_PIPELINES:
                     vicon.RunPipeline(pipeline, '', PIPELINE_TIMEOUT)
-                vicon.SaveTrial()  # marks the trial processed
+                vicon.SaveTrial(SAVE_TIMEOUT)
                 continue
             eclipse_str = ''
             trials[filepath] = Trial()
@@ -198,7 +200,7 @@ def _do_autoproc(vicon, enffiles):
             if fail is not None:
                 print('preprocessing failed: %s' % DESCRIPTIONS[fail])
                 trials[filepath].description = DESCRIPTIONS[fail]
-                vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
+                vicon.SaveTrial(SAVE_TIMEOUT)
                 continue
             else:
                 trials[filepath].recon_ok = True
@@ -223,7 +225,7 @@ def _do_autoproc(vicon, enffiles):
             gait_dir = (DESCRIPTIONS['dir_back'] if gait_dir == 1 else
                         DESCRIPTIONS['dir_front'])
             eclipse_str += gait_dir
-            vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
+            vicon.SaveTrial(SAVE_TIMEOUT)            
             # time.sleep(1)
             trials[filepath].description = eclipse_str
 
@@ -262,7 +264,7 @@ def _do_autoproc(vicon, enffiles):
         except ValueError:  # cannot automark
             eclipse_str = (trials[filepath].description + ',' +
                            DESCRIPTIONS['automark_failure'])
-            vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
+            vicon.SaveTrial(SAVE_TIMEOUT)
             continue  # next trial
         # events ok
         # crop trial
@@ -280,7 +282,7 @@ def _do_autoproc(vicon, enffiles):
         # run model pipeline and save
         eclipse_str = DESCRIPTIONS['ok'] + ',' + trial.description
         vicon.RunPipeline(MODEL_PIPELINE, '', PIPELINE_TIMEOUT)
-        vicon.RunPipeline(SAVE_PIPELINE, '', PIPELINE_TIMEOUT)
+        vicon.SaveTrial(SAVE_TIMEOUT)
         trials[filepath].description = eclipse_str
 
     # all done; update Eclipse descriptions

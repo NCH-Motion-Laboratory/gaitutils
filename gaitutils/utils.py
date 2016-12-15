@@ -119,11 +119,12 @@ def kinetics_available(source, check_weight=True):
               '(double contact?)')
         return emptydi
 
-    # check: markers inside forceplate region during strike/toeoff
-    strike_fr = int(np.round(friseind / fp0['samplesperframe']))
-    toeoff_fr = int(np.round(ffallind / fp0['samplesperframe']))
+    # frame indices are 1-based so need to add 1 (what about c3d?)
+    strike_fr = int(np.round(friseind / fp0['samplesperframe'])) + 1
+    toeoff_fr = int(np.round(ffallind / fp0['samplesperframe'])) + 1
     mrkdata = get_marker_data(source, RIGHT_FOOT_MARKERS + LEFT_FOOT_MARKERS)
     kinetics = None
+    # check: markers inside forceplate region during strike/toeoff
     ok = True
     for marker in RIGHT_FOOT_MARKERS:
         marker += '_P'

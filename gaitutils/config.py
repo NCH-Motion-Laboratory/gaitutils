@@ -35,7 +35,8 @@ class Config:
             try:
                 self.read()
             except ValueError:
-                print('Config: no config file, trying to create a default one')
+                print('Config: no config file, trying to create %s' %
+                      self.configfile)
                 self.write()
 
     def read(self):

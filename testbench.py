@@ -14,7 +14,20 @@ import matplotlib.pyplot as plt
 c3dfile = u'c:\\Users\\hus20664877\\Desktop\\Vicon\\vicon_data\\test\\H0036_EV\\2015_9_21_seur_EV\\2015_9_21_seur_EV19.c3d'
 vicon = nexus.viconnexus()
 
-utils.kinetics_available(vicon)
+#utils.kinetics_available(vicon)
+
+lout = [['LVas'], ['LRec'], ['LHam']]
+
+pl = Plotter(lout)
+
+pl.open_trial(vicon)
+
+pl.plot_trial(cycles=None, maintitleprefix='Unnormalized EMG for ')
+
+
+
+
+
 
 """
 e1 = EMG(c3dfile)

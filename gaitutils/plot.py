@@ -72,7 +72,8 @@ class Plotter():
     def plot_trial(self, cycles={'R': 1, 'L': 1}, context=None, t=None,
                    plotheightratios=None, model_tracecolor=None,
                    emg_tracecolor=None, plot_model_normaldata=True,
-                   plot_emg_normaldata=True, superpose=True):
+                   plot_emg_normaldata=True, superpose=True,
+                   maintitle=None, maintitleprefix=None):
 
         """ Create plot of variables. Parameters:
 
@@ -100,6 +101,8 @@ class Plotter():
 
         if not self.trial:
             raise ValueError('No trial to plot, call open_trial() first')
+        if not maintitle:
+            maintitle = maintitleprefix + self.trial.trialname
         if self.fig is None or not superpose:
             superposing = False
             self.fig = plt.figure(figsize=self.cfg.totalfigsize)
@@ -204,6 +207,7 @@ class Plotter():
                                             alpha=self.cfg.emg_normals_alpha,
                                             color=self.cfg.emg_normals_color)
 
+        plt.suptitle(maintitle, fontsize=12, fontweight="bold")
         self.gridspec.update(left=.08, right=.98, top=.92, bottom=.03,
                              hspace=.37, wspace=.22)
         plt.show()

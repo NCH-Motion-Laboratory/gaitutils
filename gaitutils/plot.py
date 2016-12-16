@@ -180,9 +180,8 @@ class Plotter():
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
                     x, data = self.trial[var]
-                    data *= self.cfg.emg_multiplier
                     # TODO: annotate
-                    ax.plot(x, data)
+                    ax.plot(x, data*self.cfg.emg_multiplier)
                     if cycle == cycles[-1] and not superposing:
                         ax.set(ylabel=self.cfg.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.label_fontsize)
@@ -194,7 +193,8 @@ class Plotter():
                                        labelsize=self.cfg.ticks_fontsize)
                         ax.set_xlim(min(x), max(x))
                         ysc = self.cfg.emg_yscale
-                        ax.set_ylim(ysc[0], ysc[1])
+                        ax.set_ylim(ysc[0]*self.cfg.emg_multiplier,
+                                    ysc[1]*self.cfg.emg_multiplier)
                         if plot_emg_normaldata:
                             # plot EMG normal bars
                             emgbar_ind = self.cfg.emg_normals[var]

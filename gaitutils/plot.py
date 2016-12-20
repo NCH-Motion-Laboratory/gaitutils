@@ -29,15 +29,14 @@ class Plotter(object):
     def __init__(self, layout=None, normaldata=None):
         """ Plot gait data.
 
-        plotvars: list of lists
+        layout: list of lists
             Variables to be plotted. Each list is a row of variables.
-            If none, must be set later.
+            If none, must be set before plotting (plotter.layout = layout)
         normaldata: list of lists
             Corresponding normal data files for each plot. Will override
             default normal data settings.
         """
         if layout:
-            pass
             self.layout = layout
         else:
             self._layout = None

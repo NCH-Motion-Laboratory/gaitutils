@@ -13,11 +13,10 @@ from gaitutils import Plotter, layouts
 def do_plot():
 
     pl = Plotter()
-
     pl.open_nexus_trial()
     side = pl.trial.kinetics
 
-    pl.plotvars = layouts.kinetics_emg(side)
+    pl.layout = layouts.kinetics_emg(side)
     plotheightratios = [3, 2, 2, 3, 2, 2, 2, 3]
     pdf_prefix = 'Kinetics_EMG_'
     maintitleprefix = 'Kinetics-EMG plot for '

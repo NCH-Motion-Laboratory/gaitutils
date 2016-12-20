@@ -48,12 +48,10 @@ class Plotter(object):
 
     @property
     def layout(self):
-        print('getter called')
         return self._layout
 
     @layout.setter
     def layout(self, layout):
-        print('setter called')
         if (not isinstance(layout, list) or not
            all([isinstance(item, list) for item in layout])):
             raise ValueError('Plot variables must be a list of lists')
@@ -148,28 +146,28 @@ class Plotter(object):
                       for ncycle in cycles[side]]
 
         for i, var in enumerate(self.allvars):
-            ax = plt.subplot(self.gridspec[i])
             var_type = self._var_type(var)
             if var_type is None:
                 continue
-            elif var_type == 'model':
+            ax = plt.subplot(self.gridspec[i])
+            if var_type == 'model':
                 model = models.model_from_var(var)
                 for cycle in cycles:
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
                         context = cycle.context
-                        if (models.pig_lowerbody.is_kinetic_var(var) and
-                           cycle not in self.trial.kinetics_cycles):
-                                continue  # break if no kinetics for this cycle
                     else:
                         if context is None:
                             raise ValueError('Must specify context for '
                                              'plotting unnormalized variable')
-                    varname = context + var
-                    x, data = self.trial[varname]
-                    tcolor = (model_tracecolor if model_tracecolor
-                              else self.cfg.model_tracecolors[context])
-                    ax.plot(x, data, tcolor)
+                    # plot, unless kinetic var and kinetics not available
+                    if not (models.pig_lowerbody.is_kinetic_var(var) and
+                       cycle not in self.trial.kinetics_cycles):
+                        varname = context + var
+                        x, data = self.trial[varname]
+                        tcolor = (model_tracecolor if model_tracecolor
+                                  else self.cfg.model_tracecolors[context])
+                        ax.plot(x, data, tcolor)
                     # set labels, ticks, etc. after plotting last cycle
                     if cycle == cycles[-1] and not superposing:
                         ax.set(ylabel=model.ylabels[varname])  # no xlabel now

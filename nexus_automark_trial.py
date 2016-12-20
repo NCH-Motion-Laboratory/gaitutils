@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 """
 
-Run automark for single trial
+Run automark for single trial.
+
+Note: event detection is less accurate compared to running autoprocess for the
+whole session, since here we cannot use statistics for velocity thresholding.
 
 @author: Jussi
 """
 
 from __future__ import print_function
-from gaitutils import nexus, eclipse
-import glob
-import os
-import numpy as np
-import time
+from gaitutils import nexus, utils
+
 
 AUTOMARK_HW = 100
 
@@ -20,7 +20,7 @@ if not nexus.pid():
 
 vicon = nexus.viconnexus()
 # get kinetics info
-fpdata = nexus.kinetics_available(vicon)
+fpdata = utils.kinetics_available(vicon)
 context = fpdata['context']
 vel_th = dict()
 
@@ -35,8 +35,7 @@ if context:
 vicon.ClearAllEvents()
 
 strike_frame = fpdata['strike'] if fpdata else None
-nexus.automark_events(vicon, strike_frame=strike_frame, plot=True,
+nexus.automark_events(vicon, strike_frame=strike_frame, plot=False,
                       context=context,
                       vel_thresholds=vel_th,
                       mark_window_hw=AUTOMARK_HW)
-

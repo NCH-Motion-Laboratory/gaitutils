@@ -12,25 +12,14 @@ Be careful! Overwrites files without asking anything.
 
 
 from gaitutils import nexus, eclipse
-import glob
-import sys
 
 KEY = 'FP1'  # Eclipse key
 NEWVAL = 'Auto'      # change into this value
-ENF_GLOB = '*Trial*enf'
 
-# get session path from Nexus, find processed trials
-vicon = nexus.viconnexus()
-trialname_ = vicon.GetTrialName()
-subjectname = vicon.GetSubjectNames()[0]
-sessionpath = trialname_[0]
-enffiles = glob.glob(sessionpath+'*Trial*.enf')
-
-
-enffiles = glob.glob(sessionpath+ENF_GLOB)
+enffiles = nexus.get_trial_enfs()
 
 if not enffiles:
-    sys.exit('No enf files in {0}'.format(sessionpath))
+    raise ValueError('No enf files')
 
 for enffile in enffiles:
     eclipse.set_eclipse_key(enffile, KEY, NEWVAL, update_existing=True)

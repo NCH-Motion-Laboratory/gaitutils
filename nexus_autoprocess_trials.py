@@ -169,8 +169,11 @@ def _do_autoproc(vicon, enffiles):
             else:  # duration ok
                 # try to figure out trial center frame
                 for marker in TRACK_MARKERS:
-                    ctr = utils.get_crossing_frame(vicon, marker=marker, dim=1,
+                    try:
+                        ctr = utils.get_crossing_frame(vicon, marker=marker, dim=1,
                                                    p0=Y_MIDPOINT)
+                    except ValueError:
+                        ctr = None
                     ctr = ctr[0] if ctr else None
                     if ctr:  # ok and no gaps
                         trials[filepath].ctr_frame = ctr
@@ -178,6 +181,7 @@ def _do_autoproc(vicon, enffiles):
                 # cannot find center frame - possible rasi or lasi gaps
                 if not ctr:
                     fail = 'gaps_or_short'
+                    gaps_found = True
                 else:
                     gaps_found = False
                     for marker in allmarkers:  # check for gaps / lbl failures

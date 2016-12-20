@@ -113,8 +113,11 @@ class Trial:
         enfpath = self.sessionpath + self.trialname + '.Trial.enf'
         if op.isfile(enfpath):
             self.eclipse_data = eclipse.get_eclipse_keys(enfpath)
-        self.kinetics_ = utils.kinetics_available(source)
-        self.kinetics = self.kinetics_['context']
+        try:
+            self.kinetics_ = utils.kinetics_available(source)
+            self.kinetics = self.kinetics_['context']
+        except ValueError:
+            self.kinetics = None
         # analog and model data are lazily read
         self._emg = None
         self._forceplate = None

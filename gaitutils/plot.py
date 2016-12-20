@@ -136,7 +136,7 @@ class Plotter(object):
             maintitle = maintitleprefix + self.trial.trialname
         if self.fig is None or not superpose:
             superposing = False
-            self.fig = plt.figure(figsize=self.cfg.totalfigsize)
+            self.fig = plt.figure(figsize=self.cfg.plot_totalfigsize)
         else:
             superposing = True
         if plotheightratios is None:
@@ -189,18 +189,21 @@ class Plotter(object):
                         x, data = self.trial[varname]
                         tcolor = (model_tracecolor if model_tracecolor
                                   else self.cfg.model_tracecolors[context])
-                        ax.plot(x, data, tcolor)
+                        ax.plot(x, data, tcolor,
+                                linewidth=self.cfg.model_linewidth)
                     # set labels, ticks, etc. after plotting last cycle
                     if cycle == model_cycles[-1] and not superposing:
                         ax.set(ylabel=model.ylabels[varname])  # no xlabel now
-                        ax.xaxis.label.set_fontsize(self.cfg.label_fontsize)
-                        ax.yaxis.label.set_fontsize(self.cfg.label_fontsize)
+                        ax.xaxis.label.set_fontsize(self.cfg.
+                                                    plot_label_fontsize)
+                        ax.yaxis.label.set_fontsize(self.cfg.
+                                                    plot_label_fontsize)
                         ax.set_title(model.varlabels[varname])
-                        ax.title.set_fontsize(self.cfg.title_fontsize)
+                        ax.title.set_fontsize(self.cfg.plot_title_fontsize)
                         ax.axhline(0, color='black')  # zero line
                         ax.locator_params(axis='y', nbins=6)  # less tick marks
                         ax.tick_params(axis='both', which='major',
-                                       labelsize=self.cfg.ticks_fontsize)
+                                       labelsize=self.cfg.plot_ticks_fontsize)
                         ylim = ax.get_ylim()
                         # model specific adjustments
                         if model == models.pig_lowerbody:
@@ -218,8 +221,10 @@ class Plotter(object):
                                 nstd = (ndata[:, 1] if ndata.shape[1] == 2
                                         else 0)
                                 ax.fill_between(tnor, nor-nstd, nor+nstd,
-                                                color=self.cfg.normals_color,
-                                                alpha=self.cfg.normals_alpha)
+                                                color=self.cfg.
+                                                model_normals_color,
+                                                alpha=self.cfg.
+                                                model_normals_alpha)
 
             elif var_type == 'emg':
                 for cycle in emg_cycles:
@@ -230,16 +235,18 @@ class Plotter(object):
                     # TODO: annotate
                     tcolor = (emg_tracecolor if emg_tracecolor else
                               self.cfg.emg_tracecolor)
-                    ax.plot(x, data*self.cfg.emg_multiplier, tcolor)
+                    ax.plot(x, data*self.cfg.emg_multiplier, tcolor,
+                            linewidth=self.cfg.emg_linewidth)
                     if cycle == emg_cycles[-1] and not superposing:
                         ax.set(ylabel=self.cfg.emg_ylabel)
-                        ax.yaxis.label.set_fontsize(self.cfg.label_fontsize)
+                        ax.yaxis.label.set_fontsize(self.cfg.
+                                                    plot_label_fontsize)
                         ax.set_title(var)
-                        ax.title.set_fontsize(self.cfg.title_fontsize)
+                        ax.title.set_fontsize(self.cfg.plot_title_fontsize)
                         ax.locator_params(axis='y', nbins=4)
                         # tick font size
                         ax.tick_params(axis='both', which='major',
-                                       labelsize=self.cfg.ticks_fontsize)
+                                       labelsize=self.cfg.plot_ticks_fontsize)
                         ax.set_xlim(min(x), max(x))
                         ysc = self.cfg.emg_yscale
                         ax.set_ylim(ysc[0]*self.cfg.emg_multiplier,
@@ -258,6 +265,7 @@ class Plotter(object):
                                                         label_fontsize)
 
         plt.suptitle(maintitle, fontsize=12, fontweight="bold")
+        # magic adjustments to fig geometry
         self.gridspec.update(left=.08, right=.98, top=.92, bottom=.05,
                              hspace=.37, wspace=.22)
         plt.show()

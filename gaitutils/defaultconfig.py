@@ -72,14 +72,16 @@ cfg['emg_normals'] = {'RGas': [[16, 50]],
 
 
 """ Plotting related settings """
-cfg['label_fontsize'] = 10
-cfg['title_fontsize'] = 12
-cfg['ticks_fontsize'] = 10
-cfg['totalfigsize'] = (14, 12)
+cfg['plot_label_fontsize'] = 10
+cfg['plot_title_fontsize'] = 12
+cfg['plot_ticks_fontsize'] = 10
+cfg['plot_totalfigsize'] = (14, 12)
 cfg['model_tracecolors'] = {'R': 'lawngreen', 'L': 'red'}
-cfg['normals_alpha'] = .3
-cfg['normals_color'] = 'gray'
+cfg['model_linewidth'] = 1
+cfg['model_normals_alpha'] = .3
+cfg['model_normals_color'] = 'gray'
 cfg['emg_tracecolor'] = 'black'
+cfg['emg_linewidth'] = .5
 cfg['emg_ylabel'] = 'mV'
 cfg['emg_multiplier'] = 1e3
 cfg['emg_normals_alpha'] = .8

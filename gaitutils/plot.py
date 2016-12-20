@@ -86,16 +86,17 @@ class Plotter(object):
         else:
             raise ValueError('Unknown variable')
 
-    def plot_trial(self, cycles={'R': 1, 'L': 1}, context=None, t=None,
+    def plot_trial(self, model_cycles={'R': 1, 'L': 1},
+                   emg_cycles={'R': 1, 'L': 1},
+                   context=None, t=None,
                    plotheightratios=None, model_tracecolor=None,
                    emg_tracecolor=None, plot_model_normaldata=True,
                    plot_emg_normaldata=True, superpose=True,
-                   maintitle=None, maintitleprefix=None,
-                   emg_cycles={'R': 1, 'L': 1}):
+                   maintitle=None, maintitleprefix=None):
 
         """ Create plot of variables. Parameters:
 
-        cycles : dict of int | int | dict of list | 'all' | None
+        model_cycles : dict of int | int | dict of list | 'all' | None
                 Gait cycles to plot. Default is first cycle (1) for
                 both sides. Multiple cycles can be given as lists.
                 If None, plot unnormalized data. 'context' must then be
@@ -103,7 +104,10 @@ class Plotter(object):
                 If 'all', plot all available cycles.
                 Model variable names are modified according to context, e.g.
                 'HipMomentX' -> 'LHipMomentX' for a left side gait cycle.
-        t       Time axis for unnormalized data. If None, plot whole time
+        emg_cycles : dict of int | int | dict of list | 'all' | None
+                Same as above, applied to EMG variables.
+        t : array-like
+                Time axis for unnormalized data. If None, plot whole time
                 axis.
         plot_model_normaldata : bool
                 Whether to plot normal data. Uses either default normal data
@@ -118,8 +122,6 @@ class Plotter(object):
         maintitleprefix : str
                 If maintitle is not set, title will be set to
                 maintitleprefix + trial name.
-                
-                
 
         If a plot already exists, new data will be superposed on it.
 
@@ -142,17 +144,29 @@ class Plotter(object):
             plotheightratios = [1] * self.nrows  # set plot heights all equal
         self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                           height_ratios=plotheightratios)
-        if cycles is None:
-            cycles = [None]  # make iterable
-        elif isinstance(cycles, int):
-            cycles = {'L': cycles, 'R': cycles}
-        elif cycles == 'all':
-            cycles = self.trial.cycles
-        if isinstance(cycles, dict):  # not elif due to dict conversion above
-            cycles.update({key: [val] for (key, val) in cycles.items()
-                          if isinstance(val, int)})  # int -> list
-            cycles = [self.trial.get_cycle(side, ncycle) for side in ['L', 'R']
-                      for ncycle in cycles[side]]
+
+        def _get_cycles(cycles):
+            """ Get specified cycles from the gait trial """
+            if cycles is None:
+                cycles = [None]  # make iterable
+            elif isinstance(cycles, int):
+                cycles = {'L': cycles, 'R': cycles}
+            elif cycles == 'all':
+                cycles = self.trial.cycles
+            if isinstance(cycles, dict):  # not elif due to conversion above
+                for side in ['L', 'R']:  # add L/R if needed
+                    if side not in cycles:
+                        cycles[side] = [None]
+                # convert ints to lists
+                cycles.update({key: [val] for (key, val) in cycles.items()
+                              if isinstance(val, int)})
+                # get the specified cycles
+                cycles = [self.trial.get_cycle(side, ncycle) for side in ['L', 'R']
+                          for ncycle in cycles[side] if ncycle]
+            return cycles
+
+        model_cycles = _get_cycles(model_cycles)
+        emg_cycles = _get_cycles(emg_cycles)
 
         for i, var in enumerate(self.allvars):
             var_type = self._var_type(var)
@@ -161,7 +175,7 @@ class Plotter(object):
             ax = plt.subplot(self.gridspec[i])
             if var_type == 'model':
                 model = models.model_from_var(var)
-                for cycle in cycles:
+                for cycle in model_cycles:
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
                         context = cycle.context
@@ -178,7 +192,7 @@ class Plotter(object):
                                   else self.cfg.model_tracecolors[context])
                         ax.plot(x, data, tcolor)
                     # set labels, ticks, etc. after plotting last cycle
-                    if cycle == cycles[-1] and not superposing:
+                    if cycle == model_cycles[-1] and not superposing:
                         ax.set(ylabel=model.ylabels[varname])  # no xlabel now
                         ax.xaxis.label.set_fontsize(self.cfg.label_fontsize)
                         ax.yaxis.label.set_fontsize(self.cfg.label_fontsize)
@@ -209,14 +223,14 @@ class Plotter(object):
                                                 alpha=self.cfg.normals_alpha)
 
             elif var_type == 'emg':
-                for cycle in cycles:
+                for cycle in emg_cycles:
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
                     x_, data = self.trial[var]
                     x = x_ / self.trial.analograte if cycle is None else x_
                     # TODO: annotate
                     ax.plot(x, data*self.cfg.emg_multiplier)
-                    if cycle == cycles[-1] and not superposing:
+                    if cycle == emg_cycles[-1] and not superposing:
                         ax.set(ylabel=self.cfg.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.label_fontsize)
                         ax.set_title(var)

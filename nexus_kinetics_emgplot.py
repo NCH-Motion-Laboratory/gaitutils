@@ -15,7 +15,6 @@ def do_plot():
     pl = Plotter()
     pl.open_nexus_trial()
     side = pl.trial.kinetics
-
     pl.layout = layouts.kinetics_emg(side)
     plotheightratios = [3, 2, 2, 3, 2, 2, 2, 3]
     pdf_prefix = 'Kinetics_EMG_'
@@ -28,7 +27,8 @@ def do_plot():
     if 'NOTES' in pl.trial.eclipse_data:
         maintitle += ' (' + pl.trial.eclipse_data['NOTES'] + ')'
 
-    pl.plot_trial(plotheightratios=plotheightratios, maintitle=maintitle)
+    pl.plot_trial(plotheightratios=plotheightratios, maintitle=maintitle,
+                  emg_cycles={side: 1})
     pl.create_pdf(pdf_prefix=pdf_prefix)
 
 

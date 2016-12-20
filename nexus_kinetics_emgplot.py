@@ -15,8 +15,7 @@ def do_plot():
     pl = Plotter()
     pl.open_nexus_trial()
     side = pl.trial.kinetics
-    pl.layout = layouts.kinetics_emg(side)
-    plotheightratios = [3, 2, 2, 3, 2, 2, 2, 3]
+    pl.layout, plotheightratios = layouts.kinetics_emg(side)
     pdf_prefix = 'Kinetics_EMG_'
     maintitleprefix = 'Kinetics-EMG plot for '
 

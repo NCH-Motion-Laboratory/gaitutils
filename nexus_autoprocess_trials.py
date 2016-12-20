@@ -113,10 +113,14 @@ class Trial:
         return s
 
 
-def _do_autoproc(vicon, enffiles):
+def _do_autoproc(enffiles):
     """ Do autoprocessing for all trials listed in enffiles (list of
     paths to .enf files).
     """
+
+    if not nexus.pid():
+        raise Exception('Vicon Nexus not running')
+    vicon = nexus.viconnexus()
 
     contact_v = {'L_strike': [], 'R_strike': [],
                  'L_toeoff': [], 'R_toeoff': []}
@@ -129,8 +133,7 @@ def _do_autoproc(vicon, enffiles):
     print('\n1st pass - processing %d trial(s)\n' % len(enffiles))
 
     for filepath_ in enffiles:
-        filepath__ = os.path.splitext(filepath_)[0]  # rm extension
-        filepath = filepath__[:filepath__.find('.Trial')]  # rm .Trial
+        filepath = filepath_[:filepath_.find('.Trial')]  # rm .Trial and .enf
         filename = os.path.split(filepath)[1]
         trialn = filepath[-2:]
         if TRIALS_RANGE[0] <= int(trialn) <= TRIALS_RANGE[1]:
@@ -305,13 +308,5 @@ def _do_autoproc(vicon, enffiles):
 
 if __name__ == '__main__':
 
-    if not nexus.pid():
-        raise Exception('Vicon Nexus not running')
-
-    # get session path from Nexus, find processed trials
-    vicon = nexus.viconnexus()
-    trialname_ = vicon.GetTrialName()
-    sessionpath = trialname_[0]
-    enffiles = glob.glob(sessionpath+'*Trial*.enf')
-
-    _do_autoproc(vicon, enffiles)
+    enffiles = nexus.get_trial_enfs()
+    _do_autoproc(enffiles)

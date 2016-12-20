@@ -23,4 +23,4 @@ if __name__ == '__main__':
     sessionpath = trialname_[0]
     enfname = ''.join(trialname_)+'.Trial.enf'
 
-    _do_autoproc(vicon, [enfname])  # need to listify name
+    _do_autoproc([enfname])  # need to listify name

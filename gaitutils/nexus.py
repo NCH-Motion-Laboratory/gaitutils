@@ -14,6 +14,7 @@ import numpy as np
 from scipy import signal
 import os.path as op
 import psutil
+import glob
 from numutils import rising_zerocross, falling_zerocross
 import matplotlib.pyplot as plt
 from config import Config
@@ -47,6 +48,15 @@ def pid():
 def viconnexus():
     """ Return a ViconNexus instance. """
     return ViconNexus.ViconNexus()
+
+
+def get_trial_enfs():
+    """ Return list of .enf files for the session """
+    vicon = viconnexus()
+    trialname_ = vicon.GetTrialName()
+    sessionpath = trialname_[0]
+    enffiles = glob.glob(sessionpath+'*Trial*.enf') if sessionpath else None
+    return enffiles
 
 
 def is_vicon_instance(obj):

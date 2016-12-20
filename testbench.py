@@ -16,13 +16,18 @@ vicon = nexus.viconnexus()
 
 #utils.kinetics_available(vicon)
 
-lout = [['LVas'], ['LRec'], ['LHam']]
+lout = [['LVas','RVas'], ['LRec','RRec'], ['LHam','RHam']]
 
 pl = Plotter(lout)
 
 pl.open_trial(vicon)
 
-pl.plot_trial(cycles=None, maintitleprefix='Unnormalized EMG for ')
+pl.trial.emg.passband = [10, 400]
+
+maintitle = 'EMG for %s\n%s' % (pl.trial.trialname,
+                                pl.trial.eclipse_data['NOTES'])
+
+pl.plot_trial(cycles=None, maintitle=maintitle)
 
 
 

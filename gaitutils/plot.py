@@ -218,8 +218,6 @@ class Plotter():
                              hspace=.37, wspace=.22)
         plt.show()
 
-
-
     def create_pdf(self, pdf_name=None, pdf_prefix=None):
         """ Make a pdf out of the created figure into the Nexus session dir.
         If pdf_name is not specified, automatically name according to current

@@ -90,14 +90,16 @@ class Plotter(object):
                    plotheightratios=None, model_tracecolor=None,
                    emg_tracecolor=None, plot_model_normaldata=True,
                    plot_emg_normaldata=True, superpose=True,
-                   maintitle=None, maintitleprefix=None):
+                   maintitle=None, maintitleprefix=None,
+                   emg_cycles={'R': 1, 'L': 1}):
 
         """ Create plot of variables. Parameters:
 
         cycles : dict of int | int | dict of list | 'all' | None
                 Gait cycles to plot. Default is first cycle (1) for
                 both sides. Multiple cycles can be given as lists.
-                If None, plot unnormalized data. 'context' must be specified.
+                If None, plot unnormalized data. 'context' must then be
+                specified.
                 If 'all', plot all available cycles.
                 Model variable names are modified according to context, e.g.
                 'HipMomentX' -> 'LHipMomentX' for a left side gait cycle.
@@ -111,6 +113,13 @@ class Plotter(object):
                 Whether to plot normal data. Uses either default normal data
                 (in site_defs) or the data given when creating the plotter
                 instance.
+        maintitle : str
+                Plot title.
+        maintitleprefix : str
+                If maintitle is not set, title will be set to
+                maintitleprefix + trial name.
+                
+                
 
         If a plot already exists, new data will be superposed on it.
 

@@ -182,7 +182,8 @@ class Plotter():
                 for cycle in cycles:
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
-                    x, data = self.trial[var]
+                    x_, data = self.trial[var]
+                    x = x_ / self.trial.analograte if cycle is None else x_
                     # TODO: annotate
                     ax.plot(x, data*self.cfg.emg_multiplier)
                     if cycle == cycles[-1] and not superposing:
@@ -198,7 +199,7 @@ class Plotter():
                         ysc = self.cfg.emg_yscale
                         ax.set_ylim(ysc[0]*self.cfg.emg_multiplier,
                                     ysc[1]*self.cfg.emg_multiplier)
-                        if plot_emg_normaldata:
+                        if plot_emg_normaldata and cycle is not None:
                             # plot EMG normal bars
                             emgbar_ind = self.cfg.emg_normals[var]
                             for k in range(len(emgbar_ind)):
@@ -206,9 +207,14 @@ class Plotter():
                                 plt.axvspan(inds[0], inds[1],
                                             alpha=self.cfg.emg_normals_alpha,
                                             color=self.cfg.emg_normals_color)
+                        if cycle is None:
+                            ax.set(xlabel='Time (s)')
+                            ax.xaxis.label.set_fontsize(self.cfg.label_fontsize)
+
+                
 
         plt.suptitle(maintitle, fontsize=12, fontweight="bold")
-        self.gridspec.update(left=.08, right=.98, top=.92, bottom=.03,
+        self.gridspec.update(left=.08, right=.98, top=.92, bottom=.05,
                              hspace=.37, wspace=.22)
         plt.show()
 

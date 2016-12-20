@@ -149,13 +149,13 @@ class Plotter():
                     ax.plot(x, data, tcolor)
                     # set labels, ticks, etc. after plotting last cycle
                     if cycle == cycles[-1] and not superposing:
-                        ax.set(ylabel=model.ylabels[varname])  # no xlabel for now
+                        ax.set(ylabel=model.ylabels[varname])  # no xlabel now
                         ax.xaxis.label.set_fontsize(self.cfg.label_fontsize)
                         ax.yaxis.label.set_fontsize(self.cfg.label_fontsize)
                         ax.set_title(model.varlabels[varname])
                         ax.title.set_fontsize(self.cfg.title_fontsize)
                         ax.axhline(0, color='black')  # zero line
-                        ax.locator_params(axis='y', nbins=6)  # less y tick marks
+                        ax.locator_params(axis='y', nbins=6)  # less tick marks
                         ax.tick_params(axis='both', which='major',
                                        labelsize=self.cfg.ticks_fontsize)
                         ylim = ax.get_ylim()
@@ -209,9 +209,8 @@ class Plotter():
                                             color=self.cfg.emg_normals_color)
                         if cycle is None:
                             ax.set(xlabel='Time (s)')
-                            ax.xaxis.label.set_fontsize(self.cfg.label_fontsize)
-
-                
+                            ax.xaxis.label.set_fontsize(self.cfg.
+                                                        label_fontsize)
 
         plt.suptitle(maintitle, fontsize=12, fontweight="bold")
         self.gridspec.update(left=.08, right=.98, top=.92, bottom=.05,

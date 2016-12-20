@@ -229,7 +229,9 @@ class Plotter(object):
                     x_, data = self.trial[var]
                     x = x_ / self.trial.analograte if cycle is None else x_
                     # TODO: annotate
-                    ax.plot(x, data*self.cfg.emg_multiplier)
+                    tcolor = (emg_tracecolor if emg_tracecolor else
+                              self.cfg.emg_tracecolor)
+                    ax.plot(x, data*self.cfg.emg_multiplier, tcolor)
                     if cycle == emg_cycles[-1] and not superposing:
                         ax.set(ylabel=self.cfg.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.label_fontsize)

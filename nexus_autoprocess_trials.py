@@ -53,7 +53,7 @@ DESC_SKIP = ['Unipedal right', 'Unipedal left', 'Toe standing']
 # run preprocess & save for trials skipped based on description
 PREPROC_DESC_SKIP = True
 # min. trial duration (frames)
-MIN_TRIAL_DURATION = 200
+MIN_TRIAL_DURATION = 120
 # how many frames to leave before/after first/last events
 CROP_LEAVE_FRAMES = 10
 # automark frames around forceplate region (half-width)

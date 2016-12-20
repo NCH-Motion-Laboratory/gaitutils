@@ -24,7 +24,7 @@ import os.path as op
 from config import Config
 
 
-class Plotter():
+class Plotter(object):
 
     def __init__(self, layout=None, normaldata=None):
         """ Plot gait data.
@@ -37,6 +37,7 @@ class Plotter():
             default normal data settings.
         """
         if layout:
+            pass
             self.layout = layout
         else:
             self._layout = None
@@ -51,15 +52,15 @@ class Plotter():
         return self._layout
 
     @layout.setter
-    def layout(self, val):
+    def layout(self, layout):
         print('setter called')
-        if (not isinstance(val, list) or not
-           all([isinstance(item, list) for item in val])):
+        if (not isinstance(layout, list) or not
+           all([isinstance(item, list) for item in layout])):
             raise ValueError('Plot variables must be a list of lists')
-        self._layout = val
-        self.allvars = [item for row in val for item in row]
-        self.nrows = len(val)
-        self.ncols = len(val[0])
+        self._layout = layout
+        self.allvars = [item for row in layout for item in row]
+        self.nrows = len(layout)
+        self.ncols = len(layout[0])
 
     def open_nexus_trial(self):
         source = nexus.viconnexus()

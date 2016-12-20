@@ -19,7 +19,7 @@ from config import Config
 cfg = Config()
 
 
-class EMG:
+class EMG(object):
     """ Class for handling EMG data. Convert logical names to physical,
     filter data, etc. Channel data can be accessed as emg[chname].
     If passband property is set, data will be bandpass filtered first.

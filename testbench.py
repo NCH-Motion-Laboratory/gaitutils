@@ -21,9 +21,9 @@ pl = Plotter()
 
 pl.layout = lout
 
-pl.open_trial(vicon)
+#pl.open_trial(vicon)
 
-pl.plot_trial()
+#pl.plot_trial()
 
 
 

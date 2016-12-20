@@ -28,7 +28,7 @@ class GaitDataError(Exception):
         return repr(self.msg)
 
 
-class Gaitcycle:
+class Gaitcycle(object):
     """" Holds information about one gait cycle. Offset is the frame where
     the data begins; 1 for Vicon Nexus (which always returns whole trial) and
     start of the ROI for c3d files, which contain data only for the ROI. """
@@ -76,7 +76,7 @@ class Gaitcycle:
         return self.tn_analog, var[self.start_smp:self.end_smp]
 
 
-class Trial:
+class Trial(object):
     """ A gait trial. Contains:
     -subject and trial info
     -gait cycles

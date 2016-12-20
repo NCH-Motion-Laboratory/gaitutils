@@ -59,7 +59,7 @@ def _dict_with_side(dict, append_side=False):
     return di
 
 
-class GaitModel:
+class GaitModel(object):
     """ A class for storing a model information, e.g. Plug-in Gait. The data
     indicates variable names etc. and is intended (currently not forced) to
     be non-mutable. The actual data is stored elsewhere. """

@@ -13,7 +13,7 @@ import ast
 import defaultconfig
 
 
-class Config:
+class Config(object):
     """ Configuration class for gaitutils. Config values are readable as
     instance attributes or by indexing, but must be set by indexing.
 

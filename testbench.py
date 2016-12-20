@@ -11,57 +11,20 @@ from gaitutils import EMG, nexus, config, read_data, trial, eclipse, models, Plo
 import matplotlib.pyplot as plt
 
 
-c3dfile = u'c:\\Users\\hus20664877\\Desktop\\Vicon\\vicon_data\\test\\H0036_EV\\2015_9_21_seur_EV\\2015_9_21_seur_EV19.c3d'
+# c3dfile = u'c:\\Users\\hus20664877\\Desktop\\Vicon\\vicon_data\\test\\H0036_EV\\2015_9_21_seur_EV\\2015_9_21_seur_EV19.c3d'
 vicon = nexus.viconnexus()
 
-#utils.kinetics_available(vicon)
 
-lout = [['LVas','RVas'], ['LRec','RRec'], ['LHam','RHam']]
+lout = [['LVas', 'RVas'], ['LRec', 'RRec'], ['LHam', 'RHam']]
 
-pl = Plotter(lout)
+pl = Plotter()
+
+pl.layout = lout
 
 pl.open_trial(vicon)
 
-pl.trial.emg.passband = [10, 400]
-
-maintitle = 'EMG for %s\n%s' % (pl.trial.trialname,
-                                pl.trial.eclipse_data['NOTES'])
-
-pl.plot_trial(cycles=None, maintitle=maintitle)
+pl.plot_trial()
 
 
-
-
-
-
-"""
-e1 = EMG(c3dfile)
-e2 = EMG(vicon)
-
-e1.read()
-e2.read()
-ch = 'LGas'
-
-e1.passband = [40,400]
-plt.plot(e1.t, e1['LGas'])
-plt.plot(e2.t, e2['LGas'])
-"""
-
-#clasi = read_data.get_marker_data(c3dfile, 'LASI')
-#vlasi = read_data.get_marker_data(vicon, 'LASI')
-
-
-#ctri = trial.Trial(c3dfile)
-#vtri = trial.Trial(vicon)
-
-#pigmod = models.pig_lowerbody
-
-#nmod = read_data.get_model_data(vicon, pigmod)
-#cmod = read_data.get_model_data(c3dfile, pigmod)
-
-#pl = Plotter(layouts.kinetics_emg('L'))
-#pl = Plotter(layouts.std_kinematics)
-#pl.open_trial(vicon)
-#pl.plot_trial(cycles=1, context='L')
 
 

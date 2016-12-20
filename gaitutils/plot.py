@@ -13,6 +13,7 @@
 
 
 import models
+import nexus
 from trial import Trial
 import matplotlib.pyplot as plt
 from matplotlib import pylab
@@ -25,27 +26,44 @@ from config import Config
 
 class Plotter():
 
-    def __init__(self, plotvars, normaldata=None):
+    def __init__(self, layout=None, normaldata=None):
         """ Plot gait data.
 
         plotvars: list of lists
             Variables to be plotted. Each list is a row of variables.
+            If none, must be set later.
         normaldata: list of lists
             Corresponding normal data files for each plot. Will override
             default normal data settings.
         """
-
-        if (not isinstance(plotvars, list) or not
-           all([isinstance(item, list)for item in plotvars])):
-            raise ValueError('Plot variables must be a list of lists')
-        self.nrows = len(plotvars)
-        self.ncols = len(plotvars[0])
-        self.plotvars = plotvars
+        if layout:
+            self.layout = layout
+        else:
+            self._layout = None
         self.trial = None
         self.fig = None
-        self.allvars = [item for row in plotvars for item in row]
         self.normaldata = normaldata
         self.cfg = Config()
+
+    @property
+    def layout(self):
+        print('getter called')
+        return self._layout
+
+    @layout.setter
+    def layout(self, val):
+        print('setter called')
+        if (not isinstance(val, list) or not
+           all([isinstance(item, list) for item in val])):
+            raise ValueError('Plot variables must be a list of lists')
+        self._layout = val
+        self.allvars = [item for row in val for item in row]
+        self.nrows = len(val)
+        self.ncols = len(val[0])
+
+    def open_nexus_trial(self):
+        source = nexus.viconnexus()
+        self.open_trial(source)
 
     def open_trial(self, source):
         self.trial = Trial(source)
@@ -101,7 +119,11 @@ class Plotter():
 
         if not self.trial:
             raise ValueError('No trial to plot, call open_trial() first')
+        if self._layout is None:
+            raise ValueError('No layout set')
         if not maintitle:
+            if maintitleprefix is None:
+                maintitleprefix = ''
             maintitle = maintitleprefix + self.trial.trialname
         if self.fig is None or not superpose:
             superposing = False

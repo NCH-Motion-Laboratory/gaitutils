@@ -28,7 +28,8 @@ def do_plot():
         maintitle += ' (' + pl.trial.eclipse_data['NOTES'] + ')'
 
     pl.plot_trial(plotheightratios=plotheightratios, maintitle=maintitle,
-                  emg_cycles={side: 1})
+                  emg_cycles={side: 1})  # we only want emg for one side
+
     pl.create_pdf(pdf_prefix=pdf_prefix)
 
 

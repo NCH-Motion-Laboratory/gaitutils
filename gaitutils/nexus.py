@@ -16,6 +16,7 @@ import os.path as op
 import psutil
 import glob
 from numutils import rising_zerocross, falling_zerocross
+from eclipse import get_eclipse_keys
 import matplotlib.pyplot as plt
 from config import Config
 
@@ -57,6 +58,18 @@ def get_trial_enfs():
     sessionpath = trialname_[0]
     enffiles = glob.glob(sessionpath+'*Trial*.enf') if sessionpath else None
     return enffiles
+
+
+def find_trials(eclipse_keys, strings):
+    """ Yield .enf files for trials in current Nexus session directory whose
+    Eclipse fields (list) contain any of strings (list). Case insensitive. """
+    strings = [st.upper() for st in strings]
+    enffiles = get_trial_enfs()
+    for enf in enffiles:
+        ecldi = get_eclipse_keys(enf).items()
+        eclvals = [val.upper() for key, val in ecldi if key in eclipse_keys]
+        if any([s in val for s in strings for val in eclvals]):
+            yield enf
 
 
 def is_vicon_instance(obj):

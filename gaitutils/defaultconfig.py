@@ -28,8 +28,7 @@ cfg['nexus_path'] = cfg['vicon_path'] + '/Nexus' + cfg['nexus_ver']
 cfg['pig_normaldata_path'] = appdir + '/Data/normal.gcd'
 
 """ EMG settings """
-cfg['emg_lowpass'] = 400
-cfg['emg_highpass'] = 10
+cfg['emg_passband'] = (10, 400)
 cfg['emg_devname'] = 'Myon'
 cfg['emg_yscale'] = (-.5e-3, .5e-3)
 cfg['emg_labels'] = {'RHam': 'Medial hamstrings (R)',

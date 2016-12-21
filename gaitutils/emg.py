@@ -36,7 +36,7 @@ class EMG(object):
         # order of Butterworth filter
         self.buttord = 5
         # EMG passband
-        self.passband = None
+        self.passband = cfg.emg_passband
         # whether to autodetect disconnected EMG channels. set before read()
         self.emg_auto_off = True
         self.ch_normals = cfg.emg_normals  # EMG normal data

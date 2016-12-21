@@ -26,8 +26,8 @@ def do_plot():
 
     pl.layout = layouts.kinematics_emg('L')
     pl.plot_trial(maintitle=maintitle,
-                  emg_cycles={'L': 1}, emg_tracecolor='red', show=False)  # we only want emg for one side
-                 
+                  emg_cycles={'L': 1}, emg_tracecolor='red', show=False)
+
     pl.layout = layouts.kinematics_emg('R')
     pl.plot_trial(maintitle=maintitle, emg_tracecolor='green',
                   emg_cycles={'R': 1})  # we only want emg for one side

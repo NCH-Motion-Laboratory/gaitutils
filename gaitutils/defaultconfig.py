@@ -76,6 +76,7 @@ cfg['plot_label_fontsize'] = 10
 cfg['plot_title_fontsize'] = 12
 cfg['plot_ticks_fontsize'] = 10
 cfg['plot_totalfigsize'] = (14, 12)
+cfg['plot_analog_plotheight'] = .667
 cfg['model_tracecolors'] = {'R': 'lawngreen', 'L': 'red'}
 cfg['model_linewidth'] = 1
 cfg['model_normals_alpha'] = .3

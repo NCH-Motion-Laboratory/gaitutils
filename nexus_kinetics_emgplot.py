@@ -15,7 +15,7 @@ def do_plot():
     pl = Plotter()
     pl.open_nexus_trial()
     side = pl.trial.kinetics
-    pl.layout, plotheightratios = layouts.kinetics_emg(side)
+    pl.layout = layouts.kinetics_emg(side)
     pdf_prefix = 'Kinetics_EMG_'
     maintitleprefix = 'Kinetics-EMG plot for '
 
@@ -26,7 +26,7 @@ def do_plot():
     if 'NOTES' in pl.trial.eclipse_data:
         maintitle += ' (' + pl.trial.eclipse_data['NOTES'] + ')'
 
-    pl.plot_trial(plotheightratios=plotheightratios, maintitle=maintitle,
+    pl.plot_trial(maintitle=maintitle,
                   emg_cycles={side: 1})  # we only want emg for one side
 
     pl.create_pdf(pdf_prefix=pdf_prefix)

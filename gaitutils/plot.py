@@ -85,6 +85,15 @@ class Plotter(object):
         else:
             raise ValueError('Unknown variable')
 
+    def _plot_height_ratios(self):
+        plotheightratios = []
+        for row in self._layout:
+            if all([self._var_type(var) == 'model' for var in row]):
+                plotheightratios.append(1)
+            else:
+                plotheightratios.append(self.cfg.plot_analog_plotheight)
+        return plotheightratios
+
     def plot_trial(self, model_cycles={'R': 1, 'L': 1},
                    emg_cycles={'R': 1, 'L': 1},
                    context=None, t=None,
@@ -140,7 +149,7 @@ class Plotter(object):
         else:
             superposing = True
         if plotheightratios is None:
-            plotheightratios = [1] * self.nrows  # set plot heights all equal
+            plotheightratios = self._plot_height_ratios()
         self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                           height_ratios=plotheightratios)
 

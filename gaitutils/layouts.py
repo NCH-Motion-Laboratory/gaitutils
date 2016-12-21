@@ -65,26 +65,26 @@ layout, heightratios = kinetics_emg('R')
 
 # Kinetics-EMG. Will return EMG channels according to the given side
 def kinetics_emg(side):
-    return ([['HipAnglesX', 'KneeAnglesX', 'AnkleAnglesX'],
+    return [['HipAnglesX', 'KneeAnglesX', 'AnkleAnglesX'],
             [side+'Ham', side+'Rec', side+'TibA'],
             [side+'Glut', side+'Vas', side+'Per'],
             ['HipMomentX', 'KneeMomentX', 'AnkleMomentX'],
             [side+'Rec', side+'Ham', side+'Gas'],
             [None, side+'Glut', side+'Sol'],
             [None, side+'Gas', None],
-            ['HipPowerZ', 'KneePowerZ', 'AnklePowerZ']],
-            [3, 2, 2, 3, 2, 2, 2, 3])
+            ['HipPowerZ', 'KneePowerZ', 'AnklePowerZ']]
 
 
 # Kinematics-only EMG. Will return EMG channels according to the given side
 def kinematics_emg(side):
-    return ([['HipAnglesX', 'KneeAnglesX', 'AnkleAnglesX'],
+    return [['HipAnglesX', 'KneeAnglesX', 'AnkleAnglesX'],
             [side+'Ham', side+'Rec', side+'TibA'],
             [side+'Glut', side+'Vas', side+'Per'],
             [side+'Rec', side+'Ham', side+'Gas'],
             [None, side+'Glut', side+'Sol'],
-            [None, side+'Gas', None]],
-            [3, 2, 2, 2, 2, 2])
+            [None, side+'Gas', None]]
+
+
 
 
 

@@ -8,37 +8,31 @@ description and defined search strings.
 @author: Jussi
 """
 
-from gaitutils import Plotter, layouts, nexus, guiutils
-import os.path as op
-
-def enf2c3d(fname):
-    enfstr = '.Trial.enf'
-    if enfstr not in fname:
-        raise ValueError('Filename is not a trial .enf')
-    return fname.replace(enfstr, '.c3d')
-
+from gaitutils import Plotter, layouts, nexus
+from gaitutils.nexus import enf2c3d, find_trials
+from gaitutils.guiutils import error_exit
 
 MAX_TRIALS = 8
 
 if not nexus.pid():
-    guiutils.error_exit('Vicon Nexus not running')
+    error_exit('Vicon Nexus not running')
 
 # Eclipse trial notes/description must contain one of these strings
 strs = ['R1', 'R2', 'R3', 'R4', 'L1', 'L2', 'L3', 'L4']
 
 eclkeys = ['DESCRIPTION', 'NOTES']
-marked_trials = list(nexus.find_trials(eclkeys, strs))
+marked_trials = list(find_trials(eclkeys, strs))
 
 if len(marked_trials) > MAX_TRIALS:
-    guiutils.error_exit('Too many marked trials found!')
+    error_exit('Too many marked trials found!')
 
 if not marked_trials:
     # try to find anything marked with 'ok' (kinematics-only sessions)
     strs = ['ok']
-    marked_trials = list(nexus.find_trials(eclkeys, strs))
+    marked_trials = list(find_trials(eclkeys, strs))
     if not marked_trials:
-        guiutils.error_exit('Did not find any marked trials in current '
-                            'session directory.')
+        error_exit('Did not find any marked trials in current '
+                   'session directory.')
 
 pl = Plotter()
 pl.open_trial(enf2c3d(marked_trials[0]))

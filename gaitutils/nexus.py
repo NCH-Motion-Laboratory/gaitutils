@@ -60,6 +60,14 @@ def get_trial_enfs():
     return enffiles
 
 
+def enf2c3d(fname):
+    """ Converts name of trial .enf file to corresponding .c3d. """
+    enfstr = '.Trial.enf'
+    if enfstr not in fname:
+        raise ValueError('Filename is not a trial .enf')
+    return fname.replace(enfstr, '.c3d')
+
+
 def find_trials(eclipse_keys, strings):
     """ Yield .enf files for trials in current Nexus session directory whose
     Eclipse fields (list) contain any of strings (list). Case insensitive. """

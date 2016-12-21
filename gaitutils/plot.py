@@ -99,7 +99,7 @@ class Plotter(object):
                    context=None, t=None,
                    plotheightratios=None, model_tracecolor=None,
                    emg_tracecolor=None, plot_model_normaldata=True,
-                   plot_emg_normaldata=True, superpose=True,
+                   plot_emg_normaldata=True, superpose=True, show=True,
                    maintitle=None, maintitleprefix=None):
 
         """ Create plot of variables. Parameters:
@@ -277,7 +277,8 @@ class Plotter(object):
         # magic adjustments to fig geometry
         self.gridspec.update(left=.08, right=.98, top=.92, bottom=.05,
                              hspace=.37, wspace=.22)
-        plt.show()
+        if show:
+            plt.show()
 
     def create_pdf(self, pdf_name=None, pdf_prefix=None):
         """ Make a pdf out of the created figure into the Nexus session dir.

@@ -22,9 +22,11 @@ pl = Plotter()
 
 pl.layout = lout
 
-#pl.open_trial(vicon)
+pl.open_nexus_trial()
 
-#pl.plot_trial()
+pl.plot_trial()
+
+
 
 
 

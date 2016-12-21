@@ -5,7 +5,7 @@
 gaitutils TODO:
 
 
--emg_cycles param to plot: plot emg only for specified cycles
+-legends for plotter
 
 -small discrepancies in c3d/Nexus cycles?
     -nexus returns smaller frame indices (sometimes)

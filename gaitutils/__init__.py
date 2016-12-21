@@ -12,6 +12,7 @@ from . import eclipse
 from . import read_data
 from . import trial
 from . import config
+from . import guiutils
 from .emg import EMG
 from .numutils import rising_zerocross, falling_zerocross
 from .plot import Plotter

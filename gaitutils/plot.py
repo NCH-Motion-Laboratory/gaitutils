@@ -146,12 +146,12 @@ class Plotter(object):
         if self.fig is None or not superpose:
             superposing = False
             self.fig = plt.figure(figsize=self.cfg.plot_totalfigsize)
+            self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
+                                              height_ratios=plotheightratios)
         else:
             superposing = True
         if plotheightratios is None:
             plotheightratios = self._plot_height_ratios()
-        self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
-                                          height_ratios=plotheightratios)
 
         def _get_cycles(cycles):
             """ Get specified cycles from the gait trial """

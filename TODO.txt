@@ -5,7 +5,7 @@
 gaitutils TODO:
 
 
--video player
+-unnormalized model plotting not yet working fully
 
 -small discrepancies in c3d/Nexus cycles?
     -nexus returns smaller frame indices (sometimes)

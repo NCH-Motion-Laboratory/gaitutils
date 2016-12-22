@@ -135,6 +135,20 @@ class Plotter(object):
         t : array-like
                 Time axis for unnormalized data. If None, plot whole time
                 axis.
+        plotheightratios : list
+                Force height ratios of subplot rows, e.g. [1 2 2 2] would
+                make first row half the height of others.
+        model_tracecolor : Matplotlib color
+                Select line color for model variables. If None, will be
+                automatically selected.
+        model_linestyle : Matplotlib linestyle
+                Select line style for model variables.
+        linestyle_context:
+                Automatically select line style for model variables according
+                to context (defined in config)
+        emg_tracecolor : Matplotlib color
+                Select line color for EMG variables. If None, will be
+                automatically selected (defined in config)
         plot_model_normaldata : bool
                 Whether to plot normal data. Uses either default normal data
                 (in site_defs) or the data given when creating the plotter
@@ -143,13 +157,17 @@ class Plotter(object):
                 Whether to plot normal data. Uses either default normal data
                 (in site_defs) or the data given when creating the plotter
                 instance.
+        superpose : bool
+                If superpose=False, create new figure. Otherwise superpose
+                on existing figure.
+        show : bool
+                Whether to show the plot after plotting is finished. Can also
+                set show=False and call plotter.show() explicitly.
         maintitle : str
-                Plot title.
+                Main title for the plot.
         maintitleprefix : str
                 If maintitle is not set, title will be set to
                 maintitleprefix + trial name.
-
-        If a plot already exists, new data will be superposed on it.
 
         """
 
@@ -162,12 +180,9 @@ class Plotter(object):
                 maintitleprefix = ''
             maintitle = maintitleprefix + self.trial.trialname
         if self.fig is None or not superpose:
-            superposing = False
             self.fig = plt.figure(figsize=self.cfg.plot_totalfigsize)
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)
-        else:
-            superposing = True
         if plotheightratios is None:
             plotheightratios = self._plot_height_ratios()
 
@@ -220,8 +235,9 @@ class Plotter(object):
                                   linestyles_context else model_linestyle)
                         ax.plot(x, data, tcolor, linestyle=lstyle,
                                 linewidth=self.cfg.model_linewidth)
+
                     # set labels, ticks, etc. after plotting last cycle
-                    if cycle == model_cycles[-1] and not superposing:
+                    if cycle == model_cycles[-1]:
                         ax.set(ylabel=model.ylabels[varname])  # no xlabel now
                         ax.xaxis.label.set_fontsize(self.cfg.
                                                     plot_label_fontsize)
@@ -270,7 +286,7 @@ class Plotter(object):
                               self.cfg.emg_tracecolor)
                     ax.plot(x, data*self.cfg.emg_multiplier, tcolor,
                             linewidth=self.cfg.emg_linewidth)
-                    if cycle == emg_cycles[-1] and not superposing:
+                    if cycle == emg_cycles[-1]:
                         ax.set(ylabel=self.cfg.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.
                                                     plot_label_fontsize)

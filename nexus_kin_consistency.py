@@ -23,8 +23,6 @@ strs = ['R1', 'R2', 'R3', 'R4', 'L1', 'L2', 'L3', 'L4']
 eclkeys = ['DESCRIPTION', 'NOTES']
 marked_trials = list(find_trials(eclkeys, strs))
 
-if len(marked_trials) > MAX_TRIALS:
-    error_exit('Too many marked trials found!')
 
 if not marked_trials:
     # try to find anything marked with 'ok' (kinematics-only sessions)
@@ -33,6 +31,9 @@ if not marked_trials:
     if not marked_trials:
         error_exit('Did not find any marked trials in current '
                    'session directory.')
+
+if len(marked_trials) > MAX_TRIALS:
+    error_exit('Too many marked trials found!')
 
 pl = Plotter()
 pl.open_trial(enf2c3d(marked_trials[0]))
@@ -47,8 +48,8 @@ for i, trialpath in enumerate(marked_trials):
     pl.open_trial(enf2c3d(marked_trials[i]))
     maintitle = ('Kinematics/kinetics consistency plot, '
                  'session %s' % pl.trial.trialdirname)
-    pl.plot_trial(model_tracecolor=linecolors[i], maintitle=maintitle,
-                  show=False)
+    pl.plot_trial(model_tracecolor=linecolors[i], linestyles_context=True,
+                  maintitle=maintitle, show=False)
 
 pl.show()
 pl.create_pdf('kin_consistency.pdf')

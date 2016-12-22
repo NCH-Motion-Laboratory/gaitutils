@@ -100,8 +100,9 @@ class Plotter(object):
 
     def plot_trial(self, model_cycles={'R': 1, 'L': 1},
                    emg_cycles={'R': 1, 'L': 1},
-                   context=None, t=None,
-                   plotheightratios=None, model_tracecolor=None,
+                   context=None, t=None, plotheightratios=None,
+                   model_tracecolor=None, model_linestyle='-',
+                   linestyles_context=False,
                    emg_tracecolor=None, plot_model_normaldata=True,
                    plot_emg_normaldata=True, superpose=True, show=True,
                    maintitle=None, maintitleprefix=None):
@@ -202,7 +203,9 @@ class Plotter(object):
                         x, data = self.trial[varname]
                         tcolor = (model_tracecolor if model_tracecolor
                                   else self.cfg.model_tracecolors[context])
-                        ax.plot(x, data, tcolor,
+                        lstyle = (self.cfg.model_linestyles[context] if
+                                  linestyles_context else model_linestyle)
+                        ax.plot(x, data, tcolor, linestyle=lstyle,
                                 linewidth=self.cfg.model_linewidth)
                     # set labels, ticks, etc. after plotting last cycle
                     if cycle == model_cycles[-1] and not superposing:
@@ -278,15 +281,22 @@ class Plotter(object):
                                                         label_fontsize)
 
             elif var_type == 'model_legend':
-                self.legendnames.append('%s    %s    %s' %
-                                        (self.trial.trialname,
-                                         self.trial.eclipse_data['DESCRIPTION'],
-                                         self.trial.eclipse_data['NOTES']))
-                self.modelartists.append(plt.Line2D((0,1),(0,0), color=tracecolor, linestyle=model_linestyle))
+                self.legendnames.append('%s   %s   %s' % (
+                                        self.trial.trialname,
+                                        self.trial.eclipse_data['DESCRIPTION'],
+                                        self.trial.eclipse_data['NOTES']))
+                self.modelartists.append(plt.Line2D((0, 1), (0, 0),
+                                                    color=model_tracecolor,
+                                                    linewidth=2,
+                                                    linestyle=lstyle))
                 plt.axis('off')
-                nothing = [plt.Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)]
+                nothing = [plt.Rectangle((0, 0), 1, 1, fc="w", fill=False,
+                                         edgecolor='none', linewidth=0)]
                 legtitle = ['Model traces:']
-                ax.legend(nothing+self.modelartists, legtitle+self.legendnames, prop={'size':self.fsize_labels}, loc='upper center')
+                ax.legend(nothing+self.modelartists,
+                          legtitle+self.legendnames,
+                          prop={'size': self.cfg.plot_label_fontsize},
+                          loc='upper center')
 
             elif var_type == 'emg_legend':
                 self.legendnames.append('%s    %s    %s' %
@@ -297,7 +307,7 @@ class Plotter(object):
                 plt.axis('off')
                 nothing = [plt.Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)]
                 legtitle = ['EMG traces:']
-                ax.legend(nothing+self.emgartists, legtitle+self.legendnames, prop={'size':self.fsize_labels}, loc='upper center')
+                ax.legend(nothing+self.emgartists, legtitle+self.legendnames, prop={'size':self.self.cfg.plot_label_fontsize}, loc='upper center')
 
 
             """ Update the legends on each added trial. The "artists" (corresponding to
@@ -312,6 +322,9 @@ class Plotter(object):
                              hspace=.37, wspace=.22)
         if show:
             plt.show()
+
+    def show(self):
+        plt.show()
 
     def create_pdf(self, pdf_name=None, pdf_prefix=None):
         """ Make a pdf out of the created figure into the Nexus session dir.

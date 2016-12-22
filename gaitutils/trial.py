@@ -152,7 +152,7 @@ class Trial(object):
                     t, data = self._normalize.crop_analog(data)
                 return t, data
             except KeyError:
-                    raise KeyError('Unknown variable %s' % item)
+                    raise ValueError('Cannot read variable: %s' % item)
 
     @property
     def emg(self):

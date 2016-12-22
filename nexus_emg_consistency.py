@@ -54,4 +54,3 @@ def do_plot():
 if __name__ == '__main__':
     register_gui_exception_handler()
     do_plot()
-

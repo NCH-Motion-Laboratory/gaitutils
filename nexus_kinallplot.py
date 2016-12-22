@@ -7,7 +7,7 @@ Plot Plug-in Gait outputs (online) from Nexus.
 @author: Jussi
 """
 
-from gaitutils import Plotter, layouts
+from gaitutils import Plotter, layouts, register_gui_exception_handler
 
 
 def do_plot():
@@ -22,7 +22,8 @@ def do_plot():
         pl.external_play_video(vidfile)
 
     pl.plot_trial(maintitleprefix=maintitleprefix, emg_cycles={side: 1})
-    pl.move_figure(10, 30)
+    pl.move_plot_window(10, 30)
 
 if __name__ == '__main__':
+    register_gui_exception_handler()
     do_plot()

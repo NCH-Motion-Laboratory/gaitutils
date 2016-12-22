@@ -76,7 +76,7 @@ class Plotter(object):
         # see subprocess.list2cmdline
         subprocess.Popen([PLAYER_CMD]+PLAYER_OPTS.split()+[vidfile])
 
-    def _move_plot_window(self, x, y):
+    def move_plot_window(self, x, y):
         """ Move figure upper left corner to x,y. Only works with
         Qt backend. """
         if 'Qt4' in pylab.get_backend():

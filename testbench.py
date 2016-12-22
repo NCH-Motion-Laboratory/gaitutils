@@ -16,7 +16,7 @@ vicon = nexus.viconnexus()
 
 
 lout = [['LVas', 'RVas'], ['LRec', 'RRec'], ['LHam', 'RHam']]
-lout = layouts.kinetics_emg('R')
+lout = layouts.std_kinematics
 
 pl = Plotter()
 
@@ -24,7 +24,7 @@ pl.layout = lout
 
 pl.open_nexus_trial()
 
-pl.plot_trial()
+pl.plot_trial(model_cycles=None, context='R')
 
 
 

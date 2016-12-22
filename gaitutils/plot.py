@@ -72,15 +72,13 @@ class Plotter(object):
         self.trial = Trial(source)
 
     def external_play_video(self, vidfile):
-        """ Launch an external video player (defined in config) to play vidfile.
-        vidfile is given as the last argument to the command. """
-        # TODO: put into config file
+        """ Launch video player (defined in config) to play vidfile. """
         PLAYER_CMD = self.cfg.videoplayer_path
         if not (op.isfile(PLAYER_CMD) and os.access(PLAYER_CMD, os.X_OK)):
             error_exit('Invalid video player executable: %S' % PLAYER_CMD)
         PLAYER_OPTS = self.cfg.videoplayer_opts
         # command needs to be constructed in a very particular way
-        # see subprocess.list2cmdline for troubleshooting
+        # see subprocess.list2cmdline
         subprocess.Popen([PLAYER_CMD]+PLAYER_OPTS.split()+[vidfile])
 
     def _move_plot_window(self, x, y):
@@ -126,7 +124,7 @@ class Plotter(object):
 
         model_cycles : dict of int | int | dict of list | 'all' | None
                 Gait cycles to plot. Default is first cycle (1) for
-                both sides. Multiple cycles can be given as lists.
+                both contexts. Multiple cycles can be given as lists.
                 If None, plot unnormalized data. 'context' must then be
                 specified.
                 If 'all', plot all available cycles.
@@ -207,15 +205,15 @@ class Plotter(object):
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
                         context = cycle.context
-                    else:
-                        if context is None:
-                            raise ValueError('Must specify context for '
-                                             'plotting unnormalized variable')
+                    elif context is None:
+                        raise ValueError('Must specify context for '
+                                         'plotting unnormalized variable')
                     # plot, unless kinetic var and kinetics not available
                     if not (models.pig_lowerbody.is_kinetic_var(var) and
                        cycle not in self.trial.kinetics_cycles):
                         varname = context + var
-                        x, data = self.trial[varname]
+                        x_, data = self.trial[varname]
+                        x = x_ / self.trial.framerate if cycle is None else x_
                         tcolor = (model_tracecolor if model_tracecolor
                                   else self.cfg.model_tracecolors[context])
                         lstyle = (self.cfg.model_linestyles[context] if
@@ -243,7 +241,11 @@ class Plotter(object):
                             ax.set_ylim(ylim0, ylim1)
                         elif model == models.musclelen:
                             ax.set_ylim(ylim[0]-10, ylim[1]+10)
-                        if plot_model_normaldata:
+                        if cycle is None:
+                            ax.set(xlabel='Time (s)')
+                            ax.xaxis.label.set_fontsize(self.cfg.
+                                                        plot_label_fontsize)
+                        if plot_model_normaldata and cycle is not None:
                             tnor, ndata = model.get_normaldata(varname)
                             if ndata is not None:
                                 # assume (mean, stddev) for normal data
@@ -293,7 +295,7 @@ class Plotter(object):
                         if cycle is None:
                             ax.set(xlabel='Time (s)')
                             ax.xaxis.label.set_fontsize(self.cfg.
-                                                        label_fontsize)
+                                                        plot_label_fontsize)
 
             elif var_type in ('model_legend', 'emg_legend'):
                 self.legendnames.append('%s   %s   %s' % (

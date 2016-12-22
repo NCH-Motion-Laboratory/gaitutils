@@ -43,6 +43,8 @@ class Plotter(object):
         self.trial = None
         self.fig = None
         self.normaldata = normaldata
+        self.legendnames = []
+        self.modelartists = []
         self.cfg = Config()
 
     @property
@@ -82,6 +84,8 @@ class Plotter(object):
             return 'model'
         elif var in self.trial.emg.ch_names:
             return 'emg'
+        elif var in ('model_legend', 'emg_legend'):
+            return var
         else:
             raise ValueError('Unknown variable')
 
@@ -272,6 +276,35 @@ class Plotter(object):
                             ax.set(xlabel='Time (s)')
                             ax.xaxis.label.set_fontsize(self.cfg.
                                                         label_fontsize)
+
+            elif var_type == 'model_legend':
+                self.legendnames.append('%s    %s    %s' %
+                                        (self.trial.trialname,
+                                         self.trial.eclipse_data['DESCRIPTION'],
+                                         self.trial.eclipse_data['NOTES']))
+                self.modelartists.append(plt.Line2D((0,1),(0,0), color=tracecolor, linestyle=model_linestyle))
+                plt.axis('off')
+                nothing = [plt.Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)]
+                legtitle = ['Model traces:']
+                ax.legend(nothing+self.modelartists, legtitle+self.legendnames, prop={'size':self.fsize_labels}, loc='upper center')
+
+            elif var_type == 'emg_legend':
+                self.legendnames.append('%s    %s    %s' %
+                                        (self.trial.trialname,
+                                         self.trial.eclipse_data['DESCRIPTION'],
+                                         self.trial.eclipse_data['NOTES']))
+                self.emgartists.append(plt.Line2D((0,1),(0,0), color=emg_tracecolor))
+                plt.axis('off')
+                nothing = [plt.Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)]
+                legtitle = ['EMG traces:']
+                ax.legend(nothing+self.emgartists, legtitle+self.legendnames, prop={'size':self.fsize_labels}, loc='upper center')
+
+
+            """ Update the legends on each added trial. The "artists" (corresponding to
+            line styles) and the labels are appended into lists and the legend
+            is recreated when plotting each trial (the legend has no add method) """
+
+
 
         plt.suptitle(maintitle, fontsize=12, fontweight="bold")
         # magic adjustments to fig geometry

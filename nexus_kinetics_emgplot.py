@@ -17,20 +17,15 @@ def do_plot():
     side = pl.trial.kinetics
     pl.layout = layouts.kinetics_emg(side)
     pdf_prefix = 'Kinetics_EMG_'
-    maintitleprefix = 'Kinetics-EMG plot for '
+    maintitleprefix = 'Kinetics-EMG plot for'
 
-    trialname = pl.trial.trialname
-    maintitle = maintitleprefix + trialname
-    if 'DESCRIPTION' in pl.trial.eclipse_data:
-        maintitle += ' (' + pl.trial.eclipse_data['DESCRIPTION'] + ')'
-    if 'NOTES' in pl.trial.eclipse_data:
-        maintitle += ' (' + pl.trial.eclipse_data['NOTES'] + ')'
+    maintitle = '%s %s (%s) (%s)' % (maintitleprefix,
+                                     pl.trial.trialname,
+                                     pl.trial.eclipse_data['DESCRIPTION'],
+                                     pl.trial.eclipse_data['NOTES'])
 
-    pl.plot_trial(maintitle=maintitle,
-                  emg_cycles={side: 1})  # we only want emg for one side
-
+    pl.plot_trial(maintitle=maintitle, emg_cycles={side: 1})
     pl.create_pdf(pdf_prefix=pdf_prefix)
-
 
 if __name__ == '__main__':
     do_plot()

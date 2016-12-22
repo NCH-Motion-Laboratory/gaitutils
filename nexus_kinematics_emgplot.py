@@ -2,7 +2,9 @@
 """
 Created on Tue Apr 28 11:37:51 2015
 
-Kinetics-EMG plot from Nexus.
+Kinematics-EMG plot from Nexus.
+
+Instead of separate plots, this overlays EMGs from both sides on one plot.
 
 @author: Jussi
 """
@@ -14,15 +16,13 @@ def do_plot():
 
     pl = Plotter()
     pl.open_nexus_trial()
-    pdf_prefix = 'Kinetics_EMG_'
-    maintitleprefix = 'Kinetics-EMG plot for '
+    pdf_prefix = 'Kinematics_EMG_'
+    maintitleprefix = 'Kinematics-EMG plot for '
 
-    trialname = pl.trial.trialname
-    maintitle = maintitleprefix + trialname
-    if 'DESCRIPTION' in pl.trial.eclipse_data:
-        maintitle += ' (' + pl.trial.eclipse_data['DESCRIPTION'] + ')'
-    if 'NOTES' in pl.trial.eclipse_data:
-        maintitle += ' (' + pl.trial.eclipse_data['NOTES'] + ')'
+    maintitle = '%s %s (%s) (%s)' % (maintitleprefix,
+                                     pl.trial.trialname,
+                                     pl.trial.eclipse_data['DESCRIPTION'],
+                                     pl.trial.eclipse_data['NOTES'])
 
     pl.layout = layouts.kinematics_emg('L')
     pl.plot_trial(maintitle=maintitle,

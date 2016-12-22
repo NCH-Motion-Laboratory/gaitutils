@@ -41,18 +41,18 @@ std_kinall = std_kinematics + std_kinetics
 # add legend to bottom row
 overlay_kinall = list(std_kinall)
 overlay_kinall.pop()
-overlay_kinall.append(['modellegend', None, 'AnklePowerZ'])
+overlay_kinall.append(['model_legend', None, 'AnklePowerZ'])
 
 overlay_kinematics = list(std_kinematics)
-overlay_kinematics.append(['modellegend', None, None])
+overlay_kinematics.append(['model_legend', None, None])
 
 # EMG overlay - add legend
 overlay_emg = list(std_emg)
-overlay_emg.append(['emglegend', None])
+overlay_emg.append(['emg_legend', None])
 
 # kinetics overlay - add legend
 overlay_kinetics = list(std_kinetics)
-overlay_kinetics.append(['modellegend', None, None])
+overlay_kinetics.append(['model_legend', None, None])
 
 
 """ Mixed layouts (EMG+model) for given side. These also return suitable height

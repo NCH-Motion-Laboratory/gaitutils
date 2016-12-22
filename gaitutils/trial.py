@@ -11,6 +11,7 @@ Read gait trials.
 from __future__ import division, print_function
 from gaitutils import read_data, utils, eclipse, nexus
 from envutils import debug_print
+from collections import defaultdict
 import numpy as np
 import os.path as op
 import glob
@@ -112,7 +113,9 @@ class Trial(object):
         self.trialdirname = self.sessionpath.split('\\')[-2]
         enfpath = self.sessionpath + self.trialname + '.Trial.enf'
         if op.isfile(enfpath):
-            self.eclipse_data = eclipse.get_eclipse_keys(enfpath)
+            edata = eclipse.get_eclipse_keys(enfpath)
+            # for convenience, eclipse_data returns '' for nonexistent keys
+            self.eclipse_data = defaultdict(lambda: '', edata)
         try:
             self.kinetics_ = utils.kinetics_available(source)
             self.kinetics = self.kinetics_['context']

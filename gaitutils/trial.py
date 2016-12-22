@@ -177,7 +177,7 @@ class Trial(object):
         cycles = [cycle for cycle in self.cycles
                   if cycle.context == context.upper()]
         if ncycle < 1:
-            raise ValueError('Cycle index must be >= 1')
+            raise ValueError('Index of gait cycle must be >= 1')
         if len(cycles) < ncycle:
             raise ValueError('Requested gait cycle %d does not '
                              'exist in data' % ncycle)

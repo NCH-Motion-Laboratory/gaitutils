@@ -21,6 +21,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.gridspec as gridspec
 from guiutils import error_exit, messagebox
 import os.path as op
+import os
+import subprocess
 from config import Config
 
 
@@ -68,6 +70,18 @@ class Plotter(object):
 
     def open_trial(self, source):
         self.trial = Trial(source)
+
+    def external_play_video(self, vidfile):
+        """ Launch an external video player (defined in config) to play vidfile.
+        vidfile is given as the last argument to the command. """
+        # TODO: put into config file
+        PLAYER_CMD = self.cfg.videoplayer_path
+        if not (op.isfile(PLAYER_CMD) and os.access(PLAYER_CMD, os.X_OK)):
+            error_exit('Invalid video player executable: %S' % PLAYER_CMD)
+        PLAYER_OPTS = self.cfg.videoplayer_opts
+        # command needs to be constructed in a very particular way
+        # see subprocess.list2cmdline for troubleshooting
+        subprocess.Popen([PLAYER_CMD]+PLAYER_OPTS.split()+[vidfile])
 
     def _move_plot_window(self, x, y):
         """ Move figure upper left corner to x,y. Only works with
@@ -340,13 +354,4 @@ class Plotter(object):
         except IOError:
             messagebox('Error writing PDF file, '
                        'check that file is not already open.')
-
-
-
-
-
-
-
-
-
 

@@ -5,7 +5,7 @@
 gaitutils TODO:
 
 
--legends for plotter
+-video player
 
 -small discrepancies in c3d/Nexus cycles?
     -nexus returns smaller frame indices (sometimes)

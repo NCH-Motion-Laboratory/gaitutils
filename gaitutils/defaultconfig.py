@@ -27,6 +27,10 @@ cfg['nexus_path'] = cfg['vicon_path'] + '/Nexus' + cfg['nexus_ver']
 """ Plug-in Gait normal data """
 cfg['pig_normaldata_path'] = appdir + '/Data/normal.gcd'
 
+""" Video player """
+cfg['videoplayer_path'] = 'C:/Program Files (x86)/VideoLAN/VLC/vlc.exe'
+cfg['videoplayer_opts'] = '--input-repeat=-1 --rate=.2'
+
 """ EMG settings """
 cfg['emg_passband'] = (10, 400)
 cfg['emg_devname'] = 'Myon'
@@ -68,7 +72,6 @@ cfg['emg_normals'] = {'RGas': [[16, 50]],
                       'LSol': [[10, 54]],
                       'LTibA': [[0, 12], [56, 100]],
                       'LVas': [[0, 24], [96, 100]]}
-
 
 """ Plotting related settings """
 cfg['plot_label_fontsize'] = 10

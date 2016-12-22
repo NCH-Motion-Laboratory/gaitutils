@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
--1 instance per layout
--separate methods for adding normal data?
--exception handling?
--plot unnormalized data
--plot avg/stddev?
-
+Plot gait data
 
 @author: jnu@iki.fi
 """
@@ -202,7 +197,8 @@ class Plotter(object):
                 cycles.update({key: [val] for (key, val) in cycles.items()
                               if isinstance(val, int)})
                 # get the specified cycles
-                cycles = [self.trial.get_cycle(side, ncycle) for side in ['L', 'R']
+                cycles = [self.trial.get_cycle(side, ncycle)
+                          for side in ['L', 'R']
                           for ncycle in cycles[side] if ncycle]
             return cycles
 

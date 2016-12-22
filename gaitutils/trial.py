@@ -9,7 +9,7 @@ Read gait trials.
 
 
 from __future__ import division, print_function
-from gaitutils import read_data, utils, eclipse, nexus
+from gaitutils import read_data, utils, eclipse
 from envutils import debug_print
 from collections import defaultdict
 import numpy as np
@@ -17,16 +17,6 @@ import os.path as op
 import glob
 import models
 from emg import EMG
-
-
-class GaitDataError(Exception):
-    """ Custom exception class. Stores a message. """
-
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return repr(self.msg)
 
 
 class Gaitcycle(object):
@@ -189,7 +179,8 @@ class Trial(object):
         if ncycle < 1:
             raise ValueError('Cycle index must be >= 1')
         if len(cycles) < ncycle:
-            raise ValueError('No such gait cycle')
+            raise ValueError('Requested gait cycle %d does not '
+                             'exist in data' % ncycle)
         else:
             return cycles[ncycle-1]
 

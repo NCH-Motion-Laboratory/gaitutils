@@ -5,6 +5,10 @@
 gaitutils TODO:
 
 
+-exception handling
+
+-validate (gaitplotter, Nexus)
+
 -unnormalized model plotting not yet working fully
 
 -small discrepancies in c3d/Nexus cycles?

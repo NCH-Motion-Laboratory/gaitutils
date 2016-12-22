@@ -8,7 +8,7 @@ EMG plot from Nexus.
 """
 
 
-from gaitutils import Plotter, layouts
+from gaitutils import Plotter, layouts, register_gui_exception_handler
 
 
 def do_plot():
@@ -32,6 +32,5 @@ def do_plot():
     pl.create_pdf(pdf_prefix=pdf_prefix)
 
 if __name__ == '__main__':
+    register_gui_exception_handler()
     do_plot()
-
-

@@ -176,6 +176,7 @@ def get_forceplate_data(c3dfile):
     # suppress noise by medfilt; not sure what Nexus uses
     fz = FP_FILTFUN(fz, FP_FILTW)
     fz_0_ind = np.where(fz == 0)
+    print(fz)
     copx = (my + fx * FP_DZ)/fz
     copy = (mx - fy * FP_DZ)/fz
     copx[fz_0_ind] = 0

@@ -5,9 +5,10 @@
 gaitutils TODO:
 
 
--exception handling
 
 -validate (gaitplotter, Nexus)
+
+-cop calculation causes runtime warning (div by zero)
 
 -unnormalized model plotting not yet working fully
 

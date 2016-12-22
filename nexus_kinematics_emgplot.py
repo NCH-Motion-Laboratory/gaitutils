@@ -9,7 +9,7 @@ Instead of separate plots, this overlays EMGs from both sides on one plot.
 @author: Jussi
 """
 
-from gaitutils import Plotter, layouts
+from gaitutils import Plotter, layouts, register_gui_exception_handler
 
 
 def do_plot():
@@ -36,4 +36,5 @@ def do_plot():
 
 
 if __name__ == '__main__':
+    register_gui_exception_handler()
     do_plot()

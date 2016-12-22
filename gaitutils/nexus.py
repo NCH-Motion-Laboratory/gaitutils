@@ -73,6 +73,8 @@ def find_trials(eclipse_keys, strings):
     Eclipse fields (list) contain any of strings (list). Case insensitive. """
     strings = [st.upper() for st in strings]
     enffiles = get_trial_enfs()
+    if enffiles is None:
+        return
     for enf in enffiles:
         ecldi = get_eclipse_keys(enf).items()
         eclvals = [val.upper() for key, val in ecldi if key in eclipse_keys]

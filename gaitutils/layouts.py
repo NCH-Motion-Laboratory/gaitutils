@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Gaitplotter predefined plot layouts.
+Predefined plot layouts.
 
 Created on Thu Aug 27 14:16:50 2015
 
@@ -19,7 +19,6 @@ std_kinetics = [['HipMomentX', 'HipMomentY', 'HipMomentZ'],
                 ['KneeMomentZ', 'KneePowerZ', 'AnkleMomentX'],
                 [None, None, 'AnklePowerZ']]
 
-
 # muscle lengths
 std_musclelen = [['PsoaLength', 'GracLength', 'ReFeLength'],
                  ['BiFLLength', 'SeTeLength', 'SeMeLength'],
@@ -36,27 +35,28 @@ std_emg = [['RGlut', 'LGlut'],
            ['RSol', 'LSol']]
 
 std_emg_left = [[None, 'LGlut'],
-           [None, 'LHam'],
-           [None, 'LRec'],
-           [None, 'LVas'],
-           [None, 'LTibA'],
-           [None, 'LPer'],
-           [None, 'LGas'],
-           [None, 'LSol']]
+                [None, 'LHam'],
+                [None, 'LRec'],
+                [None, 'LVas'],
+                [None, 'LTibA'],
+                [None, 'LPer'],
+                [None, 'LGas'],
+                [None, 'LSol']]
 
 std_emg_right = [['RGlut', None],
-             ['RHam', None],
-             ['RRec', None],
-             ['RVas', None],
-             ['RTibA', None],
-             ['RPer', None],
-             ['RGas', None],
-             ['RSol', None]]
+                 ['RHam', None],
+                 ['RRec', None],
+                 ['RVas', None],
+                 ['RTibA', None],
+                 ['RPer', None],
+                 ['RGas', None],
+                 ['RSol', None]]
 
 
 # kinetics + kinematics
 std_kinall = std_kinematics + std_kinetics
-# kin *overlay
+
+# kin* overlays
 # add legend to bottom row
 overlay_kinall = list(std_kinall)
 overlay_kinall.pop()
@@ -72,14 +72,6 @@ overlay_emg.append(['emg_legend', None])
 # kinetics overlay - add legend
 overlay_kinetics = list(std_kinetics)
 overlay_kinetics.append(['model_legend', None, None])
-
-
-""" Mixed layouts (EMG+model) for given side. These also return suitable height
-ratios for plotting the rows (EMG plots can be a bit smaller in vertical size).
-Example call:
-layout, heightratios = kinetics_emg('R')
-
-"""
 
 
 # Kinetics-EMG. Will return EMG channels according to the given side

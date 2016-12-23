@@ -17,6 +17,7 @@ vicon = nexus.viconnexus()
 
 lout = [['LVas', 'RVas'], ['LRec', 'RRec'], ['LHam', 'RHam']]
 lout = layouts.kinetics_emg('R')
+
 lout = layouts.std_kinetics
 
 pl = Plotter()

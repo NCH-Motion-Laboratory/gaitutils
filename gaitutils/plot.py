@@ -219,18 +219,15 @@ class Plotter(object):
                     elif context is None:
                         raise ValueError('Must specify context for '
                                          'plotting unnormalized variable')
-                    # plot, unless kinetic var and kinetics not available
-                    if not (models.pig_lowerbody.is_kinetic_var(var) and
-                       cycle not in self.trial.kinetics_cycles):
-                        varname = context + var
-                        x_, data = self.trial[varname]
-                        x = x_ / self.trial.framerate if cycle is None else x_
-                        tcolor = (model_tracecolor if model_tracecolor
-                                  else self.cfg.model_tracecolors[context])
-                        lstyle = (self.cfg.model_linestyles[context] if
-                                  linestyles_context else model_linestyle)
-                        ax.plot(x, data, tcolor, linestyle=lstyle,
-                                linewidth=self.cfg.model_linewidth)
+                    varname = context + var
+                    x_, data = self.trial[varname]
+                    x = x_ / self.trial.framerate if cycle is None else x_
+                    tcolor = (model_tracecolor if model_tracecolor
+                              else self.cfg.model_tracecolors[context])
+                    lstyle = (self.cfg.model_linestyles[context] if
+                              linestyles_context else model_linestyle)
+                    ax.plot(x, data, tcolor, linestyle=lstyle,
+                            linewidth=self.cfg.model_linewidth)
 
                     # set labels, ticks, etc. after plotting last cycle
                     if cycle == model_cycles[-1]:

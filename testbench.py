@@ -26,7 +26,7 @@ pl.layout = lout
 
 pl.open_nexus_trial()
 
-pl.plot_trial(model_cycles=None, context='R')
+pl.plot_trial(model_cycles=None, context='L')
 
 
 

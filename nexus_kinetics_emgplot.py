@@ -17,13 +17,8 @@ def do_plot():
     side = pl.trial.kinetics
     pl.layout = layouts.kinetics_emg(side)
     pdf_prefix = 'Kinetics_EMG_'
-    maintitleprefix = 'Kinetics-EMG plot for'
-
-    maintitle = '%s %s (%s) (%s)' % (maintitleprefix,
-                                     pl.trial.trialname,
-                                     pl.trial.eclipse_data['DESCRIPTION'],
-                                     pl.trial.eclipse_data['NOTES'])
-
+    maintitle = pl.title_with_eclipse_info('Kinetics-EMG for')
+    # for EMG, plot only the cycle that has kinetics info
     pl.plot_trial(maintitle=maintitle, emg_cycles={side: 1})
     pl.create_pdf(pdf_prefix=pdf_prefix)
 

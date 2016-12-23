@@ -16,11 +16,7 @@ def do_plot():
     pl = Plotter()
     pl.open_nexus_trial()
     pdf_prefix = 'EMG_'
-    maintitleprefix = 'EMG plot for'
-    maintitle = '%s %s (%s) (%s)' % (maintitleprefix,
-                                     pl.trial.trialname,
-                                     pl.trial.eclipse_data['DESCRIPTION'],
-                                     pl.trial.eclipse_data['NOTES'])
+    maintitle = pl.title_with_eclipse_info('EMG plot for')
 
     pl.layout = layouts.std_emg_right
     pl.plot_trial(maintitle=maintitle, emg_cycles={'R': 1})

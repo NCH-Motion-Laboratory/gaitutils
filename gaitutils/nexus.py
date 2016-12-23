@@ -312,7 +312,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         raise ValueError('Need to supply center frame')
     frate = vicon.GetFrameRate()
     if not frate:
-        raise Exception('Cannot get framerate from Nexus')
+        raise ValueError('Cannot get framerate from Nexus')
 
     # TODO: into config?
     # relative thresholds (of maximum velocity)

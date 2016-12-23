@@ -43,7 +43,7 @@ def get_emg_data(c3dfile):
         return {'t': np.arange(len(data[elname])) / acq.GetAnalogFrequency(),
                 'data': data}
     else:
-        raise ValueError('No EMG channels found in data!')
+        raise ValueError('No EMG channels found in data')
 
 
 def get_marker_data(c3dfile, markers):
@@ -92,14 +92,14 @@ def get_metadata(c3dfile):
             elif i.GetContext() == "Left":
                 lstrikes.append(i.GetFrame())
             else:
-                raise Exception("Unknown context on foot strike event")
+                raise ValueError("Unknown context on foot strike event")
         elif i.GetLabel() == "Foot Off":
             if i.GetContext() == "Right":
                 rtoeoffs.append(i.GetFrame())
             elif i.GetContext() == "Left":
                 ltoeoffs.append(i.GetFrame())
             else:
-                raise Exception("Unknown context on foot strike event")
+                raise ValueError("Unknown context on foot strike event")
     # get subject info
     metadata = acq.GetMetaData()
     # don't ask
@@ -176,7 +176,6 @@ def get_forceplate_data(c3dfile):
     # suppress noise by medfilt; not sure what Nexus uses
     fz = FP_FILTFUN(fz, FP_FILTW)
     fz_0_ind = np.where(fz == 0)
-    print(fz)
     copx = (my + fx * FP_DZ)/fz
     copy = (mx - fy * FP_DZ)/fz
     copx[fz_0_ind] = 0

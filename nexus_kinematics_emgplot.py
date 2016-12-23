@@ -17,12 +17,7 @@ def do_plot():
     pl = Plotter()
     pl.open_nexus_trial()
     pdf_prefix = 'Kinematics_EMG_'
-    maintitleprefix = 'Kinematics-EMG plot for '
-
-    maintitle = '%s %s (%s) (%s)' % (maintitleprefix,
-                                     pl.trial.trialname,
-                                     pl.trial.eclipse_data['DESCRIPTION'],
-                                     pl.trial.eclipse_data['NOTES'])
+    maintitle = pl.title_with_eclipse_info('Kinematics-EMG for')
 
     pl.layout = layouts.kinematics_emg('L')
     pl.plot_trial(maintitle=maintitle,

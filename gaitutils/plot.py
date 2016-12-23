@@ -170,7 +170,7 @@ class Plotter(object):
             raise ValueError('No trial to plot, call open_trial() first')
         if self._layout is None:
             raise ValueError('No layout set')
-        if not maintitle:
+        if maintitle is None:
             if maintitleprefix is None:
                 maintitleprefix = ''
             maintitle = maintitleprefix + self.trial.trialname
@@ -341,6 +341,16 @@ class Plotter(object):
                              hspace=.37, wspace=.22)
         if show:
             plt.show()
+
+    def title_with_eclipse_info(self, prefix):
+        """ Create title: prefix + trial name + Eclipse description and
+        notes """
+        desc = self.trial.eclipse_data['DESCRIPTION']
+        notes = self.trial.eclipse_data['NOTES']
+        maintitle = '%s %s' % (prefix, self.trial.trialname)
+        maintitle += ' (%s)' % desc if desc else ''
+        maintitle += ' (%s)' % notes if notes else ''
+        return maintitle
 
     def show(self):
         plt.show()

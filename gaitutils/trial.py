@@ -9,28 +9,17 @@ Read gait trials.
 
 
 from __future__ import division, print_function
-import copy
-from gaitutils import nexus, eclipse
-from fileutils import is_c3dfile
+from gaitutils import read_data, utils, eclipse
 from envutils import debug_print
+from collections import defaultdict
 import numpy as np
-import os
-import btk  # biomechanical toolkit for c3d reading
+import os.path as op
+import glob
 import models
 from emg import EMG
 
 
-class GaitDataError(Exception):
-    """ Custom exception class. Stores a message. """
-
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return repr(self.msg)
-
-
-class GaitCycle:
+class Gaitcycle(object):
     """" Holds information about one gait cycle. Offset is the frame where
     the data begins; 1 for Vicon Nexus (which always returns whole trial) and
     start of the ROI for c3d files, which contain data only for the ROI. """
@@ -38,6 +27,7 @@ class GaitCycle:
     def __init__(self, start, end, offset, toeoff, context, smp_per_frame):
         self.offset = offset
         self.len = end - start
+        # convert frame indices to 0-based
         self.start = start - offset
         self.end = end - offset
         self.toeoff = toeoff - offset
@@ -49,168 +39,170 @@ class GaitCycle:
         self.len_smp = self.end_smp - self.start_smp
         # normalized x-axis (% of gait cycle) of same length as cycle
         self.t = np.linspace(0, 100, self.len)
+        # same for analog variables
+        self.tn_analog = np.linspace(0, 100, self.len_smp)
         # normalized x-axis of 0,1,2..100%
         self.tn = np.linspace(0, 100, 101)
         # normalize toe-off event to the cycle
         self.toeoffn = round(100*((self.toeoff - self.start) / self.len))
 
+    def __repr__(self):
+        s = '<Gaitcycle |'
+        s += ' offset: %d' % self.offset
+        s += ' start: %d' % self.start
+        s += ' end: %d' % self.end
+        s += ' context: %s' % self.context
+        s += ' toeoff: %d' % self.toeoff
+        s += '>'
+        return s
+
     def normalize(self, var):
         """ Normalize frames-based variable var to the cycle.
         New interpolated x axis is 0..100% of the cycle. """
-        return np.interp(self.tn, self.t, var[self.start:self.end])
+        return self.tn, np.interp(self.tn, self.t, var[self.start:self.end])
 
-    def cut_analog_to_cycle(self, var):
+    def crop_analog(self, var):
         """ Crop analog variable (EMG, forceplate, etc. ) to the
         cycle; no interpolation. """
-        return var[self.start_smp:self.end_smp]
+        return self.tn_analog, var[self.start_smp:self.end_smp]
 
 
-class Trial:
+class Trial(object):
     """ A gait trial. Contains:
     -subject and trial info
-    -gait cycles (beginning and end frames)
+    -gait cycles
     -analog data (EMG, forceplate, etc.)
     -model output variables (Plug-in Gait, muscle length, etc.)
+    TODO:
+    -lazy reads should check whether underlying trial has changed
+    (at least for Nexus)
     """
 
-    def __init__(self, source, emg_mapping=None, emg_auto_off=None):
-        """ Open trial, read subject info, events etc. """
-        self.lfstrikes = []
-        self.rfstrikes = []
-        self.ltoeoffs = []
-        self.rtoeoffs = []
-        self.subject = {}
+    def __repr__(self):
+        s = '<Trial |'
+        s += ' trial: %s' % self.trialname
+        s += ', data source: %s' % self.source
+        s += ', subject: %s' % self.name
+        s += ', gait cycles: %s' % self.ncycles
+        s += ', kinetics: %s' % (self.kinetics if self.kinetics else 'None')
+        s += '>'
+        return s
 
-        if is_c3dfile(source):
-            debug_print('trial: reading from ', source)
-            c3dfile = source
-            self.trialname = os.path.basename(os.path.splitext(c3dfile)[0])
-            self.sessionpath = os.path.dirname(c3dfile)
-            reader = btk.btkAcquisitionFileReader()
-            reader.SetFilename(str(c3dfile))  # check existence?
-            reader.Update()
-            acq = reader.GetOutput()
-            # frame offset (start of trial data in frames)
-            self.offset = acq.GetFirstFrame()
-            self.framerate = acq.GetPointFrequency()
-            self.analograte = acq.GetAnalogFrequency()
-            #  get events
-            for i in btk.Iterate(acq.GetEvents()):
-                if i.GetLabel() == "Foot Strike":
-                    if i.GetContext() == "Right":
-                        self.rfstrikes.append(i.GetFrame())
-                    elif i.GetContext() == "Left":
-                        self.lfstrikes.append(i.GetFrame())
-                    else:
-                        raise Exception("Unknown context on foot strike event")
-                elif i.GetLabel() == "Foot Off":
-                    if i.GetContext() == "Right":
-                        self.rtoeoffs.append(i.GetFrame())
-                    elif i.GetContext() == "Left":
-                        self.ltoeoffs.append(i.GetFrame())
-                    else:
-                        raise Exception("Unknown context on foot strike event")
-            # get subject info
-            metadata = acq.GetMetaData()
-            # don't ask
-            self.subject['Name'] = (metadata.FindChild("SUBJECTS").value().
-                                    FindChild("NAMES").value().GetInfo().
-                                    ToString()[0].strip())
-            self.subject['Bodymass'] = (metadata.FindChild("PROCESSING").
-                                        value().FindChild("Bodymass").value().
-                                        GetInfo().ToDouble()[0])
-            debug_print('Subject info read:\n', self.subject)
-
-        elif nexus.is_vicon_instance(source):
-            debug_print('trial: reading from Vicon Nexus')
-            vicon = source
-            subjectnames = vicon.GetSubjectNames()
-            debug_print('subject:', subjectnames)
-            if len(subjectnames) > 1:
-                raise GaitDataError('Nexus returns multiple subjects')
-            if not subjectnames:
-                raise GaitDataError('No subject defined')
-            self.subjectname = subjectnames[0]
-            self.subject['Name'] = self.subjectname
-            Bodymass = vicon.GetSubjectParam(self.subjectname, 'Bodymass')
-            # for unknown reasons, above method may return tuple or float
-            # depending on whether script is run from Nexus or outside
-            if type(Bodymass) == tuple:
-                self.subject['Bodymass'] = vicon.GetSubjectParam(
-                                            self.subjectname, 'Bodymass')[0]
-            else:  # hopefully float
-                self.subject['Bodymass'] = (vicon.GetSubjectParam(
-                                            self.subjectname, 'Bodymass'))
-            trialname_ = vicon.GetTrialName()
-            self.sessionpath = trialname_[0]
-            self.trialname = trialname_[1]
-            if not self.trialname:
-                raise GaitDataError('No trial loaded')
-            # get events
-            self.lfstrikes = vicon.GetEvents(self.subjectname,
-                                             "Left", "Foot Strike")[0]
-            self.rfstrikes = vicon.GetEvents(self.subjectname,
-                                             "Right", "Foot Strike")[0]
-            self.ltoeoffs = vicon.GetEvents(self.subjectname,
-                                            "Left", "Foot Off")[0]
-            self.rtoeoffs = vicon.GetEvents(self.subjectname,
-                                            "Right", "Foot Off")[0]
-            # frame offset (start of trial data in frames)
-            self.offset = 1
-            self.framerate = vicon.GetFrameRate()
-            # Get analog rate. This may not be mandatory if analog devices
-            # are not used, but currently it needs to succeed.
-            devids = vicon.GetDeviceIDs()
-            if not devids:
-                raise GaitDataError('No analog devices configured in Nexus, '
-                                    'cannot determine analog rate')
-            else:
-                devid = devids[0]
-                _, _, self.analograte, _, _, _ = vicon.GetDeviceDetails(devid)
-        else:
-            raise GaitDataError('Invalid data source specified')
-        debug_print('Foot strikes right:', self.rfstrikes, 'left:',
-                    self.lfstrikes)
-        debug_print('Toeoffs right:', self.rtoeoffs, 'left:', self.ltoeoffs)
-        if len(self.lfstrikes) < 2 or len(self.rfstrikes) < 2:
-            raise GaitDataError('Too few foot strike events detected, check '
-                                'that data has been processed')
-        # sort events (may be in wrong temporal order, at least in c3d files)
-        for li in [self.lfstrikes, self.rfstrikes, self.ltoeoffs,
+    def __init__(self, source):
+        self.source = source
+        # read metadata into instance attributes
+        meta = read_data.get_metadata(source)
+        self.__dict__.update(meta)
+        # events may be in wrong temporal order, at least in c3d files
+        for li in [self.lstrikes, self.rstrikes, self.ltoeoffs,
                    self.rtoeoffs]:
             li.sort()
         # get description and notes from Eclipse database
         if not self.sessionpath[-1] == '\\':
             self.sessionpath = self.sessionpath+('\\')
         self.trialdirname = self.sessionpath.split('\\')[-2]
-        trialpath = self.sessionpath + self.trialname
-        self.eclipse_description = eclipse.get_eclipse_key(trialpath,
-                                                           'DESCRIPTION')
-        self.eclipse_notes = eclipse.get_eclipse_key(trialpath, 'NOTES')
-        self.source = source
-        # init emg
-        self.emg = EMG(source, emg_auto_off=emg_auto_off,
-                       emg_mapping=emg_mapping)
-        self.model = model_outputs(self.source)
-        self.kinetics_side = nexus.kinetics_available()['context']
-        # normalized x-axis of 0,1,2..100%
+        enfpath = self.sessionpath + self.trialname + '.Trial.enf'
+        if op.isfile(enfpath):
+            edata = eclipse.get_eclipse_keys(enfpath)
+            # for convenience, eclipse_data returns '' for nonexistent keys
+            self.eclipse_data = defaultdict(lambda: '', edata)
+        try:
+            self.kinetics_ = utils.kinetics_available(source)
+            self.kinetics = self.kinetics_['context']
+        except ValueError:
+            self.kinetics = None
+        # analog and model data are lazily read
+        self._emg = None
+        self._forceplate = None
+        self._models_data = dict()
+        # whether to normalize data
+        self._normalize = None
+        # frames 0...length
+        self.t = np.arange(self.length)
+        # analog frames 0...length
+        self.t_analog = np.arange(self.length * self.samplesperframe)
+        # normalized x-axis of 0, 1, 2 .. 100%
         self.tn = np.linspace(0, 100, 101)
-        self.smp_per_frame = self.analograte/self.framerate
-        # figure out gait cycles
-        self.cycles = list(self.scan_cycles())
+        self.samplesperframe = self.analograte/self.framerate
+        self.cycles = list(self._scan_cycles())
+        if self.kinetics:
+            kin_cyc = [cyc for cyc in self.cycles if
+                       abs(cyc.start-self.kinetics_['strike']) < 5]
+            self.kinetics_cycles = kin_cyc
+        else:
+            self.kinetics_cycles = []
         self.ncycles = len(self.cycles)
-        # video files associated with trial
-        self.video_files = get_video_filenames(self.sessionpath+self.trialname)
+        self.video_files = glob.glob(self.sessionpath+self.trialname+'*avi')
 
-    def scan_cycles(self):
-        """ Scan for foot strike events and create gait cycle objects. """
-        for strikes in [self.lfstrikes, self.rfstrikes]:
+    def __getitem__(self, item):
+        """ Get model variable or EMG channel by indexing, normalized
+        according to normalization cycle. Does not check for duplicate names.
+        """
+        try:
+            t = self.t
+            data = self._get_modelvar(item)
+            if self._normalize:
+                t, data = self._normalize.normalize(data)
+            return t, data
+        except ValueError:
+            try:
+                t = self.t_analog
+                data = self.emg[item]
+                if self._normalize:
+                    t, data = self._normalize.crop_analog(data)
+                return t, data
+            except KeyError:
+                    raise ValueError('Cannot read variable: %s' % item)
+
+    @property
+    def emg(self):
+        if not self._emg:
+            self._emg = EMG(self.source)
+            self._emg.read()
+        return self._emg
+
+    @property
+    def forceplate(self):
+        if not self._forceplate:
+            self._forceplate = read_data.get_forceplate_data(self.source)
+        return self._forceplate
+
+    def set_norm_cycle(self, cycle=None):
+        """ Set normalization cycle. None to get unnormalized data.
+        Will affect data returned by __getitem__ """
+        self._normalize = cycle if cycle else None
+
+    def get_cycle(self, context, ncycle):
+        """ e.g. ncycle=2 and context='L' returns 2nd left gait cycle. """
+        cycles = [cycle for cycle in self.cycles
+                  if cycle.context == context.upper()]
+        if ncycle < 1:
+            raise ValueError('Index of gait cycle must be >= 1')
+        if len(cycles) < ncycle:
+            raise ValueError('Requested gait cycle %d does not '
+                             'exist in data' % ncycle)
+        else:
+            return cycles[ncycle-1]
+
+    def _get_modelvar(self, var):
+        """ Return (unnormalized) model variable, load and cache data for
+        model if needed """
+        model_ = models.model_from_var(var)
+        if not model_:
+            raise ValueError('No model found for %s' % var)
+        if model_.desc not in self._models_data:
+            # read and cache model data
+            modeldata = read_data.get_model_data(self.source, model_)
+            self._models_data[model_.desc] = modeldata
+        return self._models_data[model_.desc][var]
+
+    def _scan_cycles(self):
+        """ Create gait cycle instances based on strike/toeoff markers. """
+        for strikes in [self.lstrikes, self.rstrikes]:
             len_s = len(strikes)
             if len_s < 2:
-                raise GaitDataError('Insufficient number of foot strike events'
-                                    'detected. Check that the trial has been '
-                                    'processed.')
-            if strikes == self.lfstrikes:
+                return
+            if strikes == self.lstrikes:
                 toeoffs = self.ltoeoffs
                 context = 'L'
             else:
@@ -220,132 +212,6 @@ class Trial:
                 start = strikes[k]
                 end = strikes[k+1]
                 toeoff = [x for x in toeoffs if x > start and x < end]
-                if len(toeoff) != 1:
-                    raise GaitDataError('Expected a single toe-off event '
-                                        'during gait cycle')
-                yield gaitcycle(start, end, self.offset, toeoff[0], context,
-                                self.smp_per_frame)
-
-    def get_cycle(self, context, ncycle):
-        """ e.g. ncycle=2 and context='L' returns 2nd left gait cycle. """
-        cycles = [cycle for cycle in self.cycles if cycle.context == context]
-        if len(cycles) < ncycle:
-            return None
-        else:
-            return cycles[ncycle-1]
-
-
-class ModelData:
-    """ Handles model output data, e.g. Plug-in Gait, muscle length etc. """
-
-    def __init__(self, source):
-        self.source = source
-        # local copy of models is mutable, so need a new copy
-        # instead of a binding
-        self.models = copy.deepcopy(models.models_all)
-        self.varnames = []
-        self.varlabels = {}
-        self.normaldata_map = {}
-        self.ylabels = {}
-        self.modeldata = {}  # read by read_model as necessary
-        self.normaldata = {}  # ditto
-        # update varnames etc. for this class
-        for model in self.models:
-            self.varnames += model.varnames
-            self.varlabels.update(model.varlabels)
-            self.normaldata_map.update(model.normaldata_map)
-            self.ylabels.update(model.ylabels)
-
-    def get_model(self, varname):
-        """ Returns model corresponding to varname. """
-        for model in self.models:
-            if varname in model.varnames:
-                return model
-
-    def read_model(self, model):
-        """ Read variables of given model (instance of models.model) and normal data
-        into self.modeldata. """
-        if not model:
-            raise GaitDataError('Cannot read empty model')
-        debug_print('Reading model:', model.desc)
-        source = self.source
-        if is_vicon_instance(source):
-            # read from Nexus
-            vicon = source
-            SubjectName = vicon.GetSubjectNames()[0]
-            for Var in model.read_vars:
-                debug_print('Getting:', Var)
-                NumVals,BoolVals = vicon.GetModelOutput(SubjectName, Var)
-                if not NumVals:
-                    raise GaitDataError('Cannot read model variable: '+Var+
-                    '. \nMake sure that the appropriate model has been executed in Nexus.')
-                # remove singleton dimensions
-                self.modeldata[Var] = np.squeeze(np.array(NumVals))
-        elif is_c3dfile(source):
-            # read from c3d            
-            c3dfile = source
-            reader = btk.btkAcquisitionFileReader()
-            reader.SetFilename(str(c3dfile))
-            reader.Update()
-            acq = reader.GetOutput()
-            for Var in model.read_vars:
-                try:
-                    self.modeldata[Var] = np.transpose(np.squeeze(acq.GetPoint(Var).GetValues()))
-                except RuntimeError:
-                    raise GaitDataError('Cannot find model variable in c3d file: '+Var)
-                # c3d stores scalars as first dim of 3-d array
-                if model.read_strategy == 'last':
-                    debug_print(Var,'has shape:', self.modeldata[Var].shape)
-                    self.modeldata[Var] = self.modeldata[Var][2,:]
-        else:
-            raise GaitDataError('Invalid data source')
-        # postprocessing for certain variables
-        for Var in model.read_vars:
-                if Var.find('Moment') > 0:
-                    # moment variables have to be divided by 1000 -
-                    # apparently stored in Newton-millimeters
-                    debug_print('Normalizing:', Var)                    
-                    self.modeldata[Var] /= 1000.
-                #debug_print('read_raw:', Var, 'has shape', self.modeldata[Var].shape)
-                components = model.read_strategy
-                if components == 'split_xyz':
-                    if self.modeldata[Var].shape[0] == 3:
-                        # split 3-d arrays into x,y,z variables
-                        self.modeldata[Var+'X'] = self.modeldata[Var][0,:]
-                        self.modeldata[Var+'Y'] = self.modeldata[Var][1,:]
-                        self.modeldata[Var+'Z'] = self.modeldata[Var][2,:]
-                    else:
-                        raise GaitDataError('XYZ split requested but array is not 3-d')
-        # read normal data if it exists. only gcd files supported for now
-        gcdfile = model.normaldata_path
-        if gcdfile:
-            if not os.path.isfile(gcdfile):
-                raise Exception('Cannot find specified normal data file')
-            f = open(gcdfile, 'r')
-            lines = f.readlines()
-            f.close()
-            # normaldata variables are named as in the file. the model should have a corresponding map.
-            normaldata = {}
-            for li in lines:
-                if li[0] == '!':  # it's a variable name
-                    thisvar = li[1:li.find(' ')]  # set dict key
-                    normaldata[thisvar] = list()
-                # it's a number, so read into list
-                elif li[0].isdigit() or li[0] == '-':
-                    normaldata[thisvar].append([float(x) for x in li.split()])
-            self.normaldata.update(normaldata)
-
-    def is_kinetic_var(self, varname):
-        """ Tell whether a variable represents kinetics. Works at least for
-        PiG variables... """
-        return varname.find('Power') > -1 or varname.find('Moment') > -1
-
-    def get_normaldata(self, varname):
-        """ Return the normal data for variable varname, if available. """
-        model = self.get_model(varname)
-        if model and varname in model.normaldata_map:
-            normalkey = model.normaldata_map[varname]
-            return self.normaldata[normalkey]
-        else:
-            return None
-
+                toeoff = toeoff[0] if len(toeoff) > 0 else None
+                yield Gaitcycle(start, end, self.offset, toeoff, context,
+                                self.samplesperframe)

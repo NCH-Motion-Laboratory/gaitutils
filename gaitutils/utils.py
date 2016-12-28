@@ -8,17 +8,20 @@ Utility functions for processing gait data.
 
 from __future__ import print_function
 from read_data import get_marker_data, get_forceplate_data, get_metadata
-from gaitutils import rising_zerocross, falling_zerocross
+from numutils import rising_zerocross, falling_zerocross
 from scipy import signal
 import numpy as np
 
 
-def get_center_frame(source, marker):
-    """ Return frame where marker crosses x axis of coordinate system
-    (y = 0) """
+def get_crossing_frame(source, marker, dim=1, p0=0):
+    """ Return frame(s) where marker position (dimension dim) crosses r0
+    (units are as returned by Nexus, usually mm).
+    Dims are x=0, y=1, z=2. """
     mrkdata = get_marker_data(source, marker)
     P = mrkdata[marker + '_P']
-    y = P[:, 1]
+    y = P[:, dim]
+    nzind = np.where(y != 0)  # nonzero elements == valid data (not nice)
+    y[nzind] -= p0
     zx = np.append(rising_zerocross(y), falling_zerocross(y))
     ycross = list()
     # sanity checks
@@ -29,9 +32,6 @@ def get_center_frame(source, marker):
                 # y must change sign also around p
                 if np.sign(y[p-10]) != np.sign(y[p+10]):
                         ycross.append(p)
-    if len(ycross) > 1:
-        print('get_center_frame: multiple valid crossings detected')
-        ycross = ycross[0]
     return ycross
 
 
@@ -47,9 +47,11 @@ def get_movement_direction(source, marker, dir):
 
 def kinetics_available(source, check_weight=True):
     """ See whether the trial has valid forceplate contact (ground reaction
-    forces available) for left/right side (or neither, or both).
+    forces available) for left/right side.
     Uses forceplate data, gait events and marker positions.
     For now support for one forceplate only.
+    TODO: evaluate all forceplates and return e.g. 'RL' when kinetics
+    is available for both sides.
     Conditions:
     -check max total force, must correspond to subject weight
     -center of pressure must not change too much during contact time
@@ -117,11 +119,12 @@ def kinetics_available(source, check_weight=True):
               '(double contact?)')
         return emptydi
 
-    # check: markers inside forceplate region during strike/toeoff
-    strike_fr = int(np.round(friseind / fp0['samplesperframe']))
-    toeoff_fr = int(np.round(ffallind / fp0['samplesperframe']))
+    # frame indices are 1-based so need to add 1 (what about c3d?)
+    strike_fr = int(np.round(friseind / fp0['samplesperframe'])) + 1
+    toeoff_fr = int(np.round(ffallind / fp0['samplesperframe'])) + 1
     mrkdata = get_marker_data(source, RIGHT_FOOT_MARKERS + LEFT_FOOT_MARKERS)
     kinetics = None
+    # check: markers inside forceplate region during strike/toeoff
     ok = True
     for marker in RIGHT_FOOT_MARKERS:
         marker += '_P'

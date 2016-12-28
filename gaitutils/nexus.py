@@ -4,7 +4,7 @@ Created on Fri Sep 23 10:27:56 2016
 
 @author: jnu@iki.fi
 
-Data readers for Vicon Nexus.
+Data readers & processing utils for Vicon Nexus.
 
 """
 
@@ -14,18 +14,24 @@ import numpy as np
 from scipy import signal
 import os.path as op
 import psutil
+import glob
 from numutils import rising_zerocross, falling_zerocross
+from eclipse import get_eclipse_keys
 import matplotlib.pyplot as plt
-from site_defs import NEXUS_PATH, NEXUS_VER
-# Version should be bumped on Nexus update to get the latest API
-if not op.isdir(NEXUS_PATH):
-    raise ValueError('Cannot find Nexus SDK dir: ' + NEXUS_PATH)
-if not NEXUS_PATH + "/SDK/Python" in sys.path:
-    sys.path.append(NEXUS_PATH + "/SDK/Python")
-    # needed at least when running outside Nexus
-    sys.path.append(NEXUS_PATH + "/SDK/Win32")
-import ViconNexus
-import site_defs
+from config import Config
+
+cfg = Config()
+
+if cfg.nexus_path:
+    if op.isdir(cfg.nexus_path):
+        if not cfg.nexus_path + "/SDK/Python" in sys.path:
+            sys.path.append(cfg.nexus_path + "/SDK/Python")
+            # needed at least when running outside Nexus
+            sys.path.append(cfg.nexus_path + "/SDK/Win32")
+try:
+    import ViconNexus
+except ImportError:
+    print('Warning: cannot import Nexus SDK, unable to communicate with Nexus')
 
 
 def pid():
@@ -40,13 +46,40 @@ def pid():
     return None
 
 
-def nexus_ver():
-    return float(NEXUS_VER)
-
-
 def viconnexus():
     """ Return a ViconNexus instance. """
     return ViconNexus.ViconNexus()
+
+
+def get_trial_enfs():
+    """ Return list of .enf files for the session """
+    vicon = viconnexus()
+    trialname_ = vicon.GetTrialName()
+    sessionpath = trialname_[0]
+    enffiles = glob.glob(sessionpath+'*Trial*.enf') if sessionpath else None
+    return enffiles
+
+
+def enf2c3d(fname):
+    """ Converts name of trial .enf file to corresponding .c3d. """
+    enfstr = '.Trial.enf'
+    if enfstr not in fname:
+        raise ValueError('Filename is not a trial .enf')
+    return fname.replace(enfstr, '.c3d')
+
+
+def find_trials(eclipse_keys, strings):
+    """ Yield .enf files for trials in current Nexus session directory whose
+    Eclipse fields (list) contain any of strings (list). Case insensitive. """
+    strings = [st.upper() for st in strings]
+    enffiles = get_trial_enfs()
+    if enffiles is None:
+        return
+    for enf in enffiles:
+        ecldi = get_eclipse_keys(enf).items()
+        eclvals = [val.upper() for key, val in ecldi if key in eclipse_keys]
+        if any([s in val for s in strings for val in eclvals]):
+            yield enf
 
 
 def is_vicon_instance(obj):
@@ -74,13 +107,17 @@ def get_metadata(vicon):
     trialname = trialname_[1]
     if not trialname:
         raise ValueError('No trial loaded')
-    # get events
+    # Get events - GetEvents() indices seem to often be 1 frame less than on
+    # Nexus display - only happens with ROI?
     lstrikes = vicon.GetEvents(name, "Left", "Foot Strike")[0]
     rstrikes = vicon.GetEvents(name, "Right", "Foot Strike")[0]
     ltoeoffs = vicon.GetEvents(name, "Left", "Foot Off")[0]
     rtoeoffs = vicon.GetEvents(name, "Right", "Foot Off")[0]
     # frame offset (start of trial data in frames)
     offset = 1
+    # trial length
+    rng = vicon.GetTrialRange()
+    length = rng[1] - rng[0] + 1
     framerate = vicon.GetFrameRate()
     # Get analog rate. This may not be mandatory if analog devices
     # are not used, but currently it needs to succeed.
@@ -90,18 +127,20 @@ def get_metadata(vicon):
     else:
         devid = devids[0]
         _, _, analograte, _, _, _ = vicon.GetDeviceDetails(devid)
+    samplesperframe = analograte / framerate
     # sort events (may be in wrong temporal order, at least in c3d files)
     for li in [lstrikes, rstrikes, ltoeoffs, rtoeoffs]:
         li.sort()
     return {'trialname': trialname, 'sessionpath': sessionpath,
             'offset': offset, 'framerate': framerate, 'analograte': analograte,
             'name': name, 'bodymass': bodymass, 'lstrikes': lstrikes,
-            'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs}
+            'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs,
+            'length': length, 'samplesperframe': samplesperframe}
 
 
 def get_emg_data(vicon):
     """ Read EMG data from Nexus """
-    emg_devname = site_defs.emg_devname
+    emg_devname = cfg.emg_devname
     devnames = vicon.GetDeviceNames()
     if emg_devname in devnames:
         emg_id = vicon.GetDeviceIDFromName(emg_devname)
@@ -125,8 +164,8 @@ def get_emg_data(vicon):
 
 
 def get_forceplate_data(vicon):
-    """ Read forceplate data from Nexus. Supports only single plate for
-    now. """
+    """ Read forceplate data from Nexus. Does not support multiple plates
+    yet. """
     fpdevicename = 'Forceplate'
     devicenames = vicon.GetDeviceNames()
     if fpdevicename in devicenames:
@@ -138,7 +177,6 @@ def get_forceplate_data(vicon):
     # DType should be 'ForcePlate', drate is sampling rate
     dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(fpid)
     samplesperframe = drate / framerate  # fp samples per Vicon frame
-    assert(len(outputids) == 3)
     # outputs should be force, moment, cop. select force
     outputid = outputids[0]
     # get list of channel names and IDs
@@ -220,43 +258,25 @@ def get_fp_strike_and_toeoff(vicon):
             int(np.round(fptoeoff / ftot.samplesperframe)))
 
 
-def get_center_frame(vicon, marker):
-    """ Return frame where marker crosses x axis of coordinate system
-    (y = 0) """
-    mrkdata = get_marker_data(vicon, marker)
-    P = mrkdata[marker + '_P']
-    y = P[:, 1]
-    zx = np.append(rising_zerocross(y), falling_zerocross(y))
-    ycross = list()
-    # sanity checks
-    for p in zx:
-        # y must be nonzero on either side of crossing (valid data)
-        if p-10 > 0 and p+10 < len(y):
-            if y[p-10] != 0 and y[p+10] != 0:
-                # y must change sign also around p
-                if np.sign(y[p-10]) != np.sign(y[p+10]):
-                        ycross.append(p)
-    if len(ycross) > 1:
-        print('Warning: multiple crossings detected')
-        ycross = ycross[0]
-    return ycross
-
-
-def get_movement_direction(vicon, marker, dir):
-    """ Return average direction of movement for given marker """
-    dir = dir.lower()
-    dir = {'x': 0, 'y': 1, 'z': 2}[dir]
-    mrkdata = get_marker_data(vicon, marker)
-    P = mrkdata[marker+'_P']
-    ydiff = np.median(np.diff(P[:, dir]))  # median of y derivative
-    return 1 if ydiff > 0 else -1
+def get_model_data(vicon, model):
+    """ Read model output variables (e.g. Plug-in Gait) """
+    modeldata = dict()
+    subjectname = vicon.GetSubjectNames()[0]
+    for var in model.read_vars:
+        nums, bools = vicon.GetModelOutput(subjectname, var)
+        if not nums:
+            raise ValueError('Cannot read model variable %s. Make sure that '
+                             'the appropriate model has been run.' % var)
+        # remove singleton dimensions
+        modeldata[var] = np.squeeze(np.array(nums))
+    return modeldata
 
 
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                     'R_strike': None, 'R_toeoff': None}, context=None,
-                    strike_frame=None,
-                    events_context=(0, 1), events_nocontext=(-1, 0, 1),
-                    mark_window_hw=None, plot=False):
+                    ctr_frame=None,
+                    events_context=(0, 1), events_nocontext=(0, 1),
+                    plot=False, mark=True):
     """ Mark events based on velocity thresholding. Absolute thresholds
     can be specified as arguments. Otherwise relative thresholds will be
     calculated based on the data. Optimal results will be obtained when
@@ -265,23 +285,36 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     vel_threshold gives velocity thresholds for identifying events. These
     can be obtained from forceplate data.
 
-    context gives forceplate context for the trial: 'R', 'L', or None.
-    strike_frame is the frame where forceplate contact occurs.
+    context gives forceplate context for the trial: 'R', 'L', 'RL', or None.
 
-    events_context specified which events to mark for the side where forceplate
-    strike occurs. For example (-1, 1) would mark one event before forceplate
-    and one event after (forceplate strike event is always marked).
-    events_nocontext is applied for the side where there is no forceplate
-    contact.
+    events_context and events_nocontext specify which events to mark (see
+    below).
+
+    ctr_frame is the reference frame for marking events. In events_context and
+    events_nocontext,
+    0 refers to the event nearest to the reference frame, -1 refers to the one
+    before that etc. The reference frame could be e.g. the frame where
+    forceplate strike occurs or the center of the walkway
+    (use nexus.get_crossing_frame() to compute it)
+
+    events_nocontext will be applied to the side which does not have
+    forceplate context (if any)
+
     If plot=True, velocity curves and events are plotted.
 
-    Before automark, run reconstruct, label and gap fill pipelines.
+    If mark=False, no events will actually be marked.
+
+    Before automark, run reconstruct, label, gap fill and filter pipelines.
+    Filtering is important to get reasonably smooth derivatives.
     """
 
+    if not ctr_frame:
+        raise ValueError('Need to supply center frame')
     frate = vicon.GetFrameRate()
     if not frate:
-        raise Exception('Cannot get framerate from Nexus')
+        raise ValueError('Cannot get framerate from Nexus')
 
+    # TODO: into config?
     # relative thresholds (of maximum velocity)
     REL_THRESHOLD_FALL = .2
     REL_THRESHOLD_RISE = .5
@@ -300,10 +333,6 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     RIGHT_FOOT_MARKERS = ['RHEE', 'RTOE', 'RANK']
     # left foot markers
     LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
-    # tolerance between forceplate strike (parameter) and detected event
-    FP_STRIKE_TOL = 7
-    # marker for finding trial center frame
-    TRACK_MARKER = 'LASI'
 
     # get subject info
     subjectnames = vicon.GetSubjectNames()
@@ -330,7 +359,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     # loop: same operations for left / right foot
     for ind, footctrv in enumerate((rfootctrv, lfootctrv)):
         this_side = 'R' if ind == 0 else 'L'
-        print('automark: side ', this_side)
+
         # filter to scalar velocity data to suppress noise and spikes
         footctrv = signal.medfilt(footctrv, MEDIAN_WIDTH)
 
@@ -350,12 +379,11 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         threshold_rise_ = (vel_thresholds[this_side+'_toeoff'] or
                            maxv * REL_THRESHOLD_RISE)
 
-        print('automark: rel. thresholds: fall: %.2f rise %.2f' %
-              (maxv * REL_THRESHOLD_FALL, maxv * REL_THRESHOLD_RISE))
-        print('automark: using fall threshold: %s=%.2f' %
-              (this_side, threshold_fall_))
-        print('automark: using rise threshold: %s=%.2f' %
-              (this_side, threshold_rise_))
+        print('automark_events: side: %s, rel. thresholds fall: %.2f '
+              'rise %.2f' % (this_side, maxv * REL_THRESHOLD_FALL,
+                             maxv * REL_THRESHOLD_RISE))
+        print('automark_events: using fall threshold: %.2f' % threshold_fall_)
+        print('automark_events: using rise threshold: %.2f' % threshold_rise_)
 
         # find point where velocity crosses threshold
         # strikes (velocity decreases)
@@ -378,46 +406,32 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                                   footctrv[cross+1] > MIN_SLOPE_VELOCITY)
         toeoffs = cross[np.logical_and(cind_min, cind_max)]
 
-        # if fp data available, mark only events around forceplate strike
-        if context and strike_frame:
-            strikes_ = []
-            if context == this_side:
-                # find event corresponding to forceplate strike
-                auto_strike_ind = np.argmin(abs(strikes - strike_frame))
-                if abs(strikes[auto_strike_ind] -
-                        strike_frame) > FP_STRIKE_TOL:
-                    raise ValueError('Detected strike event does not match',
-                                     'strike_frame')
-                # add other events as required
-                for fr in events_context:
-                    if 0 <= auto_strike_ind + fr <= len(strikes) - 1:
-                        strikes_.append(strikes[auto_strike_ind + fr])
-            else:  # opposite side
-                # find the next strike following the (opposite) fp strike
-                diffv = strikes - strike_frame
-                nextdiff = [x for x in diffv if x > 0][0]
-                closest_next_ind = np.where(diffv == nextdiff)[0][0]
-                for fr in events_nocontext:
-                    if 0 <= closest_next_ind + fr <= len(strikes) - 1:
-                        strikes_ += [strikes[closest_next_ind + fr]]
-            strikes = strikes_
-        # else mark around 'center frame' if specified
-        elif mark_window_hw:
-            ctr = get_center_frame(vicon, TRACK_MARKER)
-            if not ctr:
-                raise ValueError('Cannot find center frame (y crossing)')
-            strikes = [fr for fr in strikes if abs(fr - ctr) <= mark_window_hw]
+        # mark around center frame
+        events = (events_context if context is not None and
+                  this_side in context else events_nocontext)
+        ctr_strike_ind = np.argmin(abs(strikes - ctr_frame))
+
+        # compute indices of selected events
+        strike_inds = np.array(events) + ctr_strike_ind
+        inds = np.array([i for i in strike_inds if i >= 0 and
+                        i < len(strikes)])
+        print('all strike events:', strikes)
+        strikes = strikes[inds]
+        print('selected strike events:', strikes)
+
         # mark toeoffs that are between strike events
         toeoffs = [fr for fr in toeoffs
                    if any(strikes < fr) and any(strikes > fr)]
 
         # create the events in Nexus
         side_str = 'Right' if this_side == 'R' else 'Left'
-        for fr in strikes:
-                vicon.CreateAnEvent(subjectname, side_str,
-                                    'Foot Strike', fr, 0.0)
-        for fr in toeoffs:
-                vicon.CreateAnEvent(subjectname, side_str, 'Foot Off', fr, 0.0)
+        if mark:
+            for fr in strikes:
+                    vicon.CreateAnEvent(subjectname, side_str,
+                                        'Foot Strike', fr, 0.0)
+            for fr in toeoffs:
+                    vicon.CreateAnEvent(subjectname, side_str,
+                                        'Foot Off', fr, 0.0)
         strikes_all[this_side] = strikes
         toeoffs_all[this_side] = toeoffs
 

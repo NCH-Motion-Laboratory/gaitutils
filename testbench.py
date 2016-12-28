@@ -7,24 +7,29 @@ Test new gaitutils code
 @author: HUS20664877
 """
 
-from gaitutils import EMG, nexus, config
+from gaitutils import EMG, nexus, config, read_data, trial, eclipse, models, Plotter, layouts, utils
 import matplotlib.pyplot as plt
 
 
-
-c3dfile = u'c:\\Users\\hus20664877\\Desktop\\Vicon\\vicon_data\\test\\H0036_EV\\2015_9_21_seur_EV\\2015_9_21_seur_EV19.c3d'
+# c3dfile = u'c:\\Users\\hus20664877\\Desktop\\Vicon\\vicon_data\\test\\H0036_EV\\2015_9_21_seur_EV\\2015_9_21_seur_EV19.c3d'
 vicon = nexus.viconnexus()
 
 
-e1 = EMG(c3dfile)
-e2 = EMG(vicon)
+lout = [['LVas', 'RVas'], ['LRec', 'RRec'], ['LHam', 'RHam']]
+lout = layouts.kinetics_emg('R')
 
-e1.read()
-e2.read()
-ch = 'LGas'
+lout = layouts.std_kinetics
 
-e1.passband = [40,400]
-plt.plot(e1.t, e1['LGas'])
-plt.plot(e2.t, e2['LGas'])
+pl = Plotter()
+
+pl.layout = lout
+
+pl.open_nexus_trial()
+
+pl.plot_trial(model_cycles=None, context='L')
+
+
+
+
 
 

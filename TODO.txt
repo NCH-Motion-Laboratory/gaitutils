@@ -1,0 +1,61 @@
+# -*- coding: utf-8 -*-
+
+
+
+gaitutils TODO:
+
+
+
+-variable plotting semantics
+
+current: variable specified without side (KneeMoment)
+go thru specified cycles
+-> get context from cycle and specify varname accordingly (-> RKneeMoment)
+too much magic?
+would be clearer to specify side explicitly when plotting
+(all models may not prepend vars with side, thus not future proof...)
+
+
+ideas:
+
+1) enable multiple vars per subplot [[['LAnkleAngles','RAnkleAngles']]]
+(to allow superposing e.g. kinetics vars)
+
+e.g. 2 rows of subplots, superpose kinematics on top row:
+[
+[['LAnkleAngles','RAnkleAngles'], ['LHipAngles','RHipAngles]],
+['LHipMoment', 'LKneeMoment']
+]
+
+(subplot variables spec could be either list or string)
+
+then specify corresponding contexts:
+[
+[['L', 'R'], ['L', 'R']],
+['L', 'L']
+]
+
+(easy to create automagically)
+
+
+
+
+
+
+
+-validate (gaitplotter, Nexus)
+
+-cop calculation causes runtime warning (div by zero)
+
+-unnormalized model plotting not yet working fully
+
+-small discrepancies in c3d/Nexus cycles?
+    -nexus returns smaller frame indices (sometimes)
+
+-config gets imported at too many places
+
+-packaging
+
+
+
+

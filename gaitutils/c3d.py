@@ -10,7 +10,7 @@ c3d reader functions
 try:
     import btk
 except ImportError:
-    print('warning: cannot find btk module; unable to use btk functionality '
+    print('Warning: cannot find btk module; unable to use btk functionality '
           '(read c3d files)')
 import numpy as np
 from scipy.signal import medfilt
@@ -27,10 +27,9 @@ def is_c3dfile(obj):
 
 
 def get_emg_data(c3dfile):
-    """ Read EMG data from a c3d file. Returns tuple: time vector + a dict
-    with the data, keys are electrode names """
+    """ Read EMG data from a c3d file. """
     reader = btk.btkAcquisitionFileReader()
-    reader.SetFilename(str(c3dfile))  # check existence?
+    reader.SetFilename(str(c3dfile))
     reader.Update()
     acq = reader.GetOutput()
     data = dict()
@@ -44,7 +43,29 @@ def get_emg_data(c3dfile):
         return {'t': np.arange(len(data[elname])) / acq.GetAnalogFrequency(),
                 'data': data}
     else:
-        raise ValueError('No EMG channels found in data!')
+        raise ValueError('No EMG channels found in data')
+
+
+def get_marker_data(c3dfile, markers):
+    if not isinstance(markers, list):  # listify if not already a list
+        markers = [markers]
+    reader = btk.btkAcquisitionFileReader()
+    reader.SetFilename(str(c3dfile))
+    reader.Update()
+    acq = reader.GetOutput()
+    mdata = dict()
+    for marker in markers:
+        try:
+            mP = np.squeeze(acq.GetPoint(marker).GetValues())
+        except RuntimeError:
+            raise ValueError('Cannot read variable %s from c3d file' % marker)
+        mdata[marker + '_P'] = mP
+        mdata[marker + '_V'] = np.gradient(mP)[0]
+        mdata[marker + '_A'] = np.gradient(mdata[marker+'_V'])[0]
+        # find gaps
+        allzero = np.logical_and(mP[:, 0] == 0, mP[:, 1] == 0, mP[:, 2] == 0)
+        mdata[marker + '_gaps'] = np.where(allzero)[0]
+    return mdata
 
 
 def get_metadata(c3dfile):
@@ -57,8 +78,11 @@ def get_metadata(c3dfile):
     acq = reader.GetOutput()
     # frame offset (start of trial data in frames)
     offset = acq.GetFirstFrame()
+    lastfr = acq.GetLastFrame()
+    length = lastfr - offset + 1
     framerate = acq.GetPointFrequency()
     analograte = acq.GetAnalogFrequency()
+    samplesperframe = acq.GetNumberAnalogSamplePerFrame()
     #  get events
     rstrikes, lstrikes, rtoeoffs, ltoeoffs = [], [], [], []
     for i in btk.Iterate(acq.GetEvents()):
@@ -68,14 +92,14 @@ def get_metadata(c3dfile):
             elif i.GetContext() == "Left":
                 lstrikes.append(i.GetFrame())
             else:
-                raise Exception("Unknown context on foot strike event")
+                raise ValueError("Unknown context on foot strike event")
         elif i.GetLabel() == "Foot Off":
             if i.GetContext() == "Right":
                 rtoeoffs.append(i.GetFrame())
             elif i.GetContext() == "Left":
                 ltoeoffs.append(i.GetFrame())
             else:
-                raise Exception("Unknown context on foot strike event")
+                raise ValueError("Unknown context on foot strike event")
     # get subject info
     metadata = acq.GetMetaData()
     # don't ask
@@ -89,11 +113,31 @@ def get_metadata(c3dfile):
     return {'trialname': trialname, 'sessionpath': sessionpath,
             'offset': offset, 'framerate': framerate, 'analograte': analograte,
             'name': name, 'bodymass': bodymass, 'lstrikes': lstrikes,
-            'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs}
+            'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs,
+            'length': length, 'samplesperframe': samplesperframe}
+
+
+def get_model_data(c3dfile, model):
+    modeldata = dict()
+    reader = btk.btkAcquisitionFileReader()
+    reader.SetFilename(str(c3dfile))
+    reader.Update()
+    acq = reader.GetOutput()
+    for var in model.read_vars:
+        try:
+            vals = acq.GetPoint(var).GetValues()
+            modeldata[var] = np.transpose(np.squeeze(vals))
+        except RuntimeError:
+            raise ValueError('Cannot find model variable %s in c3d file' %
+                             var)
+        # c3d stores scalars as last dim of 3-d array
+        if model.read_strategy == 'last':
+            modeldata[var] = modeldata[var][2, :]
+    return modeldata
 
 
 def get_forceplate_data(c3dfile):
-    """ Read forceplate data. Does not support multiple plates.
+    """ Read forceplate data. Does not support multiple plates yet.
     Force results differ somewhat from Nexus, not sure why. Calibration? """
     FP_DZ = 41.3  # forceplate thickness in mm
     # CoP calculation uses filter

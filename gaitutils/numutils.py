@@ -19,3 +19,11 @@ def rising_zerocross(x):
 
 def falling_zerocross(x):
     return rising_zerocross(-x)
+
+
+def isfloat(x):
+    try:
+        float(x)
+        return True
+    except ValueError:
+        return False

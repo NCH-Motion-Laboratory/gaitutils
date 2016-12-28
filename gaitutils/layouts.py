@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Gaitplotter predefined plot layouts.
+Predefined plot layouts.
 
 Created on Thu Aug 27 14:16:50 2015
 
@@ -19,7 +19,6 @@ std_kinetics = [['HipMomentX', 'HipMomentY', 'HipMomentZ'],
                 ['KneeMomentZ', 'KneePowerZ', 'AnkleMomentX'],
                 [None, None, 'AnklePowerZ']]
 
-
 # muscle lengths
 std_musclelen = [['PsoaLength', 'GracLength', 'ReFeLength'],
                  ['BiFLLength', 'SeTeLength', 'SeMeLength'],
@@ -35,24 +34,44 @@ std_emg = [['RGlut', 'LGlut'],
            ['RGas', 'LGas'],
            ['RSol', 'LSol']]
 
+std_emg_left = [[None, 'LGlut'],
+                [None, 'LHam'],
+                [None, 'LRec'],
+                [None, 'LVas'],
+                [None, 'LTibA'],
+                [None, 'LPer'],
+                [None, 'LGas'],
+                [None, 'LSol']]
+
+std_emg_right = [['RGlut', None],
+                 ['RHam', None],
+                 ['RRec', None],
+                 ['RVas', None],
+                 ['RTibA', None],
+                 ['RPer', None],
+                 ['RGas', None],
+                 ['RSol', None]]
+
+
 # kinetics + kinematics
 std_kinall = std_kinematics + std_kinetics
-# kin *overlay
+
+# kin* overlays
 # add legend to bottom row
 overlay_kinall = list(std_kinall)
 overlay_kinall.pop()
-overlay_kinall.append(['modellegend', None, 'AnklePowerZ'])
+overlay_kinall.append(['model_legend', None, 'AnklePowerZ'])
 
 overlay_kinematics = list(std_kinematics)
-overlay_kinematics.append(['modellegend', None, None])
+overlay_kinematics.append(['model_legend', None, None])
 
 # EMG overlay - add legend
 overlay_emg = list(std_emg)
-overlay_emg.append(['emglegend', None])
+overlay_emg.append(['emg_legend', None])
 
 # kinetics overlay - add legend
 overlay_kinetics = list(std_kinetics)
-overlay_kinetics.append(['modellegend', None, None])
+overlay_kinetics.append(['model_legend', None, None])
 
 
 # Kinetics-EMG. Will return EMG channels according to the given side
@@ -75,3 +94,18 @@ def kinematics_emg(side):
             [side+'Rec', side+'Ham', side+'Gas'],
             [None, side+'Glut', side+'Sol'],
             [None, side+'Gas', None]]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

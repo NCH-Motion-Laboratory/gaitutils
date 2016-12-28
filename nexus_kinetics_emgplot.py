@@ -19,7 +19,7 @@ def do_plot():
     pdf_prefix = 'Kinetics_EMG_'
     maintitle = pl.title_with_eclipse_info('Kinetics-EMG for')
     # for EMG, plot only the cycle that has kinetics info
-    pl.plot_trial(maintitle=maintitle, emg_cycles={side: 1})
+    pl.plot_trial(maintitle=maintitle, model_cycles={side: 1}, emg_cycles={side: 1})
     pl.create_pdf(pdf_prefix=pdf_prefix)
 
 if __name__ == '__main__':

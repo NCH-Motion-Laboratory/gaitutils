@@ -23,7 +23,7 @@ from config import Config
 
 class Plotter(object):
 
-    def __init__(self, layout=None, normaldata=None):
+    def __init__(self, layout=None, context=None, normaldata=None):
         """ Plot gait data.
 
         layout: list of lists
@@ -215,11 +215,9 @@ class Plotter(object):
                 for cycle in model_cycles:
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
-                        context = cycle.context
                     elif context is None:
                         raise ValueError('Must specify context for '
                                          'plotting unnormalized variable')
-                    varname = context + var
                     x_, data = self.trial[varname]
                     x = x_ / self.trial.framerate if cycle is None else x_
                     tcolor = (model_tracecolor if model_tracecolor

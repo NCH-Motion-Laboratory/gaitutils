@@ -20,13 +20,21 @@ lout = layouts.kinetics_emg('R')
 
 lout = layouts.std_kinetics
 
+# online kinematics plot
+lout = [['PelvisAnglesX', 'PelvisAnglesY', 'PelvisAnglesZ'],
+                  ['HipAnglesX', 'HipAnglesY', 'HipAnglesZ'],
+                  ['KneeAnglesX', 'KneeAnglesY', 'KneeAnglesZ'],
+                  ['AnkleAnglesX', 'FootProgressAnglesZ', 'AnkleAnglesZ']]
+
+
 pl = Plotter()
 
 pl.layout = lout
 
 pl.open_nexus_trial()
 
-pl.plot_trial(model_cycles=None, context='L')
+pl.plot_trial()
+#pl.plot_trial(model_cycles=None, context='L')
 
 
 

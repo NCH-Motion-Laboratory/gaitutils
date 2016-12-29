@@ -95,12 +95,18 @@ class Plotter(object):
         elif var in ('model_legend', 'emg_legend'):
             return var
         else:
-            raise ValueError('Unknown variable')
+            raise ValueError('Unknown variable %s' % var)
 
     def _plot_height_ratios(self):
         plotheightratios = []
         for row in self._layout:
-            if all([self._var_type(var) == 'model' for var in row]):
+            rowvars = []
+            for var in row:
+                if isinstance(var, list):
+                    rowvars.extend(var)
+                else:
+                    rowvars.append(var)
+            if all([self._var_type(var) == 'model' for var in rowvars]):
                 plotheightratios.append(1)
             else:
                 plotheightratios.append(self.cfg.plot_analog_plotheight)
@@ -108,7 +114,7 @@ class Plotter(object):
 
     def plot_trial(self, model_cycles={'R': 1, 'L': 1},
                    emg_cycles={'R': 1, 'L': 1},
-                   context=None, t=None, plotheightratios=None,
+                   contexts=None, t=None, plotheightratios=None,
                    model_tracecolor=None, model_linestyle='-',
                    linestyles_context=False,
                    emg_tracecolor=None, plot_model_normaldata=True,
@@ -120,27 +126,30 @@ class Plotter(object):
         model_cycles : dict of int | int | dict of list | 'all' | None
                 Gait cycles to plot. Default is first cycle (1) for
                 both contexts. Multiple cycles can be given as lists.
-                If None, plot unnormalized data. 'context' must then be
-                specified.
+                If None, plot unnormalized data.
                 If 'all', plot all available cycles.
-                Model variable names are modified according to context, e.g.
-                'HipMomentX' -> 'LHipMomentX' for a left side gait cycle.
         emg_cycles : dict of int | int | dict of list | 'all' | None
                 Same as above, applied to EMG variables.
+        contexts : None | list
+                If None, try to figure out context based on first letter of
+                the variable name (e.g. LHipMomentX -> L). If list, must have
+                be the same structure as the layout, specifying the context
+                for each variable.
         t : array-like
-                Time axis for unnormalized data. If None, plot whole time
+                Time axis for unnormalized data. If None, plot the whole time
                 axis.
-        plotheightratios : list
+        plotheightratios : None | list
                 Force height ratios of subplot rows, e.g. [1 2 2 2] would
-                make first row half the height of others.
+                make first row half the height of others. If None, will be
+                automatically determined based on config.
         model_tracecolor : Matplotlib color
                 Select line color for model variables. If None, will be
-                automatically selected.
+                automatically selected based on config.
         model_linestyle : Matplotlib linestyle
                 Select line style for model variables.
         linestyle_context:
                 Automatically select line style for model variables according
-                to context (defined in config)
+                to context (options defined in config).
         emg_tracecolor : Matplotlib color
                 Select line color for EMG variables. If None, will be
                 automatically selected (defined in config)
@@ -154,7 +163,7 @@ class Plotter(object):
                 instance.
         superpose : bool
                 If superpose=False, create new figure. Otherwise superpose
-                on existing figure.
+                on the existing figure.
         show : bool
                 Whether to show the plot after plotting is finished. Can also
                 set show=False and call plotter.show() explicitly.
@@ -163,26 +172,33 @@ class Plotter(object):
         maintitleprefix : str
                 If maintitle is not set, title will be set to
                 maintitleprefix + trial name.
-
         """
 
         if not self.trial:
             raise ValueError('No trial to plot, call open_trial() first')
         if self._layout is None:
             raise ValueError('No layout set')
-        if maintitle is None:
-            if maintitleprefix is None:
-                maintitleprefix = ''
-            maintitle = maintitleprefix + self.trial.trialname
         if self.fig is None or not superpose:
             self.fig = plt.figure(figsize=self.cfg.plot_totalfigsize)
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)
         if plotheightratios is None:
             plotheightratios = self._plot_height_ratios()
+        if maintitle is None:
+            if maintitleprefix is None:
+                maintitleprefix = ''
+            maintitle = maintitleprefix + self.trial.trialname
+
+        def _guess_context(varname):
+            if varname is None:
+                return None
+            else:
+                c = varname[0].upper()
+                return c if c in ['L', 'R'] else None
 
         def _get_cycles(cycles):
-            """ Get specified cycles from the gait trial """
+            """ Get the specified cycle objects (as a list) from the
+            gait trial. """
             if cycles is None:
                 cycles = [None]  # make iterable
             elif isinstance(cycles, int):
@@ -205,137 +221,167 @@ class Plotter(object):
         model_cycles = _get_cycles(model_cycles)
         emg_cycles = _get_cycles(emg_cycles)
 
-        for i, var in enumerate(self.allvars):
-            var_type = self._var_type(var)
-            if var_type is None:
+        if contexts is not None:
+            contexts = [item for row in contexts for item in row]  # flatten
+
+        for i, var_ in enumerate(self.allvars):
+
+            if var_ is None:   # do nothing, skip to next variable
                 continue
+
+            # make var(s) for this subplot into a list
+            elif isinstance(var_, list):
+                vars = var_
+            else:
+                vars = [var_]
+
             ax = plt.subplot(self.gridspec[i])
-            if var_type == 'model':
-                model = models.model_from_var(var)
-                for cycle in model_cycles:
-                    if cycle is not None:  # plot normalized data
-                        self.trial.set_norm_cycle(cycle)
-                    elif context is None:
-                        raise ValueError('Must specify context for '
-                                         'plotting unnormalized variable')
-                    x_, data = self.trial[varname]
-                    x = x_ / self.trial.framerate if cycle is None else x_
-                    tcolor = (model_tracecolor if model_tracecolor
-                              else self.cfg.model_tracecolors[context])
-                    lstyle = (self.cfg.model_linestyles[context] if
-                              linestyles_context else model_linestyle)
-                    ax.plot(x, data, tcolor, linestyle=lstyle,
-                            linewidth=self.cfg.model_linewidth)
 
-                    # set labels, ticks, etc. after plotting last cycle
-                    if cycle == model_cycles[-1]:
-                        ax.set(ylabel=model.ylabels[varname])  # no xlabel now
-                        ax.xaxis.label.set_fontsize(self.cfg.
-                                                    plot_label_fontsize)
-                        ax.yaxis.label.set_fontsize(self.cfg.
-                                                    plot_label_fontsize)
-                        ax.set_title(model.varlabels[varname])
-                        ax.title.set_fontsize(self.cfg.plot_title_fontsize)
-                        ax.axhline(0, color='black')  # zero line
-                        ax.locator_params(axis='y', nbins=6)  # less tick marks
-                        ax.tick_params(axis='both', which='major',
-                                       labelsize=self.cfg.plot_ticks_fontsize)
-                        ylim = ax.get_ylim()
-                        # model specific adjustments
-                        if model == models.pig_lowerbody:
-                            ylim0 = -10 if ylim[0] == 0 else ylim[0]
-                            ylim1 = 10 if ylim[1] == 0 else ylim[1]
-                            ax.set_ylim(ylim0, ylim1)
-                        elif model == models.musclelen:
-                            ax.set_ylim(ylim[0]-10, ylim[1]+10)
-                        if cycle is None:
-                            ax.set(xlabel='Time (s)')
-                            ax.xaxis.label.set_fontsize(self.cfg.
-                                                        plot_label_fontsize)
-                        if plot_model_normaldata and cycle is not None:
-                            tnor, ndata = model.get_normaldata(varname)
-                            if ndata is not None:
-                                # assume (mean, stddev) for normal data
-                                # fill region between mean-stddev, mean+stddev
-                                nor = ndata[:, 0]
-                                nstd = (ndata[:, 1] if ndata.shape[1] == 2
-                                        else 0)
-                                ax.fill_between(tnor, nor-nstd, nor+nstd,
-                                                color=self.cfg.
-                                                model_normals_color,
-                                                alpha=self.cfg.
-                                                model_normals_alpha)
+            # loop thru vars for this subplot
+            for k, var in enumerate(vars):
+                var_type = self._var_type(var)
 
-            elif var_type == 'emg':
-                for cycle in emg_cycles:
-                    if cycle is not None:  # plot normalized data
-                        self.trial.set_norm_cycle(cycle)
-                    x_, data = self.trial[var]
-                    x = x_ / self.trial.analograte if cycle is None else x_
-                    # TODO: annotate
-                    tcolor = (emg_tracecolor if emg_tracecolor else
-                              self.cfg.emg_tracecolor)
-                    ax.plot(x, data*self.cfg.emg_multiplier, tcolor,
-                            linewidth=self.cfg.emg_linewidth)
-                    if cycle == emg_cycles[-1]:
-                        ax.set(ylabel=self.cfg.emg_ylabel)
-                        ax.yaxis.label.set_fontsize(self.cfg.
-                                                    plot_label_fontsize)
-                        ax.set_title(var)
-                        ax.title.set_fontsize(self.cfg.plot_title_fontsize)
-                        ax.locator_params(axis='y', nbins=4)
-                        # tick font size
-                        ax.tick_params(axis='both', which='major',
-                                       labelsize=self.cfg.plot_ticks_fontsize)
-                        ax.set_xlim(min(x), max(x))
-                        ysc = self.cfg.emg_yscale
-                        ax.set_ylim(ysc[0]*self.cfg.emg_multiplier,
-                                    ysc[1]*self.cfg.emg_multiplier)
-                        if plot_emg_normaldata and cycle is not None:
-                            # plot EMG normal bars
-                            emgbar_ind = self.cfg.emg_normals[var]
-                            for k in range(len(emgbar_ind)):
-                                inds = emgbar_ind[k]
-                                plt.axvspan(inds[0], inds[1],
-                                            alpha=self.cfg.emg_normals_alpha,
-                                            color=self.cfg.emg_normals_color)
-                        if cycle is None:
-                            ax.set(xlabel='Time (s)')
-                            ax.xaxis.label.set_fontsize(self.cfg.
-                                                        plot_label_fontsize)
-
-            elif var_type in ('model_legend', 'emg_legend'):
-                self.legendnames.append('%s   %s   %s' % (
-                                        self.trial.trialname,
-                                        self.trial.eclipse_data['DESCRIPTION'],
-                                        self.trial.eclipse_data['NOTES']))
-                if var_type == 'model_legend':
-                    legtitle = ['Model traces:']
-                    artists = self.modelartists
-                    artists.append(plt.Line2D((0, 1), (0, 0),
-                                   color=model_tracecolor,
-                                   linewidth=2,
-                                   linestyle=lstyle))
+                if contexts is None:
+                    context = _guess_context(var)
                 else:
-                    legtitle = ['EMG traces:']
-                    artists = self.emgartists
-                    artists.append(plt.Line2D((0, 1), (0, 0),
-                                              linewidth=2,
-                                              color=emg_tracecolor))
-                plt.axis('off')
-                nothing = [plt.Rectangle((0, 0), 1, 1, fc="w", fill=False,
-                                         edgecolor='none', linewidth=0)]
-                ax.legend(nothing+artists,
-                          legtitle+self.legendnames,
-                          prop={'size': self.cfg.plot_label_fontsize},
-                          loc='upper center')
+                    if isinstance(contexts[i], list):
+                        context = contexts[i][k]
+                    else:
+                        context = contexts[i]
 
-        plt.suptitle(maintitle, fontsize=12, fontweight="bold")
-        # magic adjustments to fig geometry
-        self.gridspec.update(left=.08, right=.98, top=.92, bottom=.05,
-                             hspace=.37, wspace=.22)
-        if show:
-            plt.show()
+                if var_type == 'model':
+                    model = models.model_from_var(var)
+
+                    for cycle in model_cycles:
+                        if cycle is not None:
+                            if context is not None:
+                                # context must match cycle
+                                if cycle.context != context:
+                                    continue
+                                else:
+                                    self.trial.set_norm_cycle(cycle)
+
+                        x_, data = self.trial[var]
+                        
+                        # unnormalized variables -> time axis
+                        x = x_ / self.trial.framerate if cycle is None else x_
+                        tcolor = (model_tracecolor if model_tracecolor
+                                  else self.cfg.model_tracecolors[context])
+                        lstyle = (self.cfg.model_linestyles[context] if
+                                  linestyles_context else model_linestyle)
+                        ax.plot(x, data, tcolor, linestyle=lstyle,
+                                linewidth=self.cfg.model_linewidth)
+
+                        # set labels, ticks, etc. after plotting last cycle/var
+                        if cycle == model_cycles[-1] and var == vars[-1]:
+                            ax.set(ylabel=model.ylabels[var])  # no xlabel now
+                            ax.xaxis.label.set_fontsize(self.cfg.
+                                                        plot_label_fontsize)
+                            ax.yaxis.label.set_fontsize(self.cfg.
+                                                        plot_label_fontsize)
+                            ax.set_title(model.varlabels[var])
+                            ax.title.set_fontsize(self.cfg.plot_title_fontsize)
+                            ax.axhline(0, color='black')  # zero line
+                            # less tick marks
+                            ax.locator_params(axis='y', nbins=6)
+                            ax.tick_params(axis='both', which='major',
+                                           labelsize=self.cfg.plot_ticks_fontsize)
+                            ylim = ax.get_ylim()
+                            # model specific adjustments
+                            if model == models.pig_lowerbody:
+                                ylim0 = -10 if ylim[0] == 0 else ylim[0]
+                                ylim1 = 10 if ylim[1] == 0 else ylim[1]
+                                ax.set_ylim(ylim0, ylim1)
+                            elif model == models.musclelen:
+                                ax.set_ylim(ylim[0]-10, ylim[1]+10)
+                            if cycle is None:
+                                ax.set(xlabel='Time (s)')
+                                ax.xaxis.label.set_fontsize(self.cfg.
+                                                            plot_label_fontsize)
+                            if plot_model_normaldata and cycle is not None:
+                                tnor, ndata = model.get_normaldata(var)
+                                if ndata is not None:
+                                    # assume (mean, stddev) for normal data
+                                    # fill region between mean-stddev, mean+stddev
+                                    nor = ndata[:, 0]
+                                    nstd = (ndata[:, 1] if ndata.shape[1] == 2
+                                            else 0)
+                                    ax.fill_between(tnor, nor-nstd, nor+nstd,
+                                                    color=self.cfg.
+                                                    model_normals_color,
+                                                    alpha=self.cfg.
+                                                    model_normals_alpha)
+
+                elif var_type == 'emg':
+                    for cycle in emg_cycles:
+                        if cycle is not None:  # plot normalized data
+                            self.trial.set_norm_cycle(cycle)
+                        x_, data = self.trial[var]
+                        x = x_ / self.trial.analograte if cycle is None else x_
+                        # TODO: annotate
+                        tcolor = (emg_tracecolor if emg_tracecolor else
+                                  self.cfg.emg_tracecolor)
+                        ax.plot(x, data*self.cfg.emg_multiplier, tcolor,
+                                linewidth=self.cfg.emg_linewidth)
+                        if cycle == emg_cycles[-1] and var == vars[-1]:
+                            ax.set(ylabel=self.cfg.emg_ylabel)
+                            ax.yaxis.label.set_fontsize(self.cfg.
+                                                        plot_label_fontsize)
+                            ax.set_title(var)
+                            ax.title.set_fontsize(self.cfg.plot_title_fontsize)
+                            ax.locator_params(axis='y', nbins=4)
+                            # tick font size
+                            ax.tick_params(axis='both', which='major',
+                                           labelsize=self.cfg.plot_ticks_fontsize)
+                            ax.set_xlim(min(x), max(x))
+                            ysc = self.cfg.emg_yscale
+                            ax.set_ylim(ysc[0]*self.cfg.emg_multiplier,
+                                        ysc[1]*self.cfg.emg_multiplier)
+                            if plot_emg_normaldata and cycle is not None:
+                                # plot EMG normal bars
+                                emgbar_ind = self.cfg.emg_normals[var]
+                                for k in range(len(emgbar_ind)):
+                                    inds = emgbar_ind[k]
+                                    plt.axvspan(inds[0], inds[1],
+                                                alpha=self.cfg.emg_normals_alpha,
+                                                color=self.cfg.emg_normals_color)
+                            if cycle is None:
+                                ax.set(xlabel='Time (s)')
+                                ax.xaxis.label.set_fontsize(self.cfg.
+                                                            plot_label_fontsize)
+
+                elif var_type in ('model_legend', 'emg_legend'):
+                    self.legendnames.append('%s   %s   %s' % (
+                                            self.trial.trialname,
+                                            self.trial.eclipse_data['DESCRIPTION'],
+                                            self.trial.eclipse_data['NOTES']))
+                    if var_type == 'model_legend':
+                        legtitle = ['Model traces:']
+                        artists = self.modelartists
+                        artists.append(plt.Line2D((0, 1), (0, 0),
+                                       color=model_tracecolor,
+                                       linewidth=2,
+                                       linestyle=lstyle))
+                    else:
+                        legtitle = ['EMG traces:']
+                        artists = self.emgartists
+                        artists.append(plt.Line2D((0, 1), (0, 0),
+                                                  linewidth=2,
+                                                  color=emg_tracecolor))
+                    plt.axis('off')
+                    nothing = [plt.Rectangle((0, 0), 1, 1, fc="w", fill=False,
+                                             edgecolor='none', linewidth=0)]
+                    ax.legend(nothing+artists,
+                              legtitle+self.legendnames,
+                              prop={'size': self.cfg.plot_label_fontsize},
+                              loc='upper center')
+
+            plt.suptitle(maintitle, fontsize=12, fontweight="bold")
+            # magic adjustments to fig geometry
+            self.gridspec.update(left=.08, right=.98, top=.92, bottom=.05,
+                                 hspace=.37, wspace=.22)
+            if show:
+                plt.show()
 
     def title_with_eclipse_info(self, prefix):
         """ Create title: prefix + trial name + Eclipse description and

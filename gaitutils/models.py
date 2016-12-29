@@ -23,18 +23,9 @@ def model_from_var(var):
     """ Return model for specified variable.
     model: model instance that has the specified variable. """
     for model in models_all:
-        if var in model.varnames or var in model.varnames_noside:
+        if var in model.varnames:
             return model
     return None
-
-
-def var_with_side(var):
-    for model in models_all:
-        if var in model.varnames:
-            return True
-        if var in model.varnames_noside:
-            return False
-    raise ValueError('Model variable not found')
 
 
 # convenience methods for model creation

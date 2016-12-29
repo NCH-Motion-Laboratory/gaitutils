@@ -226,7 +226,7 @@ class Plotter(object):
 
         for i, var_ in enumerate(self.allvars):
 
-            if var_ is None:   # do nothing, skip to next variable
+            if var_ is None:   # skip to next variable
                 continue
 
             # make var(s) for this subplot into a list

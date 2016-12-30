@@ -249,6 +249,7 @@ class Plotter(object):
                     else:
                         context = contexts[i]
 
+                # plot model variable
                 if var_type == 'model':
                     model = models.model_from_var(var)
 
@@ -272,48 +273,8 @@ class Plotter(object):
                         ax.plot(x, data, tcolor, linestyle=lstyle,
                                 linewidth=self.cfg.model_linewidth)
 
-                        # set labels, ticks, etc. after plotting last cycle/var
-                        if cycle == model_cycles[-1] and var == vars[-1]:
-                            ax.set(ylabel=model.ylabels[var])  # no xlabel now
-                            ax.xaxis.label.set_fontsize(self.cfg.
-                                                        plot_label_fontsize)
-                            ax.yaxis.label.set_fontsize(self.cfg.
-                                                        plot_label_fontsize)
-                            ax.set_title(model.varlabels[var])
-                            ax.title.set_fontsize(self.cfg.plot_title_fontsize)
-                            ax.axhline(0, color='black')  # zero line
-                            # less tick marks
-                            ax.locator_params(axis='y', nbins=6)
-                            ax.tick_params(axis='both', which='major',
-                                           labelsize=self.cfg.plot_ticks_fontsize)
-                            ylim = ax.get_ylim()
-                            # model specific adjustments
-                            if model == models.pig_lowerbody:
-                                ylim0 = -10 if ylim[0] == 0 else ylim[0]
-                                ylim1 = 10 if ylim[1] == 0 else ylim[1]
-                                ax.set_ylim(ylim0, ylim1)
-                            elif model == models.musclelen:
-                                ax.set_ylim(ylim[0]-10, ylim[1]+10)
-                            if cycle is None:
-                                ax.set(xlabel='Time (s)')
-                                ax.xaxis.label.set_fontsize(self.cfg.
-                                                            plot_label_fontsize)
-                            if plot_model_normaldata and cycle is not None:
-                                tnor, ndata = model.get_normaldata(var)
-                                if ndata is not None:
-                                    # assume (mean, stddev) for normal data
-                                    # fill region between mean-stddev, mean+stddev
-                                    nor = ndata[:, 0]
-                                    nstd = (ndata[:, 1] if ndata.shape[1] == 2
-                                            else 0)
-                                    ax.fill_between(tnor, nor-nstd, nor+nstd,
-                                                    color=self.cfg.
-                                                    model_normals_color,
-                                                    alpha=self.cfg.
-                                                    model_normals_alpha)
-
+                # plot EMG variable
                 elif var_type == 'emg':
-
                     for cycle in emg_cycles:
                         if cycle is not None:
                             if context is not None:
@@ -330,33 +291,8 @@ class Plotter(object):
                                   self.cfg.emg_tracecolor)
                         ax.plot(x, data*self.cfg.emg_multiplier, tcolor,
                                 linewidth=self.cfg.emg_linewidth)
-                        if cycle == emg_cycles[-1] and var == vars[-1]:
-                            ax.set(ylabel=self.cfg.emg_ylabel)
-                            ax.yaxis.label.set_fontsize(self.cfg.
-                                                        plot_label_fontsize)
-                            ax.set_title(var)
-                            ax.title.set_fontsize(self.cfg.plot_title_fontsize)
-                            ax.locator_params(axis='y', nbins=4)
-                            # tick font size
-                            ax.tick_params(axis='both', which='major',
-                                           labelsize=self.cfg.plot_ticks_fontsize)
-                            ax.set_xlim(min(x), max(x))
-                            ysc = self.cfg.emg_yscale
-                            ax.set_ylim(ysc[0]*self.cfg.emg_multiplier,
-                                        ysc[1]*self.cfg.emg_multiplier)
-                            if plot_emg_normaldata and cycle is not None:
-                                # plot EMG normal bars
-                                emgbar_ind = self.cfg.emg_normals[var]
-                                for k in range(len(emgbar_ind)):
-                                    inds = emgbar_ind[k]
-                                    plt.axvspan(inds[0], inds[1],
-                                                alpha=self.cfg.emg_normals_alpha,
-                                                color=self.cfg.emg_normals_color)
-                            if cycle is None:
-                                ax.set(xlabel='Time (s)')
-                                ax.xaxis.label.set_fontsize(self.cfg.
-                                                            plot_label_fontsize)
 
+                # create legend
                 elif var_type in ('model_legend', 'emg_legend'):
                     self.legendnames.append('%s   %s   %s' % (
                                             self.trial.trialname,
@@ -382,6 +318,73 @@ class Plotter(object):
                               legtitle+self.legendnames,
                               prop={'size': self.cfg.plot_label_fontsize},
                               loc='upper center')
+
+            # set subplot labels, ticks, etc. after all vars have been plotted
+            if var_type == 'model':
+                ax.set(ylabel=model.ylabels[var])  # no xlabel for now
+                ax.xaxis.label.set_fontsize(self.cfg.
+                                            plot_label_fontsize)
+                ax.yaxis.label.set_fontsize(self.cfg.
+                                            plot_label_fontsize)
+                ax.set_title(model.varlabels[var])
+                ax.title.set_fontsize(self.cfg.plot_title_fontsize)
+                ax.axhline(0, color='black')  # zero line
+                # less tick marks
+                ax.locator_params(axis='y', nbins=6)
+                ax.tick_params(axis='both', which='major',
+                               labelsize=self.cfg.plot_ticks_fontsize)
+                ylim = ax.get_ylim()
+                # model specific adjustments
+                if model == models.pig_lowerbody:
+                    ylim0 = -10 if ylim[0] == 0 else ylim[0]
+                    ylim1 = 10 if ylim[1] == 0 else ylim[1]
+                    ax.set_ylim(ylim0, ylim1)
+                elif model == models.musclelen:
+                    ax.set_ylim(ylim[0]-10, ylim[1]+10)
+                if cycle is None:
+                    ax.set(xlabel='Time (s)')
+                    ax.xaxis.label.set_fontsize(self.cfg.
+                                                plot_label_fontsize)
+                if plot_model_normaldata and cycle is not None:
+                    tnor, ndata = model.get_normaldata(var)
+                    if ndata is not None:
+                        # assume (mean, stddev) for normal data
+                        # fill region between mean-stddev, mean+stddev
+                        nor = ndata[:, 0]
+                        nstd = (ndata[:, 1] if ndata.shape[1] == 2
+                                else 0)
+                        ax.fill_between(tnor, nor-nstd, nor+nstd,
+                                        color=self.cfg.
+                                        model_normals_color,
+                                        alpha=self.cfg.
+                                        model_normals_alpha)
+
+            elif var_type == 'emg':
+                ax.set(ylabel=self.cfg.emg_ylabel)
+                ax.yaxis.label.set_fontsize(self.cfg.
+                                            plot_label_fontsize)
+                ax.set_title(var)
+                ax.title.set_fontsize(self.cfg.plot_title_fontsize)
+                ax.locator_params(axis='y', nbins=4)
+                # tick font size
+                ax.tick_params(axis='both', which='major',
+                               labelsize=self.cfg.plot_ticks_fontsize)
+                ax.set_xlim(min(x), max(x))
+                ysc = self.cfg.emg_yscale
+                ax.set_ylim(ysc[0]*self.cfg.emg_multiplier,
+                            ysc[1]*self.cfg.emg_multiplier)
+                if plot_emg_normaldata and cycle is not None:
+                    # plot EMG normal bars
+                    emgbar_ind = self.cfg.emg_normals[var]
+                    for k in range(len(emgbar_ind)):
+                        inds = emgbar_ind[k]
+                        plt.axvspan(inds[0], inds[1],
+                                    alpha=self.cfg.emg_normals_alpha,
+                                    color=self.cfg.emg_normals_color)
+                if cycle is None:
+                    ax.set(xlabel='Time (s)')
+                    ax.xaxis.label.set_fontsize(self.cfg.
+                                                plot_label_fontsize)
 
             plt.suptitle(maintitle, fontsize=12, fontweight="bold")
             # magic adjustments to fig geometry

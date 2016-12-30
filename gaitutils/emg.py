@@ -54,7 +54,7 @@ class EMG(object):
 
     def is_valid_emg(self, y):
         """ Check whether channel contains a valid EMG signal. Usually invalid
-        signal can be identified by the presence of large powerline (harmonics)
+        signal can be detected by the presence of large powerline (harmonics)
         compared to broadband signal. Cause is typically disconnected/badly
         connected electrodes. """
         # max. relative interference at 50 Hz harmonics
@@ -69,13 +69,12 @@ class EMG(object):
         linefreqs = (np.arange(nharm+1)+1) * powerline_freq
         intvar = 0
         for f in linefreqs:
-            intvar += np.var(self.filt(y, [f-power_bw/2.,
-                                           f+power_bw/2.])) / power_bw
+            pow_band = [f-power_bw/2., f+power_bw/2.]
+            intvar += np.var(self.filt(y, pow_band)) / power_bw
         # broadband signal
-        emgvar = np.var(self.filt(y, [powerline_freq+10,
-                                      powerline_freq+10+broadband_bw])) / broadband_bw
-        intrel = 10*np.log10(intvar/emgvar)
-        # debug_print('rel. interference: ', intrel)
+        br_band = [powerline_freq+10, powerline_freq+10+broadband_bw]
+        emgvar = np.var(self.filt(y, br_band)) / broadband_bw
+        intrel = 10 * np.log10(intvar/emgvar)
         return intrel < emg_max_interference
 
     def filt(self, y, passband):
@@ -105,18 +104,15 @@ class EMG(object):
         # check for invalid channels
         if self.emg_auto_off:
             for chname, data in self._logical_data.items():
-                if not self.is_valid_emg(data):
-                    self.ch_status[chname] = 'DISCONNECTED'
-                else:
-                    self.ch_status[chname] = 'OK'
+                self.ch_status[chname] = ('OK' if self.is_valid_emg(data) else
+                                          'DISCONNECTED')
         # set scales for plotting channels
         self.yscale = {}
         for logch in self.ch_names:
             self.yscale[logch] = cfg.emg_yscale  # set a constant scale
         # set flag if none of EMG channels contain data
-        self.no_emg = all([isinstance(chandata, str) and
-                           chandata == 'EMG_DISCONNECTED' for chandata in
-                           self.data.values()])
+        self.no_emg = all([st == 'DISCONNECTED' for st in
+                           self.ch_status.values()])
 
     def map_chs(self):
         """ Map logical channels into physical ones. For example, the logical

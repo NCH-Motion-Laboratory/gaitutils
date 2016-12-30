@@ -35,6 +35,8 @@ cfg['videoplayer_opts'] = '--input-repeat=-1 --rate=.2'
 cfg['emg_passband'] = (10, 400)
 cfg['emg_devname'] = 'Myon'
 cfg['emg_yscale'] = (-.5e-3, .5e-3)
+
+# descriptive labels for EMG electrodes
 cfg['emg_labels'] = {'RHam': 'Medial hamstrings (R)',
                      'RRec': 'Rectus femoris (R)',
                      'RGas': 'Gastrognemius (R)',
@@ -51,8 +53,6 @@ cfg['emg_labels'] = {'RHam': 'Medial hamstrings (R)',
                      'LSol': 'Soleus (L)',
                      'LTibA': 'Tibialis anterior (L)',
                      'LPer': 'Peroneus (L)'}
-
-cfg['emg_names'] = cfg['emg_labels'].keys()
 
 # EMG normal bars (the expected range of activation during gait cycle),
 # axis is 0..100%
@@ -92,3 +92,4 @@ cfg['emg_normals_alpha'] = .8
 cfg['emg_alpha'] = .6
 cfg['emg_normals_color'] = 'pink'
 cfg['emg_ylabel'] = 'mV'
+cfg['emg_annotate_disconnected'] = True

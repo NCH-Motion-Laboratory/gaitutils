@@ -12,28 +12,13 @@ import matplotlib.pyplot as plt
 
 
 # c3dfile = u'c:\\Users\\hus20664877\\Desktop\\Vicon\\vicon_data\\test\\H0036_EV\\2015_9_21_seur_EV\\2015_9_21_seur_EV19.c3d'
-vicon = nexus.viconnexus()
+#vicon = nexus.viconnexus()
 
-cfg = config.Config()
+#cfg = config.Config()
 
-e1 = EMG(vicon, cfg.emg_names)
+#e1 = EMG(vicon, cfg.emg_names)
+#e1.read()
 
-pasaaa
-
-
-
-lout = [['LVas', 'RVas'], ['LRec', 'RRec'], ['LHam', 'RHam']]
-lout = layouts.kinetics_emg('R')
-
-
-# online kinematics plot
-lout = [['PelvisAnglesX', 'PelvisAnglesY', 'PelvisAnglesZ'],
-        ['HipAnglesX', 'HipAnglesY', 'HipAnglesZ'],
-        ['KneeAnglesX', 'KneeAnglesY', 'KneeAnglesZ'],
-        ['AnkleAnglesX', 'FootProgressAnglesZ', 'AnkleAnglesZ']]
-
-
-lout = [['LVas', 'RVas'], ['LRec', 'RRec'], ['LHam', 'RHam']]
 
 def layout_with_sides(lout):
     """ Helper to create superposed layouts (superpose L/R) from layouts
@@ -69,6 +54,38 @@ def layout_guess_context(lout):
                 newrow.append(None)
         context.append(newrow)
     return context
+
+
+
+lout = layouts.std_emg
+
+l2 = layout_with_sides(lout)
+pl = Plotter(layout=l2)
+
+pl.open_nexus_trial()
+
+pl.plot_trial()
+
+
+baaa
+
+
+
+lout = [['LVas', 'RVas'], ['LRec', 'RRec'], ['LHam', 'RHam']]
+lout = layouts.kinetics_emg('R')
+
+
+# online kinematics plot
+lout = [['PelvisAnglesX', 'PelvisAnglesY', 'PelvisAnglesZ'],
+        ['HipAnglesX', 'HipAnglesY', 'HipAnglesZ'],
+        ['KneeAnglesX', 'KneeAnglesY', 'KneeAnglesZ'],
+        ['AnkleAnglesX', 'FootProgressAnglesZ', 'AnkleAnglesZ']]
+
+
+lout = [['LVas', 'RVas'], ['LRec', 'RRec'], ['LHam', 'RHam']]
+
+lout = layouts.std_emg
+
 
 
 l2 = layout_with_sides(lout)

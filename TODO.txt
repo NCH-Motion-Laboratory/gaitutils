@@ -15,63 +15,10 @@ var:
 
 gaitutils TODO:
 
+-missing variables? e.g. trying to plot missing EMG ch causes error in
+_var_type - script cannot know whether it's EMG or not
 
--variable plotting semantics
-
-current: variable specified without side (e.g. KneeMomentX)
-go thru specified cycles
--> get context from cycle and specify varname accordingly (-> RKneeMomentX)
-too much magic?
-would be clearer to specify side explicitly when plotting
-(all models may not prepend vars with side, thus not future proof...)
-
-
-
-
-idea:
-
-enable multiple vars per subplot [[['LAnkleAngles','RAnkleAngles']]]
-(to allow superposing e.g. kinetics vars)
-
-e.g. 2 rows of subplots, superpose kinematics on top row:
-[
-[['LAnkleAngles','RAnkleAngles'], ['LHipAngles','RHipAngles]],
-['LHipMoment', 'LKneeMoment']
-]
-
-(subplot variables spec can be either list or string)
-
-optionally specify corresponding contexts (as kwarg to plot()):
-[
-[['L', 'R'], ['L', 'R']],
-['L', 'L']
-]
-OR automatically pick context from variable name
-
--choose cycle(s) according to context
-
-
-
-
-
-
-
-create subplot
-if var is a list:
-for item in list:
-  set_normalization_cycle()
-  plot(item)
-
-
-
-
-
-
-
-
-
-
-
+-config gets imported at too many places
 
 -validate (gaitplotter, Nexus)
 
@@ -81,8 +28,6 @@ for item in list:
 
 -small discrepancies in c3d/Nexus cycles?
     -nexus returns smaller frame indices (sometimes)
-
--config gets imported at too many places
 
 -packaging
 

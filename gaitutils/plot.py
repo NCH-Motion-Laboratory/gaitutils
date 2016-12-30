@@ -90,7 +90,7 @@ class Plotter(object):
             return None
         elif models.model_from_var(var):
             return 'model'
-        elif var in self.trial.emg.ch_names:
+        elif var in self.trial.emg:
             return 'emg'
         elif var in ('model_legend', 'emg_legend'):
             return var
@@ -283,7 +283,8 @@ class Plotter(object):
                                     continue
                                 else:
                                     self.trial.set_norm_cycle(cycle)
-
+                        disconn = (self.trial.emg.get_ch_status(var) ==
+                                   'DISCONNECTED')
                         x_, data = self.trial[var]
                         x = x_ / self.trial.analograte if cycle is None else x_
                         # TODO: annotate
@@ -292,18 +293,13 @@ class Plotter(object):
                         ax.plot(x, data*self.cfg.emg_multiplier, tcolor,
                                 linewidth=self.cfg.emg_linewidth)
 
-
-                if not self.cfg.emg_enabled(thisch):
-                        ax.annotate('disabled (manual)', xy=(50,0), ha="center", va="center")                    
-                elif emgdata[thisch] == 'EMG_DISCONNECTED':
-                    if self.annotate_disconnected:
-                        ax.annotate('disabled (auto)', xy=(50,0), ha="center", va="center")
-                elif emgdata[thisch] == 'EMG_REUSED':
-                        ax.annotate('reused', xy=(50,0), ha="center", va="center")
-                elif emgdata[thisch] == 'EMG_NOT_FOUND':
-                    ax.annotate('not found', xy=(50,0), ha="center", va="center")
-
-
+                if self.cfg.emg_annotate_disconnected:
+                    if self.trial.emg.get_ch_status(var) == 'DISCONNECTED':
+                            ax.annotate('disabled (auto)', xy=(50, 0),
+                                        ha="center", va="center")
+                if self.trial.emg.get_ch_status(var) == 'NOT_FOUND':
+                    ax.annotate('not found', xy=(50, 0), ha="center",
+                                va="center")
 
                 # create legend
                 elif var_type in ('model_legend', 'emg_legend'):
@@ -376,7 +372,8 @@ class Plotter(object):
                 ax.set(ylabel=self.cfg.emg_ylabel)
                 ax.yaxis.label.set_fontsize(self.cfg.
                                             plot_label_fontsize)
-                ax.set_title(var)
+                ax.set_title(var if var not in self.cfg.emg_labels
+                             else self.cfg.emg_labels[var])
                 ax.title.set_fontsize(self.cfg.plot_title_fontsize)
                 ax.locator_params(axis='y', nbins=4)
                 # tick font size

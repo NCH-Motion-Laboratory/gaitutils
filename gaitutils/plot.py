@@ -90,7 +90,7 @@ class Plotter(object):
             return None
         elif models.model_from_var(var):
             return 'model'
-        elif var in self.trial.emg:
+        elif var in self.cfg.emg_names:
             return 'emg'
         elif var in ('model_legend', 'emg_legend'):
             return var
@@ -285,21 +285,25 @@ class Plotter(object):
                                     self.trial.set_norm_cycle(cycle)
                         disconn = (self.trial.emg.get_ch_status(var) ==
                                    'DISCONNECTED')
+                        not_found = (self.trial.emg.get_ch_status(var) ==
+                                     'NOT_FOUND')
+                        #if not (disconn or not_found):
                         x_, data = self.trial[var]
-                        x = x_ / self.trial.analograte if cycle is None else x_
-                        # TODO: annotate
+                        x = (x_ / self.trial.analograte if cycle is None
+                             else x_)
                         tcolor = (emg_tracecolor if emg_tracecolor else
                                   self.cfg.emg_tracecolor)
                         ax.plot(x, data*self.cfg.emg_multiplier, tcolor,
                                 linewidth=self.cfg.emg_linewidth)
 
-                if self.cfg.emg_annotate_disconnected:
-                    if self.trial.emg.get_ch_status(var) == 'DISCONNECTED':
-                            ax.annotate('disabled (auto)', xy=(50, 0),
-                                        ha="center", va="center")
-                if self.trial.emg.get_ch_status(var) == 'NOT_FOUND':
-                    ax.annotate('not found', xy=(50, 0), ha="center",
-                                va="center")
+                if not superpose:
+                    if self.cfg.emg_annotate_disconnected:
+                        if disconn:
+                                ax.annotate('disabled (auto)', xy=(50, 0),
+                                            ha="center", va="center")
+                    if not_found:
+                        ax.annotate('not found', xy=(50, 0), ha="center",
+                                    va="center")
 
                 # create legend
                 elif var_type in ('model_legend', 'emg_legend'):

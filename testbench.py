@@ -14,6 +14,13 @@ import matplotlib.pyplot as plt
 # c3dfile = u'c:\\Users\\hus20664877\\Desktop\\Vicon\\vicon_data\\test\\H0036_EV\\2015_9_21_seur_EV\\2015_9_21_seur_EV19.c3d'
 vicon = nexus.viconnexus()
 
+cfg = config.Config()
+
+e1 = EMG(vicon, cfg.emg_names)
+
+pasaaa
+
+
 
 lout = [['LVas', 'RVas'], ['LRec', 'RRec'], ['LHam', 'RHam']]
 lout = layouts.kinetics_emg('R')

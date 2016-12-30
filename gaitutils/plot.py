@@ -292,6 +292,19 @@ class Plotter(object):
                         ax.plot(x, data*self.cfg.emg_multiplier, tcolor,
                                 linewidth=self.cfg.emg_linewidth)
 
+
+                if not self.cfg.emg_enabled(thisch):
+                        ax.annotate('disabled (manual)', xy=(50,0), ha="center", va="center")                    
+                elif emgdata[thisch] == 'EMG_DISCONNECTED':
+                    if self.annotate_disconnected:
+                        ax.annotate('disabled (auto)', xy=(50,0), ha="center", va="center")
+                elif emgdata[thisch] == 'EMG_REUSED':
+                        ax.annotate('reused', xy=(50,0), ha="center", va="center")
+                elif emgdata[thisch] == 'EMG_NOT_FOUND':
+                    ax.annotate('not found', xy=(50,0), ha="center", va="center")
+
+
+
                 # create legend
                 elif var_type in ('model_legend', 'emg_legend'):
                     self.legendnames.append('%s   %s   %s' % (

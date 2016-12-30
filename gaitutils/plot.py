@@ -253,10 +253,10 @@ class Plotter(object):
                 if var_type == 'model':
                     model = models.model_from_var(var)
 
+                    # normalize if context matches cycle, else skip cycle
                     for cycle in model_cycles:
                         if cycle is not None:
                             if context is not None:
-                                # context must match cycle
                                 if cycle.context != context:
                                     continue
                                 else:
@@ -275,10 +275,10 @@ class Plotter(object):
 
                 # plot EMG variable
                 elif var_type == 'emg':
+                    # normalize if context matches cycle, else skip cycle
                     for cycle in emg_cycles:
                         if cycle is not None:
                             if context is not None:
-                                # context must match cycle
                                 if cycle.context != context:
                                     continue
                                 else:

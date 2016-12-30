@@ -262,7 +262,7 @@ class Plotter(object):
                                     self.trial.set_norm_cycle(cycle)
 
                         x_, data = self.trial[var]
-                        
+
                         # unnormalized variables -> time axis
                         x = x_ / self.trial.framerate if cycle is None else x_
                         tcolor = (model_tracecolor if model_tracecolor
@@ -313,9 +313,16 @@ class Plotter(object):
                                                     model_normals_alpha)
 
                 elif var_type == 'emg':
+
                     for cycle in emg_cycles:
-                        if cycle is not None:  # plot normalized data
-                            self.trial.set_norm_cycle(cycle)
+                        if cycle is not None:
+                            if context is not None:
+                                # context must match cycle
+                                if cycle.context != context:
+                                    continue
+                                else:
+                                    self.trial.set_norm_cycle(cycle)
+
                         x_, data = self.trial[var]
                         x = x_ / self.trial.analograte if cycle is None else x_
                         # TODO: annotate

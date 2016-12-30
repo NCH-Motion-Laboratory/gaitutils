@@ -5,18 +5,6 @@
 gaitutils TODO:
 
 
-R: 1, L: 1
-
-'RHipMomentX'
-
-
-
-
-
-
-context, cycle, variable name
-
-
 -variable plotting semantics
 
 current: variable specified without side (e.g. KneeMomentX)

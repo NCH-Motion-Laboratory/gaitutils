@@ -19,13 +19,14 @@ lout = [['LVas', 'RVas'], ['LRec', 'RRec'], ['LHam', 'RHam']]
 lout = layouts.kinetics_emg('R')
 
 
-
 # online kinematics plot
 lout = [['PelvisAnglesX', 'PelvisAnglesY', 'PelvisAnglesZ'],
         ['HipAnglesX', 'HipAnglesY', 'HipAnglesZ'],
         ['KneeAnglesX', 'KneeAnglesY', 'KneeAnglesZ'],
         ['AnkleAnglesX', 'FootProgressAnglesZ', 'AnkleAnglesZ']]
 
+
+lout = [['LVas', 'RVas'], ['LRec', 'RRec'], ['LHam', 'RHam']]
 
 def layout_with_sides(lout):
     """ Helper to create superposed layouts (superpose L/R) from layouts
@@ -42,7 +43,7 @@ def layout_with_sides(lout):
     return newlout
 
 
-def get_layout_context(lout):
+def layout_guess_context(lout):
     context = []
     for row in lout:
         newrow = []
@@ -65,6 +66,7 @@ def get_layout_context(lout):
 
 l2 = layout_with_sides(lout)
 
+ctxt = get_layout_context(l2)
 
 pl = Plotter()
 
@@ -72,9 +74,10 @@ pl.layout = l2
 
 pl.open_nexus_trial()
 
-#pl.plot_trial()
+pl.plot_trial()
 
-pl.plot_trial(model_cycles={'R':1, 'L':1})
+#pl.plot_trial(contexts=ctxt)
+
 
 
 

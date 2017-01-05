@@ -9,6 +9,7 @@ E0041_ES tukisessio, ES07:
 automark poimii eventit väärästä kohtaa
 
 "ei kontaktia" esim. E0041->tuet_ES12
+=cop shift too large (iso kenkä)
 
 
 

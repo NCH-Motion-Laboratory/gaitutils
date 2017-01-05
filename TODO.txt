@@ -1,6 +1,16 @@
 # -*- coding: utf-8 -*-
 
 
+bugeja:
+
+analog nollaksi -bugi
+
+E0041_ES tukisessio, ES07:
+automark poimii eventit väärästä kohtaa
+
+"ei kontaktia" esim. E0041->tuet_ES12
+
+
 
 gaitutils TODO:
 

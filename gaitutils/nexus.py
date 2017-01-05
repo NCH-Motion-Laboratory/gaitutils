@@ -446,11 +446,12 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                      label='strike')
             plt.plot(toeoffs, footctrv[toeoffs], 'k^', markersize=10,
                      label='toeoff')
-            plt.legend(numpoints=1)
+            plt.legend(numpoints=1, fontsize=10)
             plt.ylim(0, maxv+10)
-            plt.xlabel('Frame')
+            if ind == 1:
+                plt.xlabel('Frame')
             plt.ylabel('Velocity (mm/frame)')
-            plt.title('Automark ' + this_side)
+            plt.title('Left' if this_side == 'L' else 'Right')
 
     return (strikes_all['R'], strikes_all['L'],
             toeoffs_all['R'], toeoffs_all['L'])

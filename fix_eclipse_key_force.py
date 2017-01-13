@@ -13,8 +13,8 @@ Be careful! Overwrites files without asking anything.
 
 from gaitutils import nexus, eclipse
 
-KEY = 'FP1'  # Eclipse key
-NEWVAL = 'Auto'      # change into this value
+KEY = 'Description'  # Eclipse key
+NEWVAL = ''      # change into this value
 
 enffiles = nexus.get_trial_enfs()
 

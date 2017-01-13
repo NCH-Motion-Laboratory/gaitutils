@@ -46,6 +46,26 @@ def pid():
     return None
 
 
+def true_ver():
+    """ Tries to return the actual version of the running Nexus process
+    (API does not do that). Hackish and probalby unreliable """
+    PROCNAME = "Nexus.exe"
+    for proc in psutil.process_iter():
+        try:
+            if proc.name() == PROCNAME:
+                exname = proc.exe()
+                vind = exname.find('2.')  # assumes ver >2.
+                if vind == -1:
+                    return None
+                try:
+                    return float(exname[vind:vind+3])
+                except ValueError:
+                    return None
+        except psutil.AccessDenied:
+            pass
+    return None
+
+
 def viconnexus():
     """ Return a ViconNexus instance. """
     return ViconNexus.ViconNexus()

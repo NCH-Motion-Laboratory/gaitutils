@@ -42,8 +42,6 @@ import numpy as np
 from numpy import inf
 import time
 
-# range of trials to process
-TRIALS_RANGE = (1, inf)
 
 # list of pipelines to run
 PRE_PIPELINES = ['Reconstruct and label (legacy)', 'AutoGapFill_mod', 'filter']
@@ -122,6 +120,8 @@ def _do_autoproc(enffiles):
         raise Exception('Vicon Nexus not running')
     vicon = nexus.viconnexus()
 
+    nexus_ver = nexus.true_ver()
+
     contact_v = {'L_strike': [], 'R_strike': [],
                  'L_toeoff': [], 'R_toeoff': []}
     trials = {}
@@ -135,121 +135,119 @@ def _do_autoproc(enffiles):
     for filepath_ in enffiles:
         filepath = filepath_[:filepath_.find('.Trial')]  # rm .Trial and .enf
         filename = os.path.split(filepath)[1]
-        trialn = filepath[-2:]
-        if TRIALS_RANGE[0] <= int(trialn) <= TRIALS_RANGE[1]:
-            print('processing:', filename)
-            edi = eclipse.get_eclipse_keys(filepath_, return_empty=True)
-            trial_type = edi['TYPE']
-            trial_desc = edi['DESCRIPTION']
-            if trial_type in TYPE_SKIP:
-                print('Not a dynamic trial, skipping')
-                continue
-            if trial_desc.upper() in [s.upper() for s in DESC_SKIP]:
-                print('Skipping based on description')
-                # run preprocessing + save even for skipped trials, to mark
-                # them as processed
-                for pipeline in PRE_PIPELINES:
-                    vicon.RunPipeline(pipeline, '', PIPELINE_TIMEOUT)
-                vicon.SaveTrial(SAVE_TIMEOUT)
-                continue
-            eclipse_str = ''
-            trials[filepath] = Trial()
-            vicon.OpenTrial(filepath, TRIAL_OPEN_TIMEOUT)
-            allmarkers = vicon.GetMarkerNames(subjectname)
-            # reset ROI before operations
-            if RESET_ROI and cfg.nexus_ver >= 2.5:
-                (fstart, fend) = vicon.GetTrialRange()
-                vicon.SetTrialRegionOfInterest(fstart, fend)
-
-            # try to run preprocessing pipelines
-            fail = None
+        print('\nprocessing: %s' % filename)
+        edi = eclipse.get_eclipse_keys(filepath_, return_empty=True)
+        trial_type = edi['TYPE']
+        trial_desc = edi['DESCRIPTION']
+        if trial_type in TYPE_SKIP:
+            print('Not a dynamic trial, skipping')
+            continue
+        if trial_desc.upper() in [s.upper() for s in DESC_SKIP]:
+            print('Skipping based on description')
+            # run preprocessing + save even for skipped trials, to mark
+            # them as processed
             for pipeline in PRE_PIPELINES:
                 vicon.RunPipeline(pipeline, '', PIPELINE_TIMEOUT)
-            # trial sanity checks
-            trange = vicon.GetTrialRange()
-            if (trange[1] - trange[0]) < MIN_TRIAL_DURATION:
-                fail = 'short'
-            else:  # duration ok
-                # try to figure out trial center frame
-                for marker in TRACK_MARKERS:
-                    try:
-                        ctr = utils.get_crossing_frame(vicon, marker=marker, dim=1,
+            vicon.SaveTrial(SAVE_TIMEOUT)
+            continue
+        eclipse_str = ''
+        trials[filepath] = Trial()
+        vicon.OpenTrial(filepath, TRIAL_OPEN_TIMEOUT)
+        allmarkers = vicon.GetMarkerNames(subjectname)
+        # reset ROI before operations
+        if RESET_ROI and nexus_ver >= 2.5:
+            (fstart, fend) = vicon.GetTrialRange()
+            vicon.SetTrialRegionOfInterest(fstart, fend)
+
+        # try to run preprocessing pipelines
+        fail = None
+        for pipeline in PRE_PIPELINES:
+            vicon.RunPipeline(pipeline, '', PIPELINE_TIMEOUT)
+        # trial sanity checks
+        trange = vicon.GetTrialRange()
+        if (trange[1] - trange[0]) < MIN_TRIAL_DURATION:
+            fail = 'short'
+        else:  # duration ok
+            # try to figure out trial center frame
+            for marker in TRACK_MARKERS:
+                try:
+                    ctr = utils.get_crossing_frame(vicon, marker=marker, dim=1,
                                                    p0=Y_MIDPOINT)
+                except ValueError:
+                    ctr = None
+                ctr = ctr[0] if ctr else None
+                if ctr:  # ok and no gaps
+                    trials[filepath].ctr_frame = ctr
+                    break
+            # cannot find center frame - possible rasi or lasi gaps
+            if not ctr:
+                fail = 'gaps_or_short'
+                gaps_found = True
+            else:
+                gaps_found = False
+                for marker in allmarkers:  # check for gaps / lbl failures
+                    try:
+                        gaps = (nexus.get_marker_data(vicon, marker)
+                                [marker + '_gaps'])
                     except ValueError:
-                        ctr = None
-                    ctr = ctr[0] if ctr else None
-                    if ctr:  # ok and no gaps
-                        trials[filepath].ctr_frame = ctr
+                        fail = 'label_failure'
                         break
-                # cannot find center frame - possible rasi or lasi gaps
-                if not ctr:
-                    fail = 'gaps_or_short'
-                    gaps_found = True
-                else:
-                    gaps_found = False
-                    for marker in allmarkers:  # check for gaps / lbl failures
-                        try:
-                            gaps = (nexus.get_marker_data(vicon, marker)
-                                    [marker + '_gaps'])
-                        except ValueError:
-                            fail = 'label_failure'
+                    # check for gaps nearby the center frame
+                    if gaps.size > 0:
+                        if (np.where(abs(gaps - ctr) <
+                           GAPS_MIN_DIST)[0].size > GAPS_MAX):
+                            gaps_found = True
                             break
-                        # check for gaps nearby the center frame
-                        if gaps.size > 0:
-                            if (np.where(abs(gaps - ctr) <
-                               GAPS_MIN_DIST)[0].size > GAPS_MAX):
-                                gaps_found = True
-                                break
-            if gaps_found:
-                fail = 'gaps'
+        if gaps_found:
+            fail = 'gaps'
 
-            # move to next trial if preprocessing failed
-            if fail is not None:
-                print('preprocessing failed: %s' % DESCRIPTIONS[fail])
-                trials[filepath].description = DESCRIPTIONS[fail]
-                vicon.SaveTrial(SAVE_TIMEOUT)
-                continue
-            else:
-                trials[filepath].recon_ok = True
-
-            # preprocessing ok, get kinetics info
-            fpdata = utils.kinetics_available(vicon, CHECK_WEIGHT)
-            context = fpdata['context']
-            if context:
-                eclipse_str += (DESCRIPTIONS['context_right'] if context == 'R'
-                                else DESCRIPTIONS['context_left'])
-                contact_v[context+'_strike'].append(fpdata['strike_v'])
-                contact_v[context+'_toeoff'].append(fpdata['toeoff_v'])
-                trials[filepath].context = context
-                trials[filepath].fpdata = fpdata
-            else:
-                eclipse_str += DESCRIPTIONS['no_context']
-            eclipse_str += ','
-
-            # check direction of gait (y coordinate increase/decrease)
-            gait_dir = utils.get_movement_direction(vicon, TRACK_MARKERS[0],
-                                                    'y')
-            gait_dir = (DESCRIPTIONS['dir_back'] if gait_dir == 1 else
-                        DESCRIPTIONS['dir_front'])
-            eclipse_str += gait_dir
-            vicon.SaveTrial(SAVE_TIMEOUT)            
-            # time.sleep(1)
-            trials[filepath].description = eclipse_str
-
-    # compute velocity thresholds from preprocessed trial data
-    vel_th = {}
-    for key in contact_v:
-        if contact_v[key]:
-            vel_th[key] = np.median(contact_v[key])
+        # move to next trial if preprocessing failed
+        if fail is not None:
+            print('preprocessing failed: %s' % DESCRIPTIONS[fail])
+            trials[filepath].description = DESCRIPTIONS[fail]
+            vicon.SaveTrial(SAVE_TIMEOUT)
+            continue
         else:
-            vel_th[key] = None
+            trials[filepath].recon_ok = True
+
+        # preprocessing ok, get kinetics info
+        fpdata = utils.kinetics_available(vicon, CHECK_WEIGHT)
+        context = fpdata['context']
+        if context:
+            eclipse_str += (DESCRIPTIONS['context_right'] if context == 'R'
+                            else DESCRIPTIONS['context_left'])
+            contact_v[context+'_strike'].append(fpdata['strike_v'])
+            contact_v[context+'_toeoff'].append(fpdata['toeoff_v'])
+            trials[filepath].context = context
+            trials[filepath].fpdata = fpdata
+        else:
+            eclipse_str += DESCRIPTIONS['no_context']
+        eclipse_str += ','
+
+        # check direction of gait (y coordinate increase/decrease)
+        gait_dir = utils.get_movement_direction(vicon, TRACK_MARKERS[0],
+                                                'y')
+        gait_dir = (DESCRIPTIONS['dir_back'] if gait_dir == 1 else
+                    DESCRIPTIONS['dir_front'])
+        eclipse_str += gait_dir
+        vicon.SaveTrial(SAVE_TIMEOUT)
+        # time.sleep(1)
+        trials[filepath].description = eclipse_str
+
+        # compute velocity thresholds from preprocessed trial data
+        vel_th = {}
+        for key in contact_v:
+            if contact_v[key]:
+                vel_th[key] = np.median(contact_v[key])
+            else:
+                vel_th[key] = None
 
     """ 2nd pass - detect gait events, run models, crop """
     sel_trials = {k: v for k, v in trials.items() if v.recon_ok}
     print('\n2nd pass - processing %d trials\n' % len(sel_trials))
     for filepath, trial in sel_trials.items():
         filename = os.path.split(filepath)[1]
-        print('processing:', filename)
+        print('\nprocessing: %s' % filename)
         vicon.OpenTrial(filepath, TRIAL_OPEN_TIMEOUT)
         enf_file = filepath + '.Trial.enf'
         # if fp data available from trial itself, use it for automark
@@ -275,7 +273,7 @@ def _do_autoproc(enffiles):
             continue  # next trial
         # events ok
         # crop trial
-        if cfg.nexus_ver >= 2.5:
+        if nexus_ver >= 2.5:
             evs = vicon.GetEvents(subjectname, "Left", "Foot Strike")[0]
             evs += vicon.GetEvents(subjectname, "Right", "Foot Strike")[0]
             evs += vicon.GetEvents(subjectname, "Left", "Foot Off")[0]

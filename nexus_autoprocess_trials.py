@@ -38,6 +38,7 @@ from __future__ import print_function
 from gaitutils import nexus, eclipse, utils, config
 import glob
 import os
+import stat
 import numpy as np
 from numpy import inf
 import time
@@ -294,8 +295,12 @@ def _do_autoproc(enffiles):
     if WRITE_ECLIPSE_DESC:
         for filepath, trial in trials.items():
             enf_file = filepath + '.Trial.enf'
+            os.chmod(enf_file, stat.S_IWRITE)
             eclipse.set_eclipse_key(enf_file, 'DESCRIPTION',
                                     trial.description, update_existing=True)
+            # this is a hack to prevent Eclipse from changing the values
+            os.chmod(enf_file, not stat.S_IWRITE)
+
     # print stats
     n_events = len([tr for tr in trials.values() if tr.events])
     print('\nComplete\n')

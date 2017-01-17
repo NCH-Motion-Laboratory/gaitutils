@@ -346,7 +346,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     MIN_PEAK_VELOCITY = .5 * VEL_CONV
     # reasonable limits for velocity on slope (increasing/decreasing)
     MAX_SLOPE_VELOCITY = 6 * VEL_CONV
-    MIN_SLOPE_VELOCITY = .05 * VEL_CONV
+    MIN_SLOPE_VELOCITY = 0  # not currently in use
     # median prefilter width
     MEDIAN_WIDTH = 3
     # right feet markers
@@ -416,6 +416,10 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         cind_max = np.logical_and(footctrv[cross+1] < MAX_SLOPE_VELOCITY,
                                   footctrv[cross+1] > MIN_SLOPE_VELOCITY)
         strikes = cross[np.logical_and(cind_min, cind_max)]
+
+        if len(strikes) == 0:
+            raise Exception('Could not detect any foot strike events')
+
         # toeoffs (velocity increases)
         cross = rising_zerocross(footctrv - threshold_rise_)
         cross = cross[np.where(np.logical_and(cross > 0,
@@ -426,9 +430,13 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                                   footctrv[cross+1] > MIN_SLOPE_VELOCITY)
         toeoffs = cross[np.logical_and(cind_min, cind_max)]
 
+        if len(toeoffs) == 0:
+            raise Exception('Could not detect any toe-off events')
+
         # mark around center frame
         events = (events_context if context is not None and
                   this_side in context else events_nocontext)
+
         ctr_strike_ind = np.argmin(abs(strikes - ctr_frame))
 
         # compute indices of selected events

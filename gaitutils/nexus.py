@@ -353,6 +353,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     RIGHT_FOOT_MARKERS = ['RHEE', 'RTOE', 'RANK']
     # left foot markers
     LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
+    # minimum distance between subsequent events (of same kind)
+    MIN_EVENT_DISTANCE = 50
 
     # get subject info
     subjectnames = vicon.GetSubjectNames()
@@ -416,6 +418,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         cind_max = np.logical_and(footctrv[cross+1] < MAX_SLOPE_VELOCITY,
                                   footctrv[cross+1] > MIN_SLOPE_VELOCITY)
         strikes = cross[np.logical_and(cind_min, cind_max)]
+        too_near = np.where(np.diff(strikes) < MIN_EVENT_DISTANCE)[0] + 1
+        strikes = np.delete(strikes, too_near)
 
         if len(strikes) == 0:
             raise Exception('Could not detect any foot strike events')
@@ -429,6 +433,9 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         cind_max = np.logical_and(footctrv[cross+1] < MAX_SLOPE_VELOCITY,
                                   footctrv[cross+1] > MIN_SLOPE_VELOCITY)
         toeoffs = cross[np.logical_and(cind_min, cind_max)]
+
+        too_near = np.where(np.diff(toeoffs) < MIN_EVENT_DISTANCE)[0] + 1
+        toeoffs = np.delete(toeoffs, too_near)
 
         if len(toeoffs) == 0:
             raise Exception('Could not detect any toe-off events')

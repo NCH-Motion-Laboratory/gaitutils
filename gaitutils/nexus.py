@@ -158,26 +158,10 @@ def get_metadata(vicon):
             'length': length, 'samplesperframe': samplesperframe}
 
 
-def get_device_ids(vicon, type=None, name=None):
-    """ Returns id numbers for a given analog device type """
-    ids = []
-    dnames = vicon.GetDeviceNames()
-    for device in dnames:
-        devid = vicon.GetDeviceIDFromName(device)
-        dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(devid)
-        if type is not None:
-            if dtype.upper() != type.upper():
-                continue
-        if name is not None:
-            if dname.upper() != name.upper():
-                continue
-        ids.append(devid)  # ok
-    return ids
-
-
 def get_emg_data(vicon):
     """ Read EMG data from Nexus """
-    ids = get_device_ids(vicon, type='other', name=cfg.emg_devname)
+    ids = [id for id in vicon.GetDeviceIDs() if
+           vicon.GetDeviceDetails(id)[0].lower() == cfg.emg_devname.lower()]
     if len(ids) > 1:
         raise ValueError('Multiple matching EMG devices')
     elif len(ids) == 0:
@@ -201,7 +185,9 @@ def get_emg_data(vicon):
 def get_forceplate_data(vicon):
     """ Read forceplate data from Nexus. Does not support multiple plates
     yet. """
-    devids = get_device_ids(vicon, type='ForcePlate')
+    # get forceplate ids
+    devids = [id for id in vicon.GetDeviceIDs() if
+              vicon.GetDeviceDetails(id)[1].lower() == 'forceplate']
     if len(devids) > 1:
         print('warning: more than 1 forceplate not handled yet, using 1st one')
     elif len(devids) == 0:
@@ -211,13 +197,9 @@ def get_forceplate_data(vicon):
     # pick 1st forceplate
     dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(devid)
     framerate = vicon.GetFrameRate()
-    samplesperframe = drate / framerate  # fp samples per Vicon frame
-    # DType should be 'ForcePlate', drate is sampling rate
+    samplesperframe = drate / framerate
     # outputs should be force, moment, cop. select force
     outputid = outputids[0]
-    # get list of channel names and IDs
-    _, _, _, _, chnames, chids = vicon.GetDeviceOutputDetails(devid, outputid)
-    # read x,y,z forces
     chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Fx')
     fx, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
     chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Fy')

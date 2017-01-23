@@ -186,44 +186,42 @@ def get_emg_data(vicon):
 def get_forceplate_data(vicon):
     """ Read forceplate data from Nexus. Does not support multiple plates
     yet. """
-    fpdevicename = 'Forceplate'
     devicenames = vicon.GetDeviceNames()
-    if fpdevicename in devicenames:
-        # not sure what happens to fpid if multip. plates
-        fpid = vicon.GetDeviceIDFromName(fpdevicename)
-    else:
-        raise ValueError('Forceplate device not found')
+    for device in devicenames:
+        devid = vicon.GetDeviceIDFromName(device)
+        dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(devid)
+        if dtype == 'ForcePlate':
+            break
     framerate = vicon.GetFrameRate()
-    # DType should be 'ForcePlate', drate is sampling rate
-    dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(fpid)
     samplesperframe = drate / framerate  # fp samples per Vicon frame
+    # DType should be 'ForcePlate', drate is sampling rate
     # outputs should be force, moment, cop. select force
     outputid = outputids[0]
     # get list of channel names and IDs
-    _, _, _, _, chnames, chids = vicon.GetDeviceOutputDetails(fpid, outputid)
+    _, _, _, _, chnames, chids = vicon.GetDeviceOutputDetails(devid, outputid)
     # read x,y,z forces
-    chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Fx')
-    fx, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, chid)
-    chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Fy')
-    fy, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, chid)
-    chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Fz')
-    fz, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, chid)
+    chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Fx')
+    fx, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
+    chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Fy')
+    fy, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
+    chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Fz')
+    fz, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
     # moments
     outputid = outputids[1]
-    chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Mx')
-    mx, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, chid)
-    chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'My')
-    my, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, chid)
-    chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Mz')
-    mz, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, chid)
+    chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Mx')
+    mx, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
+    chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'My')
+    my, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
+    chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Mz')
+    mz, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
     # read CoP
     outputid = outputids[2]
-    chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Cx')
-    copx, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, chid)
-    chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Cy')
-    copy, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, chid)
-    chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, 'Cz')
-    copz, chready, chrate = vicon.GetDeviceChannel(fpid, outputid, chid)
+    chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Cx')
+    copx, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
+    chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Cy')
+    copy, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
+    chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Cz')
+    copz, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
     cop = np.array([copx, copy, copz]).transpose()
     fall = np.array([fx, fy, fz]).transpose()
     mall = np.array([mx, my, mz]).transpose()

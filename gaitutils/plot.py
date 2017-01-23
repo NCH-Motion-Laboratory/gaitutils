@@ -70,7 +70,7 @@ class Plotter(object):
         """ Launch video player (defined in config) to play vidfile. """
         PLAYER_CMD = self.cfg.videoplayer_path
         if not (op.isfile(PLAYER_CMD) and os.access(PLAYER_CMD, os.X_OK)):
-            error_exit('Invalid video player executable: %S' % PLAYER_CMD)
+            error_exit('Invalid video player executable: %s' % PLAYER_CMD)
         PLAYER_OPTS = self.cfg.videoplayer_opts
         # command needs to be constructed in a very particular way
         # see subprocess.list2cmdline

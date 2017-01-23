@@ -158,15 +158,31 @@ def get_metadata(vicon):
             'length': length, 'samplesperframe': samplesperframe}
 
 
+def get_device_ids(vicon, type=None, name=None):
+    """ Returns id numbers for a given analog device type """
+    ids = []
+    dnames = vicon.GetDeviceNames()
+    for device in dnames:
+        devid = vicon.GetDeviceIDFromName(device)
+        dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(devid)
+        if type is not None:
+            if dtype.upper() != type.upper():
+                continue
+        if name is not None:
+            if dname.upper() != name.upper():
+                continue
+        ids.append(devid)  # ok
+    return ids
+
+
 def get_emg_data(vicon):
     """ Read EMG data from Nexus """
-    emg_devname = cfg.emg_devname
-    devnames = vicon.GetDeviceNames()
-    if emg_devname in devnames:
-        emg_id = vicon.GetDeviceIDFromName(emg_devname)
-    else:
-        raise ValueError('EMG device not found')
-    # DType should be 'other', drate is sampling rate
+    ids = get_device_ids(vicon, type='other', name=cfg.emg_devname)
+    if len(ids) > 1:
+        raise ValueError('Multiple matching EMG devices')
+    elif len(ids) == 0:
+        raise ValueError('No matching EMG devices')
+    emg_id = ids[0]
     dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(emg_id)
     # Myon should only have 1 output; if zero, EMG was not found (?)
     if len(outputids) != 1:
@@ -176,8 +192,7 @@ def get_emg_data(vicon):
     _, _, _, _, elnames, chids = vicon.GetDeviceOutputDetails(emg_id, outputid)
     data = dict()
     for elid in chids:
-        eldata, elready, elrate = vicon.GetDeviceChannel(emg_id, outputid,
-                                                         elid)
+        eldata, _, elrate = vicon.GetDeviceChannel(emg_id, outputid, elid)
         elname = elnames[elid-1]  # chids start from 1
         data[elname] = np.array(eldata)
     return {'t': np.arange(len(eldata)) / drate, 'data': data}
@@ -186,12 +201,15 @@ def get_emg_data(vicon):
 def get_forceplate_data(vicon):
     """ Read forceplate data from Nexus. Does not support multiple plates
     yet. """
-    devicenames = vicon.GetDeviceNames()
-    for device in devicenames:
-        devid = vicon.GetDeviceIDFromName(device)
-        dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(devid)
-        if dtype == 'ForcePlate':
-            break
+    devids = get_device_ids(vicon, type='ForcePlate')
+    if len(devids) > 1:
+        print('warning: more than 1 forceplate not handled yet, using 1st one')
+    elif len(devids) == 0:
+        print('no forceplates detected')
+        return None
+    devid = devids[0]
+    # pick 1st forceplate
+    dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(devid)
     framerate = vicon.GetFrameRate()
     samplesperframe = drate / framerate  # fp samples per Vicon frame
     # DType should be 'ForcePlate', drate is sampling rate

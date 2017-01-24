@@ -33,7 +33,7 @@ def do_plot():
     """ This changes layouts on a Plotter instance,
     which is a bit of a hack """
     pl.layout = layout_R
-    pl.plot_trial(maintitle=maintitle, emg_cycles={'R': 1})
+    pl.plot_trial(maintitle=maintitle, emg_cycles={'R': 1}, show=False)
     pl.layout = layout_L
     pl.plot_trial(maintitle=maintitle, emg_cycles={'L': 1})
 

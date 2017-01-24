@@ -65,3 +65,47 @@ normalization always on corresponding side
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+context of cycle (L/R)
+side of variable
+
+
+for s in subplot:
+    for var in vars:
+        for cyc in cycles:
+            if this_var_context == cyc.context:
+                plot
+
+    
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

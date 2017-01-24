@@ -107,7 +107,6 @@ class Plotter(object):
                 plotheightratios.append(self.cfg.plot_analog_plotheight)
         return plotheightratios
 
-
     def plot_trial(self, model_cycles={'R': 1, 'L': 1},
                    emg_cycles={'R': 1, 'L': 1},
                    context=None, t=None, plotheightratios=None,
@@ -225,6 +224,7 @@ class Plotter(object):
             if var_type is None:
                 continue
             ax = plt.subplot(self.gridspec[i])
+
             if var_type == 'model':
                 model = models.model_from_var(var)
                 for cycle in model_cycles:
@@ -316,7 +316,8 @@ class Plotter(object):
                         ysc = self.cfg.emg_yscale
                         ax.set_ylim(ysc[0]*self.cfg.emg_multiplier,
                                     ysc[1]*self.cfg.emg_multiplier)
-                        if plot_emg_normaldata and cycle is not None:
+                        if (plot_emg_normaldata and cycle is not None and
+                           var in self.cfg.emg_normals):
                             # plot EMG normal bars
                             emgbar_ind = self.cfg.emg_normals[var]
                             for k in range(len(emgbar_ind)):
@@ -398,4 +399,3 @@ class Plotter(object):
         except IOError:
             messagebox('Error writing PDF file, '
                        'check that file is not already open.')
-

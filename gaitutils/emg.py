@@ -105,10 +105,11 @@ class EMG(object):
         # check for invalid channels
         if self.emg_auto_off:
             for chname, data in self._logical_data.items():
-                if not self.is_valid_emg(data):
-                    self.ch_status[chname] = 'DISCONNECTED'
-                else:
-                    self.ch_status[chname] = 'OK'
+                if data is not None:
+                    if not self.is_valid_emg(data):
+                        self.ch_status[chname] = 'DISCONNECTED'
+                    else:
+                        self.ch_status[chname] = 'OK'
         # set scales for plotting channels
         self.yscale = {}
         for logch in self.ch_names:
@@ -126,10 +127,11 @@ class EMG(object):
         self.ch_status = dict()
         for datach in self.ch_names:
             matches = [x for x in self.elnames if x.find(datach) >= 0]
-            if len(matches) == 0:
+            if len(matches) == 0:  # no match
                 self._logical_data[datach] = None
                 self.ch_status[datach] = 'NOT_FOUND'
-            elname = min(matches, key=len)  # choose shortest matching name
-            if len(matches) > 1:
-                debug_print('map_data:', matches, '->', elname)
-            self._logical_data[datach] = self.data[elname]
+            else:
+                elname = min(matches, key=len)  # choose shortest matching name
+                if len(matches) > 1:
+                    debug_print('map_data:', matches, '->', elname)
+                self._logical_data[datach] = self.data[elname]

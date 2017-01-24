@@ -53,7 +53,7 @@ class Plotter(object):
     def layout(self, layout):
         if (not isinstance(layout, list) or not
            all([isinstance(item, list) for item in layout])):
-            raise ValueError('Plot variables must be a list of lists')
+            raise ValueError('Layout must be a list of lists')
         self._layout = layout
         self.allvars = [item for row in layout for item in row]
         self.nrows = len(layout)
@@ -177,7 +177,10 @@ class Plotter(object):
                 maintitleprefix = ''
             maintitle = maintitleprefix + self.trial.trialname
         if self.fig is None or not superpose:
-            self.fig = plt.figure(figsize=self.cfg.plot_totalfigsize)
+            # auto size fig according to n of subplots w, limit size
+            figh = min(self.nrows*2, 13)
+            figw = min(self.ncols*4.5, 20)
+            self.fig = plt.figure(figsize=(figw, figh))
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)
         if plotheightratios is None:

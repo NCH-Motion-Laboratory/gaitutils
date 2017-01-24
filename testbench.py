@@ -15,10 +15,11 @@ import matplotlib.pyplot as plt
 vicon = nexus.viconnexus()
 
 
-lout = [['LVas', 'RVas'], ['LRec', 'RRec'], ['LHam', 'RHam']]
+lout = [['RGlut', 'LGlut'], ['LRec', 'RRec'], ['LHam', 'RHam']]
 lout = layouts.kinetics_emg('R')
 
 lout = layouts.std_emg
+
 
 pl = Plotter()
 

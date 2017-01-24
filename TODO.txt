@@ -6,13 +6,13 @@ bugeja:
 analog nollaksi -bugi
 
 E0041_ES tukisessio, ES07:
-automark poimii eventit väärästä kohtaa
+automark poimii eventit vÃ¤Ã¤rÃ¤stÃ¤ kohtaa
 
 E0004_IH paljal:
--eventit menee joissain trialeissa väärään kohtaan, jos prosessoi kaikki kerralla
+-eventit menee joissain trialeissa vÃ¤Ã¤rÃ¤Ã¤n kohtaan, jos prosessoi kaikki kerralla
 
 "ei kontaktia" esim. E0041->tuet_ES12
-=cop shift too large (iso kenkä)
+=cop shift too large (iso kenkÃ¤)
 
 
 
@@ -20,17 +20,7 @@ gaitutils TODO:
 
 
 
--variable plotting semantics
-
-current: variable specified without side (KneeMoment)
-go thru specified cycles
--> get context from cycle and specify varname accordingly (-> RKneeMoment)
-too much magic?
-would be clearer to specify side explicitly when plotting
-(all models may not prepend vars with side, thus not future proof...)
-
-
-ideas:
+-variable plotting semantics, possibilities:
 
 1) enable multiple vars per subplot [[['LAnkleAngles','RAnkleAngles']]]
 (to allow superposing e.g. kinetics vars)
@@ -40,16 +30,18 @@ e.g. 2 rows of subplots, superpose kinematics on top row:
 [['LAnkleAngles','RAnkleAngles'], ['LHipAngles','RHipAngles]],
 ['LHipMoment', 'LKneeMoment']
 ]
-
 (subplot variables spec could be either list or string)
-
-then specify corresponding contexts:
+then specify corresponding contexts, e.g.
 [
 [['L', 'R'], ['L', 'R']],
 ['L', 'L']
 ]
 
-(easy to create automagically)
+
+2) vars without leading side R/L will be plotted on both sides
+normalization always on corresponding side
+
+
 
 
 

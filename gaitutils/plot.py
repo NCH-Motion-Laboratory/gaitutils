@@ -107,6 +107,7 @@ class Plotter(object):
                 plotheightratios.append(self.cfg.plot_analog_plotheight)
         return plotheightratios
 
+
     def plot_trial(self, model_cycles={'R': 1, 'L': 1},
                    emg_cycles={'R': 1, 'L': 1},
                    context=None, t=None, plotheightratios=None,
@@ -181,6 +182,11 @@ class Plotter(object):
                                               height_ratios=plotheightratios)
         if plotheightratios is None:
             plotheightratios = self._plot_height_ratios()
+
+        def _axis_annotate(ax, text):
+            """ Annotate at center of axis """
+            ctr = sum(ax.get_xlim())/2, sum(ax.get_ylim())/2.
+            ax.annotate(text, xy=ctr, ha="center", va="center")
 
         def _get_cycles(cycles):
             """ Get specified cycles from the gait trial """
@@ -270,15 +276,20 @@ class Plotter(object):
                                                 model_normals_alpha)
 
             elif var_type == 'emg':
+                ax.set_title(var)
+                ax.title.set_fontsize(self.cfg.plot_title_fontsize)
                 for cycle in emg_cycles:
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
                     try:
                         x_, data = self.trial[var]
-                    except KeyError:  # EMG channel not found
-                        break  # TODO: should probably annotate here
+                    except KeyError:
+                        _axis_annotate(ax, 'channel not found')
+                        break  # no data - skip all cycles
+                    if not self.trial.emg.status_ok(var):
+                        _axis_annotate(ax, 'channel disconnected')
+                        break  # no data - skip all cycles
                     x = x_ / self.trial.analograte if cycle is None else x_
-                    # TODO: annotate if bad
                     tcolor = (emg_tracecolor if emg_tracecolor else
                               self.cfg.emg_tracecolor)
                     ax.plot(x, data*self.cfg.emg_multiplier, tcolor,
@@ -287,8 +298,6 @@ class Plotter(object):
                         ax.set(ylabel=self.cfg.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.
                                                     plot_label_fontsize)
-                        ax.set_title(var)
-                        ax.title.set_fontsize(self.cfg.plot_title_fontsize)
                         ax.locator_params(axis='y', nbins=4)
                         # tick font size
                         ax.tick_params(axis='both', which='major',

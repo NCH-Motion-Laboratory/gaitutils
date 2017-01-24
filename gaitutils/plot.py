@@ -188,6 +188,11 @@ class Plotter(object):
             ctr = sum(ax.get_xlim())/2, sum(ax.get_ylim())/2.
             ax.annotate(text, xy=ctr, ha="center", va="center")
 
+        def _no_ticks_or_labels(ax):
+            ax.tick_params(axis='both', which='both', bottom='off',
+                           top='off', labelbottom='off', right='off',
+                           left='off', labelleft='off')
+
         def _get_cycles(cycles):
             """ Get specified cycles from the gait trial """
             if cycles is None:
@@ -284,10 +289,12 @@ class Plotter(object):
                     try:
                         x_, data = self.trial[var]
                     except KeyError:
+                        _no_ticks_or_labels(ax)
                         _axis_annotate(ax, 'channel not found')
                         break  # no data - skip all cycles
                     if not self.trial.emg.status_ok(var):
-                        _axis_annotate(ax, 'channel disconnected')
+                        _no_ticks_or_labels(ax)
+                        _axis_annotate(ax, 'disconnected')
                         break  # no data - skip all cycles
                     x = x_ / self.trial.analograte if cycle is None else x_
                     tcolor = (emg_tracecolor if emg_tracecolor else

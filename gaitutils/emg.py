@@ -31,26 +31,31 @@ class EMG(object):
 
     def __init__(self, source):
         self.source = source
-        # default plotting scale in medians (channel-specific)
-        self.yscale_medians = 1
         # order of Butterworth filter
         self.buttord = 5
         # EMG passband
         self.passband = cfg.emg_passband
-        # whether to autodetect disconnected EMG channels. set before read()
-        self.emg_auto_off = True
-        self.ch_normals = cfg.emg_normals  # EMG normal data
-        self.ch_names = cfg.emg_names  # EMG logical channel names
-        self.ch_labels = cfg.emg_labels  # descriptive labels
 
     def __getitem__(self, item):
-        if item not in self.ch_names:
-            raise KeyError('No such channel')
-        data_ = self._logical_data[item]
-        if self.passband:
-            return self.filt(data_, self.passband)
+        matches = [x for x in self.data if x.find(item) >= 0]
+        if len(matches) == 0:
+            raise KeyError('No matching channel')
         else:
-            return data_
+            ch = min(matches, key=len)  # choose shortest matching name
+        if len(matches) > 1:
+            print('warning: multiple channel matches:', matches, '->', ch)
+        data = self.data[ch]
+        return self.filt(data, self.passband) if self.passband else data
+
+    def is_channel(self, item):
+        try:
+            self[item]
+            return True
+        except KeyError:
+            return False
+
+    def status_ok(self, item):
+        return self.is_valid_emg(self[item])
 
     def is_valid_emg(self, y):
         """ Check whether channel contains a valid EMG signal. Usually invalid
@@ -99,35 +104,6 @@ class EMG(object):
         emgdi = read_data.get_emg_data(self.source)
         self.data = emgdi['data']
         self.t = emgdi['t']
-        self.elnames = self.data.keys()
-        # map channel names
-        self.map_chs()
-        # check for invalid channels
-        if self.emg_auto_off:
-            for chname, data in self._logical_data.items():
-                if not self.is_valid_emg(data):
-                    self.ch_status[chname] = 'DISCONNECTED'
-                else:
-                    self.ch_status[chname] = 'OK'
-        # set scales for plotting channels
-        self.yscale = {}
-        for logch in self.ch_names:
-            self.yscale[logch] = cfg.emg_yscale  # set a constant scale
-        # set flag if none of EMG channels contain data
-        self.no_emg = all([isinstance(chandata, str) and
-                           chandata == 'EMG_DISCONNECTED' for chandata in
-                           self.data.values()])
+        
 
-    def map_chs(self):
-        """ Map logical channels into physical ones. For example, the logical
-        name can be  'LPer' and the physical channel 'Voltage.LPer12' will be
-        a match. The shortest matching physical channel will be used. """
-        self._logical_data = dict()
-        self.ch_status = dict()
-        for datach in self.ch_names:
-            matches = [x for x in self.elnames if x.find(datach) >= 0]
-            if len(matches) > 0:
-                elname = min(matches, key=len)  # choose shortest matching name
-                if len(matches) > 1:
-                    debug_print('map_data:', matches, '->', elname)
-                self._logical_data[datach] = self.data[elname]
+

@@ -90,12 +90,13 @@ class Plotter(object):
             return None
         elif models.model_from_var(var):
             return 'model'
-        elif var in self.trial.emg.ch_names:
+        # check whether it's a configured EMG channel OR a physical one
+        elif self.trial.emg.is_channel(var) or var in self.cfg.emg_names:
             return 'emg'
         elif var in ('model_legend', 'emg_legend'):
             return var
         else:
-            raise ValueError('Unknown variable')
+            raise ValueError('Unknown variable %s' % var)
 
     def _plot_height_ratios(self):
         plotheightratios = []
@@ -275,9 +276,9 @@ class Plotter(object):
                     try:
                         x_, data = self.trial[var]
                     except KeyError:  # EMG channel not found
-                        break  # should probably annotate here
+                        break  # TODO: should probably annotate here
                     x = x_ / self.trial.analograte if cycle is None else x_
-                    # TODO: annotate
+                    # TODO: annotate if bad
                     tcolor = (emg_tracecolor if emg_tracecolor else
                               self.cfg.emg_tracecolor)
                     ax.plot(x, data*self.cfg.emg_multiplier, tcolor,

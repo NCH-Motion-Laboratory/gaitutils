@@ -101,11 +101,14 @@ class Trial(object):
         if not self.sessionpath[-1] == '\\':
             self.sessionpath = self.sessionpath+('\\')
         self.trialdirname = self.sessionpath.split('\\')[-2]
+        # TODO: sometimes trial .enf name seems to be different?
         enfpath = self.sessionpath + self.trialname + '.Trial.enf'
         if op.isfile(enfpath):
             edata = eclipse.get_eclipse_keys(enfpath)
             # for convenience, eclipse_data returns '' for nonexistent keys
             self.eclipse_data = defaultdict(lambda: '', edata)
+        else:
+            self.eclipse_data = defaultdict(lambda: '', {})
         try:
             self.kinetics_ = utils.kinetics_available(source)
             self.kinetics = self.kinetics_['context']

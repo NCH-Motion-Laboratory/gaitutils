@@ -145,14 +145,11 @@ class Trial(object):
                 t, data = self._normalize.normalize(data)
             return t, data
         except ValueError:
-            try:
                 t = self.t_analog
                 data = self.emg[item]
                 if self._normalize:
                     t, data = self._normalize.crop_analog(data)
                 return t, data
-            except KeyError:
-                    raise ValueError('Cannot read variable: %s' % item)
 
     @property
     def emg(self):

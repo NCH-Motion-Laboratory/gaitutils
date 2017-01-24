@@ -272,7 +272,10 @@ class Plotter(object):
                 for cycle in emg_cycles:
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
-                    x_, data = self.trial[var]
+                    try:
+                        x_, data = self.trial[var]
+                    except KeyError:  # EMG channel not found
+                        break  # should probably annotate here
                     x = x_ / self.trial.analograte if cycle is None else x_
                     # TODO: annotate
                     tcolor = (emg_tracecolor if emg_tracecolor else

@@ -12,7 +12,6 @@ from __future__ import division, print_function
 import numpy as np
 from scipy import signal
 from gaitutils import read_data
-from envutils import debug_print
 from config import Config
 
 
@@ -20,14 +19,7 @@ cfg = Config()
 
 
 class EMG(object):
-    """ Class for handling EMG data. Convert logical names to physical,
-    filter data, etc. Channel data can be accessed as emg[chname].
-    If passband property is set, data will be bandpass filtered first.
-    The ch_status property indicates whether data is OK for a given channel.
-    Logical channel names are read from site defs and can be substrings of
-    physical channel names read from source; e.g. logical name 'LGas' can
-    be mapped to 'Voltage.LGas8'; see map_data()
-    """
+    """ Class for handling EMG data. """
 
     def __init__(self, source):
         self.source = source
@@ -37,6 +29,10 @@ class EMG(object):
         self.passband = cfg.emg_passband
 
     def __getitem__(self, item):
+        """ Return data for a channel (filtered if self.passband is set).
+        Uses name matching: if the specified channel is not found in the data,
+        partial name matches are considered and data for the shortest match is
+        returned. For example, 'LGas' could be mapped to 'Voltage.LGas8' """
         matches = [x for x in self.data if x.find(item) >= 0]
         if len(matches) == 0:
             raise KeyError('No matching channel')
@@ -48,6 +44,7 @@ class EMG(object):
         return self.filt(data, self.passband) if self.passband else data
 
     def is_channel(self, item):
+        """ Convenience to see whether a channel exists in the data """
         try:
             self[item]
             return True
@@ -55,13 +52,14 @@ class EMG(object):
             return False
 
     def status_ok(self, item):
-        return self.is_valid_emg(self[item])
+        return self._is_valid_emg(self[item])
 
-    def is_valid_emg(self, y):
+    def _is_valid_emg(self, y):
         """ Check whether channel contains a valid EMG signal. Usually invalid
         signal can be identified by the presence of large powerline (harmonics)
         compared to broadband signal. Cause is typically disconnected/badly
-        connected electrodes. """
+        connected electrodes.
+        TODO: should use multiple-zero IIR notch filter """
         # max. relative interference at 50 Hz harmonics
         emg_max_interference = 30  # maximum relative interference level (dB)
         # bandwidth of broadband signal. should be less than dist between
@@ -77,8 +75,8 @@ class EMG(object):
             intvar += np.var(self.filt(y, [f-power_bw/2.,
                                            f+power_bw/2.])) / power_bw
         # broadband signal
-        emgvar = np.var(self.filt(y, [powerline_freq+10,
-                                      powerline_freq+10+broadband_bw])) / broadband_bw
+        band = [powerline_freq+10, powerline_freq+10+broadband_bw]
+        emgvar = np.var(self.filt(y, band)) / broadband_bw
         intrel = 10*np.log10(intvar/emgvar)
         # debug_print('rel. interference: ', intrel)
         return intrel < emg_max_interference

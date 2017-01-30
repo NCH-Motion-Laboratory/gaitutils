@@ -312,8 +312,9 @@ class Plotter(object):
                     x = x_ / self.trial.analograte if cycle is None else x_
                     tcolor = (emg_tracecolor if emg_tracecolor else
                               self.cfg.emg_tracecolor)
+                    # TODO: set alpha on overlay for EMG
                     ax.plot(x, data*self.cfg.emg_multiplier, tcolor,
-                            linewidth=self.cfg.emg_linewidth)
+                            linewidth=self.cfg.emg_linewidth, alpha=.5)
                     if cycle == emg_cycles[-1]:
                         ax.set(ylabel=self.cfg.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.

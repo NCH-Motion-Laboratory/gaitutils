@@ -183,21 +183,25 @@ class Plotter(object):
 
         if not self.trial:
             raise ValueError('No trial to plot, call open_trial() first')
+
         if self._layout is None:
             raise ValueError('No layout set')
+
         if maintitle is None:
             if maintitleprefix is None:
                 maintitleprefix = ''
             maintitle = maintitleprefix + self.trial.trialname
+
+        if plotheightratios is None:
+            plotheightratios = self._plot_height_ratios()
+
         if self.fig is None or not superpose:
             # auto size fig according to n of subplots w, limit size
-            figh = min(self.nrows*2, 13)
+            figh = min(self.nrows*1.5, 13)
             figw = min(self.ncols*4.5, 20)
             self.fig = plt.figure(figsize=(figw, figh))
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)
-        if plotheightratios is None:
-            plotheightratios = self._plot_height_ratios()
 
         def _axis_annotate(ax, text):
             """ Annotate at center of axis """
@@ -388,7 +392,8 @@ class Plotter(object):
 
         plt.suptitle(maintitle, fontsize=12, fontweight="bold")
         # magic adjustments to fig geometry
-        self.gridspec.update(left=.08, right=.98, top=.92, bottom=.05,
+        top = .88 if figh < 8 else .94
+        self.gridspec.update(left=.08, right=.98, top=top, bottom=.05,
                              hspace=.37, wspace=.22)
         if show:
             plt.show()

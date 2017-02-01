@@ -92,11 +92,11 @@ def kinetics_emg(side):
     return [['HipAnglesX', 'KneeAnglesX', 'AnkleAnglesX'],
             [side+'Ham', side+'Rec', side+'TibA'],
             [side+'Glut', side+'Vas', side+'Per'],
-            ['HipMomentX', 'KneeMomentX', 'AnkleMomentX'],
+            [side+'HipMomentX', side+'KneeMomentX', side+'AnkleMomentX'],
             [side+'Rec', side+'Ham', side+'Gas'],
             [None, side+'Glut', side+'Sol'],
             [None, side+'Gas', None],
-            ['HipPowerZ', 'KneePowerZ', 'AnklePowerZ']]
+            [side+'HipPowerZ', side+'KneePowerZ', side+'AnklePowerZ']]
 
 
 # Kinematics-only EMG. Will return EMG channels according to the given side

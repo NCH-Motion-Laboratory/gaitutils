@@ -12,7 +12,6 @@ from gaitutils import Plotter, layouts, nexus, register_gui_exception_handler
 
 
 def do_plot(show=True):
-
     pl = Plotter()
     pl.open_nexus_trial()
     pdf_prefix = 'EMG_'

@@ -88,6 +88,11 @@ WRITE_ECLIPSE_DESC = True
 RESET_ROI = True
 # check subject weight when analyzing forceplate data
 CHECK_WEIGHT = True
+# events max distance from walkway center (mm)
+AUTOMARK_MAX_DIST = 2000
+# walkway mid point
+WALKWAY_MID = 300
+
 
 # read config data
 cfg = config.Config()
@@ -254,16 +259,17 @@ def _do_autoproc(enffiles):
         # otherwise use statistics
         context = trial.context
         vel_th_ = vel_th.copy()
+        first_strike = dict()
         if context:
             vel_th_[context+'_strike'] = trial.fpdata['strike_v']
             vel_th_[context+'_toeoff'] = trial.fpdata['toeoff_v']
-            ctr_frame = trial.fpdata['strike']  # mark around fp strike
-        else:
-            ctr_frame = trial.ctr_frame  # mark around walkway center
+            first_strike[context] = trial.fpdata['strike']
         try:
             vicon.ClearAllEvents()
-            nexus.automark_events(vicon, context=context,
-                                  ctr_frame=ctr_frame,
+            nexus.automark_events(vicon,
+                                  max_dist=AUTOMARK_MAX_DIST,
+                                  ctr_pos=WALKWAY_MID,
+                                  first_strike=first_strike,
                                   vel_thresholds=vel_th_)
             trial.events = True
         except ValueError:  # cannot automark

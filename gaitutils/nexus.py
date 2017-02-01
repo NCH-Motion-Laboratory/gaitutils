@@ -291,43 +291,39 @@ def get_model_data(vicon, model):
 
 
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
-                    'R_strike': None, 'R_toeoff': None}, context=None,
-                    ctr_frame=None,
-                    events_context=(0, 1, 2), events_nocontext=(-1, 0, 1),
+                    'R_strike': None, 'R_toeoff': None}, ctr_pos=0,
+                    forward_dim='y', max_dist=None, first_strike=None,
                     plot=False, mark=True):
     """ Mark events based on velocity thresholding. Absolute thresholds
-    can be specified as arguments. Otherwise relative thresholds will be
+    can be specified as arguments. Otherwise, relative thresholds will be
     calculated based on the data. Optimal results will be obtained when
     thresholds based on force plate data are available.
 
     vel_threshold gives velocity thresholds for identifying events. These
-    can be obtained from forceplate data.
+    can be obtained from forceplate data (see utils.kinetics_available).
+    Separate thresholds for left and right side.
 
-    context gives forceplate context for the trial: 'R', 'L', 'RL', or None.
+    ctr_pos is the walkway center position (used by max_dist).
 
-    events_context and events_nocontext specify which events to mark (see
-    below).
+    forward_dim is the dimension corresponding to 'forward' on the walkway
+    ('y' or second dimension by default).
 
-    ctr_frame is the reference frame for marking events. In events_context and
-    events_nocontext,
-    0 refers to the event nearest to the reference frame, -1 refers to the one
-    before that etc. The reference frame could be e.g. the frame where
-    forceplate strike occurs or the center of the walkway
-    (use nexus.get_crossing_frame() to compute it)
+    max_dist is the maximum allowed distance of the foot from ctr_pos.
+    Events where the foot is further than this will be discarded.
 
-    events_nocontext will be applied to the side which does not have
-    forceplate context (if any)
+    first_strike specifies the frame of the first strike event for either side.
+    Events earlier than this will not be marked.
+    For example, first_strike={'R': 100} will discard events earlier than frame
+    100 on the right side.
 
     If plot=True, velocity curves and events are plotted.
 
-    If mark=False, no events will actually be marked.
+    If mark=False, no events will actually be marked in Nexus.
 
     Before automark, run reconstruct, label, gap fill and filter pipelines.
     Filtering is important to get reasonably smooth derivatives.
     """
 
-    if not ctr_frame:
-        raise ValueError('Need to supply center frame')
     frate = vicon.GetFrameRate()
     if not frate:
         raise ValueError('Cannot get framerate from Nexus')
@@ -353,6 +349,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
     # minimum distance between subsequent events (of same kind)
     MIN_EVENT_DISTANCE = 50
+    # tolerance between specified and actual first strike
+    STRIKE_TOL = 5
 
     # get subject info
     subjectnames = vicon.GetSubjectNames()
@@ -360,18 +358,27 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         raise ValueError('No subject defined in Nexus')
     subjectname = subjectnames[0]
 
-    # get foot center velocity vectors and scalar velocities
+    # get foot center positions and velocities
     mrkdata = get_marker_data(vicon, RIGHT_FOOT_MARKERS+LEFT_FOOT_MARKERS)
+    data_shape = mrkdata[RIGHT_FOOT_MARKERS[0]+'_V'].shape
 
-    rfootctrV = np.zeros(mrkdata[RIGHT_FOOT_MARKERS[0]+'_V'].shape)
+    rfootctrV = np.zeros(data_shape)
     for marker in RIGHT_FOOT_MARKERS:
         rfootctrV += mrkdata[marker+'_V'] / len(RIGHT_FOOT_MARKERS)
     rfootctrv = np.sqrt(np.sum(rfootctrV[:, 1:3]**2, 1))
 
-    lfootctrV = np.zeros(mrkdata[LEFT_FOOT_MARKERS[0]+'_V'].shape)
+    lfootctrV = np.zeros(data_shape)
     for marker in LEFT_FOOT_MARKERS:
         lfootctrV += mrkdata[marker+'_V'] / len(LEFT_FOOT_MARKERS)
     lfootctrv = np.sqrt(np.sum(lfootctrV[:, 1:3]**2, 1))
+
+    rfootctrP = np.zeros(data_shape)
+    for marker in RIGHT_FOOT_MARKERS:
+        rfootctrP += mrkdata[marker+'_P'] / len(RIGHT_FOOT_MARKERS)
+
+    lfootctrP = np.zeros(data_shape)
+    for marker in LEFT_FOOT_MARKERS:
+        lfootctrP += mrkdata[marker+'_P'] / len(LEFT_FOOT_MARKERS)
 
     strikes_all = {}
     toeoffs_all = {}
@@ -379,7 +386,10 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     # loop: same operations for left / right foot
     for ind, footctrv in enumerate((rfootctrv, lfootctrv)):
         this_side = 'R' if ind == 0 else 'L'
-
+        forward_dim_ = {'x': 0, 'y': 1, 'z': 2}[forward_dim.lower()]
+        # foot center position
+        footctr_y = (rfootctrP[:, forward_dim_] if ind == 0 else
+                     lfootctrP[:, forward_dim_])
         # filter to scalar velocity data to suppress noise and spikes
         footctrv = signal.medfilt(footctrv, MEDIAN_WIDTH)
 
@@ -406,7 +416,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         print('automark_events: using rise threshold: %.2f' % threshold_rise_)
 
         # find point where velocity crosses threshold
-        # strikes (velocity decreases)
+        # foot strikes (velocity decreases)
         cross = falling_zerocross(footctrv - threshold_fall_)
         # exclude edges of data vector
         cross = cross[np.where(np.logical_and(cross > 0,
@@ -422,7 +432,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         if len(strikes) == 0:
             raise Exception('Could not detect any foot strike events')
 
-        # toeoffs (velocity increases)
+        # toe offs (velocity increases)
         cross = rising_zerocross(footctrv - threshold_rise_)
         cross = cross[np.where(np.logical_and(cross > 0,
                                               cross < len(footctrv)))]
@@ -438,18 +448,25 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         if len(toeoffs) == 0:
             raise Exception('Could not detect any toe-off events')
 
-        # mark around center frame
-        events = (events_context if context is not None and
-                  this_side in context else events_nocontext)
-
-        ctr_strike_ind = np.argmin(abs(strikes - ctr_frame))
-
-        # compute indices of selected events
-        strike_inds = np.array(events) + ctr_strike_ind
-        inds = np.array([i for i in strike_inds if i >= 0 and
-                        i < len(strikes)])
         print('all strike events:', strikes)
-        strikes = strikes[inds]
+
+        # select events close enough to center frame
+        if max_dist:
+            strike_pos = footctr_y[strikes]
+            strike_ok = np.where(np.abs(strike_pos - ctr_pos) < max_dist)
+            strikes = strikes[strike_ok]
+
+        # mark only after first strike
+        if first_strike is not None and this_side in first_strike:
+            first = first_strike[this_side]
+            # find our idea of the first strike
+            true_first = strikes[np.argmin(np.abs(strikes - first))]
+            print('first strike given: %d detected: %d', first, true_first)
+            if np.abs(true_first - first) > STRIKE_TOL:
+                raise Exception('Strikes do not agree with first_strike')
+            strike_ok = np.where(strikes >= true_first)
+            strikes = strikes[strike_ok]
+
         print('selected strike events:', strikes)
 
         # mark toeoffs that are between strike events

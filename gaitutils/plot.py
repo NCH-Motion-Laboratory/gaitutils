@@ -111,7 +111,8 @@ class Plotter(object):
                    emg_cycles={'R': 1, 'L': 1},
                    t=None, plotheightratios=None,
                    model_tracecolor=None, model_linestyle='-',
-                   split_model_vars=True, auto_match_cycle=True,
+                   split_model_vars=True, auto_match_model_cycle=True,
+                   auto_match_emg_cycle=True,
                    linestyles_context=False, annotate=True,
                    emg_tracecolor=None, plot_model_normaldata=True,
                    plot_emg_normaldata=True, superpose=True, show=True,
@@ -242,8 +243,8 @@ class Plotter(object):
                         varname = cycle.context + var
                     else:
                         varname = var
-                    if (varname[0] == cycle.context or not auto_match_cycle or
-                       cycle is None):
+                    if (varname[0] == cycle.context or not
+                       auto_match_model_cycle or cycle is None):
                         x_, data = self.trial[varname]
                         x = x_ / self.trial.framerate if cycle is None else x_
                         tcolor = (model_tracecolor if model_tracecolor
@@ -322,7 +323,7 @@ class Plotter(object):
                     x = x_ / self.trial.analograte if cycle is None else x_
                     tcolor = (emg_tracecolor if emg_tracecolor else
                               self.cfg.emg_tracecolor)
-                    if var[0] == cycle.context or not auto_match_cycle:
+                    if var[0] == cycle.context or not auto_match_emg_cycle:
                         # TODO: set alpha on overlay only
                         ax.plot(x, data*self.cfg.emg_multiplier, tcolor,
                                 linewidth=self.cfg.emg_linewidth, alpha=.5)

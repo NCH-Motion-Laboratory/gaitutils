@@ -109,8 +109,9 @@ class Plotter(object):
 
     def plot_trial(self, model_cycles={'R': 1, 'L': 1},
                    emg_cycles={'R': 1, 'L': 1},
-                   context=None, t=None, plotheightratios=None,
+                   t=None, plotheightratios=None,
                    model_tracecolor=None, model_linestyle='-',
+                   split_model_vars=True, auto_match_cycle=True,
                    linestyles_context=False, annotate=True,
                    emg_tracecolor=None, plot_model_normaldata=True,
                    plot_emg_normaldata=True, superpose=True, show=True,
@@ -119,27 +120,35 @@ class Plotter(object):
         """ Create plot of variables. Parameters:
 
         model_cycles : dict of int | int | dict of list | 'all' | None
-                Gait cycles to plot. Default is first cycle (1) for
+                Gait cycles to plot. Defaults to first cycle (1) for
                 both contexts. Multiple cycles can be given as lists.
-                If None, plot unnormalized data. 'context' must then be
-                specified.
-                If 'all', plot all available cycles.
-                Model variable names are modified according to context, e.g.
-                'HipMomentX' -> 'LHipMomentX' for a left side gait cycle.
+                If None, plot unnormalized data. If 'all', plot all cycles.
         emg_cycles : dict of int | int | dict of list | 'all' | None
                 Same as above, applied to EMG variables.
         t : array-like
-                Time axis for unnormalized data. If None, plot whole time
+                Time axis for unnormalized data. If None, plot complete time
                 axis.
         plotheightratios : list
                 Force height ratios of subplot rows, e.g. [1 2 2 2] would
                 make first row half the height of others.
-        model_tracecolor : Matplotlib color
+        model_tracecolor : Matplotlib colorspec
                 Select line color for model variables. If None, will be
                 automatically selected.
+        split_model_vars: bool
+                If model var does not have a leading context 'L' or 'R', a side
+                will be prepended according to the gait cycle context.
+                E.g. 'HipMoment' -> 'LHipMoment'.
+                This allows convenient overlay of e.g. kinematics variables by
+                specifying a variable without a leading side and cycles with
+                both contexts.
+        auto_match_cycle: bool
+                The variable will be plotted only for the cycles whose context
+                matches the context of the variable.
+                E.g. 'LHipMomentX' is plotted only for cycles whose context
+                is left.
         model_linestyle : Matplotlib linestyle
                 Select line style for model variables.
-        linestyle_context:
+        linestyles_context:
                 Automatically select line style for model variables according
                 to context (defined in config)
         emg_tracecolor : Matplotlib color
@@ -164,7 +173,6 @@ class Plotter(object):
         maintitleprefix : str
                 If maintitle is not set, title will be set to
                 maintitleprefix + trial name.
-
         """
 
         if not self.trial:
@@ -230,19 +238,21 @@ class Plotter(object):
                 for cycle in model_cycles:
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
-                        context = cycle.context
-                    elif context is None:
-                        raise ValueError('Must specify context for '
-                                         'plotting unnormalized variable')
-                    varname = context + var
-                    x_, data = self.trial[varname]
-                    x = x_ / self.trial.framerate if cycle is None else x_
-                    tcolor = (model_tracecolor if model_tracecolor
-                              else self.cfg.model_tracecolors[context])
-                    lstyle = (self.cfg.model_linestyles[context] if
-                              linestyles_context else model_linestyle)
-                    ax.plot(x, data, tcolor, linestyle=lstyle,
-                            linewidth=self.cfg.model_linewidth)
+                    if split_model_vars and var[0].upper() not in ['L', 'R']:
+                        varname = cycle.context + var
+                    else:
+                        varname = var
+                    if (varname[0] == cycle.context or not auto_match_cycle or
+                       cycle is None):
+                        x_, data = self.trial[varname]
+                        x = x_ / self.trial.framerate if cycle is None else x_
+                        tcolor = (model_tracecolor if model_tracecolor
+                                  else
+                                  self.cfg.model_tracecolors[cycle.context])
+                        lstyle = (self.cfg.model_linestyles[cycle.context] if
+                                  linestyles_context else model_linestyle)
+                        ax.plot(x, data, tcolor, linestyle=lstyle,
+                                linewidth=self.cfg.model_linewidth)
 
                     # set labels, ticks, etc. after plotting last cycle
                     if cycle == model_cycles[-1]:
@@ -312,9 +322,10 @@ class Plotter(object):
                     x = x_ / self.trial.analograte if cycle is None else x_
                     tcolor = (emg_tracecolor if emg_tracecolor else
                               self.cfg.emg_tracecolor)
-                    # TODO: set alpha on overlay for EMG
-                    ax.plot(x, data*self.cfg.emg_multiplier, tcolor,
-                            linewidth=self.cfg.emg_linewidth, alpha=.5)
+                    if var[0] == cycle.context or not auto_match_cycle:
+                        # TODO: set alpha on overlay only
+                        ax.plot(x, data*self.cfg.emg_multiplier, tcolor,
+                                linewidth=self.cfg.emg_linewidth, alpha=.5)
                     if cycle == emg_cycles[-1]:
                         ax.set(ylabel=self.cfg.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.

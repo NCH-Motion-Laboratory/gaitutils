@@ -21,11 +21,12 @@ def do_plot():
 
     pl.layout = layouts.kinematics_emg('L')
     pl.plot_trial(maintitle=maintitle,
-                  emg_cycles={'L': 1}, emg_tracecolor='red', show=False)
+                  emg_cycles={'L': 1}, emg_tracecolor='red', show=False,
+                  annotate=False)
 
     pl.layout = layouts.kinematics_emg('R')
     pl.plot_trial(maintitle=maintitle, emg_tracecolor='green',
-                  emg_cycles={'R': 1})  # we only want emg for one side
+                  emg_cycles={'R': 1}, annotate=False)  # emg only for one side
 
     pl.create_pdf(pdf_prefix=pdf_prefix)
 

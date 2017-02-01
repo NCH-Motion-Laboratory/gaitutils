@@ -111,7 +111,7 @@ class Plotter(object):
                    emg_cycles={'R': 1, 'L': 1},
                    context=None, t=None, plotheightratios=None,
                    model_tracecolor=None, model_linestyle='-',
-                   linestyles_context=False,
+                   linestyles_context=False, annotate=True,
                    emg_tracecolor=None, plot_model_normaldata=True,
                    plot_emg_normaldata=True, superpose=True, show=True,
                    maintitle=None, maintitleprefix=None):
@@ -251,7 +251,11 @@ class Plotter(object):
                                                     plot_label_fontsize)
                         ax.yaxis.label.set_fontsize(self.cfg.
                                                     plot_label_fontsize)
-                        ax.set_title(model.varlabels[varname])
+                        subplot_title = model.varlabels[varname]
+                        prev_title = ax.get_title()
+                        if prev_title and prev_title != subplot_title:
+                            subplot_title = prev_title + ' / ' + subplot_title
+                        ax.set_title(subplot_title)
                         ax.title.set_fontsize(self.cfg.plot_title_fontsize)
                         ax.axhline(0, color='black')  # zero line
                         ax.locator_params(axis='y', nbins=6)  # less tick marks
@@ -284,7 +288,11 @@ class Plotter(object):
                                                 model_normals_alpha)
 
             elif var_type == 'emg':
-                ax.set_title(var)
+                subplot_title = var
+                prev_title = ax.get_title()
+                if prev_title and prev_title != subplot_title:
+                    subplot_title = prev_title + ' / ' + subplot_title
+                ax.set_title(subplot_title)
                 ax.title.set_fontsize(self.cfg.plot_title_fontsize)
                 for cycle in emg_cycles:
                     if cycle is not None:  # plot normalized data
@@ -293,17 +301,20 @@ class Plotter(object):
                         x_, data = self.trial[var]
                     except KeyError:
                         _no_ticks_or_labels(ax)
-                        _axis_annotate(ax, 'channel not found')
+                        if annotate:
+                            _axis_annotate(ax, 'channel not found')
                         break  # no data - skip all cycles
                     if not self.trial.emg.status_ok(var):
                         _no_ticks_or_labels(ax)
-                        _axis_annotate(ax, 'disconnected')
+                        if annotate:
+                            _axis_annotate(ax, 'disconnected')
                         break  # no data - skip all cycles
                     x = x_ / self.trial.analograte if cycle is None else x_
                     tcolor = (emg_tracecolor if emg_tracecolor else
                               self.cfg.emg_tracecolor)
+                    # TODO: set alpha on overlay for EMG
                     ax.plot(x, data*self.cfg.emg_multiplier, tcolor,
-                            linewidth=self.cfg.emg_linewidth)
+                            linewidth=self.cfg.emg_linewidth, alpha=.5)
                     if cycle == emg_cycles[-1]:
                         ax.set(ylabel=self.cfg.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.

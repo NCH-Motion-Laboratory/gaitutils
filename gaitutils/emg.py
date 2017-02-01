@@ -38,7 +38,7 @@ class EMG(object):
             self.read()
         matches = [x for x in self.data if x.find(item) >= 0]
         if len(matches) == 0:
-            raise KeyError('No matching channel')
+            raise KeyError('No matching channel for %s' % item)
         else:
             ch = min(matches, key=len)  # choose shortest matching name
         if len(matches) > 1:
@@ -55,7 +55,9 @@ class EMG(object):
             return False
 
     def status_ok(self, item):
-        return self._is_valid_emg(self[item])
+        """ Returns True for existing channel with signal ok, False
+        otherwise """
+        return self.is_channel(item) and self._is_valid_emg(self[item])
 
     def _is_valid_emg(self, y):
         """ Check whether channel contains a valid EMG signal. Usually invalid

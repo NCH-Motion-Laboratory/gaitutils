@@ -115,7 +115,7 @@ class Trial(object):
         except ValueError:
             self.kinetics = None
         # analog and model data are lazily read
-        self._emg = None
+        self.emg = EMG(self.source)
         self._forceplate = None
         self._models_data = dict()
         # whether to normalize data
@@ -153,13 +153,6 @@ class Trial(object):
                 if self._normalize:
                     t, data = self._normalize.crop_analog(data)
                 return t, data
-
-    @property
-    def emg(self):
-        if not self._emg:
-            self._emg = EMG(self.source)
-            self._emg.read()
-        return self._emg
 
     @property
     def forceplate(self):

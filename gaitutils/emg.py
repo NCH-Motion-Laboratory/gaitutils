@@ -27,12 +27,15 @@ class EMG(object):
         self.buttord = 5
         # EMG passband
         self.passband = cfg.emg_passband
+        self.data = None
 
     def __getitem__(self, item):
         """ Return data for a channel (filtered if self.passband is set).
         Uses name matching: if the specified channel is not found in the data,
         partial name matches are considered and data for the shortest match is
         returned. For example, 'LGas' could be mapped to 'Voltage.LGas8' """
+        if self.data is None:
+            self.read()
         matches = [x for x in self.data if x.find(item) >= 0]
         if len(matches) == 0:
             raise KeyError('No matching channel')

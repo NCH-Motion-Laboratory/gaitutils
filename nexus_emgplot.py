@@ -8,7 +8,7 @@ EMG plot from Nexus.
 """
 
 
-from gaitutils import Plotter, layouts, register_gui_exception_handler
+from gaitutils import Plotter, layouts, nexus, register_gui_exception_handler
 
 
 def do_plot():
@@ -18,12 +18,10 @@ def do_plot():
     pdf_prefix = 'EMG_'
     maintitle = pl.title_with_eclipse_info('EMG plot for')
 
-    pl.layout = layouts.std_emg_right
-    pl.plot_trial(maintitle=maintitle, emg_cycles={'R': 1})
-    """ This changes layouts on a Plotter instance,
-    which is a bit of a hack """
-    pl.layout = layouts.std_emg_left
-    pl.plot_trial(maintitle=maintitle, emg_cycles={'L': 1})
+    vicon = nexus.viconnexus()
+    layout = layouts.std_emg
+    pl.layout = layouts.rm_dead_channels(vicon, layout)
+    pl.plot_trial(maintitle=maintitle)
 
     pl.create_pdf(pdf_prefix=pdf_prefix)
 

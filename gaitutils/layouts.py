@@ -7,6 +7,17 @@ Created on Thu Aug 27 14:16:50 2015
 @author: Jussi
 """
 
+from emg import EMG
+
+
+def rm_dead_channels(source, layout):
+    """ Remove non-functional EMG channels from a layout """
+    emg = EMG(source)
+    for j, row in enumerate(layout):
+        if all([not emg.status_ok(ch) for ch in row]):
+            layout.pop(j)
+    return layout
+
 # online kinematics plot
 std_kinematics = [['PelvisAnglesX', 'PelvisAnglesY', 'PelvisAnglesZ'],
                   ['HipAnglesX', 'HipAnglesY', 'HipAnglesZ'],

@@ -10,7 +10,7 @@ Kinetics-EMG plot from Nexus.
 from gaitutils import Plotter, layouts, register_gui_exception_handler
 
 
-def do_plot():
+def do_plot(show=True):
 
     pl = Plotter()
     pl.open_nexus_trial()
@@ -19,7 +19,8 @@ def do_plot():
     pdf_prefix = 'Kinetics_EMG_'
     maintitle = pl.title_with_eclipse_info('Kinetics-EMG for')
     # for EMG, plot only the cycle that has kinetics info
-    pl.plot_trial(maintitle=maintitle, model_cycles={side: 1}, emg_cycles={side: 1})
+    pl.plot_trial(maintitle=maintitle, model_cycles={side: 1},
+                  emg_cycles={side: 1}, show=show)
     pl.create_pdf(pdf_prefix=pdf_prefix)
 
 if __name__ == '__main__':

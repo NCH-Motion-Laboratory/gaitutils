@@ -277,14 +277,6 @@ class Plotter(object):
                         ax.locator_params(axis='y', nbins=6)  # less tick marks
                         ax.tick_params(axis='both', which='major',
                                        labelsize=self.cfg.plot_ticks_fontsize)
-                        ylim = ax.get_ylim()
-                        # model specific adjustments
-                        if model == models.pig_lowerbody:
-                            ylim0 = -10 if ylim[0] == 0 else ylim[0]
-                            ylim1 = 10 if ylim[1] == 0 else ylim[1]
-                            ax.set_ylim(ylim0, ylim1)
-                        elif model == models.musclelen:
-                            ax.set_ylim(ylim[0]-10, ylim[1]+10)
                         if cycle is None:
                             ax.set(xlabel='Time (s)')
                             ax.xaxis.label.set_fontsize(self.cfg.
@@ -302,6 +294,16 @@ class Plotter(object):
                                                 model_normals_color,
                                                 alpha=self.cfg.
                                                 model_normals_alpha)
+                        ylim = ax.get_ylim()
+                        # model specific adjustments to y limits
+                        if model == models.pig_lowerbody:
+                            # make sure there is space below zero line
+                            ylim0 = -10 if ylim[0] == 0 else ylim[0]
+                            ylim1 = 10 if ylim[1] == 0 else ylim[1]
+                            ax.set_ylim(ylim0, ylim1)
+                        elif model == models.musclelen:
+                            # add some extra y space
+                            ax.set_ylim(ylim[0]-10, ylim[1]+10)
 
             elif var_type == 'emg':
                 subplot_title = var

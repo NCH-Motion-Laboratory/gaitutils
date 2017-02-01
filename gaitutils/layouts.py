@@ -12,11 +12,13 @@ from emg import EMG
 
 def rm_dead_channels(source, layout):
     """ Remove non-functional EMG channels from a layout """
+    layout_ = list()
     emg = EMG(source)
     for j, row in enumerate(layout):
-        if all([not emg.status_ok(ch) for ch in row]):
-            layout.pop(j)
-    return layout
+        print row
+        if all([emg.status_ok(ch) for ch in row]):
+            layout_.append(row)
+    return layout_
 
 # online kinematics plot
 std_kinematics = [['PelvisAnglesX', 'PelvisAnglesY', 'PelvisAnglesZ'],
@@ -36,14 +38,14 @@ std_musclelen = [['PsoaLength', 'GracLength', 'ReFeLength'],
                  ['MeGaLength', 'LaGaLength', 'SoleLength']]
 
 # EMG only
-std_emg = [['RGlut', 'LGlut'],
-           ['RHam', 'LHam'],
-           ['RRec', 'LRec'],
-           ['RVas', 'LVas'],
-           ['RTibA', 'LTibA'],
-           ['RPer', 'LPer'],
-           ['RGas', 'LGas'],
-           ['RSol', 'LSol']]
+std_emg = [['LGlut', 'RGlut'],
+           ['LHam', 'RHam'],
+           ['LRec', 'RRec'],
+           ['LVas', 'RVas'],
+           ['LTibA', 'RTibA'],
+           ['LPer', 'RPer'],
+           ['LGas', 'RGas'],
+           ['LSol', 'RSol']]
 
 std_emg_left = [[None, 'LGlut'],
                 [None, 'LHam'],

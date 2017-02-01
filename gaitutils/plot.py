@@ -139,14 +139,19 @@ class Plotter(object):
                 If model var does not have a leading context 'L' or 'R', a side
                 will be prepended according to the gait cycle context.
                 E.g. 'HipMoment' -> 'LHipMoment'.
-                This allows convenient overlay of e.g. kinematics variables by
-                specifying a variable without a leading side and cycles with
-                both contexts.
-        auto_match_cycle: bool
-                The variable will be plotted only for the cycles whose context
-                matches the context of the variable.
-                E.g. 'LHipMomentX' is plotted only for cycles whose context
-                is left.
+                This allows convenient L/R overlay of e.g. kinematics variables
+                by specifying the variable without context (and plotting cycles
+                with both contexts)
+        auto_match_model_cycle: bool
+                If True, the model variable will be plotted only for cycles
+                whose context matches the context of the variable. E.g.
+                'LHipMomentX' will be plotted only for left side cycles.
+                If False, the variable will be plotted for all cycles.
+        auto_match_emg_cycle: bool
+                If True, the EMG channel will be plotted only for cycles
+                whose context matches the context of the channel name. E.g.
+                'LRec' will be plotted only for left side cycles.
+                If False, the channel will be plotted for all cycles.
         model_linestyle : Matplotlib linestyle
                 Select line style for model variables.
         linestyles_context:

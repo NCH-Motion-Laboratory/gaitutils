@@ -372,13 +372,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         lfootctrV += mrkdata[marker+'_V'] / len(LEFT_FOOT_MARKERS)
     lfootctrv = np.sqrt(np.sum(lfootctrV[:, 1:3]**2, 1))
 
-    rfootctrP = np.zeros(data_shape)
-    for marker in RIGHT_FOOT_MARKERS:
-        rfootctrP += mrkdata[marker+'_P'] / len(RIGHT_FOOT_MARKERS)
-
-    lfootctrP = np.zeros(data_shape)
-    for marker in LEFT_FOOT_MARKERS:
-        lfootctrP += mrkdata[marker+'_P'] / len(LEFT_FOOT_MARKERS)
+    rfootctrP = mrkdata['RANK_P']
+    lfootctrP = mrkdata['LANK_P']
 
     strikes_all = {}
     toeoffs_all = {}
@@ -456,6 +451,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
             nz = strike_pos != 0
             dist_ok = np.abs(strike_pos - ctr_pos) < max_dist
             strike_ok = np.where(np.logical_and(nz, dist_ok))
+            print('distances:', strike_pos)
             strikes = strikes[strike_ok]
 
         # mark only after first strike

@@ -453,7 +453,9 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         # select events close enough to center frame
         if max_dist:
             strike_pos = footctr_y[strikes]
-            strike_ok = np.where(np.abs(strike_pos - ctr_pos) < max_dist)
+            nz = strike_pos != 0
+            dist_ok = np.abs(strike_pos - ctr_pos) < max_dist
+            strike_ok = np.where(np.logical_and(nz, dist_ok))
             strikes = strikes[strike_ok]
 
         # mark only after first strike

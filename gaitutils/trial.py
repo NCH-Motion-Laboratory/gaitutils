@@ -88,7 +88,7 @@ class Trial(object):
         s += '>'
         return s
 
-    def __init__(self, source):
+    def __init__(self, source, config):
         self.source = source
         # read metadata into instance attributes
         meta = read_data.get_metadata(source)
@@ -115,7 +115,7 @@ class Trial(object):
         except ValueError:
             self.kinetics = None
         # analog and model data are lazily read
-        self.emg = EMG(self.source)
+        self.emg = EMG(self.source, config)
         self._forceplate = None
         self._models_data = dict()
         # whether to normalize data

@@ -12,21 +12,18 @@ from __future__ import division, print_function
 import numpy as np
 from scipy import signal
 from gaitutils import read_data
-from config import Config
-
-
-cfg = Config()
 
 
 class EMG(object):
     """ Class for handling EMG data. """
 
-    def __init__(self, source):
+    def __init__(self, source, config):
         self.source = source
         # order of Butterworth filter
         self.buttord = 5
         # EMG passband
-        self.passband = cfg.emg_passband
+        self.passband = config.emg_passband
+        self.linefreq = config.linefreq
         self.data = None
 
     def __getitem__(self, item):
@@ -70,17 +67,16 @@ class EMG(object):
         # bandwidth of broadband signal. should be less than dist between
         # the powerline harmonics
         broadband_bw = 30
-        powerline_freq = 50  # TODO: move into config
         power_bw = 4  # width of power line peak detector (bandpass)
         nharm = 3  # number of harmonics to detect
         # detect 50 Hz harmonics
-        linefreqs = (np.arange(nharm+1)+1) * powerline_freq
+        linefreqs = (np.arange(nharm+1)+1) * self.linefreq
         intvar = 0
         for f in linefreqs:
             intvar += np.var(self.filt(y, [f-power_bw/2.,
                                            f+power_bw/2.])) / power_bw
         # broadband signal
-        band = [powerline_freq+10, powerline_freq+10+broadband_bw]
+        band = [self.linefreq+10, self.linefreq+10+broadband_bw]
         emgvar = np.var(self.filt(y, band)) / broadband_bw
         intrel = 10*np.log10(intvar/emgvar)
         # debug_print('rel. interference: ', intrel)
@@ -107,6 +103,3 @@ class EMG(object):
         emgdi = read_data.get_emg_data(self.source)
         self.data = emgdi['data']
         self.t = emgdi['t']
-        
-
-

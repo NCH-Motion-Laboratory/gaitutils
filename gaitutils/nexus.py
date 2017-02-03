@@ -20,8 +20,8 @@ from eclipse import get_eclipse_keys
 import matplotlib.pyplot as plt
 from config import Config
 
+# try to import Nexus Python SDK
 cfg = Config()
-
 if cfg.nexus_path:
     if op.isdir(cfg.nexus_path):
         if not cfg.nexus_path + "/SDK/Python" in sys.path:

@@ -33,6 +33,7 @@ cfg['videoplayer_opts'] = '--input-repeat=-1 --rate=.2'
 
 """ EMG settings """
 cfg['emg_passband'] = (10, 400)
+cfg['linefreq'] = 50
 cfg['emg_devname'] = 'Myon'
 cfg['emg_yscale'] = (-.5e-3, .5e-3)
 cfg['emg_labels'] = {'RHam': 'Medial hamstrings (R)',
@@ -87,7 +88,7 @@ cfg['model_linewidth'] = 1.5
 cfg['model_normals_alpha'] = .3
 cfg['model_normals_color'] = 'gray'
 cfg['emg_tracecolor'] = 'black'
-cfg['emg_linewidth'] = 1
+cfg['emg_linewidth'] = .5
 cfg['emg_ylabel'] = 'mV'
 cfg['emg_multiplier'] = 1e3
 cfg['emg_normals_alpha'] = .8

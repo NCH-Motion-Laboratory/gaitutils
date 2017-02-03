@@ -64,7 +64,7 @@ class Plotter(object):
         self.open_trial(source)
 
     def open_trial(self, source):
-        self.trial = Trial(source)
+        self.trial = Trial(source, self.cfg)
 
     def external_play_video(self, vidfile):
         """ Launch video player (defined in config) to play vidfile. """

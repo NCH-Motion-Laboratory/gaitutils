@@ -110,17 +110,18 @@ class Plotter(object):
     def plot_trial(self, model_cycles={'R': 1, 'L': 1},
                    emg_cycles={'R': 1, 'L': 1},
                    t=None, plotheightratios=None,
-                   model_tracecolor=None, model_linestyle='-',
+                   model_tracecolor=None, model_linestyle='-', model_alpha=1.0,
                    split_model_vars=True, auto_match_model_cycle=True,
                    auto_match_emg_cycle=True,
-                   linestyles_context=False, annotate=True,
-                   emg_tracecolor=None, plot_model_normaldata=True,
+                   linestyles_context=False, annotate_emg=True,
+                   emg_tracecolor=None, emg_alpha=1.0,
+                   plot_model_normaldata=True,
                    plot_emg_normaldata=True, superpose=True, show=True,
                    maintitle=None, maintitleprefix=None):
 
         """ Create plot of variables. Parameters:
 
-        model_cycles : dict of int | int | dict of list | 'all' | None
+        model_cycles : dict of int |  dict of list | 'all' | None
                 Gait cycles to plot. Defaults to first cycle (1) for
                 both contexts. Multiple cycles can be given as lists.
                 If None, plot unnormalized data. If 'all', plot all cycles.
@@ -134,7 +135,9 @@ class Plotter(object):
                 make first row half the height of others.
         model_tracecolor : Matplotlib colorspec
                 Select line color for model variables. If None, will be
-                automatically selected.
+                automatically selected
+        model_alpha : float
+                Alpha value for model variable traces (0.0 - 1.0)
         split_model_vars: bool
                 If model var does not have a leading context 'L' or 'R', a side
                 will be prepended according to the gait cycle context.
@@ -160,6 +163,8 @@ class Plotter(object):
         emg_tracecolor : Matplotlib color
                 Select line color for EMG variables. If None, will be
                 automatically selected (defined in config)
+        emg_alpha : float
+                Alpha value for EMG traces (0.0 - 1.0)
         plot_model_normaldata : bool
                 Whether to plot normal data. Uses either default normal data
                 (in site_defs) or the data given when creating the plotter
@@ -194,6 +199,8 @@ class Plotter(object):
 
         if plotheightratios is None:
             plotheightratios = self._plot_height_ratios()
+        elif len(plotheightratios) != len(self.nrows):
+            raise ValueError('n of height ratios must match n of rows')
 
         if self.fig is None or not superpose:
             # auto size fig according to n of subplots w, limit size
@@ -216,19 +223,17 @@ class Plotter(object):
         def _get_cycles(cycles):
             """ Get specified cycles from the gait trial """
             if cycles is None:
-                cycles = [None]  # make iterable
-            elif isinstance(cycles, int):
-                cycles = {'L': cycles, 'R': cycles}
+                cycles = [None]  # listify
             elif cycles == 'all':
                 cycles = self.trial.cycles
-            if isinstance(cycles, dict):  # not elif due to conversion above
-                for side in ['L', 'R']:  # add L/R if needed
+            elif isinstance(cycles, dict):
+                for side in ['L', 'R']:  # add L/R side if needed
                     if side not in cycles:
                         cycles[side] = [None]
                 # convert ints to lists
                 cycles.update({key: [val] for (key, val) in cycles.items()
                               if isinstance(val, int)})
-                # get the specified cycles
+                # get the specified cycles from trial
                 cycles = [self.trial.get_cycle(side, ncycle)
                           for side in ['L', 'R']
                           for ncycle in cycles[side] if ncycle]
@@ -262,7 +267,8 @@ class Plotter(object):
                         lstyle = (self.cfg.model_linestyles[cycle.context] if
                                   linestyles_context else model_linestyle)
                         ax.plot(x, data, tcolor, linestyle=lstyle,
-                                linewidth=self.cfg.model_linewidth)
+                                linewidth=self.cfg.model_linewidth,
+                                alpha=model_alpha)
 
                     # set labels, ticks, etc. after plotting last cycle
                     if cycle == model_cycles[-1]:
@@ -323,21 +329,21 @@ class Plotter(object):
                         x_, data = self.trial[var]
                     except KeyError:
                         _no_ticks_or_labels(ax)
-                        if annotate:
-                            _axis_annotate(ax, 'channel not found')
+                        if annotate_emg:
+                            _axis_annotate(ax, 'not found')
                         break  # no data - skip all cycles
                     if not self.trial.emg.status_ok(var):
                         _no_ticks_or_labels(ax)
-                        if annotate:
+                        if annotate_emg:
                             _axis_annotate(ax, 'disconnected')
                         break  # no data - skip all cycles
                     x = x_ / self.trial.analograte if cycle is None else x_
                     tcolor = (emg_tracecolor if emg_tracecolor else
                               self.cfg.emg_tracecolor)
                     if var[0] == cycle.context or not auto_match_emg_cycle:
-                        # TODO: set alpha on overlay only
                         ax.plot(x, data*self.cfg.emg_multiplier, tcolor,
-                                linewidth=self.cfg.emg_linewidth, alpha=.5)
+                                linewidth=self.cfg.emg_linewidth,
+                                alpha=emg_alpha)
                     if cycle == emg_cycles[-1]:
                         ax.set(ylabel=self.cfg.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.
@@ -391,7 +397,7 @@ class Plotter(object):
                           loc='upper center')
 
         plt.suptitle(maintitle, fontsize=12, fontweight="bold")
-        # magic adjustments to fig geometry
+        # magic adjustments to fig geometry, to improve spacing etc.
         top = .88 if figh < 8 else .94
         self.gridspec.update(left=.08, right=.98, top=top, bottom=.05,
                              hspace=.37, wspace=.22)

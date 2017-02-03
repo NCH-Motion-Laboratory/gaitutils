@@ -20,13 +20,9 @@ lout = layouts.kinetics_emg('R')
 
 lout = layouts.std_emg
 
-
 pl = Plotter()
-
-pl.layout = lout
-
+pl.layout = layouts.rm_dead_channels(vicon, lout)
 pl.open_nexus_trial()
-
 pl.plot_trial()
 
 

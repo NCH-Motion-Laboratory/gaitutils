@@ -11,11 +11,10 @@ from emg import EMG
 
 
 def rm_dead_channels(source, layout):
-    """ Remove non-functional EMG channels from a layout """
+    """ From EMG layout, remove rows with no functional channels """
     layout_ = list()
     emg = EMG(source)
     for j, row in enumerate(layout):
-        print row
         if all([emg.status_ok(ch) for ch in row]):
             layout_.append(row)
     return layout_

@@ -11,19 +11,21 @@ Class for reading EMG
 from __future__ import division, print_function
 import numpy as np
 from scipy import signal
-from gaitutils import read_data
+import read_data
+import config
 
 
 class EMG(object):
     """ Class for handling EMG data. """
 
-    def __init__(self, source, config):
+    def __init__(self, source, cfg=None):
         self.source = source
         # order of Butterworth filter
         self.buttord = 5
-        # EMG passband
-        self.passband = config.emg_passband
-        self.linefreq = config.linefreq
+        if cfg is None:
+            cfg = config.Config()
+        self.passband = cfg.emg_passband
+        self.linefreq = cfg.linefreq
         self.data = None
 
     def __getitem__(self, item):

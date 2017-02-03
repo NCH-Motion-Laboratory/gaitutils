@@ -204,8 +204,10 @@ class Plotter(object):
 
         if self.fig is None or not superpose:
             # auto size fig according to n of subplots w, limit size
-            figh = min(self.nrows*1.5, 13)
-            figw = min(self.ncols*4.5, 20)
+            figh = min(self.nrows*self.cfg.plot_inch_per_row,
+                       self.cfg.plot_maxh)
+            figw = min(self.ncols*self.cfg.plot_inch_per_col,
+                       self.cfg.plot_maxw)
             self.fig = plt.figure(figsize=(figw, figh))
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)

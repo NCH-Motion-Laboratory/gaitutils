@@ -57,7 +57,7 @@ cfg['emg_labels'] = {'RHam': 'Medial hamstrings (R)',
 
 cfg['emg_names'] = cfg['emg_labels'].keys()
 
-# EMG normal bars (the expected range of activation during gait cycle),
+# EMG "normal bars" (the expected range of activation during gait cycle),
 # axis is 0..100%
 cfg['emg_normals'] = {'RGas': [[16, 50]],
                       'RGlut': [[0, 42], [96, 100]],
@@ -82,8 +82,9 @@ cfg['plot_title_fontsize'] = 12
 cfg['plot_ticks_fontsize'] = 10
 cfg['plot_inch_per_row'] = 1.5
 cfg['plot_inch_per_col'] = 4.5
-cfg['plot_maxw'] = 20
-cfg['plot_maxh'] = 13
+cfg['plot_titlespace'] = .75
+cfg['plot_maxw'] = 20.
+cfg['plot_maxh'] = 13.
 cfg['plot_analog_plotheight'] = .667
 cfg['model_tracecolors'] = {'R': 'lawngreen', 'L': 'red'}
 cfg['model_linestyles'] = {'R': '-', 'L': '--'}

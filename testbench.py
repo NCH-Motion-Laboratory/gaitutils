@@ -15,10 +15,10 @@ import matplotlib.pyplot as plt
 vicon = nexus.viconnexus()
 
 
-lout = [['RGlut', 'LGlut'], ['LRec', 'RRec'], ['LHam', 'RHam']]
-lout = layouts.kinetics_emg('R')
+lout = [['RGlut', 'LGlut'], ['LRec', 'RRec']]
+#lout = layouts.kinetics_emg('R')
 
-lout = layouts.std_emg
+#lout = layouts.std_emg
 
 pl = Plotter()
 pl.layout = layouts.rm_dead_channels(vicon, lout)

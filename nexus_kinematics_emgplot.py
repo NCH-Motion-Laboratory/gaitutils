@@ -22,11 +22,11 @@ def do_plot():
     pl.layout = layouts.kinematics_emg('L')
     pl.plot_trial(maintitle=maintitle,
                   emg_cycles={'L': 1}, emg_tracecolor='red', show=False,
-                  annotate=False)
+                  annotate_emg=False)
 
     pl.layout = layouts.kinematics_emg('R')
     pl.plot_trial(maintitle=maintitle, emg_tracecolor='green',
-                  emg_cycles={'R': 1}, annotate=False)  # emg only for one side
+                  emg_cycles={'R': 1}, annotate_emg=False)
 
     pl.create_pdf(pdf_prefix=pdf_prefix)
 

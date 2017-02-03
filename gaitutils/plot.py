@@ -204,11 +204,11 @@ class Plotter(object):
 
         if self.fig is None or not superpose:
             # auto size fig according to n of subplots w, limit size
-            figh = min(self.nrows*self.cfg.plot_inch_per_row,
-                       self.cfg.plot_maxh)
-            figw = min(self.ncols*self.cfg.plot_inch_per_col,
-                       self.cfg.plot_maxw)
-            self.fig = plt.figure(figsize=(figw, figh))
+            self.figh = min(self.nrows*self.cfg.plot_inch_per_row + 1,
+                            self.cfg.plot_maxh)
+            self.figw = min(self.ncols*self.cfg.plot_inch_per_col,
+                            self.cfg.plot_maxw)
+            self.fig = plt.figure(figsize=(self.figw, self.figh))
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)
 
@@ -399,10 +399,10 @@ class Plotter(object):
                           loc='upper center')
 
         plt.suptitle(maintitle, fontsize=12, fontweight="bold")
-        # magic adjustments to fig geometry, to improve spacing etc.
-        top = .88 if figh < 8 else .94
-        self.gridspec.update(left=.08, right=.98, top=top, bottom=.05,
-                             hspace=.37, wspace=.22)
+        self.gridspec.tight_layout(self.fig)
+        # make space for main title - tight_layout cannot do this yet
+        top = (self.figh - self.cfg.plot_titlespace) / self.figh
+        self.gridspec.update(top=top)
         if show:
             plt.show()
 

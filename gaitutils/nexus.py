@@ -291,9 +291,8 @@ def get_model_data(vicon, model):
 
 
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
-                    'R_strike': None, 'R_toeoff': None}, ctr_pos=0,
-                    forward_dim='y', max_dist=None, first_strike=None,
-                    plot=False, mark=True):
+                    'R_strike': None, 'R_toeoff': None}, ctr_pos=[0, 0, 0],
+                    max_dist=None, first_strike=None, plot=False, mark=True):
     """ Mark events based on velocity thresholding. Absolute thresholds
     can be specified as arguments. Otherwise, relative thresholds will be
     calculated based on the data. Optimal results will be obtained when
@@ -304,9 +303,6 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     Separate thresholds for left and right side.
 
     ctr_pos is the walkway center position (used by max_dist).
-
-    forward_dim is the dimension corresponding to 'forward' on the walkway
-    ('y' or second dimension by default).
 
     max_dist is the maximum allowed distance of the foot from ctr_pos.
     Events where the foot is further than this will be discarded.
@@ -381,10 +377,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     # loop: same operations for left / right foot
     for ind, footctrv in enumerate((rfootctrv, lfootctrv)):
         this_side = 'R' if ind == 0 else 'L'
-        forward_dim_ = {'x': 0, 'y': 1, 'z': 2}[forward_dim.lower()]
         # foot center position
-        footctr_y = (rfootctrP[:, forward_dim_] if ind == 0 else
-                     lfootctrP[:, forward_dim_])
+        footctrP = rfootctrP if ind == 0 else lfootctrP
         # filter to scalar velocity data to suppress noise and spikes
         footctrv = signal.medfilt(footctrv, MEDIAN_WIDTH)
 
@@ -445,13 +439,15 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
 
         print('all strike events:', strikes)
 
-        # select events close enough to center frame
+        # select events for which the foot is close enough to center frame
         if max_dist:
-            strike_pos = footctr_y[strikes]
-            nz = strike_pos != 0
-            dist_ok = np.abs(strike_pos - ctr_pos) < max_dist
+            strike_pos = footctrP[strikes, :]
+            # pick points where data is ok (no gaps)
+            nz = [all(row) for row in strike_pos != 0]
+            distv = np.sqrt(np.sum((strike_pos-ctr_pos)**2, 1))
+            print('distances: ', distv)
+            dist_ok = distv < max_dist
             strike_ok = np.where(np.logical_and(nz, dist_ok))
-            print('distances:', strike_pos)
             strikes = strikes[strike_ok]
 
         # mark only after first strike

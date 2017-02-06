@@ -90,8 +90,8 @@ RESET_ROI = True
 CHECK_WEIGHT = True
 # events max distance from walkway center (mm)
 AUTOMARK_MAX_DIST = 2000
-# walkway mid point
-WALKWAY_MID = 300
+# walkway mid point (mm)
+WALKWAY_MID = [0, 300, 0]
 
 
 # read config data

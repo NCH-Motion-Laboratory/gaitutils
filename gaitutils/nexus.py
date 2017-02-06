@@ -445,7 +445,6 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
             # pick points where data is ok (no gaps)
             nz = [all(row) for row in strike_pos != 0]
             distv = np.sqrt(np.sum((strike_pos-ctr_pos)**2, 1))
-            print('distances: ', distv)
             dist_ok = distv < max_dist
             strike_ok = np.where(np.logical_and(nz, dist_ok))
             strikes = strikes[strike_ok]
@@ -455,13 +454,13 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
             first = first_strike[this_side]
             # find our idea of the first strike
             true_first = strikes[np.argmin(np.abs(strikes - first))]
-            print('first strike given: %d detected: %d', first, true_first)
+            print('first strike given: %d detected: %d' % (first, true_first))
             if np.abs(true_first - first) > STRIKE_TOL:
                 raise Exception('Strikes do not agree with first_strike')
             strike_ok = np.where(strikes >= true_first)
             strikes = strikes[strike_ok]
 
-        print('selected strike events:', strikes)
+        print('accepted strike events:', strikes)
 
         # mark toeoffs that are between strike events
         toeoffs = [fr for fr in toeoffs

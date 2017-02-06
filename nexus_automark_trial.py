@@ -32,4 +32,5 @@ if context:
 vicon.ClearAllEvents()
 nexus.automark_events(vicon,
                       vel_thresholds=vel_th, max_dist=2000, ctr_pos=300,
-                      first_strike=first_strike, plot=False)
+                      forward_dim='x',
+                      first_strike=first_strike, plot=True)

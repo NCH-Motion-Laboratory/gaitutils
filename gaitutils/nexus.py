@@ -365,12 +365,12 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     rfootctrV = np.zeros(data_shape)
     for marker in RIGHT_FOOT_MARKERS:
         rfootctrV += mrkdata[marker+'_V'] / len(RIGHT_FOOT_MARKERS)
-    rfootctrv = np.sqrt(np.sum(rfootctrV[:, 1:3]**2, 1))
+    rfootctrv = np.sqrt(np.sum(rfootctrV**2, 1))
 
     lfootctrV = np.zeros(data_shape)
     for marker in LEFT_FOOT_MARKERS:
         lfootctrV += mrkdata[marker+'_V'] / len(LEFT_FOOT_MARKERS)
-    lfootctrv = np.sqrt(np.sum(lfootctrV[:, 1:3]**2, 1))
+    lfootctrv = np.sqrt(np.sum(lfootctrV**2, 1))
 
     rfootctrP = mrkdata['RANK_P']
     lfootctrP = mrkdata['LANK_P']
@@ -500,6 +500,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                 plt.xlabel('Frame')
             plt.ylabel('Velocity (mm/frame)')
             plt.title('Left' if this_side == 'L' else 'Right')
+            plt.show()
 
     return (strikes_all['R'], strikes_all['L'],
             toeoffs_all['R'], toeoffs_all['L'])

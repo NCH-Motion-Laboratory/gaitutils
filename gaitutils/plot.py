@@ -400,9 +400,12 @@ class Plotter(object):
 
         plt.suptitle(maintitle, fontsize=12, fontweight="bold")
         self.gridspec.tight_layout(self.fig)
-        # make space for main title - tight_layout cannot do this yet
+        # some fixes to tight_layout
+        # space for main title
         top = (self.figh - self.cfg.plot_titlespace) / self.figh
-        self.gridspec.update(top=top)
+        # decrease vertical spacing
+        hspace = .40
+        self.gridspec.update(top=top, hspace=hspace)
         if show:
             plt.show()
 

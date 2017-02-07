@@ -310,7 +310,11 @@ def _do_autoproc(enffiles):
     print('Automarked: %d' % n_events)
 
 
-if __name__ == '__main__':
+def autoproc_session():
 
     enffiles = nexus.get_trial_enfs()
     _do_autoproc(enffiles)
+
+
+if __name__ == '__main__':
+    autoproc_session()

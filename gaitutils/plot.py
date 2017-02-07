@@ -381,22 +381,19 @@ class Plotter(object):
                     legtitle = ['Model traces:']
                     artists = self.modelartists
                     artists.append(plt.Line2D((0, 1), (0, 0),
-                                   color=model_tracecolor,
-                                   linewidth=2,
+                                   color=model_tracecolor, linewidth=2,
                                    linestyle=lstyle))
                 else:
                     legtitle = ['EMG traces:']
                     artists = self.emgartists
-                    artists.append(plt.Line2D((0, 1), (0, 0),
-                                              linewidth=2,
+                    artists.append(plt.Line2D((0, 1), (0, 0), linewidth=2,
                                               color=emg_tracecolor))
                 plt.axis('off')
                 nothing = [plt.Rectangle((0, 0), 1, 1, fc="w", fill=False,
                                          edgecolor='none', linewidth=0)]
                 ax.legend(nothing+artists,
-                          legtitle+self.legendnames,
-                          prop={'size': self.cfg.plot_label_fontsize},
-                          loc='upper center')
+                          legtitle+self.legendnames, loc='upper center',
+                          prop={'size': self.cfg.plot_label_fontsize})
 
         plt.suptitle(maintitle, fontsize=12, fontweight="bold")
         self.gridspec.tight_layout(self.fig)

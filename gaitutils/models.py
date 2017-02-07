@@ -200,29 +200,30 @@ pig_lowerbody.normaldata_map = _dict_with_side({
              'PelvisAnglesY': 'PelvicObliquity',
              'PelvisAnglesZ': 'PelvicRotation'})
 
+spacer = (2*(1*' ',))
 pig_lowerbody.ylabels = _dict_with_side({
-                         'AnkleAnglesX': 'Pla     ($^\\circ$)      Dor',
-                         'AnkleAnglesZ': 'Ext     ($^\\circ$)      Int',
-                         'AnkleMomentX': 'Int dors    Nm/kg    Int plan',
-                         'AnklePowerZ': 'Abs    W/kg    Gen',
-                         'FootProgressAnglesZ': 'Ext     ($^\\circ$)      Int',
-                         'HipAnglesX': 'Ext     ($^\\circ$)      Flex',
-                         'HipAnglesY': 'Abd     ($^\\circ$)      Add',
-                         'HipAnglesZ': 'Ext     ($^\\circ$)      Int',
-                         'HipMomentX': 'Int flex    Nm/kg    Int ext',
-                         'HipMomentY': 'Int add    Nm/kg    Int abd',
-                         'HipMomentZ': 'Int flex    Nm/kg    Int ext',
-                         'HipPowerZ': 'Abs    W/kg    Gen',
-                         'KneeAnglesX': 'Ext     ($^\\circ$)      Flex',
-                         'KneeAnglesY': 'Val     ($^\\circ$)      Var',
-                         'KneeAnglesZ': 'Ext     ($^\\circ$)      Int',
-                         'KneeMomentX': 'Int flex    Nm/kg    Int ext',
-                         'KneeMomentY': 'Int var    Nm/kg    Int valg',
-                         'KneeMomentZ': 'Int flex    Nm/kg    Int ext',
-                         'KneePowerZ': 'Abs    W/kg    Gen',
-                         'PelvisAnglesX': 'Pst     ($^\\circ$)      Ant',
-                         'PelvisAnglesY': 'Dwn     ($^\\circ$)      Up',
-                         'PelvisAnglesZ': 'Bak     ($^\\circ$)      For'})
+                         'AnkleAnglesX': 'Pla%s($^\\circ$)%sDor' % spacer,
+                         'AnkleAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
+                         'AnkleMomentX': 'I dors%sNm/kg%sI plan' % spacer,
+                         'AnklePowerZ': 'Abs%sW/kg%sGen' % spacer,
+                         'FootProgressAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
+                         'HipAnglesX': 'Ext%s($^\\circ$)%sFlex' % spacer,
+                         'HipAnglesY': 'Abd%s($^\\circ$)%sAdd' % spacer,
+                         'HipAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
+                         'HipMomentX': 'I flex%sNm/kg%sI ext' % spacer,
+                         'HipMomentY': 'I add%sNm/kg%sI abd' % spacer,
+                         'HipMomentZ': 'I flex%sNm/kg%sI ext' % spacer,
+                         'HipPowerZ': 'Abs%sW/kg%sGen' % spacer,
+                         'KneeAnglesX': 'Ext%s($^\\circ$)%sFlex' % spacer,
+                         'KneeAnglesY': 'Val%s($^\\circ$)%sVar' % spacer,
+                         'KneeAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
+                         'KneeMomentX': 'I flex%sNm/kg%sI ext' % spacer,
+                         'KneeMomentY': 'I var%sNm/kg%sI valg' % spacer,
+                         'KneeMomentZ': 'I flex%sNm/kg%sI ext' % spacer,
+                         'KneePowerZ': 'Abs%sW/kg%sGen' % spacer,
+                         'PelvisAnglesX': 'Pst%s($^\\circ$)%sAnt' % spacer,
+                         'PelvisAnglesY': 'Dwn%s($^\\circ$)%sUp' % spacer,
+                         'PelvisAnglesZ': 'Bak%s($^\\circ$)%sFor' % spacer})
 
 pig_lowerbody.normaldata_path = cfg.pig_normaldata_path
 

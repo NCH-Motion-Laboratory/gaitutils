@@ -77,7 +77,7 @@ cfg['emg_normals'] = {'RGas': [[16, 50]],
                       'LVas': [[0, 24], [96, 100]]}
 
 """ Plotting related settings """
-cfg['plot_label_fontsize'] = 10
+cfg['plot_label_fontsize'] = 9
 cfg['plot_title_fontsize'] = 12
 cfg['plot_ticks_fontsize'] = 10
 cfg['plot_inch_per_row'] = 1.5

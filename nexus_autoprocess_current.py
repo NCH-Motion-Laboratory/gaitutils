@@ -10,7 +10,8 @@ Note: does not use stats for event detection -> less accurate
 from nexus_autoprocess_trials import _do_autoproc
 from gaitutils import nexus
 
-if __name__ == '__main__':
+
+def autoproc_single():
 
     if not nexus.pid():
         raise Exception('Vicon Nexus not running')
@@ -19,8 +20,10 @@ if __name__ == '__main__':
     trialname_ = vicon.GetTrialName()
     if not trialname_:
         raise ValueError('No trial loaded in Nexus?')
-    subjectname = vicon.GetSubjectNames()[0]
-    sessionpath = trialname_[0]
     enfname = ''.join(trialname_)+'.Trial.enf'
 
     _do_autoproc([enfname])  # need to listify name
+
+
+if __name__ == '__main__':
+    autoproc_single()

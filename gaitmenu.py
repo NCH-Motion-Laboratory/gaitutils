@@ -16,6 +16,7 @@ import nexus_autoprocess_current
 import nexus_autoprocess_trials
 import nexus_kinallplot
 import sys
+import subprocess as sp
 
 
 class Log(object):
@@ -33,6 +34,16 @@ class Log(object):
     def flush(self):
         self.stdout.flush()
 
+def fun_wrapper(foo, widget):
+    process=sp.Popen('nexus_kinetics_emgplot.py', shell=True)
+    while True:
+        output = process.stdout.readline()
+        if output == '' and process.poll() is not None:
+            break
+        if output:
+            widget.appendPlainText(output)
+    rc = process.poll()
+
 
 class Gaitmenu(QtGui.QMainWindow):
 
@@ -41,8 +52,9 @@ class Gaitmenu(QtGui.QMainWindow):
         # load user interface made with designer
         uifile = 'gaitmenu.ui'
         uic.loadUi(uifile, self)
-
-        self.btnEMG.clicked.connect(nexus_emgplot.do_plot)
+        #self.btnEMG.clicked.connect(nexus_emgplot.do_plot)
+        self.btnEMG.clicked.connect(lambda checked: fun_wrapper(checked,
+                                                                self.txtOutput)) 
         self.btnKinEMG.clicked.connect(nexus_kinetics_emgplot.do_plot)
         self.btnKinall.clicked.connect(nexus_kinallplot.do_plot)
         self.btnEMGCons.clicked.connect(nexus_emg_consistency.do_plot)
@@ -59,7 +71,7 @@ def main():
     app = QtGui.QApplication(sys.argv)
     gaitmenu = Gaitmenu()
     
-    sys.stdout = Log(gaitmenu.txtOutput)
+    #sys.stdout = Log(gaitmenu.txtOutput)
 
     gaitmenu.show()
     app.exec_()

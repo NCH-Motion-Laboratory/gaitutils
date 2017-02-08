@@ -116,7 +116,7 @@ class Plotter(object):
                    linestyles_context=False, annotate_emg=True,
                    emg_tracecolor=None, emg_alpha=1.0,
                    plot_model_normaldata=True,
-                   plot_emg_normaldata=True, superpose=True, show=True,
+                   plot_emg_normaldata=True, superpose=False, show=True,
                    maintitle=None, maintitleprefix=None):
 
         """ Create plot of variables. Parameters:

@@ -404,7 +404,7 @@ class Plotter(object):
         hspace = .40
         self.gridspec.update(top=top, hspace=hspace)
         if show:
-            plt.show()
+            self.show()
 
     def title_with_eclipse_info(self, prefix):
         """ Create title: prefix + trial name + Eclipse description and
@@ -417,6 +417,7 @@ class Plotter(object):
         return maintitle
 
     def show(self):
+        """ Show all figures """
         plt.show()
 
     def create_pdf(self, pdf_name=None, pdf_prefix=None):

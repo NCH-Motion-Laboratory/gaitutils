@@ -42,8 +42,7 @@ class Gaitmenu(QtGui.QMainWindow):
         uifile = 'gaitmenu.ui'
         uic.loadUi(uifile, self)
 
-        #self.btnEMG.clicked.connect(nexus_emgplot.do_plot)
-        self.btnEMG.clicked.connect(nexus_kinetics_emgplot.do_plot)        
+        self.btnEMG.clicked.connect(nexus_emgplot.do_plot)
         self.btnKinEMG.clicked.connect(nexus_kinetics_emgplot.do_plot)
         self.btnKinall.clicked.connect(nexus_kinallplot.do_plot)
         self.btnEMGCons.clicked.connect(nexus_emg_consistency.do_plot)

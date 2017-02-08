@@ -11,7 +11,7 @@ EMG plot from Nexus.
 from gaitutils import Plotter, layouts, nexus, register_gui_exception_handler
 
 
-def do_plot(show=True):
+def do_plot():
     pl = Plotter()
     pl.open_nexus_trial()
     pdf_prefix = 'EMG_'
@@ -20,7 +20,7 @@ def do_plot(show=True):
     vicon = nexus.viconnexus()
     layout = layouts.std_emg
     pl.layout = layouts.rm_dead_channels(vicon, layout)
-    pl.plot_trial(maintitle=maintitle, show=show)
+    pl.plot_trial(maintitle=maintitle)
 
     pl.create_pdf(pdf_prefix=pdf_prefix)
 

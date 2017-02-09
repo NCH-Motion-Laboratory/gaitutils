@@ -19,6 +19,10 @@ from numutils import rising_zerocross, falling_zerocross
 from eclipse import get_eclipse_keys
 import matplotlib.pyplot as plt
 from config import Config
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 # try to import Nexus Python SDK
 cfg = Config()
@@ -31,7 +35,7 @@ if cfg.nexus_path:
 try:
     import ViconNexus
 except ImportError:
-    print('Warning: cannot import Nexus SDK, unable to communicate with Nexus')
+    logger.warning('Cannot import Nexus SDK, unable to communicate with Nexus')
 
 
 def pid():
@@ -189,9 +193,9 @@ def get_forceplate_data(vicon):
     devids = [id for id in vicon.GetDeviceIDs() if
               vicon.GetDeviceDetails(id)[1].lower() == 'forceplate']
     if len(devids) > 1:
-        print('warning: more than 1 forceplate not handled yet, using 1st one')
+        logger.warning('more than 1 forceplate not handled yet, using 1st one')
     elif len(devids) == 0:
-        print('no forceplates detected')
+        logger.debug('no forceplates detected')
         return None
     devid = devids[0]
     # pick 1st forceplate
@@ -288,6 +292,11 @@ def get_model_data(vicon, model):
         # remove singleton dimensions
         modeldata[var] = np.squeeze(np.array(nums))
     return modeldata
+
+
+def _list_to_str(li):
+    """ Convenience for displaying lists """
+    return ','.join([str(it) for it in li])
 
 
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
@@ -398,11 +407,13 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         threshold_rise_ = (vel_thresholds[this_side+'_toeoff'] or
                            maxv * REL_THRESHOLD_RISE)
 
-        print('automark_events: side: %s, rel. thresholds fall: %.2f '
-              'rise %.2f' % (this_side, maxv * REL_THRESHOLD_FALL,
-                             maxv * REL_THRESHOLD_RISE))
-        print('automark_events: using fall threshold: %.2f' % threshold_fall_)
-        print('automark_events: using rise threshold: %.2f' % threshold_rise_)
+        logger.debug('side: %s, rel. thresholds fall: %.2f rise %.2f'
+                     % (this_side, maxv * REL_THRESHOLD_FALL,
+                        maxv * REL_THRESHOLD_RISE))
+        logger.debug('using fall threshold: %.2f'
+                     % threshold_fall_)
+        logger.debug('using rise threshold: %.2f'
+                     % threshold_rise_)
 
         # find point where velocity crosses threshold
         # foot strikes (velocity decreases)
@@ -437,7 +448,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         if len(toeoffs) == 0:
             raise Exception('Could not detect any toe-off events')
 
-        print('all strike events:', strikes)
+        logger.debug('all strike events: %s' % _list_to_str(strikes))
 
         # select events for which the foot is close enough to center frame
         if max_dist:
@@ -454,13 +465,14 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
             first = first_strike[this_side]
             # find our idea of the first strike
             true_first = strikes[np.argmin(np.abs(strikes - first))]
-            print('first strike given: %d detected: %d' % (first, true_first))
+            logger.debug('first strike given: %d detected: %d' %
+                         (first, true_first))
             if np.abs(true_first - first) > STRIKE_TOL:
                 raise Exception('Strikes do not agree with first_strike')
             strike_ok = np.where(strikes >= true_first)
             strikes = strikes[strike_ok]
 
-        print('accepted strike events:', strikes)
+        logger.debug('accepted strike events: %s' % _list_to_str(strikes))
 
         # mark toeoffs that are between strike events
         toeoffs = [fr for fr in toeoffs

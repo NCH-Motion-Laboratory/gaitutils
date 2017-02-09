@@ -12,6 +12,9 @@ whole session, since here we cannot use statistics for velocity thresholding.
 from __future__ import print_function
 from gaitutils import nexus, utils
 
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
 
 def automark_single():
 

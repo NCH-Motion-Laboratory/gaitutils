@@ -7,14 +7,15 @@ c3d reader functions
 @author: Jussi (jnu@iki.fi)
 """
 
-try:
-    import btk
-except ImportError:
-    print('Warning: cannot find btk module; unable to use btk functionality '
-          '(read c3d files)')
+import logging
 import numpy as np
 from scipy.signal import medfilt
 import os
+logger = logging.getLogger(__name__)
+try:
+    import btk
+except ImportError:
+    logger.warning('cannot find btk module; unable to read .c3d files')
 
 
 def is_c3dfile(obj):
@@ -43,7 +44,7 @@ def get_emg_data(c3dfile):
         return {'t': np.arange(len(data[elname])) / acq.GetAnalogFrequency(),
                 'data': data}
     else:
-        raise ValueError('No EMG channels found in data')
+        raise Exception('No EMG channels found in data')
 
 
 def get_marker_data(c3dfile, markers):
@@ -58,7 +59,7 @@ def get_marker_data(c3dfile, markers):
         try:
             mP = np.squeeze(acq.GetPoint(marker).GetValues())
         except RuntimeError:
-            raise ValueError('Cannot read variable %s from c3d file' % marker)
+            raise Exception('Cannot read variable %s from c3d file' % marker)
         mdata[marker + '_P'] = mP
         mdata[marker + '_V'] = np.gradient(mP)[0]
         mdata[marker + '_A'] = np.gradient(mdata[marker+'_V'])[0]

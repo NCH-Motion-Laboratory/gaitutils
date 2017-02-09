@@ -12,6 +12,9 @@ from gaitutils import Plotter, layouts, register_gui_exception_handler
 from gaitutils.nexus import enf2c3d, find_trials
 from gaitutils.guiutils import error_exit
 
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
 
 def do_plot():
 
@@ -45,7 +48,7 @@ def do_plot():
         maintitle = ('EMG consistency plot, '
                      'session %s' % pl.trial.trialdirname)
         pl.plot_trial(emg_tracecolor=linecolors[i],
-                      maintitle=maintitle, show=False)
+                      maintitle=maintitle, superpose=True, show=False)
 
     pl.show()
     pl.create_pdf('emg_consistency.pdf')

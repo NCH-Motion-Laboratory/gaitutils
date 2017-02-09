@@ -10,7 +10,9 @@ description and defined search strings.
 
 from gaitutils import Plotter, layouts, register_gui_exception_handler
 from gaitutils.nexus import enf2c3d, find_trials
-from gaitutils.guiutils import error_exit
+
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 
 def do_plot():
@@ -25,14 +27,13 @@ def do_plot():
 
     if not marked_trials:
         # try to find anything marked with 'ok' (kinematics-only sessions)
-        strs = ['ok']
         marked_trials = list(find_trials(eclkeys, strs))
         if not marked_trials:
-            error_exit('Did not find any marked trials in current '
-                       'session directory')
+            raise Exception('Did not find any marked trials in current '
+                            'session directory')
 
     if len(marked_trials) > MAX_TRIALS:
-        error_exit('Too many marked trials found!')
+        raise Exception('Too many marked trials found!')
 
     pl = Plotter()
     pl.open_trial(enf2c3d(marked_trials[0]))
@@ -46,7 +47,7 @@ def do_plot():
         maintitle = ('Kinematics/kinetics consistency plot, '
                      'session %s' % pl.trial.trialdirname)
         pl.plot_trial(model_tracecolor=linecolors[i], linestyles_context=True,
-                      maintitle=maintitle, show=False)
+                      maintitle=maintitle, superpose=True, show=False)
 
     pl.show()
     pl.create_pdf('kin_consistency.pdf')

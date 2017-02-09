@@ -10,6 +10,9 @@ Note: does not use stats for event detection -> less accurate
 from nexus_autoprocess_trials import _do_autoproc
 from gaitutils import nexus
 
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
 
 def autoproc_single():
 

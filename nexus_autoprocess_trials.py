@@ -36,11 +36,12 @@ by Eclipse?)
 
 from __future__ import print_function
 from gaitutils import nexus, eclipse, utils, config
-import glob
 import os
 import numpy as np
-from numpy import inf
 import time
+
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 
 # list of pipelines to run

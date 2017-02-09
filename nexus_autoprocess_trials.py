@@ -34,13 +34,13 @@ by Eclipse?)
 @author: Jussi
 """
 
-from __future__ import print_function
 from gaitutils import nexus, eclipse, utils, config
 import os
 import numpy as np
 import time
 
 import logging
+logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -136,20 +136,20 @@ def _do_autoproc(enffiles):
 
     """ 1st pass - reconstruct, label, sanity check, check forceplate and gait
     direction """
-    print('\n1st pass - processing %d trial(s)\n' % len(enffiles))
+    logger.debug('\n1st pass - processing %d trial(s)\n' % len(enffiles))
 
     for filepath_ in enffiles:
         filepath = filepath_[:filepath_.find('.Trial')]  # rm .Trial and .enf
         filename = os.path.split(filepath)[1]
-        print('\nprocessing: %s' % filename)
+        logger.debug('\nprocessing: %s' % filename)
         edi = eclipse.get_eclipse_keys(filepath_, return_empty=True)
         trial_type = edi['TYPE']
         trial_desc = edi['DESCRIPTION']
         if trial_type in TYPE_SKIP:
-            print('Not a dynamic trial, skipping')
+            logger.debug('Not a dynamic trial, skipping')
             continue
         if trial_desc.upper() in [s.upper() for s in DESC_SKIP]:
-            print('Skipping based on description')
+            logger.debug('Skipping based on description')
             # run preprocessing + save even for skipped trials, to mark
             # them as processed
             for pipeline in PRE_PIPELINES:
@@ -209,7 +209,7 @@ def _do_autoproc(enffiles):
 
         # move to next trial if preprocessing failed
         if fail is not None:
-            print('preprocessing failed: %s' % DESCRIPTIONS[fail])
+            logger.debug('preprocessing failed: %s' % DESCRIPTIONS[fail])
             trials[filepath].description = DESCRIPTIONS[fail]
             vicon.SaveTrial(SAVE_TIMEOUT)
             continue
@@ -250,10 +250,10 @@ def _do_autoproc(enffiles):
 
     """ 2nd pass - detect gait events, run models, crop """
     sel_trials = {k: v for k, v in trials.items() if v.recon_ok}
-    print('\n2nd pass - processing %d trials\n' % len(sel_trials))
+    logger.debug('\n2nd pass - processing %d trials\n' % len(sel_trials))
     for filepath, trial in sel_trials.items():
         filename = os.path.split(filepath)[1]
-        print('\nprocessing: %s' % filename)
+        logger.debug('\nprocessing: %s' % filename)
         vicon.OpenTrial(filepath, TRIAL_OPEN_TIMEOUT)
         enf_file = filepath + '.Trial.enf'
         # if fp data available from trial itself, use it for automark
@@ -305,10 +305,10 @@ def _do_autoproc(enffiles):
                                     trial.description, update_existing=True)
     # print stats
     n_events = len([tr for tr in trials.values() if tr.events])
-    print('\nComplete\n')
-    print('Trials opened: %d' % len(trials))
-    print('Trials with recon ok: %d' % len(sel_trials))
-    print('Automarked: %d' % n_events)
+    logger.debug('Complete')
+    logger.debug('Trials opened: %d' % len(trials))
+    logger.debug('Trials with recon ok: %d' % len(sel_trials))
+    logger.debug('Automarked: %d' % n_events)
 
 
 def autoproc_session():

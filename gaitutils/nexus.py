@@ -8,7 +8,6 @@ Data readers & processing utils for Vicon Nexus.
 
 """
 
-from __future__ import print_function
 import sys
 import numpy as np
 from scipy import signal

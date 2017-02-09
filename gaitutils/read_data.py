@@ -10,9 +10,11 @@ a path to a c3d file.
 
 """
 
-from __future__ import print_function
 import nexus
 import c3d
+
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 
 def _reader_module(source):
@@ -22,7 +24,7 @@ def _reader_module(source):
     elif c3d.is_c3dfile(source):
         return c3d
     else:
-        raise ValueError('Unknown source')
+        raise Exception('Unknown data source')
 
 
 def get_metadata(source):
@@ -83,17 +85,9 @@ def get_model_data(source, model):
                     modeldata[var+'Y'] = modeldata[var][1, :]
                     modeldata[var+'Z'] = modeldata[var][2, :]
                 else:
-                    raise ValueError('Expected 3d array')
+                    raise Exception('Expected a 3D array')
     return modeldata
 
 
 def kinetics_available(source):
     return _reader_module(source).kinetics_available(source)
-
-
-#def get_roi(source, markers):
-#    return reader_module(source).get_roi(source, markers)
-
-
-
-

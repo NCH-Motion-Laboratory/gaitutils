@@ -6,7 +6,6 @@ Utility functions for processing gait data.
 @author: Jussi (jnu@iki.fi)
 """
 
-from __future__ import print_function
 from read_data import get_marker_data, get_forceplate_data, get_metadata
 from numutils import rising_zerocross, falling_zerocross
 from scipy import signal

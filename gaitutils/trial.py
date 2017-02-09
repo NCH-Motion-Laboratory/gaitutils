@@ -8,7 +8,7 @@ Read gait trials.
 """
 
 
-from __future__ import division, print_function
+from __future__ import division
 from gaitutils import read_data, utils, eclipse
 from collections import defaultdict
 import numpy as np

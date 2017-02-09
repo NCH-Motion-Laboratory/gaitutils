@@ -11,6 +11,9 @@ from read_data import get_marker_data, get_forceplate_data, get_metadata
 from numutils import rising_zerocross, falling_zerocross
 from scipy import signal
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_crossing_frame(source, marker, dim=1, p0=0):
@@ -95,29 +98,29 @@ def kinetics_available(source, check_weight=True):
 
     fmax = max(forcetot)
     fmaxind = np.where(forcetot == fmax)[0][0]  # first maximum
-    print('kinetics_available: max force: %.2f at %.2f, weight: %.2f N'
-          % (fmax, fmaxind, subj_weight))
+    logger.debug('max force: %.2f at %.2f, weight: %.2f N'
+                 % (fmax, fmaxind, subj_weight))
     if not check_weight:
-        print('(ignoring subject weight)')
+        logger.debug('(ignoring subject weight)')
     elif max(forcetot) < FMAX_REL_MIN * subj_weight:
-        print('kinetics_available: insufficient max. force on plate')
+        logger.debug('insufficient max. force on plate')
         return emptydi
     # find indices where force crosses threshold
     try:
         friseind = rising_zerocross(forcetot-F_THRESHOLD)[0]  # first rise
         ffallind = falling_zerocross(forcetot-F_THRESHOLD)[-1]  # last fall
     except IndexError:
-        print('kinetics_available: cannot detect force rise/fall')
+        logger.debug('cannot detect force rise/fall')
         return emptydi
     # check shift of center of pressure during ROI; should not shift too much
     cop_roi = np.arange(friseind, ffallind)
     copx, copy = np.array(fp0['cop'][:, 0]), np.array(fp0['cop'][:, 1])
     copx_shift = np.max(copx[cop_roi]) - np.min(copx[cop_roi])
     copy_shift = np.max(copy[cop_roi]) - np.min(copy[cop_roi])
-    print('CoP x shift %.2f mm, y shift %.2f mm' % (copx_shift, copy_shift))
+    logger.debug('CoP x shift %.2f mm, y shift %.2f mm'
+                 % (copx_shift, copy_shift))
     if copx_shift > MAX_COP_SHIFT or copy_shift > MAX_COP_SHIFT:
-        print('kinetics_available: center of pressure shifts too much',
-              '(double contact?)')
+        logger.debug('center of pressure shifts too much (double contact?)')
         return emptydi
 
     # frame indices are 1-based so need to add 1 (what about c3d?)
@@ -173,7 +176,7 @@ def kinetics_available(source, check_weight=True):
         kinetics = 'L'
 
     if not kinetics:
-        print('kinetics_available: markers off plate during strike/toeoff')
+        logger.debug('markers off plate during strike/toeoff')
         return emptydi
 
     # kinetics ok, compute velocities at strike
@@ -184,7 +187,7 @@ def kinetics_available(source, check_weight=True):
     footctrv = np.sqrt(np.sum(footctrV[:, 1:3]**2, 1))
     strike_v = footctrv[int(strike_fr)]
     toeoff_v = footctrv[int(toeoff_fr)]
-    print('kinetics_available: strike on %s at %d, toeoff at %d'
-          % (kinetics, strike_fr, toeoff_fr))
+    logger.debug('strike on %s at %d, toeoff at %d'
+                 % (kinetics, strike_fr, toeoff_fr))
     return {'context': kinetics, 'strike': strike_fr, 'strike_v': strike_v,
             'toeoff': toeoff_fr, 'toeoff_v': toeoff_v}

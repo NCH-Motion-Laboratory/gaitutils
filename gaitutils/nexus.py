@@ -52,7 +52,7 @@ def pid():
 
 def true_ver():
     """ Tries to return the actual version of the running Nexus process
-    (API does not do that). Hackish and probalby unreliable """
+    (API does not do that). Hackish and probably unreliable """
     PROCNAME = "Nexus.exe"
     for proc in psutil.process_iter():
         try:
@@ -399,7 +399,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         maxv = np.median(footctrv[vdz_ind[inds]])
 
         if maxv > MAX_PEAK_VELOCITY:
-            raise ValueError('Velocity thresholds too high, data may be noisy')
+            raise Exception('Velocity thresholds too high, data may be noisy')
 
         # compute thresholds
         threshold_fall_ = (vel_thresholds[this_side+'_strike'] or
@@ -407,14 +407,11 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         threshold_rise_ = (vel_thresholds[this_side+'_toeoff'] or
                            maxv * REL_THRESHOLD_RISE)
 
-        logger.debug('side: %s, rel. thresholds fall: %.2f rise %.2f'
+        logger.debug('side: %s, default thresholds fall/rise: %.2f/%.2f'
                      % (this_side, maxv * REL_THRESHOLD_FALL,
                         maxv * REL_THRESHOLD_RISE))
-        logger.debug('using fall threshold: %.2f'
-                     % threshold_fall_)
-        logger.debug('using rise threshold: %.2f'
-                     % threshold_rise_)
-
+        logger.debug('using thresholds: %.2f/%.2f' % (threshold_fall_,
+                                                      threshold_rise_))
         # find point where velocity crosses threshold
         # foot strikes (velocity decreases)
         cross = falling_zerocross(footctrv - threshold_fall_)

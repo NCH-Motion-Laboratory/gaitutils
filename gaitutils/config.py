@@ -6,11 +6,13 @@ Manage config.
 @author: Jussi (jnu@iki.fi)
 """
 
-from __future__ import print_function
 import ConfigParser
 import os.path as op
 import ast
 import defaultconfig
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Config(object):
@@ -35,8 +37,8 @@ class Config(object):
             try:
                 self.read()
             except ValueError:
-                print('Config: no config file, trying to create %s' %
-                      self.configfile)
+                logger.warning('Config: no config file, trying to create %s' %
+                               self.configfile)
                 self.write()
 
     def read(self):

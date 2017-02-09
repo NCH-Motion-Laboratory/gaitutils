@@ -9,6 +9,9 @@ Kinetics-EMG plot from Nexus.
 
 from gaitutils import Plotter, layouts, register_gui_exception_handler
 
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
 
 def do_plot():
 

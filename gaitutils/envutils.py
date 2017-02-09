@@ -8,10 +8,8 @@ Stuff related to Python environment
 """
 
 
-from __future__ import print_function
 from guiutils import error_exit
 import sys
-import traceback
 
 
 def register_gui_exception_handler():
@@ -44,8 +42,3 @@ if run_from_ipython():
     DEBUG = True
 else:
     DEBUG = False
-
-
-def debug_print(*args):
-    if DEBUG:
-        print(*args)

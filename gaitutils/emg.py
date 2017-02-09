@@ -8,11 +8,15 @@ Class for reading EMG
 """
 
 
-from __future__ import division, print_function
+from __future__ import division
 import numpy as np
 from scipy import signal
 import read_data
 import config
+import logging
+from nexus import _list_to_str
+
+logger = logging.getLogger(__name__)
 
 
 class EMG(object):
@@ -41,7 +45,8 @@ class EMG(object):
         else:
             ch = min(matches, key=len)  # choose shortest matching name
         if len(matches) > 1:
-            print('warning: multiple channel matches:', matches, '->', ch)
+            logger.warning('multiple channel matches: %s -> %s' %
+                           (_list_to_str(matches), ch))
         data = self.data[ch]
         return self.filt(data, self.passband) if self.passband else data
 
@@ -81,7 +86,6 @@ class EMG(object):
         band = [self.linefreq+10, self.linefreq+10+broadband_bw]
         emgvar = np.var(self.filt(y, band)) / broadband_bw
         intrel = 10*np.log10(intvar/emgvar)
-        # debug_print('rel. interference: ', intrel)
         return intrel < emg_max_interference
 
     def filt(self, y, passband):

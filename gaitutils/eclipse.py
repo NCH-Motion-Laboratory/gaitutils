@@ -6,7 +6,9 @@ Eclipse (database) hacks.
 
 @author: jnu@iki.fi
 """
-from __future__ import print_function
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_eclipse_keys(fname_enf, return_empty=False):
@@ -43,7 +45,7 @@ def set_eclipse_key(fname_enf, keyname, newval, update_existing=False):
             newline = line
         linesnew.append(newline)
     with open(fname_enf, 'w') as f:
-        # print('set_eclipse_key: writing %s' % fname_enf_)
+        logger.debug('writing %s' % fname_enf)
         for li in linesnew:
-            # print('set_eclipse_key: new line %s' % li)
+            logger.debug('new line %s' % li)
             f.write(li + '\n')

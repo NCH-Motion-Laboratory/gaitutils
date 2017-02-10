@@ -12,9 +12,8 @@ import os.path as op
 cfg = dict()
 
 # location of user specific config file
-pathprefix = op.expanduser('~')
-appdir = pathprefix + '/.gaitutils'
-cfg_file = appdir + '/gaitutils.cfg'
+homedir = op.expanduser('~')
+cfg_file = homedir + '/.gaitutils.cfg'
 
 
 """ These variables will be written out into config file. """
@@ -25,7 +24,7 @@ cfg['vicon_path'] = "C:/Program Files (x86)/Vicon"
 cfg['nexus_path'] = cfg['vicon_path'] + '/Nexus' + cfg['nexus_ver']
 
 """ Plug-in Gait normal data """
-cfg['pig_normaldata_path'] = appdir + '/Data/normal.gcd'
+cfg['pig_normaldata_path'] = homedir + '/Data/normal.gcd'
 
 """ Video player """
 cfg['videoplayer_path'] = 'C:/Program Files (x86)/VideoLAN/VLC/vlc.exe'

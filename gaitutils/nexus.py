@@ -8,6 +8,7 @@ Data readers & processing utils for Vicon Nexus.
 
 """
 
+from __future__ import print_function
 import sys
 import numpy as np
 from scipy import signal
@@ -19,6 +20,7 @@ from eclipse import get_eclipse_keys
 import matplotlib.pyplot as plt
 from config import Config
 import logging
+
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +36,8 @@ if cfg.nexus_path:
 try:
     import ViconNexus
 except ImportError:
-    logger.warning('Cannot import Nexus SDK, unable to communicate with Nexus')
+    # logging handlers are not installed at this point, so use print
+    print('Cannot import Nexus SDK, unable to communicate with Nexus')
 
 
 def pid():

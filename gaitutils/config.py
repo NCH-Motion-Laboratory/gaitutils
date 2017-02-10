@@ -37,8 +37,9 @@ class Config(object):
             try:
                 self.read()
             except ValueError:
-                logger.warning('Config: no config file, trying to create %s' %
-                               self.configfile)
+                # logging handlers are not installed at this point, so use print
+                print('Config: no config file, trying to create %s' %
+                      self.configfile)
                 self.write()
 
     def read(self):

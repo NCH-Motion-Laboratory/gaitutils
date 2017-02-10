@@ -65,6 +65,11 @@ def _do_autoproc(enffiles):
     paths to .enf files).
     """
 
+    def _run_pipelines(plines):
+        for pipeline in plines:
+            logger.debug('Running %s' % pipeline)
+            vicon.RunPipeline(pipeline, '', cfg.pipeline_timeout)
+
     if not nexus.pid():
         raise Exception('Vicon Nexus not running')
     vicon = nexus.viconnexus()
@@ -95,8 +100,7 @@ def _do_autoproc(enffiles):
             logger.debug('Skipping based on description')
             # run preprocessing + save even for skipped trials, to mark
             # them as processed
-            for pipeline in cfg.pre_pipelines:
-                vicon.RunPipeline(pipeline, '', cfg.pipeline_timeout)
+            _run_pipelines(cfg.pre_pipelines)
             vicon.SaveTrial(cfg.save_timeout)
             continue
         eclipse_str = ''
@@ -107,11 +111,9 @@ def _do_autoproc(enffiles):
         if cfg.reset_roi and nexus_ver >= 2.5:
             (fstart, fend) = vicon.GetTrialRange()
             vicon.SetTrialRegionOfInterest(fstart, fend)
-
         # try to run preprocessing pipelines
         fail = None
-        for pipeline in cfg.pre_pipelines:
-            vicon.RunPipeline(pipeline, '', cfg.pipeline_timeout)
+        _run_pipelines(cfg.pre_pipelines)
         # trial sanity checks
         trange = vicon.GetTrialRange()
         if (trange[1] - trange[0]) < cfg.min_trial_duration:
@@ -152,7 +154,8 @@ def _do_autoproc(enffiles):
 
         # move to next trial if preprocessing failed
         if fail is not None:
-            logger.debug('preprocessing failed: %s' % cfg.enf_descriptions[fail])
+            logger.debug('preprocessing failed: %s'
+                         % cfg.enf_descriptions[fail])
             trials[filepath].description = cfg.enf_descriptions[fail]
             vicon.SaveTrial(cfg.save_timeout)
             continue
@@ -163,7 +166,8 @@ def _do_autoproc(enffiles):
         fpdata = utils.kinetics_available(vicon, cfg.check_weight)
         context = fpdata['context']
         if context:
-            eclipse_str += (cfg.enf_descriptions['context_right'] if context == 'R'
+            eclipse_str += (cfg.enf_descriptions['context_right']
+                            if context == 'R'
                             else cfg.enf_descriptions['context_left'])
             contact_v[context+'_strike'].append(fpdata['strike_v'])
             contact_v[context+'_toeoff'].append(fpdata['toeoff_v'])
@@ -241,7 +245,7 @@ def _do_autoproc(enffiles):
         trials[filepath].description = eclipse_str
 
     # all done; update Eclipse descriptions
-    if cfg.write_eclipse_test:
+    if cfg.write_eclipse_desc:
         for filepath, trial in trials.items():
             enf_file = filepath + '.Trial.enf'
             eclipse.set_eclipse_key(enf_file, 'DESCRIPTION',

@@ -7,6 +7,7 @@ c3d reader functions
 @author: Jussi (jnu@iki.fi)
 """
 
+from __future__ import print_function
 import logging
 import numpy as np
 from scipy.signal import medfilt
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 try:
     import btk
 except ImportError:
-    logger.warning('cannot find btk module; unable to read .c3d files')
+    print('Cannot find btk module; unable to read .c3d files')
 
 
 def is_c3dfile(obj):

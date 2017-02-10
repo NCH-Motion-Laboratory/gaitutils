@@ -99,3 +99,46 @@ cfg['emg_normals_alpha'] = .8
 cfg['emg_alpha'] = .6
 cfg['emg_normals_color'] = 'pink'
 cfg['emg_ylabel'] = 'mV'
+
+
+""" Autoprocessing settings """
+
+cfg['pre_pipelines'] = ['Reconstruct and label (legacy)',
+                        'AutoGapFill_mod', 'filter']
+cfg['model_pipeline'] = 'Dynamic model + save (LEGACY)'
+cfg['trial_open_timeout'] = 45
+cfg['pipeline_timeout'] = 45
+cfg['save_timeout'] = 100
+cfg['type_skip'] = 'Static'
+cfg['desc_skip'] = ['Unipedal right', 'Unipedal left', 'Toe standing']
+cfg['min_trial_duration'] = 100
+cfg['crop_margin'] = 10
+cfg['track_markers'] = ['RASI', 'LASI']
+cfg['y_midpoint'] = 0
+cfg['enf_descriptions'] = {'short': 'short trial', 'context_right': 'o',
+                           'context_left': 'v', 'no_context': 'ei kontaktia',
+                           'dir_front': 'e', 'dir_back': 't', 'ok': 'ok',
+                           'automark_failure': 'not automarked',
+                           'gaps': 'gaps',
+                           'gaps_or_short': 'gaps or short trial',
+                           'label_failure': 'labelling failed'}
+cfg['gaps_min_dist'] = 70
+cfg['gaps_max'] = 10
+cfg['write_eclipse_desc'] = True
+cfg['reset_roi'] = True
+cfg['check_weight'] = True
+cfg['automark_max_dist'] = 2000
+cfg['walkway_mid'] = [0, 300, 0]
+
+
+
+
+
+
+
+
+
+
+
+
+

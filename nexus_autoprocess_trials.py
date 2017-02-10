@@ -19,11 +19,6 @@ Process all trials in current session directory. Need to load a trial first
 -mark all trials in Eclipse .enf files
 
 
-TODO:
-
-vars into config data
-
-
 NOTES:
 
 -ROI operations only work for Nexus >= 2.5
@@ -42,58 +37,6 @@ import time
 import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
-
-
-# list of pipelines to run
-PRE_PIPELINES = ['Reconstruct and label (legacy)', 'AutoGapFill_mod', 'filter']
-MODEL_PIPELINE = 'Dynamic model + save (LEGACY)'
-# timeouts for Nexus (sec)
-TRIAL_OPEN_TIMEOUT = 45
-PIPELINE_TIMEOUT = 45
-SAVE_TIMEOUT = 100
-# trial types to skip (Eclipse type field) (case sensitive)
-TYPE_SKIP = 'Static'
-# trial descriptions to skip (Eclipse description field) (not case sensitive)
-DESC_SKIP = ['Unipedal right', 'Unipedal left', 'Toe standing']
-# min. trial duration (frames)
-MIN_TRIAL_DURATION = 100
-# how many frames to leave before/after first/last events
-CROP_MARGIN = 10
-# marker for tracking overall body position (to get gait dir) and center frame
-# do not use RPSI and LPSI since they are not always present
-TRACK_MARKERS = ['RASI', 'LASI']
-# center of walkway
-Y_MIDPOINT = 0
-# right feet markers
-RIGHT_FOOT_MARKERS = ['RHEE', 'RTOE', 'RANK']
-# left foot markers
-LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
-# Eclipse descriptions for various conditions
-DESCRIPTIONS = {'short': 'short trial', 'context_right': 'o',
-                'context_left': 'v',
-                'no_context': 'ei kontaktia', 'dir_front': 'e',
-                'dir_back': 't', 'ok': 'ok',
-                'automark_failure': 'not automarked', 'gaps': 'gaps',
-                'gaps_or_short': 'gaps or short trial',
-                'label_failure': 'labelling failed'}
-# gaps min distance from center frame
-GAPS_MIN_DIST = 70
-# max. tolerated frames with gaps
-GAPS_MAX = 10
-# whether to use trial specific velocity threshold data when available
-TRIAL_SPECIFIC_VELOCITY = True
-# write Eclipse descriptions
-WRITE_ECLIPSE_DESC = True
-# reset ROI before processing; otherwise trajectories won't get reconstructed
-# outside ROI
-RESET_ROI = True
-# check subject weight when analyzing forceplate data
-CHECK_WEIGHT = True
-# events max distance from walkway center (mm)
-AUTOMARK_MAX_DIST = 2000
-# walkway mid point (mm)
-WALKWAY_MID = [0, 300, 0]
-
 
 # read config data
 cfg = config.Config()
@@ -145,40 +88,40 @@ def _do_autoproc(enffiles):
         edi = eclipse.get_eclipse_keys(filepath_, return_empty=True)
         trial_type = edi['TYPE']
         trial_desc = edi['DESCRIPTION']
-        if trial_type in TYPE_SKIP:
+        if trial_type in cfg.type_skip:
             logger.debug('Not a dynamic trial, skipping')
             continue
-        if trial_desc.upper() in [s.upper() for s in DESC_SKIP]:
+        if trial_desc.upper() in [s.upper() for s in cfg.desc_skip]:
             logger.debug('Skipping based on description')
             # run preprocessing + save even for skipped trials, to mark
             # them as processed
-            for pipeline in PRE_PIPELINES:
-                vicon.RunPipeline(pipeline, '', PIPELINE_TIMEOUT)
-            vicon.SaveTrial(SAVE_TIMEOUT)
+            for pipeline in cfg.pre_pipelines:
+                vicon.RunPipeline(pipeline, '', cfg.pipeline_timeout)
+            vicon.SaveTrial(cfg.save_timeout)
             continue
         eclipse_str = ''
         trials[filepath] = Trial()
-        vicon.OpenTrial(filepath, TRIAL_OPEN_TIMEOUT)
+        vicon.OpenTrial(filepath, cfg.trial_open_timeout)
         allmarkers = vicon.GetMarkerNames(subjectname)
         # reset ROI before operations
-        if RESET_ROI and nexus_ver >= 2.5:
+        if cfg.reset_roi and nexus_ver >= 2.5:
             (fstart, fend) = vicon.GetTrialRange()
             vicon.SetTrialRegionOfInterest(fstart, fend)
 
         # try to run preprocessing pipelines
         fail = None
-        for pipeline in PRE_PIPELINES:
-            vicon.RunPipeline(pipeline, '', PIPELINE_TIMEOUT)
+        for pipeline in cfg.pre_pipelines:
+            vicon.RunPipeline(pipeline, '', cfg.pipeline_timeout)
         # trial sanity checks
         trange = vicon.GetTrialRange()
-        if (trange[1] - trange[0]) < MIN_TRIAL_DURATION:
+        if (trange[1] - trange[0]) < cfg.min_trial_duration:
             fail = 'short'
         else:  # duration ok
             # try to figure out trial center frame
-            for marker in TRACK_MARKERS:
+            for marker in cfg.track_markers:
                 try:
                     ctr = utils.get_crossing_frame(vicon, marker=marker, dim=1,
-                                                   p0=Y_MIDPOINT)
+                                                   p0=cfg.y_midpoint)
                 except ValueError:
                     ctr = None
                 ctr = ctr[0] if ctr else None
@@ -201,7 +144,7 @@ def _do_autoproc(enffiles):
                     # check for gaps nearby the center frame
                     if gaps.size > 0:
                         if (np.where(abs(gaps - ctr) <
-                           GAPS_MIN_DIST)[0].size > GAPS_MAX):
+                           cfg.gaps_min_dist)[0].size > cfg.gaps_max):
                             gaps_found = True
                             break
         if gaps_found:
@@ -209,34 +152,34 @@ def _do_autoproc(enffiles):
 
         # move to next trial if preprocessing failed
         if fail is not None:
-            logger.debug('preprocessing failed: %s' % DESCRIPTIONS[fail])
-            trials[filepath].description = DESCRIPTIONS[fail]
-            vicon.SaveTrial(SAVE_TIMEOUT)
+            logger.debug('preprocessing failed: %s' % cfg.enf_descriptions[fail])
+            trials[filepath].description = cfg.enf_descriptions[fail]
+            vicon.SaveTrial(cfg.save_timeout)
             continue
         else:
             trials[filepath].recon_ok = True
 
         # preprocessing ok, get kinetics info
-        fpdata = utils.kinetics_available(vicon, CHECK_WEIGHT)
+        fpdata = utils.kinetics_available(vicon, cfg.check_weight)
         context = fpdata['context']
         if context:
-            eclipse_str += (DESCRIPTIONS['context_right'] if context == 'R'
-                            else DESCRIPTIONS['context_left'])
+            eclipse_str += (cfg.enf_descriptions['context_right'] if context == 'R'
+                            else cfg.enf_descriptions['context_left'])
             contact_v[context+'_strike'].append(fpdata['strike_v'])
             contact_v[context+'_toeoff'].append(fpdata['toeoff_v'])
             trials[filepath].context = context
             trials[filepath].fpdata = fpdata
         else:
-            eclipse_str += DESCRIPTIONS['no_context']
+            eclipse_str += cfg.enf_descriptions['no_context']
         eclipse_str += ','
 
         # check direction of gait (y coordinate increase/decrease)
-        gait_dir = utils.get_movement_direction(vicon, TRACK_MARKERS[0],
+        gait_dir = utils.get_movement_direction(vicon, cfg.track_markers[0],
                                                 'y')
-        gait_dir = (DESCRIPTIONS['dir_back'] if gait_dir == 1 else
-                    DESCRIPTIONS['dir_front'])
+        gait_dir = (cfg.enf_descriptions['dir_back'] if gait_dir == 1 else
+                    cfg.enf_descriptions['dir_front'])
         eclipse_str += gait_dir
-        vicon.SaveTrial(SAVE_TIMEOUT)
+        vicon.SaveTrial(cfg.save_timeout)
         # time.sleep(1)
         trials[filepath].description = eclipse_str
 
@@ -254,7 +197,7 @@ def _do_autoproc(enffiles):
     for filepath, trial in sel_trials.items():
         filename = os.path.split(filepath)[1]
         logger.debug('\nprocessing: %s' % filename)
-        vicon.OpenTrial(filepath, TRIAL_OPEN_TIMEOUT)
+        vicon.OpenTrial(filepath, cfg.trial_open_timeout)
         enf_file = filepath + '.Trial.enf'
         # if fp data available from trial itself, use it for automark
         # otherwise use statistics
@@ -268,15 +211,15 @@ def _do_autoproc(enffiles):
         try:
             vicon.ClearAllEvents()
             nexus.automark_events(vicon,
-                                  max_dist=AUTOMARK_MAX_DIST,
-                                  ctr_pos=WALKWAY_MID,
+                                  max_dist=cfg.automark_max_dist,
+                                  ctr_pos=cfg.walkway_mid,
                                   first_strike=first_strike,
                                   vel_thresholds=vel_th_)
             trial.events = True
         except ValueError:  # cannot automark
             eclipse_str = (trials[filepath].description + ',' +
-                           DESCRIPTIONS['automark_failure'])
-            vicon.SaveTrial(SAVE_TIMEOUT)
+                           cfg.enf_descriptions['automark_failure'])
+            vicon.SaveTrial(cfg.save_timeout)
             continue  # next trial
         # events ok
         # crop trial
@@ -288,17 +231,17 @@ def _do_autoproc(enffiles):
             if evs:
                 # when setting roi, do not go beyond trial range
                 minfr, maxfr = vicon.GetTrialRange()
-                roistart = max(min(evs)-CROP_MARGIN, minfr)
-                roiend = min(max(evs)+CROP_MARGIN, maxfr)
+                roistart = max(min(evs)-cfg.crop_margin, minfr)
+                roiend = min(max(evs)+cfg.crop_margin, maxfr)
                 vicon.SetTrialRegionOfInterest(roistart, roiend)
         # run model pipeline and save
-        eclipse_str = DESCRIPTIONS['ok'] + ',' + trial.description
-        vicon.RunPipeline(MODEL_PIPELINE, '', PIPELINE_TIMEOUT)
-        vicon.SaveTrial(SAVE_TIMEOUT)
+        eclipse_str = cfg.enf_descriptions['ok'] + ',' + trial.description
+        vicon.RunPipeline(cfg.model_pipeline, '', cfg.pipeline_timeout)
+        vicon.SaveTrial(cfg.save_timeout)
         trials[filepath].description = eclipse_str
 
     # all done; update Eclipse descriptions
-    if WRITE_ECLIPSE_DESC:
+    if cfg.write_eclipse_test:
         for filepath, trial in trials.items():
             enf_file = filepath + '.Trial.enf'
             eclipse.set_eclipse_key(enf_file, 'DESCRIPTION',

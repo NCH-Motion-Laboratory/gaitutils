@@ -13,9 +13,6 @@ a path to a c3d file.
 import nexus
 import c3d
 
-import logging
-logging.basicConfig(level=logging.DEBUG)
-
 
 def _reader_module(source):
     """ Determine the appropriate module to use """

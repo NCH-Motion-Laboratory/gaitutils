@@ -1,111 +1,29 @@
 # -*- coding: utf-8 -*-
 
 
-bugeja:
 
-analog nollaksi -bugi
 
-E0041_ES tukisessio, ES07:
-automark poimii eventit väärästä kohtaa
-
-E0004_IH paljal:
--eventit menee joissain trialeissa väärään kohtaan, jos prosessoi kaikki kerralla
-
-"ei kontaktia" esim. E0041->tuet_ES12
-=cop shift too large (iso kenkä)
+gaitutils TODO
 
 
 
-gaitutils TODO:
+-layouts should go into config or separate layouts file
 
+-config may need sections
 
+-need testing on multiple forceplate systems
 
--variable plotting semantics, possibilities:
+-unnormalized model plotting ok?
 
-1) enable multiple vars per subplot [[['LAnkleAngles','RAnkleAngles']]]
-(to allow superposing e.g. kinetics vars)
-
-e.g. 2 rows of subplots, superpose kinematics on top row:
-[
-[['LAnkleAngles','RAnkleAngles'], ['LHipAngles','RHipAngles]],
-['LHipMoment', 'LKneeMoment']
-]
-(subplot variables spec could be either list or string)
-then specify corresponding contexts, e.g.
-[
-[['L', 'R'], ['L', 'R']],
-['L', 'L']
-]
-
-
-2) vars without leading side R/L will be plotted on both sides
-normalization always on corresponding side
-
-
-
-
-
-
-
-
-
--validate (gaitplotter, Nexus)
+-validate (against gaitplotter & Nexus)
 
 -cop calculation causes runtime warning (div by zero)
-
--unnormalized model plotting not yet working fully
 
 -small discrepancies in c3d/Nexus cycles?
     -nexus returns smaller frame indices (sometimes)
 
 -config gets imported at too many places
 
--packaging
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-context of cycle (L/R)
-side of variable
-
-
-for s in subplot:
-    for var in vars:
-        for cyc in cycles:
-            if this_var_context == cyc.context:
-                plot
-
-    
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+-pip install? (eventually)
 
 

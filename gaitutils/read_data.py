@@ -82,7 +82,7 @@ def get_model_data(source, model):
                     modeldata[var+'Y'] = modeldata[var][1, :]
                     modeldata[var+'Z'] = modeldata[var][2, :]
                 else:
-                    raise Exception('Expected a 3D array')
+                    raise ValueError('Expected a 3D array')
     return modeldata
 
 

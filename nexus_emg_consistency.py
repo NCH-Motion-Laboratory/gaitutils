@@ -47,7 +47,8 @@ def do_plot():
         maintitle = ('EMG consistency plot, '
                      'session %s' % pl.trial.trialdirname)
         pl.plot_trial(emg_tracecolor=linecolors[i],
-                      maintitle=maintitle, superpose=True, show=False)
+                      maintitle=maintitle, annotate_emg=False,
+                      superpose=True, show=False)
 
     pl.show()
     pl.create_pdf('emg_consistency.pdf')

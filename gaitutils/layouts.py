@@ -46,24 +46,6 @@ std_emg = [['LGlut', 'RGlut'],
            ['LGas', 'RGas'],
            ['LSol', 'RSol']]
 
-std_emg_left = [[None, 'LGlut'],
-                [None, 'LHam'],
-                [None, 'LRec'],
-                [None, 'LVas'],
-                [None, 'LTibA'],
-                [None, 'LPer'],
-                [None, 'LGas'],
-                [None, 'LSol']]
-
-std_emg_right = [['RGlut', None],
-                 ['RHam', None],
-                 ['RRec', None],
-                 ['RVas', None],
-                 ['RTibA', None],
-                 ['RPer', None],
-                 ['RGas', None],
-                 ['RSol', None]]
-
 
 # kinetics + kinematics
 std_kinall = std_kinematics + std_kinetics

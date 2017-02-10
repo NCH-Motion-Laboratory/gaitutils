@@ -10,7 +10,6 @@ description and defined search strings.
 
 from gaitutils import Plotter, layouts, register_gui_exception_handler
 from gaitutils.nexus import enf2c3d, find_trials
-from gaitutils.guiutils import error_exit
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -31,11 +30,11 @@ def do_plot():
         strs = ['ok']
         marked_trials = list(find_trials(eclkeys, strs))
         if not marked_trials:
-            error_exit('Did not find any marked trials in current '
-                       'session directory')
+            raise Exception('Did not find any marked trials in current '
+                            'session directory')
 
     if len(marked_trials) > MAX_TRIALS:
-        error_exit('Too many marked trials found!')
+        raise Exception('Too many marked trials found!')
 
     pl = Plotter()
     pl.open_trial(enf2c3d(marked_trials[0]))

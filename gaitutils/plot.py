@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 from matplotlib import pylab
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.gridspec as gridspec
-from guiutils import error_exit, messagebox
 import os.path as op
 import os
 import subprocess
@@ -53,7 +52,7 @@ class Plotter(object):
     def layout(self, layout):
         if (not isinstance(layout, list) or not
            all([isinstance(item, list) for item in layout])):
-            raise ValueError('Layout must be a list of lists')
+            raise Exception('Layout must be a list of lists')
         self._layout = layout
         self.allvars = [item for row in layout for item in row]
         self.nrows = len(layout)
@@ -70,7 +69,7 @@ class Plotter(object):
         """ Launch video player (defined in config) to play vidfile. """
         PLAYER_CMD = self.cfg.videoplayer_path
         if not (op.isfile(PLAYER_CMD) and os.access(PLAYER_CMD, os.X_OK)):
-            error_exit('Invalid video player executable: %s' % PLAYER_CMD)
+            raise Exception('Invalid video player executable: %s' % PLAYER_CMD)
         PLAYER_OPTS = self.cfg.videoplayer_opts
         # command needs to be constructed in a very particular way
         # see subprocess.list2cmdline
@@ -441,5 +440,5 @@ class Plotter(object):
             with PdfPages(pdf_name) as pdf:
                 pdf.savefig(self.fig)
         except IOError:
-            messagebox('Error writing PDF file, '
-                       'check that file is not already open.')
+            raise Exception('Error writing PDF file, '
+                            'check that file is not already open.')

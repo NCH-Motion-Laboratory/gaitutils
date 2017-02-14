@@ -289,8 +289,8 @@ def get_model_data(vicon, model):
     for var in model.read_vars:
         nums, bools = vicon.GetModelOutput(subjectname, var)
         if not nums:
-            raise ValueError('Cannot read model variable %s. Make sure that '
-                             'the appropriate model has been run.' % var)
+            raise Exception('Cannot read model variable %s. Make sure that '
+                            'the appropriate model has been run.' % var)
         # remove singleton dimensions
         modeldata[var] = np.squeeze(np.array(nums))
     return modeldata

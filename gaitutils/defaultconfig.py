@@ -56,7 +56,7 @@ cfg['emg']['channel_labels'] = {'RHam': 'Medial hamstrings (R)',
                      'LTibA': 'Tibialis anterior (L)',
                      'LPer': 'Peroneus (L)'}
 
-cfg['emg']['channel_names'] = cfg['emg']['emg_labels'].keys()
+cfg['emg']['channel_names'] = cfg['emg']['channel_labels'].keys()
 
 # EMG "normal bars" (the expected range of activation during gait cycle),
 # axis is 0..100%

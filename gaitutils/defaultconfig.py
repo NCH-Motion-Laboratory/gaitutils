@@ -7,9 +7,10 @@ Edit the user specific config file instead (location given by cfg_file below)
 @author: Jussi (jnu@iki.fi)
 """
 
+from collections import OrderedDict
 import os.path as op
 
-cfg = dict()
+cfg = OrderedDict()  # to preserve order of items in config file
 
 # location of user specific config file
 homedir = op.expanduser('~')
@@ -30,14 +31,13 @@ cfg['general']['videoplayer_path'] = 'C:/Program Files (x86)/VideoLAN/VLC/vlc.ex
 cfg['general']['videoplayer_opts'] = '--input-repeat=-1 --rate=.2'
 
 
-
 """ EMG settings """
 cfg['emg'] = dict()
-cfg['emg']['emg_passband'] = (10, 400)
+cfg['emg']['passband'] = (10, 400)
 cfg['emg']['linefreq'] = 50
-cfg['emg']['emg_devname'] = 'Myon'
-cfg['emg']['emg_yscale'] = (-.5e-3, .5e-3)
-cfg['emg']['emg_labels'] = {'RHam': 'Medial hamstrings (R)',
+cfg['emg']['devname'] = 'Myon'
+cfg['emg']['yscale'] = (-.5e-3, .5e-3)
+cfg['emg']['channel_labels'] = {'RHam': 'Medial hamstrings (R)',
                      'RRec': 'Rectus femoris (R)',
                      'RGas': 'Gastrognemius (R)',
                      'RLat_gast': 'Lateral gastrocnemius (R)',
@@ -56,11 +56,11 @@ cfg['emg']['emg_labels'] = {'RHam': 'Medial hamstrings (R)',
                      'LTibA': 'Tibialis anterior (L)',
                      'LPer': 'Peroneus (L)'}
 
-cfg['emg']['emg_names'] = cfg['emg']['emg_labels'].keys()
+cfg['emg']['channel_names'] = cfg['emg']['emg_labels'].keys()
 
 # EMG "normal bars" (the expected range of activation during gait cycle),
 # axis is 0..100%
-cfg['emg']['emg_normals'] = {'RGas': [[16, 50]],
+cfg['emg']['channel_normaldata'] = {'RGas': [[16, 50]],
                       'RGlut': [[0, 42], [96, 100]],
                       'RHam': [[0, 2], [92, 100]],
                       'RPer': [[4, 54]],
@@ -78,29 +78,29 @@ cfg['emg']['emg_normals'] = {'RGas': [[16, 50]],
                       'LVas': [[0, 24], [96, 100]]}
 
 """ Plotting related settings """
-cfg['plotting'] = dict()
-cfg['plotting']['plot_label_fontsize'] = 9
-cfg['plotting']['plot_title_fontsize'] = 12
-cfg['plotting']['plot_ticks_fontsize'] = 10
-cfg['plotting']['plot_inch_per_row'] = 1.5
-cfg['plotting']['plot_inch_per_col'] = 4.5
-cfg['plotting']['plot_titlespace'] = .75
-cfg['plotting']['plot_maxw'] = 20.
-cfg['plotting']['plot_maxh'] = 12.
-cfg['plotting']['plot_analog_plotheight'] = .667
-cfg['plotting']['model_tracecolors'] = {'R': 'lawngreen', 'L': 'red'}
-cfg['plotting']['model_linestyles'] = {'R': '-', 'L': '--'}
-cfg['plotting']['model_linewidth'] = 1.5
-cfg['plotting']['model_normals_alpha'] = .3
-cfg['plotting']['model_normals_color'] = 'gray'
-cfg['plotting']['emg_tracecolor'] = 'black'
-cfg['plotting']['emg_linewidth'] = .5
-cfg['plotting']['emg_ylabel'] = 'mV'
-cfg['plotting']['emg_multiplier'] = 1e3
-cfg['plotting']['emg_normals_alpha'] = .8
-cfg['plotting']['emg_alpha'] = .6
-cfg['plotting']['emg_normals_color'] = 'pink'
-cfg['plotting']['emg_ylabel'] = 'mV'
+cfg['plot'] = dict()
+cfg['plot']['label_fontsize'] = 9
+cfg['plot']['title_fontsize'] = 12
+cfg['plot']['ticks_fontsize'] = 10
+cfg['plot']['inch_per_row'] = 1.5
+cfg['plot']['inch_per_col'] = 4.5
+cfg['plot']['titlespace'] = .75
+cfg['plot']['maxw'] = 20.
+cfg['plot']['maxh'] = 12.
+cfg['plot']['analog_plotheight'] = .667
+cfg['plot']['model_tracecolors'] = {'R': 'lawngreen', 'L': 'red'}
+cfg['plot']['model_linestyles'] = {'R': '-', 'L': '--'}
+cfg['plot']['model_linewidth'] = 1.5
+cfg['plot']['model_normals_alpha'] = .3
+cfg['plot']['model_normals_color'] = 'gray'
+cfg['plot']['emg_tracecolor'] = 'black'
+cfg['plot']['emg_linewidth'] = .5
+cfg['plot']['emg_ylabel'] = 'mV'
+cfg['plot']['emg_multiplier'] = 1e3
+cfg['plot']['emg_normals_alpha'] = .8
+cfg['plot']['emg_alpha'] = .6
+cfg['plot']['emg_normals_color'] = 'pink'
+cfg['plot']['emg_ylabel'] = 'mV'
 
 
 """ Autoprocessing settings """

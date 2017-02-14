@@ -90,7 +90,8 @@ class Plotter(object):
         elif models.model_from_var(var):
             return 'model'
         # check whether it's a configured EMG channel OR a physical one
-        elif self.trial.emg.is_channel(var) or var in self.cfg.emg_names:
+        elif (self.trial.emg.is_channel(var) or
+              var in self.cfg.emg.channel_names):
             return 'emg'
         elif var in ('model_legend', 'emg_legend'):
             return var
@@ -103,7 +104,7 @@ class Plotter(object):
             if all([self._var_type(var) == 'model' for var in row]):
                 plotheightratios.append(1)
             else:
-                plotheightratios.append(self.cfg.plot_analog_plotheight)
+                plotheightratios.append(self.cfg.plot.analog_plotheight)
         return plotheightratios
 
     def plot_trial(self, model_cycles={'R': 1, 'L': 1},
@@ -203,10 +204,10 @@ class Plotter(object):
 
         if self.fig is None or not superpose:
             # auto size fig according to n of subplots w, limit size
-            self.figh = min(self.nrows*self.cfg.plot_inch_per_row + 1,
-                            self.cfg.plot_maxh)
-            self.figw = min(self.ncols*self.cfg.plot_inch_per_col,
-                            self.cfg.plot_maxw)
+            self.figh = min(self.nrows*self.cfg.plot.inch_per_row + 1,
+                            self.cfg.plot.maxh)
+            self.figw = min(self.ncols*self.cfg.plot.inch_per_col,
+                            self.cfg.plot.maxw)
             self.fig = plt.figure(figsize=(self.figw, self.figh))
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)
@@ -275,23 +276,23 @@ class Plotter(object):
                     if cycle == model_cycles[-1]:
                         ax.set(ylabel=model.ylabels[varname])  # no xlabel now
                         ax.xaxis.label.set_fontsize(self.cfg.
-                                                    plot_label_fontsize)
+                                                    plot.label_fontsize)
                         ax.yaxis.label.set_fontsize(self.cfg.
-                                                    plot_label_fontsize)
+                                                    plot.label_fontsize)
                         subplot_title = model.varlabels[varname]
                         prev_title = ax.get_title()
                         if prev_title and prev_title != subplot_title:
                             subplot_title = prev_title + ' / ' + subplot_title
                         ax.set_title(subplot_title)
-                        ax.title.set_fontsize(self.cfg.plot_title_fontsize)
+                        ax.title.set_fontsize(self.cfg.plot.title_fontsize)
                         ax.axhline(0, color='black')  # zero line
                         ax.locator_params(axis='y', nbins=6)  # less tick marks
                         ax.tick_params(axis='both', which='major',
-                                       labelsize=self.cfg.plot_ticks_fontsize)
+                                       labelsize=self.cfg.plot.ticks_fontsize)
                         if cycle is None:
                             ax.set(xlabel='Time (s)')
                             ax.xaxis.label.set_fontsize(self.cfg.
-                                                        plot_label_fontsize)
+                                                        plot.label_fontsize)
                         if plot_model_normaldata and cycle is not None:
                             tnor, ndata = model.get_normaldata(varname)
                             if ndata is not None:
@@ -322,7 +323,7 @@ class Plotter(object):
                 if prev_title and prev_title != subplot_title:
                     subplot_title = prev_title + ' / ' + subplot_title
                 ax.set_title(subplot_title)
-                ax.title.set_fontsize(self.cfg.plot_title_fontsize)
+                ax.title.set_fontsize(self.cfg.plot.title_fontsize)
                 for cycle in emg_cycles:
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
@@ -348,19 +349,19 @@ class Plotter(object):
                     if cycle == emg_cycles[-1]:
                         ax.set(ylabel=self.cfg.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.
-                                                    plot_label_fontsize)
+                                                    plot.label_fontsize)
                         ax.locator_params(axis='y', nbins=4)
                         # tick font size
                         ax.tick_params(axis='both', which='major',
-                                       labelsize=self.cfg.plot_ticks_fontsize)
+                                       labelsize=self.cfg.plot.ticks_fontsize)
                         ax.set_xlim(min(x), max(x))
-                        ysc = self.cfg.emg_yscale
+                        ysc = self.cfg.emg.yscale
                         ax.set_ylim(ysc[0]*self.cfg.emg_multiplier,
                                     ysc[1]*self.cfg.emg_multiplier)
                         if (plot_emg_normaldata and cycle is not None and
-                           var in self.cfg.emg_normals):
+                           var in self.cfg.emg.channel_normaldata):
                             # plot EMG normal bars
-                            emgbar_ind = self.cfg.emg_normals[var]
+                            emgbar_ind = self.cfg.emg.channel_normaldata[var]
                             for k in range(len(emgbar_ind)):
                                 inds = emgbar_ind[k]
                                 plt.axvspan(inds[0], inds[1],
@@ -369,7 +370,7 @@ class Plotter(object):
                         if cycle is None:
                             ax.set(xlabel='Time (s)')
                             ax.xaxis.label.set_fontsize(self.cfg.
-                                                        plot_label_fontsize)
+                                                        plot.label_fontsize)
 
             elif var_type in ('model_legend', 'emg_legend'):
                 self.legendnames.append('%s   %s   %s' % (
@@ -392,13 +393,13 @@ class Plotter(object):
                                          edgecolor='none', linewidth=0)]
                 ax.legend(nothing+artists,
                           legtitle+self.legendnames, loc='upper center',
-                          prop={'size': self.cfg.plot_label_fontsize})
+                          prop={'size': self.cfg.plot.label_fontsize})
 
         plt.suptitle(maintitle, fontsize=12, fontweight="bold")
         self.gridspec.tight_layout(self.fig)
         # some fixes to tight_layout
         # space for main title
-        top = (self.figh - self.cfg.plot_titlespace) / self.figh
+        top = (self.figh - self.cfg.plot.titlespace) / self.figh
         # decrease vertical spacing
         hspace = .40
         self.gridspec.update(top=top, hspace=hspace)

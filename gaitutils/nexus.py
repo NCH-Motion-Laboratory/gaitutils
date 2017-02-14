@@ -167,7 +167,7 @@ def get_metadata(vicon):
 def get_emg_data(vicon):
     """ Read EMG data from Nexus """
     ids = [id for id in vicon.GetDeviceIDs() if
-           vicon.GetDeviceDetails(id)[0].lower() == cfg.emg_devname.lower()]
+           vicon.GetDeviceDetails(id)[0].lower() == cfg.emg.devname.lower()]
     if len(ids) > 1:
         raise ValueError('Multiple matching EMG devices')
     elif len(ids) == 0:

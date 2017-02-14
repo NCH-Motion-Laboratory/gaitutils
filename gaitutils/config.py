@@ -24,10 +24,12 @@ class Config(object):
     """ Configuration class for gaitutils. Config values are readable as
     instance attributes or by indexing, but must be set by indexing.
 
-    Uses configparser and auto conversion between string values and Python
-    types (based on __repr__ and ast.literal_eval). Values are converted to
+    Provides auto conversion between string values and Python types
+    (based on __repr__ and ast.literal_eval). Values are converted to
     text when saving to file and back to Python expressions when reading.
-    Alternative might be to use configobj module.
+
+    Also provides attribute access by syntax Config.SectionName.ItemName
+    to avoid cumbersome dict expressions.
     """
 
     def __init__(self, autoread=True):
@@ -50,17 +52,15 @@ class Config(object):
                 self.write()
 
     def read(self):
-        """ Read config dict from disk file. """
+        """ Read config from disk file, update instance """
         if not op.isfile(self.configfile):
             raise ValueError('No config file')
         self.parser.read(self.configfile)
-        inifile = open(self.configfile, 'rt')        
-        inifile.close()
         for section in self.parser.sections():
             if section not in self.__dict__:
                 self.__dict__[section] = Section()
-            cfgtxt = self.parser._sections[section]  # dict
-            cfg = self._untextify(cfgtxt)  # dict values -> Python types
+            cfgtxt = self.parser._sections[section]
+            cfg = self._untextify(cfgtxt)
             self.__dict__[section].__dict__.update(cfg)
 
     def write(self):
@@ -75,13 +75,6 @@ class Config(object):
                 self.parser.set(section, key, cfgtxt[key])
         self.parser.write(inifile)
         inifile.close()
-
-    def __getitem__(self, key):
-        return self.cfg[key]
-
-    def __setitem__(self, key, val):
-        self.cfg[key] = val
-        self.__dict__.update(self.cfg)
 
     @staticmethod
     def _textify(di):

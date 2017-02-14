@@ -28,8 +28,8 @@ class EMG(object):
         self.buttord = 5
         if cfg is None:
             cfg = config.Config()
-        self.passband = cfg.emg_passband
-        self.linefreq = cfg.linefreq
+        self.passband = cfg.emg.passband
+        self.linefreq = cfg.emg.linefreq
         self.data = None
 
     def __getitem__(self, item):

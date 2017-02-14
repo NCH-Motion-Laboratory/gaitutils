@@ -27,12 +27,12 @@ logger = logging.getLogger(__name__)
 
 # try to import Nexus Python SDK
 cfg = Config()
-if cfg.nexus_path:
-    if op.isdir(cfg.nexus_path):
-        if not cfg.nexus_path + "/SDK/Python" in sys.path:
-            sys.path.append(cfg.nexus_path + "/SDK/Python")
+if cfg.general.nexus_path:
+    if op.isdir(cfg.general.nexus_path):
+        if not cfg.general.nexus_path + "/SDK/Python" in sys.path:
+            sys.path.append(cfg.general.nexus_path + "/SDK/Python")
             # needed at least when running outside Nexus
-            sys.path.append(cfg.nexus_path + "/SDK/Win32")
+            sys.path.append(cfg.general.nexus_path + "/SDK/Win32")
 try:
     import ViconNexus
 except ImportError:

@@ -67,10 +67,10 @@ class Plotter(object):
 
     def external_play_video(self, vidfile):
         """ Launch video player (defined in config) to play vidfile. """
-        PLAYER_CMD = self.cfg.videoplayer_path
+        PLAYER_CMD = self.cfg.general.videoplayer_path
         if not (op.isfile(PLAYER_CMD) and os.access(PLAYER_CMD, os.X_OK)):
             raise Exception('Invalid video player executable: %s' % PLAYER_CMD)
-        PLAYER_OPTS = self.cfg.videoplayer_opts
+        PLAYER_OPTS = self.cfg.general.videoplayer_opts
         # command needs to be constructed in a very particular way
         # see subprocess.list2cmdline
         subprocess.Popen([PLAYER_CMD]+PLAYER_OPTS.split()+[vidfile])
@@ -265,11 +265,11 @@ class Plotter(object):
                         x = x_ / self.trial.framerate if cycle is None else x_
                         tcolor = (model_tracecolor if model_tracecolor
                                   else
-                                  self.cfg.model_tracecolors[cycle.context])
-                        lstyle = (self.cfg.model_linestyles[cycle.context] if
+                                  self.cfg.plot.model_tracecolors[cycle.context])
+                        lstyle = (self.cfg.plot.model_linestyles[cycle.context] if
                                   linestyles_context else model_linestyle)
                         ax.plot(x, data, tcolor, linestyle=lstyle,
-                                linewidth=self.cfg.model_linewidth,
+                                linewidth=self.cfg.plot.model_linewidth,
                                 alpha=model_alpha)
 
                     # set labels, ticks, etc. after plotting last cycle
@@ -302,9 +302,9 @@ class Plotter(object):
                                 nstd = (ndata[:, 1] if ndata.shape[1] == 2
                                         else 0)
                                 ax.fill_between(tnor, nor-nstd, nor+nstd,
-                                                color=self.cfg.
+                                                color=self.cfg.plot.
                                                 model_normals_color,
-                                                alpha=self.cfg.
+                                                alpha=self.cfg.plot.
                                                 model_normals_alpha)
                         ylim = ax.get_ylim()
                         # model specific adjustments to y limits
@@ -341,13 +341,13 @@ class Plotter(object):
                         break  # no data - skip all cycles
                     x = x_ / self.trial.analograte if cycle is None else x_
                     tcolor = (emg_tracecolor if emg_tracecolor else
-                              self.cfg.emg_tracecolor)
+                              self.cfg.plot.emg_tracecolor)
                     if var[0] == cycle.context or not auto_match_emg_cycle:
-                        ax.plot(x, data*self.cfg.emg_multiplier, tcolor,
-                                linewidth=self.cfg.emg_linewidth,
+                        ax.plot(x, data*self.cfg.plot.emg_multiplier, tcolor,
+                                linewidth=self.cfg.plot.emg_linewidth,
                                 alpha=emg_alpha)
                     if cycle == emg_cycles[-1]:
-                        ax.set(ylabel=self.cfg.emg_ylabel)
+                        ax.set(ylabel=self.cfg.plot.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.
                                                     plot.label_fontsize)
                         ax.locator_params(axis='y', nbins=4)
@@ -356,8 +356,8 @@ class Plotter(object):
                                        labelsize=self.cfg.plot.ticks_fontsize)
                         ax.set_xlim(min(x), max(x))
                         ysc = self.cfg.emg.yscale
-                        ax.set_ylim(ysc[0]*self.cfg.emg_multiplier,
-                                    ysc[1]*self.cfg.emg_multiplier)
+                        ax.set_ylim(ysc[0]*self.cfg.plot.emg_multiplier,
+                                    ysc[1]*self.cfg.plot.emg_multiplier)
                         if (plot_emg_normaldata and cycle is not None and
                            var in self.cfg.emg.channel_normaldata):
                             # plot EMG normal bars
@@ -365,8 +365,8 @@ class Plotter(object):
                             for k in range(len(emgbar_ind)):
                                 inds = emgbar_ind[k]
                                 plt.axvspan(inds[0], inds[1],
-                                            alpha=self.cfg.emg_normals_alpha,
-                                            color=self.cfg.emg_normals_color)
+                                            alpha=self.cfg.plot.emg_normals_alpha,
+                                            color=self.cfg.plot.emg_normals_color)
                         if cycle is None:
                             ax.set(xlabel='Time (s)')
                             ax.xaxis.label.set_fontsize(self.cfg.

@@ -68,7 +68,7 @@ def _do_autoproc(enffiles):
     def _run_pipelines(plines):
         for pipeline in plines:
             logger.debug('Running %s' % pipeline)
-            vicon.RunPipeline(pipeline, '', cfg.pipeline_timeout)
+            vicon.RunPipeline(pipeline, '', cfg.autoproc.pipeline_timeout)
 
     if not nexus.pid():
         raise Exception('Vicon Nexus not running')
@@ -93,37 +93,37 @@ def _do_autoproc(enffiles):
         edi = eclipse.get_eclipse_keys(filepath_, return_empty=True)
         trial_type = edi['TYPE']
         trial_desc = edi['DESCRIPTION']
-        if trial_type in cfg.type_skip:
+        if trial_type in cfg.autoproc.type_skip:
             logger.debug('Not a dynamic trial, skipping')
             continue
-        if trial_desc.upper() in [s.upper() for s in cfg.desc_skip]:
+        if trial_desc.upper() in [s.upper() for s in cfg.autoproc.desc_skip]:
             logger.debug('Skipping based on description')
             # run preprocessing + save even for skipped trials, to mark
             # them as processed
-            _run_pipelines(cfg.pre_pipelines)
-            vicon.SaveTrial(cfg.save_timeout)
+            _run_pipelines(cfg.autoproc.pre_pipelines)
+            vicon.SaveTrial(cfg.autoproc.save_timeout)
             continue
         eclipse_str = ''
         trials[filepath] = Trial()
-        vicon.OpenTrial(filepath, cfg.trial_open_timeout)
+        vicon.OpenTrial(filepath, cfg.autoproc.trial_open_timeout)
         allmarkers = vicon.GetMarkerNames(subjectname)
         # reset ROI before operations
-        if cfg.reset_roi and nexus_ver >= 2.5:
+        if cfg.autoproc.reset_roi and nexus_ver >= 2.5:
             (fstart, fend) = vicon.GetTrialRange()
             vicon.SetTrialRegionOfInterest(fstart, fend)
         # try to run preprocessing pipelines
         fail = None
-        _run_pipelines(cfg.pre_pipelines)
+        _run_pipelines(cfg.autoproc.pre_pipelines)
         # trial sanity checks
         trange = vicon.GetTrialRange()
-        if (trange[1] - trange[0]) < cfg.min_trial_duration:
+        if (trange[1] - trange[0]) < cfg.autoproc.min_trial_duration:
             fail = 'short'
         else:  # duration ok
             # try to figure out trial center frame
-            for marker in cfg.track_markers:
+            for marker in cfg.autoproc.track_markers:
                 try:
                     ctr = utils.get_crossing_frame(vicon, marker=marker, dim=1,
-                                                   p0=cfg.y_midpoint)
+                                                   p0=cfg.autoproc.y_midpoint)
                 except ValueError:
                     ctr = None
                 ctr = ctr[0] if ctr else None
@@ -146,7 +146,7 @@ def _do_autoproc(enffiles):
                     # check for gaps nearby the center frame
                     if gaps.size > 0:
                         if (np.where(abs(gaps - ctr) <
-                           cfg.gaps_min_dist)[0].size > cfg.gaps_max):
+                           cfg.autoproc.gaps_min_dist)[0].size > cfg.autoproc.gaps_max):
                             gaps_found = True
                             break
         if gaps_found:
@@ -155,35 +155,35 @@ def _do_autoproc(enffiles):
         # move to next trial if preprocessing failed
         if fail is not None:
             logger.debug('preprocessing failed: %s'
-                         % cfg.enf_descriptions[fail])
-            trials[filepath].description = cfg.enf_descriptions[fail]
-            vicon.SaveTrial(cfg.save_timeout)
+                         % cfg.autoproc.enf_descriptions[fail])
+            trials[filepath].description = cfg.autoproc.enf_descriptions[fail]
+            vicon.SaveTrial(cfg.autoproc.save_timeout)
             continue
         else:
             trials[filepath].recon_ok = True
 
         # preprocessing ok, get kinetics info
-        fpdata = utils.kinetics_available(vicon, cfg.check_weight)
+        fpdata = utils.kinetics_available(vicon, cfg.autoproc.check_weight)
         context = fpdata['context']
         if context:
-            eclipse_str += (cfg.enf_descriptions['context_right']
+            eclipse_str += (cfg.autoproc.enf_descriptions['context_right']
                             if context == 'R'
-                            else cfg.enf_descriptions['context_left'])
+                            else cfg.autoproc.enf_descriptions['context_left'])
             contact_v[context+'_strike'].append(fpdata['strike_v'])
             contact_v[context+'_toeoff'].append(fpdata['toeoff_v'])
             trials[filepath].context = context
             trials[filepath].fpdata = fpdata
         else:
-            eclipse_str += cfg.enf_descriptions['no_context']
+            eclipse_str += cfg.autoproc.enf_descriptions['no_context']
         eclipse_str += ','
 
         # check direction of gait (y coordinate increase/decrease)
-        gait_dir = utils.get_movement_direction(vicon, cfg.track_markers[0],
+        gait_dir = utils.get_movement_direction(vicon, cfg.autoproc.track_markers[0],
                                                 'y')
-        gait_dir = (cfg.enf_descriptions['dir_back'] if gait_dir == 1 else
-                    cfg.enf_descriptions['dir_front'])
+        gait_dir = (cfg.autoproc.enf_descriptions['dir_back'] if gait_dir == 1 else
+                    cfg.autoproc.enf_descriptions['dir_front'])
         eclipse_str += gait_dir
-        vicon.SaveTrial(cfg.save_timeout)
+        vicon.SaveTrial(cfg.autoproc.save_timeout)
         # time.sleep(1)
         trials[filepath].description = eclipse_str
 
@@ -201,7 +201,7 @@ def _do_autoproc(enffiles):
     for filepath, trial in sel_trials.items():
         filename = os.path.split(filepath)[1]
         logger.debug('\nprocessing: %s' % filename)
-        vicon.OpenTrial(filepath, cfg.trial_open_timeout)
+        vicon.OpenTrial(filepath, cfg.autoproc.trial_open_timeout)
         enf_file = filepath + '.Trial.enf'
         # if fp data available from trial itself, use it for automark
         # otherwise use statistics
@@ -215,15 +215,15 @@ def _do_autoproc(enffiles):
         try:
             vicon.ClearAllEvents()
             nexus.automark_events(vicon,
-                                  max_dist=cfg.automark_max_dist,
-                                  ctr_pos=cfg.walkway_mid,
+                                  max_dist=cfg.autoproc.automark_max_dist,
+                                  ctr_pos=cfg.autoproc.walkway_mid,
                                   first_strike=first_strike,
                                   vel_thresholds=vel_th_)
             trial.events = True
         except ValueError:  # cannot automark
             eclipse_str = (trials[filepath].description + ',' +
-                           cfg.enf_descriptions['automark_failure'])
-            vicon.SaveTrial(cfg.save_timeout)
+                           cfg.autoproc.enf_descriptions['automark_failure'])
+            vicon.SaveTrial(cfg.autoproc.save_timeout)
             continue  # next trial
         # events ok
         # crop trial
@@ -235,17 +235,17 @@ def _do_autoproc(enffiles):
             if evs:
                 # when setting roi, do not go beyond trial range
                 minfr, maxfr = vicon.GetTrialRange()
-                roistart = max(min(evs)-cfg.crop_margin, minfr)
-                roiend = min(max(evs)+cfg.crop_margin, maxfr)
+                roistart = max(min(evs)-cfg.autoproc.crop_margin, minfr)
+                roiend = min(max(evs)+cfg.autoproc.crop_margin, maxfr)
                 vicon.SetTrialRegionOfInterest(roistart, roiend)
         # run model pipeline and save
-        eclipse_str = cfg.enf_descriptions['ok'] + ',' + trial.description
-        vicon.RunPipeline(cfg.model_pipeline, '', cfg.pipeline_timeout)
-        vicon.SaveTrial(cfg.save_timeout)
+        eclipse_str = cfg.autoproc.enf_descriptions['ok'] + ',' + trial.description
+        vicon.RunPipeline(cfg.autoproc.model_pipeline, '', cfg.autoproc.pipeline_timeout)
+        vicon.SaveTrial(cfg.autoproc.save_timeout)
         trials[filepath].description = eclipse_str
 
     # all done; update Eclipse descriptions
-    if cfg.write_eclipse_desc:
+    if cfg.autoproc.write_eclipse_desc:
         for filepath, trial in trials.items():
             enf_file = filepath + '.Trial.enf'
             eclipse.set_eclipse_key(enf_file, 'DESCRIPTION',

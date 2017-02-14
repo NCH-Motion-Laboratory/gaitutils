@@ -32,14 +32,14 @@ class Config(object):
 
     def __init__(self, autoread=True):
         self.cfg = defaultconfig.cfg
-        self.sections = dict()  # of Section instances
         self.configfile = defaultconfig.cfg_file
         self.parser = ConfigParser.SafeConfigParser()
         self.parser.optionxform = str  # make it case sensitive
         for section in self.cfg:
             self.parser.add_section(section)
-            self.sections[section] = Section()
-            self.sections[section].__dict__.update(self.cfg[section])
+            self.__dict__[section] = Section()  # section  -> instance variable
+            # make section vars available as instance variables
+            self.__dict__[section].__dict__.update(self.cfg[section])
         if autoread:
             try:
                 self.read()
@@ -54,9 +54,14 @@ class Config(object):
         if not op.isfile(self.configfile):
             raise ValueError('No config file')
         self.parser.read(self.configfile)
-        cfgtxt = self.parser._sections[self.section]  # dict
-        self.cfg = self._untextify(cfgtxt)  # dict values -> Python types
-        self.__dict__.update(self.cfg)
+        inifile = open(self.configfile, 'rt')        
+        inifile.close()
+        for section in self.parser.sections():
+            if section not in self.__dict__:
+                self.__dict__[section] = Section()
+            cfgtxt = self.parser._sections[section]  # dict
+            cfg = self._untextify(cfgtxt)  # dict values -> Python types
+            self.__dict__[section].__dict__.update(cfg)
 
     def write(self):
         """ Save current config dict to a disk file. """
@@ -64,9 +69,10 @@ class Config(object):
             inifile = open(self.configfile, 'wt')
         except IOError:
             raise ValueError('Cannot open config file for writing')
-        cfgtxt = self._textify(self.cfg)  # dict values -> strings
-        for key in sorted(cfgtxt):  # put keys into file in alphabetical order
-            self.parser.set(self.section, key, cfgtxt[key])
+        for section in self.parser.sections():
+            cfgtxt = self._textify(self.__dict__[section].__dict__)
+            for key in sorted(cfgtxt):  # keys into file in alphabetical order
+                self.parser.set(section, key, cfgtxt[key])
         self.parser.write(inifile)
         inifile.close()
 

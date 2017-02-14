@@ -22,7 +22,7 @@ cfg['general'] = dict()
 """ Nexus installation """
 cfg['general']['nexus_ver'] = "2.5"
 cfg['general']['vicon_path'] = "C:/Program Files (x86)/Vicon"
-cfg['general']['nexus_path'] = cfg['vicon_path'] + '/Nexus' + cfg['nexus_ver']
+cfg['general']['nexus_path'] = cfg['general']['vicon_path'] + '/Nexus' + cfg['general']['nexus_ver']
 """ Plug-in Gait normal data """
 cfg['general']['pig_normaldata_path'] = homedir + '/Data/normal.gcd'
 """ Video player """
@@ -56,7 +56,7 @@ cfg['emg']['emg_labels'] = {'RHam': 'Medial hamstrings (R)',
                      'LTibA': 'Tibialis anterior (L)',
                      'LPer': 'Peroneus (L)'}
 
-cfg['emg']['emg_names'] = cfg['emg_labels'].keys()
+cfg['emg']['emg_names'] = cfg['emg']['emg_labels'].keys()
 
 # EMG "normal bars" (the expected range of activation during gait cycle),
 # axis is 0..100%

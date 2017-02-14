@@ -15,6 +15,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class Section(object):
+    """ Holds config items for a section """
+    pass
+
+
 class Config(object):
     """ Configuration class for gaitutils. Config values are readable as
     instance attributes or by indexing, but must be set by indexing.
@@ -27,17 +32,19 @@ class Config(object):
 
     def __init__(self, autoread=True):
         self.cfg = defaultconfig.cfg
-        self.section = 'gaitutils'  # global section identifier
+        self.sections = dict()  # of Section instances
         self.configfile = defaultconfig.cfg_file
         self.parser = ConfigParser.SafeConfigParser()
         self.parser.optionxform = str  # make it case sensitive
-        self.parser.add_section(self.section)
-        self.__dict__.update(self.cfg)  # default vals -> attributes
+        for section in self.cfg:
+            self.parser.add_section(section)
+            self.sections[section] = Section()
+            self.sections[section].__dict__.update(self.cfg[section])
         if autoread:
             try:
                 self.read()
             except ValueError:
-                # logging handlers are not installed at this point, so use print
+                # logging handlers are not installed at this point
                 print('Config: no config file, trying to create %s' %
                       self.configfile)
                 self.write()

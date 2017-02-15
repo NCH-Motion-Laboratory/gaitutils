@@ -9,11 +9,14 @@ Created on Wed Feb 15 13:14:16 2017
 import ConfigParser
 import ast
 import os.path as op
+from pkg_resources import resource_filename
+
 
 # default config
-cfg_template = 'C:/Users/hus20664877/gaitutils/gaitutils/default.cfg'
+cfg_template = resource_filename(__name__, 'default.cfg')
 # user specific config
-cfg_user = 'C:/Users/hus20664877/.gaitutils.cfg'
+homedir = op.expanduser('~')
+cfg_user = homedir + '/.gaitutils.cfg'
 
 
 class Section(object):

@@ -12,7 +12,7 @@ from __future__ import division
 import numpy as np
 from scipy import signal
 import read_data
-import config
+from config import cfg
 import logging
 from nexus import _list_to_str
 
@@ -22,14 +22,12 @@ logger = logging.getLogger(__name__)
 class EMG(object):
     """ Class for handling EMG data. """
 
-    def __init__(self, source, cfg=None):
+    def __init__(self, source):
         self.source = source
         # order of Butterworth filter
         self.buttord = 5
-        if cfg is None:
-            cfg = config.Config()
-        self.passband = cfg.emg.passband
-        self.linefreq = cfg.emg.linefreq
+        self.passband = cfg.data.emg.passband
+        self.linefreq = cfg.data.emg.linefreq
         self.data = None
 
     def __getitem__(self, item):

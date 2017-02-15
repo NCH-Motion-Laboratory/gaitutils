@@ -90,6 +90,7 @@ def _do_autoproc(enffiles):
         filepath = filepath_[:filepath_.find('.Trial')]  # rm .Trial and .enf
         filename = os.path.split(filepath)[1]
         logger.debug('\nprocessing: %s' % filename)
+        vicon.OpenTrial(filepath, cfg.trial_open_timeout)
         edi = eclipse.get_eclipse_keys(filepath_, return_empty=True)
         trial_type = edi['TYPE']
         trial_desc = edi['DESCRIPTION']
@@ -105,7 +106,6 @@ def _do_autoproc(enffiles):
             continue
         eclipse_str = ''
         trials[filepath] = Trial()
-        vicon.OpenTrial(filepath, cfg.trial_open_timeout)
         allmarkers = vicon.GetMarkerNames(subjectname)
         # reset ROI before operations
         if cfg.reset_roi and nexus_ver >= 2.5:

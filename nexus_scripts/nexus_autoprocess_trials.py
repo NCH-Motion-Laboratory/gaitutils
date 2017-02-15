@@ -148,7 +148,8 @@ def _do_autoproc(enffiles):
                     # check for gaps nearby the center frame
                     if gaps.size > 0:
                         if (np.where(abs(gaps - ctr) <
-                           cfg.autoproc.gaps_min_dist)[0].size > cfg.autoproc.gaps_max):
+                           cfg.autoproc.gaps_min_dist)[0].size >
+                           cfg.autoproc.gaps_max):
                             gaps_found = True
                             break
         if gaps_found:
@@ -180,10 +181,11 @@ def _do_autoproc(enffiles):
         eclipse_str += ','
 
         # check direction of gait (y coordinate increase/decrease)
-        gait_dir = utils.get_movement_direction(vicon, cfg.autoproc.track_markers[0],
+        gait_dir = utils.get_movement_direction(vicon,
+                                                cfg.autoproc.track_markers[0],
                                                 'y')
-        gait_dir = (cfg.autoproc.enf_descriptions['dir_back'] if gait_dir == 1 else
-                    cfg.autoproc.enf_descriptions['dir_front'])
+        gait_dir = (cfg.autoproc.enf_descriptions['dir_back'] if gait_dir == 1
+                    else cfg.autoproc.enf_descriptions['dir_front'])
         eclipse_str += gait_dir
         _save_trial()
         # time.sleep(1)
@@ -223,8 +225,9 @@ def _do_autoproc(enffiles):
                                   vel_thresholds=vel_th_)
             trial.events = True
         except ValueError:  # cannot automark
-            eclipse_str = (trials[filepath].description + ',' +
-                           cfg.autoproc.enf_descriptions['automark_failure'])
+            eclipse_str = '%s,%s' % (trials[filepath].description,
+                                     cfg.autoproc.enf_descriptions
+                                     ['automark_failure'])
             _save_trial()
             continue  # next trial
         # events ok
@@ -241,7 +244,8 @@ def _do_autoproc(enffiles):
                 roiend = min(max(evs)+cfg.autoproc.crop_margin, maxfr)
                 vicon.SetTrialRegionOfInterest(roistart, roiend)
         # run model pipeline and save
-        eclipse_str = cfg.autoproc.enf_descriptions['ok'] + ',' + trial.description
+        eclipse_str = '%s,%s' % (cfg.autoproc.enf_descriptions['ok'],
+                                 trial.description)
         vicon.RunPipeline(cfg.autoproc.model_pipeline, '',
                           cfg.autoproc.pipeline_timeout)
         _save_trial()

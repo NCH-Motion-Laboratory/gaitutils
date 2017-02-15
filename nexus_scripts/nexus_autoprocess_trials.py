@@ -65,8 +65,12 @@ def _do_autoproc(enffiles):
 
     def _run_pipelines(plines):
         for pipeline in plines:
-            logger.debug('Running %s' % pipeline)
+            logger.debug('Running pipeline: %s' % pipeline)
             vicon.RunPipeline(pipeline, '', cfg.autoproc.pipeline_timeout)
+
+    def _save_trial():
+        logger.debug('Saving trial')
+        vicon.SaveTrial(cfg.autoproc.save_timeout)
 
     if not nexus.pid():
         raise Exception('Vicon Nexus not running')
@@ -88,7 +92,7 @@ def _do_autoproc(enffiles):
         filepath = filepath_[:filepath_.find('.Trial')]  # rm .Trial and .enf
         filename = os.path.split(filepath)[1]
         logger.debug('\nprocessing: %s' % filename)
-        vicon.OpenTrial(filepath, cfg.trial_open_timeout)
+        vicon.OpenTrial(filepath, cfg.autoproc.trial_open_timeout)
         edi = eclipse.get_eclipse_keys(filepath_, return_empty=True)
         trial_type = edi['TYPE']
         trial_desc = edi['DESCRIPTION']
@@ -100,7 +104,7 @@ def _do_autoproc(enffiles):
             # run preprocessing + save even for skipped trials, to mark
             # them as processed
             _run_pipelines(cfg.autoproc.pre_pipelines)
-            vicon.SaveTrial(cfg.autoproc.save_timeout)
+            _save_trial()
             continue
         eclipse_str = ''
         trials[filepath] = Trial()
@@ -155,7 +159,7 @@ def _do_autoproc(enffiles):
             logger.debug('preprocessing failed: %s'
                          % cfg.autoproc.enf_descriptions[fail])
             trials[filepath].description = cfg.autoproc.enf_descriptions[fail]
-            vicon.SaveTrial(cfg.autoproc.save_timeout)
+            _save_trial()
             continue
         else:
             trials[filepath].recon_ok = True
@@ -181,7 +185,7 @@ def _do_autoproc(enffiles):
         gait_dir = (cfg.autoproc.enf_descriptions['dir_back'] if gait_dir == 1 else
                     cfg.autoproc.enf_descriptions['dir_front'])
         eclipse_str += gait_dir
-        vicon.SaveTrial(cfg.autoproc.save_timeout)
+        _save_trial()
         # time.sleep(1)
         trials[filepath].description = eclipse_str
 
@@ -221,7 +225,7 @@ def _do_autoproc(enffiles):
         except ValueError:  # cannot automark
             eclipse_str = (trials[filepath].description + ',' +
                            cfg.autoproc.enf_descriptions['automark_failure'])
-            vicon.SaveTrial(cfg.autoproc.save_timeout)
+            _save_trial()
             continue  # next trial
         # events ok
         # crop trial
@@ -238,8 +242,9 @@ def _do_autoproc(enffiles):
                 vicon.SetTrialRegionOfInterest(roistart, roiend)
         # run model pipeline and save
         eclipse_str = cfg.autoproc.enf_descriptions['ok'] + ',' + trial.description
-        vicon.RunPipeline(cfg.autoproc.model_pipeline, '', cfg.autoproc.pipeline_timeout)
-        vicon.SaveTrial(cfg.autoproc.save_timeout)
+        vicon.RunPipeline(cfg.autoproc.model_pipeline, '',
+                          cfg.autoproc.pipeline_timeout)
+        _save_trial()
         trials[filepath].description = eclipse_str
 
     # all done; update Eclipse descriptions

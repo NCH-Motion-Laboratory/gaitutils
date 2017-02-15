@@ -17,7 +17,7 @@ import matplotlib.gridspec as gridspec
 import os.path as op
 import os
 import subprocess
-from config import Config
+from config import cfg
 
 
 class Plotter(object):
@@ -42,7 +42,7 @@ class Plotter(object):
         self.legendnames = []
         self.modelartists = []
         self.emgartists = []
-        self.cfg = Config()
+        self.cfg = cfg
 
     @property
     def layout(self):
@@ -63,7 +63,7 @@ class Plotter(object):
         self.open_trial(source)
 
     def open_trial(self, source):
-        self.trial = Trial(source, self.cfg)
+        self.trial = Trial(source)
 
     def external_play_video(self, vidfile):
         """ Launch video player (defined in config) to play vidfile. """

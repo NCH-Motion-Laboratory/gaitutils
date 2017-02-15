@@ -26,8 +26,8 @@ class EMG(object):
         self.source = source
         # order of Butterworth filter
         self.buttord = 5
-        self.passband = cfg.data.emg.passband
-        self.linefreq = cfg.data.emg.linefreq
+        self.passband = cfg.emg.passband
+        self.linefreq = cfg.emg.linefreq
         self.data = None
 
     def __getitem__(self, item):

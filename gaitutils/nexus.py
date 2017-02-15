@@ -18,7 +18,7 @@ import glob
 from numutils import rising_zerocross, falling_zerocross
 from eclipse import get_eclipse_keys
 import matplotlib.pyplot as plt
-from config import Config
+from config import cfg
 import logging
 
 
@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 
 # try to import Nexus Python SDK
-cfg = Config()
 if cfg.general.nexus_path:
     if op.isdir(cfg.general.nexus_path):
         if not cfg.general.nexus_path + "/SDK/Python" in sys.path:

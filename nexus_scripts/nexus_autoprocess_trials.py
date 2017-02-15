@@ -29,7 +29,8 @@ by Eclipse?)
 @author: Jussi
 """
 
-from gaitutils import nexus, eclipse, utils, config
+from gaitutils import nexus, eclipse, utils
+from gaitutils.config import cfg
 import os
 import numpy as np
 import time
@@ -37,9 +38,6 @@ import time
 import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
-
-# read config data
-cfg = config.Config()
 
 
 class Trial:

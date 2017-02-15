@@ -25,8 +25,7 @@ class ExtConfigParser(object):
     """ Extends SafeConfigParser by:
     1) providing attribute access as extconfigparser.section.item
     2) attributes (as above) are stored as Python types, with autoconversion by
-    the ast module (this is not implemented when accessing via ConfigParser
-    default interface)
+    the ast module
     """
 
     def __init__(self, cfg_template, cfg_user):
@@ -40,7 +39,7 @@ class ExtConfigParser(object):
 
     def _read(self, file):
         if not op.isfile(file):
-            raise IOError('config file does not exist')
+            raise IOError('Config file does not exist')
         self._parser.read(file)
         for section in self._parser.sections():
             if section[0] == '_':  # don't allow underscores (protect members)

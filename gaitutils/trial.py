@@ -15,7 +15,6 @@ import numpy as np
 import os.path as op
 import glob
 import models
-import config
 from emg import EMG
 
 
@@ -88,10 +87,8 @@ class Trial(object):
         s += '>'
         return s
 
-    def __init__(self, source, cfg=None):
+    def __init__(self, source):
         self.source = source
-        if cfg is None:
-            cfg = config.Config()
         # read metadata into instance attributes
         meta = read_data.get_metadata(source)
         self.__dict__.update(meta)
@@ -117,7 +114,7 @@ class Trial(object):
         except ValueError:
             self.kinetics = None
         # analog and model data are lazily read
-        self.emg = EMG(self.source, cfg)
+        self.emg = EMG(self.source)
         self._forceplate = None
         self._models_data = dict()
         # whether to normalize data

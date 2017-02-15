@@ -22,7 +22,7 @@ class Section(object):
 
 class Config(object):
     """ Configuration class for gaitutils. Config values are readable as
-    instance attributes or by indexing, but must be set by indexing.
+    instance attributes.
 
     Provides auto conversion between string values and Python types
     (based on __repr__ and ast.literal_eval). Values are converted to

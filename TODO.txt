@@ -6,10 +6,13 @@
 gaitutils TODO
 
 
+-repl defaultconfig.py by static cfg file
+
+-check pep8
+
+-check that cfg_sections branch works
 
 -layouts should go into config or separate layouts file
-
--config may need sections
 
 -need testing on multiple forceplate systems
 
@@ -22,7 +25,7 @@ gaitutils TODO
 -small discrepancies in c3d/Nexus cycles?
     -nexus returns smaller frame indices (sometimes)
 
--config gets imported at too many places
+-config gets imported at too many places. singleton?
 
 -pip install? (eventually)
 

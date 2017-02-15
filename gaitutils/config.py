@@ -23,36 +23,37 @@ class Section(object):
 
 class ExtConfigParser(object):
     """ Extends SafeConfigParser by:
-    1) providing attribute access as extconfigparser.data.section.item
+    1) providing attribute access as extconfigparser.section.item
     2) attributes (as above) are stored as Python types, with autoconversion by
     the ast module (this is not implemented when accessing via ConfigParser
     default interface)
     """
 
     def __init__(self, cfg_template, cfg_user):
-        self._parser = ConfigParser.SafeConfigParser.__init__(self)
-        self.data = Section()
-        self.read(cfg_template)
+        self._parser = ConfigParser.SafeConfigParser()
+        self._read(cfg_template)
         try:
-            self.read(cfg_user)
+            self._read(cfg_user)
         except IOError:
             print('no config file, trying to create %s' % cfg_user)
-            self.write(cfg_user)
+            self._write(cfg_user)
 
-    def read(self, file):
+    def _read(self, file):
         if not op.isfile(file):
             raise IOError('config file does not exist')
-        ConfigParser.SafeConfigParser.read(self, file)
-        for section in self.sections():
-            if section not in self.data.__dict__:
-                self.data.__dict__[section] = Section()
-            cfgtxt = self._sections[section]
+        self._parser.read(file)
+        for section in self._parser.sections():
+            if section[0] == '_':  # don't allow underscores (protect members)
+                raise ValueError('Illegal section name: %s' % section)
+            if section not in self.__dict__:
+                self.__dict__[section] = Section()
+            cfgtxt = self._parser._sections[section]
             cfg = self._untextify(cfgtxt)
-            self.data.__dict__[section].__dict__.update(cfg)
+            self.__dict__[section].__dict__.update(cfg)
 
-    def write(self, file):
+    def _write(self, file):
         cfg = open(file, 'wt')
-        ConfigParser.SafeConfigParser.write(self, cfg)
+        self._parser.write(cfg)
         cfg.close()
 
     @staticmethod

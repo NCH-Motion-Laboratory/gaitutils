@@ -223,7 +223,7 @@ pig_lowerbody.ylabels = _dict_with_side({
                          'PelvisAnglesY': 'Dwn%s($^\\circ$)%sUp' % spacer,
                          'PelvisAnglesZ': 'Bak%s($^\\circ$)%sFor' % spacer})
 
-pig_lowerbody.normaldata_path = cfg.data.general.pig_normaldata_path
+pig_lowerbody.normaldata_path = cfg.general.pig_normaldata_path
 
 pig_lowerbody.is_kinetic_var = (lambda varname: 'Moment' in varname or
                                 'Power' in varname)

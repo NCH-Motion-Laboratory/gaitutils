@@ -100,7 +100,7 @@ def kinetics_available(source, check_weight=True):
     logger.debug('max force: %.2f at %.2f, weight: %.2f N'
                  % (fmax, fmaxind, subj_weight))
     if not check_weight:
-        logger.debug('(ignoring subject weight)')
+        logger.debug('ignoring subject weight')
     elif max(forcetot) < FMAX_REL_MIN * subj_weight:
         logger.debug('insufficient max. force on plate')
         return emptydi

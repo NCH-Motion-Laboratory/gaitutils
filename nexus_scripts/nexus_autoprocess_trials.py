@@ -240,8 +240,8 @@ def _do_autoproc(enffiles):
             if evs:
                 # when setting roi, do not go beyond trial range
                 minfr, maxfr = vicon.GetTrialRange()
-                roistart = max(min(evs)-cfg.autoproc.crop_margin, minfr)
-                roiend = min(max(evs)+cfg.autoproc.crop_margin, maxfr)
+                roistart = max(min(evs) - cfg.autoproc.crop_margin, minfr)
+                roiend = min(max(evs) + cfg.autoproc.crop_margin, maxfr)
                 vicon.SetTrialRegionOfInterest(roistart, roiend)
         # run model pipeline and save
         eclipse_str = '%s,%s' % (cfg.autoproc.enf_descriptions['ok'],

@@ -115,7 +115,7 @@ class Trial(object):
             self.kinetics = None
         # analog and model data are lazily read
         self.emg = EMG(self.source)
-        self._forceplate = None
+        self._forceplate_data = None
         self._models_data = dict()
         # whether to normalize data
         self._normalize = None
@@ -154,10 +154,10 @@ class Trial(object):
                 return t, data
 
     @property
-    def forceplate(self):
-        if not self._forceplate:
-            self._forceplate = read_data.get_forceplate_data(self.source)
-        return self._forceplate
+    def forceplate_data(self):
+        if not self._forceplate_data:
+            self._forceplate_data = read_data.get_forceplate_data(self.source)
+        return self._forceplate_data
 
     def set_norm_cycle(self, cycle=None):
         """ Set normalization cycle. None to get unnormalized data.

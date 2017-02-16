@@ -194,20 +194,10 @@ def get_emg_data(vicon):
     return {'t': np.arange(len(eldata)) / drate, 'data': data}
 
 
-
-
-def _get_forceplate_data(vicon):
+def _get_1_forceplate_data(vicon, devid):
     """ Read data of single forceplate data from Nexus. """
     # get forceplate ids
-    devids = [id for id in vicon.GetDeviceIDs() if
-              vicon.GetDeviceDetails(id)[1].lower() == 'forceplate']
-    if len(devids) > 1:
-        logger.warning('more than 1 forceplate not handled yet, using 1st one')
-    elif len(devids) == 0:
-        logger.debug('no forceplates detected')
-        return None
-    devid = devids[0]
-    # pick 1st forceplate
+    logger.debug('reading forceplate data from devid %d' % devid)
     dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(devid)
     framerate = vicon.GetFrameRate()
     samplesperframe = drate / framerate
@@ -241,6 +231,21 @@ def _get_forceplate_data(vicon):
     Ftot = np.sqrt(np.sum(F**2, axis=1))
     return {'F': F, 'M': M, 'Ftot': Ftot, 'CoP': CoP,
             'samplesperframe': samplesperframe, 'analograte': drate}
+
+
+def get_forceplate_data(vicon):
+    """ Read all forceplate data from Nexus. """
+    # get forceplate ids
+    devids = [id for id in vicon.GetDeviceIDs() if
+              vicon.GetDeviceDetails(id)[1].lower() == 'forceplate']
+    if len(devids) == 0:
+        logger.debug('no forceplates detected')
+        return None
+    logger.debug('detected %d forceplates' % len(devids))
+    data = []
+    for devid in devids:
+        data.append(_get_1_forceplate_data(vicon, devid))
+    return data
 
 
 def get_marker_data(vicon, markers):

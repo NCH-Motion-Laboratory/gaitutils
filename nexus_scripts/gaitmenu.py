@@ -85,15 +85,16 @@ def main():
 
     app = QtGui.QApplication(sys.argv)
 
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger()
     handler = QtHandler()
-    handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    handler.setFormatter(logging.Formatter("%(name)s: %(levelname)s: %(message)s"))
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
 
     gaitmenu = Gaitmenu()
 
     gaitmenu.show()
+    logger.debug('starting')
     app.exec_()
 
 

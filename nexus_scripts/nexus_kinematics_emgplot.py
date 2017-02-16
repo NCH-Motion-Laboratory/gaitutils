@@ -10,6 +10,7 @@ Instead of separate plots, this overlays EMGs from both sides on one plot.
 """
 
 from gaitutils import Plotter, layouts, register_gui_exception_handler
+import logging
 
 
 def do_plot():
@@ -31,5 +32,6 @@ def do_plot():
     pl.create_pdf(pdf_prefix=pdf_prefix)
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     register_gui_exception_handler()
     do_plot()

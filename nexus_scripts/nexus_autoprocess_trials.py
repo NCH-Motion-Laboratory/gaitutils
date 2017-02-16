@@ -37,7 +37,6 @@ import time
 
 import logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
 
 class Trial:
@@ -266,10 +265,10 @@ def _do_autoproc(enffiles):
 
 
 def autoproc_session():
-
     enffiles = nexus.get_trial_enfs()
     _do_autoproc(enffiles)
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     autoproc_session()

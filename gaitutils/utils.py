@@ -68,7 +68,7 @@ def kinetics_available(source, check_weight=True):
     subj_weight = info['bodymass'] * 9.81
 
     fp0 = get_forceplate_data(source)
-    forcetot = signal.medfilt(fp0['ftot'])  # remove spikes
+    forcetot = signal.medfilt(fp0['Ftot'])  # remove spikes
 
     # autodetection parameters
     F_THRESHOLD = .1 * subj_weight  # rise threshold
@@ -113,7 +113,7 @@ def kinetics_available(source, check_weight=True):
         return emptydi
     # check shift of center of pressure during ROI; should not shift too much
     cop_roi = np.arange(friseind, ffallind)
-    copx, copy = np.array(fp0['cop'][:, 0]), np.array(fp0['cop'][:, 1])
+    copx, copy = np.array(fp0['CoP'][:, 0]), np.array(fp0['CoP'][:, 1])
     copx_shift = np.max(copx[cop_roi]) - np.min(copx[cop_roi])
     copy_shift = np.max(copy[cop_roi]) - np.min(copy[cop_roi])
     logger.debug('CoP x shift %.2f mm, y shift %.2f mm'

@@ -146,6 +146,7 @@ def get_metadata(vicon):
     framerate = vicon.GetFrameRate()
     # Get analog rate. This may not be mandatory if analog devices
     # are not used, but currently it needs to succeed.
+
     devids = vicon.GetDeviceIDs()
     if not devids:
         raise ValueError('Cannot determine analog rate')
@@ -153,6 +154,11 @@ def get_metadata(vicon):
         devid = devids[0]
         _, _, analograte, _, _, _ = vicon.GetDeviceDetails(devid)
     samplesperframe = analograte / framerate
+
+    # get n of forceplates
+    fp_devids = [id for id in devids if
+                 vicon.GetDeviceDetails(id)[1].lower() == 'forceplate']
+
     # sort events (may be in wrong temporal order, at least in c3d files)
     for li in [lstrikes, rstrikes, ltoeoffs, rtoeoffs]:
         li.sort()
@@ -160,7 +166,8 @@ def get_metadata(vicon):
             'offset': offset, 'framerate': framerate, 'analograte': analograte,
             'name': name, 'bodymass': bodymass, 'lstrikes': lstrikes,
             'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs,
-            'length': length, 'samplesperframe': samplesperframe}
+            'length': length, 'samplesperframe': samplesperframe,
+            'n_forceplates': len(fp_devids)}
 
 
 def get_emg_data(vicon):
@@ -187,9 +194,10 @@ def get_emg_data(vicon):
     return {'t': np.arange(len(eldata)) / drate, 'data': data}
 
 
-def get_forceplate_data(vicon):
-    """ Read forceplate data from Nexus. Does not support multiple plates
-    yet. """
+
+
+def _get_forceplate_data(vicon):
+    """ Read data of single forceplate data from Nexus. """
     # get forceplate ids
     devids = [id for id in vicon.GetDeviceIDs() if
               vicon.GetDeviceDetails(id)[1].lower() == 'forceplate']
@@ -227,11 +235,11 @@ def get_forceplate_data(vicon):
     copy, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
     chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Cz')
     copz, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
-    cop = np.array([copx, copy, copz]).transpose()
-    fall = np.array([fx, fy, fz]).transpose()
-    mall = np.array([mx, my, mz]).transpose()
-    ftot = np.sqrt(np.sum(fall**2, axis=1))
-    return {'fall': fall, 'mall': mall, 'ftot': ftot, 'cop': cop,
+    CoP = np.array([copx, copy, copz]).transpose()
+    F = np.array([fx, fy, fz]).transpose()
+    M = np.array([mx, my, mz]).transpose()
+    Ftot = np.sqrt(np.sum(F**2, axis=1))
+    return {'F': F, 'M': M, 'Ftot': Ftot, 'CoP': CoP,
             'samplesperframe': samplesperframe, 'analograte': drate}
 
 
@@ -268,7 +276,7 @@ def get_fp_strike_and_toeoff(vicon):
     """ Return forceplate strike and toeoff frames. """
     FP_THRESHOLD = .02  # % of maximum force
     MEDIAN_FILTER_WIDTH = 5
-    ftot = get_forceplate_data(vicon)['ftot']
+    ftot = get_forceplate_data(vicon)['Ftot']
     # try to remove forceplate noise & spikes with median filter
     ftot = signal.medfilt(ftot, MEDIAN_FILTER_WIDTH)
     frel = ftot/ftot.max()

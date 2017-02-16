@@ -42,10 +42,10 @@ def get_metadata(source):
 
 def get_forceplate_data(source):
     """ Get forceplate data. Returns dict with:
-    fall: Nx3 array with force x,y,z components
-    mall: Nx3 array with moment x,y,z components
-    ftot: Nx1 array of total force
-    cop:  Nx3 array, center of pressure
+    F: Nx3 array with force x,y,z components
+    M: Nx3 array with moment x,y,z components
+    Ftot: Nx1 array of total force
+    CoP:  Nx3 array, center of pressure
     analograte: sampling rate
     samplesperframe: samples per capture frame
     TODO: return dict/list of dict for multiple forceplates

@@ -85,6 +85,12 @@ def get_metadata(c3dfile):
     framerate = acq.GetPointFrequency()
     analograte = acq.GetAnalogFrequency()
     samplesperframe = acq.GetNumberAnalogSamplePerFrame()
+    # count forceplates
+    n_forceplates = 0
+    for i in btk.Iterate(acq.GetAnalogs()):
+        desc = i.GetLabel()
+        if desc.find('Force.') >= 0 and i.GetUnit() == 'N':
+            n_forceplates += 1
     #  get events
     rstrikes, lstrikes, rtoeoffs, ltoeoffs = [], [], [], []
     for i in btk.Iterate(acq.GetEvents()):
@@ -116,7 +122,8 @@ def get_metadata(c3dfile):
             'offset': offset, 'framerate': framerate, 'analograte': analograte,
             'name': name, 'bodymass': bodymass, 'lstrikes': lstrikes,
             'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs,
-            'length': length, 'samplesperframe': samplesperframe}
+            'length': length, 'samplesperframe': samplesperframe,
+            'n_forceplates': n_forceplates}
 
 
 def get_model_data(c3dfile, model):
@@ -183,8 +190,8 @@ def get_forceplate_data(c3dfile):
     copx[fz_0_ind] = 0
     copy[fz_0_ind] = 0
     copz = np.zeros(copx.shape)
-    cop = np.array([copx, copy, copz]).transpose()
-    fall = np.array([fx, fy, fz]).transpose()
-    ftot = np.sqrt(np.sum(fall**2, axis=1))
-    return {'fall': fall, 'ftot': ftot, 'cop': cop,
+    CoP = np.array([copx, copy, copz]).transpose()
+    F = np.array([fx, fy, fz]).transpose()
+    Ftot = np.sqrt(np.sum(F**2, axis=1))
+    return {'F': F, 'Ftot': Ftot, 'CoP': CoP,
             'samplesperframe': samplesperframe, 'analograte': sfrate}

@@ -9,10 +9,28 @@ Test new gaitutils code
 
 from gaitutils import EMG, nexus, config, read_data, trial, eclipse, models, Plotter, layouts, utils
 import matplotlib.pyplot as plt
+import sys
+import logging
 
+logging.basicConfig()
 
 # c3dfile = u'c:\\Users\\hus20664877\\Desktop\\Vicon\\vicon_data\\test\\H0036_EV\\2015_9_21_seur_EV\\2015_9_21_seur_EV19.c3d'
+
+
+c3dfile = "C:/Users/hus20664877/Desktop/NVUG2017/Example Data Workshop/Carita/Level/Dynamic 03.c3d"
+
 vicon = nexus.viconnexus()
+
+
+pl = Plotter()
+
+pl.open_trial(c3dfile)
+
+print pl.trial.forceplate
+
+
+sys.exit()
+
 
 
 lout = [['RGlut', 'LGlut'], ['LRec', 'RRec']]

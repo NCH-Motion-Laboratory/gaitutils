@@ -16,22 +16,48 @@ import nexus_autoprocess_current
 import nexus_autoprocess_trials
 import nexus_kinallplot
 import sys
+import logging
 
 
-class Log(object):
-    """ File-like object that catches output meant for sys.stdout and also
-        outputs it in QTextEdit """
+class QtHandler(logging.Handler):
 
-    def __init__(self, edit):
-        self.textEdit = edit
-        self.stdout = sys.stdout  # save stdout
+    def __init__(self):
+        logging.Handler.__init__(self)
 
-    def write(self, message):
-        self.stdout.write(message)
-        self.textEdit.appendPlainText(message)
+    def emit(self, record):
+        record = self.format(record)
+        if record:
+            XStream.stdout().write('%s\n' % record)
+
+
+class XStream(QtCore.QObject):
+    _stdout = None
+    _stderr = None
+    messageWritten = QtCore.pyqtSignal(str)
 
     def flush(self):
-        self.stdout.flush()
+        pass
+
+    def fileno(self):
+        return -1
+
+    def write(self, msg):
+        if not self.signalsBlocked():
+            self.messageWritten.emit(unicode(msg))
+
+    @staticmethod
+    def stdout():
+        if not XStream._stdout:
+            XStream._stdout = XStream()
+            sys.stdout = XStream._stdout
+        return XStream._stdout
+
+    @staticmethod
+    def stderr():
+        if not XStream._stderr:
+            XStream._stderr = XStream()
+            sys.stderr = XStream._stderr
+        return XStream._stderr
 
 
 class Gaitmenu(QtGui.QMainWindow):
@@ -51,15 +77,21 @@ class Gaitmenu(QtGui.QMainWindow):
                                               autoproc_single)
         self.btnAutoprocSession.clicked.connect(nexus_autoprocess_trials.
                                                 autoproc_session)
-       
+        XStream.stdout().messageWritten.connect(self.txtOutput.insertPlainText)
+        XStream.stderr().messageWritten.connect(self.txtOutput.insertPlainText)
 
 
 def main():
 
     app = QtGui.QApplication(sys.argv)
+
+    logger = logging.getLogger(__name__)
+    handler = QtHandler()
+    handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    logger.addHandler(handler)
+    logger.setLevel(logging.DEBUG)
+
     gaitmenu = Gaitmenu()
-    
-    sys.stdout = Log(gaitmenu.txtOutput)
 
     gaitmenu.show()
     app.exec_()

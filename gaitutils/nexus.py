@@ -241,7 +241,7 @@ def get_forceplate_data(vicon):
     if len(devids) == 0:
         logger.debug('no forceplates detected')
         return None
-    logger.debug('detected %d forceplates' % len(devids))
+    logger.debug('detected %d forceplate(s)' % len(devids))
     data = []
     for devid in devids:
         data.append(_get_1_forceplate_data(vicon, devid))

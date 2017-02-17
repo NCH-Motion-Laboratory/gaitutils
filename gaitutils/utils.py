@@ -11,6 +11,7 @@ from numutils import rising_zerocross, falling_zerocross
 from scipy import signal
 import numpy as np
 import logging
+import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
 
@@ -47,22 +48,48 @@ def get_movement_direction(source, marker, dir):
     return 1 if ddiff > 0 else -1
 
 
-def kinetics_available(source, check_weight=True):
-    """ See whether the trial has valid forceplate contact (ground reaction
-    forces available) for left/right side.
-    Uses forceplate data, gait events and marker positions.
-    For now support for one forceplate only.
-    TODO: evaluate all forceplates and return e.g. 'RL' when kinetics
-    is available for both sides.
+def butter_filt(data, passband, sfreq, bord=5):
+    """ Design a filter and forward-backward filter given data to
+    passband, e.g. [1, 40].
+    Passband is given in Hz. None for no filtering.
+    Implemented as pure lowpass/highpass, if highpass/lowpass freq == 0
+    """
+    if passband is None:
+        return data
+    elif len(passband) != 2:
+        raise Exception('Passband must be a vector of length 2')
+    passbandn = 2 * np.array(passband) / sfreq
+    if passbandn[0] == 0:  # lowpass
+        b, a = signal.butter(bord, passbandn[1], btype='lowpass')
+    elif passbandn[1] == 0:  # highpass
+        b, a = signal.butter(bord, passbandn[1], btype='highpass')
+    else:  # bandpass
+        b, a = signal.butter(bord, passbandn, btype='bandpass')
+    return signal.filtfilt(b, a, data)
+
+
+def _baseline(data):
+    """ Baseline data based on histogram """
+    data = np.array(data)
+    nbins = int(len(data) / 10)  # rough guess
+    ns, edges = np.histogram(data, bins=nbins)
+    peak_ind = np.where(ns == np.max(ns))[0][0]
+    return data - np.mean(edges[peak_ind:peak_ind+2])
+
+
+def kinetics_available(source, check_weight=True, check_cop=True):
+    """ See whether the trial has valid forceplate contact.
+    Uses forceplate data and marker positions.
+
     Conditions:
     -check max total force, must correspond to subject weight
     -center of pressure must not change too much during contact time
     -heel & toe markers must not be outside plate edges at strike time
-    Computes foot velocities at strike & toeoff.
+
     Return dict as:
-    return {'context': kinetics, 'strike': strike_fr, 'strike_v': strike_v,
-            'toeoff': toeoff_fr, 'toeoff_v': toeoff_v}
+    return {'context': context, 'strike': strike_fr, 'toeoff': toeoff_fr}
     """
+    
     # get subject info
     info = get_metadata(source)
     subj_weight = info['bodymass'] * 9.81
@@ -97,9 +124,13 @@ def kinetics_available(source, check_weight=True):
     results['toeoffs'] = {'R': [], 'L': []}
 
     for plate_ind, fp in enumerate(fpdata):
-
+        logger.debug('analyzing plate %d' % plate_ind)
         # test the force data
         forcetot = signal.medfilt(fp['Ftot'])  # remove spikes
+        forcetot = _baseline(forcetot)
+        if plate_ind == 0:
+            plt.plot(fp['Ftot'])
+            plt.plot(forcetot)
         fmax = max(forcetot)
         fmaxind = np.where(forcetot == fmax)[0][0]  # first maximum
         logger.debug('max force: %.2f at %.2f, weight: %.2f N'
@@ -111,22 +142,25 @@ def kinetics_available(source, check_weight=True):
             continue
         # find indices where force crosses threshold
         try:
+            logger.debug('force threshold: %g' % F_THRESHOLD)
             friseind = rising_zerocross(forcetot-F_THRESHOLD)[0]  # first rise
             ffallind = falling_zerocross(forcetot-F_THRESHOLD)[-1]  # last fall
+            logger.debug('force rise: %d fall: %d' % (friseind, ffallind))
         except IndexError:
             logger.debug('cannot detect force rise/fall')
             continue
         # check shift of cop during roi
-        cop_roi = np.arange(friseind, ffallind)
-        copx, copy = np.array(fp['CoP'][:, 0]), np.array(fp['CoP'][:, 1])
-        copx_shift = np.max(copx[cop_roi]) - np.min(copx[cop_roi])
-        copy_shift = np.max(copy[cop_roi]) - np.min(copy[cop_roi])
-        logger.debug('CoP x shift %.2f mm, y shift %.2f mm'
-                     % (copx_shift, copy_shift))
-        if copx_shift > MAX_COP_SHIFT or copy_shift > MAX_COP_SHIFT:
-            logger.debug('center of pressure shifts too much '
-                         '(double contact?)')
-            continue
+        if check_cop:
+            cop_roi = np.arange(friseind, ffallind)
+            copx, copy = np.array(fp['CoP'][:, 0]), np.array(fp['CoP'][:, 1])
+            copx_shift = np.max(copx[cop_roi]) - np.min(copx[cop_roi])
+            copy_shift = np.max(copy[cop_roi]) - np.min(copy[cop_roi])
+            logger.debug('CoP x shift %.2f mm, y shift %.2f mm'
+                         % (copx_shift, copy_shift))
+            if copx_shift > MAX_COP_SHIFT or copy_shift > MAX_COP_SHIFT:
+                logger.debug('center of pressure shifts too much '
+                             '(double contact?)')
+                continue
 
         # frame indices are 1-based so need to add 1 (what about c3d?)
         strike_fr = int(np.round(friseind / fp['samplesperframe'])) + 1
@@ -191,6 +225,7 @@ def kinetics_available(source, check_weight=True):
                          % (plate_ind, this_valid, strike_fr))
             results['context'] += this_valid
             results['strikes'][this_valid].append(strike_fr)
-            results['toeoffs'][this_valid].append(strike_fr)
+            results['toeoffs'][this_valid].append(toeoff_fr)
 
+    logger.debug(results)
     return results

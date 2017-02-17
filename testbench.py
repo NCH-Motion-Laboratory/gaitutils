@@ -12,7 +12,15 @@ import matplotlib.pyplot as plt
 import sys
 import logging
 
-logging.basicConfig()
+
+
+logger = logging.getLogger()
+handler = logging.StreamHandler()
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(name)s: %(levelname)s: %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
 
 # c3dfile = u'c:\\Users\\hus20664877\\Desktop\\Vicon\\vicon_data\\test\\H0036_EV\\2015_9_21_seur_EV\\2015_9_21_seur_EV19.c3d'
 
@@ -22,15 +30,15 @@ c3dfile = "C:/Users/hus20664877/Desktop/NVUG2017/Example Data Workshop/Carita/Le
 vicon = nexus.viconnexus()
 
 
-pl = Plotter()
+#pl = Plotter()
 
-pl.open_nexus_trial()
+#pl.open_nexus_trial()
 
-print utils.kinetics_available(vicon)
+print utils.kinetics_available(vicon, check_cop=True)
 
 #pl.open_trial(c3dfile)
 
-print pl.trial.forceplate_data
+#print pl.trial.forceplate_data
 
 
 sys.exit()

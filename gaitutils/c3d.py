@@ -10,7 +10,7 @@ c3d reader functions
 from __future__ import print_function
 import logging
 import numpy as np
-from scipy.signal import medfilt
+import utils
 import os
 logger = logging.getLogger(__name__)
 try:
@@ -148,10 +148,6 @@ def get_model_data(c3dfile, model):
 def get_forceplate_data(c3dfile):
     """ Read forceplate data. Does not support multiple plates yet.
     Force results differ somewhat from Nexus, not sure why. Calibration? """
-    FP_DZ = 41.3  # forceplate thickness in mm
-    # CoP calculation uses filter
-    FP_FILTFUN = medfilt  # filter function
-    FP_FILTW = 3  # median filter width
     reader = btk.btkAcquisitionFileReader()
     reader.SetFilename(str(c3dfile))  # btk does not tolerate unicode
     reader.Update()
@@ -179,19 +175,10 @@ def get_forceplate_data(c3dfile):
                 mz = np.squeeze(i.GetValues())
     if any([var is None for var in (fx, fy, fz, mx, my, mz)]):
         raise ValueError('Cannot read force/moment variable')
-    """ Compute CoP according to AMTI instructions. The results differ
-    slightly (few mm) from Nexus, for unknown reasons (different filter?)
-    See http://health.uottawa.ca/biomech/courses/apa6903/amticalc.pdf """
-    # suppress noise by medfilt; not sure what Nexus uses
-    fz = FP_FILTFUN(fz, FP_FILTW)
-    fz_0_ind = np.where(fz == 0)
-    copx = (my + fx * FP_DZ)/fz
-    copy = (mx - fy * FP_DZ)/fz
-    copx[fz_0_ind] = 0
-    copy[fz_0_ind] = 0
-    copz = np.zeros(copx.shape)
-    CoP = np.array([copx, copy, copz]).transpose()
+    # c3d does not seem to include center of pressure data, so we compute it
     F = np.array([fx, fy, fz]).transpose()
     Ftot = np.sqrt(np.sum(F**2, axis=1))
+    M = np.array([mx, my, mz]).transpose()
+    CoP = utils.cop(F, M)
     return {'F': F, 'Ftot': Ftot, 'CoP': CoP,
             'samplesperframe': samplesperframe, 'analograte': sfrate}

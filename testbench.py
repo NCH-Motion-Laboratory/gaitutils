@@ -27,6 +27,10 @@ logger.addHandler(handler)
 
 c3dfile = "C:/Users/hus20664877/Desktop/NVUG2017/Example Data Workshop/Carita/Level/Dynamic 03.c3d"
 
+
+
+
+
 vicon = nexus.viconnexus()
 
 

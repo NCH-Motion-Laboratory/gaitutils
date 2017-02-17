@@ -10,8 +10,8 @@ c3d reader functions
 from __future__ import print_function
 import logging
 import numpy as np
-import utils
 import os
+from numutils import cop
 logger = logging.getLogger(__name__)
 try:
     import btk
@@ -179,6 +179,6 @@ def get_forceplate_data(c3dfile):
     F = np.array([fx, fy, fz]).transpose()
     Ftot = np.sqrt(np.sum(F**2, axis=1))
     M = np.array([mx, my, mz]).transpose()
-    CoP = utils.cop(F, M)
+    CoP = cop(F, M)
     return {'F': F, 'Ftot': Ftot, 'CoP': CoP,
             'samplesperframe': samplesperframe, 'analograte': sfrate}

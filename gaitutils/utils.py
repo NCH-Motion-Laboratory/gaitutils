@@ -67,10 +67,8 @@ def kinetics_available(source, check_weight=True):
     info = get_metadata(source)
     subj_weight = info['bodymass'] * 9.81
 
-    fp0 = get_forceplate_data(source)
-    forcetot = signal.medfilt(fp0['Ftot'])  # remove spikes
-
     # autodetection parameters
+    # TODO: move into config
     F_THRESHOLD = .1 * subj_weight  # rise threshold
     FMAX_REL_MIN = .8  # maximum force as % of bodyweight must exceed this
     MAX_COP_SHIFT = 300  # maximum CoP shift (in x or y dir) in mm
@@ -92,101 +90,107 @@ def kinetics_available(source, check_weight=True):
     # ankle marker tolerance in x dir
     X_ANKLE_TOL = 20
 
-    emptydi = {'context': '', 'strike': None, 'strike_v': None,
-               'toeoff': None, 'toeoff_v': None}
+    fpdata = get_forceplate_data(source)
 
-    fmax = max(forcetot)
-    fmaxind = np.where(forcetot == fmax)[0][0]  # first maximum
-    logger.debug('max force: %.2f at %.2f, weight: %.2f N'
-                 % (fmax, fmaxind, subj_weight))
-    if not check_weight:
-        logger.debug('ignoring subject weight')
-    elif max(forcetot) < FMAX_REL_MIN * subj_weight:
-        logger.debug('insufficient max. force on plate')
-        return emptydi
-    # find indices where force crosses threshold
-    try:
-        friseind = rising_zerocross(forcetot-F_THRESHOLD)[0]  # first rise
-        ffallind = falling_zerocross(forcetot-F_THRESHOLD)[-1]  # last fall
-    except IndexError:
-        logger.debug('cannot detect force rise/fall')
-        return emptydi
-    # check shift of center of pressure during ROI; should not shift too much
-    cop_roi = np.arange(friseind, ffallind)
-    copx, copy = np.array(fp0['CoP'][:, 0]), np.array(fp0['CoP'][:, 1])
-    copx_shift = np.max(copx[cop_roi]) - np.min(copx[cop_roi])
-    copy_shift = np.max(copy[cop_roi]) - np.min(copy[cop_roi])
-    logger.debug('CoP x shift %.2f mm, y shift %.2f mm'
-                 % (copx_shift, copy_shift))
-    if copx_shift > MAX_COP_SHIFT or copy_shift > MAX_COP_SHIFT:
-        logger.debug('center of pressure shifts too much (double contact?)')
-        return emptydi
+    results = {'context': '', 'strikes': None, 'toeoffs': None}
+    results['strikes'] = {'R': [], 'L': []}
+    results['toeoffs'] = {'R': [], 'L': []}
 
-    # frame indices are 1-based so need to add 1 (what about c3d?)
-    strike_fr = int(np.round(friseind / fp0['samplesperframe'])) + 1
-    toeoff_fr = int(np.round(ffallind / fp0['samplesperframe'])) + 1
-    mrkdata = get_marker_data(source, RIGHT_FOOT_MARKERS + LEFT_FOOT_MARKERS)
-    kinetics = None
-    # check: markers inside forceplate region during strike/toeoff
-    ok = True
-    for marker in RIGHT_FOOT_MARKERS:
-        marker += '_P'
-        # ankle marker gets extra tolerance in x dir
-        if marker == 'RANK_P':
-            FP_XMIN_ = FP_XMIN - X_ANKLE_TOL
-            FP_XMAX_ = FP_XMAX + X_ANKLE_TOL
+    for plate_ind, fp in enumerate(fpdata):
+
+        # test the force data
+        forcetot = signal.medfilt(fp['Ftot'])  # remove spikes
+        fmax = max(forcetot)
+        fmaxind = np.where(forcetot == fmax)[0][0]  # first maximum
+        logger.debug('max force: %.2f at %.2f, weight: %.2f N'
+                     % (fmax, fmaxind, subj_weight))
+        if not check_weight:
+            logger.debug('ignoring subject weight')
+        elif max(forcetot) < FMAX_REL_MIN * subj_weight:
+            logger.debug('insufficient max. force on plate')
+            continue
+        # find indices where force crosses threshold
+        try:
+            friseind = rising_zerocross(forcetot-F_THRESHOLD)[0]  # first rise
+            ffallind = falling_zerocross(forcetot-F_THRESHOLD)[-1]  # last fall
+        except IndexError:
+            logger.debug('cannot detect force rise/fall')
+            continue
+        # check shift of cop during roi
+        cop_roi = np.arange(friseind, ffallind)
+        copx, copy = np.array(fp['CoP'][:, 0]), np.array(fp['CoP'][:, 1])
+        copx_shift = np.max(copx[cop_roi]) - np.min(copx[cop_roi])
+        copy_shift = np.max(copy[cop_roi]) - np.min(copy[cop_roi])
+        logger.debug('CoP x shift %.2f mm, y shift %.2f mm'
+                     % (copx_shift, copy_shift))
+        if copx_shift > MAX_COP_SHIFT or copy_shift > MAX_COP_SHIFT:
+            logger.debug('center of pressure shifts too much '
+                         '(double contact?)')
+            continue
+
+        # frame indices are 1-based so need to add 1 (what about c3d?)
+        strike_fr = int(np.round(friseind / fp['samplesperframe'])) + 1
+        toeoff_fr = int(np.round(ffallind / fp['samplesperframe'])) + 1
+        mrkdata = get_marker_data(source, RIGHT_FOOT_MARKERS+LEFT_FOOT_MARKERS)
+
+        this_valid = None
+
+        # if we got here, force data looks ok; check marker data
+        ok = True
+        for marker in RIGHT_FOOT_MARKERS:
+            marker += '_P'
+            # ankle marker gets extra tolerance in x dir
+            if marker == 'RANK_P':
+                FP_XMIN_ = FP_XMIN - X_ANKLE_TOL
+                FP_XMAX_ = FP_XMAX + X_ANKLE_TOL
+            else:
+                FP_XMIN_ = FP_XMIN
+                FP_XMAX_ = FP_XMAX
+            ok &= np.logical_and(mrkdata[marker][:, 0] > FP_XMIN,
+                                 mrkdata[marker][:, 0] < FP_XMAX)[strike_fr]
+            ok &= np.logical_and(mrkdata[marker][:, 0] > FP_XMIN,
+                                 mrkdata[marker][:, 0] < FP_XMAX)[toeoff_fr]
+            ok &= np.logical_and(mrkdata[marker][:, 1] > FP_YMIN,
+                                 mrkdata[marker][:, 1] < FP_YMAX)[strike_fr]
+            ok &= np.logical_and(mrkdata[marker][:, 1] > FP_YMIN - Y_TOEOFF_TOL,
+                                 mrkdata[marker][:, 1] <
+                                 FP_YMAX + Y_TOEOFF_TOL)[toeoff_fr]
+            if not ok:
+                break
+        if ok:
+            this_valid = 'R'
+
+        ok = True
+        for marker in LEFT_FOOT_MARKERS:
+            marker += '_P'
+            if marker == 'LANK_P':
+                FP_XMIN_ = FP_XMIN - X_ANKLE_TOL
+                FP_XMAX_ = FP_XMAX + X_ANKLE_TOL
+            else:
+                FP_XMIN_ = FP_XMIN
+                FP_XMAX_ = FP_XMAX
+            ok &= np.logical_and(mrkdata[marker][:, 0] > FP_XMIN_,
+                                 mrkdata[marker][:, 0] < FP_XMAX_)[strike_fr]
+            ok &= np.logical_and(mrkdata[marker][:, 0] > FP_XMIN_,
+                                 mrkdata[marker][:, 0] < FP_XMAX_)[toeoff_fr]
+            ok &= np.logical_and(mrkdata[marker][:, 1] > FP_YMIN,
+                                 mrkdata[marker][:, 1] < FP_YMAX)[strike_fr]
+            ok &= np.logical_and(mrkdata[marker][:, 1] > FP_YMIN - Y_TOEOFF_TOL,
+                                 mrkdata[marker][:, 1] <
+                                 FP_YMAX + Y_TOEOFF_TOL)[toeoff_fr]
+            if not ok:
+                break
+        if ok:
+            this_valid = 'L'
+
+        if not this_valid:
+            logger.debug('plate %d: markers off plate during strike/toeoff' %
+                         plate_ind)
         else:
-            FP_XMIN_ = FP_XMIN
-            FP_XMAX_ = FP_XMAX
-        ok &= np.logical_and(mrkdata[marker][:, 0] > FP_XMIN,
-                             mrkdata[marker][:, 0] < FP_XMAX)[strike_fr]
-        ok &= np.logical_and(mrkdata[marker][:, 0] > FP_XMIN,
-                             mrkdata[marker][:, 0] < FP_XMAX)[toeoff_fr]
-        ok &= np.logical_and(mrkdata[marker][:, 1] > FP_YMIN,
-                             mrkdata[marker][:, 1] < FP_YMAX)[strike_fr]
-        ok &= np.logical_and(mrkdata[marker][:, 1] > FP_YMIN - Y_TOEOFF_TOL,
-                             mrkdata[marker][:, 1] <
-                             FP_YMAX + Y_TOEOFF_TOL)[toeoff_fr]
-        if not ok:
-            break
-    if ok:
-        kinetics = 'R'
-    ok = True
-    for marker in LEFT_FOOT_MARKERS:
-        marker += '_P'
-        if marker == 'LANK_P':
-            FP_XMIN_ = FP_XMIN - X_ANKLE_TOL
-            FP_XMAX_ = FP_XMAX + X_ANKLE_TOL
-        else:
-            FP_XMIN_ = FP_XMIN
-            FP_XMAX_ = FP_XMAX
-        ok &= np.logical_and(mrkdata[marker][:, 0] > FP_XMIN_,
-                             mrkdata[marker][:, 0] < FP_XMAX_)[strike_fr]
-        ok &= np.logical_and(mrkdata[marker][:, 0] > FP_XMIN_,
-                             mrkdata[marker][:, 0] < FP_XMAX_)[toeoff_fr]
-        ok &= np.logical_and(mrkdata[marker][:, 1] > FP_YMIN,
-                             mrkdata[marker][:, 1] < FP_YMAX)[strike_fr]
-        ok &= np.logical_and(mrkdata[marker][:, 1] > FP_YMIN - Y_TOEOFF_TOL,
-                             mrkdata[marker][:, 1] <
-                             FP_YMAX + Y_TOEOFF_TOL)[toeoff_fr]
-        if not ok:
-            break
-    if ok:
-        kinetics = 'L'
+            logger.debug('plate %d: valid foot strike on %s at frame %d'
+                         % (plate_ind, this_valid, strike_fr))
+            results['context'] += this_valid
+            results['strikes'][this_valid].append(strike_fr)
+            results['toeoffs'][this_valid].append(strike_fr)
 
-    if not kinetics:
-        logger.debug('markers off plate during strike/toeoff')
-        return emptydi
-
-    # kinetics ok, compute velocities at strike
-    markers = RIGHT_FOOT_MARKERS if kinetics == 'R' else LEFT_FOOT_MARKERS
-    footctrV = np.zeros(mrkdata[markers[0]+'_V'].shape)
-    for marker in markers:
-        footctrV += mrkdata[marker+'_V'] / len(markers)
-    footctrv = np.sqrt(np.sum(footctrV[:, 1:3]**2, 1))
-    strike_v = footctrv[int(strike_fr)]
-    toeoff_v = footctrv[int(toeoff_fr)]
-    logger.debug('strike on %s at %d, toeoff at %d'
-                 % (kinetics, strike_fr, toeoff_fr))
-    return {'context': kinetics, 'strike': strike_fr, 'strike_v': strike_v,
-            'toeoff': toeoff_fr, 'toeoff_v': toeoff_v}
+    return results

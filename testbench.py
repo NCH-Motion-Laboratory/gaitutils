@@ -24,9 +24,13 @@ vicon = nexus.viconnexus()
 
 pl = Plotter()
 
-pl.open_trial(c3dfile)
+pl.open_nexus_trial()
 
-print pl.trial.forceplate
+print utils.kinetics_available(vicon)
+
+#pl.open_trial(c3dfile)
+
+print pl.trial.forceplate_data
 
 
 sys.exit()

@@ -156,10 +156,13 @@ def get_forceplate_data(c3dfile):
     samplesperframe = acq.GetNumberAnalogSamplePerFrame()
     sfrate = acq.GetAnalogFrequency()
     # TODO: raise DeviceNotFound if needed
+    data = []
     fx, fy, fz, mx, my, mz = (None,) * 6
     for i in btk.Iterate(acq.GetAnalogs()):
         desc = i.GetLabel()
+        # logger.info('c3d analog: %s' % desc)
         if desc.find('Force.') >= 0 and i.GetUnit() == 'N':
+            plate_n = desc[-1]
             if desc.find('Fx') > 0:
                 fx = np.squeeze(i.GetValues())  # rm singleton dimension
             elif desc.find('Fy') > 0:
@@ -180,5 +183,6 @@ def get_forceplate_data(c3dfile):
     Ftot = np.sqrt(np.sum(F**2, axis=1))
     M = np.array([mx, my, mz]).transpose()
     CoP = cop(F, M)
-    return {'F': F, 'Ftot': Ftot, 'CoP': CoP,
-            'samplesperframe': samplesperframe, 'analograte': sfrate}
+    data.append({'F': F, 'Ftot': Ftot, 'CoP': CoP,
+                 'samplesperframe': samplesperframe, 'analograte': sfrate})
+                 

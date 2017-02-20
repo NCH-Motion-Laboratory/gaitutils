@@ -6,6 +6,7 @@
 gaitutils TODO
 
 
+-consistency plot ylimits needs fixing
 
 -check pep8
 

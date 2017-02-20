@@ -27,7 +27,7 @@ def do_plot():
 
     pl.layout = layouts.kinematics_emg('R')
     pl.plot_trial(maintitle=maintitle, emg_tracecolor='green',
-                  emg_cycles={'R': 1}, annotate_emg=False)
+                  emg_cycles={'R': 1}, annotate_emg=False, superpose=True)
 
     pl.create_pdf(pdf_prefix=pdf_prefix)
 

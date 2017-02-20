@@ -12,6 +12,7 @@ from gaitutils import Plotter, layouts, register_gui_exception_handler
 from gaitutils.nexus import enf2c3d, find_trials
 
 import logging
+logger = logging.getLogger(__name__)
 
 
 def do_plot():
@@ -42,14 +43,15 @@ def do_plot():
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
 
     for i, trialpath in enumerate(marked_trials):
+        logger.debug('plotting %s' % marked_trials[i])
         pl.open_trial(enf2c3d(marked_trials[i]))
         maintitle = ('Kinematics/kinetics consistency plot, '
                      'session %s' % pl.trial.trialdirname)
         pl.plot_trial(model_tracecolor=linecolors[i], linestyles_context=True,
                       maintitle=maintitle, superpose=True, show=False)
-
     pl.show()
     pl.create_pdf('kin_consistency.pdf')
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

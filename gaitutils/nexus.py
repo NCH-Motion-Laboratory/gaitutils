@@ -462,12 +462,12 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         if first_strike is not None and this_side in first_strike:
             first = first_strike[this_side]
             # find our idea of the first strike
-            true_first = strikes[np.argmin(np.abs(strikes - first))]
+            auto_first = strikes[np.argmin(np.abs(strikes - first))]
             logger.debug('first strike given: %d detected: %d' %
-                         (first, true_first))
-            if np.abs(true_first - first) > STRIKE_TOL:
+                         (first, auto_first))
+            if np.abs(auto_first - first) > STRIKE_TOL:
                 raise Exception('Strikes do not agree with first_strike')
-            strike_ok = np.where(strikes >= true_first)
+            strike_ok = np.where(strikes >= auto_first)
             strikes = strikes[strike_ok]
 
         logger.debug('accepted strike events: %s' % _list_to_str(strikes))

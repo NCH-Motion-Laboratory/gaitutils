@@ -29,7 +29,7 @@ by Eclipse?)
 @author: Jussi
 """
 
-from gaitutils import nexus, eclipse, utils
+from gaitutils import nexus, eclipse, utils, register_gui_exception_handler
 from gaitutils.config import cfg
 import os
 import numpy as np
@@ -81,7 +81,7 @@ def _do_autoproc(enffiles):
                  'L_toeoff': [], 'R_toeoff': []}
     trials = {}
 
-    subjectname = vicon.GetSubjectNames()[0]
+    subjectname = nexus.get_metadata(vicon)['name']
 
     """ 1st pass - reconstruct, label, sanity check, check forceplate and gait
     direction """

@@ -434,7 +434,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         strikes = np.delete(strikes, too_near)
 
         if len(strikes) == 0:
-            raise GaitDataError('Could not detect any foot strike events')
+            raise GaitDataError('No valid foot strikes detected')
 
         # toe offs (velocity increases)
         cross = rising_zerocross(footctrv - threshold_rise_)
@@ -464,6 +464,9 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
             strike_ok = np.where(np.logical_and(nz, dist_ok))
             strikes = strikes[strike_ok]
 
+        if len(strikes) == 0:
+            raise GaitDataError('No valid foot strikes detected')
+
         # mark only after first strike
         if first_strike is not None and this_side in first_strike:
             first = first_strike[this_side]
@@ -473,7 +476,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                          (first, auto_first))
             if np.abs(auto_first - first) > STRIKE_TOL:
                 raise GaitDataError('Detected foot strike does not agree '
-                                        'with parameters')
+                                    'with parameters')
             strike_ok = np.where(strikes >= auto_first)
             strikes = strikes[strike_ok]
 

@@ -29,7 +29,8 @@ by Eclipse?)
 @author: Jussi
 """
 
-from gaitutils import nexus, eclipse, utils, register_gui_exception_handler
+from gaitutils import (nexus, eclipse, utils, register_gui_exception_handler,
+                       GaitDataError)
 from gaitutils.config import cfg
 import os
 import numpy as np
@@ -223,7 +224,7 @@ def _do_autoproc(enffiles):
                                   first_strike=first_strike,
                                   vel_thresholds=vel_th_)
             trial.events = True
-        except ValueError:  # cannot automark
+        except GaitDataError:  # cannot automark
             eclipse_str = '%s,%s' % (trials[filepath].description,
                                      cfg.autoproc.enf_descriptions
                                      ['automark_failure'])

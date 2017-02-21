@@ -393,7 +393,7 @@ class Plotter(object):
                                          edgecolor='none', linewidth=0)]
                 ax.legend(nothing+artists,
                           legtitle+self.legendnames, loc='upper center',
-                          prop={'size': self.cfg.plot.label_fontsize})
+                          prop={'size': self.cfg.plot.legend_fontsize})
 
         plt.suptitle(maintitle, fontsize=12, fontweight="bold")
         self.gridspec.tight_layout(self.fig)

@@ -8,6 +8,9 @@ Created on Thu Aug 27 14:16:50 2015
 """
 
 from emg import EMG
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def rm_dead_channels(source, layout):
@@ -17,6 +20,8 @@ def rm_dead_channels(source, layout):
     for j, row in enumerate(layout):
         if all([emg.status_ok(ch) for ch in row]):
             layout_.append(row)
+    if not layout_:
+        logger.warning('removed all - no EMG channels active')
     return layout_
 
 # online kinematics plot

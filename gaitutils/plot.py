@@ -59,6 +59,8 @@ class Plotter(object):
         self._layout = layout
         self.allvars = [item for row in layout for item in row]
         self.nrows = len(layout)
+        if self.nrows == 0:
+            raise Exception('No data to plot')
         self.ncols = len(layout[0])
 
     def open_nexus_trial(self):

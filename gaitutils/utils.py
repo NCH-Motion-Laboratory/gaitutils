@@ -97,8 +97,8 @@ def kinetics_available(source, check_weight=True):
 
     fmax = max(forcetot)
     fmaxind = np.where(forcetot == fmax)[0][0]  # first maximum
-    logger.debug('max force: %.2f at %.2f, weight: %.2f N'
-                 % (fmax, fmaxind, subj_weight))
+    logger.debug('max force: %.2f N at frame %d = %.2f%% of weight'
+                 % (fmax, fmaxind, 100*fmax/subj_weight))
     if not check_weight:
         logger.debug('(ignoring subject weight)')
     elif max(forcetot) < FMAX_REL_MIN * subj_weight:
@@ -116,7 +116,7 @@ def kinetics_available(source, check_weight=True):
     copx, copy = np.array(fp0['cop'][:, 0]), np.array(fp0['cop'][:, 1])
     copx_shift = np.max(copx[cop_roi]) - np.min(copx[cop_roi])
     copy_shift = np.max(copy[cop_roi]) - np.min(copy[cop_roi])
-    logger.debug('CoP x shift %.2f mm, y shift %.2f mm'
+    logger.debug('CoP shift x: %.2f mm, y: %.2f mm'
                  % (copx_shift, copy_shift))
     if copx_shift > MAX_COP_SHIFT or copy_shift > MAX_COP_SHIFT:
         logger.debug('center of pressure shifts too much (double contact?)')

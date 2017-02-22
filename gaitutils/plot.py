@@ -18,6 +18,9 @@ import os.path as op
 import os
 import subprocess
 from config import cfg
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Plotter(object):
@@ -208,6 +211,8 @@ class Plotter(object):
                             self.cfg.plot.maxh)
             self.figw = min(self.ncols*self.cfg.plot.inch_per_col,
                             self.cfg.plot.maxw)
+            logger.debug('new figure: width %.2f, height %.2f'
+                         % (self.figw, self.figh))
             self.fig = plt.figure(figsize=(self.figw, self.figh))
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)
@@ -395,13 +400,16 @@ class Plotter(object):
                           legtitle+self.legendnames, loc='upper center',
                           prop={'size': self.cfg.plot.legend_fontsize})
 
-        plt.suptitle(maintitle, fontsize=12, fontweight="bold")
+        plt.suptitle(maintitle, fontsize=self.cfg.plot.maintitle_fontsize,
+                     fontweight="bold")
         self.gridspec.tight_layout(self.fig)
         # some fixes to tight_layout
         # space for main title
         top = (self.figh - self.cfg.plot.titlespace) / self.figh
         # decrease vertical spacing
-        hspace = .40
+        hspace = .6
+        #self.gridspec.update(hspace=hspace)
+        #self.gridspec.update(top=top)
         self.gridspec.update(top=top, hspace=hspace)
         if show:
             self.show()

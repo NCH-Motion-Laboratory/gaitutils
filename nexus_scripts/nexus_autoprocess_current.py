@@ -8,10 +8,9 @@ Note: does not use stats for event detection -> less accurate
 """
 
 from nexus_autoprocess_trials import _do_autoproc
-from gaitutils import nexus
+from gaitutils import nexus, register_gui_exception_handler
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
 
 
 def autoproc_single():
@@ -20,13 +19,11 @@ def autoproc_single():
         raise Exception('Vicon Nexus not running')
 
     vicon = nexus.viconnexus()
-    trialname_ = vicon.GetTrialName()
-    if not trialname_:
-        raise ValueError('No trial loaded in Nexus?')
-    enfname = ''.join(trialname_)+'.Trial.enf'
-
+    meta = nexus.get_metadata(vicon)
+    enfname = meta['sessionpath'] + meta['trialname'] + '.Trial.enf'
     _do_autoproc([enfname])  # need to listify name
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     autoproc_single()

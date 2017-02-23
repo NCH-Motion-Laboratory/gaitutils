@@ -25,6 +25,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class GaitDataError(Exception):
+    """ Exception specific to erroneous or unexpected gait data """
+    pass
+
 # try to import Nexus Python SDK
 if cfg.general.nexus_path:
     if op.isdir(cfg.general.nexus_path):
@@ -263,7 +267,8 @@ def get_marker_data(vicon, markers):
     for marker in markers:
         x, y, z, _ = vicon.GetTrajectory(subjectnames[0], marker)
         if len(x) == 0:
-            raise ValueError('Cannot get marker trajectory: %s' % marker)
+            raise GaitDataError('Cannot get marker trajectory: %s'
+                                    % marker)
         mP = np.array([x, y, z]).transpose()
         mdata[marker + '_P'] = mP
         mdata[marker + '_V'] = np.gradient(mP)[0]
@@ -416,7 +421,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         maxv = np.median(footctrv[vdz_ind[inds]])
 
         if maxv > MAX_PEAK_VELOCITY:
-            raise Exception('Velocity thresholds too high, data may be noisy')
+            raise GaitDataError('Velocity thresholds too high, data may '
+                                    'be noisy')
 
         # compute thresholds
         threshold_fall_ = (vel_thresholds[this_side+'_strike'] or
@@ -444,7 +450,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         strikes = np.delete(strikes, too_near)
 
         if len(strikes) == 0:
-            raise Exception('Could not detect any foot strike events')
+            raise GaitDataError('No valid foot strikes detected')
 
         # toe offs (velocity increases)
         cross = rising_zerocross(footctrv - threshold_rise_)
@@ -460,7 +466,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         toeoffs = np.delete(toeoffs, too_near)
 
         if len(toeoffs) == 0:
-            raise Exception('Could not detect any toe-off events')
+            raise GaitDataError('Could not detect any toe-off events')
 
         logger.debug('all strike events: %s' % _list_to_str(strikes))
 
@@ -474,16 +480,20 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
             strike_ok = np.where(np.logical_and(nz, dist_ok))
             strikes = strikes[strike_ok]
 
+        if len(strikes) == 0:
+            raise GaitDataError('No valid foot strikes detected')
+
         # mark only after first strike
         if first_strike is not None and this_side in first_strike:
             first = first_strike[this_side]
             # find our idea of the first strike
-            true_first = strikes[np.argmin(np.abs(strikes - first))]
+            auto_first = strikes[np.argmin(np.abs(strikes - first))]
             logger.debug('first strike given: %d detected: %d' %
-                         (first, true_first))
-            if np.abs(true_first - first) > STRIKE_TOL:
-                raise Exception('Strikes do not agree with first_strike')
-            strike_ok = np.where(strikes >= true_first)
+                         (first, auto_first))
+            if np.abs(auto_first - first) > STRIKE_TOL:
+                raise GaitDataError('Detected foot strike does not agree '
+                                    'with parameters')
+            strike_ok = np.where(strikes >= auto_first)
             strikes = strikes[strike_ok]
 
         logger.debug('accepted strike events: %s' % _list_to_str(strikes))

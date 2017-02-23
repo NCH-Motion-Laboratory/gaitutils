@@ -29,7 +29,8 @@ by Eclipse?)
 @author: Jussi
 """
 
-from gaitutils import nexus, eclipse, utils
+from gaitutils import (nexus, eclipse, utils, register_gui_exception_handler,
+                       GaitDataError)
 from gaitutils.config import cfg
 import os
 import numpy as np
@@ -37,7 +38,6 @@ import time
 
 import logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
 
 class Trial:
@@ -93,7 +93,7 @@ def _do_autoproc(enffiles):
                  'L_toeoff': [], 'R_toeoff': []}
     trials = {}
 
-    subjectname = vicon.GetSubjectNames()[0]
+    subjectname = nexus.get_metadata(vicon)['name']
 
     """ 1st pass - reconstruct, label, sanity check, check forceplate and gait
     direction """
@@ -235,7 +235,7 @@ def _do_autoproc(enffiles):
                                   first_strike=first_strike,
                                   vel_thresholds=vel_th_)
             trial.events = True
-        except ValueError:  # cannot automark
+        except GaitDataError:  # cannot automark
             eclipse_str = '%s,%s' % (trials[filepath].description,
                                      cfg.autoproc.enf_descriptions
                                      ['automark_failure'])
@@ -277,10 +277,10 @@ def _do_autoproc(enffiles):
 
 
 def autoproc_session():
-
     enffiles = nexus.get_trial_enfs()
     _do_autoproc(enffiles)
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     autoproc_session()

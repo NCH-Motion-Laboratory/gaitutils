@@ -6,16 +6,13 @@
 gaitutils TODO
 
 
+-consistency plot ylimits needs fixing
 
 -check pep8
 
+-layouts should go into config or separate layouts file
 
 -multiple forceplate support
-
-    -baseline removal ok
-    -try cop calculation instead of fp cop (NVUG2017 example data)
-
--layouts should go into config or separate layouts file
 
 -unnormalized model plotting ok?
 

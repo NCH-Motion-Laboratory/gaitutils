@@ -43,8 +43,8 @@ class EMG(object):
         else:
             ch = min(matches, key=len)  # choose shortest matching name
         if len(matches) > 1:
-            logger.warning('multiple channel matches: %s -> %s' %
-                           (_list_to_str(matches), ch))
+            logger.warning('multiple channel matches for %s: %s -> %s' %
+                           (item, _list_to_str(matches), ch))
         data = self.data[ch]
         return self.filt(data, self.passband) if self.passband else data
 

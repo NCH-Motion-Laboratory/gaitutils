@@ -47,5 +47,4 @@ def set_eclipse_key(fname_enf, keyname, newval, update_existing=False):
     with open(fname_enf, 'w') as f:
         logger.debug('writing %s' % fname_enf)
         for li in linesnew:
-            logger.debug('new line %s' % li)
             f.write(li + '\n')

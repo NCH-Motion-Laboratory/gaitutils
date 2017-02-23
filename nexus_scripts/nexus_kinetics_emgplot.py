@@ -10,7 +10,6 @@ Kinetics-EMG plot from Nexus.
 from gaitutils import Plotter, layouts, register_gui_exception_handler
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
 
 
 def do_plot():
@@ -26,5 +25,6 @@ def do_plot():
     pl.create_pdf(pdf_prefix=pdf_prefix)
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     register_gui_exception_handler()
     do_plot()

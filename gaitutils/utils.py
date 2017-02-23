@@ -69,11 +69,6 @@ def butter_filt(data, passband, sfreq, bord=5):
     return signal.filtfilt(b, a, data)
 
 
-
-
-
-
-
 def kinetics_available(source, check_weight=True, check_cop=True):
     """ See whether the trial has valid forceplate contact.
     Uses forceplate data and marker positions.
@@ -86,14 +81,10 @@ def kinetics_available(source, check_weight=True, check_cop=True):
     Return dict as:
     return {'context': context, 'strike': strike_fr, 'toeoff': toeoff_fr}
     """
-    
-    # get subject info
-    info = get_metadata(source)
-    subj_weight = info['bodymass'] * 9.81
 
     # autodetection parameters
     # TODO: move into config
-    F_THRESHOLD = .1 * subj_weight  # rise threshold
+    F_REL_THRESHOLD = .1  # force rise / fall threshold
     FMAX_REL_MIN = .8  # maximum force as % of bodyweight must exceed this
     MAX_COP_SHIFT = 300  # maximum CoP shift (in x or y dir) in mm
     # time specified in seconds -> analog frames
@@ -114,6 +105,9 @@ def kinetics_available(source, check_weight=True, check_cop=True):
     # ankle marker tolerance in x dir
     X_ANKLE_TOL = 20
 
+    # get subject info
+    info = get_metadata(source)
+
     fpdata = get_forceplate_data(source)
 
     results = {'context': '', 'strikes': None, 'toeoffs': None}
@@ -125,23 +119,27 @@ def kinetics_available(source, check_weight=True, check_cop=True):
         # test the force data
         forcetot = signal.medfilt(fp['Ftot'])  # remove spikes
         forcetot = _baseline(forcetot)
-        if plate_ind == 0:
-            plt.plot(fp['Ftot'])
-            plt.plot(forcetot)
         fmax = max(forcetot)
         fmaxind = np.where(forcetot == fmax)[0][0]  # first maximum
-        logger.debug('max force: %.2f at %.2f, weight: %.2f N'
-                     % (fmax, fmaxind, subj_weight))
-        if not check_weight:
-            logger.debug('ignoring subject weight')
-        elif max(forcetot) < FMAX_REL_MIN * subj_weight:
-            logger.debug('insufficient max. force on plate')
-            continue
+        logger.debug('max force: %.2f N at %.2f' % (fmax, fmaxind))
+        bodymass = info['bodymass']
+        if bodymass is None:
+            f_threshold = F_REL_THRESHOLD * fmax
+            logger.warning('body mass unknown, thresholding force at %.2f N',
+                           f_threshold)
+        else:
+            logger.debug('body mass %.2f kg' % bodymass)
+            f_threshold = F_REL_THRESHOLD * bodymass
+            if check_weight and fmax < FMAX_REL_MIN * bodymass * 9.81:
+                logger.debug('insufficient max. force on plate')
+                continue
+            else:
+                logger.debug('ignoring subject weight')
         # find indices where force crosses threshold
         try:
-            logger.debug('force threshold: %g' % F_THRESHOLD)
-            friseind = rising_zerocross(forcetot-F_THRESHOLD)[0]  # first rise
-            ffallind = falling_zerocross(forcetot-F_THRESHOLD)[-1]  # last fall
+            logger.debug('force threshold: %.2f N' % f_threshold)
+            friseind = rising_zerocross(forcetot-f_threshold)[0]  # first rise
+            ffallind = falling_zerocross(forcetot-f_threshold)[-1]  # last fall
             logger.debug('force rise: %d fall: %d' % (friseind, ffallind))
         except IndexError:
             logger.debug('cannot detect force rise/fall')

@@ -127,6 +127,9 @@ def get_metadata(vicon):
         bodymass = vicon.GetSubjectParam(name, 'Bodymass')[0]
     else:  # hopefully float
         bodymass = vicon.GetSubjectParam(name, 'Bodymass')
+    if bodymass <= 0:
+        logger.warn('invalid or unspecified body mass: %.2f', bodymass)
+        bodymass = None
     trialname_ = vicon.GetTrialName()
     sessionpath = trialname_[0]
     trialname = trialname_[1]

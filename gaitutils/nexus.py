@@ -205,7 +205,7 @@ def _get_1_forceplate_data(vicon, devid):
     """ Read data of single forceplate data from Nexus. """
     # get forceplate ids
     logger.debug('reading forceplate data from devid %d' % devid)
-    dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(devid)
+    dname, dtype, drate, outputids, nfp, _ = vicon.GetDeviceDetails(devid)
     framerate = vicon.GetFrameRate()
     samplesperframe = drate / framerate
     # outputs should be force, moment, cop. select force
@@ -224,7 +224,7 @@ def _get_1_forceplate_data(vicon, devid):
     my, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
     chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Mz')
     mz, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
-    # read CoP
+    # read CoP, returned in forceplate local coords
     outputid = outputids[2]
     chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Cx')
     copx, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
@@ -236,8 +236,16 @@ def _get_1_forceplate_data(vicon, devid):
     F = np.array([fx, fy, fz]).transpose()
     M = np.array([mx, my, mz]).transpose()
     Ftot = np.sqrt(np.sum(F**2, axis=1))
+    # translation and rotation matrices -> world coords
+    wR = np.array(nfp.WorldR).reshape(3,3)
+    wT = np.array(nfp.WorldT)
+    # corners in plate local coords
+    lowerbounds = np.array(nfp.LowerBounds)
+    upperbounds = np.array(nfp.UpperBounds)
     return {'F': F, 'M': M, 'Ftot': Ftot, 'CoP': CoP,
-            'samplesperframe': samplesperframe, 'analograte': drate}
+            'samplesperframe': samplesperframe, 'analograte': drate,
+            'wR': wR, 'wT': wT, 'lowerbounds': lowerbounds,
+            'upperbounds': upperbounds}
 
 
 def get_forceplate_data(vicon):

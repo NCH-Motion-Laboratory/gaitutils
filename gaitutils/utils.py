@@ -94,15 +94,9 @@ def kinetics_available(source, check_weight=True, check_cop=True):
     RIGHT_FOOT_MARKERS = ['RHEE', 'RTOE', 'RANK']
     # left foot markers
     LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
-    # forceplate boundaries in world coords
-    # TODO: should be read from config / source
-    FP_YMIN = 0
-    FP_YMAX = 508
-    FP_XMIN = 0
-    FP_XMAX = 465
-    # tolerance for toeoff in y dir
+    # tolerance for toeoff in forward dir (mm)
     Y_TOEOFF_TOL = 20
-    # ankle marker tolerance in x dir
+    # ankle marker tolerance in perpendicular dir (mm)
     X_ANKLE_TOL = 20
 
     # get subject info
@@ -144,7 +138,9 @@ def kinetics_available(source, check_weight=True, check_cop=True):
         except IndexError:
             logger.debug('cannot detect force rise/fall')
             continue
-        # check shift of cop during roi
+        # check shift of center of pressure during roi
+        # cop is here in plate coordinates, but it does not matter as we're
+        # only looking for the magnitude of the shift
         if check_cop:
             cop_roi = np.arange(friseind, ffallind)
             copx, copy = np.array(fp['CoP'][:, 0]), np.array(fp['CoP'][:, 1])
@@ -164,26 +160,40 @@ def kinetics_available(source, check_weight=True, check_cop=True):
 
         this_valid = None
 
-        # if we got here, force data looks ok; check marker data
+        # if we got here, force data looked ok; next, check marker data
+        # first compute plate boundaries in world coords
+        wR = fp['wR']
+        wT = fp['wT']
+        c = np.stack([fp['lowerbounds'], fp['upperbounds']])
+        cw = np.dot(wR, c.T).T + wT
+        mins = np.min(cw, axis=0)
+        maxes = np.max(cw, axis=0)
+        fp_xmax = maxes[0]
+        fp_xmin = mins[0]
+        fp_ymax = maxes[1]
+        fp_ymin = mins[1]
+        logger.debug('plate boundaries: x %.2f -> %.2f mm, y %.2f -> %.2f mm'
+                     % (fp_xmin, fp_xmax, fp_ymin, fp_ymax))
+
         ok = True
         for marker in RIGHT_FOOT_MARKERS:
             marker += '_P'
             # ankle marker gets extra tolerance in x dir
             if marker == 'RANK_P':
-                FP_XMIN_ = FP_XMIN - X_ANKLE_TOL
-                FP_XMAX_ = FP_XMAX + X_ANKLE_TOL
+                fp_xmin_ = fp_xmin - X_ANKLE_TOL
+                fp_xmax_ = fp_xmax + X_ANKLE_TOL
             else:
-                FP_XMIN_ = FP_XMIN
-                FP_XMAX_ = FP_XMAX
-            ok &= np.logical_and(mrkdata[marker][:, 0] > FP_XMIN,
-                                 mrkdata[marker][:, 0] < FP_XMAX)[strike_fr]
-            ok &= np.logical_and(mrkdata[marker][:, 0] > FP_XMIN,
-                                 mrkdata[marker][:, 0] < FP_XMAX)[toeoff_fr]
-            ok &= np.logical_and(mrkdata[marker][:, 1] > FP_YMIN,
-                                 mrkdata[marker][:, 1] < FP_YMAX)[strike_fr]
-            ok &= np.logical_and(mrkdata[marker][:, 1] > FP_YMIN - Y_TOEOFF_TOL,
+                fp_xmin_ = fp_xmin
+                fp_xmax_ = fp_xmax
+            ok &= np.logical_and(mrkdata[marker][:, 0] > fp_xmin,
+                                 mrkdata[marker][:, 0] < fp_xmax)[strike_fr]
+            ok &= np.logical_and(mrkdata[marker][:, 0] > fp_xmin,
+                                 mrkdata[marker][:, 0] < fp_xmax)[toeoff_fr]
+            ok &= np.logical_and(mrkdata[marker][:, 1] > fp_ymin,
+                                 mrkdata[marker][:, 1] < fp_ymax)[strike_fr]
+            ok &= np.logical_and(mrkdata[marker][:, 1] > fp_ymin - Y_TOEOFF_TOL,
                                  mrkdata[marker][:, 1] <
-                                 FP_YMAX + Y_TOEOFF_TOL)[toeoff_fr]
+                                 fp_ymax + Y_TOEOFF_TOL)[toeoff_fr]
             if not ok:
                 break
         if ok:
@@ -193,20 +203,20 @@ def kinetics_available(source, check_weight=True, check_cop=True):
         for marker in LEFT_FOOT_MARKERS:
             marker += '_P'
             if marker == 'LANK_P':
-                FP_XMIN_ = FP_XMIN - X_ANKLE_TOL
-                FP_XMAX_ = FP_XMAX + X_ANKLE_TOL
+                fp_xmin_ = fp_xmin - X_ANKLE_TOL
+                fp_xmax_ = fp_xmax + X_ANKLE_TOL
             else:
-                FP_XMIN_ = FP_XMIN
-                FP_XMAX_ = FP_XMAX
-            ok &= np.logical_and(mrkdata[marker][:, 0] > FP_XMIN_,
-                                 mrkdata[marker][:, 0] < FP_XMAX_)[strike_fr]
-            ok &= np.logical_and(mrkdata[marker][:, 0] > FP_XMIN_,
-                                 mrkdata[marker][:, 0] < FP_XMAX_)[toeoff_fr]
-            ok &= np.logical_and(mrkdata[marker][:, 1] > FP_YMIN,
-                                 mrkdata[marker][:, 1] < FP_YMAX)[strike_fr]
-            ok &= np.logical_and(mrkdata[marker][:, 1] > FP_YMIN - Y_TOEOFF_TOL,
+                fp_xmin_ = fp_xmin
+                fp_xmax_ = fp_xmax
+            ok &= np.logical_and(mrkdata[marker][:, 0] > fp_xmin_,
+                                 mrkdata[marker][:, 0] < fp_xmax_)[strike_fr]
+            ok &= np.logical_and(mrkdata[marker][:, 0] > fp_xmin_,
+                                 mrkdata[marker][:, 0] < fp_xmax_)[toeoff_fr]
+            ok &= np.logical_and(mrkdata[marker][:, 1] > fp_ymin,
+                                 mrkdata[marker][:, 1] < fp_ymax)[strike_fr]
+            ok &= np.logical_and(mrkdata[marker][:, 1] > fp_ymin - Y_TOEOFF_TOL,
                                  mrkdata[marker][:, 1] <
-                                 FP_YMAX + Y_TOEOFF_TOL)[toeoff_fr]
+                                 fp_ymax + Y_TOEOFF_TOL)[toeoff_fr]
             if not ok:
                 break
         if ok:
@@ -218,7 +228,8 @@ def kinetics_available(source, check_weight=True, check_cop=True):
         else:
             logger.debug('plate %d: valid foot strike on %s at frame %d'
                          % (plate_ind, this_valid, strike_fr))
-            results['context'] += this_valid
+            if this_valid not in results['context']:
+                results['context'] += this_valid
             results['strikes'][this_valid].append(strike_fr)
             results['toeoffs'][this_valid].append(toeoff_fr)
 

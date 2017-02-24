@@ -84,7 +84,7 @@ def kinetics_available(source, check_weight=True, check_cop=True):
 
     # autodetection parameters
     # TODO: move into config
-    F_REL_THRESHOLD = .1  # force rise / fall threshold
+    F_REL_THRESHOLD = .2  # force rise / fall threshold
     FMAX_REL_MIN = .8  # maximum force as % of bodyweight must exceed this
     MAX_COP_SHIFT = 300  # maximum CoP shift (in x or y dir) in mm
     # time specified in seconds -> analog frames
@@ -124,9 +124,10 @@ def kinetics_available(source, check_weight=True, check_cop=True):
         else:
             logger.debug('body mass %.2f kg' % bodymass)
             f_threshold = F_REL_THRESHOLD * bodymass
-            if check_weight and fmax < FMAX_REL_MIN * bodymass * 9.81:
-                logger.debug('insufficient max. force on plate')
-                continue
+            if check_weight:
+                if fmax < FMAX_REL_MIN * bodymass * 9.81:
+                    logger.debug('insufficient max. force on plate')
+                    continue
             else:
                 logger.debug('ignoring subject weight')
         # find indices where force crosses threshold
@@ -152,12 +153,15 @@ def kinetics_available(source, check_weight=True, check_cop=True):
                 logger.debug('center of pressure shifts too much '
                              '(double contact?)')
                 continue
+        else:
+            logger.debug('ignoring center of pressure')
 
         # frame indices are 1-based so need to add 1 (what about c3d?)
         strike_fr = int(np.round(friseind / fp['samplesperframe'])) + 1
         toeoff_fr = int(np.round(ffallind / fp['samplesperframe'])) + 1
-        mrkdata = get_marker_data(source, RIGHT_FOOT_MARKERS+LEFT_FOOT_MARKERS)
+        logger.debug('strike %d, toeoff %d' % (strike_fr, toeoff_fr))
 
+        mrkdata = get_marker_data(source, RIGHT_FOOT_MARKERS+LEFT_FOOT_MARKERS)
         this_valid = None
 
         # if we got here, force data looked ok; next, check marker data
@@ -195,6 +199,7 @@ def kinetics_available(source, check_weight=True, check_cop=True):
                                  mrkdata[marker][:, 1] <
                                  fp_ymax + Y_TOEOFF_TOL)[toeoff_fr]
             if not ok:
+                logger.debug('marker %s failed on-plate check' % marker)
                 break
         if ok:
             this_valid = 'R'
@@ -218,6 +223,7 @@ def kinetics_available(source, check_weight=True, check_cop=True):
                                  mrkdata[marker][:, 1] <
                                  fp_ymax + Y_TOEOFF_TOL)[toeoff_fr]
             if not ok:
+                logger.debug('marker %s failed on-plate check' % marker)
                 break
         if ok:
             this_valid = 'L'

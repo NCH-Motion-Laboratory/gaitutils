@@ -32,7 +32,7 @@ vicon = nexus.viconnexus()
 #fpdata = read_data.get_forceplate_data(vicon)
 meta = read_data.get_metadata(vicon)
 
-kin = utils.kinetics_available(vicon)
+kin = utils.kinetics_available(vicon, check_cop=False)
 
 
 sys.exit()

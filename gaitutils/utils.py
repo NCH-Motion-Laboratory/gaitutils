@@ -75,11 +75,14 @@ def kinetics_available(source, check_weight=True, check_cop=True):
 
     Conditions:
     -check max total force, must correspond to subject weight
+    (disable by check_weight=False)
     -center of pressure must not change too much during contact time
-    -heel & toe markers must not be outside plate edges at strike time
+    (disable by check_cop=False)
+    -foot markers must be inside plate edges at strike time
 
-    Return dict as:
-    return {'context': context, 'strike': strike_fr, 'toeoff': toeoff_fr}
+    Returns dict as:
+    return {'context': context, 'strikes': strike_fr, 'toeoffs': toeoff_fr}
+    
     """
 
     # autodetection parameters

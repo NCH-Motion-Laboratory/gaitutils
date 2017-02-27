@@ -94,9 +94,9 @@ def kinetics_available(source, check_weight=True, check_cop=True):
     # FRISE_WINDOW = .05 * fp0['sfrate']
     # FMAX_MAX_DELAY = .95 * fp0['sfrate']
     # right feet markers
-    RIGHT_FOOT_MARKERS = ['RHEE', 'RTOE']
+    RIGHT_FOOT_MARKERS = ['RHEE', 'RTOE', 'RANK']
     # left foot markers
-    LEFT_FOOT_MARKERS = ['LHEE', 'LTOE']
+    LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
     # tolerance for toeoff in forward dir (mm)
     Y_TOEOFF_TOL = 20
     # ankle marker tolerance in perpendicular dir (mm)
@@ -185,8 +185,13 @@ def kinetics_available(source, check_weight=True, check_cop=True):
         ok = True
         for marker in RIGHT_FOOT_MARKERS:
             marker += '_P'
-            fp_xmin_ = fp_xmin
-            fp_xmax_ = fp_xmax
+            # ankle marker gets extra tolerance in x dir
+            if marker == 'RANK_P':
+                fp_xmin_ = fp_xmin - X_ANKLE_TOL
+                fp_xmax_ = fp_xmax + X_ANKLE_TOL
+            else:
+                fp_xmin_ = fp_xmin
+                fp_xmax_ = fp_xmax
             ok &= np.logical_and(mrkdata[marker][:, 0] > fp_xmin,
                                  mrkdata[marker][:, 0] < fp_xmax)[strike_fr]
             ok &= np.logical_and(mrkdata[marker][:, 0] > fp_xmin,
@@ -197,7 +202,7 @@ def kinetics_available(source, check_weight=True, check_cop=True):
                                  mrkdata[marker][:, 1] <
                                  fp_ymax + Y_TOEOFF_TOL)[toeoff_fr]
             if not ok:
-                logger.debug('marker %s failed on-plate check' % marker[:-2])
+                logger.debug('marker %s failed on-plate check' % marker)
                 break
         if ok:
             this_valid = 'R'
@@ -205,8 +210,12 @@ def kinetics_available(source, check_weight=True, check_cop=True):
         ok = True
         for marker in LEFT_FOOT_MARKERS:
             marker += '_P'
-            fp_xmin_ = fp_xmin
-            fp_xmax_ = fp_xmax
+            if marker == 'LANK_P':
+                fp_xmin_ = fp_xmin - X_ANKLE_TOL
+                fp_xmax_ = fp_xmax + X_ANKLE_TOL
+            else:
+                fp_xmin_ = fp_xmin
+                fp_xmax_ = fp_xmax
             ok &= np.logical_and(mrkdata[marker][:, 0] > fp_xmin_,
                                  mrkdata[marker][:, 0] < fp_xmax_)[strike_fr]
             ok &= np.logical_and(mrkdata[marker][:, 0] > fp_xmin_,
@@ -217,7 +226,7 @@ def kinetics_available(source, check_weight=True, check_cop=True):
                                  mrkdata[marker][:, 1] <
                                  fp_ymax + Y_TOEOFF_TOL)[toeoff_fr]
             if not ok:
-                logger.debug('marker %s failed on-plate check' % marker[:-2])
+                logger.debug('marker %s failed on-plate check' % marker)
                 break
         if ok:
             this_valid = 'L'

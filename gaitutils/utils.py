@@ -169,7 +169,7 @@ def kinetics_available(source, check_weight=True, check_cop=True):
         # frame indices are 1-based so need to add 1 (what about c3d?)
         strike_fr = int(np.round(friseind / fp['samplesperframe'])) + 1
         toeoff_fr = int(np.round(ffallind / fp['samplesperframe'])) + 1
-        logger.debug('strike %d, toeoff %d' % (strike_fr, toeoff_fr))
+        logger.debug('strike @ frame %d, toeoff @ %d' % (strike_fr, toeoff_fr))
 
         # if we got here, force data looked ok; next, check marker data
         # first compute plate boundaries in world coords
@@ -180,6 +180,7 @@ def kinetics_available(source, check_weight=True, check_cop=True):
         mins = np.min(cw, axis=0)
         maxes = np.max(cw, axis=0)
 
+        # check markers
         this_valid = None
         for markers in [RIGHT_FOOT_MARKERS, LEFT_FOOT_MARKERS]:
             ok = True            
@@ -192,26 +193,30 @@ def kinetics_available(source, check_weight=True, check_cop=True):
                     maxes_t[orth_dir] += ANKLE_TOL
                     mins_s[orth_dir] -= ANKLE_TOL
                     maxes_s[orth_dir] += ANKLE_TOL
-                # extra tolerance for all markers in gait direction during toeoff
+                # extra tolerance for all markers in gait direction @ toeoff
                 maxes_t[fwd_dir] += TOEOFF_TOL
                 mins_t[fwd_dir] -= TOEOFF_TOL                   
                 marker = marker_ + '_P'
                 ok &= mins_s[0] < mrkdata[marker][strike_fr, 0]  < maxes_s[0]
-                ok &= mins_t[0] < mrkdata[marker][toeoff_fr, 0]  < maxes_t[0]
                 ok &= mins_s[1] < mrkdata[marker][strike_fr, 1]  < maxes_s[1]
+                if not ok:
+                    logger.debug('marker %s failed on-plate check during foot '
+                                 'strike' % marker_)
+                    break
+                ok &= mins_t[0] < mrkdata[marker][toeoff_fr, 0]  < maxes_t[0]
                 ok &= mins_t[1] < mrkdata[marker][toeoff_fr, 1]  < maxes_t[1]
                 if not ok:
-                    logger.debug('marker %s failed on-plate check' % marker_)
+                    logger.debug('marker %s failed on-plate check during '
+                                 'toeoff ' % marker_)
                     break
             if ok:
                 if this_valid:
-                    raise Exception('both feet passed on-plate check')
+                    raise Exception('both feet on plate, how come?')
                 this_valid = 'R' if markers == RIGHT_FOOT_MARKERS else 'L'
                 logger.debug('on-plate check ok for side %s' % this_valid)
 
         if not this_valid:
-            logger.debug('plate %d: markers off plate during strike/toeoff' %
-                         plate_ind)
+            logger.debug('plate %d: no valid foot strike' % plate_ind)
         else:
             logger.debug('plate %d: valid foot strike on %s at frame %d'
                          % (plate_ind, this_valid, strike_fr))

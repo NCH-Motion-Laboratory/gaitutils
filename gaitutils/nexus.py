@@ -243,15 +243,17 @@ def _get_1_forceplate_data(vicon, devid):
     lb = np.array(nfp.LowerBounds)
     ub = np.array(nfp.UpperBounds)
     plims = np.sort(np.stack([lb, ub]), axis=0)
-    logger.debug('plate boundaries in plate coords: (%.2f, %.2f) mm, '
-                 '(%.2f, %.2f) mm' % (lb[0], lb[1], ub[0], ub[1]))
+    # logger.debug('plate lower boundary (plate coords): (%.2f, %.2f) mm' %
+    #              (lb[0], lb[1]))
+    # logger.debug('plate upper boundary (plate coords): (%.2f, %.2f) mm' %
+    #              (ub[0], ub[1]))
     dims = np.abs(ub - lb)
     # check that CoP stays inside plate
     copmax, copmin = cop.max(axis=0), cop.min(axis=0)    
     cop_ok = all(np.logical_and(copmax >= plims[0, :], copmax <= plims[1, :]))
     cop_ok &= all(np.logical_and(copmin >= plims[0, :], copmin <= plims[1, :]))
     if not cop_ok:
-        logger.warning('center of pressure goes outside plate boundaries')
+        logger.warning('center of pressure outside plate boundaries')
 
     return {'F': F, 'M': M, 'Ftot': Ftot, 'CoP': cop, 'CoP_ok': cop_ok,
             'samplesperframe': samplesperframe, 'analograte': drate,

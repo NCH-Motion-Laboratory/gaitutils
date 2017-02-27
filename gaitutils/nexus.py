@@ -232,20 +232,31 @@ def _get_1_forceplate_data(vicon, devid):
     copy, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
     chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Cz')
     copz, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
-    CoP = np.array([copx, copy, copz]).transpose()
+    cop = np.array([copx, copy, copz]).transpose()
     F = np.array([fx, fy, fz]).transpose()
     M = np.array([mx, my, mz]).transpose()
     Ftot = np.sqrt(np.sum(F**2, axis=1))
     # translation and rotation matrices -> world coords
     wR = np.array(nfp.WorldR).reshape(3,3)
     wT = np.array(nfp.WorldT)
-    # corners in plate local coords
-    lowerbounds = np.array(nfp.LowerBounds)
-    upperbounds = np.array(nfp.UpperBounds)
-    return {'F': F, 'M': M, 'Ftot': Ftot, 'CoP': CoP,
+    # plate corners in plate local coords
+    lb = np.array(nfp.LowerBounds)
+    ub = np.array(nfp.UpperBounds)
+    plims = np.sort(np.stack([lb, ub]), axis=0)
+    logger.debug('plate boundaries in plate coords: (%.2f, %.2f) mm, '
+                 '(%.2f, %.2f) mm' % (lb[0], lb[1], ub[0], ub[1]))
+    dims = np.abs(ub - lb)
+    # check that CoP stays inside plate
+    copmax, copmin = cop.max(axis=0), cop.min(axis=0)    
+    cop_ok = all(np.logical_and(copmax >= plims[0, :], copmax <= plims[1, :]))
+    cop_ok &= all(np.logical_and(copmin >= plims[0, :], copmin <= plims[1, :]))
+    if not cop_ok:
+        logger.warning('center of pressure goes outside plate boundaries')
+
+    return {'F': F, 'M': M, 'Ftot': Ftot, 'CoP': cop, 'CoP_ok': cop_ok,
             'samplesperframe': samplesperframe, 'analograte': drate,
-            'wR': wR, 'wT': wT, 'lowerbounds': lowerbounds,
-            'upperbounds': upperbounds}
+            'wR': wR, 'wT': wT, 'lowerbounds': lb, 'upperbounds': ub,
+            'dims': dims}
 
 
 def get_forceplate_data(vicon):

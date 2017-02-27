@@ -154,14 +154,12 @@ def kinetics_available(source, check_weight=True, check_cop=True):
         # check shift of center of pressure during roi
         # cop is here in plate coordinates, but it does not matter as we're
         # only looking for the magnitude of the shift
-        if check_cop:
-            cop_roi = np.arange(friseind, ffallind)
-            copx, copy = np.array(fp['CoP'][:, 0]), np.array(fp['CoP'][:, 1])
-            copx_shift = np.max(copx[cop_roi]) - np.min(copx[cop_roi])
-            copy_shift = np.max(copy[cop_roi]) - np.min(copy[cop_roi])
-            logger.debug('CoP x shift %.2f mm, y shift %.2f mm'
-                         % (copx_shift, copy_shift))
-            if copx_shift > MAX_COP_SHIFT or copy_shift > MAX_COP_SHIFT:
+        if check_cop and fp['CoP_ok']:
+            cop_roi = fp['CoP'][friseind:ffallind, :]
+            cop_shift = cop_roi.max(axis=0) - cop_roi.min(axis=0)
+            total_shift = np.sqrt(np.sum(cop_shift**2))
+            logger.debug('CoP total shift %.2f mm' % total_shift)
+            if total_shift > MAX_COP_SHIFT:
                 logger.debug('center of pressure shifts too much '
                              '(double contact?)')
                 continue
@@ -181,8 +179,6 @@ def kinetics_available(source, check_weight=True, check_cop=True):
         cw = np.dot(wR, c.T).T + wT
         mins = np.min(cw, axis=0)
         maxes = np.max(cw, axis=0)
-        logger.debug('plate boundaries: x %.2f -> %.2f mm, y %.2f -> %.2f mm'
-                     % (mins[0], maxes[0], mins[1], maxes[1]))
 
         this_valid = None
         for markers in [RIGHT_FOOT_MARKERS, LEFT_FOOT_MARKERS]:
@@ -205,7 +201,7 @@ def kinetics_available(source, check_weight=True, check_cop=True):
                 ok &= mins_s[1] < mrkdata[marker][strike_fr, 1]  < maxes_s[1]
                 ok &= mins_t[1] < mrkdata[marker][toeoff_fr, 1]  < maxes_t[1]
                 if not ok:
-                    logger.debug('marker %s failed on-plate check' % marker)
+                    logger.debug('marker %s failed on-plate check' % marker_)
                     break
             if ok:
                 if this_valid:

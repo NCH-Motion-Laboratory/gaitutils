@@ -98,9 +98,9 @@ def kinetics_available(source, check_weight=True, check_cop=True):
     # left foot markers
     LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
     # tolerance for toeoff in forward dir (mm)
-    Y_TOEOFF_TOL = 20
-    # ankle marker tolerance in perpendicular dir (mm)
-    X_ANKLE_TOL = 20
+    TOEOFF_TOL = 20
+    # ankle marker tolerance in dir orthogonal to gait (mm)
+    ANKLE_TOL = 20
 
     # get subject info
     info = get_metadata(source)
@@ -110,6 +110,15 @@ def kinetics_available(source, check_weight=True, check_cop=True):
     results = {'context': '', 'strikes': None, 'toeoffs': None}
     results['strikes'] = {'R': [], 'L': []}
     results['toeoffs'] = {'R': [], 'L': []}
+
+    # get marker data and find "forward" direction
+    mrkdata = get_marker_data(source, RIGHT_FOOT_MARKERS+LEFT_FOOT_MARKERS)
+    pos = sum([mrkdata[name+'_P'] for name in 
+               LEFT_FOOT_MARKERS+RIGHT_FOOT_MARKERS])
+    fwd_dir = np.argmax(np.var(pos, axis=0))
+    orth_dir = 0 if fwd_dir == 1 else 1
+    logger.debug('gait forward direction seems to be %s' %
+                 {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])
 
     for plate_ind, fp in enumerate(fpdata):
         logger.debug('analyzing plate %d' % plate_ind)
@@ -164,9 +173,6 @@ def kinetics_available(source, check_weight=True, check_cop=True):
         toeoff_fr = int(np.round(ffallind / fp['samplesperframe'])) + 1
         logger.debug('strike %d, toeoff %d' % (strike_fr, toeoff_fr))
 
-        mrkdata = get_marker_data(source, RIGHT_FOOT_MARKERS+LEFT_FOOT_MARKERS)
-        this_valid = None
-
         # if we got here, force data looked ok; next, check marker data
         # first compute plate boundaries in world coords
         wR = fp['wR']
@@ -175,61 +181,36 @@ def kinetics_available(source, check_weight=True, check_cop=True):
         cw = np.dot(wR, c.T).T + wT
         mins = np.min(cw, axis=0)
         maxes = np.max(cw, axis=0)
-        fp_xmax = maxes[0]
-        fp_xmin = mins[0]
-        fp_ymax = maxes[1]
-        fp_ymin = mins[1]
         logger.debug('plate boundaries: x %.2f -> %.2f mm, y %.2f -> %.2f mm'
-                     % (fp_xmin, fp_xmax, fp_ymin, fp_ymax))
+                     % (mins[0], maxes[0], mins[1], maxes[1]))
 
-        ok = True
-        for marker in RIGHT_FOOT_MARKERS:
-            marker += '_P'
-            # ankle marker gets extra tolerance in x dir
-            if marker == 'RANK_P':
-                fp_xmin_ = fp_xmin - X_ANKLE_TOL
-                fp_xmax_ = fp_xmax + X_ANKLE_TOL
-            else:
-                fp_xmin_ = fp_xmin
-                fp_xmax_ = fp_xmax
-            ok &= np.logical_and(mrkdata[marker][:, 0] > fp_xmin,
-                                 mrkdata[marker][:, 0] < fp_xmax)[strike_fr]
-            ok &= np.logical_and(mrkdata[marker][:, 0] > fp_xmin,
-                                 mrkdata[marker][:, 0] < fp_xmax)[toeoff_fr]
-            ok &= np.logical_and(mrkdata[marker][:, 1] > fp_ymin,
-                                 mrkdata[marker][:, 1] < fp_ymax)[strike_fr]
-            ok &= np.logical_and(mrkdata[marker][:, 1] > fp_ymin - Y_TOEOFF_TOL,
-                                 mrkdata[marker][:, 1] <
-                                 fp_ymax + Y_TOEOFF_TOL)[toeoff_fr]
-            if not ok:
-                logger.debug('marker %s failed on-plate check' % marker)
-                break
-        if ok:
-            this_valid = 'R'
-
-        ok = True
-        for marker in LEFT_FOOT_MARKERS:
-            marker += '_P'
-            if marker == 'LANK_P':
-                fp_xmin_ = fp_xmin - X_ANKLE_TOL
-                fp_xmax_ = fp_xmax + X_ANKLE_TOL
-            else:
-                fp_xmin_ = fp_xmin
-                fp_xmax_ = fp_xmax
-            ok &= np.logical_and(mrkdata[marker][:, 0] > fp_xmin_,
-                                 mrkdata[marker][:, 0] < fp_xmax_)[strike_fr]
-            ok &= np.logical_and(mrkdata[marker][:, 0] > fp_xmin_,
-                                 mrkdata[marker][:, 0] < fp_xmax_)[toeoff_fr]
-            ok &= np.logical_and(mrkdata[marker][:, 1] > fp_ymin,
-                                 mrkdata[marker][:, 1] < fp_ymax)[strike_fr]
-            ok &= np.logical_and(mrkdata[marker][:, 1] > fp_ymin - Y_TOEOFF_TOL,
-                                 mrkdata[marker][:, 1] <
-                                 fp_ymax + Y_TOEOFF_TOL)[toeoff_fr]
-            if not ok:
-                logger.debug('marker %s failed on-plate check' % marker)
-                break
-        if ok:
-            this_valid = 'L'
+        this_valid = None
+        for markers in [RIGHT_FOOT_MARKERS, LEFT_FOOT_MARKERS]:
+            ok = True            
+            for marker_ in markers:
+                mins_s, maxes_s = mins.copy(), maxes.copy()
+                mins_t, maxes_t = mins.copy(), maxes.copy()
+                # extra tolerance for ankle marker in sideways direction
+                if 'ANK' in marker_ :
+                    mins_t[orth_dir] -= ANKLE_TOL
+                    maxes_t[orth_dir] += ANKLE_TOL
+                    mins_s[orth_dir] -= ANKLE_TOL
+                    maxes_s[orth_dir] += ANKLE_TOL
+                # extra tolerance for all markers in gait direction during toeoff
+                maxes_t[fwd_dir] += TOEOFF_TOL
+                mins_t[fwd_dir] -= TOEOFF_TOL                   
+                marker = marker_ + '_P'
+                ok &= mins_s[0] < mrkdata[marker][strike_fr, 0]  < maxes_s[0]
+                ok &= mins_t[0] < mrkdata[marker][toeoff_fr, 0]  < maxes_t[0]
+                ok &= mins_s[1] < mrkdata[marker][strike_fr, 1]  < maxes_s[1]
+                ok &= mins_t[1] < mrkdata[marker][toeoff_fr, 1]  < maxes_t[1]
+                if not ok:
+                    logger.debug('marker %s failed on-plate check' % marker)
+                    break
+            if ok:
+                if this_valid:
+                    raise Exception('both feet passed on-plate check')
+                this_valid = 'R' if markers == RIGHT_FOOT_MARKERS else 'L'
 
         if not this_valid:
             logger.debug('plate %d: markers off plate during strike/toeoff' %

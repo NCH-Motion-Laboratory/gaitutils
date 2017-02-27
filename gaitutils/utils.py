@@ -211,6 +211,7 @@ def kinetics_available(source, check_weight=True, check_cop=True):
                 if this_valid:
                     raise Exception('both feet passed on-plate check')
                 this_valid = 'R' if markers == RIGHT_FOOT_MARKERS else 'L'
+                logger.debug('on-plate check ok for side %s' % this_valid)
 
         if not this_valid:
             logger.debug('plate %d: markers off plate during strike/toeoff' %

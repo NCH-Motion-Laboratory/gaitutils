@@ -206,8 +206,6 @@ def _get_1_forceplate_data(vicon, devid):
     # get forceplate ids
     logger.debug('reading forceplate data from devid %d' % devid)
     dname, dtype, drate, outputids, nfp, _ = vicon.GetDeviceDetails(devid)
-    framerate = vicon.GetFrameRate()
-    samplesperframe = drate / framerate
     # outputs should be force, moment, cop. select force
     outputid = outputids[0]
     chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Fx')
@@ -237,7 +235,7 @@ def _get_1_forceplate_data(vicon, devid):
     M = np.array([mx, my, mz]).transpose()
     Ftot = np.sqrt(np.sum(F**2, axis=1))
     # translation and rotation matrices -> world coords
-    wR = np.array(nfp.WorldR).reshape(3,3)
+    wR = np.array(nfp.WorldR).reshape(3, 3)
     wT = np.array(nfp.WorldT)
     # plate corners in plate local coords
     lb = np.array(nfp.LowerBounds)
@@ -256,9 +254,7 @@ def _get_1_forceplate_data(vicon, devid):
         logger.warning('center of pressure outside plate boundaries')
 
     return {'F': F, 'M': M, 'Ftot': Ftot, 'CoP': cop, 'CoP_ok': cop_ok,
-            'samplesperframe': samplesperframe, 'analograte': drate,
-            'wR': wR, 'wT': wT, 'lowerbounds': lb, 'upperbounds': ub,
-            'dims': dims}
+            'wR': wR, 'wT': wT, 'lowerbounds': lb, 'upperbounds': ub}
 
 
 def get_forceplate_data(vicon):

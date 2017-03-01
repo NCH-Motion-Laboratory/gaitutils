@@ -146,43 +146,50 @@ def get_model_data(c3dfile, model):
 
 
 def get_forceplate_data(c3dfile):
-    """ Read forceplate data. Does not support multiple plates yet.
-    Force results differ somewhat from Nexus, not sure why. Calibration? """
+    read_chs = ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz']
     reader = btk.btkAcquisitionFileReader()
     reader.SetFilename(str(c3dfile))  # btk does not tolerate unicode
     reader.Update()
     acq = reader.GetOutput()
-    frame1 = acq.GetFirstFrame()  # start of ROI (1-based)
-    samplesperframe = acq.GetNumberAnalogSamplePerFrame()
-    sfrate = acq.GetAnalogFrequency()
-    # TODO: raise DeviceNotFound if needed
-    data = []
-    fx, fy, fz, mx, my, mz = (None,) * 6
-    for i in btk.Iterate(acq.GetAnalogs()):
-        desc = i.GetLabel()
-        # logger.info('c3d analog: %s' % desc)
-        if desc.find('Force.') >= 0 and i.GetUnit() == 'N':
-            plate_n = desc[-1]
-            if desc.find('Fx') > 0:
-                fx = np.squeeze(i.GetValues())  # rm singleton dimension
-            elif desc.find('Fy') > 0:
-                fy = np.squeeze(i.GetValues())
-            elif desc.find('Fz') > 0:
-                fz = np.squeeze(i.GetValues())
-        elif desc.find('Moment.') >= 0 and i.GetUnit() == 'Nmm':
-            if desc.find('Mx') > 0:
-                mx = np.squeeze(i.GetValues())  # rm singleton dimension
-            elif desc.find('My') > 0:
-                my = np.squeeze(i.GetValues())
-            elif desc.find('Mz') > 0:
-                mz = np.squeeze(i.GetValues())
-    if any([var is None for var in (fx, fy, fz, mx, my, mz)]):
-        raise ValueError('Cannot read force/moment variable')
-    # c3d does not seem to include center of pressure data, so we compute it
-    F = np.array([fx, fy, fz]).transpose()
-    Ftot = np.sqrt(np.sum(F**2, axis=1))
-    M = np.array([mx, my, mz]).transpose()
-    CoP = cop(F, M)
-    data.append({'F': F, 'Ftot': Ftot, 'CoP': CoP,
-                 'samplesperframe': samplesperframe, 'analograte': sfrate})
-                 
+    fpe = btk.btkForcePlatformsExtractor()
+    fpe.SetInput(acq)
+    fpe.Update()
+    fpdata = list()
+    for plate in btk.Iterate(fpe.GetOutput()):
+        if plate.GetType() != 2:
+            # Nexus should always write forceplates as type 2
+            raise Exception('Only type 2 forceplates are supported for now')
+        rawdata = dict()
+        data = dict()
+        for ch in btk.Iterate(plate.GetChannels()):
+            label = ch.GetLabel()[-3:-1]  # strip descriptor and plate number
+            rawdata[label] = np.squeeze(ch.GetData().GetValues())
+        if not all([ch in rawdata for ch in read_chs]):
+            raise Exception('could not read force/moment data')
+        F = np.stack([rawdata['Fx'], rawdata['Fy'], rawdata['Fz']], axis=1)
+        M = np.stack([rawdata['Mx'], rawdata['My'], rawdata['Mz']], axis=1)
+        cp = cop(F, M)
+        Ftot = np.sqrt(np.sum(F**2, axis=1))
+        # locations of +x+y, -x+y, -x-y, +x-y plate corners in world coords
+        # (in that order)
+        cor = plate.GetCorners()
+        wT = np.mean(cor, axis=1)  # translation vector, plate -> world
+        # get plate unit vectors in world system
+        px = cor[:, 0] - cor[:, 1]
+        py = cor[:, 0] - cor[:, 3]
+        pz = np.array([0, 0, 1])
+        P = np.stack([px, py, pz], axis=1)
+        wR = P / np.linalg.norm(P, axis=0)  # rotation matrix, plate -> world
+        data['F'] = F
+        data['Ftot'] = Ftot
+        data['M'] = M
+        data['CoP'] = cp
+        #data['upperbounds'] = ub
+        #data['lowerbounds'] = lb
+        data['wR'] = wR
+        data['wT'] = wT
+        fpdata.append(data)
+    return fpdata
+
+
+

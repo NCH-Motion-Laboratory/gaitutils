@@ -28,22 +28,48 @@ logger.addHandler(handler)
 
 # c3dfile = u'c:\\Users\\hus20664877\\Desktop\\Vicon\\vicon_data\\test\\H0036_EV\\2015_9_21_seur_EV\\2015_9_21_seur_EV19.c3d'
 
-vicon = nexus.viconnexus()
+#vicon = nexus.viconnexus()
 #fpdata = read_data.get_forceplate_data(vicon)
-meta = read_data.get_metadata(vicon)
+#meta = read_data.get_metadata(vicon)
 
-kin = utils.kinetics_available(vicon, check_cop=True)
+#kin = utils.kinetics_available(vicon, check_cop=True)
 
 
-sys.exit()
+#sys.exit()
 
 
 
 
 c3dfile = "C:/Users/hus20664877/Desktop/NVUG2017/Example Data Workshop/Carita/Level/Dynamic 03.c3d"
-c3dfile = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/test/Verrokki6v_IN/2015_10_22_girl6v_IN/2015_10_22_girl6v_IN57.c3d"
 
 c3dfile = "C:/Users/hus20664877/Desktop/trondheim_gait_data/Tobias Goihl - 4-511_P3_Tardieu02.c3d"
+
+c3dfile = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/test/Verrokki6v_IN/2015_10_22_girl6v_IN/2015_10_22_girl6v_IN57.c3d"
+
+
+
+
+vicon = nexus.viconnexus()
+
+fpdn = read_data.get_forceplate_data(vicon)
+
+fpd3 = read_data.get_forceplate_data(c3dfile)
+
+
+wR = fpd3[0]['wR']
+wT = fpd3[0]['wT']
+cop_3 = fpd3[0]['CoP']
+cop_n = fpdn[0]['CoP']
+
+
+cop_w = np.dot(wR, cop.T).T + wT
+plt.plot(cop_w)
+plt.legend(['x','y','z'])
+
+
+
+
+sys.exit()
 
 
 # btk 
@@ -58,7 +84,16 @@ pfe.Update()
 pfc	= pfe.GetOutput()	#	a	btkPlateFormCollec1on	
 pf1	= pfc.GetItem(0)	#	item	0	=	First	force	plagorm	
 
+for it in btk.Iterate(pfc):
+    print it.GetCalMatrix()
+    
+    
+                 
+                 
 
+sys.exit()
+
+                 
 #fpdata = read_data.get_forceplate_data(vicon)
 meta = read_data.get_metadata(vicon)
 

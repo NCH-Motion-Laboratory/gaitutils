@@ -53,7 +53,7 @@ def cop(F, M):
     mx, my, mz = tuple(M.T)
     fz = FP_FILTFUN(fz, FP_FILTW)
     fz_0_ind = np.where(fz == 0)
-    copx = (my + fx * FP_DZ)/fz
+    copx = -(my + fx * FP_DZ)/fz
     copy = (mx - fy * FP_DZ)/fz
     copx[fz_0_ind] = 0
     copy[fz_0_ind] = 0

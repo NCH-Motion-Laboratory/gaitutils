@@ -8,7 +8,6 @@ gaitutils TODO
 
 Nexus / c3d fplate API:
 
-
 -forceplate z axis is down (positive force towards ground)
 -coord system is right-handed
 
@@ -18,7 +17,6 @@ http://biomechanical-toolkit.github.io/docs/API/classbtk_1_1_a_m_t_i_force_platf
 
 -create transformation matrix + translation vector from plate boundaries
 https://www.c3d.org/HTML/default.htm?turl=corners.htm
-
 
 ????
 

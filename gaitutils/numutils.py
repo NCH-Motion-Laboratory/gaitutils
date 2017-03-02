@@ -60,6 +60,4 @@ def change_coords(pts, wR, wT):
     """ Translate pts (N x 3) into a new coordinate system described by
     rotation matrix wR and translation vector wT """
     pts = np.array(pts)
-    if pts.shape[1] != 3:
-        raise ValueError('need an N x 3 matrix')
     return np.dot(wR, pts.T).T + wT

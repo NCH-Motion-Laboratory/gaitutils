@@ -177,7 +177,8 @@ def _do_autoproc(enffiles):
             trials[filepath].recon_ok = True
 
         # preprocessing ok, get kinetics info
-        fpdata = utils.kinetics_available(vicon, cfg.autoproc.check_weight)
+        fpdata = utils.check_forceplate_contact(vicon,
+                                                cfg.autoproc.check_weight)
         context = fpdata['context']
         if context:
             eclipse_str += (cfg.autoproc.enf_descriptions['context_right']

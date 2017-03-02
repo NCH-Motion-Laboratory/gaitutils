@@ -23,7 +23,8 @@ class Gaitcycle(object):
     the data begins; 1 for Vicon Nexus (which always returns whole trial) and
     start of the ROI for c3d files, which contain data only for the ROI. """
 
-    def __init__(self, start, end, offset, toeoff, context, smp_per_frame):
+    def __init__(self, start, end, offset, toeoff, context, on_forceplate,
+                 smp_per_frame):
         self.offset = offset
         self.len = end - start
         # convert frame indices to 0-based
@@ -32,6 +33,8 @@ class Gaitcycle(object):
         self.toeoff = toeoff - offset
         # which foot begins and ends the cycle
         self.context = context
+        # whether cycle begins with forceplate strike
+        self.on_forceplate = on_forceplate
         # start and end on the analog samples axis; round to whole samples
         self.start_smp = int(round(self.start * smp_per_frame))
         self.end_smp = int(round(self.end * smp_per_frame))
@@ -109,7 +112,7 @@ class Trial(object):
         else:
             self.eclipse_data = defaultdict(lambda: '', {})
         try:
-            self.kinetics_ = utils.kinetics_available(source)
+            self.fpcontact = utils.check_forceplate_contact(source)
             self.kinetics = self.kinetics_['context']
         except ValueError:
             self.kinetics = None
@@ -127,12 +130,6 @@ class Trial(object):
         self.tn = np.linspace(0, 100, 101)
         self.samplesperframe = self.analograte/self.framerate
         self.cycles = list(self._scan_cycles())
-        if self.kinetics:
-            kin_cyc = [cyc for cyc in self.cycles if
-                       abs(cyc.start-self.kinetics_['strike']) < 5]
-            self.kinetics_cycles = kin_cyc
-        else:
-            self.kinetics_cycles = []
         self.ncycles = len(self.cycles)
         self.video_files = glob.glob(self.sessionpath+self.trialname+'*avi')
 

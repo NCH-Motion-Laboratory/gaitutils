@@ -84,7 +84,3 @@ def get_model_data(source, model):
                 else:
                     raise ValueError('Expected a 3D array')
     return modeldata
-
-
-def kinetics_available(source):
-    return _reader_module(source).kinetics_available(source)

@@ -69,7 +69,7 @@ def butter_filt(data, passband, sfreq, bord=5):
     return signal.filtfilt(b, a, data)
 
 
-def kinetics_available(source, check_weight=True, check_cop=True):
+def check_forceplate_contact(source, check_weight=True, check_cop=True):
     """ See whether the trial has valid forceplate contact.
     Uses forceplate data and marker positions.
 
@@ -104,16 +104,15 @@ def kinetics_available(source, check_weight=True, check_cop=True):
 
     # get subject info
     info = get_metadata(source)
-
     fpdata = get_forceplate_data(source)
 
-    results = {'context': '', 'strikes': None, 'toeoffs': None}
-    results['strikes'] = {'R': [], 'L': []}
-    results['toeoffs'] = {'R': [], 'L': []}
+    results = dict()
+    results['strikes'] = {}
+    results['toeoffs'] = {}
 
     # get marker data and find "forward" direction
     mrkdata = get_marker_data(source, RIGHT_FOOT_MARKERS+LEFT_FOOT_MARKERS)
-    pos = sum([mrkdata[name+'_P'] for name in 
+    pos = sum([mrkdata[name+'_P'] for name in
                LEFT_FOOT_MARKERS+RIGHT_FOOT_MARKERS])
     fwd_dir = np.argmax(np.var(pos, axis=0))
     orth_dir = 0 if fwd_dir == 1 else 1
@@ -123,7 +122,8 @@ def kinetics_available(source, check_weight=True, check_cop=True):
     for plate_ind, fp in enumerate(fpdata):
         logger.debug('analyzing plate %d' % plate_ind)
         # test the force data
-        forcetot = signal.medfilt(fp['Ftot'])  # remove spikes
+        # FIXME: filter should maybe depend on sampling freq
+        forcetot = signal.medfilt(fp['Ftot'])
         forcetot = _baseline(forcetot)
         fmax = max(forcetot)
         fmaxind = np.where(forcetot == fmax)[0][0]  # first maximum
@@ -154,7 +154,7 @@ def kinetics_available(source, check_weight=True, check_cop=True):
         # check shift of center of pressure during roi
         # cop is here in plate coordinates, but it does not matter as we're
         # only looking for the magnitude of the shift
-        if check_cop and fp['CoP_ok']:
+        if check_cop:
             cop_roi = fp['CoP'][friseind:ffallind, :]
             cop_shift = cop_roi.max(axis=0) - cop_roi.min(axis=0)
             total_shift = np.sqrt(np.sum(cop_shift**2))
@@ -167,44 +167,40 @@ def kinetics_available(source, check_weight=True, check_cop=True):
             logger.debug('ignoring center of pressure')
 
         # frame indices are 1-based so need to add 1 (what about c3d?)
-        strike_fr = int(np.round(friseind / fp['samplesperframe'])) + 1
-        toeoff_fr = int(np.round(ffallind / fp['samplesperframe'])) + 1
+        strike_fr = int(np.round(friseind / info['samplesperframe'])) + 1
+        toeoff_fr = int(np.round(ffallind / info['samplesperframe'])) + 1
         logger.debug('strike @ frame %d, toeoff @ %d' % (strike_fr, toeoff_fr))
 
         # if we got here, force data looked ok; next, check marker data
         # first compute plate boundaries in world coords
-        wR = fp['wR']
-        wT = fp['wT']
-        c = np.stack([fp['lowerbounds'], fp['upperbounds']])
-        cw = np.dot(wR, c.T).T + wT
-        mins = np.min(cw, axis=0)
-        maxes = np.max(cw, axis=0)
+        mins = fp['lowerbounds']
+        maxes = fp['upperbounds']
 
         # check markers
         this_valid = None
         for markers in [RIGHT_FOOT_MARKERS, LEFT_FOOT_MARKERS]:
-            ok = True            
+            ok = True
             for marker_ in markers:
                 mins_s, maxes_s = mins.copy(), maxes.copy()
                 mins_t, maxes_t = mins.copy(), maxes.copy()
                 # extra tolerance for ankle marker in sideways direction
-                if 'ANK' in marker_ :
+                if 'ANK' in marker_:
                     mins_t[orth_dir] -= ANKLE_TOL
                     maxes_t[orth_dir] += ANKLE_TOL
                     mins_s[orth_dir] -= ANKLE_TOL
                     maxes_s[orth_dir] += ANKLE_TOL
                 # extra tolerance for all markers in gait direction @ toeoff
                 maxes_t[fwd_dir] += TOEOFF_TOL
-                mins_t[fwd_dir] -= TOEOFF_TOL                   
+                mins_t[fwd_dir] -= TOEOFF_TOL
                 marker = marker_ + '_P'
-                ok &= mins_s[0] < mrkdata[marker][strike_fr, 0]  < maxes_s[0]
-                ok &= mins_s[1] < mrkdata[marker][strike_fr, 1]  < maxes_s[1]
+                ok &= mins_s[0] < mrkdata[marker][strike_fr, 0] < maxes_s[0]
+                ok &= mins_s[1] < mrkdata[marker][strike_fr, 1] < maxes_s[1]
                 if not ok:
                     logger.debug('marker %s failed on-plate check during foot '
                                  'strike' % marker_)
                     break
-                ok &= mins_t[0] < mrkdata[marker][toeoff_fr, 0]  < maxes_t[0]
-                ok &= mins_t[1] < mrkdata[marker][toeoff_fr, 1]  < maxes_t[1]
+                ok &= mins_t[0] < mrkdata[marker][toeoff_fr, 0] < maxes_t[0]
+                ok &= mins_t[1] < mrkdata[marker][toeoff_fr, 1] < maxes_t[1]
                 if not ok:
                     logger.debug('marker %s failed on-plate check during '
                                  'toeoff ' % marker_)
@@ -220,8 +216,11 @@ def kinetics_available(source, check_weight=True, check_cop=True):
         else:
             logger.debug('plate %d: valid foot strike on %s at frame %d'
                          % (plate_ind, this_valid, strike_fr))
-            if this_valid not in results['context']:
-                results['context'] += this_valid
+
+            if this_valid not in results['strikes']:
+                results['strikes'][this_valid] = []
+                results['toeoffs'][this_valid] = []
+
             results['strikes'][this_valid].append(strike_fr)
             results['toeoffs'][this_valid].append(toeoff_fr)
 

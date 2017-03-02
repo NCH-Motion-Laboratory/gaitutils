@@ -202,7 +202,7 @@ def get_emg_data(vicon):
 
 
 def _get_1_forceplate_data(vicon, devid):
-    """ Read data of single forceplate data from Nexus. """
+    """ Read data of single forceplate from Nexus. """
     # get forceplate ids
     logger.debug('reading forceplate data from devid %d' % devid)
     dname, dtype, drate, outputids, nfp, _ = vicon.GetDeviceDetails(devid)
@@ -235,18 +235,21 @@ def _get_1_forceplate_data(vicon, devid):
     M = np.array([mx, my, mz]).transpose()
     Ftot = np.sqrt(np.sum(F**2, axis=1))
     # translation and rotation matrices -> world coords
+    # suspect that Nexus wR is wrong (does not match displayed plate axes)?
+    # but CoP is transformed ok
     wR = np.array(nfp.WorldR).reshape(3, 3)
     wT = np.array(nfp.WorldT)
-    # plate corners in plate local coords
-    lb = np.array(nfp.LowerBounds)
-    ub = np.array(nfp.UpperBounds)
-    # check that CoP stays inside plate
+    # plate corners -> world coords
+    lb = change_coords(np.array(nfp.LowerBounds), wR, wT)
+    ub = change_coords(np.array(nfp.UpperBounds), wR, wT)
+    print(lb, ub)
+    # check that CoP stays inside plate boundaries
     cop_ok = np.logical_and(cop[:, 0] >= lb[0], cop[:, 0] <= ub[0]).all()
     cop_ok &= np.logical_and(cop[:, 1] >= lb[1], cop[:, 1] <= ub[1]).all()
-    cop_w = change_coords(cop, wR, wT)
     if not cop_ok:
         logger.warning('center of pressure outside plate boundaries')
-    return {'F': F, 'M': M, 'Ftot': Ftot, 'CoP': cop_w, 'CoP_ok': cop_ok,
+    cop_w = change_coords(cop, wR, wT)
+    return {'F': F, 'M': M, 'Ftot': Ftot, 'CoP': cop_w,
             'wR': wR, 'wT': wT, 'lowerbounds': lb, 'upperbounds': ub}
 
 
@@ -341,7 +344,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     thresholds based on force plate data are available.
 
     vel_threshold gives velocity thresholds for identifying events. These
-    can be obtained from forceplate data (see utils.kinetics_available).
+    can be obtained from forceplate data (see utils.check_forceplate_contact).
     Separate thresholds for left and right side.
 
     ctr_pos is the walkway center position (used by max_dist).

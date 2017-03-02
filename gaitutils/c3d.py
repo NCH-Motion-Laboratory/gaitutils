@@ -190,18 +190,19 @@ def get_forceplate_data(c3dfile):
         pz = np.array([0, 0, 1])
         P = np.stack([px, py, pz], axis=1)
         wR = P / np.linalg.norm(P, axis=0)  # rotation matrix, plate -> world
-        # check whether cop stays inside forceplate area
+        # check whether cop stays inside forceplate area and clip if necessary
         cop_w = change_coords(cop, wR, wT)
-        cop_ok = np.logical_and(lb[0] < cop_w[:, 0], cop_w[:, 0] < ub[0]).all()
-        cop_ok &= np.logical_and(lb[1] < cop_w[:, 1],
-                                 cop_w[:, 1] < ub[1]).all()
-        if not cop_ok:
-            logger.warning('center of pressure is outside forceplate bounds')
+        cop_wx = np.clip(cop_w[:, 0], lb[0], ub[0])
+        cop_wy = np.clip(cop_w[:, 1], lb[1], ub[1])
+        if not (cop_wx == cop_w[:, 0]).all() and (cop_wy == cop_w[:, 1]).all():
+            logger.warning('center of pressure outside forceplate '
+                           'bounds, clipping to plate')
+            cop[:, 0] = cop_wx
+            cop[:, 1] = cop_wy
         data['F'] = F
         data['Ftot'] = Ftot
         data['M'] = M
         data['CoP'] = cop_w
-        data['CoP_ok'] = cop_ok
         data['upperbounds'] = ub
         data['lowerbounds'] = lb
         data['wR'] = wR

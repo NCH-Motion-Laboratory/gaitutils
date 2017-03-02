@@ -40,13 +40,14 @@ logger.addHandler(handler)
 
 
 
-c3dfile = "C:/Users/hus20664877/Desktop/NVUG2017/Example Data Workshop/Carita/Level/Dynamic 03.c3d"
 
 c3dfile = "C:/Users/hus20664877/Desktop/trondheim_gait_data/Tobias Goihl - 4-511_P3_Tardieu02.c3d"
 
 c3dfile = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/test/Verrokki6v_IN/2015_10_22_girl6v_IN/2015_10_22_girl6v_IN57.c3d"
 
+c3dfile = "C:/Users/hus20664877/Desktop/trondheim_gait_data/astrid_080515_02.c3d"
 
+c3dfile = "C:/Users/hus20664877/Desktop/NVUG2017/Example Data Workshop/Carita/Level/Dynamic 03.c3d"
 
 
 vicon = nexus.viconnexus()
@@ -55,14 +56,24 @@ fpdn = read_data.get_forceplate_data(vicon)
 
 fpd3 = read_data.get_forceplate_data(c3dfile)
 
-
-wR = fpd3[0]['wR']
-wT = fpd3[0]['wT']
 cop_3 = fpd3[0]['CoP']
 cop_n = fpdn[0]['CoP']
 
 
+
+sys.exit()
+
+
+
+cop_3 = fpd3[0]['CoP']
+cop_n = fpdn[0]['CoP']
+
+
+wR = fpd3[0]['wR']
+wT = fpd3[0]['wT']
 cop_w = np.dot(wR, cop.T).T + wT
+
+              
 plt.plot(cop_w)
 plt.legend(['x','y','z'])
 

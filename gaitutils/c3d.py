@@ -11,7 +11,7 @@ from __future__ import print_function
 import logging
 import numpy as np
 import os
-from numutils import cop
+from numutils import center_of_pressure, change_coords
 logger = logging.getLogger(__name__)
 try:
     import btk
@@ -146,6 +146,7 @@ def get_model_data(c3dfile, model):
 
 
 def get_forceplate_data(c3dfile):
+    logger.debug('reading forceplate data from %s' % c3dfile)
     read_chs = ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz']
     reader = btk.btkAcquisitionFileReader()
     reader.SetFilename(str(c3dfile))  # btk does not tolerate unicode
@@ -155,7 +156,10 @@ def get_forceplate_data(c3dfile):
     fpe.SetInput(acq)
     fpe.Update()
     fpdata = list()
+    nplate = 1
     for plate in btk.Iterate(fpe.GetOutput()):
+        logger.debug('reading plate %d' % nplate)
+        nplate += 1
         if plate.GetType() != 2:
             # Nexus should always write forceplates as type 2
             raise Exception('Only type 2 forceplates are supported for now')
@@ -168,28 +172,39 @@ def get_forceplate_data(c3dfile):
             raise Exception('could not read force/moment data')
         F = np.stack([rawdata['Fx'], rawdata['Fy'], rawdata['Fz']], axis=1)
         M = np.stack([rawdata['Mx'], rawdata['My'], rawdata['Mz']], axis=1)
-        cp = cop(F, M)
+        # this should be the plate thickness (from moment origin to physical
+        # origin) needed for center of pressure calculations
+        dz = np.abs(plate.GetOrigin()[2])
+        cop = center_of_pressure(F, M, dz)  # in plate local coords
         Ftot = np.sqrt(np.sum(F**2, axis=1))
         # locations of +x+y, -x+y, -x-y, +x-y plate corners in world coords
         # (in that order)
         cor = plate.GetCorners()
         wT = np.mean(cor, axis=1)  # translation vector, plate -> world
-        # get plate unit vectors in world system
+        # upper and lower bounds of forceplate
+        ub = np.max(cor, axis=1)
+        lb = np.min(cor, axis=1)
+        # plate unit vectors in world system
         px = cor[:, 0] - cor[:, 1]
         py = cor[:, 0] - cor[:, 3]
         pz = np.array([0, 0, 1])
         P = np.stack([px, py, pz], axis=1)
         wR = P / np.linalg.norm(P, axis=0)  # rotation matrix, plate -> world
+        # check whether cop stays inside forceplate area
+        cop_w = change_coords(cop, wR, wT)
+        cop_ok = np.logical_and(lb[0] < cop_w[:, 0], cop_w[:, 0] < ub[0]).all()
+        cop_ok &= np.logical_and(lb[1] < cop_w[:, 1],
+                                 cop_w[:, 1] < ub[1]).all()
+        if not cop_ok:
+            logger.warning('center of pressure is outside forceplate bounds')
         data['F'] = F
         data['Ftot'] = Ftot
         data['M'] = M
-        data['CoP'] = cp
-        #data['upperbounds'] = ub
-        #data['lowerbounds'] = lb
+        data['CoP'] = cop_w
+        data['CoP_ok'] = cop_ok
+        data['upperbounds'] = ub
+        data['lowerbounds'] = lb
         data['wR'] = wR
         data['wT'] = wT
         fpdata.append(data)
     return fpdata
-
-
-

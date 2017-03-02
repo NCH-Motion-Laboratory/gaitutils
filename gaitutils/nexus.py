@@ -15,7 +15,7 @@ from scipy import signal
 import os.path as op
 import psutil
 import glob
-from numutils import rising_zerocross, falling_zerocross
+from numutils import rising_zerocross, falling_zerocross, change_coords
 from eclipse import get_eclipse_keys
 import matplotlib.pyplot as plt
 from config import cfg
@@ -240,26 +240,20 @@ def _get_1_forceplate_data(vicon, devid):
     # plate corners in plate local coords
     lb = np.array(nfp.LowerBounds)
     ub = np.array(nfp.UpperBounds)
-    plims = np.sort(np.stack([lb, ub]), axis=0)
-    # logger.debug('plate lower boundary (plate coords): (%.2f, %.2f) mm' %
-    #              (lb[0], lb[1]))
-    # logger.debug('plate upper boundary (plate coords): (%.2f, %.2f) mm' %
-    #              (ub[0], ub[1]))
-    dims = np.abs(ub - lb)
     # check that CoP stays inside plate
-    copmax, copmin = cop.max(axis=0), cop.min(axis=0)    
-    cop_ok = all(np.logical_and(copmax >= plims[0, :], copmax <= plims[1, :]))
-    cop_ok &= all(np.logical_and(copmin >= plims[0, :], copmin <= plims[1, :]))
+    cop_ok = np.logical_and(cop[:, 0] >= lb[0], cop[:, 0] <= ub[0]).all()
+    cop_ok &= np.logical_and(cop[:, 1] >= lb[1], cop[:, 1] <= ub[1]).all()
+    cop_w = change_coords(cop, wR, wT)
     if not cop_ok:
         logger.warning('center of pressure outside plate boundaries')
-
-    return {'F': F, 'M': M, 'Ftot': Ftot, 'CoP': cop, 'CoP_ok': cop_ok,
+    return {'F': F, 'M': M, 'Ftot': Ftot, 'CoP': cop_w, 'CoP_ok': cop_ok,
             'wR': wR, 'wT': wT, 'lowerbounds': lb, 'upperbounds': ub}
 
 
 def get_forceplate_data(vicon):
     """ Read all forceplate data from Nexus. """
     # get forceplate ids
+    logger.debug('reading forceplate data from Vicon Nexus')
     devids = [id for id in vicon.GetDeviceIDs() if
               vicon.GetDeviceDetails(id)[1].lower() == 'forceplate']
     if len(devids) == 0:

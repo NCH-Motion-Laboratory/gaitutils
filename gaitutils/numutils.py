@@ -40,22 +40,26 @@ def _baseline(data):
     return data - np.mean(edges[peak_ind:peak_ind+2])
 
 
-def cop(F, M):
+def center_of_pressure(F, M, dz):
     """ Compute CoP according to AMTI instructions. The results differ
     slightly (few mm) from Nexus, for unknown reasons (different filter?)
     See http://health.uottawa.ca/biomech/courses/apa6903/amticalc.pdf """
-    # suppress noise by medfilt; not sure what Nexus uses
-    FP_DZ = 41.3  # forceplate thickness in mm
-    # CoP calculation uses filter
     FP_FILTFUN = medfilt  # filter function
-    FP_FILTW = 3  # median filter width
-    fx, fy, fz = tuple(F.T)
+    FP_FILTW = 5  # median filter width
+    fx, fy, fz = tuple(F.T)  # split columns into separate vars
     mx, my, mz = tuple(M.T)
     fz = FP_FILTFUN(fz, FP_FILTW)
-    fz_0_ind = np.where(fz == 0)
-    copx = -(my + fx * FP_DZ)/fz
-    copy = (mx - fy * FP_DZ)/fz
-    copx[fz_0_ind] = 0
-    copy[fz_0_ind] = 0
-    copz = np.zeros(copx.shape)
-    return np.array([copx, copy, copz]).T
+    nz_inds = np.where(np.abs(fz) > 0)[0]  # only divide on nonzero inds
+    cop = np.zeros((fx.shape[0], 3))
+    cop[nz_inds, 0] = -(my[nz_inds] + fx[nz_inds] * dz)/fz[nz_inds]
+    cop[nz_inds, 1] = (mx[nz_inds] - fy[nz_inds] * dz)/fz[nz_inds]
+    return cop
+
+
+def change_coords(pts, wR, wT):
+    """ Translate pts (N x 3) into a new coordinate system described by
+    rotation matrix wR and translation vector wT """
+    pts = np.array(pts)
+    if pts.shape[1] != 3:
+        raise ValueError('need an N x 3 matrix')
+    return np.dot(wR, pts.T).T + wT

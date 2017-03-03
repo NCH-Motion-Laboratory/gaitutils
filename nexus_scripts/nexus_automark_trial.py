@@ -22,10 +22,12 @@ def automark_single():
         raise Exception('Vicon Nexus not running')
 
     vicon = nexus.viconnexus()
-    fpdata = utils.check_forceplate_contact(vicon)
+    fpinfo = utils.check_forceplate_contact(vicon)
 
     vel_th = {'R_strike': None, 'R_toeoff': None,
               'L_strike': None, 'L_toeoff': None}
+
+
 
     first_strike = dict()
     for context in ['R', 'L']:

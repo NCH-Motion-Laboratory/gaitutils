@@ -37,6 +37,13 @@ logger.addHandler(handler)
 
 vicon = nexus.viconnexus()
 
+fpinfo = utils.check_forceplate_contact(vicon)
+
+vs = utils.strike_toeoff_velocity(vicon, fpinfo)
+
+sys.exit()
+
+
 c3dfile = "C:/Users/hus20664877/Desktop/trondheim_gait_data/astrid_080515_02.c3d"
 
 pl = Plotter()

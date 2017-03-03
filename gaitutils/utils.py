@@ -228,32 +228,27 @@ def check_forceplate_contact(source, check_weight=True, check_cop=True):
     return results
 
 
-
-"""
-    # kinetics ok, compute velocities at strike
-    markers = RIGHT_FOOT_MARKERS if kinetics == 'R' else LEFT_FOOT_MARKERS
-
-
-
-def _strike_toeoff_velocity(markerdata_r, markerdata_l):
-     Return foot velocity at strike/toeoff 
-    
-    markers = mdata.keys()
-    footctrV = np.zeros(mdata[markers[0]+'_V'].shape)
-    for marker in mrkdata:
-        footctrV += mrkdata[marker+'_V'] / len(markers)
-
-
-
-    footctrv = np.sqrt(np.sum(footctrV[:, 1:3]**2, 1))
-    
-    
-    strike_v = footctrv[int(strike_fr)]
-    toeoff_v = footctrv[int(toeoff_fr)]
-
-"""
-
-
-
-
+def strike_toeoff_velocity(source, fpinfo):
+    """ Return foot velocities during forceplate strike/toeoff frames """
+    RIGHT_FOOT_MARKERS = ['RHEE', 'RTOE', 'RANK']
+    LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
+    mrkdata = get_marker_data(source, RIGHT_FOOT_MARKERS+LEFT_FOOT_MARKERS)
+    results = dict()
+    results['strike_v'] = dict()
+    results['toeoff_v'] = dict()
+    for context, markers in zip(('R', 'L'), [RIGHT_FOOT_MARKERS,
+                                LEFT_FOOT_MARKERS]):
+        # average velocities for different markers
+        footctrV = np.zeros(mrkdata[markers[0]+'_V'].shape)
+        for marker in markers:
+            footctrV += mrkdata[marker+'_V'] / float(len(markers))
+        # scalar velocity
+        footctrv = np.sqrt(np.sum(footctrV**2, 1))
+        strikes = (fpinfo['strikes'][context] if context in fpinfo['strikes']
+                   else [])
+        toeoffs = (fpinfo['toeoffs'][context] if context in fpinfo['toeoffs']
+                   else [])
+        results['strike_v'][context] = footctrv[strikes]
+        results['toeoff_v'][context] = footctrv[toeoffs]
+    return results
 

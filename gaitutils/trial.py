@@ -204,10 +204,13 @@ class Trial(object):
             for k in range(0, len_s-1):
                 start = strikes[k]
                 # see if cycle starts on forceplate strike
-                cands = np.array(self.fpinfo['strikes'][context])
-                # offset is needed since event info is not yet 0-offset
-                diffs = np.abs(cands - start + self.offset)
-                on_forceplate = min(diffs) <= STRIKE_TOL
+                if context not in self.fpinfo['strikes']:
+                    on_forceplate = False
+                else:
+                    cands = np.array(self.fpinfo['strikes'][context])
+                    # offset is needed since event info is not yet 0-offset
+                    diffs = np.abs(cands - start + self.offset)
+                    on_forceplate = min(diffs) <= STRIKE_TOL
                 end = strikes[k+1]
                 toeoff = [x for x in toeoffs if x > start and x < end]
                 toeoff = toeoff[0] if len(toeoff) > 0 else None

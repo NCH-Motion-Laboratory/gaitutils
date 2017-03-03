@@ -41,9 +41,11 @@ c3dfile = "C:/Users/hus20664877/Desktop/trondheim_gait_data/astrid_080515_02.c3d
 
 pl = Plotter()
 
-pl.open_nexus_trial()
+#pl.open_nexus_trial()
+pl.open_trial(c3dfile)
 
-pl.layout = [['LHipMomentX']]
+pl.layout = [['HipMomentX']]
+pl.layout = layouts.std_kinall
 
 pl.plot_trial(model_cycles='all')
 

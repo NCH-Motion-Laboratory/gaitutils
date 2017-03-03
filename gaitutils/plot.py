@@ -117,6 +117,7 @@ class Plotter(object):
                    t=None, plotheightratios=None,
                    model_tracecolor=None, model_linestyle='-', model_alpha=1.0,
                    split_model_vars=True, auto_match_model_cycle=True,
+                   match_pig_kinetics=True,
                    auto_match_emg_cycle=True,
                    linestyles_context=False, annotate_emg=True,
                    emg_tracecolor=None, emg_alpha=1.0,
@@ -155,6 +156,9 @@ class Plotter(object):
                 whose context matches the context of the variable. E.g.
                 'LHipMomentX' will be plotted only for left side cycles.
                 If False, the variable will be plotted for all cycles.
+        match_pig_kinetics: bool
+                If True, Plug-in Gait kinetics variables will be plotted only
+                for cycles that begin with forceplate strike.
         auto_match_emg_cycle: bool
                 If True, the EMG channel will be plotted only for cycles
                 whose context matches the context of the channel name. E.g.
@@ -266,15 +270,23 @@ class Plotter(object):
                         varname = cycle.context + var
                     else:
                         varname = var
-                    if (varname[0] == cycle.context or not
+                    # check for kinetics variable
+                    kin_ok = True
+                    if match_pig_kinetics:
+                        if model == models.pig_lowerbody:
+                            if model.is_kinetic_var(var):
+                                kin_ok = cycle.on_forceplate
+                    # do the actual plotting if necessary
+                    if kin_ok and (varname[0] == cycle.context or not
                        auto_match_model_cycle or cycle is None):
                         x_, data = self.trial[varname]
                         x = x_ / self.trial.framerate if cycle is None else x_
                         tcolor = (model_tracecolor if model_tracecolor
-                                  else
-                                  self.cfg.plot.model_tracecolors[cycle.context])
-                        lstyle = (self.cfg.plot.model_linestyles[cycle.context] if
-                                  linestyles_context else model_linestyle)
+                                  else self.cfg.plot.model_tracecolors
+                                  [cycle.context])
+                        lstyle = (self.cfg.plot.model_linestyles
+                                  [cycle.context] if linestyles_context else
+                                  model_linestyle)
                         ax.plot(x, data, tcolor, linestyle=lstyle,
                                 linewidth=self.cfg.plot.model_linewidth,
                                 alpha=model_alpha)

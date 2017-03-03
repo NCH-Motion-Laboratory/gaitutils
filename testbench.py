@@ -39,9 +39,13 @@ vicon = nexus.viconnexus()
 
 c3dfile = "C:/Users/hus20664877/Desktop/trondheim_gait_data/astrid_080515_02.c3d"
 
-tri = trial.Trial(c3dfile)
+pl = Plotter()
 
-print tri.cycles
+pl.open_nexus_trial()
+
+pl.layout = [['LHipMomentX']]
+
+pl.plot_trial(model_cycles='all')
 
 sys.exit()
 

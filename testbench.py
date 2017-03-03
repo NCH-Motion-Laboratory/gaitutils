@@ -35,7 +35,25 @@ logger.addHandler(handler)
 #kin = utils.kinetics_available(vicon, check_cop=True)
 
 
-#sys.exit()
+vicon = nexus.viconnexus()
+
+c3dfile = "C:/Users/hus20664877/Desktop/trondheim_gait_data/astrid_080515_02.c3d"
+
+tri = trial.Trial(c3dfile)
+
+print tri.cycles
+
+sys.exit()
+
+
+#fpdn = read_data.get_forceplate_data(vicon)
+
+utils.check_forceplate_contact(vicon)
+
+utils.check_forceplate_contact(c3dfile)
+
+
+sys.exit()
 
 
 
@@ -44,7 +62,7 @@ c3dfile = "C:/Users/hus20664877/Desktop/trondheim_gait_data/Tobias Goihl - 4-511
 
 c3dfile = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/test/Verrokki6v_IN/2015_10_22_girl6v_IN/2015_10_22_girl6v_IN57.c3d"
 
-# c3dfile = "C:/Users/hus20664877/Desktop/trondheim_gait_data/astrid_080515_02.c3d"
+
 
 # c3dfile = "C:/Users/hus20664877/Desktop/NVUG2017/Example Data Workshop/Carita/Level/Dynamic 03.c3d"
 
@@ -80,7 +98,7 @@ plt.legend(['x','y','z'])
 plt.ylim()
 """
 
-utils.kinetics_available(vicon)
+
 #utils.kinetics_available(c3dfile)
 
 sys.exit()

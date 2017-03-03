@@ -81,7 +81,7 @@ def check_forceplate_contact(source, check_weight=True, check_cop=True):
     -foot markers must be inside plate edges at strike time
 
     Returns dict as:
-    return {'context': context, 'strikes': strike_fr, 'toeoffs': toeoff_fr}
+    return {'strikes': strike_fr, 'toeoffs': toeoff_fr}
     
     """
 
@@ -226,3 +226,34 @@ def check_forceplate_contact(source, check_weight=True, check_cop=True):
 
     logger.debug(results)
     return results
+
+
+
+"""
+    # kinetics ok, compute velocities at strike
+    markers = RIGHT_FOOT_MARKERS if kinetics == 'R' else LEFT_FOOT_MARKERS
+
+
+
+def _strike_toeoff_velocity(markerdata_r, markerdata_l):
+     Return foot velocity at strike/toeoff 
+    
+    markers = mdata.keys()
+    footctrV = np.zeros(mdata[markers[0]+'_V'].shape)
+    for marker in mrkdata:
+        footctrV += mrkdata[marker+'_V'] / len(markers)
+
+
+
+    footctrv = np.sqrt(np.sum(footctrV[:, 1:3]**2, 1))
+    
+    
+    strike_v = footctrv[int(strike_fr)]
+    toeoff_v = footctrv[int(toeoff_fr)]
+
+"""
+
+
+
+
+

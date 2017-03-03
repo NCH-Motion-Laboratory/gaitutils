@@ -240,15 +240,20 @@ def _get_1_forceplate_data(vicon, devid):
     wR = np.array(nfp.WorldR).reshape(3, 3)
     wT = np.array(nfp.WorldT)
     # plate corners -> world coords
-    lb = change_coords(np.array(nfp.LowerBounds), wR, wT)
-    ub = change_coords(np.array(nfp.UpperBounds), wR, wT)
-    print(lb, ub)
+    cor = np.stack([nfp.LowerBounds, nfp.UpperBounds])
+    cor_w = change_coords(cor, wR, wT)
+    lb = np.min(cor_w, axis=0)
+    ub = np.max(cor_w, axis=0)
     # check that CoP stays inside plate boundaries
-    cop_ok = np.logical_and(cop[:, 0] >= lb[0], cop[:, 0] <= ub[0]).all()
-    cop_ok &= np.logical_and(cop[:, 1] >= lb[1], cop[:, 1] <= ub[1]).all()
-    if not cop_ok:
-        logger.warning('center of pressure outside plate boundaries')
     cop_w = change_coords(cop, wR, wT)
+    cop_ok = np.logical_and(cop_w[:, 0] >= lb[0], cop_w[:, 0] <= ub[0]).all()
+    cop_ok &= np.logical_and(cop_w[:, 1] >= lb[1], cop_w[:, 1] <= ub[1]).all()
+    if not cop_ok:
+        logger.warning('center of pressure outside plate boundaries, '
+                       'clipping to plate')
+        cop_w[:, 0] = np.clip(cop_w[:, 0], lb[0], ub[0])
+        cop_w[:, 1] = np.clip(cop_w[:, 1], lb[1], ub[1])
+
     return {'F': F, 'M': M, 'Ftot': Ftot, 'CoP': cop_w,
             'wR': wR, 'wT': wT, 'lowerbounds': lb, 'upperbounds': ub}
 

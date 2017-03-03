@@ -16,6 +16,9 @@ import os.path as op
 import glob
 import models
 from emg import EMG
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Gaitcycle(object):
@@ -50,10 +53,11 @@ class Gaitcycle(object):
 
     def __repr__(self):
         s = '<Gaitcycle |'
-        s += ' offset: %d' % self.offset
-        s += ' start: %d' % self.start
-        s += ' end: %d' % self.end
-        s += ' context: %s' % self.context
+        s += ' offset: %d,' % self.offset
+        s += ' start: %d,' % self.start
+        s += ' end: %d,' % self.end
+        s += ' context: %s,' % self.context
+        s += ' starts on forceplate,' if self.on_forceplate else ''
         s += ' toeoff: %d' % self.toeoff
         s += '>'
         return s
@@ -112,10 +116,9 @@ class Trial(object):
         else:
             self.eclipse_data = defaultdict(lambda: '', {})
         try:
-            self.fpcontact = utils.check_forceplate_contact(source)
-            self.kinetics = self.kinetics_['context']
+            self.fpinfo = utils.check_forceplate_contact(source)
         except ValueError:
-            self.kinetics = None
+            self.fpinfo = None
         # analog and model data are lazily read
         self.emg = EMG(self.source)
         self._forceplate_data = None
@@ -187,6 +190,7 @@ class Trial(object):
 
     def _scan_cycles(self):
         """ Create gait cycle instances based on strike/toeoff markers. """
+        STRIKE_TOL = 4  # tolerance for matching forceplate strikes (frames)
         for strikes in [self.lstrikes, self.rstrikes]:
             len_s = len(strikes)
             if len_s < 2:
@@ -199,8 +203,13 @@ class Trial(object):
                 context = 'R'
             for k in range(0, len_s-1):
                 start = strikes[k]
+                # see if cycle starts on forceplate strike
+                cands = np.array(self.fpinfo['strikes'][context])
+                # offset is needed since event info is not yet 0-offset
+                diffs = np.abs(cands - start + self.offset)
+                on_forceplate = min(diffs) <= STRIKE_TOL
                 end = strikes[k+1]
                 toeoff = [x for x in toeoffs if x > start and x < end]
                 toeoff = toeoff[0] if len(toeoff) > 0 else None
                 yield Gaitcycle(start, end, self.offset, toeoff, context,
-                                self.samplesperframe)
+                                on_forceplate, self.samplesperframe)

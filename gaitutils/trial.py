@@ -117,6 +117,7 @@ class Trial(object):
             self.eclipse_data = defaultdict(lambda: '', {})
         try:
             self.fpinfo = utils.check_forceplate_contact(source)
+            self.fp_valid = self.fpinfo['valid']
         except ValueError:
             self.fpinfo = None
         # analog and model data are lazily read

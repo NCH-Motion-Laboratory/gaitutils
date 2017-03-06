@@ -109,6 +109,7 @@ def check_forceplate_contact(source, check_weight=True, check_cop=True):
     results = dict()
     results['strikes'] = {}
     results['toeoffs'] = {}
+    results['valid'] = ''
 
     # get marker data and find "forward" direction
     mrkdata = get_marker_data(source, RIGHT_FOOT_MARKERS+LEFT_FOOT_MARKERS)
@@ -220,6 +221,7 @@ def check_forceplate_contact(source, check_weight=True, check_cop=True):
             if this_valid not in results['strikes']:
                 results['strikes'][this_valid] = []
                 results['toeoffs'][this_valid] = []
+                results['valid'] += (this_valid)
 
             results['strikes'][this_valid].append(strike_fr)
             results['toeoffs'][this_valid].append(toeoff_fr)
@@ -251,4 +253,3 @@ def strike_toeoff_velocity(source, fpinfo):
         results['strike_v'][context] = footctrv[strikes]
         results['toeoff_v'][context] = footctrv[toeoffs]
     return results
-

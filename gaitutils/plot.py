@@ -428,7 +428,7 @@ class Plotter(object):
         if show:
             self.show()
 
-    def title_with_eclipse_info(self, prefix):
+    def title_with_eclipse_info(self, prefix=''):
         """ Create title: prefix + trial name + Eclipse description and
         notes """
         desc = self.trial.eclipse_data['DESCRIPTION']
@@ -460,6 +460,7 @@ class Plotter(object):
         if op.isfile(pdf_name):
             pass  # can prevent overwriting here
         try:
+            logger.debug('writing %s' % pdf_name)
             with PdfPages(pdf_name) as pdf:
                 pdf.savefig(self.fig)
         except IOError:

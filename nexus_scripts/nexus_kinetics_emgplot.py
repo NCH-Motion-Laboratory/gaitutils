@@ -16,13 +16,22 @@ def do_plot():
 
     pl = Plotter()
     pl.open_nexus_trial()
-    side = pl.trial.kinetics
-    pl.layout = layouts.kinetics_emg(side)
-    pdf_prefix = 'Kinetics_EMG_'
-    maintitle = pl.title_with_eclipse_info('Kinetics-EMG for')
-    # for EMG, plot only the cycle that has kinetics info
-    pl.plot_trial(maintitle=maintitle)
-    pl.create_pdf(pdf_prefix=pdf_prefix)
+    sides = pl.trial.fp_valid
+    if not sides:
+        raise Exception('No kinetics')
+    elif sides == 'LR':
+        sides = ['L', 'R']
+    else:
+        sides = [sides]
+    for side in sides:
+        pl.layout = layouts.kinetics_emg(side)
+        s = 'right' if side == 'R' else 'left'
+        maintitle = 'Kinetics-EMG (%s) for %s' % (s,
+                                                  pl.title_with_eclipse_info())
+        # for EMG, plot only the cycle that has kinetics info
+        pl.plot_trial(maintitle=maintitle)
+        pdf_name = 'Kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname, s)
+        pl.create_pdf(pdf_name=pdf_name)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

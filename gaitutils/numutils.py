@@ -22,6 +22,16 @@ def falling_zerocross(x):
     return rising_zerocross(-x)
 
 
+def best_match(v, b):
+    """ Replace elements of v using closest matches in b """
+    v = np.array(v)
+    b = np.array(b)
+    if b.size == 0:
+        return v
+    inds = np.abs(v[np.newaxis, :] - b[:, np.newaxis]).argmin(axis=0)
+    return b[inds]
+
+
 def isfloat(x):
     try:
         float(x)

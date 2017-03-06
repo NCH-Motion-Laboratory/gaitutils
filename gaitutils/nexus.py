@@ -15,7 +15,8 @@ from scipy import signal
 import os.path as op
 import psutil
 import glob
-from numutils import rising_zerocross, falling_zerocross, change_coords
+from numutils import (rising_zerocross, best_match, falling_zerocross,
+                      change_coords)
 from eclipse import get_eclipse_keys
 import matplotlib.pyplot as plt
 from config import cfg
@@ -342,7 +343,8 @@ def _list_to_str(li):
 
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                     'R_strike': None, 'R_toeoff': None}, ctr_pos=[0, 0, 0],
-                    max_dist=None, first_strike=None, plot=False, mark=True):
+                    max_dist=None, fp_events=None, fp_strike_first=True,
+                    plot=False, mark=True):
     """ Mark events based on velocity thresholding. Absolute thresholds
     can be specified as arguments. Otherwise, relative thresholds will be
     calculated based on the data. Optimal results will be obtained when
@@ -357,10 +359,13 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     max_dist is the maximum allowed distance of the foot from ctr_pos.
     Events where the foot is further than this will be discarded.
 
-    first_strike specifies the frame of the first strike event for either side.
-    Events earlier than this will not be marked.
-    For example, first_strike={'R': 100} will discard events earlier than frame
-    100 on the right side.
+    fp_events is dict specifying the forceplate detected strikes and toeoffs
+    (see utils.check_forceplate_contact). These will not be marked by
+    velocity thresholding.
+
+    If fp_strike_is_first is True, the first cycle will start on forceplate
+    (i.e. events earlier than the first foot strike events in fp_events will
+    not be marked)
 
     If plot=True, velocity curves and events are plotted.
 
@@ -441,7 +446,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
 
         if maxv > MAX_PEAK_VELOCITY:
             raise GaitDataError('Velocity thresholds too high, data may '
-                                    'be noisy')
+                                'be noisy')
 
         # compute thresholds
         threshold_fall_ = (vel_thresholds[this_side+'_strike'] or
@@ -488,6 +493,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
             raise GaitDataError('Could not detect any toe-off events')
 
         logger.debug('all strike events: %s' % _list_to_str(strikes))
+        logger.debug('all toeoff events: %s' % _list_to_str(toeoffs))
 
         # select events for which the foot is close enough to center frame
         if max_dist:
@@ -502,24 +508,30 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         if len(strikes) == 0:
             raise GaitDataError('No valid foot strikes detected')
 
-        # mark only after first strike
-        if first_strike is not None and this_side in first_strike:
-            first = first_strike[this_side]
-            # find our idea of the first strike
-            auto_first = strikes[np.argmin(np.abs(strikes - first))]
-            logger.debug('first strike given: %d detected: %d' %
-                         (first, auto_first))
-            if np.abs(auto_first - first) > STRIKE_TOL:
-                raise GaitDataError('Detected foot strike does not agree '
-                                    'with parameters')
-            strike_ok = np.where(strikes >= auto_first)
-            strikes = strikes[strike_ok]
+        # correct for force plate autodetected events
+        if fp_events:
+            # strikes
+            fp_strikes = fp_events[this_side+'_strikes']
+            fpc = best_match(strikes, fp_strikes)
+            ok_ind = np.where(np.abs(fpc - strikes) < STRIKE_TOL)
+            strikes[ok_ind] = fpc[ok_ind]
+            # toeoffs
+            fp_toeoffs = fp_events[this_side+'_toeoffs']
+            fpc = best_match(toeoffs, fp_toeoffs)
+            ok_ind = np.where(np.abs(fpc - toeoffs) < STRIKE_TOL)
+            toeoffs[ok_ind] = fpc[ok_ind]
+            # delete strikes before 1st forceplate contact
+            if fp_strike_first and len(fp_strikes) > 0:
+                not_ok = np.where(strikes < fp_strikes[0])
+                strikes = np.delete(strikes, not_ok)
 
-        logger.debug('accepted strike events: %s' % _list_to_str(strikes))
+        # delete toeoffs that are not between strike events
+        not_ok = np.where(np.logical_or(toeoffs <= min(strikes),
+                                        toeoffs >= max(strikes)))
+        toeoffs = np.delete(toeoffs, not_ok)
 
-        # mark toeoffs that are between strike events
-        toeoffs = [fr for fr in toeoffs
-                   if any(strikes < fr) and any(strikes > fr)]
+        logger.debug('final strike events: %s' % _list_to_str(strikes))
+        logger.debug('final toeoff events: %s' % _list_to_str(toeoffs))
 
         # create the events in Nexus
         side_str = 'Right' if this_side == 'R' else 'Left'

@@ -37,9 +37,12 @@ logger.addHandler(handler)
 
 vicon = nexus.viconnexus()
 
-fpinfo = utils.check_forceplate_contact(vicon)
+fpe = utils.check_forceplate_contact(vicon)
 
-vs = utils.strike_toeoff_velocity(vicon, fpinfo)
+vs = utils.strike_toeoff_velocity(vicon, fpe)
+
+nexus.automark_events(vicon, fp_events=fpe, fp_strike_first=True,
+                      vel_thresholds=vs)
 
 sys.exit()
 

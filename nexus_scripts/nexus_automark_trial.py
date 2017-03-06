@@ -27,14 +27,10 @@ def automark_single():
     vel_th = {'R_strike': None, 'R_toeoff': None,
               'L_strike': None, 'L_toeoff': None}
 
-
-
     first_strike = dict()
+    
     for context in ['R', 'L']:
-        if context in fpdata['strikes']:
-            vel_th[context+'_strike'] = fpdata['strike_v']
-            vel_th[context+'_toeoff'] = fpdata['toeoff_v']
-            first_strike[context] = fpdata['strike']
+        first_strike[context] = min(fpdata[context+'_strikes'])
 
     vicon.ClearAllEvents()
     nexus.automark_events(vicon,

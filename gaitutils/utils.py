@@ -107,8 +107,10 @@ def check_forceplate_contact(source, check_weight=True, check_cop=True):
     fpdata = get_forceplate_data(source)
 
     results = dict()
-    results['strikes'] = {}
-    results['toeoffs'] = {}
+    results['R_strikes'] = []
+    results['R_toeoffs'] = []
+    results['L_strikes'] = []
+    results['L_toeoffs'] = []
     results['valid'] = ''
 
     # get marker data and find "forward" direction
@@ -217,15 +219,9 @@ def check_forceplate_contact(source, check_weight=True, check_cop=True):
         else:
             logger.debug('plate %d: valid foot strike on %s at frame %d'
                          % (plate_ind, this_valid, strike_fr))
-
-            if this_valid not in results['strikes']:
-                results['strikes'][this_valid] = []
-                results['toeoffs'][this_valid] = []
-                results['valid'] += (this_valid)
-
-            results['strikes'][this_valid].append(strike_fr)
-            results['toeoffs'][this_valid].append(toeoff_fr)
-
+            results['valid'] += this_valid
+            results[this_valid+'_strikes'].append(strike_fr)
+            results[this_valid+'_toeoffs'].append(toeoff_fr)
     logger.debug(results)
     return results
 
@@ -236,8 +232,6 @@ def strike_toeoff_velocity(source, fpinfo):
     LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
     mrkdata = get_marker_data(source, RIGHT_FOOT_MARKERS+LEFT_FOOT_MARKERS)
     results = dict()
-    results['strike_v'] = dict()
-    results['toeoff_v'] = dict()
     for context, markers in zip(('R', 'L'), [RIGHT_FOOT_MARKERS,
                                 LEFT_FOOT_MARKERS]):
         # average velocities for different markers
@@ -246,10 +240,8 @@ def strike_toeoff_velocity(source, fpinfo):
             footctrV += mrkdata[marker+'_V'] / float(len(markers))
         # scalar velocity
         footctrv = np.sqrt(np.sum(footctrV**2, 1))
-        strikes = (fpinfo['strikes'][context] if context in fpinfo['strikes']
-                   else [])
-        toeoffs = (fpinfo['toeoffs'][context] if context in fpinfo['toeoffs']
-                   else [])
-        results['strike_v'][context] = footctrv[strikes]
-        results['toeoff_v'][context] = footctrv[toeoffs]
+        strikes = fpinfo[context+'_strikes']
+        toeoffs = fpinfo[context+'_toeoffs']
+        results[context + '_strike'] = footctrv[strikes]
+        results[context + '_toeoff'] = footctrv[toeoffs]
     return results

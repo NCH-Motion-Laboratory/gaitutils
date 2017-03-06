@@ -325,6 +325,8 @@ class Plotter(object):
                                                 model_normals_color,
                                                 alpha=self.cfg.plot.
                                                 model_normals_alpha)
+                        # tighten x limits
+                        ax.set_xlim(x[0], x[-1])
                         ylim = ax.get_ylim()
                         # model specific adjustments to y limits
                         if model == models.pig_lowerbody:
@@ -433,7 +435,8 @@ class Plotter(object):
         notes """
         desc = self.trial.eclipse_data['DESCRIPTION']
         notes = self.trial.eclipse_data['NOTES']
-        maintitle = '%s %s' % (prefix, self.trial.trialname)
+        maintitle = ('%s %s' % (prefix, self.trial.trialname) if prefix else
+                     self.trial.trialname)
         maintitle += ' (%s)' % desc if desc else ''
         maintitle += ' (%s)' % notes if notes else ''
         return maintitle

@@ -22,21 +22,12 @@ def automark_single():
         raise Exception('Vicon Nexus not running')
 
     vicon = nexus.viconnexus()
-    fpinfo = utils.check_forceplate_contact(vicon)
-
-    vel_th = {'R_strike': None, 'R_toeoff': None,
-              'L_strike': None, 'L_toeoff': None}
-
-    first_strike = dict()
-    
-    for context in ['R', 'L']:
-        first_strike[context] = min(fpdata[context+'_strikes'])
+    fpe = utils.check_forceplate_contact(vicon)
+    vel = utils.strike_toeoff_velocity(vicon, fpe)
 
     vicon.ClearAllEvents()
-    nexus.automark_events(vicon,
-                          vel_thresholds=vel_th, max_dist=2000,
-                          ctr_pos=[0, 300, 0],
-                          first_strike=first_strike, plot=False)
+    nexus.automark_events(vicon, vel_thresholds=vel, max_dist=2000,
+                          fp_events=fpe, ctr_pos=[0, 300, 0], plot=False)
 
 if __name__ == '__main__':
     automark_single()

@@ -226,8 +226,9 @@ def check_forceplate_contact(source, check_weight=True, check_cop=True):
     return results
 
 
-def strike_toeoff_velocity(source, fpinfo):
-    """ Return foot velocities during forceplate strike/toeoff frames """
+def strike_toeoff_velocity(source, fpinfo, medians=True):
+    """ Return foot velocities during forceplate strike/toeoff frames.
+    If medians=True, return median values. """
     RIGHT_FOOT_MARKERS = ['RHEE', 'RTOE', 'RANK']
     LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
     mrkdata = get_marker_data(source, RIGHT_FOOT_MARKERS+LEFT_FOOT_MARKERS)
@@ -244,4 +245,6 @@ def strike_toeoff_velocity(source, fpinfo):
         toeoffs = fpinfo[context+'_toeoffs']
         results[context + '_strike'] = footctrv[strikes]
         results[context + '_toeoff'] = footctrv[toeoffs]
+    if medians:
+        results = {key: np.median(x) for key, x in results.items()}
     return results

@@ -47,7 +47,7 @@ class Trial:
         self.ctr_frame = None
         self.context = None
         self.description = ''
-        self.fpdata = None
+        self.fpev = None
         self.events = False
 
     def __repr__(self):
@@ -156,7 +156,7 @@ def _do_autoproc(enffiles):
                     except ValueError:
                         fail = 'label_failure'
                         break
-                    # check for gaps nearby the center frame
+                    # check for gaps near the center frame
                     if gaps.size > 0:
                         if (np.where(abs(gaps - ctr) <
                            cfg.autoproc.gaps_min_dist)[0].size >
@@ -176,18 +176,20 @@ def _do_autoproc(enffiles):
         else:
             trials[filepath].recon_ok = True
 
-        # preprocessing ok, get kinetics info
-        fpdata = utils.check_forceplate_contact(vicon,
-                                                cfg.autoproc.check_weight)
-        context = fpdata['context']
-        if context:
+        # preprocessing ok
+        fpev = utils.detect_forceplate_events(vicon, cfg.autoproc.check_weight)
+        # get foot velocity info for all events (do not reduce to median)
+        vel = utils.get_foot_velocity(vicon, fpev, medians=False)
+        valid = fpev['valid']
+
+        if valid:
             eclipse_str += (cfg.autoproc.enf_descriptions['context_right']
                             if context == 'R'
                             else cfg.autoproc.enf_descriptions['context_left'])
             contact_v[context+'_strike'].append(fpdata['strike_v'])
             contact_v[context+'_toeoff'].append(fpdata['toeoff_v'])
             trials[filepath].context = context
-            trials[filepath].fpdata = fpdata
+            trials[filepath].fpdata = fpev
         else:
             eclipse_str += cfg.autoproc.enf_descriptions['no_context']
         eclipse_str += ','
@@ -230,6 +232,8 @@ def _do_autoproc(enffiles):
             first_strike[context] = trial.fpdata['strike']
         try:
             vicon.ClearAllEvents()
+
+
             nexus.automark_events(vicon,
                                   max_dist=cfg.autoproc.automark_max_dist,
                                   ctr_pos=cfg.autoproc.walkway_mid,

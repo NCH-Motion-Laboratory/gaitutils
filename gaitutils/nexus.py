@@ -350,8 +350,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     calculated based on the data. Optimal results will be obtained when
     thresholds based on force plate data are available.
 
-    vel_threshold gives velocity thresholds for identifying events. These
-    can be obtained from forceplate data (see utils.check_forceplate_contact).
+    vel_thresholds gives velocity thresholds for identifying events. These
+    can be obtained from forceplate data (utils.check_forceplate_contact).
     Separate thresholds for left and right side.
 
     ctr_pos is the walkway center position (used by max_dist).
@@ -360,12 +360,12 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     Events where the foot is further than this will be discarded.
 
     fp_events is dict specifying the forceplate detected strikes and toeoffs
-    (see utils.check_forceplate_contact). These will not be marked by
+    (see utils.detect_forceplate_events). These will not be marked by
     velocity thresholding.
 
     If fp_strike_is_first is True, the first cycle will start on forceplate
     (i.e. events earlier than the first foot strike events in fp_events will
-    not be marked)
+    not be marked).
 
     If plot=True, velocity curves and events are plotted.
 

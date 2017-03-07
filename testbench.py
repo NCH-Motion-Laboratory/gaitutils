@@ -37,9 +37,9 @@ logger.addHandler(handler)
 
 vicon = nexus.viconnexus()
 
-fpe = utils.check_forceplate_contact(vicon)
+fpe = utils.detect_forceplate_events(vicon)
 
-vs = utils.strike_toeoff_velocity(vicon, fpe)
+vs = utils.get_foot_velocity(vicon, fpe)
 
 nexus.automark_events(vicon, fp_events=fpe, fp_strike_first=True,
                       vel_thresholds=vs)
@@ -93,7 +93,7 @@ sys.exit()
 
 vicon = nexus.viconnexus()
 
-fpdn = read_data.get_forceplate_data(vicon)
+fpdn = read_data.detect_forceplate_events(vicon)
 
 sys.exit()
 

@@ -22,8 +22,8 @@ def automark_single():
         raise Exception('Vicon Nexus not running')
 
     vicon = nexus.viconnexus()
-    fpe = utils.check_forceplate_contact(vicon)
-    vel = utils.strike_toeoff_velocity(vicon, fpe)
+    fpe = utils.detect_forceplate_events(vicon)
+    vel = utils.get_foot_velocity(vicon, fpe)
 
     vicon.ClearAllEvents()
     nexus.automark_events(vicon, vel_thresholds=vel, max_dist=2000,

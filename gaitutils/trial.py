@@ -116,7 +116,7 @@ class Trial(object):
         else:
             self.eclipse_data = defaultdict(lambda: '', {})
         try:
-            self.fp_events = utils.check_forceplate_contact(source)
+            self.fp_events = utils.detect_forceplate_events(source)
             self.fp_valid = self.fp_events['valid']
         except ValueError:
             self.fpinfo = None

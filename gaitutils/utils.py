@@ -69,7 +69,7 @@ def butter_filt(data, passband, sfreq, bord=5):
     return signal.filtfilt(b, a, data)
 
 
-def check_forceplate_contact(source, check_weight=True, check_cop=True):
+def detect_forceplate_events(source, check_weight=True, check_cop=True):
     """ See whether the trial has valid forceplate contact.
     Uses forceplate data and marker positions.
 
@@ -80,9 +80,6 @@ def check_forceplate_contact(source, check_weight=True, check_cop=True):
     (disable by check_cop=False)
     -foot markers must be inside plate edges at strike time
 
-    Returns dict as:
-    return {'strikes': strike_fr, 'toeoffs': toeoff_fr}
-    
     """
 
     # autodetection parameters
@@ -219,15 +216,17 @@ def check_forceplate_contact(source, check_weight=True, check_cop=True):
         else:
             logger.debug('plate %d: valid foot strike on %s at frame %d'
                          % (plate_ind, this_valid, strike_fr))
-            results['valid'] += this_valid
+            if this_valid not in results['valid']:
+                results['valid'] += this_valid
             results[this_valid+'_strikes'].append(strike_fr)
             results[this_valid+'_toeoffs'].append(toeoff_fr)
     logger.debug(results)
     return results
 
 
-def strike_toeoff_velocity(source, fpinfo, medians=True):
+def get_foot_velocity(source, fp_events, medians=True):
     """ Return foot velocities during forceplate strike/toeoff frames.
+    fp_events is from detect_forceplate_events()
     If medians=True, return median values. """
     RIGHT_FOOT_MARKERS = ['RHEE', 'RTOE', 'RANK']
     LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
@@ -241,10 +240,11 @@ def strike_toeoff_velocity(source, fpinfo, medians=True):
             footctrV += mrkdata[marker+'_V'] / float(len(markers))
         # scalar velocity
         footctrv = np.sqrt(np.sum(footctrV**2, 1))
-        strikes = fpinfo[context+'_strikes']
-        toeoffs = fpinfo[context+'_toeoffs']
+        strikes = fp_events[context+'_strikes']
+        toeoffs = fp_events[context+'_toeoffs']
         results[context + '_strike'] = footctrv[strikes]
         results[context + '_toeoff'] = footctrv[toeoffs]
     if medians:
-        results = {key: np.median(x) for key, x in results.items()}
+        results = {key: (np.array([np.median(x)]) if x.size > 0 else x)
+                   for key, x in results.items()}
     return results

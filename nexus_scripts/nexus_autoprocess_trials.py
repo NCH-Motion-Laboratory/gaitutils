@@ -89,8 +89,8 @@ def _do_autoproc(enffiles):
     nexus_ver = nexus.true_ver()
 
     # used to store stats about foot velocity
-    foot_vel = {'L_strike': [], 'R_strike': [],
-                'L_toeoff': [], 'R_toeoff': []}
+    foot_vel = {'L_strike': np.array([]), 'R_strike': np.array([]),
+                'L_toeoff': np.array([]), 'R_toeoff': np.array([])}
     trials = {}
 
     subjectname = nexus.get_metadata(vicon)['name']

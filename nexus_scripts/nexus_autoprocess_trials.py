@@ -72,14 +72,25 @@ def _do_autoproc(enffiles):
         logger.debug('Saving trial')
         vicon.SaveTrial(cfg.autoproc.save_timeout)
 
+    def _context_desc(context):
+        if not context:
+            return cfg.autoproc.enf_descriptions['context_none']
+        if context == 'L':
+            return cfg.autoproc.enf_descriptions['context_left']
+        elif context == 'R':
+            return cfg.autoproc.enf_descriptions['context_right']
+        else:
+            return cfg.autoproc.enf_descriptions['context_both']
+
     if not nexus.pid():
         raise Exception('Vicon Nexus not running')
     vicon = nexus.viconnexus()
 
     nexus_ver = nexus.true_ver()
 
-    contact_v = {'L_strike': [], 'R_strike': [],
-                 'L_toeoff': [], 'R_toeoff': []}
+    # used to store stats about foot velocity
+    foot_vel = {'L_strike': [], 'R_strike': [],
+                'L_toeoff': [], 'R_toeoff': []}
     trials = {}
 
     subjectname = nexus.get_metadata(vicon)['name']
@@ -124,6 +135,7 @@ def _do_autoproc(enffiles):
             # try to figure out trial center frame
             for marker in cfg.autoproc.track_markers:
                 try:
+                    # TODO: x vs y dim
                     ctr = utils.get_crossing_frame(vicon, marker=marker, dim=1,
                                                    p0=cfg.autoproc.y_midpoint)
                 except ValueError:
@@ -165,25 +177,25 @@ def _do_autoproc(enffiles):
         else:
             trials[filepath].recon_ok = True
 
-        # preprocessing ok
+        # preprocessing ok, check forceplate data
         fpev = utils.detect_forceplate_events(vicon, cfg.autoproc.check_weight)
         # get foot velocity info for all events (do not reduce to median)
         vel = utils.get_foot_velocity(vicon, fpev, medians=False)
         valid = fpev['valid']
-
-        if valid:
-            eclipse_str += (cfg.autoproc.enf_descriptions['context_right']
-                            if context == 'R'
-                            else cfg.autoproc.enf_descriptions['context_left'])
-            contact_v[context+'_strike'].append(fpdata['strike_v'])
-            contact_v[context+'_toeoff'].append(fpdata['toeoff_v'])
-            trials[filepath].context = context
-            trials[filepath].fpdata = fpev
-        else:
-            eclipse_str += cfg.autoproc.enf_descriptions['no_context']
+        eclipse_str += _context_desc(valid)
+        trials[filepath].valid = valid
+        trials[filepath].fpev = fpev
+        for context in valid:  # save velocity data
+            nv = np.append(foot_vel[context+'_strike'],
+                           vel[context+'_strike'])
+            foot_vel[context+'_strike'] = nv
+            nv = np.append(foot_vel[context+'_toeoff'],
+                           vel[context+'_toeoff'])
+            foot_vel[context+'_toeoff'] = nv
         eclipse_str += ','
 
         # check direction of gait (y coordinate increase/decrease)
+        # TODO: x vs y dir
         gait_dir = utils.get_movement_direction(vicon,
                                                 cfg.autoproc.track_markers[0],
                                                 'y')
@@ -194,13 +206,12 @@ def _do_autoproc(enffiles):
         # time.sleep(1)
         trials[filepath].description = eclipse_str
 
-        # compute velocity thresholds from preprocessed trial data
-        vel_th = {}
-        for key in contact_v:
-            if contact_v[key]:
-                vel_th[key] = np.median(contact_v[key])
-            else:
-                vel_th[key] = None
+    # compute velocity thresholds using all trials
+    vel_th = {key: (np.median(x) if x.size > 0 else None) for key, x in
+              foot_vel.items()}
+
+    logger.debug('global velocity thresholds:')
+    logger.debug(vel_th)
 
     """ 2nd pass - detect gait events, run models, crop """
     sel_trials = {k: v for k, v in trials.items() if v.recon_ok}
@@ -210,24 +221,14 @@ def _do_autoproc(enffiles):
         logger.debug('\nprocessing: %s' % filename)
         vicon.OpenTrial(filepath, cfg.autoproc.trial_open_timeout)
         enf_file = filepath + '.Trial.enf'
-        # if fp data available from trial itself, use it for automark
-        # otherwise use statistics
-        context = trial.context
-        vel_th_ = vel_th.copy()
-        first_strike = dict()
-        if context:
-            vel_th_[context+'_strike'] = trial.fpdata['strike_v']
-            vel_th_[context+'_toeoff'] = trial.fpdata['toeoff_v']
-            first_strike[context] = trial.fpdata['strike']
+
+        # automark using global velocity thresholds
         try:
             vicon.ClearAllEvents()
-
-
-            nexus.automark_events(vicon,
+            nexus.automark_events(vicon, vel_thresholds=vel_th,
                                   max_dist=cfg.autoproc.automark_max_dist,
-                                  ctr_pos=cfg.autoproc.walkway_mid,
-                                  first_strike=first_strike,
-                                  vel_thresholds=vel_th_)
+                                  fp_events=trial.fpev, plot=False,
+                                  ctr_pos=cfg.autoproc.walkway_mid)
             trial.events = True
         except GaitDataError:  # cannot automark
             eclipse_str = '%s,%s' % (trials[filepath].description,

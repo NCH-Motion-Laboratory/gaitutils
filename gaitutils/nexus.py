@@ -406,18 +406,18 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     subjectname = subjectnames[0]
 
     # get foot center positions and velocities
-    mrkdata = get_marker_data(vicon, cfg.right_foot_markers +
-                              cfg.left_foot_markers)
-    data_shape = mrkdata[cfg.right_foot_markers[0]+'_V'].shape
+    mrkdata = get_marker_data(vicon, cfg.autoproc.right_foot_markers +
+                              cfg.autoproc.left_foot_markers)
+    data_shape = mrkdata[cfg.autoproc.right_foot_markers[0]+'_V'].shape
 
     rfootctrV = np.zeros(data_shape)
-    for marker in cfg.right_foot_markers:
-        rfootctrV += mrkdata[marker+'_V'] / len(cfg.right_foot_markers)
+    for marker in cfg.autoproc.right_foot_markers:
+        rfootctrV += mrkdata[marker+'_V'] / len(cfg.autoproc.right_foot_markers)
     rfootctrv = np.sqrt(np.sum(rfootctrV**2, 1))
 
     lfootctrV = np.zeros(data_shape)
-    for marker in cfg.left_foot_markers:
-        lfootctrV += mrkdata[marker+'_V'] / len(cfg.left_foot_markers)
+    for marker in cfg.autoproc.left_foot_markers:
+        lfootctrV += mrkdata[marker+'_V'] / len(cfg.autoproc.left_foot_markers)
     lfootctrv = np.sqrt(np.sum(lfootctrV**2, 1))
 
     rfootctrP = mrkdata['RANK_P']

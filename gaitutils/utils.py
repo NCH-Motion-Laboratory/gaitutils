@@ -109,9 +109,9 @@ def detect_forceplate_events(source, check_weight=True, check_cop=True):
     results['valid'] = ''
 
     # get marker data and find "forward" direction
-    mrkdata = get_marker_data(source, cfg.right_foot_markers+cfg.left_foot_markers)
+    mrkdata = get_marker_data(source, cfg.autoproc.right_foot_markers+cfg.autoproc.left_foot_markers)
     pos = sum([mrkdata[name+'_P'] for name in
-               cfg.left_foot_markers+cfg.right_foot_markers])
+               cfg.autoproc.left_foot_markers+cfg.autoproc.right_foot_markers])
     fwd_dir = np.argmax(np.var(pos, axis=0))
     orth_dir = 0 if fwd_dir == 1 else 1
     logger.debug('gait forward direction seems to be %s' %
@@ -176,7 +176,7 @@ def detect_forceplate_events(source, check_weight=True, check_cop=True):
 
         # check markers
         this_valid = None
-        for markers in [cfg.right_foot_markers, cfg.left_foot_markers]:
+        for markers in [cfg.autoproc.right_foot_markers, cfg.autoproc.left_foot_markers]:
             ok = True
             for marker_ in markers:
                 mins_s, maxes_s = mins.copy(), maxes.copy()
@@ -206,7 +206,7 @@ def detect_forceplate_events(source, check_weight=True, check_cop=True):
             if ok:
                 if this_valid:
                     raise Exception('both feet on plate, how come?')
-                this_valid = 'R' if markers == cfg.right_foot_markers else 'L'
+                this_valid = 'R' if markers == cfg.autoproc.right_foot_markers else 'L'
                 logger.debug('on-plate check ok for side %s' % this_valid)
 
         if not this_valid:
@@ -226,11 +226,11 @@ def get_foot_velocity(source, fp_events, medians=True):
     """ Return foot velocities during forceplate strike/toeoff frames.
     fp_events is from detect_forceplate_events()
     If medians=True, return median values. """
-    mrkdata = get_marker_data(source, cfg.right_foot_markers +
-                              cfg.left_foot_markers)
+    mrkdata = get_marker_data(source, cfg.autoproc.right_foot_markers +
+                              cfg.autoproc.left_foot_markers)
     results = dict()
-    for context, markers in zip(('R', 'L'), [cfg.right_foot_markers,
-                                cfg.left_foot_markers]):
+    for context, markers in zip(('R', 'L'), [cfg.autoproc.right_foot_markers,
+                                cfg.autoproc.left_foot_markers]):
         # average velocities for different markers
         footctrV = np.zeros(mrkdata[markers[0]+'_V'].shape)
         for marker in markers:

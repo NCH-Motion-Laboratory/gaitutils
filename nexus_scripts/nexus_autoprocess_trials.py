@@ -57,17 +57,6 @@ class Trial:
         s += '>'
         return s
 
-# TODO
-def _footctr_v(frame)
-    # kinetics ok, compute velocities at strike
-    markers = RIGHT_FOOT_MARKERS if kinetics == 'R' else LEFT_FOOT_MARKERS
-    footctrV = np.zeros(mrkdata[markers[0]+'_V'].shape)
-    for marker in markers:
-        footctrV += mrkdata[marker+'_V'] / len(markers)
-    footctrv = np.sqrt(np.sum(footctrV[:, 1:3]**2, 1))
-    strike_v = footctrv[int(strike_fr)]
-    toeoff_v = footctrv[int(toeoff_fr)]
-
 
 def _do_autoproc(enffiles):
     """ Do autoprocessing for all trials listed in enffiles (list of

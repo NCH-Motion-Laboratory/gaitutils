@@ -14,6 +14,8 @@ import numpy as np
 import logging
 import matplotlib.pyplot as plt
 
+from config import cfg
+
 logger = logging.getLogger(__name__)
 
 
@@ -90,10 +92,6 @@ def detect_forceplate_events(source, check_weight=True, check_cop=True):
     # time specified in seconds -> analog frames
     # FRISE_WINDOW = .05 * fp0['sfrate']
     # FMAX_MAX_DELAY = .95 * fp0['sfrate']
-    # right feet markers
-    RIGHT_FOOT_MARKERS = ['RHEE', 'RTOE', 'RANK']
-    # left foot markers
-    LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
     # tolerance for toeoff in forward dir (mm)
     TOEOFF_TOL = 20
     # ankle marker tolerance in dir orthogonal to gait (mm)
@@ -111,9 +109,9 @@ def detect_forceplate_events(source, check_weight=True, check_cop=True):
     results['valid'] = ''
 
     # get marker data and find "forward" direction
-    mrkdata = get_marker_data(source, RIGHT_FOOT_MARKERS+LEFT_FOOT_MARKERS)
+    mrkdata = get_marker_data(source, cfg.right_foot_markers+cfg.left_foot_markers)
     pos = sum([mrkdata[name+'_P'] for name in
-               LEFT_FOOT_MARKERS+RIGHT_FOOT_MARKERS])
+               cfg.left_foot_markers+cfg.right_foot_markers])
     fwd_dir = np.argmax(np.var(pos, axis=0))
     orth_dir = 0 if fwd_dir == 1 else 1
     logger.debug('gait forward direction seems to be %s' %
@@ -178,7 +176,7 @@ def detect_forceplate_events(source, check_weight=True, check_cop=True):
 
         # check markers
         this_valid = None
-        for markers in [RIGHT_FOOT_MARKERS, LEFT_FOOT_MARKERS]:
+        for markers in [cfg.right_foot_markers, cfg.left_foot_markers]:
             ok = True
             for marker_ in markers:
                 mins_s, maxes_s = mins.copy(), maxes.copy()
@@ -208,7 +206,7 @@ def detect_forceplate_events(source, check_weight=True, check_cop=True):
             if ok:
                 if this_valid:
                     raise Exception('both feet on plate, how come?')
-                this_valid = 'R' if markers == RIGHT_FOOT_MARKERS else 'L'
+                this_valid = 'R' if markers == cfg.right_foot_markers else 'L'
                 logger.debug('on-plate check ok for side %s' % this_valid)
 
         if not this_valid:
@@ -228,12 +226,11 @@ def get_foot_velocity(source, fp_events, medians=True):
     """ Return foot velocities during forceplate strike/toeoff frames.
     fp_events is from detect_forceplate_events()
     If medians=True, return median values. """
-    RIGHT_FOOT_MARKERS = ['RHEE', 'RTOE', 'RANK']
-    LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
-    mrkdata = get_marker_data(source, RIGHT_FOOT_MARKERS+LEFT_FOOT_MARKERS)
+    mrkdata = get_marker_data(source, cfg.right_foot_markers +
+                              cfg.left_foot_markers)
     results = dict()
-    for context, markers in zip(('R', 'L'), [RIGHT_FOOT_MARKERS,
-                                LEFT_FOOT_MARKERS]):
+    for context, markers in zip(('R', 'L'), [cfg.right_foot_markers,
+                                cfg.left_foot_markers]):
         # average velocities for different markers
         footctrV = np.zeros(mrkdata[markers[0]+'_V'].shape)
         for marker in markers:

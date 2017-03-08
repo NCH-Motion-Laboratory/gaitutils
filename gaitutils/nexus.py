@@ -394,10 +394,6 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     MIN_SLOPE_VELOCITY = 0  # not currently in use
     # median prefilter width
     MEDIAN_WIDTH = 3
-    # right feet markers
-    RIGHT_FOOT_MARKERS = ['RHEE', 'RTOE', 'RANK']
-    # left foot markers
-    LEFT_FOOT_MARKERS = ['LHEE', 'LTOE', 'LANK']
     # minimum distance between subsequent events (of same kind)
     MIN_EVENT_DISTANCE = 50
     # tolerance between specified and actual first strike
@@ -410,17 +406,18 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     subjectname = subjectnames[0]
 
     # get foot center positions and velocities
-    mrkdata = get_marker_data(vicon, RIGHT_FOOT_MARKERS+LEFT_FOOT_MARKERS)
-    data_shape = mrkdata[RIGHT_FOOT_MARKERS[0]+'_V'].shape
+    mrkdata = get_marker_data(vicon, cfg.right_foot_markers +
+                              cfg.left_foot_markers)
+    data_shape = mrkdata[cfg.right_foot_markers[0]+'_V'].shape
 
     rfootctrV = np.zeros(data_shape)
-    for marker in RIGHT_FOOT_MARKERS:
-        rfootctrV += mrkdata[marker+'_V'] / len(RIGHT_FOOT_MARKERS)
+    for marker in cfg.right_foot_markers:
+        rfootctrV += mrkdata[marker+'_V'] / len(cfg.right_foot_markers)
     rfootctrv = np.sqrt(np.sum(rfootctrV**2, 1))
 
     lfootctrV = np.zeros(data_shape)
-    for marker in LEFT_FOOT_MARKERS:
-        lfootctrV += mrkdata[marker+'_V'] / len(LEFT_FOOT_MARKERS)
+    for marker in cfg.left_foot_markers:
+        lfootctrV += mrkdata[marker+'_V'] / len(cfg.left_foot_markers)
     lfootctrv = np.sqrt(np.sum(lfootctrV**2, 1))
 
     rfootctrP = mrkdata['RANK_P']

@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_crossing_frame(source, marker, dim=1, p0=0):
-    """ Return frame(s) where marker position (dimension dim) crosses r0
+    """ Return frame(s) where marker position (dimension dim) crosses p0
     (units are as returned by Nexus, usually mm).
     Dims are x=0, y=1, z=2. """
     mrkdata = get_marker_data(source, marker)
@@ -42,7 +42,8 @@ def get_crossing_frame(source, marker, dim=1, p0=0):
 
 
 def get_movement_direction(source, marker, dir):
-    """ Return average direction of movement for given marker """
+    """ Return direction of movement (negative/positive)
+    for given marker and movement direction """
     dir = dir.lower()
     dir = {'x': 0, 'y': 1, 'z': 2}[dir]
     mrkdata = get_marker_data(source, marker)
@@ -71,6 +72,14 @@ def butter_filt(data, passband, sfreq, bord=5):
     return signal.filtfilt(b, a, data)
 
 
+def principal_movement_direction(source, markers):
+    """ Return principal movement direction """
+    mrkdata = get_marker_data(source, markers)
+    pos = sum([mrkdata[name+'_P'] for name in markers])
+    fwd_dir = np.argmax(np.var(pos, axis=0))
+    return fwd_dir
+
+
 def detect_forceplate_events(source, check_weight=True, check_cop=True):
     """ See whether the trial has valid forceplate contact.
     Uses forceplate data and marker positions.
@@ -82,20 +91,10 @@ def detect_forceplate_events(source, check_weight=True, check_cop=True):
     (disable by check_cop=False)
     -foot markers must be inside plate edges at strike time
 
-    """
+    Returns dict with keys R_strikes, L_strikes, R_toeoffs, L_toeoffs:
+    lists of frames where valid forceplate contact occurs for each event
 
-    # autodetection parameters
-    # TODO: move into config
-    F_REL_THRESHOLD = .2  # force rise / fall threshold
-    FMAX_REL_MIN = .8  # maximum force as % of bodyweight must exceed this
-    MAX_COP_SHIFT = 300  # maximum CoP shift (in x or y dir) in mm
-    # time specified in seconds -> analog frames
-    # FRISE_WINDOW = .05 * fp0['sfrate']
-    # FMAX_MAX_DELAY = .95 * fp0['sfrate']
-    # tolerance for toeoff in forward dir (mm)
-    TOEOFF_TOL = 20
-    # ankle marker tolerance in dir orthogonal to gait (mm)
-    ANKLE_TOL = 20
+    """
 
     # get subject info
     info = get_metadata(source)
@@ -109,7 +108,8 @@ def detect_forceplate_events(source, check_weight=True, check_cop=True):
     results['valid'] = ''
 
     # get marker data and find "forward" direction
-    mrkdata = get_marker_data(source, cfg.autoproc.right_foot_markers+cfg.autoproc.left_foot_markers)
+    mrkdata = get_marker_data(source, cfg.autoproc.right_foot_markers +
+                              cfg.autoproc.left_foot_markers)
     pos = sum([mrkdata[name+'_P'] for name in
                cfg.autoproc.left_foot_markers+cfg.autoproc.right_foot_markers])
     fwd_dir = np.argmax(np.var(pos, axis=0))
@@ -128,14 +128,14 @@ def detect_forceplate_events(source, check_weight=True, check_cop=True):
         logger.debug('max force: %.2f N at %.2f' % (fmax, fmaxind))
         bodymass = info['bodymass']
         if bodymass is None:
-            f_threshold = F_REL_THRESHOLD * fmax
+            f_threshold = cfg.autoproc.forceplate_contact_threshold * fmax
             logger.warning('body mass unknown, thresholding force at %.2f N',
                            f_threshold)
         else:
             logger.debug('body mass %.2f kg' % bodymass)
-            f_threshold = F_REL_THRESHOLD * bodymass
+            f_threshold = cfg.autoproc.forceplate_contact_threshold * bodymass
             if check_weight:
-                if fmax < FMAX_REL_MIN * bodymass * 9.81:
+                if fmax < cfg.autoproc.forceplate_min_weight * bodymass * 9.81:
                     logger.debug('insufficient max. force on plate')
                     continue
             else:
@@ -157,7 +157,7 @@ def detect_forceplate_events(source, check_weight=True, check_cop=True):
             cop_shift = cop_roi.max(axis=0) - cop_roi.min(axis=0)
             total_shift = np.sqrt(np.sum(cop_shift**2))
             logger.debug('CoP total shift %.2f mm' % total_shift)
-            if total_shift > MAX_COP_SHIFT:
+            if total_shift > cfg.autoproc.cop_shift_max:
                 logger.debug('center of pressure shifts too much '
                              '(double contact?)')
                 continue
@@ -176,20 +176,21 @@ def detect_forceplate_events(source, check_weight=True, check_cop=True):
 
         # check markers
         this_valid = None
-        for markers in [cfg.autoproc.right_foot_markers, cfg.autoproc.left_foot_markers]:
+        for markers in [cfg.autoproc.right_foot_markers,
+                        cfg.autoproc.left_foot_markers]:
             ok = True
             for marker_ in markers:
                 mins_s, maxes_s = mins.copy(), maxes.copy()
                 mins_t, maxes_t = mins.copy(), maxes.copy()
                 # extra tolerance for ankle marker in sideways direction
                 if 'ANK' in marker_:
-                    mins_t[orth_dir] -= ANKLE_TOL
-                    maxes_t[orth_dir] += ANKLE_TOL
-                    mins_s[orth_dir] -= ANKLE_TOL
-                    maxes_s[orth_dir] += ANKLE_TOL
+                    mins_t[orth_dir] -= cfg.autoproc.ankle_sideways_tol
+                    maxes_t[orth_dir] += cfg.autoproc.ankle_sideways_tol
+                    mins_s[orth_dir] -= cfg.autoproc.ankle_sideways_tol
+                    maxes_s[orth_dir] += cfg.autoproc.ankle_sideways_tol
                 # extra tolerance for all markers in gait direction @ toeoff
-                maxes_t[fwd_dir] += TOEOFF_TOL
-                mins_t[fwd_dir] -= TOEOFF_TOL
+                maxes_t[fwd_dir] += cfg.autoproc.toeoff_marker_tol
+                mins_t[fwd_dir] -= cfg.autoproc.toeoff_marker_tol
                 marker = marker_ + '_P'
                 ok &= mins_s[0] < mrkdata[marker][strike_fr, 0] < maxes_s[0]
                 ok &= mins_s[1] < mrkdata[marker][strike_fr, 1] < maxes_s[1]
@@ -206,7 +207,8 @@ def detect_forceplate_events(source, check_weight=True, check_cop=True):
             if ok:
                 if this_valid:
                     raise Exception('both feet on plate, how come?')
-                this_valid = 'R' if markers == cfg.autoproc.right_foot_markers else 'L'
+                this_valid = ('R' if markers == cfg.autoproc.right_foot_markers
+                              else 'L')
                 logger.debug('on-plate check ok for side %s' % this_valid)
 
         if not this_valid:

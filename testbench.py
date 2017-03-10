@@ -37,6 +37,7 @@ logger.addHandler(handler)
 
 vicon = nexus.viconnexus()
 
+
 fpe = utils.detect_forceplate_events(vicon)
 
 vs = utils.get_foot_velocity(vicon, fpe)
@@ -44,7 +45,6 @@ vs = utils.get_foot_velocity(vicon, fpe)
 nexus.automark_events(vicon, fp_events=fpe, fp_strike_first=True,
                       vel_thresholds=vs)
 
-sys.exit()
 
 
 c3dfile = "C:/Users/hus20664877/Desktop/trondheim_gait_data/astrid_080515_02.c3d"

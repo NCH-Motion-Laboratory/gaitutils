@@ -379,7 +379,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     if not frate:
         raise ValueError('Cannot get framerate from Nexus')
 
-    # TODO: into config?
+    # TODO: move into config
     # relative thresholds (of maximum velocity)
     REL_THRESHOLD_FALL = .2
     REL_THRESHOLD_RISE = .5

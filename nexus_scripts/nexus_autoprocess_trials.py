@@ -86,14 +86,13 @@ def _do_autoproc(enffiles):
         raise Exception('Vicon Nexus not running')
     vicon = nexus.viconnexus()
 
+    subjectname = nexus.get_metadata(vicon)['name']
     nexus_ver = nexus.true_ver()
 
     # used to store stats about foot velocity
     foot_vel = {'L_strike': np.array([]), 'R_strike': np.array([]),
                 'L_toeoff': np.array([]), 'R_toeoff': np.array([])}
     trials = {}
-
-    subjectname = nexus.get_metadata(vicon)['name']
 
     """ 1st pass - reconstruct, label, sanity check, check forceplate and gait
     direction """
@@ -135,15 +134,20 @@ def _do_autoproc(enffiles):
             # try to figure out trial center frame
             for marker in cfg.autoproc.track_markers:
                 try:
-                    # TODO: x vs y dim
-                    ctr = utils.get_crossing_frame(vicon, marker=marker, dim=1,
-                                                   p0=cfg.autoproc.y_midpoint)
+                    dim = utils.principal_movement_direction(vicon, cfg.
+                                                             autoproc.
+                                                             track_markers)
+                    ctr = utils.get_crossing_frame(vicon, marker=marker,
+                                                   dim=dim,
+                                                   p0=cfg.autoproc.
+                                                   walkway_ctr[dim])
                 except ValueError:
                     ctr = None
                 ctr = ctr[0] if ctr else None
                 if ctr:  # ok and no gaps
                     trials[filepath].ctr_frame = ctr
                     break
+            logger.debug('walkway center frame: %d' % ctr)
             # cannot find center frame - possible rasi or lasi gaps
             if not ctr:
                 fail = 'gaps_or_short'
@@ -210,9 +214,6 @@ def _do_autoproc(enffiles):
     vel_th = {key: (np.median(x) if x.size > 0 else None) for key, x in
               foot_vel.items()}
 
-    logger.debug('global velocity thresholds:')
-    logger.debug(vel_th)
-
     """ 2nd pass - detect gait events, run models, crop """
     sel_trials = {k: v for k, v in trials.items() if v.recon_ok}
     logger.debug('\n2nd pass - processing %d trials\n' % len(sel_trials))
@@ -228,7 +229,7 @@ def _do_autoproc(enffiles):
             nexus.automark_events(vicon, vel_thresholds=vel_th,
                                   max_dist=cfg.autoproc.automark_max_dist,
                                   fp_events=trial.fpev, plot=False,
-                                  ctr_pos=cfg.autoproc.walkway_mid)
+                                  ctr_pos=cfg.autoproc.walkway_ctr)
             trial.events = True
         except GaitDataError:  # cannot automark
             eclipse_str = '%s,%s' % (trials[filepath].description,
@@ -239,6 +240,7 @@ def _do_autoproc(enffiles):
         # events ok
         # crop trial
         if nexus_ver >= 2.5:
+
             evs = vicon.GetEvents(subjectname, "Left", "Foot Strike")[0]
             evs += vicon.GetEvents(subjectname, "Right", "Foot Strike")[0]
             evs += vicon.GetEvents(subjectname, "Left", "Foot Off")[0]
@@ -274,7 +276,6 @@ def _do_autoproc(enffiles):
 def autoproc_session():
     enffiles = nexus.get_trial_enfs()
     _do_autoproc(enffiles)
-
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

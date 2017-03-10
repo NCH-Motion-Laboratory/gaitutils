@@ -7,10 +7,10 @@ gaitutils TODO
 
 
 
-               
-fix automark:
-    -mark fp strikes directly (if available)
-    -adapt code to use strike_toeoff_velocity()
+test:
+    automark
+    all plots
+              
 
 -(consistency) plot ylimits needs fixing
 

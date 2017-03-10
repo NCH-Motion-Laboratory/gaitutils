@@ -119,7 +119,9 @@ class Trial(object):
             self.fp_events = utils.detect_forceplate_events(source)
             self.fp_valid = self.fp_events['valid']
         except ValueError:
-            self.fpinfo = None
+            # TODO
+            self.fp_events = None
+            self.fp_valid = None
         # analog and model data are lazily read
         self.emg = EMG(self.source)
         self._forceplate_data = None

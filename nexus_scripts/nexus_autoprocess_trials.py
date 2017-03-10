@@ -141,13 +141,14 @@ def _do_autoproc(enffiles):
                                                    dim=dim,
                                                    p0=cfg.autoproc.
                                                    walkway_ctr[dim])
-                except ValueError:
+                except (GaitDataError, ValueError):
                     ctr = None
                 ctr = ctr[0] if ctr else None
                 if ctr:  # ok and no gaps
                     trials[filepath].ctr_frame = ctr
                     break
-            logger.debug('walkway center frame: %d' % ctr)
+            if ctr is not None:
+                logger.debug('walkway center frame: %d' % ctr)
             # cannot find center frame - possible rasi or lasi gaps
             if not ctr:
                 fail = 'gaps_or_short'

@@ -18,7 +18,7 @@ def do_plot():
     pl.open_nexus_trial()
     sides = pl.trial.fp_valid
     if not sides:
-        raise Exception('No kinetics')
+        raise Exception('No kinetics available')
     elif sides == 'LR':
         sides = ['L', 'R']
     else:

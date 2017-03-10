@@ -37,8 +37,7 @@ def do_plot():
 
     pl = Plotter()
     pl.open_trial(enf2c3d(marked_trials[0]))
-    pl.layout = (layouts.overlay_kinall if pl.trial.kinetics else
-                 layouts.overlay_kinematics)
+    pl.layout = layouts.overlay_kinall
 
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
 

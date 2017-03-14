@@ -18,7 +18,7 @@ def do_plot():
     pl = Plotter()
     pl.open_nexus_trial()
 
-    if pl.trial.kinetics:
+    if pl.trial.fp_valid:
         nexus_kinetics_emgplot.do_plot()
     else:
         nexus_kinematics_emgplot.do_plot()

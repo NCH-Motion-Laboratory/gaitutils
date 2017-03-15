@@ -128,6 +128,7 @@ def _do_autoproc(enffiles):
         _run_pipelines(cfg.autoproc.pre_pipelines)
         # trial sanity checks
         trange = vicon.GetTrialRange()
+        gaps_found = False
         if (trange[1] - trange[0]) < cfg.autoproc.min_trial_duration:
             fail = 'short'
         else:  # duration ok
@@ -154,7 +155,6 @@ def _do_autoproc(enffiles):
                 fail = 'gaps_or_short'
                 gaps_found = True
             else:
-                gaps_found = False
                 for marker in allmarkers:  # check for gaps / lbl failures
                     try:
                         gaps = (nexus.get_marker_data(vicon, marker)

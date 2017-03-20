@@ -164,9 +164,9 @@ def detect_forceplate_events(source, check_weight=True, check_cop=True):
         else:
             logger.debug('ignoring center of pressure')
 
-        # frame indices are 1-based so need to add 1 (what about c3d?)
-        strike_fr = int(np.round(friseind / info['samplesperframe'])) + 1
-        toeoff_fr = int(np.round(ffallind / info['samplesperframe'])) + 1
+        # we work with 0-based frame indices (=1 less than Nexus frame index)
+        strike_fr = int(np.round(friseind / info['samplesperframe']))
+        toeoff_fr = int(np.round(ffallind / info['samplesperframe']))
         logger.debug('strike @ frame %d, toeoff @ %d' % (strike_fr, toeoff_fr))
 
         # if we got here, force data looked ok; next, check marker data

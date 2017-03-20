@@ -530,15 +530,16 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         logger.debug('final strike events: %s' % _list_to_str(strikes))
         logger.debug('final toeoff events: %s' % _list_to_str(toeoffs))
 
-        # create the events in Nexus
+        # create the events in Vicon Nexus
+        # Nexus frame numbers are 1-based so add 1
         side_str = 'Right' if this_side == 'R' else 'Left'
         if mark:
             for fr in strikes:
                     vicon.CreateAnEvent(subjectname, side_str,
-                                        'Foot Strike', fr, 0.0)
+                                        'Foot Strike', fr+1, 0.0)
             for fr in toeoffs:
                     vicon.CreateAnEvent(subjectname, side_str,
-                                        'Foot Off', fr, 0.0)
+                                        'Foot Off', fr+1, 0.0)
         strikes_all[this_side] = strikes
         toeoffs_all[this_side] = toeoffs
 

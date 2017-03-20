@@ -46,6 +46,9 @@ nexus.automark_events(vicon, fp_events=fpe, fp_strike_first=True,
                       vel_thresholds=vs)
 
 
+sys.exit()
+
+
 
 c3dfile = "C:/Users/hus20664877/Desktop/trondheim_gait_data/astrid_080515_02.c3d"
 

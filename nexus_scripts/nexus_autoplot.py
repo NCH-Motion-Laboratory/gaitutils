@@ -7,7 +7,7 @@ Use kinetics layout if kinetics available, else kinematics only.
 """
 
 
-from gaitutils import Plotter, register_gui_exception_handler
+from gaitutils import Plotter, register_gui_exception_handler, messagebox
 import nexus_kinematics_emgplot
 import nexus_kinetics_emgplot
 import nexus_emgplot
@@ -21,6 +21,8 @@ def do_plot():
     if pl.trial.fp_valid:
         nexus_kinetics_emgplot.do_plot()
     else:
+        messagebox('No valid foot strike detected. Plotting '
+                   'kinematics and EMG.')
         nexus_kinematics_emgplot.do_plot()
 
     nexus_emgplot.do_plot()

@@ -379,25 +379,13 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     if not frate:
         raise ValueError('Cannot get framerate from Nexus')
 
-    # TODO: move into config
-    # relative thresholds (of maximum velocity)
-    REL_THRESHOLD_FALL = .2
-    REL_THRESHOLD_RISE = .5
-    # marker data is assumed to be in mm
-    # mm/frame = 1000 m/frame = 1000/frate m/s
+    # convert values from m/s to mm/frame
     VEL_CONV = 1000/frate
-    # reasonable limits for peak velocity (m/s before multiplier)
-    MAX_PEAK_VELOCITY = 12 * VEL_CONV
-    MIN_PEAK_VELOCITY = .5 * VEL_CONV
+    MAX_PEAK_V = cfg.automark.max_peak_v * VEL_CONV
+    MIN_PEAK_V = cfg.automark.min_peak_v * VEL_CONV
     # reasonable limits for velocity on slope (increasing/decreasing)
-    MAX_SLOPE_VELOCITY = 6 * VEL_CONV
-    MIN_SLOPE_VELOCITY = 0  # not currently in use
-    # median prefilter width
-    MEDIAN_WIDTH = 3
-    # minimum distance between subsequent events (of same kind)
-    MIN_EVENT_DISTANCE = 50
-    # tolerance between specified and actual first strike
-    STRIKE_TOL = 5
+    MAX_SLOPE_V = cfg.automark.max_slope_v * VEL_CONV
+    MIN_SLOPE_V = cfg.automark.min_slope_v * VEL_CONV
 
     # get subject info
     subjectnames = vicon.GetSubjectNames()
@@ -431,8 +419,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         this_side = 'R' if ind == 0 else 'L'
         # foot center position
         footctrP = rfootctrP if ind == 0 else lfootctrP
-        # filter to scalar velocity data to suppress noise and spikes
-        footctrv = signal.medfilt(footctrv, MEDIAN_WIDTH)
+        # filter the scalar velocity data to suppress noise and spikes
+        footctrv = signal.medfilt(footctrv, cfg.automark.medfilt_width)
 
         # compute local maxima of velocity: derivative crosses zero, values ok
         vd = np.gradient(footctrv)
@@ -447,13 +435,10 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
 
         # compute thresholds
         threshold_fall_ = (vel_thresholds[this_side+'_strike'] or
-                           maxv * REL_THRESHOLD_FALL)
+                           maxv * cfg.automark.rel_threshold_fall)
         threshold_rise_ = (vel_thresholds[this_side+'_toeoff'] or
-                           maxv * REL_THRESHOLD_RISE)
+                           maxv * cfg.automark.rel_threshold_rise)
 
-        logger.debug('side: %s, default thresholds fall/rise: %.2f/%.2f'
-                     % (this_side, maxv * REL_THRESHOLD_FALL,
-                        maxv * REL_THRESHOLD_RISE))
         logger.debug('using thresholds: %.2f/%.2f' % (threshold_fall_,
                                                       threshold_rise_))
         # find point where velocity crosses threshold
@@ -467,7 +452,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         cind_max = np.logical_and(footctrv[cross+1] < MAX_SLOPE_VELOCITY,
                                   footctrv[cross+1] > MIN_SLOPE_VELOCITY)
         strikes = cross[np.logical_and(cind_min, cind_max)]
-        too_near = np.where(np.diff(strikes) < MIN_EVENT_DISTANCE)[0] + 1
+        too_near = np.where(np.diff(strikes) < cfg.automark.min_event_dist)[0] + 1
         strikes = np.delete(strikes, too_near)
 
         if len(strikes) == 0:
@@ -483,7 +468,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                                   footctrv[cross+1] > MIN_SLOPE_VELOCITY)
         toeoffs = cross[np.logical_and(cind_min, cind_max)]
 
-        too_near = np.where(np.diff(toeoffs) < MIN_EVENT_DISTANCE)[0] + 1
+        too_near = np.where(np.diff(toeoffs) < cfg.automark.min_event_dist)[0] + 1
         toeoffs = np.delete(toeoffs, too_near)
 
         if len(toeoffs) == 0:
@@ -510,12 +495,12 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
             # strikes
             fp_strikes = fp_events[this_side+'_strikes']
             fpc = best_match(strikes, fp_strikes)
-            ok_ind = np.where(np.abs(fpc - strikes) < STRIKE_TOL)
+            ok_ind = np.where(np.abs(fpc - strikes) < cfg.automark.strike_tol)
             strikes[ok_ind] = fpc[ok_ind]
             # toeoffs
             fp_toeoffs = fp_events[this_side+'_toeoffs']
             fpc = best_match(toeoffs, fp_toeoffs)
-            ok_ind = np.where(np.abs(fpc - toeoffs) < STRIKE_TOL)
+            ok_ind = np.where(np.abs(fpc - toeoffs) < cfg.automark.strike_tol)
             toeoffs[ok_ind] = fpc[ok_ind]
             # delete strikes before 1st forceplate contact
             if fp_strike_first and len(fp_strikes) > 0:

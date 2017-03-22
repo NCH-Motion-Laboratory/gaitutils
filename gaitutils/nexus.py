@@ -226,18 +226,17 @@ def _get_1_forceplate_data(vicon, devid):
     # read CoP, returned in forceplate local coords
     outputid = outputids[2]
     chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Cx')
-    copx, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
+    copx, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
     chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Cy')
-    copy, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
+    copy, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
     chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Cz')
-    copz, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
-    cop = np.array([copx, copy, copz]).transpose()
+    copz, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
+    cop_w = np.array([copx, copy, copz]).transpose()
     F = np.array([fx, fy, fz]).transpose()
     M = np.array([mx, my, mz]).transpose()
     Ftot = np.sqrt(np.sum(F**2, axis=1))
     # translation and rotation matrices -> world coords
     # suspect that Nexus wR is wrong (does not match displayed plate axes)?
-    # but CoP is transformed ok
     wR = np.array(nfp.WorldR).reshape(3, 3)
     wT = np.array(nfp.WorldT)
     # plate corners -> world coords
@@ -246,7 +245,6 @@ def _get_1_forceplate_data(vicon, devid):
     lb = np.min(cor_w, axis=0)
     ub = np.max(cor_w, axis=0)
     # check that CoP stays inside plate boundaries
-    cop_w = change_coords(cop, wR, wT)
     cop_ok = np.logical_and(cop_w[:, 0] >= lb[0], cop_w[:, 0] <= ub[0]).all()
     cop_ok &= np.logical_and(cop_w[:, 1] >= lb[1], cop_w[:, 1] <= ub[1]).all()
     if not cop_ok:

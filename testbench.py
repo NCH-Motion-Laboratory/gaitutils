@@ -26,7 +26,6 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
-# c3dfile = u'c:\\Users\\hus20664877\\Desktop\\Vicon\\vicon_data\\test\\H0036_EV\\2015_9_21_seur_EV\\2015_9_21_seur_EV19.c3d'
 
 #vicon = nexus.viconnexus()
 #fpdata = read_data.get_forceplate_data(vicon)
@@ -35,15 +34,22 @@ logger.addHandler(handler)
 #kin = utils.kinetics_available(vicon, check_cop=True)
 
 
+c3dfile = ('C:/Users/hus20664877/Desktop/Vicon/vicon_data/test/Verrokki6v_IN/'
+           '2015_10_22_girl6v_IN/2015_10_22_girl6v_IN57.c3d')
+
 vicon = nexus.viconnexus()
 
+fpn = read_data.get_forceplate_data(vicon)[0]
+plt.figure()
+plt.plot(fpn['F'])
+plt.legend(['x', 'y', 'z'])
+plt.title('Nexus')
 
-fpe = utils.detect_forceplate_events(vicon)
-
-vs = utils.get_foot_velocity(vicon, fpe)
-
-nexus.automark_events(vicon, fp_events=fpe, fp_strike_first=True,
-                      vel_thresholds=vs)
+fp3 = read_data.get_forceplate_data(c3dfile)[0]
+plt.figure()
+plt.plot(fp3['F'])
+plt.legend(['x', 'y', 'z'])
+plt.title('C3D')
 
 
 sys.exit()

@@ -203,27 +203,28 @@ def get_emg_data(vicon):
 
 
 def _get_1_forceplate_data(vicon, devid):
-    """ Read data of single forceplate from Nexus. """
+    """ Read data of single forceplate from Nexus.
+    Data is returned in global coordinate frame """
     # get forceplate ids
     logger.debug('reading forceplate data from devid %d' % devid)
     dname, dtype, drate, outputids, nfp, _ = vicon.GetDeviceDetails(devid)
     # outputs should be force, moment, cop. select force
     outputid = outputids[0]
     chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Fx')
-    fx, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
+    fx, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
     chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Fy')
-    fy, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
+    fy, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
     chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Fz')
-    fz, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
+    fz, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
     # moments
     outputid = outputids[1]
     chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Mx')
-    mx, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
+    mx, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
     chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'My')
-    my, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
+    my, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
     chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Mz')
-    mz, chready, chrate = vicon.GetDeviceChannel(devid, outputid, chid)
-    # read CoP, returned in forceplate local coords
+    mz, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
+    # center of pressure
     outputid = outputids[2]
     chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Cx')
     copx, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
@@ -252,7 +253,6 @@ def _get_1_forceplate_data(vicon, devid):
                        'clipping to plate')
         cop_w[:, 0] = np.clip(cop_w[:, 0], lb[0], ub[0])
         cop_w[:, 1] = np.clip(cop_w[:, 1], lb[1], ub[1])
-
     return {'F': F, 'M': M, 'Ftot': Ftot, 'CoP': cop_w,
             'wR': wR, 'wT': wT, 'lowerbounds': lb, 'upperbounds': ub}
 

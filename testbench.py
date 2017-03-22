@@ -36,18 +36,20 @@ logger.addHandler(handler)
 
 c3dfile = ('C:/Users/hus20664877/Desktop/Vicon/vicon_data/test/Verrokki6v_IN/'
            '2015_10_22_girl6v_IN/2015_10_22_girl6v_IN57.c3d')
+# c3dfile = 'Z:/siirto/coptest/session101.c3d'
+c3dfile = "C:/Users/hus20664877/Desktop/NVUG2017/Example Data Workshop/Carita/Level/Dynamic 03.c3d"
 
 vicon = nexus.viconnexus()
 
 fpn = read_data.get_forceplate_data(vicon)[0]
 plt.figure()
-plt.plot(fpn['F'])
+plt.plot(fpn['CoP'])
 plt.legend(['x', 'y', 'z'])
 plt.title('Nexus')
 
 fp3 = read_data.get_forceplate_data(c3dfile)[0]
 plt.figure()
-plt.plot(fp3['F'])
+plt.plot(fp3['CoP'])
 plt.legend(['x', 'y', 'z'])
 plt.title('C3D')
 

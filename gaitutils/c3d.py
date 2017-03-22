@@ -187,7 +187,7 @@ def get_forceplate_data(c3dfile):
         # plate unit vectors in world system
         px = cor[:, 0] - cor[:, 1]
         py = cor[:, 0] - cor[:, 3]
-        pz = np.array([0, 0, 1])
+        pz = np.array([0, 0, -1])
         P = np.stack([px, py, pz], axis=1)
         wR = P / np.linalg.norm(P, axis=0)  # rotation matrix, plate -> world
         # check whether cop stays inside forceplate area and clip if necessary
@@ -199,9 +199,10 @@ def get_forceplate_data(c3dfile):
                            'bounds, clipping to plate')
             cop[:, 0] = cop_wx
             cop[:, 1] = cop_wy
-        data['F'] = F
+        # XXX moment and force transformations may still be wrong
+        data['F'] = change_coords(-F, wR, 0)
         data['Ftot'] = Ftot
-        data['M'] = M
+        data['M'] = change_coords(-M, wR, 0)
         data['CoP'] = cop_w
         data['upperbounds'] = ub
         data['lowerbounds'] = lb

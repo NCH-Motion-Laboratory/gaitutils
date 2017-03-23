@@ -8,6 +8,7 @@ Misc numerical utils
 """
 
 import numpy as np
+from scipy.linalg import norm
 from scipy.signal import medfilt
 
 
@@ -71,3 +72,12 @@ def change_coords(pts, wR, wT):
     rotation matrix wR and translation vector wT """
     pts = np.array(pts)
     return np.dot(wR, pts.T).T + wT
+
+
+def segment_angles(P):
+    """ Compute angles between segments defined by ordered points in P
+    (Nx3 array). Returned in radians. """
+    Pd = np.diff(P, axis=0)
+    Pdn = Pd / norm(Pd, axis=1)[:, np.newaxis]
+    dots = np.sum(Pdn[0:-1, :] * Pdn[1:, :], axis=1)  # vectorwise dot products
+    return np.pi - np.arccos(dots)

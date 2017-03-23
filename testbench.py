@@ -11,9 +11,24 @@ from gaitutils import EMG, nexus, config, read_data, trial, eclipse, models, Plo
 import matplotlib.pyplot as plt
 import sys
 import logging
-
+import scipy.linalg
+import numpy as np
 import btk
 
+
+def segment_angles(P):
+    """ Compute angles between segments defined by ordered points in P
+    (Nx3 array). Returned in radians. """
+    Pd = np.diff(P, axis=0)
+    Pdn = Pd / scipy.linalg.norm(Pd, axis=1)[:, np.newaxis]
+    dots = np.sum(Pdn[0:-1, :] * Pdn[1:, :], axis=1)  # vectorwise dot products
+    return np.pi - np.arccos(dots)
+
+
+    
+    
+    
+    
 
 
 

@@ -76,8 +76,33 @@ def change_coords(pts, wR, wT):
 
 def segment_angles(P):
     """ Compute angles between segments defined by ordered points in P
-    (Nx3 array). Returned in radians. """
-    Pd = np.diff(P, axis=0)
-    Pdn = Pd / norm(Pd, axis=1)[:, np.newaxis]
-    dots = np.sum(Pdn[0:-1, :] * Pdn[1:, :], axis=1)  # vectorwise dot products
+    (N x 3 array). Can also be 3-d matrix of T x N x 3 to get time-dependent
+    data. Output will be (N-2) vector or T x (N-2) matrix of angles in radians.
+    If successive points are identical, nan:s will be output for the
+    corresponding angles.
+    """
+    if P.shape[-1] != 3 or len(P.shape) not in [2, 3]:
+        raise ValueError('Invalid shape of input matrix')
+    if len(P.shape) == 2:
+        P = P[np.newaxis, ...]  # insert singleton time axis
+    Pd = np.diff(P, axis=1)  # point-to-point vectors
+    # normalize avoiding div by zero (caused by identical successive pts)
+    vnorms = norm(Pd, axis=2)[..., np.newaxis]
+    nonzero = np.where(vnorms)[1]
+    Pdn = np.full(Pd.shape, np.nan)
+    Pdn[:, nonzero, :] = Pd[:, nonzero, :] / vnorms[:, nonzero, :]
+    # take dot products between successive vectors and angles by arccos
+    dots = np.sum(Pdn[:, 0:-1, :] * Pdn[:, 1:, :], axis=2)
+    dots = dots[0, :] if dots.shape[0] == 1 else dots  # rm singleton dim
     return np.pi - np.arccos(dots)
+
+
+
+
+
+
+
+
+
+
+

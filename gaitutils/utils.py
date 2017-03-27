@@ -80,7 +80,7 @@ def principal_movement_direction(source, markers):
     return fwd_dir
 
 
-def detect_forceplate_events(source, check_weight=True, check_cop=True):
+def detect_forceplate_events(source, check_weight=True):
     """ See whether the trial has valid forceplate contact.
     Uses forceplate data and marker positions.
 
@@ -150,17 +150,14 @@ def detect_forceplate_events(source, check_weight=True, check_cop=True):
             logger.debug('cannot detect force rise/fall')
             continue
         # check shift of center of pressure during roi in fwd dir
-        if check_cop:
-            cop_roi = fp['CoP'][friseind:ffallind, fwd_dir]
-            cop_shift = cop_roi.max() - cop_roi.min()
-            total_shift = np.sqrt(np.sum(cop_shift**2))
-            logger.debug('CoP total shift %.2f mm' % total_shift)
-            if total_shift > cfg.autoproc.cop_shift_max:
-                logger.debug('center of pressure shifts too much '
-                             '(double contact?)')
-                continue
-        else:
-            logger.debug('ignoring center of pressure')
+        cop_roi = fp['CoP'][friseind:ffallind, fwd_dir]
+        cop_shift = cop_roi.max() - cop_roi.min()
+        total_shift = np.sqrt(np.sum(cop_shift**2))
+        logger.debug('CoP total shift %.2f mm' % total_shift)
+        if total_shift > cfg.autoproc.cop_shift_max:
+            logger.debug('center of pressure shifts too much '
+                         '(double contact?)')
+            continue
 
         # we work with 0-based frame indices (=1 less than Nexus frame index)
         strike_fr = int(np.round(friseind / info['samplesperframe']))

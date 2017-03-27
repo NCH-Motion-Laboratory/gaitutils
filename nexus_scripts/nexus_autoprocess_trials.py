@@ -183,7 +183,7 @@ def _do_autoproc(enffiles):
             trials[filepath].recon_ok = True
 
         # preprocessing ok, check forceplate data
-        fpev = utils.detect_forceplate_events(vicon, cfg.autoproc.check_weight)
+        fpev = utils.detect_forceplate_events(vicon)
         # get foot velocity info for all events (do not reduce to median)
         vel = utils.get_foot_velocity(vicon, fpev, medians=False)
         valid = fpev['valid']

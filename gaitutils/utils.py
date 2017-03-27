@@ -80,15 +80,13 @@ def principal_movement_direction(source, markers):
     return fwd_dir
 
 
-def detect_forceplate_events(source, check_weight=True):
+def detect_forceplate_events(source):
     """ See whether the trial has valid forceplate contact.
     Uses forceplate data and marker positions.
 
     Conditions:
     -check max total force, must correspond to subject weight
-    (disable by check_weight=False)
     -center of pressure must not change too much during contact time
-    (disable by check_cop=False)
     -foot markers must be inside plate edges at strike time
 
     Returns dict with keys R_strikes, L_strikes, R_toeoffs, L_toeoffs:
@@ -134,12 +132,9 @@ def detect_forceplate_events(source, check_weight=True):
         else:
             logger.debug('body mass %.2f kg' % bodymass)
             f_threshold = cfg.autoproc.forceplate_contact_threshold * bodymass
-            if check_weight:
-                if fmax < cfg.autoproc.forceplate_min_weight * bodymass * 9.81:
-                    logger.debug('insufficient max. force on plate')
-                    continue
-            else:
-                logger.debug('ignoring subject weight')
+            if fmax < cfg.autoproc.forceplate_min_weight * bodymass * 9.81:
+                logger.debug('insufficient max. force on plate')
+                continue
         # find indices where force crosses threshold
         try:
             logger.debug('force threshold: %.2f N' % f_threshold)

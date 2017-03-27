@@ -149,12 +149,10 @@ def detect_forceplate_events(source, check_weight=True, check_cop=True):
         except IndexError:
             logger.debug('cannot detect force rise/fall')
             continue
-        # check shift of center of pressure during roi
-        # cop is here in plate coordinates, but it does not matter as we're
-        # only looking for the magnitude of the shift
+        # check shift of center of pressure during roi in fwd dir
         if check_cop:
-            cop_roi = fp['CoP'][friseind:ffallind, :]
-            cop_shift = cop_roi.max(axis=0) - cop_roi.min(axis=0)
+            cop_roi = fp['CoP'][friseind:ffallind, fwd_dir]
+            cop_shift = cop_roi.max() - cop_roi.min()
             total_shift = np.sqrt(np.sum(cop_shift**2))
             logger.debug('CoP total shift %.2f mm' % total_shift)
             if total_shift > cfg.autoproc.cop_shift_max:
@@ -206,7 +204,7 @@ def detect_forceplate_events(source, check_weight=True, check_cop=True):
                     break
             if ok:
                 if this_valid:
-                    raise Exception('both feet on plate, how come?')
+                    raise Exception('valid contact on both feet, how come?')
                 this_valid = ('R' if markers == cfg.autoproc.right_foot_markers
                               else 'L')
                 logger.debug('on-plate check ok for side %s' % this_valid)

@@ -158,7 +158,7 @@ def get_forceplate_data(c3dfile):
     fpdata = list()
     nplate = 1
     for plate in btk.Iterate(fpe.GetOutput()):
-        logger.debug('reading plate %d' % nplate)
+        logger.debug('reading from plate %d' % nplate)
         nplate += 1
         if plate.GetType() != 2:
             # Nexus should always write forceplates as type 2
@@ -200,9 +200,9 @@ def get_forceplate_data(c3dfile):
             cop[:, 0] = cop_wx
             cop[:, 1] = cop_wy
         # XXX moment and force transformations may still be wrong
-        data['F'] = change_coords(-F, wR, 0)
+        data['F'] = change_coords(-F, wR, 0)  # not sure why sign flip needed
         data['Ftot'] = Ftot
-        data['M'] = change_coords(-M, wR, 0)
+        data['M'] = change_coords(-M, wR, 0)  # not sure why sign flip needed
         data['CoP'] = cop_w
         data['upperbounds'] = ub
         data['lowerbounds'] = lb

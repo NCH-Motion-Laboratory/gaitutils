@@ -285,8 +285,7 @@ def get_marker_data(vicon, markers):
     for marker in markers:
         x, y, z, _ = vicon.GetTrajectory(subjectnames[0], marker)
         if len(x) == 0:
-            raise GaitDataError('Cannot get marker trajectory: %s'
-                                    % marker)
+            raise GaitDataError('Cannot get marker trajectory: %s' % marker)
         mP = np.array([x, y, z]).transpose()
         mdata[marker + '_P'] = mP
         mdata[marker + '_V'] = np.gradient(mP)[0]
@@ -410,7 +409,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
 
     rfootctrV = np.zeros(data_shape)
     for marker in cfg.autoproc.right_foot_markers:
-        rfootctrV += mrkdata[marker+'_V'] / len(cfg.autoproc.right_foot_markers)
+        rfootctrV += mrkdata[marker+'_V'] / len(cfg.autoproc.
+                                                right_foot_markers)
     rfootctrv = np.sqrt(np.sum(rfootctrV**2, 1))
 
     lfootctrV = np.zeros(data_shape)

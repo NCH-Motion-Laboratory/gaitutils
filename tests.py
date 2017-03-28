@@ -7,7 +7,7 @@ automatically run by 'nose2'
 @author: jussi (jnu@iki.fi)
 """
 
-from gaitutils.numutils import segment_angles
+from gaitutils.numutils import segment_angles, best_match
 import numpy as np
 from nose.tools import (assert_set_equal, assert_in, assert_equal,
                         assert_raises)
@@ -24,5 +24,14 @@ def test_segment_angles():
     P = np.array([0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 3, 0]).reshape(4, 3)
     ang = np.array([np.nan, 135.])
     assert_allclose(ang, segment_angles(P)/np.pi * 180)
+
+
+def test_best_match():
+    v = [1, 2, 3, 2]
+    b = [1, 2.1, 3.1]
+    r = [1, 2.1, 3.1, 2.1]
+    assert_allclose(best_match(v, b), r)
+    b = []
+    assert_allclose(best_match(v, b), v)
 
 

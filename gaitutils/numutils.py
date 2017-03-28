@@ -24,7 +24,7 @@ def falling_zerocross(x):
 
 
 def best_match(v, b):
-    """ Replace elements of v using closest matches in b """
+    """ Replace elements of v using their closest matches in b """
     v = np.array(v)
     b = np.array(b)
     if b.size == 0:
@@ -41,14 +41,17 @@ def isfloat(x):
         return False
 
 
-def _baseline(data):
-    """ Baseline data using histogram. Subtracts the most prominent
+def _baseline(v):
+    """ Baseline v using histogram. Subtracts the most prominent
     signal level """
-    data = np.array(data)
-    nbins = int(len(data) / 10)  # exact n of bins should not matter
-    ns, edges = np.histogram(data, bins=nbins)
+    v = v.squeeze()
+    if len(v.shape) != 1:
+        raise ValueError('Need 1-dim input')
+    v = np.array(v)
+    nbins = int(len(v) / 10)  # exact n of bins should not matter
+    ns, edges = np.histogram(v, bins=nbins)
     peak_ind = np.where(ns == np.max(ns))[0][0]
-    return data - np.mean(edges[peak_ind:peak_ind+2])
+    return v - np.mean(edges[peak_ind:peak_ind+2])
 
 
 def center_of_pressure(F, M, dz):

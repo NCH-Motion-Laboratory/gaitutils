@@ -24,34 +24,6 @@ def rm_dead_channels(source, layout):
         logger.warning('removed all - no EMG channels active')
     return layout_
 
-# online kinematics plot
-std_kinematics = [['PelvisAnglesX', 'PelvisAnglesY', 'PelvisAnglesZ'],
-                  ['HipAnglesX', 'HipAnglesY', 'HipAnglesZ'],
-                  ['KneeAnglesX', 'KneeAnglesY', 'KneeAnglesZ'],
-                  ['AnkleAnglesX', 'FootProgressAnglesZ', 'AnkleAnglesZ']]
-
-# online kinetics plot
-std_kinetics = [['HipMomentX', 'HipMomentY', 'HipMomentZ'],
-                ['HipPowerZ', 'KneeMomentX', 'KneeMomentY'],
-                ['KneeMomentZ', 'KneePowerZ', 'AnkleMomentX'],
-                [None, None, 'AnklePowerZ']]
-
-# muscle lengths
-std_musclelen = [['PsoaLength', 'GracLength', 'ReFeLength'],
-                 ['BiFLLength', 'SeTeLength', 'SeMeLength'],
-                 ['MeGaLength', 'LaGaLength', 'SoleLength']]
-
-# EMG only
-std_emg = [['LGlut', 'RGlut'],
-           ['LHam', 'RHam'],
-           ['LRec', 'RRec'],
-           ['LVas', 'RVas'],
-           ['LTibA', 'RTibA'],
-           ['LPer', 'RPer'],
-           ['LGas', 'RGas'],
-           ['LSol', 'RSol']]
-
-
 # kinetics + kinematics
 std_kinall = std_kinematics + std_kinetics
 

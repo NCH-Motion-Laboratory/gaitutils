@@ -9,6 +9,7 @@ Created on Thu Aug 27 14:16:50 2015
 
 from emg import EMG
 import logging
+from config import cfg
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ def rm_dead_channels(source, layout):
     return layout_
 
 # kinetics + kinematics
-std_kinall = std_kinematics + std_kinetics
+std_kinall = cfg.layouts.std_kinematics + cfg.layouts.std_kinetics
 
 # kin* overlays
 # add legend to bottom row
@@ -33,15 +34,15 @@ overlay_kinall = list(std_kinall)
 overlay_kinall.pop()
 overlay_kinall.append(['model_legend', None, 'AnklePowerZ'])
 
-overlay_kinematics = list(std_kinematics)
+overlay_kinematics = list(cfg.layouts.std_kinematics)
 overlay_kinematics.append(['model_legend', None, None])
 
 # EMG overlay - add legend
-overlay_emg = list(std_emg)
+overlay_emg = list(cfg.layouts.std_emg)
 overlay_emg.append(['emg_legend', None])
 
 # kinetics overlay - add legend
-overlay_kinetics = list(std_kinetics)
+overlay_kinetics = list(cfg.layouts.std_kinetics)
 overlay_kinetics.append(['model_legend', None, None])
 
 

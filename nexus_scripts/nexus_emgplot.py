@@ -9,6 +9,7 @@ EMG plot from Nexus.
 
 
 from gaitutils import Plotter, layouts, nexus, register_gui_exception_handler
+from gaitutils.config import cfg
 
 import logging
 
@@ -20,7 +21,7 @@ def do_plot():
     maintitle = pl.title_with_eclipse_info('EMG plot for')
 
     vicon = nexus.viconnexus()
-    layout = layouts.std_emg
+    layout = cfg.layouts.std_emg
     pl.layout = layouts.rm_dead_channels(vicon, layout)
     pl.plot_trial(maintitle=maintitle)
 

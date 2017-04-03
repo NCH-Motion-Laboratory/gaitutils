@@ -96,7 +96,7 @@ class Plotter(object):
             return 'model'
         # check whether it's a configured EMG channel OR a physical one
         elif (self.trial.emg.is_channel(var) or
-              var in self.cfg.emg.channel_names):
+              var in self.cfg.emg.channel_labels):
             return 'emg'
         elif var in ('model_legend', 'emg_legend'):
             return var
@@ -339,12 +339,6 @@ class Plotter(object):
                             ax.set_ylim(ylim[0]-10, ylim[1]+10)
 
             elif var_type == 'emg':
-                subplot_title = var
-                prev_title = ax.get_title()
-                if prev_title and prev_title != subplot_title:
-                    subplot_title = prev_title + ' / ' + subplot_title
-                ax.set_title(subplot_title)
-                ax.title.set_fontsize(self.cfg.plot.title_fontsize)
                 for cycle in emg_cycles:
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
@@ -371,6 +365,13 @@ class Plotter(object):
                         ax.set(ylabel=self.cfg.plot.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.
                                                     plot.label_fontsize)
+
+                        subplot_title = self.cfg.emg.channel_labels[var]
+                        prev_title = ax.get_title()
+                        if prev_title and prev_title != subplot_title:
+                            subplot_title = prev_title + ' / ' + subplot_title
+                        ax.set_title(subplot_title)
+                        ax.title.set_fontsize(self.cfg.plot.title_fontsize)
                         ax.locator_params(axis='y', nbins=4)
                         # tick font size
                         ax.tick_params(axis='both', which='major',

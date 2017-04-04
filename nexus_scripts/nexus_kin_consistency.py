@@ -2,13 +2,13 @@
 """
 Created on Thu Sep 03 14:54:34 2015
 
-EMG consistency plot from Nexus. Automatically picks trials based on Eclipse
+Kin* consistency plot from Nexus. Automatically picks trials based on Eclipse
 description and defined search strings.
 
 @author: Jussi
 """
 
-from gaitutils import Plotter, layouts, register_gui_exception_handler
+from gaitutils import Plotter, cfg, register_gui_exception_handler
 from gaitutils.nexus import enf2c3d, find_trials
 
 import logging
@@ -37,7 +37,7 @@ def do_plot():
 
     pl = Plotter()
     pl.open_trial(enf2c3d(marked_trials[0]))
-    pl.layout = layouts.overlay_kinall
+    pl.layout = cfg.layouts.overlay_lb_kin
 
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
 

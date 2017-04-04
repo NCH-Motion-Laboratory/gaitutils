@@ -7,7 +7,7 @@ Plot Plug-in Gait outputs (online) from Nexus.
 @author: Jussi
 """
 
-from gaitutils import Plotter, layouts, register_gui_exception_handler
+from gaitutils import Plotter, cfg, register_gui_exception_handler
 import logging
 
 
@@ -15,7 +15,7 @@ def do_plot():
 
     pl = Plotter()
     pl.open_nexus_trial()
-    pl.layout = layouts.std_kinall
+    pl.layout = cfg.layouts.lb_kin
     maintitleprefix = 'Kinetics/kinematics plot for '
 
     for vidfile in pl.trial.video_files:

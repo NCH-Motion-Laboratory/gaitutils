@@ -18,4 +18,4 @@ from .envutils import register_gui_exception_handler
 from .numutils import rising_zerocross, falling_zerocross
 from .guiutils import messagebox
 from .plot import Plotter
-from .nexus import GaitDataError
+

@@ -6,6 +6,7 @@ Utility functions for processing gait data.
 @author: Jussi (jnu@iki.fi)
 """
 
+from exceptions import GaitDataError
 from read_data import get_marker_data, get_forceplate_data, get_metadata
 from numutils import rising_zerocross, falling_zerocross, _baseline
 from scipy import signal
@@ -17,6 +18,8 @@ import matplotlib.pyplot as plt
 from config import cfg
 
 logger = logging.getLogger(__name__)
+
+
 
 
 def get_crossing_frame(source, marker, dim=1, p0=0):
@@ -61,7 +64,7 @@ def butter_filt(data, passband, sfreq, bord=5):
     if passband is None:
         return data
     elif len(passband) != 2:
-        raise Exception('Passband must be a vector of length 2')
+        raise ValueError('Passband must be a vector of length 2')
     passbandn = 2 * np.array(passband) / sfreq
     if passbandn[0] == 0:  # lowpass
         b, a = signal.butter(bord, passbandn[1], btype='lowpass')
@@ -196,7 +199,7 @@ def detect_forceplate_events(source):
                     break
             if ok:
                 if this_valid:
-                    raise Exception('valid contact on both feet, how come?')
+                    raise GaitDataError('valid contact on both feet (??)')
                 this_valid = ('R' if markers == cfg.autoproc.right_foot_markers
                               else 'L')
                 logger.debug('on-plate check ok for side %s' % this_valid)

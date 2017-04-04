@@ -13,6 +13,7 @@ import os.path as op
 import numpy as np
 from numutils import isfloat
 from config import cfg
+from exceptions import GaitDataError
 
 models_all = []
 
@@ -32,7 +33,7 @@ def var_with_side(var):
             return True
         if var in model.varnames_noside:
             return False
-    raise ValueError('Model variable not found')
+    raise GaitDataError('Model variable not found')
 
 
 # convenience methods for model creation

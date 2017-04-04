@@ -7,13 +7,29 @@ Test new gaitutils code
 @author: HUS20664877
 """
 
-from gaitutils import EMG, nexus, config, read_data, trial, eclipse, models, Plotter, layouts, utils
+from gaitutils import (EMG, nexus, config, read_data, trial, eclipse, models,
+                       Plotter, layouts, utils)
 import matplotlib.pyplot as plt
 import sys
 import logging
 import scipy.linalg
 import numpy as np
 import btk
+
+
+
+pl = Plotter()
+pl.open_nexus_trial()
+
+pl.layout = layouts.std_kinetics
+
+pl.plot_trial()
+
+pl.create_pdf('/Temp/roska.pdf')
+
+sys.exit()
+
+
 
 
 def segment_angles(P):

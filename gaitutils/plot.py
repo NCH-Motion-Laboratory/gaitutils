@@ -55,12 +55,12 @@ class Plotter(object):
     def layout(self, layout):
         if (not isinstance(layout, list) or not
            all([isinstance(item, list) for item in layout])):
-            raise Exception('Layout must be a list of lists')
+            raise ValueError('Layout must be a list of lists')
         self._layout = layout
         self.allvars = [item for row in layout for item in row]
         self.nrows = len(layout)
         if self.nrows == 0:
-            raise Exception('No data to plot')
+            raise ValueError('No data to plot')
         self.ncols = len(layout[0])
 
     def open_nexus_trial(self):
@@ -74,7 +74,8 @@ class Plotter(object):
         """ Launch video player (defined in config) to play vidfile. """
         PLAYER_CMD = self.cfg.general.videoplayer_path
         if not (op.isfile(PLAYER_CMD) and os.access(PLAYER_CMD, os.X_OK)):
-            raise Exception('Invalid video player executable: %s' % PLAYER_CMD)
+            raise ValueError('Invalid video player executable: %s'
+                             % PLAYER_CMD)
         PLAYER_OPTS = self.cfg.general.videoplayer_opts
         # command needs to be constructed in a very particular way
         # see subprocess.list2cmdline
@@ -96,7 +97,7 @@ class Plotter(object):
             return 'model'
         # check whether it's a configured EMG channel OR a physical one
         elif (self.trial.emg.is_channel(var) or
-              var in self.cfg.emg.channel_names):
+              var in self.cfg.emg.channel_labels):
             return 'emg'
         elif var in ('model_legend', 'emg_legend'):
             return var
@@ -339,12 +340,6 @@ class Plotter(object):
                             ax.set_ylim(ylim[0]-10, ylim[1]+10)
 
             elif var_type == 'emg':
-                subplot_title = var
-                prev_title = ax.get_title()
-                if prev_title and prev_title != subplot_title:
-                    subplot_title = prev_title + ' / ' + subplot_title
-                ax.set_title(subplot_title)
-                ax.title.set_fontsize(self.cfg.plot.title_fontsize)
                 for cycle in emg_cycles:
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
@@ -371,6 +366,13 @@ class Plotter(object):
                         ax.set(ylabel=self.cfg.plot.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.
                                                     plot.label_fontsize)
+
+                        subplot_title = self.cfg.emg.channel_labels[var]
+                        prev_title = ax.get_title()
+                        if prev_title and prev_title != subplot_title:
+                            subplot_title = prev_title + ' / ' + subplot_title
+                        ax.set_title(subplot_title)
+                        ax.title.set_fontsize(self.cfg.plot.title_fontsize)
                         ax.locator_params(axis='y', nbins=4)
                         # tick font size
                         ax.tick_params(axis='both', which='major',
@@ -451,7 +453,7 @@ class Plotter(object):
         If pdf_name is not specified, automatically name according to current
         trial. """
         if not self.fig:
-            raise Exception('No figure to save!')
+            raise ValueError('No figure to save!')
         # resize to A4
         # self.fig.set_size_inches([8.27,11.69])
         if pdf_name:
@@ -468,5 +470,5 @@ class Plotter(object):
             with PdfPages(pdf_name) as pdf:
                 pdf.savefig(self.fig)
         except IOError:
-            raise Exception('Error writing PDF file, '
-                            'check that file is not already open.')
+            raise IOError('Error writing PDF file, '
+                          'check that file is not already open.')

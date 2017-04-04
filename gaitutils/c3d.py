@@ -12,6 +12,7 @@ import logging
 import numpy as np
 import os
 from numutils import center_of_pressure, change_coords
+from exceptions import GaitDataError
 logger = logging.getLogger(__name__)
 try:
     import btk
@@ -45,7 +46,7 @@ def get_emg_data(c3dfile):
         return {'t': np.arange(len(data[elname])) / acq.GetAnalogFrequency(),
                 'data': data}
     else:
-        raise Exception('No EMG channels found in data')
+        raise GaitDataError('No EMG channels found in data')
 
 
 def get_marker_data(c3dfile, markers):
@@ -60,7 +61,8 @@ def get_marker_data(c3dfile, markers):
         try:
             mP = np.squeeze(acq.GetPoint(marker).GetValues())
         except RuntimeError:
-            raise Exception('Cannot read variable %s from c3d file' % marker)
+            raise GaitDataError('Cannot read variable %s from c3d file'
+                                % marker)
         mdata[marker + '_P'] = mP
         mdata[marker + '_V'] = np.gradient(mP)[0]
         mdata[marker + '_A'] = np.gradient(mdata[marker+'_V'])[0]
@@ -100,14 +102,14 @@ def get_metadata(c3dfile):
             elif i.GetContext() == "Left":
                 lstrikes.append(i.GetFrame())
             else:
-                raise ValueError("Unknown context on foot strike event")
+                raise GaitDataError("Unknown context on foot strike event")
         elif i.GetLabel() == "Foot Off":
             if i.GetContext() == "Right":
                 rtoeoffs.append(i.GetFrame())
             elif i.GetContext() == "Left":
                 ltoeoffs.append(i.GetFrame())
             else:
-                raise ValueError("Unknown context on foot strike event")
+                raise GaitDataError("Unknown context on foot strike event")
     # get subject info
     metadata = acq.GetMetaData()
     # don't ask
@@ -137,7 +139,7 @@ def get_model_data(c3dfile, model):
             vals = acq.GetPoint(var).GetValues()
             modeldata[var] = np.transpose(np.squeeze(vals))
         except RuntimeError:
-            raise ValueError('Cannot find model variable %s in c3d file' %
+            raise GaitDataError('Cannot find model variable %s in c3d file' %
                              var)
         # c3d stores scalars as last dim of 3-d array
         if model.read_strategy == 'last':
@@ -162,14 +164,15 @@ def get_forceplate_data(c3dfile):
         nplate += 1
         if plate.GetType() != 2:
             # Nexus should always write forceplates as type 2
-            raise Exception('Only type 2 forceplates are supported for now')
+            raise GaitDataError('Only type 2 forceplates are '
+                                'supported for now')
         rawdata = dict()
         data = dict()
         for ch in btk.Iterate(plate.GetChannels()):
             label = ch.GetLabel()[-3:-1]  # strip descriptor and plate number
             rawdata[label] = np.squeeze(ch.GetData().GetValues())
         if not all([ch in rawdata for ch in read_chs]):
-            raise Exception('could not read force/moment data')
+            raise GaitDataError('could not read force/moment data')
         F = np.stack([rawdata['Fx'], rawdata['Fy'], rawdata['Fz']], axis=1)
         M = np.stack([rawdata['Mx'], rawdata['My'], rawdata['Mz']], axis=1)
         # this should be the plate thickness (from moment origin to physical

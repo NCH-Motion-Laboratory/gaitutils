@@ -21,7 +21,7 @@ def _reader_module(source):
     elif c3d.is_c3dfile(source):
         return c3d
     else:
-        raise Exception('Error reading from source: %s' % source)
+        raise ValueError('Error reading from source: %s' % source)
 
 
 def get_metadata(source):

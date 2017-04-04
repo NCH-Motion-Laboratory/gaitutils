@@ -17,6 +17,7 @@ import psutil
 import glob
 from numutils import (rising_zerocross, best_match, falling_zerocross,
                       change_coords)
+from exceptions import GaitDataError
 from eclipse import get_eclipse_keys
 import matplotlib.pyplot as plt
 from config import cfg
@@ -25,10 +26,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
-class GaitDataError(Exception):
-    """ Exception specific to erroneous or unexpected gait data """
-    pass
 
 # try to import Nexus Python SDK
 if cfg.general.nexus_path:
@@ -121,9 +118,9 @@ def get_metadata(vicon):
     """ Read trial and subject metadata """
     subjectnames = vicon.GetSubjectNames()
     if len(subjectnames) > 1:
-        raise ValueError('Nexus returns multiple subjects')
+        raise GaitDataError('Nexus returns multiple subjects')
     if not subjectnames:
-        raise ValueError('No subject defined in Nexus')
+        raise GaitDataError('No subject defined in Nexus')
     name = subjectnames[0]
     Bodymass = vicon.GetSubjectParam(name, 'Bodymass')
     # for unknown reasons, above method may return tuple or float
@@ -139,7 +136,7 @@ def get_metadata(vicon):
     sessionpath = trialname_[0]
     trialname = trialname_[1]
     if not trialname:
-        raise ValueError('No trial loaded')
+        raise GaitDataError('No trial loaded')
     # Get events - GetEvents() indices seem to often be 1 frame less than on
     # Nexus display - only happens with ROI?
     lstrikes = vicon.GetEvents(name, "Left", "Foot Strike")[0]
@@ -157,7 +154,7 @@ def get_metadata(vicon):
 
     devids = vicon.GetDeviceIDs()
     if not devids:
-        raise ValueError('Cannot determine analog rate')
+        raise GaitDataError('Cannot determine analog rate')
     else:
         devid = devids[0]
         _, _, analograte, _, _, _ = vicon.GetDeviceDetails(devid)
@@ -183,14 +180,14 @@ def get_emg_data(vicon):
     ids = [id for id in vicon.GetDeviceIDs() if
            vicon.GetDeviceDetails(id)[0].lower() == cfg.emg.devname.lower()]
     if len(ids) > 1:
-        raise ValueError('Multiple matching EMG devices')
+        raise GaitDataError('Multiple matching EMG devices')
     elif len(ids) == 0:
-        raise ValueError('No matching EMG devices')
+        raise GaitDataError('No matching EMG devices')
     emg_id = ids[0]
     dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(emg_id)
     # Myon should only have 1 output; if zero, EMG was not found (?)
     if len(outputids) != 1:
-        raise ValueError('Expected single EMG output')
+        raise GaitDataError('Expected single EMG output')
     outputid = outputids[0]
     # get list of channel names and IDs
     _, _, _, _, elnames, chids = vicon.GetDeviceOutputDetails(emg_id, outputid)
@@ -280,7 +277,7 @@ def get_marker_data(vicon, markers):
         markers = [markers]
     subjectnames = vicon.GetSubjectNames()
     if not subjectnames:
-        raise ValueError('No subject defined in Nexus')
+        raise GaitDataError('No subject defined in Nexus')
     mdata = dict()
     for marker in markers:
         x, y, z, _ = vicon.GetTrajectory(subjectnames[0], marker)
@@ -326,8 +323,9 @@ def get_model_data(vicon, model):
     for var in model.read_vars:
         nums, bools = vicon.GetModelOutput(subjectname, var)
         if not nums:
-            raise Exception('Cannot read model variable %s. Make sure that '
-                            'the appropriate model has been run.' % var)
+            raise GaitDataError('Cannot read model variable %s. Make sure '
+                                'that the appropriate model has been run.'
+                                % var)
         # remove singleton dimensions
         modeldata[var] = np.squeeze(np.array(nums))
     return modeldata
@@ -374,7 +372,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
 
     frate = vicon.GetFrameRate()
     if not frate:
-        raise ValueError('Cannot get framerate from Nexus')
+        raise GaitDataError('Cannot get framerate from Nexus')
 
     # TODO: move into config
     # relative thresholds (of maximum velocity)
@@ -399,7 +397,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     # get subject info
     subjectnames = vicon.GetSubjectNames()
     if not subjectnames:
-        raise ValueError('No subject defined in Nexus')
+        raise GaitDataError('No subject defined in Nexus')
     subjectname = subjectnames[0]
 
     # get foot center positions and velocities

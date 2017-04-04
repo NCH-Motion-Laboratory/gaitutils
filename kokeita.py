@@ -7,7 +7,7 @@ Test new gaitutils code
 @author: HUS20664877
 """
 
-from gaitutils import (EMG, nexus, config, read_data, trial, eclipse, models,
+from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
                        Plotter, layouts, utils)
 import matplotlib.pyplot as plt
 import sys
@@ -21,7 +21,7 @@ import btk
 pl = Plotter()
 pl.open_nexus_trial()
 
-pl.layout = layouts.std_kinetics
+pl.layout = cfg.layouts.std_emg
 
 pl.plot_trial()
 

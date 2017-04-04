@@ -7,8 +7,7 @@ Kinetics-EMG plot from Nexus.
 @author: Jussi
 """
 
-from gaitutils import Plotter, layouts, register_gui_exception_handler
-
+from gaitutils import Plotter, layouts, register_gui_exception_handler, cfg
 import logging
 
 
@@ -24,7 +23,9 @@ def do_plot():
     else:
         sides = [sides]
     for side in sides:
-        pl.layout = layouts.kinetics_emg(side)
+        pl.layout = (cfg.layouts.lb_kinetics_emg_r if side == 'R' else
+                     cfg.layouts.lb_kinetics_emg_l)
+
         s = 'right' if side == 'R' else 'left'
         maintitle = 'Kinetics-EMG (%s) for %s' % (s,
                                                   pl.title_with_eclipse_info())

@@ -284,6 +284,8 @@ def autoproc_session(patterns=None):
     if patterns is not None:
         # filter trial names according to patterns
         enffiles = [s for s in enffiles if any([p in s for p in patterns])]
+        if not enffiles:
+            logger.info('no trials match specified include patterns')
 
     _do_autoproc(enffiles)
 
@@ -295,4 +297,4 @@ if __name__ == '__main__':
                         help='strings that must appear in trial name')
 
     args = parser.parse_args()
-    autoproc_session(args.patterns)
+    autoproc_session(args.include)

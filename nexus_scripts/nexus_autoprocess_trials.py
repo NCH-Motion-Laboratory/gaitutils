@@ -35,9 +35,13 @@ from gaitutils.config import cfg
 import os
 import numpy as np
 import time
-
+import argparse
 import logging
+import sys
+
+
 logger = logging.getLogger(__name__)
+
 
 
 class Trial:
@@ -274,10 +278,23 @@ def _do_autoproc(enffiles):
     logger.debug('Automarked: %d' % n_events)
 
 
-def autoproc_session():
+def autoproc_session(patterns=None):
     enffiles = nexus.get_trial_enfs()
+    
+    if patterns is not None:
+        # filter trial names according to patterns
+        enffiles = [s for s in enffiles if any([p in s for p in patterns])]
+        if not enffiles:
+            logger.info('no trials match specified include patterns')
+
     _do_autoproc(enffiles)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    autoproc_session()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--include', metavar='p', type=str, nargs='+',
+                        help='strings that must appear in trial name')
+
+    args = parser.parse_args()
+    autoproc_session(args.include)

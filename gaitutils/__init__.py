@@ -19,3 +19,4 @@ from .numutils import rising_zerocross, falling_zerocross
 from .guiutils import messagebox
 from .plot import Plotter
 from .config import cfg
+from .exceptions import GaitDataError

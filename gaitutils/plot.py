@@ -291,7 +291,6 @@ class Plotter(object):
                         ax.plot(x, data, tcolor, linestyle=lstyle,
                                 linewidth=self.cfg.plot.model_linewidth,
                                 alpha=model_alpha)
-
                     # set labels, ticks, etc. after plotting last cycle
                     if cycle == model_cycles[-1]:
                         ax.set(ylabel=model.ylabels[varname])  # no xlabel now
@@ -328,16 +327,6 @@ class Plotter(object):
                                                 model_normals_alpha)
                         # tighten x limits
                         ax.set_xlim(x[0], x[-1])
-                        ylim = ax.get_ylim()
-                        # model specific adjustments to y limits
-                        if model == models.pig_lowerbody:
-                            # make sure there is space below zero line
-                            ylim0 = -10 if ylim[0] == 0 else ylim[0]
-                            ylim1 = 10 if ylim[1] == 0 else ylim[1]
-                            ax.set_ylim(ylim0, ylim1)
-                        elif model == models.musclelen:
-                            # add some extra y space
-                            ax.set_ylim(ylim[0]-10, ylim[1]+10)
 
             elif var_type == 'emg':
                 for cycle in emg_cycles:

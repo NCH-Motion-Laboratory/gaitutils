@@ -373,7 +373,7 @@ class Plotter(object):
                         ax.tick_params(axis='both', which='major',
                                        labelsize=self.cfg.plot.ticks_fontsize)
                         ax.set_xlim(min(x), max(x))
-                        ysc = self.cfg.emg.yscale
+                        ysc = self.cfg.plot.emg_yscale
                         ax.set_ylim(ysc[0]*self.cfg.plot.emg_multiplier,
                                     ysc[1]*self.cfg.plot.emg_multiplier)
                         if (plot_emg_normaldata and cycle is not None and

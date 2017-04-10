@@ -233,6 +233,12 @@ class Plotter(object):
             ax.tick_params(axis='both', which='both', bottom='off',
                            top='off', labelbottom='off', right='off',
                            left='off', labelleft='off')
+            
+        def _shorten_name(name):
+            """ Shorten overlong names for legend etc. """
+            MAX_LEN = 10
+            return name if len(name) <= MAX_LEN else '..'+name[-MAX_LEN+2:]
+
 
         def _get_cycles(cycles):
             """ Get specified cycles from the gait trial """
@@ -386,7 +392,7 @@ class Plotter(object):
 
             elif var_type in ('model_legend', 'emg_legend'):
                 self.legendnames.append('%s   %s   %s' % (
-                                        self.trial.trialname,
+                                        _shorten_name(self.trial.trialname),
                                         self.trial.eclipse_data['DESCRIPTION'],
                                         self.trial.eclipse_data['NOTES']))
                 if var_type == 'model_legend':

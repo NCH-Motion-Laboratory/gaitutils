@@ -6,7 +6,7 @@ Created on Tue Feb 07 10:05:28 2017
 """
 
 from __future__ import print_function
-from PyQt4 import QtGui, QtCore, uic
+from PyQt5 import QtGui, QtCore, uic, QtWidgets
 import sys
 import nexus_emgplot
 import nexus_kinetics_emgplot
@@ -60,7 +60,7 @@ class XStream(QtCore.QObject):
         return XStream._stderr
 
 
-class Gaitmenu(QtGui.QMainWindow):
+class Gaitmenu(QtWidgets.QMainWindow):
 
     def __init__(self):
         super(self.__class__, self).__init__()
@@ -83,7 +83,7 @@ class Gaitmenu(QtGui.QMainWindow):
 
 def main():
 
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
 
     logger = logging.getLogger()
     handler = QtHandler()

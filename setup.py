@@ -24,6 +24,7 @@ setup(name='gaitutils',
                'nexus_scripts/nexus_emg_consistency.py',
                'nexus_scripts/nexus_autoplot.py',
                'nexus_scripts/nexus_autoprocess_current.py',
-               'nexus_scripts/nexus_autoprocess_trials.py'],
+               'nexus_scripts/nexus_autoprocess_trials.py',
+               'nexus_scripts/nexus_menu.py'],
       include_package_data=True,
       )

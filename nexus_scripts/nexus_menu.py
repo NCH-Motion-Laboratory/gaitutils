@@ -7,6 +7,7 @@ Created on Tue Feb 07 10:05:28 2017
 
 from __future__ import print_function
 from PyQt5 import QtGui, QtCore, uic, QtWidgets
+from pkg_resources import resource_filename
 import sys
 import nexus_emgplot
 import nexus_kinetics_emgplot
@@ -65,9 +66,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def __init__(self):
         super(self.__class__, self).__init__()
         # load user interface made with designer
-        uifile = 'gaitmenu.ui'
+        uifile = resource_filename(__name__, 'gaitmenu.ui')
         uic.loadUi(uifile, self)
-
         self.btnEMG.clicked.connect(nexus_emgplot.do_plot)
         self.btnKinEMG.clicked.connect(nexus_kinetics_emgplot.do_plot)
         self.btnKinall.clicked.connect(nexus_kinallplot.do_plot)

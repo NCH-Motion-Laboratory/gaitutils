@@ -35,6 +35,8 @@ class EMG(object):
         Uses name matching: if the specified channel is not found in the data,
         partial name matches are considered and data for the shortest match is
         returned. For example, 'LGas' could be mapped to 'Voltage.LGas8' """
+        if item is None or len(item) < 2:
+            raise KeyError('Invalid channel name')
         if self.data is None:
             self.read()
         matches = [x for x in self.data if x.find(item) >= 0]

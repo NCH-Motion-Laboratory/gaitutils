@@ -9,6 +9,7 @@ from __future__ import print_function
 from PyQt5 import QtGui, QtCore, uic, QtWidgets
 from pkg_resources import resource_filename
 import sys
+from gaitutils import nexus
 import nexus_emgplot
 import nexus_kinetics_emgplot
 import nexus_emg_consistency
@@ -99,6 +100,7 @@ def main():
     handler = QtHandler()
     handler.setFormatter(logging.
                          Formatter("%(name)s: %(levelname)s: %(message)s"))
+    handler.setFormatter(logging.Formatter("%(name)s: %(message)s"))
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
 
@@ -115,7 +117,9 @@ def main():
     sys.excepthook = my_excepthook
 
     gaitmenu.show()
-    logger.debug('starting')
+    nexus_status = 'Vicon Nexus is '
+    nexus_status += 'running' if nexus.pid() else 'not running'
+    logger.debug(nexus_status)
     app.exec_()
 
 

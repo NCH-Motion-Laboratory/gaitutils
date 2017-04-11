@@ -89,11 +89,10 @@ def segment_angles(P):
     if len(P.shape) == 2:
         P = P[np.newaxis, ...]  # insert singleton time axis
     Pd = np.diff(P, axis=1)  # point-to-point vectors
-    # normalize avoiding div by zero (caused by identical successive pts)
     vnorms = norm(Pd, axis=2)[..., np.newaxis]
-    nonzero = np.where(vnorms)[1]
-    Pdn = np.full(Pd.shape, np.nan)
-    Pdn[:, nonzero, :] = Pd[:, nonzero, :] / vnorms[:, nonzero, :]
+    # ignore 0/0 and x/0 errors -> nan
+    with np.errstate(divide='ignore', invalid='ignore'):
+        Pdn = Pd / vnorms
     # take dot products between successive vectors and angles by arccos
     dots = np.sum(Pdn[:, 0:-1, :] * Pdn[:, 1:, :], axis=2)
     dots = dots[0, :] if dots.shape[0] == 1 else dots  # rm singleton dim

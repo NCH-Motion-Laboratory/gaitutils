@@ -17,7 +17,7 @@ import nexus_autoprocess_trials
 import nexus_kinallplot
 import sys
 import logging
-
+import traceback
 
 class QtHandler(logging.Handler):
 
@@ -80,6 +80,15 @@ class Gaitmenu(QtWidgets.QMainWindow):
         XStream.stdout().messageWritten.connect(self.txtOutput.insertPlainText)
         XStream.stderr().messageWritten.connect(self.txtOutput.insertPlainText)
 
+    def message_dialog(self, msg):
+        """ Show message with an 'OK' button. """
+        dlg = QtWidgets.QMessageBox()
+        dlg.setWindowTitle('Message')
+        dlg.setText(msg)
+        dlg.addButton(QtWidgets.QPushButton('Ok'),
+                      QtWidgets.QMessageBox.YesRole)
+        dlg.exec_()
+
 
 def main():
 
@@ -87,11 +96,22 @@ def main():
 
     logger = logging.getLogger()
     handler = QtHandler()
-    handler.setFormatter(logging.Formatter("%(name)s: %(levelname)s: %(message)s"))
+    handler.setFormatter(logging.
+                         Formatter("%(name)s: %(levelname)s: %(message)s"))
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
 
     gaitmenu = Gaitmenu()
+
+    def my_excepthook(type, value, tback):
+        """ Custom exception handler for fatal (unhandled) exceptions:
+        report to user via GUI and terminate. """
+        tb_full = u''.join(traceback.format_exception(type, value, tback))
+        gaitmenu.message_dialog('%s' % value)
+        sys.__excepthook__(type, value, tback)
+        #app.quit()
+
+    sys.excepthook = my_excepthook
 
     gaitmenu.show()
     logger.debug('starting')

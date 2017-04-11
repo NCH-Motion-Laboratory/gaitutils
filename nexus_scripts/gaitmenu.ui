@@ -178,6 +178,19 @@
     <item>
      <widget class="QPlainTextEdit" name="txtOutput"/>
     </item>
+    <item>
+     <widget class="QPushButton" name="btnQuit">
+      <property name="maximumSize">
+       <size>
+        <width>50</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Quit</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -186,7 +199,7 @@
      <x>0</x>
      <y>0</y>
      <width>736</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

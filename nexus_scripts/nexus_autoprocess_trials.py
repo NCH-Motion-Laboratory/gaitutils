@@ -280,8 +280,8 @@ def _do_autoproc(enffiles):
 
 def autoproc_session(patterns=None):
     enffiles = nexus.get_trial_enfs()
-    
-    if patterns is not None:
+
+    if patterns:
         # filter trial names according to patterns
         enffiles = [s for s in enffiles if any([p in s for p in patterns])]
         if not enffiles:

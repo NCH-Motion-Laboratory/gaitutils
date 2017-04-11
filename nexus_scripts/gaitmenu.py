@@ -77,6 +77,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                               autoproc_single)
         self.btnAutoprocSession.clicked.connect(nexus_autoprocess_trials.
                                                 autoproc_session)
+        self.btnQuit.clicked.connect(self.close)
         XStream.stdout().messageWritten.connect(self.txtOutput.insertPlainText)
         XStream.stderr().messageWritten.connect(self.txtOutput.insertPlainText)
 

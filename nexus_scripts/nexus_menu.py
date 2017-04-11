@@ -66,7 +66,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def __init__(self):
         super(self.__class__, self).__init__()
         # load user interface made with designer
-        uifile = resource_filename(__name__, 'gaitmenu.ui')
+        uifile = resource_filename(__name__, 'nexus_menu.ui')
         uic.loadUi(uifile, self)
         self.btnEMG.clicked.connect(nexus_emgplot.do_plot)
         self.btnKinEMG.clicked.connect(nexus_kinetics_emgplot.do_plot)

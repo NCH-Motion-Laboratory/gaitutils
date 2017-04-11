@@ -9,7 +9,8 @@ Read gait trials.
 
 
 from __future__ import division
-from gaitutils import read_data, utils, eclipse
+from exceptions import GaitDataError
+from . import read_data, utils, eclipse
 from collections import defaultdict
 import numpy as np
 import os.path as op
@@ -118,7 +119,7 @@ class Trial(object):
         try:
             self.fp_events = utils.detect_forceplate_events(source)
             self.fp_valid = self.fp_events['valid']
-        except ValueError:
+        except GaitDataError:
             # TODO
             self.fp_events = None
             self.fp_valid = None

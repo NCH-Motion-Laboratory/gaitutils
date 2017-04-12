@@ -9,6 +9,7 @@ Plot gait data
 
 import models
 import nexus
+import numutils
 from trial import Trial
 import matplotlib.pyplot as plt
 from matplotlib import pylab
@@ -123,7 +124,8 @@ class Plotter(object):
                    linestyles_context=False, annotate_emg=True,
                    emg_tracecolor=None, emg_alpha=1.0,
                    plot_model_normaldata=True,
-                   plot_emg_normaldata=True, superpose=False, show=True,
+                   plot_emg_normaldata=True, plot_emg_rms=True,
+                   superpose=False, show=True,
                    maintitle=None, maintitleprefix=None):
 
         """ Create plot of variables. Parameters:
@@ -183,6 +185,8 @@ class Plotter(object):
                 Whether to plot normal data. Uses either default normal data
                 (in site_defs) or the data given when creating the plotter
                 instance.
+        plot_emg_rms : bool
+                Whether to plot EMG RMS superpose on the EMG signal.
         superpose : bool
                 If superpose=False, create new figure. Otherwise superpose
                 on existing figure.
@@ -233,12 +237,11 @@ class Plotter(object):
             ax.tick_params(axis='both', which='both', bottom='off',
                            top='off', labelbottom='off', right='off',
                            left='off', labelleft='off')
-            
+
         def _shorten_name(name):
             """ Shorten overlong names for legend etc. """
             MAX_LEN = 10
             return name if len(name) <= MAX_LEN else '..'+name[-MAX_LEN+2:]
-
 
         def _get_cycles(cycles):
             """ Get specified cycles from the gait trial """
@@ -340,24 +343,32 @@ class Plotter(object):
                         self.trial.set_norm_cycle(cycle)
                     try:
                         x_, data = self.trial[var]
-                    except KeyError:
+                    except KeyError:  # channel not found
                         _no_ticks_or_labels(ax)
                         if annotate_emg:
                             _axis_annotate(ax, 'not found')
-                        break  # no data - skip all cycles
+                        break  # skip all cycles
                     if not self.trial.emg.status_ok(var):
                         _no_ticks_or_labels(ax)
                         if annotate_emg:
                             _axis_annotate(ax, 'disconnected')
-                        break  # no data - skip all cycles
+                        break  # data no good - skip all cycles
                     x = x_ / self.trial.analograte if cycle is None else x_
                     tcolor = (emg_tracecolor if emg_tracecolor else
                               self.cfg.plot.emg_tracecolor)
                     if var[0] == cycle.context or not auto_match_emg_cycle:
+                        # plot actual data
                         ax.plot(x, data*self.cfg.plot.emg_multiplier, tcolor,
                                 linewidth=self.cfg.plot.emg_linewidth,
                                 alpha=emg_alpha)
+                        if plot_emg_rms:
+                            rms = numutils.rms(data, self.cfg.emg.rms_win)
+                            ax.plot(x, rms*self.cfg.plot.emg_multiplier,
+                                    tcolor,
+                                    linewidth=self.cfg.plot.emg_rms_linewidth,
+                                    alpha=emg_alpha)
                     if cycle == emg_cycles[-1]:
+                        # last cycle; plot scales, titles etc.
                         ax.set(ylabel=self.cfg.plot.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.
                                                     plot.label_fontsize)
@@ -382,9 +393,10 @@ class Plotter(object):
                             emgbar_ind = self.cfg.emg.channel_normaldata[var]
                             for k in range(len(emgbar_ind)):
                                 inds = emgbar_ind[k]
-                                plt.axvspan(inds[0], inds[1],
-                                            alpha=self.cfg.plot.emg_normals_alpha,
-                                            color=self.cfg.plot.emg_normals_color)
+                                plt.axvspan(inds[0], inds[1], alpha=self.cfg.
+                                            plot.emg_normals_alpha,
+                                            color=self.cfg.
+                                            plot.emg_normals_color)
                         if cycle is None:
                             ax.set(xlabel='Time (s)')
                             ax.xaxis.label.set_fontsize(self.cfg.

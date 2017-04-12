@@ -99,12 +99,25 @@ def segment_angles(P):
     return np.pi - np.arccos(dots)
 
 
+def running_sum(M, win, axis=None):
+    """ Running (windowed) sum of sequence M using cumulative sum,
+        along given axis. Inspired by
+        http://arogozhnikov.github.io/2015/09/30/NumpyTipsAndTricks2.html """
+    if axis is None:
+        M = M.flatten()
+    s = np.cumsum(M, axis=axis)
+    s = np.insert(s, 0, [0], axis=axis)
+    len = s.shape[0] if axis is None else s.shape[axis]
+    return (s.take(np.arange(win, len), axis=axis) -
+            s.take(np.arange(0, len-win), axis=axis))
 
 
-
-
-
-
-
-
+def rms(data, win):
+    """ Return RMS for a given data (1-d; will be flattened if not) """
+    if win % 2 != 1:
+        raise ValueError('Need RMS window of odd length')
+    rms = np.sqrt(running_sum(data**2, win) / float(win))
+    # pad ends of RMS data so that lengths are matched
+    pad = np.repeat(0, (win-1)/2)
+    return np.concatenate([pad, rms, pad])
 

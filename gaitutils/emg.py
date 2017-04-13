@@ -24,6 +24,7 @@ class EMG(object):
     """ Class for handling EMG data. """
 
     def __init__(self, source):
+        logger.debug('new EMG instance from %s' % source)
         self.source = source
         # order of Butterworth filter
         self.buttord = 5

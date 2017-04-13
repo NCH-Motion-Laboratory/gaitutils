@@ -22,7 +22,7 @@ def do_plot():
 
     vicon = nexus.viconnexus()
     layout = cfg.layouts.std_emg
-    pl.layout = layouts.rm_dead_channels(vicon, layout)
+    pl.layout = layouts.rm_dead_channels(vicon, pl.trial.emg, layout)
     pl.plot_trial(maintitle=maintitle)
 
     pl.create_pdf(pdf_prefix=pdf_prefix)

@@ -23,10 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class Gaitcycle(object):
-    """" Holds information about one gait cycle. Offset is the frame where
-    the data begins; 1 for Vicon Nexus (which always returns whole trial) and
-    start of the ROI for c3d files, which contain data only for the ROI. """
-
+    """" Holds information about one gait cycle """
     def __init__(self, start, end, offset, toeoff, context, on_forceplate,
                  smp_per_frame):
         self.offset = offset
@@ -91,11 +88,13 @@ class Trial(object):
         s += ', data source: %s' % self.source
         s += ', subject: %s' % self.name
         s += ', gait cycles: %s' % self.ncycles
-        s += ', kinetics: %s' % (self.kinetics if self.kinetics else 'None')
+        s += ', valid forceplate data: %s' % (self.fp_valid if
+                                              self.fp_valid else 'None')
         s += '>'
         return s
 
     def __init__(self, source):
+        logger.debug('new trial instance from %s' % source)
         self.source = source
         # read metadata into instance attributes
         meta = read_data.get_metadata(source)

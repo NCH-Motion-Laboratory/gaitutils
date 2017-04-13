@@ -356,7 +356,8 @@ class Plotter(object):
                     x = x_ / self.trial.analograte if cycle is None else x_
                     tcolor = (emg_tracecolor if emg_tracecolor else
                               self.cfg.plot.emg_tracecolor)
-                    if var[0] == cycle.context or not auto_match_emg_cycle:
+                    if (cycle is None or var[0] == cycle.context or not
+                       auto_match_emg_cycle):
                         # plot actual data
                         ax.plot(x, data*self.cfg.plot.emg_multiplier, tcolor,
                                 linewidth=self.cfg.plot.emg_linewidth,

@@ -98,6 +98,7 @@ def detect_forceplate_events(source):
     """
 
     # get subject info
+    logger.debug('detect forceplate events from %s' % source)
     info = get_metadata(source)
     fpdata = get_forceplate_data(source)
 

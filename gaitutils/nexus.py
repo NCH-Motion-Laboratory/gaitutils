@@ -116,6 +116,7 @@ def is_vicon_instance(obj):
 
 def get_metadata(vicon):
     """ Read trial and subject metadata """
+    logger.debug('reading metadata from Vicon Nexus')
     subjectnames = vicon.GetSubjectNames()
     if len(subjectnames) > 1:
         raise GaitDataError('Nexus returns multiple subjects')
@@ -143,12 +144,12 @@ def get_metadata(vicon):
     rstrikes = vicon.GetEvents(name, "Right", "Foot Strike")[0]
     ltoeoffs = vicon.GetEvents(name, "Left", "Foot Off")[0]
     rtoeoffs = vicon.GetEvents(name, "Right", "Foot Off")[0]
+    # frame info
     offset = vicon.GetTrialRange()[0]
     length = vicon.GetFrameCount()
     framerate = vicon.GetFrameRate()
     # Get analog rate. This may not be mandatory if analog devices
     # are not used, but currently it needs to succeed.
-
     devids = vicon.GetDeviceIDs()
     if not devids:
         raise GaitDataError('Cannot determine analog rate')
@@ -156,7 +157,8 @@ def get_metadata(vicon):
         devid = devids[0]
         _, _, analograte, _, _, _ = vicon.GetDeviceDetails(devid)
     samplesperframe = analograte / framerate
-
+    logger.debug('offset @ %d, %d frames, framerate %d Hz, %d samples per frame' %
+                 (offset, length, framerate, samplesperframe))
     # get n of forceplates
     fp_devids = [id for id in devids if
                  vicon.GetDeviceDetails(id)[1].lower() == 'forceplate']

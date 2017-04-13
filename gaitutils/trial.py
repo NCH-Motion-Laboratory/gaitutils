@@ -94,6 +94,7 @@ class Trial(object):
         return s
 
     def __init__(self, source):
+        logger.debug('new trial instance from %s' % source)
         self.source = source
         # read metadata into instance attributes
         meta = read_data.get_metadata(source)

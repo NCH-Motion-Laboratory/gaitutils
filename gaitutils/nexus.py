@@ -143,11 +143,8 @@ def get_metadata(vicon):
     rstrikes = vicon.GetEvents(name, "Right", "Foot Strike")[0]
     ltoeoffs = vicon.GetEvents(name, "Left", "Foot Off")[0]
     rtoeoffs = vicon.GetEvents(name, "Right", "Foot Off")[0]
-    # frame offset (start of trial data in frames)
-    offset = 1
-    # trial length
-    rng = vicon.GetTrialRange()
-    length = rng[1] - rng[0] + 1
+    offset = vicon.GetTrialRange()[0]
+    length = vicon.GetFrameCount()
     framerate = vicon.GetFrameRate()
     # Get analog rate. This may not be mandatory if analog devices
     # are not used, but currently it needs to succeed.

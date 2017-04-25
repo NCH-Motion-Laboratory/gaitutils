@@ -319,7 +319,7 @@ class Plotter(object):
                         ax.locator_params(axis='y', nbins=6)  # less tick marks
                         ax.tick_params(axis='both', which='major',
                                        labelsize=self.cfg.plot.ticks_fontsize)
-                        if cycle is None:
+                        if cycle is None and var in self.layout[-1]:
                             ax.set(xlabel='Time (s)')
                             ax.xaxis.label.set_fontsize(self.cfg.
                                                         plot.label_fontsize)
@@ -403,7 +403,7 @@ class Plotter(object):
                                             plot.emg_normals_alpha,
                                             color=self.cfg.
                                             plot.emg_normals_color)
-                        if cycle is None:
+                        if cycle is None and var in self.layout[-1]:
                             ax.set(xlabel='Time (s)')
                             ax.xaxis.label.set_fontsize(self.cfg.
                                                         plot.label_fontsize)

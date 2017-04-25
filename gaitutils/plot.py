@@ -117,10 +117,10 @@ class Plotter(object):
         return plotheightratios
 
     def plot_trial(self, model_cycles={'R': 1, 'L': 1},
-                   emg_cycles={'R': 1, 'L': 1},
-                   t=None, plotheightratios=None,
+                   emg_cycles={'R': 1, 'L': 1}, plotheightratios=None,
                    model_tracecolor=None, model_linestyle='-', model_alpha=1.0,
                    split_model_vars=True, auto_match_model_cycle=True,
+                   x_axis_is_time=True,
                    match_pig_kinetics=True,
                    auto_match_emg_cycle=True,
                    linestyles_context=False, annotate_emg=True,
@@ -161,6 +161,9 @@ class Plotter(object):
                 whose context matches the context of the variable. E.g.
                 'LHipMomentX' will be plotted only for left side cycles.
                 If False, the variable will be plotted for all cycles.
+        x_axis_is_time: bool
+                For unnormalized variables, whether x axis is in seconds
+                (default) or in frames.
         match_pig_kinetics: bool
                 If True, Plug-in Gait kinetics variables will be plotted only
                 for cycles that begin with forceplate strike.
@@ -293,7 +296,8 @@ class Plotter(object):
                     if kin_ok and (varname[0] == cycle.context or not
                        auto_match_model_cycle or cycle is None):
                         x_, data = self.trial[varname]
-                        x = x_ / self.trial.framerate if cycle is None else x_
+                        x = (x_ / self.trial.framerate if cycle is None and
+                             x_axis_is_time else x_)
                         tcolor = (model_tracecolor if model_tracecolor
                                   else self.cfg.plot.model_tracecolors
                                   [cycle.context])
@@ -321,7 +325,8 @@ class Plotter(object):
                         ax.tick_params(axis='both', which='major',
                                        labelsize=self.cfg.plot.ticks_fontsize)
                         if cycle is None and var in self.layout[-1]:
-                            ax.set(xlabel='Time (s)')
+                            xlabel = 'Time (s)' if x_axis_is_time else 'Frame'
+                            ax.set(xlabel=xlabel)
                             ax.xaxis.label.set_fontsize(self.cfg.
                                                         plot.label_fontsize)
                         if plot_model_normaldata and cycle is not None:
@@ -356,7 +361,11 @@ class Plotter(object):
                         if annotate_emg:
                             _axis_annotate(ax, 'disconnected')
                         break  # data no good - skip all cycles
-                    x = x_ / self.trial.analograte if cycle is None else x_
+                    x = (x_ / self.trial.analograte if cycle is None and
+                         x_axis_is_time else x_)
+                    if cycle is None and not x_axis_is_time:
+                        # analog -> frames
+                        x /= self.trial.samplesperframe
                     tcolor = (emg_tracecolor if emg_tracecolor else
                               self.cfg.plot.emg_tracecolor)
                     if (cycle is None or var[0] == cycle.context or not
@@ -405,7 +414,8 @@ class Plotter(object):
                                             color=self.cfg.
                                             plot.emg_normals_color)
                         if cycle is None and var in self.layout[-1]:
-                            ax.set(xlabel='Time (s)')
+                            xlabel = 'Time (s)' if x_axis_is_time else 'Frame'
+                            ax.set(xlabel=xlabel)
                             ax.xaxis.label.set_fontsize(self.cfg.
                                                         plot.label_fontsize)
 

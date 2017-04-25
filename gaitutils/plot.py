@@ -43,6 +43,7 @@ class Plotter(object):
         self.trial = None
         self.fig = None
         self.normaldata = normaldata
+        self.axes = []
         self.legendnames = []
         self.modelartists = []
         self.emgartists = []
@@ -431,7 +432,7 @@ class Plotter(object):
                           legtitle+self.legendnames, loc='upper center',
                           ncol=2,
                           prop={'size': self.cfg.plot.legend_fontsize})
-
+            self.axes.append(ax)
         plt.suptitle(maintitle, fontsize=self.cfg.plot.maintitle_fontsize,
                      fontweight="bold")
         self.gridspec.tight_layout(self.fig)

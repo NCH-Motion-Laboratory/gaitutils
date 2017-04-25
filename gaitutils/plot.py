@@ -96,7 +96,8 @@ class Plotter(object):
             return None
         elif models.model_from_var(var):
             return 'model'
-        # check whether it's a configured EMG channel OR a physical one
+        # check whether it's a configured EMG channel or exists in the data
+        # source (both are ok)
         elif (self.trial.emg.is_channel(var) or
               var in self.cfg.emg.channel_labels):
             return 'emg'
@@ -373,8 +374,9 @@ class Plotter(object):
                         ax.set(ylabel=self.cfg.plot.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.
                                                     plot.label_fontsize)
-
-                        subplot_title = self.cfg.emg.channel_labels[var]
+                        subplot_title = (self.cfg.emg.channel_labels[var] if
+                                         var in self.cfg.emg.channel_labels
+                                         else var)
                         prev_title = ax.get_title()
                         if prev_title and prev_title != subplot_title:
                             subplot_title = prev_title + ' / ' + subplot_title

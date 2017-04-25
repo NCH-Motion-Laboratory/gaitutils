@@ -7,7 +7,7 @@ Kinetics-EMG plot from Nexus.
 @author: Jussi
 """
 
-from gaitutils import Plotter, layouts, register_gui_exception_handler, cfg
+from gaitutils import Plotter, register_gui_exception_handler, cfg
 import logging
 
 
@@ -15,7 +15,7 @@ def do_plot():
 
     pl = Plotter()
     pl.open_nexus_trial()
-    sides = pl.trial.fp_valid
+    sides = pl.trial.fp_events['valid']
     if not sides:
         raise Exception('No kinetics available')
     elif sides == 'LR':

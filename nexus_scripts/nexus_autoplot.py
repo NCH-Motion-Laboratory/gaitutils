@@ -18,7 +18,7 @@ def do_plot():
     pl = Plotter()
     pl.open_nexus_trial()
 
-    if pl.trial.fp_valid:
+    if pl.trial.fp_events['valid']:
         nexus_kinetics_emgplot.do_plot()
     else:
         messagebox('No valid foot strike detected. Plotting '

@@ -88,9 +88,6 @@ class Trial(object):
         s += ', data source: %s' % self.source
         s += ', subject: %s' % self.name
         s += ', gait cycles: %s' % self.ncycles
-        s += ', valid forceplate data: %s' % (self.fp_events['valid'] if
-                                              self.fp_events['valid'] else
-                                              'None')
         s += '>'
         return s
 
@@ -119,6 +116,7 @@ class Trial(object):
         # analog and model data are lazily read
         self.emg = EMG(self.source)
         self._forceplate_data = None
+        self._fp_events = None
         self._models_data = dict()
         # whether to normalize data
         self._normalize = None

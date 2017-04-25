@@ -185,8 +185,9 @@ class Plotter(object):
                 Whether to plot normal data. Uses either default normal data
                 (in site_defs) or the data given when creating the plotter
                 instance.
-        plot_emg_rms : bool
-                Whether to plot EMG RMS superpose on the EMG signal.
+        plot_emg_rms : bool | string
+                Whether to plot EMG RMS superposed on the EMG signal.
+                If 'rms_only', plot only RMS.
         superpose : bool
                 If superpose=False, create new figure. Otherwise superpose
                 on existing figure.
@@ -358,11 +359,13 @@ class Plotter(object):
                               self.cfg.plot.emg_tracecolor)
                     if (cycle is None or var[0] == cycle.context or not
                        auto_match_emg_cycle):
-                        # plot actual data
-                        ax.plot(x, data*self.cfg.plot.emg_multiplier, tcolor,
-                                linewidth=self.cfg.plot.emg_linewidth,
-                                alpha=emg_alpha)
-                        if plot_emg_rms:
+                        # plot data and/or rms
+                        if plot_emg_rms != 'rms_only':
+                            ax.plot(x, data*self.cfg.plot.emg_multiplier,
+                                    tcolor,
+                                    linewidth=self.cfg.plot.emg_linewidth,
+                                    alpha=emg_alpha)
+                        if plot_emg_rms is not False:
                             rms = numutils.rms(data, self.cfg.emg.rms_win)
                             ax.plot(x, rms*self.cfg.plot.emg_multiplier,
                                     tcolor,

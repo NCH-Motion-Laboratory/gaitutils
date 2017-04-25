@@ -17,6 +17,7 @@ import numpy as np
 import btk
 
 
+
 pl = Plotter()
 pl.layout = [['L_TibAnt']]
 pl.open_nexus_trial()

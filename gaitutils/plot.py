@@ -43,6 +43,7 @@ class Plotter(object):
         self.trial = None
         self.fig = None
         self.normaldata = normaldata
+        self.axes = []
         self.legendnames = []
         self.modelartists = []
         self.emgartists = []
@@ -96,7 +97,8 @@ class Plotter(object):
             return None
         elif models.model_from_var(var):
             return 'model'
-        # check whether it's a configured EMG channel OR a physical one
+        # check whether it's a configured EMG channel or exists in the data
+        # source (both are ok)
         elif (self.trial.emg.is_channel(var) or
               var in self.cfg.emg.channel_labels):
             return 'emg'
@@ -115,10 +117,10 @@ class Plotter(object):
         return plotheightratios
 
     def plot_trial(self, model_cycles={'R': 1, 'L': 1},
-                   emg_cycles={'R': 1, 'L': 1},
-                   t=None, plotheightratios=None,
+                   emg_cycles={'R': 1, 'L': 1}, plotheightratios=None,
                    model_tracecolor=None, model_linestyle='-', model_alpha=1.0,
                    split_model_vars=True, auto_match_model_cycle=True,
+                   x_axis_is_time=True,
                    match_pig_kinetics=True,
                    auto_match_emg_cycle=True,
                    linestyles_context=False, annotate_emg=True,
@@ -159,6 +161,9 @@ class Plotter(object):
                 whose context matches the context of the variable. E.g.
                 'LHipMomentX' will be plotted only for left side cycles.
                 If False, the variable will be plotted for all cycles.
+        x_axis_is_time: bool
+                For unnormalized variables, whether x axis is in seconds
+                (default) or in frames.
         match_pig_kinetics: bool
                 If True, Plug-in Gait kinetics variables will be plotted only
                 for cycles that begin with forceplate strike.
@@ -185,8 +190,9 @@ class Plotter(object):
                 Whether to plot normal data. Uses either default normal data
                 (in site_defs) or the data given when creating the plotter
                 instance.
-        plot_emg_rms : bool
-                Whether to plot EMG RMS superpose on the EMG signal.
+        plot_emg_rms : bool | string
+                Whether to plot EMG RMS superposed on the EMG signal.
+                If 'rms_only', plot only RMS.
         superpose : bool
                 If superpose=False, create new figure. Otherwise superpose
                 on existing figure.
@@ -290,7 +296,8 @@ class Plotter(object):
                     if kin_ok and (varname[0] == cycle.context or not
                        auto_match_model_cycle or cycle is None):
                         x_, data = self.trial[varname]
-                        x = x_ / self.trial.framerate if cycle is None else x_
+                        x = (x_ / self.trial.framerate if cycle is None and
+                             x_axis_is_time else x_)
                         tcolor = (model_tracecolor if model_tracecolor
                                   else self.cfg.plot.model_tracecolors
                                   [cycle.context])
@@ -317,8 +324,9 @@ class Plotter(object):
                         ax.locator_params(axis='y', nbins=6)  # less tick marks
                         ax.tick_params(axis='both', which='major',
                                        labelsize=self.cfg.plot.ticks_fontsize)
-                        if cycle is None:
-                            ax.set(xlabel='Time (s)')
+                        if cycle is None and var in self.layout[-1]:
+                            xlabel = 'Time (s)' if x_axis_is_time else 'Frame'
+                            ax.set(xlabel=xlabel)
                             ax.xaxis.label.set_fontsize(self.cfg.
                                                         plot.label_fontsize)
                         if plot_model_normaldata and cycle is not None:
@@ -353,16 +361,22 @@ class Plotter(object):
                         if annotate_emg:
                             _axis_annotate(ax, 'disconnected')
                         break  # data no good - skip all cycles
-                    x = x_ / self.trial.analograte if cycle is None else x_
+                    x = (x_ / self.trial.analograte if cycle is None and
+                         x_axis_is_time else x_)
+                    if cycle is None and not x_axis_is_time:
+                        # analog -> frames
+                        x /= self.trial.samplesperframe
                     tcolor = (emg_tracecolor if emg_tracecolor else
                               self.cfg.plot.emg_tracecolor)
                     if (cycle is None or var[0] == cycle.context or not
                        auto_match_emg_cycle):
-                        # plot actual data
-                        ax.plot(x, data*self.cfg.plot.emg_multiplier, tcolor,
-                                linewidth=self.cfg.plot.emg_linewidth,
-                                alpha=emg_alpha)
-                        if plot_emg_rms:
+                        # plot data and/or rms
+                        if plot_emg_rms != 'rms_only':
+                            ax.plot(x, data*self.cfg.plot.emg_multiplier,
+                                    tcolor,
+                                    linewidth=self.cfg.plot.emg_linewidth,
+                                    alpha=emg_alpha)
+                        if plot_emg_rms is not False:
                             rms = numutils.rms(data, self.cfg.emg.rms_win)
                             ax.plot(x, rms*self.cfg.plot.emg_multiplier,
                                     tcolor,
@@ -373,8 +387,9 @@ class Plotter(object):
                         ax.set(ylabel=self.cfg.plot.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.
                                                     plot.label_fontsize)
-
-                        subplot_title = self.cfg.emg.channel_labels[var]
+                        subplot_title = (self.cfg.emg.channel_labels[var] if
+                                         var in self.cfg.emg.channel_labels
+                                         else var)
                         prev_title = ax.get_title()
                         if prev_title and prev_title != subplot_title:
                             subplot_title = prev_title + ' / ' + subplot_title
@@ -398,8 +413,9 @@ class Plotter(object):
                                             plot.emg_normals_alpha,
                                             color=self.cfg.
                                             plot.emg_normals_color)
-                        if cycle is None:
-                            ax.set(xlabel='Time (s)')
+                        if cycle is None and var in self.layout[-1]:
+                            xlabel = 'Time (s)' if x_axis_is_time else 'Frame'
+                            ax.set(xlabel=xlabel)
                             ax.xaxis.label.set_fontsize(self.cfg.
                                                         plot.label_fontsize)
 
@@ -426,7 +442,7 @@ class Plotter(object):
                           legtitle+self.legendnames, loc='upper center',
                           ncol=2,
                           prop={'size': self.cfg.plot.legend_fontsize})
-
+            self.axes.append(ax)
         plt.suptitle(maintitle, fontsize=self.cfg.plot.maintitle_fontsize,
                      fontweight="bold")
         self.gridspec.tight_layout(self.fig)

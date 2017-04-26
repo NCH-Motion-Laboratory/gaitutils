@@ -88,8 +88,6 @@ class Trial(object):
         s += ', data source: %s' % self.source
         s += ', subject: %s' % self.name
         s += ', gait cycles: %s' % self.ncycles
-        s += ', valid forceplate data: %s' % (self.fp_valid if
-                                              self.fp_valid else 'None')
         s += '>'
         return s
 
@@ -115,16 +113,10 @@ class Trial(object):
             self.eclipse_data = defaultdict(lambda: '', edata)
         else:
             self.eclipse_data = defaultdict(lambda: '', {})
-        try:
-            self.fp_events = utils.detect_forceplate_events(source)
-            self.fp_valid = self.fp_events['valid']
-        except GaitDataError:
-            # TODO
-            self.fp_events = None
-            self.fp_valid = None
         # analog and model data are lazily read
         self.emg = EMG(self.source)
         self._forceplate_data = None
+        self._fp_events = None
         self._models_data = dict()
         # whether to normalize data
         self._normalize = None
@@ -161,6 +153,15 @@ class Trial(object):
         if not self._forceplate_data:
             self._forceplate_data = read_data.get_forceplate_data(self.source)
         return self._forceplate_data
+
+    @property
+    def fp_events(self):
+        if not self._fp_events:
+            try:
+                self._fp_events = utils.detect_forceplate_events(self.source)
+            except GaitDataError:
+                self._fp_events = None
+        return self._fp_events
 
     def set_norm_cycle(self, cycle=None):
         """ Set normalization cycle. None to get unnormalized data.

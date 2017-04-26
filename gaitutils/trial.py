@@ -212,11 +212,18 @@ class Trial(object):
                 if fp_strikes.size == 0:
                     on_forceplate = False
                 else:
-                    # offset is needed since event info is not yet 0-offset
+                    # offset is needed since events are not 0-offset here
                     diffs = np.abs(fp_strikes - start + self.offset)
                     on_forceplate = min(diffs) <= STRIKE_TOL
                 end = strikes[k+1]
                 toeoff = [x for x in toeoffs if x > start and x < end]
-                toeoff = toeoff[0] if len(toeoff) > 0 else None
+                if len(toeoff) == 0:
+                    raise GaitDataError('No toeoff for cycle starting at %d'
+                                        % start)
+                elif len(toeoff) > 1:
+                    raise GaitDataError('Multiple toeoffs for cycle starting '
+                                        'at %d' % start)
+                else:
+                    toeoff = toeoff[0]
                 yield Gaitcycle(start, end, self.offset, toeoff, context,
                                 on_forceplate, self.samplesperframe)

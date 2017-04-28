@@ -127,6 +127,7 @@ class Plotter(object):
                    emg_tracecolor=None, emg_alpha=1.0,
                    plot_model_normaldata=True,
                    plot_emg_normaldata=True, plot_emg_rms=False,
+                   sharex=True,
                    superpose=False, show=True,
                    maintitle=None, maintitleprefix=None):
 
@@ -193,6 +194,8 @@ class Plotter(object):
         plot_emg_rms : bool | string
                 Whether to plot EMG RMS superposed on the EMG signal.
                 If 'rms_only', plot only RMS.
+        sharex : bool
+                Link the x axes together (will affect zooming)
         superpose : bool
                 If superpose=False, create new figure. Otherwise superpose
                 on existing figure.
@@ -275,7 +278,10 @@ class Plotter(object):
             var_type = self._var_type(var)
             if var_type is None:
                 continue
-            ax = plt.subplot(self.gridspec[i])
+            if sharex and len(self.axes) > 0:
+                ax = plt.subplot(self.gridspec[i], sharex=self.axes[-1])
+            else:
+                ax = plt.subplot(self.gridspec[i])
 
             if var_type == 'model':
                 model = models.model_from_var(var)
@@ -362,7 +368,7 @@ class Plotter(object):
                             _axis_annotate(ax, 'disconnected')
                         break  # data no good - skip all cycles
                     x = (x_ / self.trial.analograte if cycle is None and
-                         x_axis_is_time else x_)
+                         x_axis_is_time else x_ / 1.)
                     if cycle is None and not x_axis_is_time:
                         # analog -> frames
                         x /= self.trial.samplesperframe
@@ -443,6 +449,7 @@ class Plotter(object):
                           ncol=2,
                           prop={'size': self.cfg.plot.legend_fontsize})
             self.axes.append(ax)
+
         plt.suptitle(maintitle, fontsize=self.cfg.plot.maintitle_fontsize,
                      fontweight="bold")
         self.gridspec.tight_layout(self.fig)

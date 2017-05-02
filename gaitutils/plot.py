@@ -116,6 +116,19 @@ class Plotter(object):
                 plotheightratios.append(self.cfg.plot.analog_plotheight)
         return plotheightratios
 
+    def tight_layout(self):
+        """ Customized tight layout """
+        self.gridspec.tight_layout(self.fig)
+        # space for main title
+        top = (self.figh - self.cfg.plot.titlespace) / self.figh
+        # decrease vertical spacing
+        hspace = .6
+        #self.gridspec.update(hspace=hspace)
+        #self.gridspec.update(top=top)
+        self.gridspec.update(top=top, hspace=hspace)
+
+
+
     def plot_trial(self, model_cycles={'R': 1, 'L': 1},
                    emg_cycles={'R': 1, 'L': 1}, plotheightratios=None,
                    model_tracecolor=None, model_linestyle='-', model_alpha=1.0,
@@ -236,6 +249,8 @@ class Plotter(object):
             self.fig = plt.figure(figsize=(self.figw, self.figh))
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)
+
+
 
         def _axis_annotate(ax, text):
             """ Annotate at center of axis """
@@ -452,15 +467,8 @@ class Plotter(object):
 
         plt.suptitle(maintitle, fontsize=self.cfg.plot.maintitle_fontsize,
                      fontweight="bold")
-        self.gridspec.tight_layout(self.fig)
-        # some fixes to tight_layout
-        # space for main title
-        top = (self.figh - self.cfg.plot.titlespace) / self.figh
-        # decrease vertical spacing
-        hspace = .6
-        #self.gridspec.update(hspace=hspace)
-        #self.gridspec.update(top=top)
-        self.gridspec.update(top=top, hspace=hspace)
+        self.tight_layout()
+        
         if show:
             self.show()
 

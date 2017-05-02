@@ -12,7 +12,7 @@ from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
 from gaitutils.numutils import segment_angles, rms
 from gaitutils.guiutils import messagebox
 import matplotlib.pyplot as plt
-from matplotlib.widgets import SpanSelector
+from matplotlib.widgets import SpanSelector, Button
 import sys
 import logging
 import scipy.linalg
@@ -22,7 +22,7 @@ import btk
 # EMG channels of interest
 emg_chs = ['L_Gastr', 'L_TibAnt']
 # our events
-events = []
+events = dict()
 
 
 
@@ -127,22 +127,26 @@ for ax in pl.fig.get_axes():
                         rectprops=dict(alpha=0.5, facecolor='red'))
     spans.append(span)  # keep reference
 
+def bclick(event):
+    for ev in events:
+        events[ev].remove()
+    events.clear()
+    pl.fig.canvas.draw()
+
 
 def onclick(event):
     if event.button != 3:
         return
-    print('button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
-          (event.button, event.x, event.y, event.xdata, event.ydata))
-    event.inaxes.plot(event.xdata, event.ydata, 'k^')
     ev = int(np.round(event.xdata))
     if ev not in events:
-        events.append(ev)
+        events[ev] = event.inaxes.plot(event.xdata, event.ydata, 'k^')[0]
     pl.fig.canvas.draw()
 
 cid = pl.fig.canvas.mpl_connect('button_press_event', onclick)
 
+pl.tight_layout()
 
-
-
-
+ax = plt.axes([0.7, 0.9, 0.25, 0.05])
+bkoe = Button(ax, 'Clear events')
+bkoe.on_clicked(bclick)
 

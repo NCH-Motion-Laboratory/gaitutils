@@ -135,7 +135,7 @@ def bclick(event):
 
 
 def onclick(event):
-    if not event.dblclick:
+    if event.button != 3:
         return
     ev = int(np.round(event.xdata))
     if ev not in events:

@@ -101,13 +101,13 @@ def _onselect(xmin_, xmax_):
     s += 'Selected range\t\t%d-%d\n' % (xmin, xmax)
     s += 'Max velocity\t\t%.2f deg/s @ frame %d\n' % (velmax, velmaxind)
     s += 'Max angle\t\t\t%.2f deg @ frame %d\n' % (angmax, angmaxind)
-    s += 'Max RMS in given range:\n'
+    s += '\nMax RMS in given range:\n'
     for ch in emg_chs:
         smin, smax = (pl.trial.samplesperframe*np.round([xmin_, xmax_])).astype(int)
         rms = emg_rms[ch][smin:smax]
         rmsmax, rmsmaxind = rms.max(), int(np.round((np.argmax(rms) + smin)/pl.trial.samplesperframe))
-        s += '%s\t\t%g mV @ frame %d\n' % (ch, rmsmax*1e3, rmsmaxind)
-    s += 'Markers:\n' if events else ''
+        s += '%s\t\t\t%g mV @ frame %d\n' % (ch, rmsmax*1e3, rmsmaxind)
+    s += '\nMarkers:\n' if events else ''
     for event in events:
         if xmin_ < event < xmax_:
             s += 'Ankle angle at marker %d: %.2f deg\n' % (event, angd[event])
@@ -135,7 +135,7 @@ def bclick(event):
 
 
 def onclick(event):
-    if event.button != 3:
+    if not event.dblclick:
         return
     ev = int(np.round(event.xdata))
     if ev not in events:
@@ -147,6 +147,6 @@ cid = pl.fig.canvas.mpl_connect('button_press_event', onclick)
 pl.tight_layout()
 
 ax = plt.axes([0.7, 0.9, 0.25, 0.05])
-bkoe = Button(ax, 'Clear events')
+bkoe = Button(ax, 'Clear markers')
 bkoe.on_clicked(bclick)
 

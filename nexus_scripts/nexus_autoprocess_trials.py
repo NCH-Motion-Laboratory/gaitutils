@@ -268,7 +268,7 @@ def _do_autoproc(enffiles):
     if cfg.autoproc.write_eclipse_desc:
         for filepath, trial in trials.items():
             enf_file = filepath + '.Trial.enf'
-            eclipse.set_eclipse_key(enf_file, 'DESCRIPTION',
+            eclipse.set_eclipse_key(enf_file, 'NOTES',
                                     trial.description, update_existing=True)
     # print stats
     n_events = len([tr for tr in trials.values() if tr.events])

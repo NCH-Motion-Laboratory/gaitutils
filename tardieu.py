@@ -41,7 +41,7 @@ pl = Plotter()
 pl.layout = [[ch] for ch in emg_chs] + [[None], [None]]
 pl.open_nexus_trial()
 pl.plot_trial(model_cycles=None, emg_cycles=None, x_axis_is_time=False,
-              plot_emg_rms=True, emg_tracecolor='b', sharex=True)
+              plot_emg_rms=True, emg_tracecolor='b', sharex=True, show=False)
 
 # get marker data
 data = read_data.get_marker_data(vicon, ['Toe', 'Ankle', 'Knee'])
@@ -151,3 +151,4 @@ ax = plt.axes([0.7, 0.9, 0.25, 0.05])
 bkoe = Button(ax, 'Clear markers')
 bkoe.on_clicked(bclick)
 
+plt.show()

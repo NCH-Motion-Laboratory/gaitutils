@@ -20,7 +20,7 @@ import numpy as np
 import btk
 
 # EMG channels of interest
-emg_chs = ['L_Gastr', 'L_TibAnt']
+emg_chs = ['L_Gastr', 'L_Sol', 'L_TibAnt']
 # our events
 events = dict()
 
@@ -49,6 +49,7 @@ Ptoe = data['Toe_P']
 Pank = data['Ankle_P']
 Pknee = data['Knee_P']
 # stack so that marker changes along 2nd dim, as req'd by segment_angles
+
 Pall = np.stack([Ptoe, Pank, Pknee], axis=1)
 # compute segment angles (deg)
 ang = segment_angles(Pall)
@@ -135,7 +136,7 @@ def bclick(event):
 
 
 def onclick(event):
-    if event.button != 3:
+    if event.button != 2:
         return
     ev = int(np.round(event.xdata))
     if ev not in events:

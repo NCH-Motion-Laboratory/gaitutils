@@ -116,6 +116,19 @@ class Plotter(object):
                 plotheightratios.append(self.cfg.plot.analog_plotheight)
         return plotheightratios
 
+    def tight_layout(self):
+        """ Customized tight layout """
+        self.gridspec.tight_layout(self.fig)
+        # space for main title
+        top = (self.figh - self.cfg.plot.titlespace) / self.figh
+        # decrease vertical spacing
+        hspace = .6
+        #self.gridspec.update(hspace=hspace)
+        #self.gridspec.update(top=top)
+        self.gridspec.update(top=top, hspace=hspace)
+
+
+
     def plot_trial(self, model_cycles={'R': 1, 'L': 1},
                    emg_cycles={'R': 1, 'L': 1}, plotheightratios=None,
                    model_tracecolor=None, model_linestyle='-', model_alpha=1.0,
@@ -127,6 +140,7 @@ class Plotter(object):
                    emg_tracecolor=None, emg_alpha=1.0,
                    plot_model_normaldata=True,
                    plot_emg_normaldata=True, plot_emg_rms=False,
+                   sharex=True,
                    superpose=False, show=True,
                    maintitle=None, maintitleprefix=None):
 
@@ -193,6 +207,8 @@ class Plotter(object):
         plot_emg_rms : bool | string
                 Whether to plot EMG RMS superposed on the EMG signal.
                 If 'rms_only', plot only RMS.
+        sharex : bool
+                Link the x axes together (will affect zooming)
         superpose : bool
                 If superpose=False, create new figure. Otherwise superpose
                 on existing figure.
@@ -233,6 +249,8 @@ class Plotter(object):
             self.fig = plt.figure(figsize=(self.figw, self.figh))
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)
+
+
 
         def _axis_annotate(ax, text):
             """ Annotate at center of axis """
@@ -275,7 +293,10 @@ class Plotter(object):
             var_type = self._var_type(var)
             if var_type is None:
                 continue
-            ax = plt.subplot(self.gridspec[i])
+            if sharex and len(self.axes) > 0:
+                ax = plt.subplot(self.gridspec[i], sharex=self.axes[-1])
+            else:
+                ax = plt.subplot(self.gridspec[i])
 
             if var_type == 'model':
                 model = models.model_from_var(var)
@@ -363,7 +384,7 @@ class Plotter(object):
                             _axis_annotate(ax, 'disconnected')
                         break  # data no good - skip all cycles
                     x = (x_ / self.trial.analograte if cycle is None and
-                         x_axis_is_time else x_)
+                         x_axis_is_time else x_ / 1.)
                     if cycle is None and not x_axis_is_time:
                         # analog -> frames
                         x /= self.trial.samplesperframe
@@ -446,15 +467,8 @@ class Plotter(object):
             self.axes.append(ax)
         plt.suptitle(maintitle, fontsize=self.cfg.plot.maintitle_fontsize,
                      fontweight="bold")
-        self.gridspec.tight_layout(self.fig)
-        # some fixes to tight_layout
-        # space for main title
-        top = (self.figh - self.cfg.plot.titlespace) / self.figh
-        # decrease vertical spacing
-        hspace = .6
-        #self.gridspec.update(hspace=hspace)
-        #self.gridspec.update(top=top)
-        self.gridspec.update(top=top, hspace=hspace)
+        self.tight_layout()
+        
         if show:
             self.show()
 

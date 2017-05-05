@@ -20,10 +20,11 @@ def error_exit(message):
     sys.exit()
 
 
-def messagebox(message):
+def messagebox(message, title=None):
     """ Custom notification handler """
-    ctypes.windll.user32.MessageBoxA(0, str(message),
-                                     "Message from Nexus Python script", 0)
+    if title is None:
+        title = "Message from Nexus Python script"
+    ctypes.windll.user32.MessageBoxA(0, str(message), title, 0)
 
 
 def yesno_box(message):

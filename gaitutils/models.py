@@ -86,7 +86,7 @@ class GaitModel(object):
     def get_normaldata(self, var):
         """ Get normal data for specified variable. Returns (t, data) tuple
         (see below) """
-        if self.normaldata_path is None:
+        if not self.normaldata_path:
             return None
         if not self._normaldata:  # not read yet
             self._normaldata = self._read_normaldata()

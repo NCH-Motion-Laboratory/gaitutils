@@ -123,26 +123,35 @@ class Plotter(object):
         top = (self.figh - self.cfg.plot.titlespace) / self.figh
         # decrease vertical spacing
         hspace = .6
-        #self.gridspec.update(hspace=hspace)
-        #self.gridspec.update(top=top)
+        # self.gridspec.update(hspace=hspace)
+        # self.gridspec.update(top=top)
         self.gridspec.update(top=top, hspace=hspace)
 
-
-
-    def plot_trial(self, model_cycles={'R': 1, 'L': 1},
-                   emg_cycles={'R': 1, 'L': 1}, plotheightratios=None,
-                   model_tracecolor=None, model_linestyle='-', model_alpha=1.0,
-                   split_model_vars=True, auto_match_model_cycle=True,
+    def plot_trial(self,
+                   model_cycles={'R': 1, 'L': 1},
+                   emg_cycles={'R': 1, 'L': 1},
+                   plotheightratios=None,
+                   model_tracecolor=None,
+                   model_linestyle='-',
+                   model_alpha=1.0,
+                   split_model_vars=True,
+                   auto_match_model_cycle=True,
                    x_axis_is_time=True,
                    match_pig_kinetics=True,
+                   forceplate_cycles_only=cfg.plot.forceplate_cycles_only,
                    auto_match_emg_cycle=True,
-                   linestyles_context=False, annotate_emg=True,
-                   emg_tracecolor=None, emg_alpha=1.0,
+                   linestyles_context=False,
+                   annotate_emg=True,
+                   emg_tracecolor=cfg.plot.emg_tracecolor,
+                   emg_alpha=cfg.plot.emg_alpha,
                    plot_model_normaldata=True,
-                   plot_emg_normaldata=True, plot_emg_rms=False,
+                   plot_emg_normaldata=True,
+                   plot_emg_rms=False,
                    sharex=True,
-                   superpose=False, show=True,
-                   maintitle=None, maintitleprefix=None):
+                   superpose=False,
+                   show=True,
+                   maintitle=None,
+                   maintitleprefix=None):
 
         """ Create plot of variables. Parameters:
 
@@ -181,6 +190,9 @@ class Plotter(object):
         match_pig_kinetics: bool
                 If True, Plug-in Gait kinetics variables will be plotted only
                 for cycles that begin with forceplate strike.
+        forceplate_cycles_only: bool
+                If True, plot only cycles that start on forceplate strike.
+                If False, plot all (specified) cycles.
         auto_match_emg_cycle: bool
                 If True, the EMG channel will be plotted only for cycles
                 whose context matches the context of the channel name. E.g.
@@ -309,6 +321,8 @@ class Plotter(object):
                         varname = var
                     # check for kinetics variable
                     kin_ok = True
+                    if forceplate_cycles_only:
+                        kin_ok = cycle.on_forceplate
                     if match_pig_kinetics:
                         if model == models.pig_lowerbody:
                             if model.is_kinetic_var(var):
@@ -388,20 +402,18 @@ class Plotter(object):
                     if cycle is None and not x_axis_is_time:
                         # analog -> frames
                         x /= self.trial.samplesperframe
-                    tcolor = (emg_tracecolor if emg_tracecolor else
-                              self.cfg.plot.emg_tracecolor)
                     if (cycle is None or var[0] == cycle.context or not
                        auto_match_emg_cycle):
                         # plot data and/or rms
                         if plot_emg_rms != 'rms_only':
                             ax.plot(x, data*self.cfg.plot.emg_multiplier,
-                                    tcolor,
+                                    emg_tracecolor,
                                     linewidth=self.cfg.plot.emg_linewidth,
                                     alpha=emg_alpha)
                         if plot_emg_rms is not False:
                             rms = numutils.rms(data, self.cfg.emg.rms_win)
                             ax.plot(x, rms*self.cfg.plot.emg_multiplier,
-                                    tcolor,
+                                    emg_tracecolor,
                                     linewidth=self.cfg.plot.emg_rms_linewidth,
                                     alpha=emg_alpha)
                     if cycle == emg_cycles[-1]:
@@ -465,6 +477,7 @@ class Plotter(object):
                           ncol=2,
                           prop={'size': self.cfg.plot.legend_fontsize})
             self.axes.append(ax)
+
         plt.suptitle(maintitle, fontsize=self.cfg.plot.maintitle_fontsize,
                      fontweight="bold")
         self.tight_layout()

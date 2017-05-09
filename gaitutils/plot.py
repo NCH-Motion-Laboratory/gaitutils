@@ -335,19 +335,20 @@ class Plotter(object):
                             ax.set(xlabel=xlabel)
                             ax.xaxis.label.set_fontsize(self.cfg.
                                                         plot.label_fontsize)
-                        if plot_model_normaldata and cycle is not None:
-                            tnor, ndata = model.get_normaldata(varname)
-                            if ndata is not None:
-                                # assume (mean, stddev) for normal data
-                                # fill region between mean-stddev, mean+stddev
-                                nor = ndata[:, 0]
-                                nstd = (ndata[:, 1] if ndata.shape[1] == 2
-                                        else 0)
-                                ax.fill_between(tnor, nor-nstd, nor+nstd,
-                                                color=self.cfg.plot.
-                                                model_normals_color,
-                                                alpha=self.cfg.plot.
-                                                model_normals_alpha)
+                        if model.get_normaldata(varname):
+                            if plot_model_normaldata and cycle is not None:
+                                tnor, ndata = model.get_normaldata(varname)
+                                if ndata is not None:
+                                    # assume (mean, stddev) for normal data
+                                    # fill region between mean-stddev, mean+stddev
+                                    nor = ndata[:, 0]
+                                    nstd = (ndata[:, 1] if ndata.shape[1] == 2
+                                            else 0)
+                                    ax.fill_between(tnor, nor-nstd, nor+nstd,
+                                                    color=self.cfg.plot.
+                                                    model_normals_color,
+                                                    alpha=self.cfg.plot.
+                                                    model_normals_alpha)
                         # tighten x limits
                         ax.set_xlim(x[0], x[-1])
 

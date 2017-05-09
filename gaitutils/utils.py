@@ -185,6 +185,10 @@ def detect_forceplate_events(source):
                 # extra tolerance for all markers in gait direction @ toeoff
                 maxes_t[fwd_dir] += cfg.autoproc.toeoff_marker_tol
                 mins_t[fwd_dir] -= cfg.autoproc.toeoff_marker_tol
+                # extra tol for heel marker in gait dir during foot strike
+                if 'HEE' in marker_:
+                    maxes_s[fwd_dir] += cfg.autoproc.heel_strike_tol
+                    mins_s[fwd_dir] -= cfg.autoproc.heel_strike_tol
                 marker = marker_ + '_P'
                 ok &= mins_s[0] < mrkdata[marker][strike_fr, 0] < maxes_s[0]
                 ok &= mins_s[1] < mrkdata[marker][strike_fr, 1] < maxes_s[1]

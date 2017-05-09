@@ -117,8 +117,7 @@ def main():
     sys.excepthook = my_excepthook
 
     gaitmenu.show()
-    nexus_status = 'Vicon Nexus is '
-    nexus_status += 'running' if nexus.pid() else 'not running'
+    nexus_status = 'Vicon Nexus is %srunning' % ('' if nexus.pid() else 'not ')
     logger.debug(nexus_status)
     app.exec_()
 

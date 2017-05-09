@@ -18,6 +18,20 @@ import btk
 
 
 
+
+class Foo:
+    
+    def __init__(self):
+        self.txt = 'hello'
+    
+    def show(self, txt=self.txt):
+        print txt
+        
+        
+
+
+
+
 pl = Plotter()
 pl.open_nexus_trial()
 

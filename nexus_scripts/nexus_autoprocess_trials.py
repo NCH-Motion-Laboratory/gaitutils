@@ -203,25 +203,14 @@ def _do_autoproc(enffiles):
             foot_vel[context+'_toeoff'] = nv
         eclipse_str += ','
 
-        # check direction of gait (y coordinate increase/decrease)
-        # not done for Trondheim
-        # TODO: x vs y dir
-        #gait_dir = utils.get_movement_direction(vicon,
-        #                                        cfg.autoproc.track_markers[0],
-        #                                        'y')
-        #gait_dir = (cfg.autoproc.enf_descriptions['dir_back'] if gait_dir == 1
-        #            else cfg.autoproc.enf_descriptions['dir_front'])
-        #eclipse_str += gait_dir
-        #eclipse_str += ','
-
-        # hack for Trondheim: get movement velocity
+        # hack(ish): get movement velocity
         mkr = cfg.autoproc.track_markers[0]
         vel_ = nexus.get_marker_data(vicon, mkr)[mkr+'_V'][:, dim]
         vel = np.median(np.abs(vel_[np.where(vel_)]))
         vel_ms = vel * vicon.GetFrameRate() / 1000.
         logger.debug('median forward velocity: %.2f m/s' % vel_ms)
         eclipse_str += '%.2f m/s' % vel_ms
-        
+
         _save_trial()
         # time.sleep(1)
         trials[filepath].description = eclipse_str
@@ -280,7 +269,7 @@ def _do_autoproc(enffiles):
     if cfg.autoproc.write_eclipse_desc:
         for filepath, trial in trials.items():
             enf_file = filepath + '.Trial.enf'
-            eclipse.set_eclipse_key(enf_file, 'NOTES',
+            eclipse.set_eclipse_key(enf_file, cfg.autoproc.eclipse_write_key,
                                     trial.description, update_existing=True)
     # print stats
     n_events = len([tr for tr in trials.values() if tr.events])

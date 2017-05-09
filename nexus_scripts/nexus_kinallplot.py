@@ -18,8 +18,9 @@ def do_plot():
     pl.layout = cfg.layouts.lb_kin
     maintitleprefix = 'Kinetics/kinematics plot for '
 
-    for vidfile in pl.trial.video_files:
-        pl.external_play_video(vidfile)
+    if cfg.plot.show_videos:
+        for vidfile in pl.trial.video_files:
+            pl.external_play_video(vidfile)
 
     pl.plot_trial(maintitleprefix=maintitleprefix, show=False)
     pl.move_plot_window(10, 30)

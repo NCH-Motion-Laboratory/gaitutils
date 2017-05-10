@@ -128,8 +128,8 @@ class Plotter(object):
         self.gridspec.update(top=top, hspace=hspace)
 
     def plot_trial(self,
-                   model_cycles={'R': 1, 'L': 1},
-                   emg_cycles={'R': 1, 'L': 1},
+                   model_cycles=cfg.plot.default_model_cycles,
+                   emg_cycles=cfg.plot.default_emg_cycles,
                    plotheightratios=None,
                    model_tracecolor=None,
                    model_linestyle='-',
@@ -138,7 +138,6 @@ class Plotter(object):
                    auto_match_model_cycle=True,
                    x_axis_is_time=True,
                    match_pig_kinetics=True,
-                   forceplate_cycles_only=cfg.plot.forceplate_cycles_only,
                    auto_match_emg_cycle=True,
                    linestyles_context=False,
                    annotate_emg=True,
@@ -159,6 +158,8 @@ class Plotter(object):
                 Gait cycles to plot. Defaults to first cycle (1) for
                 both contexts. Multiple cycles can be given as lists.
                 If None, plot unnormalized data. If 'all', plot all cycles.
+                If 'forceplate', plot cycles that start on valid forceplate
+                contact.
         emg_cycles : dict of int | int | dict of list | 'all' | None
                 Same as above, applied to EMG variables.
         t : array-like
@@ -190,9 +191,6 @@ class Plotter(object):
         match_pig_kinetics: bool
                 If True, Plug-in Gait kinetics variables will be plotted only
                 for cycles that begin with forceplate strike.
-        forceplate_cycles_only: bool
-                If True, plot only cycles that start on forceplate strike.
-                If False, plot all (specified) cycles.
         auto_match_emg_cycle: bool
                 If True, the EMG channel will be plotted only for cycles
                 whose context matches the context of the channel name. E.g.
@@ -285,6 +283,9 @@ class Plotter(object):
                 cycles = [None]  # listify
             elif cycles == 'all':
                 cycles = self.trial.cycles
+            elif cycles == 'forceplate':
+                cycles = [cyc for cyc in self.trial.cycles
+                          if cyc.on_forceplate]
             elif isinstance(cycles, dict):
                 for side in ['L', 'R']:  # add L/R side if needed
                     if side not in cycles:
@@ -321,8 +322,6 @@ class Plotter(object):
                         varname = var
                     # check for kinetics variable
                     kin_ok = True
-                    if forceplate_cycles_only:
-                        kin_ok = cycle.on_forceplate
                     if match_pig_kinetics:
                         if model == models.pig_lowerbody:
                             if model.is_kinetic_var(var):

@@ -21,23 +21,26 @@ import numpy as np
 import btk
 
 
+
+
 class Tardieu_window(object):
     """ Open a matplotlib window for Tardieu analysis """
 
     def __init__(self, emg_chs=None):
         # line markers
         self.markers = dict()
-        self.m_colors = ['r', 'g', 'b']
+        self.marker_button = 3  # mouse button for markers
+        self.m_colors = ['r', 'g', 'b']  # colors for markers
         self.max_markers = len(self.m_colors)
         self.emg_chs = emg_chs
-        self.clear_button_ax = [0.7, 0.9, 0.25, 0.05]
+        self.clear_button_ax = [.8, .95, .15, .05]
 
     def show(self):
         vicon = nexus.viconnexus()
         # plot EMG vs. frames
         # x axis will be same as Nexus (here data is shown starting at frame 0)
         pl = Plotter()
-        pl.layout = [[ch] for ch in self.emg_chs] + [[None], [None], [None]]
+        pl.layout = [[None, ch] for ch in self.emg_chs] + [[None, None], [None, None], [None, None]]
         pl.open_nexus_trial()
         fs = pl.trial.framerate
         pl.plot_trial(model_cycles=None, emg_cycles=None, x_axis_is_time=True,
@@ -65,14 +68,14 @@ class Tardieu_window(object):
 
         # add angle plot
         pos = len(emg_chs)
-        ax = plt.subplot(pl.gridspec[pos], sharex=pl.axes[0])
+        ax = plt.subplot(pl.gridspec[pos, 1], sharex=pl.axes[0])
         ax.plot(pl.trial.t / fs, angd)
         ax.set(ylabel='Angle (deg)')
         ax.set_title('Angle')
         self._adj_fonts(ax)
 
         # add angular velocity plot
-        ax = plt.subplot(pl.gridspec[pos+1], sharex=pl.axes[0])
+        ax = plt.subplot(pl.gridspec[pos+1, 1], sharex=pl.axes[0])
         angveld = fs * np.diff(angd, axis=0)
         ax.plot(pl.trial.t[:-1] / fs, angveld)
         ax.set(ylabel='Velocity (deg/s)')
@@ -80,7 +83,7 @@ class Tardieu_window(object):
         self._adj_fonts(ax)
 
         # add angular acceleration plot
-        ax = plt.subplot(pl.gridspec[pos+2], sharex=pl.axes[0])
+        ax = plt.subplot(pl.gridspec[pos+2, 1], sharex=pl.axes[0])
         angaccd = np.diff(angveld, axis=0)
         ax.plot(pl.trial.t[:-2] / fs, angaccd)
         ax.set(xlabel='Time (s)', ylabel='Acceleration (deg/s^2)')
@@ -106,8 +109,8 @@ class Tardieu_window(object):
 
         # add the 'Clear markers' button
         ax = plt.axes(self.clear_button_ax)
-        bkoe = Button(ax, 'Clear markers')
-        bkoe.on_clicked(self._bclick)
+        self._clearbutton = Button(ax, 'Clear markers')
+        self._clearbutton.on_clicked(lambda ev: self._bclick(ev))
 
         plt.show()
 
@@ -120,6 +123,7 @@ class Tardieu_window(object):
                        labelsize=cfg.plot.ticks_fontsize)
 
     def _bclick(self, event):
+        print('bclick')
         for m in self.markers:
             for ax in self.allaxes:
                 self.markers[m][ax].remove()
@@ -127,7 +131,9 @@ class Tardieu_window(object):
         self.pl.fig.canvas.draw()
 
     def _onclick(self, event):
-        if event.button != 3:
+        if event.inaxes not in self.allaxes:
+            return
+        if event.button != self.marker_button:
             return
         if len(self.markers) == self.max_markers:
             messagebox('You can place a maximum of %d markers' %
@@ -135,7 +141,7 @@ class Tardieu_window(object):
             return
         x = event.xdata
         if x not in self.markers:
-            col = self.colors[len(self.markers)]
+            col = self.m_colors[len(self.markers)]
             self.markers[x] = dict()
             for ax in self.allaxes:
                 self.markers[x][ax] = ax.axvline(x=x, linewidth=1, color=col)

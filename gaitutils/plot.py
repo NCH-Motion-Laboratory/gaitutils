@@ -108,6 +108,7 @@ class Plotter(object):
             raise ValueError('Unknown variable %s' % var)
 
     def _plot_height_ratios(self):
+        """ Automatically adjust height ratios, if they are not specified """
         plotheightratios = []
         for row in self._layout:
             if all([self._var_type(var) == 'model' for var in row]):
@@ -131,6 +132,7 @@ class Plotter(object):
                    model_cycles=cfg.plot.default_model_cycles,
                    emg_cycles=cfg.plot.default_emg_cycles,
                    plotheightratios=None,
+                   plotwidthratios=None,
                    model_tracecolor=None,
                    model_linestyle='-',
                    model_alpha=1.0,
@@ -243,6 +245,7 @@ class Plotter(object):
                 maintitleprefix = ''
             maintitle = maintitleprefix + self.trial.trialname
 
+        # auto adjust plot heights
         if plotheightratios is None:
             plotheightratios = self._plot_height_ratios()
         elif len(plotheightratios) != len(self.nrows):
@@ -258,7 +261,8 @@ class Plotter(object):
                          % (self.figw, self.figh))
             self.fig = plt.figure(figsize=(self.figw, self.figh))
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
-                                              height_ratios=plotheightratios)
+                                              height_ratios=plotheightratios,
+                                              width_ratios=plotwidthratios)
 
 
 

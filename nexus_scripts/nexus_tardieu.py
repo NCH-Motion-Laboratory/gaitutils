@@ -34,6 +34,8 @@ class Tardieu_window(object):
         self.max_markers = len(self.m_colors)
         self.emg_chs = emg_chs
         self.clear_button_ax = [.8, .95, .15, .05]
+        self.width_ratio = [1, 3]
+        self.text = ''
 
     def show(self):
         vicon = nexus.viconnexus()
@@ -45,7 +47,7 @@ class Tardieu_window(object):
         fs = pl.trial.framerate
         pl.plot_trial(model_cycles=None, emg_cycles=None, x_axis_is_time=True,
                       plot_emg_rms=True, emg_tracecolor='b', sharex=True,
-                      show=False)
+                      plotwidthratios=self.width_ratio, show=False)
         self.pl = pl
         # read marker data from Nexus
         data = read_data.get_marker_data(vicon, ['Toe', 'Ankle', 'Knee'])
@@ -93,6 +95,10 @@ class Tardieu_window(object):
         # save axes at this point
         self.allaxes = pl.fig.get_axes()
 
+        self.textax = plt.subplot(pl.gridspec[:, 0])
+        self.textax.set_axis_off()
+
+
         # add the span selector to all axes
         """
         spans = []
@@ -112,7 +118,16 @@ class Tardieu_window(object):
         self._clearbutton = Button(ax, 'Clear markers')
         self._clearbutton.on_clicked(lambda ev: self._bclick(ev))
 
+        self.set_text('Moikka\nKaikenlaista')
+
         plt.show()
+
+    def set_text(self, text):
+        self.text = self.textax.text(0, 1, text,
+                                     transform=self.textax.transAxes)
+
+    def rm_text(self):
+        self.text.remove()
 
     @staticmethod
     def _adj_fonts(ax):
@@ -123,7 +138,6 @@ class Tardieu_window(object):
                        labelsize=cfg.plot.ticks_fontsize)
 
     def _bclick(self, event):
-        print('bclick')
         for m in self.markers:
             for ax in self.allaxes:
                 self.markers[m][ax].remove()

@@ -22,8 +22,6 @@ import btk
 
 # EMG channels of interest
 emg_chs = ['L_Gastr', 'L_Sol', 'L_TibAnt']
-# our events
-events = dict()
 
 
 
@@ -131,26 +129,37 @@ def _onselect(xmin_, xmax_):
     # TODO: find events in this range, raport corresponding angles
     """
 
+allaxes = pl.fig.get_axes()
+
 # add span selector to all axes
 spans = []
-for ax in pl.fig.get_axes():
+for ax in allaxes:
     span = SpanSelector(ax, _onselect, 'horizontal', useblit=True, button=1,
                         rectprops=dict(alpha=0.5, facecolor='red'))
     spans.append(span)  # keep reference
 
+
+# line markers 
+markers = dict()
+
+
 def bclick(event):
-    for ev in events:
-        events[ev].remove()
-    events.clear()
+    for m in markers:
+        for ax in allaxes:
+            markers[m][ax].remove()
+    markers.clear()
     pl.fig.canvas.draw()
 
 
 def onclick(event):
-    if event.button != 2:
+    if event.button != 3:
         return
-    ev = int(np.round(event.xdata))
-    if ev not in events:
-        events[ev] = event.inaxes.plot(event.xdata, event.ydata, 'k^')[0]
+    x = int(np.round(event.xdata))
+    if x not in markers:
+        markers[x] = dict()
+        for ax in allaxes:
+            li = ax.axvline(x=event.xdata, linewidth=1, color='k')
+            markers[x][ax] = li
     pl.fig.canvas.draw()
 
 cid = pl.fig.canvas.mpl_connect('button_press_event', onclick)

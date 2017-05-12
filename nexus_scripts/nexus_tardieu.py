@@ -21,7 +21,6 @@ import numpy as np
 import btk
 
 
-
 class Tardieu_window(object):
     """ Open a matplotlib window for Tardieu analysis """
 
@@ -29,7 +28,7 @@ class Tardieu_window(object):
         # line markers
         self.markers = dict()
         self.m_colors = ['r', 'g', 'b']
-        self.max_markers = len(self.colors)
+        self.max_markers = len(self.m_colors)
         self.emg_chs = emg_chs
         self.clear_button_ax = [0.7, 0.9, 0.25, 0.05]
 
@@ -92,14 +91,17 @@ class Tardieu_window(object):
         self.allaxes = pl.fig.get_axes()
 
         # add the span selector to all axes
+        """
         spans = []
         for ax in self.allaxes:
             span = SpanSelector(ax, self._onselect, 'horizontal', useblit=True,
                                 button=1,
                                 rectprops=dict(alpha=0.5, facecolor='red'))
             spans.append(span)  # keep reference
+        """
 
-        pl.fig.canvas.mpl_connect('button_press_event', self._onclick)
+        pl.fig.canvas.mpl_connect('button_press_event',
+                                  lambda ev: self._onclick(ev))
         pl.tight_layout()
 
         # add the 'Clear markers' button
@@ -124,7 +126,7 @@ class Tardieu_window(object):
         self.markers.clear()
         self.pl.fig.canvas.draw()
 
-    def onclick(self, event):
+    def _onclick(self, event):
         if event.button != 3:
             return
         if len(self.markers) == self.max_markers:
@@ -136,8 +138,7 @@ class Tardieu_window(object):
             col = self.colors[len(self.markers)]
             self.markers[x] = dict()
             for ax in self.allaxes:
-                self.markers[x][ax] = ax.axvline(x=event.xdata, linewidth=1,
-                                                 color=col)
+                self.markers[x][ax] = ax.axvline(x=x, linewidth=1, color=col)
             self.pl.fig.canvas.draw()
 
 

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 
-Test Tardieu analysis
+Interactive script for analysis of Tardieu trials.
+Work in progress
 
 @author: HUS20664877
 """
@@ -38,9 +39,10 @@ vicon = nexus.viconnexus()
 # plot EMG vs. frames
 # x axis will be same as Nexus (here data is plotted starting at frame 0)
 pl = Plotter()
-pl.layout = [[ch] for ch in emg_chs] + [[None], [None]]
+pl.layout = [[ch] for ch in emg_chs] + [[None], [None], [None]]
 pl.open_nexus_trial()
-pl.plot_trial(model_cycles=None, emg_cycles=None, x_axis_is_time=False,
+fs = pl.trial.framerate
+pl.plot_trial(model_cycles=None, emg_cycles=None, x_axis_is_time=True,
               plot_emg_rms=True, emg_tracecolor='b', sharex=True, show=False)
 
 # get marker data
@@ -49,31 +51,39 @@ Ptoe = data['Toe_P']
 Pank = data['Ankle_P']
 Pknee = data['Knee_P']
 # stack so that marker changes along 2nd dim, as req'd by segment_angles
-
 Pall = np.stack([Ptoe, Pank, Pknee], axis=1)
 # compute segment angles (deg)
-ang = segment_angles(Pall)
+angd = segment_angles(Pall) / np.pi * 180
+
 # normalize according to initial pos
 # ang -= ang[~np.isnan(ang)][0]
 # plot angular velocity -> deg/s
-angvel = pl.trial.framerate * np.diff(ang, axis=0)
+
 
 # plot angle
 pos = len(emg_chs)
 ax = plt.subplot(pl.gridspec[pos], sharex=pl.axes[0])
-angd = ang / np.pi * 180
-ax.plot(pl.trial.t, angd)
-ax.set(ylabel='deg')
+ax.plot(pl.trial.t / fs, angd)
+ax.set(ylabel='Angle (deg)')
 ax.set_title('Angle')
 _adj_fonts(ax)
 
 # plot angular velocity
 ax = plt.subplot(pl.gridspec[pos+1], sharex=pl.axes[0])
-angveld = angvel / np.pi * 180
-ax.plot(pl.trial.t[:-1], angveld)
-ax.set(xlabel='Frame', ylabel='deg/s')
+angveld = fs * np.diff(angd, axis=0)
+ax.plot(pl.trial.t[:-1] / fs, angveld)
+ax.set(ylabel='Velocity (deg/s)')
 ax.set_title('Angular velocity')
 _adj_fonts(ax)
+
+# plot angular acceleration
+ax = plt.subplot(pl.gridspec[pos+2], sharex=pl.axes[0])
+angaccd = np.diff(angveld, axis=0)
+ax.plot(pl.trial.t[:-2] / fs, angaccd)
+ax.set(xlabel='Time (s)', ylabel='Acceleration (deg/s^2)')
+ax.set_title('Angular acceleration')
+_adj_fonts(ax)
+
 
 # read events
 evs = vicon.GetEvents('4-511', 'General', 'MuscleOn')[0]

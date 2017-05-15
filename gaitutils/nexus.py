@@ -337,7 +337,7 @@ def _list_to_str(li):
 
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                     'R_strike': None, 'R_toeoff': None}, ctr_pos=[0, 0, 0],
-                    max_dist=None, fp_events=None, fp_strike_first=True,
+                    max_dist=None, fp_events=None, start_on_forceplate=False,
                     plot=False, mark=True):
     """ Mark events based on velocity thresholding. Absolute thresholds
     can be specified as arguments. Otherwise, relative thresholds will be
@@ -357,9 +357,9 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     (see utils.detect_forceplate_events). These will not be marked by
     velocity thresholding.
 
-    If fp_strike_is_first is True, the first cycle will start on forceplate
+    If start_on_forceplate is True, the first cycle will start on forceplate
     (i.e. events earlier than the first foot strike events in fp_events will
-    not be marked).
+    not be marked for the corresponding side(s)).
 
     If plot=True, velocity curves and events are plotted.
 
@@ -513,7 +513,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
             ok_ind = np.where(np.abs(fpc - toeoffs) < STRIKE_TOL)
             toeoffs[ok_ind] = fpc[ok_ind]
             # delete strikes before 1st forceplate contact
-            if fp_strike_first and len(fp_strikes) > 0:
+            if start_on_forceplate and len(fp_strikes) > 0:
                 not_ok = np.where(strikes < fp_strikes[0])
                 strikes = np.delete(strikes, not_ok)
 

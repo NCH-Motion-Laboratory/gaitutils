@@ -341,6 +341,9 @@ class Plotter(object):
                         ax.plot(x, data, tcolor, linestyle=lstyle,
                                 linewidth=self.cfg.plot.model_linewidth,
                                 alpha=model_alpha)
+                        # tighten x limits
+                        ax.set_xlim(x[0], x[-1])
+
                     # set labels, ticks, etc. after plotting last cycle
                     if cycle == model_cycles[-1]:
                         ax.set(ylabel=model.ylabels[varname])  # no xlabel now
@@ -377,8 +380,6 @@ class Plotter(object):
                                                     model_normals_color,
                                                     alpha=self.cfg.plot.
                                                     model_normals_alpha)
-                        # tighten x limits
-                        ax.set_xlim(x[0], x[-1])
 
             elif var_type == 'emg':
                 for cycle in emg_cycles:

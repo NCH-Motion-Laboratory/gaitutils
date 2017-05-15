@@ -43,7 +43,6 @@ class Plotter(object):
         self.trial = None
         self.fig = None
         self.normaldata = normaldata
-        self.axes = []
         self.legendnames = []
         self.modelartists = []
         self.emgartists = []
@@ -247,6 +246,7 @@ class Plotter(object):
             plotheightratios = self._plot_height_ratios()
         elif len(plotheightratios) != len(self.nrows):
             raise ValueError('n of height ratios must match n of rows')
+        plotaxes = []
 
         if self.fig is None or not superpose:
             # auto size fig according to n of subplots w, limit size
@@ -306,8 +306,8 @@ class Plotter(object):
             var_type = self._var_type(var)
             if var_type is None:
                 continue
-            if sharex and len(self.axes) > 0:
-                ax = plt.subplot(self.gridspec[i], sharex=self.axes[-1])
+            if sharex and len(plotaxes) > 0:
+                ax = plt.subplot(self.gridspec[i], sharex=plotaxes[-1])
             else:
                 ax = plt.subplot(self.gridspec[i])
 
@@ -341,6 +341,9 @@ class Plotter(object):
                         ax.plot(x, data, tcolor, linestyle=lstyle,
                                 linewidth=self.cfg.plot.model_linewidth,
                                 alpha=model_alpha)
+                        # tighten x limits
+                        ax.set_xlim(x[0], x[-1])
+
                     # set labels, ticks, etc. after plotting last cycle
                     if cycle == model_cycles[-1]:
                         ax.set(ylabel=model.ylabels[varname])  # no xlabel now
@@ -377,8 +380,6 @@ class Plotter(object):
                                                     model_normals_color,
                                                     alpha=self.cfg.plot.
                                                     model_normals_alpha)
-                        # tighten x limits
-                        ax.set_xlim(x[0], x[-1])
 
             elif var_type == 'emg':
                 for cycle in emg_cycles:
@@ -475,7 +476,7 @@ class Plotter(object):
                           legtitle+self.legendnames, loc='upper center',
                           ncol=2,
                           prop={'size': self.cfg.plot.legend_fontsize})
-            self.axes.append(ax)
+            plotaxes.append(ax)
 
         plt.suptitle(maintitle, fontsize=self.cfg.plot.maintitle_fontsize,
                      fontweight="bold")

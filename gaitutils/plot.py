@@ -6,7 +6,6 @@ Plot gait data
 @author: jnu@iki.fi
 """
 
-
 import models
 import nexus
 import numutils
@@ -314,6 +313,7 @@ class Plotter(object):
             if var_type == 'model':
                 model = models.model_from_var(var)
                 for cycle in model_cycles:
+                    logging.debug('cycle %s' % cycle)
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
                     if split_model_vars and var[0].upper() not in ['L', 'R']:
@@ -329,6 +329,7 @@ class Plotter(object):
                     # do the actual plotting if necessary
                     if kin_ok and (varname[0] == cycle.context or not
                        auto_match_model_cycle or cycle is None):
+                        logging.debug('plotting data for %s' % varname)
                         x_, data = self.trial[varname]
                         x = (x_ / self.trial.framerate if cycle is None and
                              x_axis_is_time else x_)
@@ -343,6 +344,8 @@ class Plotter(object):
                                 alpha=model_alpha)
                         # tighten x limits
                         ax.set_xlim(x[0], x[-1])
+                    else:
+                        logging.debug('not plotting data for %s' % varname)
 
                     # set labels, ticks, etc. after plotting last cycle
                     if cycle == model_cycles[-1]:

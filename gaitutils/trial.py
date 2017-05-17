@@ -55,7 +55,7 @@ class Gaitcycle(object):
         s += ' start: %d,' % self.start
         s += ' end: %d,' % self.end
         s += ' context: %s,' % self.context
-        s += ' starts on forceplate,' if self.on_forceplate else ''
+        s += ' on forceplate,' if self.on_forceplate else ' not on forceplate,'
         s += ' toeoff: %d' % self.toeoff
         s += '>'
         return s

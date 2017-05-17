@@ -62,7 +62,7 @@ class Trial:
         return s
 
 
-def _do_autoproc(enffiles):
+def _do_autoproc(enffiles, update_eclipse=True):
     """ Do autoprocessing for all trials listed in enffiles (list of
     paths to .enf files).
     """
@@ -267,11 +267,14 @@ def _do_autoproc(enffiles):
         trials[filepath].description = eclipse_str
 
     # all done; update Eclipse descriptions
-    if cfg.autoproc.eclipse_write_key:
+    if cfg.autoproc.eclipse_write_key and update_eclipse:
         for filepath, trial in trials.items():
             enf_file = filepath + '.Trial.enf'
             eclipse.set_eclipse_key(enf_file, cfg.autoproc.eclipse_write_key,
                                     trial.description, update_existing=True)
+    else:
+        logger.debug('Not updating Eclipse entries')
+
     # print stats
     n_events = len([tr for tr in trials.values() if tr.events])
     logger.debug('Complete')
@@ -280,16 +283,16 @@ def _do_autoproc(enffiles):
     logger.debug('Automarked: %d' % n_events)
 
 
-def autoproc_session(patterns=None):
+def autoproc_session(patterns=None, update_eclipse=True):
     enffiles = nexus.get_trial_enfs()
 
     if patterns:
         # filter trial names according to patterns
         enffiles = [s for s in enffiles if any([p in s for p in patterns])]
         if not enffiles:
-            logger.info('no trials match specified include patterns')
+            logger.info('No trials match specified include patterns')
 
-    _do_autoproc(enffiles)
+    _do_autoproc(enffiles, update_eclipse=update_eclipse)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
@@ -297,6 +300,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--include', metavar='p', type=str, nargs='+',
                         help='strings that must appear in trial name')
+    parser.add_argument('--no_eclipse', action='store_true',
+                        help='disable writing of Eclipse entries')
 
     args = parser.parse_args()
-    autoproc_session(args.include)
+    autoproc_session(args.include, update_eclipse=not args.no_eclipse)

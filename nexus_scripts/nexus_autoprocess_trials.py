@@ -267,7 +267,7 @@ def _do_autoproc(enffiles):
         trials[filepath].description = eclipse_str
 
     # all done; update Eclipse descriptions
-    if cfg.autoproc.write_eclipse_desc:
+    if cfg.autoproc.eclipse_write_key:
         for filepath, trial in trials.items():
             enf_file = filepath + '.Trial.enf'
             eclipse.set_eclipse_key(enf_file, cfg.autoproc.eclipse_write_key,

@@ -150,6 +150,7 @@ class Tardieu_window(object):
         s = self._status_string()
         self.clear_text()
         self.set_text(s)
+        self.pl.fig.canvas.draw()
 
     def _bclick(self, event):
         for m in self.markers:
@@ -176,6 +177,10 @@ class Tardieu_window(object):
             self.pl.fig.canvas.draw()
 
     def _status_string(self):
+        tmin_, tmax_ = self.allaxes[0].get_xlim()  # axis x limits,  float
+        return '%g - %g' % (tmin_, tmax_)
+
+    def _status_string_(self):
         """ Data parameters -> text """
         # take t limits as x axis limits
         tmin_, tmax_ = self.allaxes[0].get_xlim()  # axis x limits,  float

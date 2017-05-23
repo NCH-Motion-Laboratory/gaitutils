@@ -9,7 +9,7 @@ Work in progress
 
 from __future__ import print_function
 from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
-                       Plotter, layouts, utils)
+                       Trial, Plotter, layouts, utils)
 from gaitutils.numutils import segment_angles, rms
 from gaitutils.guiutils import messagebox
 import matplotlib.pyplot as plt
@@ -36,22 +36,15 @@ class Tardieu_window(object):
         self.clear_button_ax = [.8, .95, .15, .05]
         self.width_ratio = [1, 3]
         self.text = ''
+        self.data_axes = list()
         # read data from Nexus and initialize plot
         vicon = nexus.viconnexus()
         # plot EMG vs. frames
         # x axis will be same as Nexus (here data is shown starting at frame 0)
-        pl = Plotter()
-        # 2-column layout with space for text + frame-based data
-        pl.layout = ([[None, ch] for ch in self.emg_chs] +
-                     [[None, None], [None, None], [None, None]])
-        pl.open_nexus_trial()
-        self.frate = pl.trial.framerate
-        self.t = pl.trial.t / self.frate  # time axis
-        self.tmax = pl.trial.t[-1] / self.frate
-        pl.plot_trial(model_cycles=None, emg_cycles=None, x_axis_is_time=True,
-                      plot_emg_rms=True, emg_tracecolor='b', sharex=True,
-                      plotwidthratios=self.width_ratio, show=False)
-        self.pl = pl
+        self.trial = Trial(vicon)
+        self.frate = self.trial.framerate
+        self.time = self.trial.t / self.frate  # time axis
+        self.tmax = trial.t[-1] / self.frate
         # read marker data from Nexus
         data = read_data.get_marker_data(vicon, ['Toe', 'Ankle', 'Knee'])
         Ptoe = data['Toe_P']
@@ -62,17 +55,29 @@ class Tardieu_window(object):
         # compute segment angles (deg)
         self.angd = segment_angles(Pall) / np.pi * 180
 
+        # create subplot grid
+        self.fig = plt.figure()
+        gs = gridspec.GridSpec(nemg + 3, 2)
+
+        # add text axis spanning the left column
+        self.textax = gs[:, 0]
+        self.textax.set_axis_off()
+
         # read events
         # evs = vicon.GetEvents('4-511', 'General', 'MuscleOn')[0]
-        # compute EMG RMS
+
+        # plot EMG signals
         self.emg_rms = dict()
-        for ch in emg_chs:
-            x, data = pl.trial[ch]
-            self.emg_rms[ch] = rms(data, cfg.emg.rms_win)
-
-        self.show()
-
-    def show(self):
+        for ind, ch in enumerate(emg_chs):
+            x, emgdata = trial[ch]
+            self.emg_rms[ch] = rms(emgdata, cfg.emg.rms_win)
+            ax = gs[ind, 1]
+            ax.plot(self.t, emgdata)
+            ax.plot(self.t, self.emg_rms[ch])
+            ax.set(ylabel='mV')
+            ax.set_title(ch)
+            self._adj_fonts(ax)
+            self.data_axes.append(ax)
 
         # add angle plot
         pos = len(emg_chs)
@@ -81,6 +86,7 @@ class Tardieu_window(object):
         ax.set(ylabel='Angle (deg)')
         ax.set_title('Angle')
         self._adj_fonts(ax)
+        self.data_axes.append(ax)        
 
         # add angular velocity plot
         ax = plt.subplot(self.pl.gridspec[pos+1, 1], sharex=self.pl.axes[0])
@@ -89,6 +95,7 @@ class Tardieu_window(object):
         ax.set(ylabel='Velocity (deg/s)')
         ax.set_title('Angular velocity')
         self._adj_fonts(ax)
+        self.data_axes.append(ax)
 
         # add angular acceleration plot
         ax = plt.subplot(self.pl.gridspec[pos+2, 1], sharex=self.pl.axes[0])
@@ -97,16 +104,12 @@ class Tardieu_window(object):
         ax.set(xlabel='Time (s)', ylabel='Acceleration (deg/s^2)')
         ax.set_title('Angular acceleration')
         self._adj_fonts(ax)
+        self.data_axes.append(ax)
 
-        # save axes at this point (only EMG and marker data)
-        self.allaxes = self.pl.fig.get_axes()
-        for ax in self.allaxes:
+        for ax in self.data_axes:
             ax.callbacks.connect('xlim_changed',
                                  lambda ax: self._on_xzoom(ax))
 
-        # add text axis spanning the left column
-        self.textax = plt.subplot(self.pl.gridspec[:, 0])
-        self.textax.set_axis_off()
 
         # add the span selector to all axes
         """
@@ -118,7 +121,7 @@ class Tardieu_window(object):
             spans.append(span)  # keep reference
         """
 
-        self.pl.fig.canvas.mpl_connect('button_press_event',
+        self.fig.canvas.mpl_connect('button_press_event',
                                        lambda ev: self._onclick(ev))
         self.pl.tight_layout()
 
@@ -150,14 +153,14 @@ class Tardieu_window(object):
         s = self._status_string()
         self.clear_text()
         self.set_text(s)
-        self.pl.fig.canvas.draw()
+        self.fig.canvas.draw()
 
     def _bclick(self, event):
         for m in self.markers:
             for ax in self.allaxes:
                 self.markers[m][ax].remove()
         self.markers.clear()
-        self.pl.fig.canvas.draw()
+        self.fig.canvas.draw()
 
     def _onclick(self, event):
         if event.inaxes not in self.allaxes:
@@ -174,7 +177,7 @@ class Tardieu_window(object):
             self.markers[x] = dict()
             for ax in self.allaxes:
                 self.markers[x][ax] = ax.axvline(x=x, linewidth=1, color=col)
-            self.pl.fig.canvas.draw()
+            self.fig.canvas.draw()
 
     def _status_string(self):
         tmin_, tmax_ = self.allaxes[0].get_xlim()  # axis x limits,  float
@@ -189,7 +192,7 @@ class Tardieu_window(object):
         tmax_ = min(self.t[-1], tmax_)
         # convert into frame indices
         fmin, fmax = np.round(self.frate * np.array([tmin_, tmax_])).astype(int)
-        smin, smax = (self.pl.trial.samplesperframe*np.round([fmin, fmax])).astype(int)
+        smin, smax = (self.trial.samplesperframe*np.round([fmin, fmax])).astype(int)
         # xmin, xmax = np.round([xmin_, xmax_]).astype(int)  # int
         # velocity
         velr = abs(self.angveld[fmin:fmax])
@@ -204,7 +207,7 @@ class Tardieu_window(object):
         s += '\nMax RMS in given range:\n'
         for ch in self.emg_chs:
             rms = self.emg_rms[ch][smin:smax]
-            rmsmax, rmsmaxind = rms.max(), int(np.round((np.argmax(rms) + smin)/self.pl.trial.samplesperframe))
+            rmsmax, rmsmaxind = rms.max(), int(np.round((np.argmax(rms) + smin)/self.trial.samplesperframe))
             s += '%s:\t%g mV @ frame %d\n' % (ch, rmsmax*1e3, rmsmaxind)
         s += '\nMarkers:\n' if self.markers else ''
         for marker in self.markers:

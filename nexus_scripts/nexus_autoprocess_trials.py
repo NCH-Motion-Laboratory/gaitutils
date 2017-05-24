@@ -163,7 +163,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
                     try:
                         gaps = (nexus.get_marker_data(vicon, marker)
                                 [marker + '_gaps'])
-                    except ValueError:
+                    except GaitDataError:
                         fail = 'label_failure'
                         break
                     # check for gaps near the center frame

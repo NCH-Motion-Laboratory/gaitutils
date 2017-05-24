@@ -432,10 +432,9 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         # compute local maxima of velocity: derivative crosses zero, values ok
         vd = np.gradient(footctrv)
         vdz_ind = falling_zerocross(vd)
-        ok_inds = np.where(np.logical_and(footctrv[vdz_ind] > MIN_PEAK_VELOCITY,
+        inds = np.where(np.logical_and(footctrv[vdz_ind] > MIN_PEAK_VELOCITY,
                         footctrv[vdz_ind] < MAX_PEAK_VELOCITY))
-        maxv = np.median(footctrv[vdz_ind[ok_inds]])
-        peakv = np.median(maxv)
+        maxv = np.median(footctrv[vdz_ind[inds]])
 
         if maxv > MAX_PEAK_VELOCITY:
             raise GaitDataError('Velocity thresholds too high, data may '
@@ -463,22 +462,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         cind_max = np.logical_and(footctrv[cross+1] < MAX_SLOPE_VELOCITY,
                                   footctrv[cross+1] > MIN_SLOPE_VELOCITY)
         strikes = cross[np.logical_and(cind_min, cind_max)]
-        #too_near = np.where(np.diff(strikes) < MIN_EVENT_DISTANCE)[0] + 1
-        #strikes = np.delete(strikes, too_near)
-        logger.debug('initial strikes')
-        logger.debug(strikes)
-        
-
-        # check that peak velocity is attained before each footstrike
-        med_dist = int(np.round(.25 * np.median(np.diff(strikes))))
-        logger.debug(med_dist)
-        not_ok = list()
-        for k, s in enumerate(strikes):
-            r0 = max(s-med_dist, 0)
-            if footctrv[r0:s].max() < .75 * peakv:
-                not_ok.append(k)
-                logger.debug('peak velocity not attained before event %d' % s)
-        strikes = np.delete(strikes, not_ok)
+        too_near = np.where(np.diff(strikes) < MIN_EVENT_DISTANCE)[0] + 1
+        strikes = np.delete(strikes, too_near)
 
         if len(strikes) == 0:
             raise GaitDataError('No valid foot strikes detected')
@@ -493,16 +478,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                                   footctrv[cross+1] > MIN_SLOPE_VELOCITY)
         toeoffs = cross[np.logical_and(cind_min, cind_max)]
 
-        #too_near = np.where(np.diff(toeoffs) < MIN_EVENT_DISTANCE)[0] + 1
-        #toeoffs = np.delete(toeoffs, too_near)
-
-        # check that peak velocity is attained after each toeoff
-        not_ok = list()
-        for k, s in enumerate(toeoffs):
-            if footctrv[s:s+med_dist].max() < .75 * peakv:
-                not_ok.append(k)
-                logger.debug('peak velocity not attained after event %d' % s)
-        toeoffs = np.delete(toeoffs, not_ok)
+        too_near = np.where(np.diff(toeoffs) < MIN_EVENT_DISTANCE)[0] + 1
+        toeoffs = np.delete(toeoffs, too_near)
 
         if len(toeoffs) == 0:
             raise GaitDataError('Could not detect any toe-off events')

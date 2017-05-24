@@ -31,7 +31,7 @@ def automark_single():
     nexus.automark_events(vicon, vel_thresholds=vel,
                           max_dist=cfg.autoproc.automark_max_dist,
                           fp_events=fpe, ctr_pos=cfg.autoproc.walkway_ctr,
-                          plot=True)
+                          plot=False)
 
 if __name__ == '__main__':
     automark_single()

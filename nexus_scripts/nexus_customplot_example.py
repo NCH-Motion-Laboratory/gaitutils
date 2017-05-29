@@ -4,7 +4,7 @@ Created on Tue Apr 28 11:37:51 2015
 
 Example of a custom plot
 
-Copy to nexus_customplot.py
+Copy to nexus_scripts/nexus_customplot.py
 
 @author: Jussi
 """

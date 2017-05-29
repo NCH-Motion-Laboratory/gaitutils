@@ -166,6 +166,13 @@
         </property>
        </widget>
       </item>
+      <item row="4" column="1">
+       <widget class="QPushButton" name="btnCustom">
+        <property name="text">
+         <string>Custom plot</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>

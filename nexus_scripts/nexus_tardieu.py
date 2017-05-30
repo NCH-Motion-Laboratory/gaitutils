@@ -14,6 +14,7 @@ from gaitutils.numutils import segment_angles, rms
 from gaitutils.guiutils import messagebox
 import matplotlib.pyplot as plt
 from matplotlib.widgets import SpanSelector, Button
+import matplotlib.gridspec as gridspec
 import sys
 import logging
 import scipy.linalg
@@ -28,23 +29,23 @@ class Tardieu_window(object):
 
     def __init__(self, emg_chs=None):
         # line markers
-        self.markers = dict()
-        self.marker_button = 3  # mouse button for markers
+        self.markers = dict()  # user defined markers
+        self.marker_button = 3  # mouse button for placing markers
         self.m_colors = ['r', 'g', 'b']  # colors for markers
         self.max_markers = len(self.m_colors)
         self.emg_chs = emg_chs
-        self.clear_button_ax = [.8, .95, .15, .05]
+        self.clear_button_ax = [.8, .95, .15, .05]  # axes for 'clear' button
         self.width_ratio = [1, 3]
         self.text = ''
-        self.data_axes = list()
+        self.data_axes = list()  # axes that actually contain data
         # read data from Nexus and initialize plot
         vicon = nexus.viconnexus()
         # plot EMG vs. frames
         # x axis will be same as Nexus (here data is shown starting at frame 0)
         self.trial = Trial(vicon)
         self.frate = self.trial.framerate
-        self.time = self.trial.t / self.frate  # time axis
-        self.tmax = trial.t[-1] / self.frate
+        self.time = self.trial.t / self.frate  # time axis in sec
+        self.tmax = self.time[-1]
         # read marker data from Nexus
         data = read_data.get_marker_data(vicon, ['Toe', 'Ankle', 'Knee'])
         Ptoe = data['Toe_P']
@@ -57,10 +58,11 @@ class Tardieu_window(object):
 
         # create subplot grid
         self.fig = plt.figure()
-        gs = gridspec.GridSpec(nemg + 3, 2)
+        gs = gridspec.GridSpec(len(self.emg_chs) + 3, 2,
+                               width_ratios=self.width_ratio)
 
         # add text axis spanning the left column
-        self.textax = gs[:, 0]
+        self.textax = plt.subplot(gs[1:, 0])
         self.textax.set_axis_off()
 
         # read events
@@ -69,11 +71,12 @@ class Tardieu_window(object):
         # plot EMG signals
         self.emg_rms = dict()
         for ind, ch in enumerate(emg_chs):
-            x, emgdata = trial[ch]
+            t_, emgdata = self.trial[ch]
+            t = t_ / self.trial.analograte
             self.emg_rms[ch] = rms(emgdata, cfg.emg.rms_win)
-            ax = gs[ind, 1]
-            ax.plot(self.t, emgdata)
-            ax.plot(self.t, self.emg_rms[ch])
+            ax = plt.subplot(gs[ind, 1])
+            ax.plot(t, emgdata*1e3)
+            ax.plot(t, self.emg_rms[ch]*1e3)
             ax.set(ylabel='mV')
             ax.set_title(ch)
             self._adj_fonts(ax)
@@ -81,26 +84,26 @@ class Tardieu_window(object):
 
         # add angle plot
         pos = len(emg_chs)
-        ax = plt.subplot(self.pl.gridspec[pos, 1], sharex=self.pl.axes[0])
-        ax.plot(self.t, self.angd)
+        ax = plt.subplot(gs[pos, 1], sharex=self.data_axes[0])
+        ax.plot(self.time, self.angd)
         ax.set(ylabel='Angle (deg)')
         ax.set_title('Angle')
         self._adj_fonts(ax)
-        self.data_axes.append(ax)        
+        self.data_axes.append(ax)
 
         # add angular velocity plot
-        ax = plt.subplot(self.pl.gridspec[pos+1, 1], sharex=self.pl.axes[0])
+        ax = plt.subplot(gs[pos+1, 1], sharex=self.data_axes[0])
         self.angveld = self.frate * np.diff(self.angd, axis=0)
-        ax.plot(self.t[:-1], self.angveld)
+        ax.plot(self.time[:-1], self.angveld)
         ax.set(ylabel='Velocity (deg/s)')
         ax.set_title('Angular velocity')
         self._adj_fonts(ax)
         self.data_axes.append(ax)
 
         # add angular acceleration plot
-        ax = plt.subplot(self.pl.gridspec[pos+2, 1], sharex=self.pl.axes[0])
+        ax = plt.subplot(gs[pos+2, 1], sharex=self.data_axes[0])
         self.angaccd = np.diff(self.angveld, axis=0)
-        ax.plot(self.t[:-2], self.angaccd)
+        ax.plot(self.time[:-2], self.angaccd)
         ax.set(xlabel='Time (s)', ylabel='Acceleration (deg/s^2)')
         ax.set_title('Angular acceleration')
         self._adj_fonts(ax)
@@ -109,7 +112,6 @@ class Tardieu_window(object):
         for ax in self.data_axes:
             ax.callbacks.connect('xlim_changed',
                                  lambda ax: self._on_xzoom(ax))
-
 
         # add the span selector to all axes
         """
@@ -123,7 +125,7 @@ class Tardieu_window(object):
 
         self.fig.canvas.mpl_connect('button_press_event',
                                        lambda ev: self._onclick(ev))
-        self.pl.tight_layout()
+        #gs.tight_layout(self.fig)
 
         # add the 'Clear markers' button
         ax = plt.axes(self.clear_button_ax)
@@ -180,7 +182,7 @@ class Tardieu_window(object):
             self.fig.canvas.draw()
 
     def _status_string(self):
-        tmin_, tmax_ = self.allaxes[0].get_xlim()  # axis x limits,  float
+        tmin_, tmax_ = self.data_axes[0].get_xlim()  # axis x limits,  float
         return '%g - %g' % (tmin_, tmax_)
 
     def _status_string_(self):
@@ -252,9 +254,10 @@ class Tardieu_window(object):
 # EMG channels of interest
 emg_chs = ['L_Gastr', 'L_Sol', 'L_TibAnt']
 
+
 if __name__ == '__main__':
     t = Tardieu_window(emg_chs=emg_chs)
-    t.show()
+
     
 
 

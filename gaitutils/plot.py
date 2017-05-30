@@ -247,20 +247,6 @@ class Plotter(object):
             raise ValueError('n of height ratios must match n of rows')
         plotaxes = []
 
-        if self.fig is None or not superpose:
-            # auto size fig according to n of subplots w, limit size
-            self.figh = min(self.nrows*self.cfg.plot.inch_per_row + 1,
-                            self.cfg.plot.maxh)
-            self.figw = min(self.ncols*self.cfg.plot.inch_per_col,
-                            self.cfg.plot.maxw)
-            logger.debug('new figure: width %.2f, height %.2f'
-                         % (self.figw, self.figh))
-            self.fig = plt.figure(figsize=(self.figw, self.figh))
-            self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
-                                              height_ratios=plotheightratios)
-
-
-
         def _axis_annotate(ax, text):
             """ Annotate at center of axis """
             ctr = sum(ax.get_xlim())/2, sum(ax.get_ylim())/2.
@@ -300,6 +286,22 @@ class Plotter(object):
 
         model_cycles = _get_cycles(model_cycles)
         emg_cycles = _get_cycles(emg_cycles)
+
+        if not (model_cycles or emg_cycles):
+            raise ValueError('No matching gait cycles found in data')
+
+        if self.fig is None or not superpose:
+            # auto size fig according to n of subplots w, limit size
+            self.figh = min(self.nrows*self.cfg.plot.inch_per_row + 1,
+                            self.cfg.plot.maxh)
+            self.figw = min(self.ncols*self.cfg.plot.inch_per_col,
+                            self.cfg.plot.maxw)
+            logger.debug('new figure: width %.2f, height %.2f'
+                         % (self.figw, self.figh))
+            self.fig = plt.figure(figsize=(self.figw, self.figh))
+            self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
+                                              height_ratios=plotheightratios)
+
 
         for i, var in enumerate(self.allvars):
             var_type = self._var_type(var)

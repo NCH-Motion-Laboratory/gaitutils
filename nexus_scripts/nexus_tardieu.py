@@ -29,13 +29,15 @@ class Tardieu_window(object):
 
     def __init__(self, emg_chs=None):
         # line markers
-        self.markers = dict()  # user defined markers
-        self.marker_button = 3  # mouse button for placing markers
+
+        self.marker_button = 1  # mouse button for placing markers
+        self.marker_key = 'shift'  # modifier key for markers
         self.m_colors = ['r', 'g', 'b']  # colors for markers
+        self.markers = dict()
         self.max_markers = len(self.m_colors)
         self.emg_chs = emg_chs
-        self.clear_button_ax = [.8, .95, .15, .05]  # axes for 'clear' button
-        self.width_ratio = [1, 3]
+
+        self.width_ratio = [1, 5]
         self.text = ''
         self.data_axes = list()  # axes that actually contain data
         # read data from Nexus and initialize plot
@@ -65,6 +67,9 @@ class Tardieu_window(object):
         self.textax = plt.subplot(gs[1:, 0])
         self.textax.set_axis_off()
 
+        self.clear_button_ax = [.8, .95, .15, .05]  # axes for 'clear' button
+        self.clear_button_ax = plt.subplot(gs[0, 0])
+        
         # read events
         # evs = vicon.GetEvents('4-511', 'General', 'MuscleOn')[0]
 
@@ -74,7 +79,8 @@ class Tardieu_window(object):
             t_, emgdata = self.trial[ch]
             t = t_ / self.trial.analograte
             self.emg_rms[ch] = rms(emgdata, cfg.emg.rms_win)
-            ax = plt.subplot(gs[ind, 1])
+            sharex = None if ind == 0 else self.data_axes[0]
+            ax = plt.subplot(gs[ind, 1:], sharex=sharex)
             ax.plot(t, emgdata*1e3)
             ax.plot(t, self.emg_rms[ch]*1e3)
             ax.set(ylabel='mV')
@@ -84,27 +90,27 @@ class Tardieu_window(object):
 
         # add angle plot
         pos = len(emg_chs)
-        ax = plt.subplot(gs[pos, 1], sharex=self.data_axes[0])
+        ax = plt.subplot(gs[pos, 1:], sharex=self.data_axes[0])
         ax.plot(self.time, self.angd)
-        ax.set(ylabel='Angle (deg)')
+        ax.set(ylabel='deg')
         ax.set_title('Angle')
         self._adj_fonts(ax)
         self.data_axes.append(ax)
 
         # add angular velocity plot
-        ax = plt.subplot(gs[pos+1, 1], sharex=self.data_axes[0])
+        ax = plt.subplot(gs[pos+1, 1:], sharex=self.data_axes[0])
         self.angveld = self.frate * np.diff(self.angd, axis=0)
         ax.plot(self.time[:-1], self.angveld)
-        ax.set(ylabel='Velocity (deg/s)')
+        ax.set(ylabel='deg/s')
         ax.set_title('Angular velocity')
         self._adj_fonts(ax)
         self.data_axes.append(ax)
 
         # add angular acceleration plot
-        ax = plt.subplot(gs[pos+2, 1], sharex=self.data_axes[0])
+        ax = plt.subplot(gs[pos+2, 1:], sharex=self.data_axes[0])
         self.angaccd = np.diff(self.angveld, axis=0)
         ax.plot(self.time[:-2], self.angaccd)
-        ax.set(xlabel='Time (s)', ylabel='Acceleration (deg/s^2)')
+        ax.set(xlabel='Time (s)', ylabel='deg/s^2')
         ax.set_title('Angular acceleration')
         self._adj_fonts(ax)
         self.data_axes.append(ax)
@@ -125,7 +131,10 @@ class Tardieu_window(object):
 
         self.fig.canvas.mpl_connect('button_press_event',
                                        lambda ev: self._onclick(ev))
-        #gs.tight_layout(self.fig)
+        gs.tight_layout(self.fig)
+        hspace = .6
+        wspace = .6
+        gs.update(hspace=hspace, wspace=wspace)
 
         # add the 'Clear markers' button
         ax = plt.axes(self.clear_button_ax)
@@ -133,6 +142,9 @@ class Tardieu_window(object):
         self._clearbutton.on_clicked(lambda ev: self._bclick(ev))
 
         self.set_text(self._status_string())
+
+        figManager = plt.get_current_fig_manager()
+        figManager.window.showMaximized()
 
         plt.show()
 
@@ -159,15 +171,15 @@ class Tardieu_window(object):
 
     def _bclick(self, event):
         for m in self.markers:
-            for ax in self.allaxes:
+            for ax in self.data_axes:
                 self.markers[m][ax].remove()
         self.markers.clear()
         self.fig.canvas.draw()
 
     def _onclick(self, event):
-        if event.inaxes not in self.allaxes:
+        if event.inaxes not in self.data_axes:
             return
-        if event.button != self.marker_button:
+        if event.button != self.marker_button or event.key != 'shift':
             return
         if len(self.markers) == self.max_markers:
             messagebox('You can place a maximum of %d markers' %
@@ -177,13 +189,13 @@ class Tardieu_window(object):
         if x not in self.markers:
             col = self.m_colors[len(self.markers)]
             self.markers[x] = dict()
-            for ax in self.allaxes:
+            for ax in self.data_axes:
                 self.markers[x][ax] = ax.axvline(x=x, linewidth=1, color=col)
             self.fig.canvas.draw()
 
     def _status_string(self):
         tmin_, tmax_ = self.data_axes[0].get_xlim()  # axis x limits,  float
-        return '%g - %g' % (tmin_, tmax_)
+        return 'Time range: %.2f - %.2f s' % (tmin_, tmax_)
 
     def _status_string_(self):
         """ Data parameters -> text """

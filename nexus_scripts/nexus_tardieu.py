@@ -13,13 +13,12 @@ from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
 from gaitutils.numutils import segment_angles, rms
 from gaitutils.guiutils import messagebox
 import matplotlib.pyplot as plt
-from matplotlib.widgets import SpanSelector, Button
+from matplotlib.widgets import Button
 import matplotlib.gridspec as gridspec
 import sys
 import logging
 import scipy.linalg
 import numpy as np
-import btk
 
 
 
@@ -38,15 +37,14 @@ class Tardieu_window(object):
         self.emg_chs = emg_chs
 
         self.width_ratio = [1, 5]
-        self.text = ''
+        self.text = None
         self.data_axes = list()  # axes that actually contain data
         # read data from Nexus and initialize plot
         vicon = nexus.viconnexus()
         # plot EMG vs. frames
         # x axis will be same as Nexus (here data is shown starting at frame 0)
         self.trial = Trial(vicon)
-        self.frate = self.trial.framerate
-        self.time = self.trial.t / self.frate  # time axis in sec
+        self.time = self.trial.t / self.trial.framerate  # time axis in sec
         self.tmax = self.time[-1]
         # read marker data from Nexus
         data = read_data.get_marker_data(vicon, ['Toe', 'Ankle', 'Knee'])
@@ -57,8 +55,10 @@ class Tardieu_window(object):
         Pall = np.stack([Ptoe, Pank, Pknee], axis=1)
         # compute segment angles (deg)
         self.angd = segment_angles(Pall) / np.pi * 180
-
-        # create subplot grid
+        # normalize: plantarflexion negative, 0 at straight angle
+        # TODO: use the normal angle from Nexus
+        self.angd = 90-self.angd                          
+        
         self.fig = plt.figure()
         gs = gridspec.GridSpec(len(self.emg_chs) + 3, 2,
                                width_ratios=self.width_ratio)
@@ -88,8 +88,8 @@ class Tardieu_window(object):
             self._adj_fonts(ax)
             self.data_axes.append(ax)
 
-        # add angle plot
         pos = len(emg_chs)
+        # add angle plot
         ax = plt.subplot(gs[pos, 1:], sharex=self.data_axes[0])
         ax.plot(self.time, self.angd)
         ax.set(ylabel='deg')
@@ -99,7 +99,7 @@ class Tardieu_window(object):
 
         # add angular velocity plot
         ax = plt.subplot(gs[pos+1, 1:], sharex=self.data_axes[0])
-        self.angveld = self.frate * np.diff(self.angd, axis=0)
+        self.angveld = self.trial.framerate * np.diff(self.angd, axis=0)
         ax.plot(self.time[:-1], self.angveld)
         ax.set(ylabel='deg/s')
         ax.set_title('Angular velocity')
@@ -115,34 +115,28 @@ class Tardieu_window(object):
         self._adj_fonts(ax)
         self.data_axes.append(ax)
 
+        # refresh text field on zoom
         for ax in self.data_axes:
-            ax.callbacks.connect('xlim_changed',
-                                 lambda ax: self._on_xzoom(ax))
+            ax.callbacks.connect('xlim_changed', self._redraw)
 
-        # add the span selector to all axes
-        """
-        spans = []
-        for ax in self.allaxes:
-            span = SpanSelector(ax, self._onselect, 'horizontal', useblit=True,
-                                button=1,
-                                rectprops=dict(alpha=0.5, facecolor='red'))
-            spans.append(span)  # keep reference
-        """
-
-        self.fig.canvas.mpl_connect('button_press_event',
-                                       lambda ev: self._onclick(ev))
+        # catch mouse click to add events
+        self.fig.canvas.mpl_connect('button_press_event', self._onclick)
+        
+        # adjust plot layout
         gs.tight_layout(self.fig)
         hspace = .6
-        wspace = .6
+        wspace = .1
         gs.update(hspace=hspace, wspace=wspace)
 
         # add the 'Clear markers' button
         ax = plt.axes(self.clear_button_ax)
         self._clearbutton = Button(ax, 'Clear markers')
-        self._clearbutton.on_clicked(lambda ev: self._bclick(ev))
+        self._clearbutton.on_clicked(self._bclick)
 
-        self.set_text(self._status_string())
-
+        self.tmin, self.tmax = self.data_axes[0].get_xlim()
+        self._update_status_text()
+        
+        # maximize window
         figManager = plt.get_current_fig_manager()
         figManager.window.showMaximized()
 
@@ -151,10 +145,7 @@ class Tardieu_window(object):
     def set_text(self, text):
         self.text = self.textax.text(0, 1, text, ha='left', va='top',
                                      transform=self.textax.transAxes)
-
-    def clear_text(self):
-        self.text.remove()
-
+        
     @staticmethod
     def _adj_fonts(ax):
         ax.xaxis.label.set_fontsize(cfg.plot.label_fontsize)
@@ -163,19 +154,19 @@ class Tardieu_window(object):
         ax.tick_params(axis='both', which='major',
                        labelsize=cfg.plot.ticks_fontsize)
 
-    def _on_xzoom(self, ax):
-        s = self._status_string()
-        self.clear_text()
-        self.set_text(s)
-        self.fig.canvas.draw()
+    def _redraw(self, ax):
+        # we need to get the limits from the axis that was zoomed
+        # (the limits are not instantly updated by sharex)
+        self.tmin, self.tmax = ax.get_xlim()
+        self._update_status_text()
 
     def _bclick(self, event):
         for m in self.markers:
             for ax in self.data_axes:
                 self.markers[m][ax].remove()
         self.markers.clear()
-        self.fig.canvas.draw()
-
+        self._update_status_text()
+        
     def _onclick(self, event):
         if event.inaxes not in self.data_axes:
             return
@@ -191,86 +182,46 @@ class Tardieu_window(object):
             self.markers[x] = dict()
             for ax in self.data_axes:
                 self.markers[x][ax] = ax.axvline(x=x, linewidth=1, color=col)
-            self.fig.canvas.draw()
-
-    def _status_string(self):
-        tmin, tmax = self.data_axes[0].get_xlim()  # axis x limits,  float
-        # cap at data limits
-        tmin_ = max(self.time[0], tmin)
-        tmax_ = min(self.time[-1], tmax)
-        s = 'Data range shown: %.2f - %.2f s' % (tmin_, tmax_)
-        # frame indices
-        fmin, fmax = np.round(self.frate * np.array([tmin_, tmax_])).astype(int)
-        # velocity
-        velr = abs(self.angveld[fmin:fmax])
-        velmax, velmaxind = velr.max(), np.argmax(velr) + xmin
-        return s
+            self._redraw(event.inaxes)
+            
+    def _time_to_frame(self, times, rate):
+        return np.round(rate * np.array(times)).astype(int)
         
-
-    def _status_string_(self):
-        """ Data parameters -> text """
-        # take t limits as x axis limits
-        tmin_, tmax_ = self.allaxes[0].get_xlim()  # axis x limits,  float
-        # cap t limits at data t limits
-        tmin_ = max(self.time[0], tmin_)
-        tmax_ = min(self.time[-1], tmax_)
-        # convert into frame indices
-        fmin, fmax = np.round(self.frate * np.array([tmin_, tmax_])).astype(int)
-        smin, smax = (self.trial.samplesperframe*np.round([fmin, fmax])).astype(int)
-        # xmin, xmax = np.round([xmin_, xmax_]).astype(int)  # int
-        # velocity
-        velr = abs(self.angveld[fmin:fmax])
-        velmax, velmaxind = velr.max(), np.argmax(velr) + xmin
-        # foot angle
+    def _update_status_text(self):
+        if self.text is not None:
+            self.text.remove()
+        # find the limits of the data that is shown
+        tmin_ = max(self.time[0], self.tmin)
+        tmax_ = min(self.time[-1], self.tmax)
+        s = 'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)
+        # frame indices corresponding to time limits
+        fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
+        # analog sample indices ...
+        smin, smax = self._time_to_frame([tmin_, tmax_], self.trial.analograte)
+        s += 'In frames: %d - %d\n' % (fmin, fmax)
+        # foot angle in chosen range and the maximum
         angr = self.angd[fmin:fmax]
-        angmax, angmaxind = angr.max(), np.argmax(angr) + xmin
-        s = u''
-        s += 'Time range: %.2f - %.2f s\n' % (xmin, xmax)
+        angmax, angmaxind = np.nanmax(angr), np.nanargmax(angr)/self.trial.framerate + tmin_
+        # same for velocity
+        velr = abs(self.angveld[fmin:fmax])
+        velmax, velmaxind = np.nanmax(velr), np.nanargmax(velr)/self.trial.framerate + tmin_
+        s += 'Max angle: %.2f deg/s @ %.2f s\n' % (angmax, angmaxind)
         s += 'Max velocity: %.2f deg/s @ %.2f s\n' % (velmax, velmaxind)
-        s += 'Max angle: %.2f deg @ %.2f s\n' % (angmax, angmaxind)
-        s += '\nMax RMS in given range:\n'
+
+        s += '\nEMG RMS peaks:\n'
         for ch in self.emg_chs:
             rms = self.emg_rms[ch][smin:smax]
-            rmsmax, rmsmaxind = rms.max(), int(np.round((np.argmax(rms) + smin)/self.trial.samplesperframe))
-            s += '%s:\t%g mV @ frame %d\n' % (ch, rmsmax*1e3, rmsmaxind)
+            rmsmax, rmsmaxind = rms.max(), np.argmax(rms)/self.trial.analograte + tmin_
+            s += '%s: %.2f mV @ %.2f s\n' % (ch, rmsmax*1e3, rmsmaxind)
+
         s += '\nMarkers:\n' if self.markers else ''
-        for marker in self.markers:
-            if xmin_ < marker < xmax_:
-                s += 'Ankle angle at marker %d: %.2f deg\n' % (marker, self.angd[marker])
-        return s
-    
 
-        
-
-
-
-
-"""
-    @staticmethod
-    def _onselect(xmin_, xmax_):
-        xmin, xmax = np.round([xmin_, xmax_]).astype(int)
-        # velocity
-        velr = abs(angveld[xmin:xmax])
-        velmax, velmaxind = velr.max(), np.argmax(velr) + xmin
-        # foot angle
-        angr = angd[xmin:xmax]
-        angmax, angmaxind = angr.max(), np.argmax(angr) + xmin
-        s = ''
-        s += 'Selected range\t\t%d-%d\n' % (xmin, xmax)
-        s += 'Max velocity\t\t%.2f deg/s @ frame %d\n' % (velmax, velmaxind)
-        s += 'Max angle\t\t\t%.2f deg @ frame %d\n' % (angmax, angmaxind)
-        s += '\nMax RMS in given range:\n'
-        for ch in emg_chs:
-            smin, smax = (pl.trial.samplesperframe*np.round([xmin_, xmax_])).astype(int)
-            rms = emg_rms[ch][smin:smax]
-            rmsmax, rmsmaxind = rms.max(), int(np.round((np.argmax(rms) + smin)/pl.trial.samplesperframe))
-            s += '%s\t\t\t%g mV @ frame %d\n' % (ch, rmsmax*1e3, rmsmaxind)
-        s += '\nMarkers:\n' if events else ''
-        for event in events:
-            if xmin_ < event < xmax_:
-                s += 'Ankle angle at marker %d: %.2f deg\n' % (event, angd[event])
-        messagebox(s, title='Info')
-"""
+        for marker in sorted(self.markers):
+            frame = self._time_to_frame(marker, self.trial.framerate)
+            s += '%.2f s: %.2f deg\n' % (marker, self.angd[frame])
+        self.text = self.textax.text(0, 1, s, ha='left', va='top',
+                                     transform=self.textax.transAxes)
+        self.fig.canvas.draw()
 
 
 # EMG channels of interest

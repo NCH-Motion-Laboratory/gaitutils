@@ -36,7 +36,7 @@ class Tardieu_window(object):
         self.max_markers = len(self.m_colors)
         self.emg_chs = emg_chs
 
-        self.width_ratio = [1, 5]
+        self.width_ratio = [1, 8]
         self.text = None
         self.data_axes = list()  # axes that actually contain data
         # read data from Nexus and initialize plot
@@ -59,7 +59,7 @@ class Tardieu_window(object):
         # TODO: use the normal angle from Nexus
         self.angd = 90-self.angd                          
         
-        self.fig = plt.figure()
+        self.fig = plt.figure(figsize=(20,10))
         gs = gridspec.GridSpec(len(self.emg_chs) + 3, 2,
                                width_ratios=self.width_ratio)
 
@@ -118,14 +118,16 @@ class Tardieu_window(object):
         # refresh text field on zoom
         for ax in self.data_axes:
             ax.callbacks.connect('xlim_changed', self._redraw)
-
+            
         # catch mouse click to add events
         self.fig.canvas.mpl_connect('button_press_event', self._onclick)
-        
+        # catch key press
+        self.fig.canvas.mpl_connect('key_press_event', self._onpress)
+
         # adjust plot layout
         gs.tight_layout(self.fig)
-        hspace = .6
-        wspace = .1
+        hspace = .4
+        wspace = .2
         gs.update(hspace=hspace, wspace=wspace)
 
         # add the 'Clear markers' button
@@ -137,8 +139,8 @@ class Tardieu_window(object):
         self._update_status_text()
         
         # maximize window
-        figManager = plt.get_current_fig_manager()
-        figManager.window.showMaximized()
+        #figManager = plt.get_current_fig_manager()
+        #figManager.window.showMaximized()
 
         plt.show()
 
@@ -167,6 +169,10 @@ class Tardieu_window(object):
         self.markers.clear()
         self._update_status_text()
         
+    def _onpress(self, event):
+        if event.key == 'escape':
+            self._bclick(event)
+        
     def _onclick(self, event):
         if event.inaxes not in self.data_axes:
             return
@@ -185,6 +191,7 @@ class Tardieu_window(object):
             self._redraw(event.inaxes)
             
     def _time_to_frame(self, times, rate):
+        # convert time to frames or analog frames (according to rate)
         return np.round(rate * np.array(times)).astype(int)
         
     def _update_status_text(self):

@@ -194,16 +194,26 @@ class Tardieu_window(object):
             self.fig.canvas.draw()
 
     def _status_string(self):
-        tmin_, tmax_ = self.data_axes[0].get_xlim()  # axis x limits,  float
-        return 'Time range: %.2f - %.2f s' % (tmin_, tmax_)
+        tmin, tmax = self.data_axes[0].get_xlim()  # axis x limits,  float
+        # cap at data limits
+        tmin_ = max(self.time[0], tmin)
+        tmax_ = min(self.time[-1], tmax)
+        s = 'Data range shown: %.2f - %.2f s' % (tmin_, tmax_)
+        # frame indices
+        fmin, fmax = np.round(self.frate * np.array([tmin_, tmax_])).astype(int)
+        # velocity
+        velr = abs(self.angveld[fmin:fmax])
+        velmax, velmaxind = velr.max(), np.argmax(velr) + xmin
+        return s
+        
 
     def _status_string_(self):
         """ Data parameters -> text """
         # take t limits as x axis limits
         tmin_, tmax_ = self.allaxes[0].get_xlim()  # axis x limits,  float
         # cap t limits at data t limits
-        tmin_ = max(self.t[0], tmin_)
-        tmax_ = min(self.t[-1], tmax_)
+        tmin_ = max(self.time[0], tmin_)
+        tmax_ = min(self.time[-1], tmax_)
         # convert into frame indices
         fmin, fmax = np.round(self.frate * np.array([tmin_, tmax_])).astype(int)
         smin, smax = (self.trial.samplesperframe*np.round([fmin, fmax])).astype(int)

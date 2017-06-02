@@ -156,9 +156,11 @@ class Plotter(object):
 
         model_cycles : dict of int |  dict of list | 'all' | None
                 Gait cycles to plot. Defaults to first cycle (1) for
-                both contexts. Multiple cycles can be given as lists.
+                both contexts. Dict keys 'R' and 'L' specify the cycles
+                for right and left contexts. Multiple cycles can be given
+                as lists.
                 If None, plot unnormalized data. If 'all', plot all cycles.
-                If 'forceplate', plot cycles that start on valid forceplate
+                If 'forceplate', plot all cycles that start on valid forceplate
                 contact.
         emg_cycles : dict of int | int | dict of list | 'all' | None
                 Same as above, applied to EMG variables.

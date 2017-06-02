@@ -21,8 +21,6 @@ import scipy.linalg
 import numpy as np
 
 
-
-
 class Tardieu_window(object):
     """ Open a matplotlib window for Tardieu analysis """
 
@@ -36,7 +34,7 @@ class Tardieu_window(object):
         self.max_markers = len(self.m_colors)
         self.emg_chs = emg_chs
 
-        self.width_ratio = [1, 8]
+        self.width_ratio = [1, 6]
         self.text = None
         self.data_axes = list()  # axes that actually contain data
         # read data from Nexus and initialize plot
@@ -59,7 +57,7 @@ class Tardieu_window(object):
         # TODO: use the normal angle from Nexus
         self.angd = 90-self.angd                          
         
-        self.fig = plt.figure(figsize=(20,10))
+        self.fig = plt.figure(figsize=(16, 10))
         gs = gridspec.GridSpec(len(self.emg_chs) + 3, 2,
                                width_ratios=self.width_ratio)
 
@@ -69,7 +67,7 @@ class Tardieu_window(object):
 
         self.clear_button_ax = [.8, .95, .15, .05]  # axes for 'clear' button
         self.clear_button_ax = plt.subplot(gs[0, 0])
-        
+
         # read events
         # evs = vicon.GetEvents('4-511', 'General', 'MuscleOn')[0]
 
@@ -137,17 +135,17 @@ class Tardieu_window(object):
 
         self.tmin, self.tmax = self.data_axes[0].get_xlim()
         self._update_status_text()
-        
+
         # maximize window
-        #figManager = plt.get_current_fig_manager()
-        #figManager.window.showMaximized()
+        # figManager = plt.get_current_fig_manager()
+        # figManager.window.showMaximized()
 
         plt.show()
 
     def set_text(self, text):
         self.text = self.textax.text(0, 1, text, ha='left', va='top',
                                      transform=self.textax.transAxes)
-        
+
     @staticmethod
     def _adj_fonts(ax):
         ax.xaxis.label.set_fontsize(cfg.plot.label_fontsize)
@@ -225,22 +223,16 @@ class Tardieu_window(object):
 
         for marker in sorted(self.markers):
             frame = self._time_to_frame(marker, self.trial.framerate)
-            s += '%.2f s: %.2f deg\n' % (marker, self.angd[frame])
+            s += '%.2f s: %.2f deg\n\n' % (marker, self.angd[frame])
         self.text = self.textax.text(0, 1, s, ha='left', va='top',
                                      transform=self.textax.transAxes)
         self.fig.canvas.draw()
 
 
-# EMG channels of interest
-emg_chs = ['L_Gastr', 'L_Sol', 'L_TibAnt']
-
+def do_plot():
+    # EMG channels of interest
+    emg_chs = ['L_Gastr', 'L_Sol', 'L_TibAnt']
+    Tardieu_window(emg_chs=emg_chs)
 
 if __name__ == '__main__':
-    t = Tardieu_window(emg_chs=emg_chs)
-
-    
-
-
-
-
-
+    do_plot()

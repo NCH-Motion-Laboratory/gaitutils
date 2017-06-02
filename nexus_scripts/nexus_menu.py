@@ -17,6 +17,7 @@ import nexus_kin_consistency
 import nexus_autoprocess_current
 import nexus_autoprocess_trials
 import nexus_kinallplot
+import nexus_tardieu
 try:
     from nexus_scripts import nexus_customplot
     have_custom = True
@@ -77,6 +78,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnEMG.clicked.connect(nexus_emgplot.do_plot)
         self.btnKinEMG.clicked.connect(nexus_kinetics_emgplot.do_plot)
         self.btnKinall.clicked.connect(nexus_kinallplot.do_plot)
+        self.btnTardieu.clicked.connect(nexus_tardieu.do_plot)
         if have_custom:
             self.btnCustom.clicked.connect(nexus_customplot.do_plot)
         else:

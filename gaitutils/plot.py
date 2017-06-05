@@ -396,6 +396,8 @@ class Plotter(object):
                                                     model_normals_color,
                                                     alpha=self.cfg.plot.
                                                     model_normals_alpha)
+                                    # tighten x limits
+                                    ax.set_xlim(tnor[0], tnor[-1])
 
             elif var_type == 'emg':
                 for cycle in emg_cycles:

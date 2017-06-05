@@ -10,8 +10,8 @@ import models
 import nexus
 import numutils
 from trial import Trial
-import matplotlib.pyplot as plt
-from matplotlib import pylab
+import matplotlib
+from matplotlib.figure import Figure
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.gridspec as gridspec
 import os.path as op
@@ -84,7 +84,7 @@ class Plotter(object):
     def move_plot_window(self, x, y):
         """ Move figure upper left corner to x,y. Only works with
         Qt backend. """
-        if 'Qt4' in pylab.get_backend():
+        if 'Qt4' or 'Qt5' in pylab.get_backend():
             cman = pylab.get_current_fig_manager()
             _, _, dx, dy = cman.window.geometry().getRect()
             cman.window.setGeometry(x, y, dx, dy)
@@ -126,7 +126,7 @@ class Plotter(object):
         # self.gridspec.update(top=top)
         self.gridspec.update(top=top, hspace=hspace)
 
-    def plot_trial(self,
+    def plot_trial(self, interactive=True,
                    model_cycles=cfg.plot.default_model_cycles,
                    emg_cycles=cfg.plot.default_emg_cycles,
                    plotheightratios=None,
@@ -154,6 +154,8 @@ class Plotter(object):
 
         """ Create plot of variables. Parameters:
 
+        interactive: if True, use the pyplot event loop to show the figure
+        in a GUI. If False, do not import pyplot (needed for embedding).
         model_cycles : dict of int |  dict of list | 'all' | None
                 Gait cycles to plot. Defaults to first cycle (1) for
                 both contexts. Dict keys 'R' and 'L' specify the cycles
@@ -303,19 +305,23 @@ class Plotter(object):
                             self.cfg.plot.maxw)
             logger.debug('new figure: width %.2f, height %.2f'
                          % (self.figw, self.figh))
-            self.fig = plt.figure(figsize=(self.figw, self.figh))
+            if interactive:
+                import matplotlib.pyplot as plt
+                self.fig = plt.figure(figsize=(self.figw, self.figh))
+            else:
+                self.fig = Figure(figsize=(self.figw, self.figh))
+            self.interactive = interactive
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)
-
 
         for i, var in enumerate(self.allvars):
             var_type = self._var_type(var)
             if var_type is None:
                 continue
             if sharex and len(plotaxes) > 0:
-                ax = plt.subplot(self.gridspec[i], sharex=plotaxes[-1])
+                ax = self.fig.add_subplot(self.gridspec[i], sharex=plotaxes[-1])
             else:
-                ax = plt.subplot(self.gridspec[i])
+                ax = self.fig.add_subplot(self.gridspec[i])
 
             if var_type == 'model':
                 model = models.model_from_var(var)
@@ -453,10 +459,10 @@ class Plotter(object):
                             emgbar_ind = self.cfg.emg.channel_normaldata[var]
                             for k in range(len(emgbar_ind)):
                                 inds = emgbar_ind[k]
-                                plt.axvspan(inds[0], inds[1], alpha=self.cfg.
-                                            plot.emg_normals_alpha,
-                                            color=self.cfg.
-                                            plot.emg_normals_color)
+                                ax.axvspan(inds[0], inds[1], alpha=self.cfg.
+                                           plot.emg_normals_alpha,
+                                           color=self.cfg.
+                                           plot.emg_normals_color)
                         if cycle is None and var in self.layout[-1]:
                             xlabel = 'Time (s)' if x_axis_is_time else 'Frame'
                             ax.set(xlabel=xlabel)
@@ -471,16 +477,16 @@ class Plotter(object):
                 if var_type == 'model_legend':
                     legtitle = ['Model traces:']
                     artists = self.modelartists
-                    artists.append(plt.Line2D((0, 1), (0, 0),
+                    artists.append(matplotlib.lines.Line2D((0, 1), (0, 0),
                                    color=model_tracecolor, linewidth=2,
                                    linestyle=lstyle))
                 else:
                     legtitle = ['EMG traces:']
                     artists = self.emgartists
-                    artists.append(plt.Line2D((0, 1), (0, 0), linewidth=2,
+                    artists.append(matplotlib.lines.Line2D((0, 1), (0, 0), linewidth=2,
                                               color=emg_tracecolor))
-                plt.axis('off')
-                nothing = [plt.Rectangle((0, 0), 1, 1, fc="w", fill=False,
+                #plt.axis('off')
+                nothing = [matplotlib.patches.Rectangle((0, 0), 1, 1, fc="w", fill=False,
                                          edgecolor='none', linewidth=0)]
                 ax.legend(nothing+artists,
                           legtitle+self.legendnames, loc='upper center',
@@ -488,8 +494,8 @@ class Plotter(object):
                           prop={'size': self.cfg.plot.legend_fontsize})
             plotaxes.append(ax)
 
-        plt.suptitle(maintitle, fontsize=self.cfg.plot.maintitle_fontsize,
-                     fontweight="bold")
+        self.fig.suptitle(maintitle, fontsize=self.cfg.plot.maintitle_fontsize,
+                          fontweight="bold")
         self.tight_layout()
         
         if show:
@@ -507,8 +513,8 @@ class Plotter(object):
         return maintitle
 
     def show(self):
-        """ Show all figures """
-        plt.show()
+        """ Show all figures. Only works if interactive=True """
+        self.fig.show()
 
     def create_pdf(self, pdf_name=None, pdf_prefix=None):
         """ Make a pdf out of the created figure into the Nexus session dir.

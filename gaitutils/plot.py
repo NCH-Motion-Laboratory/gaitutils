@@ -84,10 +84,11 @@ class Plotter(object):
     def move_plot_window(self, x, y):
         """ Move figure upper left corner to x,y. Only works with
         Qt backend. """
-        if 'Qt4' or 'Qt5' in pylab.get_backend():
-            cman = pylab.get_current_fig_manager()
-            _, _, dx, dy = cman.window.geometry().getRect()
-            cman.window.setGeometry(x, y, dx, dy)
+        pass
+        # if 'Qt4' or 'Qt5' in pylab.get_backend():
+        #    cman = pylab.get_current_fig_manager()
+        #    _, _, dx, dy = cman.window.geometry().getRect()
+        #    cman.window.setGeometry(x, y, dx, dy)
 
     def _var_type(self, var):
         """ Helper to return variable type """
@@ -117,7 +118,7 @@ class Plotter(object):
 
     def tight_layout(self):
         """ Customized tight layout """
-        self.gridspec.tight_layout(self.fig)
+        self.gridspec.tight_layout(self.fig, h_pad=2, w_pad=.2)
         # space for main title
         top = (self.figh - self.cfg.plot.titlespace) / self.figh
         # decrease vertical spacing
@@ -305,12 +306,12 @@ class Plotter(object):
                             self.cfg.plot.maxw)
             logger.debug('new figure: width %.2f, height %.2f'
                          % (self.figw, self.figh))
+            self.interactive = interactive
             if interactive:
                 import matplotlib.pyplot as plt
                 self.fig = plt.figure(figsize=(self.figw, self.figh))
             else:
                 self.fig = Figure(figsize=(self.figw, self.figh))
-            self.interactive = interactive
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)
 
@@ -499,8 +500,8 @@ class Plotter(object):
         self.fig.suptitle(maintitle, fontsize=self.cfg.plot.maintitle_fontsize,
                           fontweight="bold")
         self.tight_layout()
-        
-        if show:
+
+        if show and self.interactive:
             self.show()
 
     def title_with_eclipse_info(self, prefix=''):

@@ -529,6 +529,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
 
         # create the events in Vicon Nexus
         # Nexus frame numbers are 1-based so add 1
+        logger.debug('marking events in Nexus')
         side_str = 'Right' if this_side == 'R' else 'Left'
         if mark:
             for fr in strikes:

@@ -502,7 +502,7 @@ class Plotter(object):
         self.tight_layout()
 
         if show and self.interactive:
-            self.fig.show()
+            self.show()
 
     def title_with_eclipse_info(self, prefix=''):
         """ Create title: prefix + trial name + Eclipse description and
@@ -514,6 +514,11 @@ class Plotter(object):
         maintitle += ' (%s)' % desc if desc else ''
         maintitle += ' (%s)' % notes if notes else ''
         return maintitle
+
+    def show(self):
+        logger.debug('calling show')
+        if self.interactive and self.fig is not None:
+            self.fig.show()
 
     def create_pdf(self, pdf_name=None, pdf_prefix=None):
         """ Make a pdf out of the created figure into the Nexus session dir.

@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Jun 02 14:29:00 2017
+Embed mpl canvas into Qt GUI
+
+See also:
+    
+https://stackoverflow.com/questions/36665850/matplotlib-animation-inside-your-own-pyqt4-gui/36669876#36669876
 
 @author: hus20664877
 """
@@ -21,7 +25,7 @@ class Window(QtWidgets.QDialog):
 
         pl = Plotter()
         pl.open_nexus_trial()
-        pl.layout = cfg.layouts.lb_kinematics
+        pl.layout = cfg.layouts.std_emg
         pl.plot_trial(interactive=False)
 
         self.figure = pl.fig
@@ -42,7 +46,7 @@ class Window(QtWidgets.QDialog):
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.toolbar)
         layout.addWidget(self.canvas)
-        layout.addWidget(self.button)
+        #layout.addWidget(self.button)
         self.setLayout(layout)
 
     def plot(self):

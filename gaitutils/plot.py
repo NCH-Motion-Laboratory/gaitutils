@@ -123,11 +123,13 @@ class Plotter(object):
         bottom = .07
         left = .07
         right = .96
+        hspace = .7
+        wspace = .3
         self.fig.subplots_adjust(left=left, right=right,
                                  bottom=bottom, top=top,
-                                 hspace=0.6, wspace=0.2)
+                                 hspace=hspace, wspace=wspace)
 
-    def plot_trial(self, interactive=True,
+    def plot_trial(self,
                    model_cycles=cfg.plot.default_model_cycles,
                    emg_cycles=cfg.plot.default_emg_cycles,
                    plotheightratios=None,
@@ -150,13 +152,12 @@ class Plotter(object):
                    sharex=True,
                    superpose=False,
                    show=True,
+                   interactive=True,
                    maintitle=None,
                    maintitleprefix=None):
 
         """ Create plot of variables. Parameters:
 
-        interactive: if True, use the pyplot event loop to show the figure
-        in a GUI. If False, do not import pyplot (needed for embedding).
         model_cycles : dict of int |  dict of list | 'all' | None
                 Gait cycles to plot. Defaults to first cycle (1) for
                 both contexts. Dict keys 'R' and 'L' specify the cycles
@@ -228,8 +229,13 @@ class Plotter(object):
                 If superpose=False, create new figure. Otherwise superpose
                 on existing figure.
         show : bool
-                Whether to show the plot after plotting is finished. Can also
-                set show=False and call plotter.show() explicitly.
+                Whether to show the plot after plotting is finished. Use
+                show=False if overlaying multiple trials and call show()
+                after finished. If interactive=False, this has no effect.
+        interactive: bool
+                If True, start the pyplot event loop to show the figure
+                in a GUI. If False, do not import pyplot (this needed for
+                e.g. embedding in Qt).
         maintitle : str
                 Main title for the plot.
         maintitleprefix : str

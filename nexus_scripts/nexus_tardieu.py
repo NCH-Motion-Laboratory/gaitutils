@@ -33,6 +33,7 @@ class Tardieu_window(object):
         self.markers = dict()
         self.max_markers = len(self.m_colors)
         self.emg_chs = emg_chs
+        self.emg_yrange = [-.5e-3, .5e-3]
 
         self.width_ratio = [1, 6]
         self.text = None
@@ -81,6 +82,7 @@ class Tardieu_window(object):
             ax = plt.subplot(gs[ind, 1:], sharex=sharex)
             ax.plot(t, emgdata*1e3)
             ax.plot(t, self.emg_rms[ch]*1e3)
+            ax.set_ylim(self.emg_yrange[0]*1e3, self.emg_yrange[1]*1e3)
             ax.set(ylabel='mV')
             ax.set_title(ch)
             self._adj_fonts(ax)
@@ -108,7 +110,7 @@ class Tardieu_window(object):
         ax = plt.subplot(gs[pos+2, 1:], sharex=self.data_axes[0])
         self.angaccd = np.diff(self.angveld, axis=0)
         ax.plot(self.time[:-2], self.angaccd)
-        ax.set(xlabel='Time (s)', ylabel='deg/s^2')
+        ax.set(xlabel='Time (s)', ylabel=u'deg/s²')
         ax.set_title('Angular acceleration')
         self._adj_fonts(ax)
         self.data_axes.append(ax)

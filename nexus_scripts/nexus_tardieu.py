@@ -32,6 +32,7 @@ class Tardieu_window(object):
         self.m_colors = ['r', 'g', 'b']  # colors for markers
         self.markers = dict()
         self.max_markers = len(self.m_colors)
+        self.marker_width = 1.5
         self.emg_chs = emg_chs
         self.emg_yrange = [-.5e-3, .5e-3]
 
@@ -187,7 +188,9 @@ class Tardieu_window(object):
             col = self.m_colors[len(self.markers)]
             self.markers[x] = dict()
             for ax in self.data_axes:
-                self.markers[x][ax] = ax.axvline(x=x, linewidth=1, color=col)
+                self.markers[x][ax] = ax.axvline(x=x,
+                                                 linewidth=self.marker_width,
+                                                 color=col)
             self._redraw(event.inaxes)
 
     def _time_to_frame(self, times, rate):
@@ -230,7 +233,6 @@ class Tardieu_window(object):
                 frame = self._time_to_frame(marker, self.trial.framerate)
                 s += u'%.2f s:\npos %.2f° vel %.2f°/s acc %.2f°/s² \n\n' % (marker, self.angd[frame], self.angveld[frame],
                                                                             self.angaccd[frame])
-
         self.text = self.textax.text(0, 1, s, ha='left', va='top',
                                      transform=self.textax.transAxes)
         self.fig.canvas.draw()

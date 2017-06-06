@@ -23,11 +23,12 @@ class Window(QtWidgets.QDialog):
         pl.open_nexus_trial()
         pl.layout = cfg.layouts.lb_kinematics
         pl.plot_trial(interactive=False)
+
         self.figure = pl.fig
+
 
         # this is the Canvas Widget that displays the `figure`
         # it takes the `figure` instance as a parameter to __init__
-
         self.canvas = FigureCanvas(self.figure)
 
         # this is the Navigation widget

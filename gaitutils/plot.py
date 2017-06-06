@@ -118,14 +118,14 @@ class Plotter(object):
 
     def tight_layout(self):
         """ Customized tight layout """
-        self.gridspec.tight_layout(self.fig, h_pad=2, w_pad=.2)
         # space for main title
         top = (self.figh - self.cfg.plot.titlespace) / self.figh
-        # decrease vertical spacing
-        hspace = .6
-        # self.gridspec.update(hspace=hspace)
-        # self.gridspec.update(top=top)
-        self.gridspec.update(top=top, hspace=hspace)
+        bottom = .07
+        left = .07
+        right = .96
+        self.fig.subplots_adjust(left=left, right=right,
+                                 bottom=bottom, top=top,
+                                 hspace=0.6, wspace=0.2)
 
     def plot_trial(self, interactive=True,
                    model_cycles=cfg.plot.default_model_cycles,
@@ -502,7 +502,7 @@ class Plotter(object):
         self.tight_layout()
 
         if show and self.interactive:
-            self.show()
+            self.fig.show()
 
     def title_with_eclipse_info(self, prefix=''):
         """ Create title: prefix + trial name + Eclipse description and
@@ -514,10 +514,6 @@ class Plotter(object):
         maintitle += ' (%s)' % desc if desc else ''
         maintitle += ' (%s)' % notes if notes else ''
         return maintitle
-
-    def show(self):
-        """ Show all figures. Only works if interactive=True """
-        self.fig.show()
 
     def create_pdf(self, pdf_name=None, pdf_prefix=None):
         """ Make a pdf out of the created figure into the Nexus session dir.

@@ -32,12 +32,14 @@ class Tardieu_window(object):
         self.m_colors = ['r', 'g', 'b']  # colors for markers
         self.markers = dict()
         self.max_markers = len(self.m_colors)
+        self.mpos = np.linspace(.75, .6, self.max_markers)
         self.marker_width = 1.5
         self.emg_chs = emg_chs
         self.emg_yrange = [-.5e-3, .5e-3]
 
         self.width_ratio = [1, 6]
-        self.text = None
+        self.texts = []
+        self.text_fontsize = 9
         self.data_axes = list()  # axes that actually contain data
         # read data from Nexus and initialize plot
         vicon = nexus.viconnexus()
@@ -145,10 +147,6 @@ class Tardieu_window(object):
 
         plt.show()
 
-    def set_text(self, text):
-        self.text = self.textax.text(0, 1, text, ha='left', va='top',
-                                     transform=self.textax.transAxes)
-
     @staticmethod
     def _adj_fonts(ax):
         ax.xaxis.label.set_fontsize(cfg.plot.label_fontsize)
@@ -196,10 +194,18 @@ class Tardieu_window(object):
     def _time_to_frame(self, times, rate):
         # convert time to frames or analog frames (according to rate)
         return np.round(rate * np.array(times)).astype(int)
+    
+    def _plot_text(self, s, ypos, color):
+        self.texts.append(self.textax.text(0, ypos, s, ha='left', va='top',
+                                           transform=self.textax.transAxes,
+                                           fontsize=self.text_fontsize,
+                                           color=color))
+        
 
     def _update_status_text(self):
-        if self.text is not None:
-            self.text.remove()
+        if self.texts:
+            [txt.remove() for txt in self.texts]
+            self.texts = []
         # find the limits of the data that is shown
         tmin_ = max(self.time[0], self.tmin)
         tmax_ = min(self.time[-1], self.tmax)
@@ -226,15 +232,15 @@ class Tardieu_window(object):
                 rms = self.emg_rms[ch][smin:smax]
                 rmsmax, rmsmaxind = rms.max(), np.argmax(rms)/self.trial.analograte + tmin_
                 s += u'%s: %.2f mV @ %.2f s\n' % (ch, rmsmax*1e3, rmsmaxind)
-    
-            s += u'\nMarkers:\n\n' if self.markers else ''
-    
-            for marker in sorted(self.markers):
+
+            self._plot_text(s, 1, 'k')
+
+            for marker, pos, col in zip(self.markers, self.mpos, self.m_colors):
                 frame = self._time_to_frame(marker, self.trial.framerate)
-                s += u'%.2f s:\npos %.2f° vel %.2f°/s acc %.2f°/s² \n\n' % (marker, self.angd[frame], self.angveld[frame],
+                ms = u'marker @%.2f s:\npos %.2f° vel %.2f°/s acc %.2f°/s² \n\n' % (marker, self.angd[frame], self.angveld[frame],
                                                                             self.angaccd[frame])
-        self.text = self.textax.text(0, 1, s, ha='left', va='top',
-                                     transform=self.textax.transAxes)
+                self._plot_text(ms, pos, col)
+
         self.fig.canvas.draw()
 
 

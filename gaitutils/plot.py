@@ -306,9 +306,11 @@ class Plotter(object):
                             self.cfg.plot.maxw)
             logger.debug('new figure: width %.2f, height %.2f'
                          % (self.figw, self.figh))
+            logger.debug('woo')
             self.interactive = interactive
             if interactive:
-                import matplotlib.pyplot as plt
+                # figure needs to be created differently for interactive mode
+                import matplotlib.pylab as plt
                 self.fig = plt.figure(figsize=(self.figw, self.figh))
             else:
                 self.fig = Figure(figsize=(self.figw, self.figh))
@@ -320,7 +322,8 @@ class Plotter(object):
             if var_type is None:
                 continue
             if sharex and len(plotaxes) > 0:
-                ax = self.fig.add_subplot(self.gridspec[i], sharex=plotaxes[-1])
+                ax = self.fig.add_subplot(self.gridspec[i],
+                                          sharex=plotaxes[-1])
             else:
                 ax = self.fig.add_subplot(self.gridspec[i])
 
@@ -486,11 +489,14 @@ class Plotter(object):
                 else:
                     legtitle = ['EMG traces:']
                     artists = self.emgartists
-                    artists.append(matplotlib.lines.Line2D((0, 1), (0, 0), linewidth=2,
-                                              color=emg_tracecolor))
+                    artists.append(matplotlib.lines.Line2D((0, 1), (0, 0),
+                                                           linewidth=2,
+                                                           color=emg_tracecolor))
                 #plt.axis('off')
-                nothing = [matplotlib.patches.Rectangle((0, 0), 1, 1, fc="w", fill=False,
-                                         edgecolor='none', linewidth=0)]
+                nothing = [matplotlib.patches.Rectangle((0, 0), 1, 1, fc="w",
+                                                        fill=False,
+                                                        edgecolor='none',
+                                                        linewidth=0)]
                 ax.legend(nothing+artists,
                           legtitle+self.legendnames, loc='upper center',
                           ncol=2,
@@ -516,9 +522,10 @@ class Plotter(object):
         return maintitle
 
     def show(self):
-        logger.debug('calling show')
+        # start the pyplot event loop
         if self.interactive and self.fig is not None:
-            self.fig.show()
+            import matplotlib.pyplot as plt
+            plt.show()
 
     def create_pdf(self, pdf_name=None, pdf_prefix=None):
         """ Make a pdf out of the created figure into the Nexus session dir.

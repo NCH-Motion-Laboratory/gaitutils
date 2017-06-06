@@ -26,7 +26,6 @@ class Window(QtWidgets.QDialog):
 
         self.figure = pl.fig
 
-
         # this is the Canvas Widget that displays the `figure`
         # it takes the `figure` instance as a parameter to __init__
         self.canvas = FigureCanvas(self.figure)

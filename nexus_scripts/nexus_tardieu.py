@@ -166,11 +166,11 @@ class Tardieu_window(object):
                 self.markers[m][ax].remove()
         self.markers.clear()
         self._update_status_text()
-        
+
     def _onpress(self, event):
         if event.key == 'escape':
             self._bclick(event)
-        
+
     def _onclick(self, event):
         if event.inaxes not in self.data_axes:
             return
@@ -187,43 +187,48 @@ class Tardieu_window(object):
             for ax in self.data_axes:
                 self.markers[x][ax] = ax.axvline(x=x, linewidth=1, color=col)
             self._redraw(event.inaxes)
-            
+
     def _time_to_frame(self, times, rate):
         # convert time to frames or analog frames (according to rate)
         return np.round(rate * np.array(times)).astype(int)
-        
+
     def _update_status_text(self):
         if self.text is not None:
             self.text.remove()
         # find the limits of the data that is shown
         tmin_ = max(self.time[0], self.tmin)
         tmax_ = min(self.time[-1], self.tmax)
-        s = 'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)
+        s = u'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)
         # frame indices corresponding to time limits
         fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
-        # analog sample indices ...
-        smin, smax = self._time_to_frame([tmin_, tmax_], self.trial.analograte)
-        s += 'In frames: %d - %d\n' % (fmin, fmax)
-        # foot angle in chosen range and the maximum
-        angr = self.angd[fmin:fmax]
-        angmax, angmaxind = np.nanmax(angr), np.nanargmax(angr)/self.trial.framerate + tmin_
-        # same for velocity
-        velr = abs(self.angveld[fmin:fmax])
-        velmax, velmaxind = np.nanmax(velr), np.nanargmax(velr)/self.trial.framerate + tmin_
-        s += 'Max angle: %.2f deg/s @ %.2f s\n' % (angmax, angmaxind)
-        s += 'Max velocity: %.2f deg/s @ %.2f s\n' % (velmax, velmaxind)
+        if fmin == fmax:
+            s = 'Zoomed in to a single frame\nPlease zoom out for info'
+        else:
+            # analog sample indices ...
+            smin, smax = self._time_to_frame([tmin_, tmax_], self.trial.analograte)
+            s += u'In frames: %d - %d\n' % (fmin, fmax)
+            # foot angle in chosen range and the maximum
+            angr = self.angd[fmin:fmax]
+            angmax, angmaxind = np.nanmax(angr), np.nanargmax(angr)/self.trial.framerate + tmin_
+            # same for velocity
+            velr = abs(self.angveld[fmin:fmax])
+            velmax, velmaxind = np.nanmax(velr), np.nanargmax(velr)/self.trial.framerate + tmin_
+            s += u'Max angle: %.2f °/s @ %.2f s\n' % (angmax, angmaxind)
+            s += u'Max velocity: %.2f °/s @ %.2f s\n' % (velmax, velmaxind)
+    
+            s += u'\nEMG RMS peaks:\n'
+            for ch in self.emg_chs:
+                rms = self.emg_rms[ch][smin:smax]
+                rmsmax, rmsmaxind = rms.max(), np.argmax(rms)/self.trial.analograte + tmin_
+                s += u'%s: %.2f mV @ %.2f s\n' % (ch, rmsmax*1e3, rmsmaxind)
+    
+            s += u'\nMarkers:\n\n' if self.markers else ''
+    
+            for marker in sorted(self.markers):
+                frame = self._time_to_frame(marker, self.trial.framerate)
+                s += u'%.2f s:\npos %.2f° vel %.2f°/s acc %.2f°/s² \n\n' % (marker, self.angd[frame], self.angveld[frame],
+                                                                            self.angaccd[frame])
 
-        s += '\nEMG RMS peaks:\n'
-        for ch in self.emg_chs:
-            rms = self.emg_rms[ch][smin:smax]
-            rmsmax, rmsmaxind = rms.max(), np.argmax(rms)/self.trial.analograte + tmin_
-            s += '%s: %.2f mV @ %.2f s\n' % (ch, rmsmax*1e3, rmsmaxind)
-
-        s += '\nMarkers:\n' if self.markers else ''
-
-        for marker in sorted(self.markers):
-            frame = self._time_to_frame(marker, self.trial.framerate)
-            s += '%.2f s: %.2f deg\n\n' % (marker, self.angd[frame])
         self.text = self.textax.text(0, 1, s, ha='left', va='top',
                                      transform=self.textax.transAxes)
         self.fig.canvas.draw()

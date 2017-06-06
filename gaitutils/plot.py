@@ -514,7 +514,7 @@ class Plotter(object):
         self.tight_layout()
 
         if show and self.interactive:
-            self.show()
+            plt.show()
 
     def title_with_eclipse_info(self, prefix=''):
         """ Create title: prefix + trial name + Eclipse description and

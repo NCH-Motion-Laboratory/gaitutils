@@ -31,17 +31,17 @@ class Tardieu_window(object):
         self.marker_button = 1  # mouse button for placing markers
         self.marker_key = 'shift'  # modifier key for markers
         self.m_colors = ['r', 'g', 'b']  # colors for markers
+        self.marker_width = 1.5
+        self.emg_yrange = [-.5e-3, .5e-3]
+        self.width_ratio = [1, 5]
+        self.text_fontsize = 9
+
         # use OrderedDict to remember the order in which the markers were added
         self.markers = OrderedDict()
         self.max_markers = len(self.m_colors)
-        self.mpos = np.linspace(.75, .6, self.max_markers)
-        self.marker_width = 1.5
+        self.markers_pos = np.linspace(.75, .6, self.max_markers)
         self.emg_chs = emg_chs
-        self.emg_yrange = [-.5e-3, .5e-3]
-
-        self.width_ratio = [1, 6]
         self.texts = []
-        self.text_fontsize = 9
         self.data_axes = list()  # axes that actually contain data
         # read data from Nexus and initialize plot
         vicon = nexus.viconnexus()
@@ -235,7 +235,8 @@ class Tardieu_window(object):
 
             self._plot_text(s, 1, 'k')
 
-            for marker, pos, col in zip(self.markers, self.mpos, self.m_colors):
+            for marker, pos, col in zip(self.markers, self.markers_pos,
+                                        self.m_colors):
                 frame = self._time_to_frame(marker, self.trial.framerate)
                 ms = u'marker @%.2f s:\npos %.2f° vel %.2f°/s acc %.2f°/s² \n\n' % (marker, self.angd[frame], self.angveld[frame],
                                                                             self.angaccd[frame])

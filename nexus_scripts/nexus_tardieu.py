@@ -12,6 +12,7 @@ from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
                        Trial, Plotter, layouts, utils)
 from gaitutils.numutils import segment_angles, rms
 from gaitutils.guiutils import messagebox
+from collections import OrderedDict
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button
 import matplotlib.gridspec as gridspec
@@ -30,7 +31,8 @@ class Tardieu_window(object):
         self.marker_button = 1  # mouse button for placing markers
         self.marker_key = 'shift'  # modifier key for markers
         self.m_colors = ['r', 'g', 'b']  # colors for markers
-        self.markers = dict()
+        # use OrderedDict to remember the order in which the markers were added
+        self.markers = OrderedDict()
         self.max_markers = len(self.m_colors)
         self.mpos = np.linspace(.75, .6, self.max_markers)
         self.marker_width = 1.5
@@ -183,24 +185,22 @@ class Tardieu_window(object):
             return
         x = event.xdata
         if x not in self.markers:
-            col = self.m_colors[len(self.markers)]
+            col = self.m_colors[len(self.markers)]  # pick next available color
             self.markers[x] = dict()
             for ax in self.data_axes:
-                self.markers[x][ax] = ax.axvline(x=x,
-                                                 linewidth=self.marker_width,
-                                                 color=col)
+                self.markers[x][ax] = ax.axvline(x=x, color=col,
+                                                 linewidth=self.marker_width)
             self._redraw(event.inaxes)
 
     def _time_to_frame(self, times, rate):
         # convert time to frames or analog frames (according to rate)
         return np.round(rate * np.array(times)).astype(int)
-    
+
     def _plot_text(self, s, ypos, color):
         self.texts.append(self.textax.text(0, ypos, s, ha='left', va='top',
                                            transform=self.textax.transAxes,
                                            fontsize=self.text_fontsize,
                                            color=color))
-        
 
     def _update_status_text(self):
         if self.texts:

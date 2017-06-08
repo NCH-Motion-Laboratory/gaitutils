@@ -28,11 +28,8 @@ def do_plot(search=None):
     marked_trials = list(find_trials(eclkeys, search))
 
     if not marked_trials:
-        # try to find anything marked with 'ok' (kinematics-only sessions)
-        marked_trials = list(find_trials(eclkeys, search))
-        if not marked_trials:
-            raise Exception('Did not find any matching trials in current '
-                            'session directory')
+        raise Exception('Did not find any matching trials in current '
+                        'session directory')
 
     if len(marked_trials) > MAX_TRIALS:
         raise Exception('Too many marked trials found!')

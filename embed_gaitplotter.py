@@ -1,22 +1,21 @@
 # -*- coding: utf-8 -*-
 """
-Embed mpl canvas into Qt GUI
+Embed gaitplotter figure canvas into PyQt5 GUI
+WIP
 
-See also:
-    
-https://stackoverflow.com/questions/36665850/matplotlib-animation-inside-your-own-pyqt4-gui/36669876#36669876
 
-@author: hus20664877
+@author: Jussi (jnu@iki.fi)
 """
 
 import sys
 from PyQt5 import QtGui, QtWidgets, uic
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
+                                                FigureCanvas)
+from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
+                                                NavigationToolbar)
 from matplotlib.figure import Figure
 from gaitutils import Plotter, layouts, cfg
 
-import random
 
 class PlotterWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):

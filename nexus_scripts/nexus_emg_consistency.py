@@ -10,27 +10,24 @@ description and defined search strings.
 
 from gaitutils import Plotter, cfg, register_gui_exception_handler
 from gaitutils.nexus import enf2c3d, find_trials
-
 import logging
+import argparse
 
 
-def do_plot():
+def do_plot(search=None):
 
     MAX_TRIALS = 8
 
     # Eclipse trial notes/description must contain one of these strings
-    strs = ['R1', 'R2', 'R3', 'R4', 'L1', 'L2', 'L3', 'L4']
+    if search is None:
+        search = ['R1', 'R2', 'R3', 'R4', 'L1', 'L2', 'L3', 'L4']
 
     eclkeys = ['DESCRIPTION', 'NOTES']
-    marked_trials = list(find_trials(eclkeys, strs))
+    marked_trials = list(find_trials(eclkeys, search))
 
     if not marked_trials:
-        # try to find anything marked with 'ok' (kinematics-only sessions)
-        strs = ['ok']
-        marked_trials = list(find_trials(eclkeys, strs))
-        if not marked_trials:
-            raise Exception('Did not find any marked trials in current '
-                            'session directory')
+        raise Exception('Did not find any marked trials in current '
+                        'session directory')
 
     if len(marked_trials) > MAX_TRIALS:
         raise Exception('Too many marked trials found!')
@@ -54,6 +51,12 @@ def do_plot():
 
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--search', metavar='p', type=str, nargs='+',
+                        help='strings that must appear in trial '
+                        'description or notes')
+    args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG)
     register_gui_exception_handler()
-    do_plot()
+    do_plot(search=args.search)

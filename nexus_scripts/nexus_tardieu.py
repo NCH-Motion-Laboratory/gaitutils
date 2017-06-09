@@ -261,9 +261,7 @@ class Tardieu_window(object):
 
 
 def do_plot():
-    # EMG channels of interest
-    emg_chs = ['L_Gastr', 'L_Sol', 'L_TibAnt']
-    Tardieu_window(emg_chs=emg_chs)
+    Tardieu_window(emg_chs=cfg.tardieu.emg_chs)
 
 if __name__ == '__main__':
     do_plot()

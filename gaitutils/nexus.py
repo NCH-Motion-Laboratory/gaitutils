@@ -17,6 +17,7 @@ import psutil
 import glob
 from numutils import (rising_zerocross, best_match, falling_zerocross,
                       change_coords)
+from utils import principal_movement_direction
 from exceptions import GaitDataError
 from eclipse import get_eclipse_keys
 import matplotlib.pyplot as plt
@@ -339,8 +340,8 @@ def _list_to_str(li):
 
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                     'R_strike': None, 'R_toeoff': None}, ctr_pos=[0, 0, 0],
-                    max_dist=None, fp_events=None, start_on_forceplate=False,
-                    plot=False, mark=True):
+                    events_range=None, fp_events=None,
+                    start_on_forceplate=False, plot=False, mark=True):
     """ Mark events based on velocity thresholding. Absolute thresholds
     can be specified as arguments. Otherwise, relative thresholds will be
     calculated based on the data. Optimal results will be obtained when
@@ -496,14 +497,13 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         logger.debug('all toeoff events: %s' % _list_to_str(toeoffs))
 
         # select events for which the foot is close enough to center frame
-        if max_dist:
-            strike_pos = footctrP[strikes, :]
-            # pick points where data is ok (no gaps)
-            nz = [all(row) for row in strike_pos != 0]
-            distv = np.sqrt(np.sum((strike_pos-ctr_pos)**2, 1))
-            dist_ok = distv < max_dist
-            strike_ok = np.where(np.logical_and(nz, dist_ok))
-            strikes = strikes[strike_ok]
+        if events_range:
+            fwd_dim = principal_movement_direction(vicon, cfg.
+                                                   autoproc.track_markers)
+            strike_pos = footctrP[strikes, fwd_dim]
+            dist_ok = np.logical_and(strike_pos > events_range[0],
+                                     strike_pos < events_range[1])
+            strikes = strikes[dist_ok]
 
         if len(strikes) == 0:
             raise GaitDataError('No valid foot strikes detected')

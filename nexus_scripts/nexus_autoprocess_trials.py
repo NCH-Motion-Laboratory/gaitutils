@@ -234,8 +234,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
         try:
             vicon.ClearAllEvents()
             nexus.automark_events(vicon, vel_thresholds=vel_th,
-                                  max_dist=cfg.autoproc.automark_max_dist,
                                   fp_events=trial.fpev, plot=False,
+                                  events_range=cfg.autoproc.events_range,
                                   start_on_forceplate=
                                   cfg.autoproc.start_on_forceplate,
                                   ctr_pos=cfg.autoproc.walkway_ctr)

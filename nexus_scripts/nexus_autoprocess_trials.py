@@ -244,7 +244,9 @@ def _do_autoproc(enffiles, update_eclipse=True):
             eclipse_str = '%s,%s' % (trials[filepath].description,
                                      cfg.autoproc.enf_descriptions
                                      ['automark_failure'])
+            logger.debug('Automark failed')
             _save_trial()
+            trials[filepath].description = eclipse_str
             continue  # next trial
         # events ok
         # crop trial

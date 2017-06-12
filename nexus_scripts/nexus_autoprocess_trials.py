@@ -28,8 +28,8 @@ NOTES:
 """
 
 from gaitutils import (nexus, eclipse, utils, register_gui_exception_handler,
-                       GaitDataError, messagebox)
-from gaitutils.config import cfg as defaultcfg
+                       GaitDataError)
+from gaitutils.config import cfg
 import os
 import numpy as np
 import time
@@ -59,7 +59,7 @@ class Trial:
         return s
 
 
-def _do_autoproc(enffiles, cfg=defaultcfg, update_eclipse=True):
+def _do_autoproc(enffiles, update_eclipse=True):
     """ Do autoprocessing for all trials listed in enffiles (list of
     paths to .enf files).
     """
@@ -230,11 +230,10 @@ def _do_autoproc(enffiles, cfg=defaultcfg, update_eclipse=True):
         try:
             vicon.ClearAllEvents()
             nexus.automark_events(vicon, vel_thresholds=vel_th,
-                                  max_dist=cfg.autoproc.automark_max_dist,
                                   fp_events=trial.fpev, plot=False,
-                                  start_on_forceplate=
-                                  cfg.autoproc.start_on_forceplate,
-                                  ctr_pos=cfg.autoproc.walkway_ctr)
+                                  events_range=cfg.autoproc.events_range,
+                                  start_on_forceplate=cfg.autoproc.
+                                  start_on_forceplate)
             trial.events = True
         except GaitDataError:  # cannot automark
             eclipse_str = '%s,%s' % (trials[filepath].description,
@@ -282,7 +281,7 @@ def _do_autoproc(enffiles, cfg=defaultcfg, update_eclipse=True):
     logger.debug('Automarked: %d' % n_events)
 
 
-def autoproc_session(patterns=None, cfg=defaultcfg, update_eclipse=True):
+def autoproc_session(patterns=None, update_eclipse=True):
 
     enffiles = nexus.get_session_enfs()
 
@@ -290,7 +289,7 @@ def autoproc_session(patterns=None, cfg=defaultcfg, update_eclipse=True):
         # filter trial names according to patterns
         enffiles = [s for s in enffiles if any([p in s for p in patterns])]
     if enffiles:
-        _do_autoproc(enffiles, cfg=cfg, update_eclipse=update_eclipse)
+        _do_autoproc(enffiles, update_eclipse=update_eclipse)
     else:
         raise GaitDataError('No trials to process')
 

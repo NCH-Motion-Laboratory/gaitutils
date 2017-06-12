@@ -28,7 +28,7 @@ NOTES:
 """
 
 from gaitutils import (nexus, eclipse, utils, register_gui_exception_handler,
-                       GaitDataError, messagebox)
+                       GaitDataError)
 from gaitutils.config import cfg
 import os
 import numpy as np
@@ -230,11 +230,10 @@ def _do_autoproc(enffiles, update_eclipse=True):
         try:
             vicon.ClearAllEvents()
             nexus.automark_events(vicon, vel_thresholds=vel_th,
-                                  max_dist=cfg.autoproc.automark_max_dist,
                                   fp_events=trial.fpev, plot=False,
-                                  start_on_forceplate=
-                                  cfg.autoproc.start_on_forceplate,
-                                  ctr_pos=cfg.autoproc.walkway_ctr)
+                                  events_range=cfg.autoproc.events_range,
+                                  start_on_forceplate=cfg.autoproc.
+                                  start_on_forceplate)
             trial.events = True
         except GaitDataError:  # cannot automark
             eclipse_str = '%s,%s' % (trials[filepath].description,

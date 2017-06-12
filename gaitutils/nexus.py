@@ -17,6 +17,7 @@ import psutil
 import glob
 from numutils import (rising_zerocross, best_match, falling_zerocross,
                       change_coords)
+from utils import principal_movement_direction
 from exceptions import GaitDataError
 from eclipse import get_eclipse_keys
 import matplotlib.pyplot as plt
@@ -361,9 +362,10 @@ def _list_to_str(li):
 
 
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
-                    'R_strike': None, 'R_toeoff': None}, ctr_pos=[0, 0, 0],
-                    max_dist=None, fp_events=None, start_on_forceplate=False,
-                    restrict_to_roi=False, plot=False, mark=True):
+                    'R_strike': None, 'R_toeoff': None}, events_range=None,
+                    fp_events=None, restrict_to_roi=False,
+                    start_on_forceplate=False, plot=False, mark=True):
+
     """ Mark events based on velocity thresholding. Absolute thresholds
     can be specified as arguments. Otherwise, relative thresholds will be
     calculated based on the data. Optimal results will be obtained when
@@ -373,14 +375,13 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     can be obtained from forceplate data (utils.check_forceplate_contact).
     Separate thresholds for left and right side.
 
-    ctr_pos is the walkway center position (used by max_dist).
-
-    max_dist is the maximum allowed distance of the foot from ctr_pos.
-    Events where the foot is further than this will be discarded.
-
     fp_events is dict specifying the forceplate detected strikes and toeoffs
     (see utils.detect_forceplate_events). These will not be marked by
     velocity thresholding.
+
+    If events_range is specified, the events will be restricted to given
+    coordinate range in the principal gait direction.
+    E.g. events_range=[-1000, 1000]
 
     If start_on_forceplate is True, the first cycle will start on forceplate
     (i.e. events earlier than the first foot strike events in fp_events will
@@ -519,14 +520,13 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         logger.debug('all toeoff events: %s' % _list_to_str(toeoffs))
 
         # select events for which the foot is close enough to center frame
-        if max_dist:
-            strike_pos = footctrP[strikes, :]
-            # pick points where data is ok (no gaps)
-            nz = [all(row) for row in strike_pos != 0]
-            distv = np.sqrt(np.sum((strike_pos-ctr_pos)**2, 1))
-            dist_ok = distv < max_dist
-            strike_ok = np.where(np.logical_and(nz, dist_ok))
-            strikes = strikes[strike_ok]
+        if events_range:
+            fwd_dim = principal_movement_direction(vicon, cfg.
+                                                   autoproc.track_markers)
+            strike_pos = footctrP[strikes, fwd_dim]
+            dist_ok = np.logical_and(strike_pos > events_range[0],
+                                     strike_pos < events_range[1])
+            strikes = strikes[dist_ok]
 
         if len(strikes) == 0:
             raise GaitDataError('No valid foot strikes detected')
@@ -552,7 +552,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
             roi = vicon.GetTrialRegionOfInterest()
             strikes = np.extract(np.logical_and(roi[0] <= strikes+1,
                                                 strikes+1 <= roi[1]), strikes)
-            
+
             toeoffs = np.extract(np.logical_and(roi[0] <= toeoffs+1,
                                                 toeoffs+1 <= roi[1]), toeoffs)
 

@@ -16,7 +16,7 @@ from pkg_resources import resource_filename
 cfg_template = resource_filename(__name__, 'default.cfg')
 # user specific config
 homedir = op.expanduser('~')
-cfg_user = homedir + '/.gaitutils.cfg'
+cfg_user = homedir + '/.gaitutils_cp_projekti.cfg'
 
 
 class Section(object):

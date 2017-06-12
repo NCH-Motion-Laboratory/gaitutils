@@ -46,6 +46,8 @@ class Plotter(object):
         self.modelartists = []
         self.emgartists = []
         self.cfg = cfg
+        self.nrows = 0
+        self.ncols = 0
 
     @property
     def layout(self):
@@ -242,9 +244,20 @@ class Plotter(object):
                 If maintitle is not set, title will be set to
                 maintitleprefix + trial name.
         """
+        # auto size fig according to n of subplots w, limit size
+        self.figh = min(self.nrows*self.cfg.plot.inch_per_row + 1,
+                        self.cfg.plot.maxh)
+        self.figw = min(self.ncols*self.cfg.plot.inch_per_col,
+                        self.cfg.plot.maxw)
 
         if not self.trial:
-            raise ValueError('No trial to plot, call open_trial() first')
+            if not interactive:
+                # create empty figure
+                logger.debug('making empty figure')
+                self.fig = Figure(figsize=(self.figw, self.figh))
+                return
+            else:
+                raise ValueError('No trial to plot, call open_trial() first')
 
         if self._layout is None:
             raise ValueError('No layout set')
@@ -305,14 +318,8 @@ class Plotter(object):
             raise ValueError('No matching gait cycles found in data')
 
         if self.fig is None or not superpose:
-            # auto size fig according to n of subplots w, limit size
-            self.figh = min(self.nrows*self.cfg.plot.inch_per_row + 1,
-                            self.cfg.plot.maxh)
-            self.figw = min(self.ncols*self.cfg.plot.inch_per_col,
-                            self.cfg.plot.maxw)
             logger.debug('new figure: width %.2f, height %.2f'
                          % (self.figw, self.figh))
-            logger.debug('woo')
             self.interactive = interactive
             if interactive:
                 # figure needs to be created differently for interactive mode

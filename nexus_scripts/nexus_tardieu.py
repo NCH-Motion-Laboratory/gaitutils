@@ -63,10 +63,16 @@ class Tardieu_window(object):
         Pall = np.stack([Ptoe, Pank, Pknee], axis=1)
         # compute segment angles (deg)
         self.angd = segment_angles(Pall) / np.pi * 180
-        # normalize: plantarflexion negative, 0 at straight angle
-        startpos = self.read_starting_angle(vicon)
-        startpos = 0 if startpos is None else startpos
-        self.angd = 90 - self.angd - startpos
+        # this is our calculated starting angle
+        ang0_our = np.median(angd[~np.isnan(angd)][:10])
+        # the 'true' starting angle (in Nexus as subject param)
+        ang0_nexus = self.read_starting_angle(vicon)
+        # if it cannot be read, assume 90 deg
+        ang0_nexus = 90 if ang0_nexus is None else ang0_nexus
+        # normalize: plantarflexion negative, our starting angle equals
+        # the starting angle given in Nexus (i.e. if ang0_nexus is 95,
+        # we normalize the data to start at -5 deg)
+        self.angd = 90 - ang0_nexus - self.angd + ang0_our
 
         self.fig = plt.figure(figsize=(16, 10))
         self.gs = gridspec.GridSpec(len(self.emg_chs) + 3, 2,
@@ -153,6 +159,7 @@ class Tardieu_window(object):
         self._update_status_text()
         
         plt.show()
+        
         
     @staticmethod
     def read_starting_angle(vicon):

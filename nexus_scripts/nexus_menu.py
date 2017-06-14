@@ -78,7 +78,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnEMG.clicked.connect(nexus_emgplot.do_plot)
         self.btnKinEMG.clicked.connect(nexus_kinetics_emgplot.do_plot)
         self.btnKinall.clicked.connect(nexus_kinallplot.do_plot)
-        self.btnTardieu.clicked.connect(nexus_tardieu.do_plot)
+        self.btnTardieu.clicked.connect(self._tardieu)
         if have_custom:
             self.btnCustom.clicked.connect(nexus_customplot.do_plot)
         else:
@@ -105,6 +105,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _no_custom(self):
         self.message_dialog('No custom plot defined. Please create '
                             'nexus_scripts/nexus_customplot.py')
+        
+    def _tardieu(self):
+        if self.rbtnR.isChecked():
+            nexus_tardieu.do_plot('R')
+        else:
+            nexus_tardieu.do_plot('L')
+            
 
 
 def main():

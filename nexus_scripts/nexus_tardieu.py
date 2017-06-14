@@ -64,7 +64,7 @@ class Tardieu_window(object):
         # compute segment angles (deg)
         self.angd = segment_angles(Pall) / np.pi * 180
         # this is our calculated starting angle
-        ang0_our = np.median(angd[~np.isnan(angd)][:10])
+        ang0_our = np.median(self.angd[~np.isnan(self.angd)][:10])
         # the 'true' starting angle (in Nexus as subject param)
         ang0_nexus = self.read_starting_angle(vicon)
         # if it cannot be read, assume 90 deg
@@ -274,8 +274,9 @@ class Tardieu_window(object):
         self.fig.canvas.draw()
 
 
-def do_plot():
-    Tardieu_window(emg_chs=cfg.tardieu.emg_chs)
+def do_plot(side):
+    emg_chs = [side+ch for ch in cfg.tardieu.emg_chs]
+    Tardieu_window(emg_chs=emg_chs)
 
 if __name__ == '__main__':
-    do_plot()
+    do_plot('L')

@@ -64,9 +64,10 @@ class Tardieu_window(object):
         # compute segment angles (deg)
         self.angd = segment_angles(Pall) / np.pi * 180
         # normalize: plantarflexion negative, 0 at straight angle
-        # TODO: use the normal angle from Nexus
-        self.angd = 90-self.angd                          
-        
+        startpos = self.read_starting_angle(vicon)
+        startpos = 0 if startpos is None else startpos
+        self.angd = 90 - self.angd - startpos
+
         self.fig = plt.figure(figsize=(16, 10))
         self.gs = gridspec.GridSpec(len(self.emg_chs) + 3, 2,
                                width_ratios=self.width_ratio)
@@ -152,7 +153,13 @@ class Tardieu_window(object):
         self._update_status_text()
         
         plt.show()
-
+        
+    @staticmethod
+    def read_starting_angle(vicon):
+        subjname = vicon.GetSubjectNames()[0]
+        asp = vicon.GetSubjectParam(subjname, 'AnkleStartPos')
+        return asp[0] if asp[1] else None
+        
     @staticmethod
     def _adj_fonts(ax):
         ax.xaxis.label.set_fontsize(cfg.plot.label_fontsize)

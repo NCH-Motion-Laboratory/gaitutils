@@ -3,8 +3,11 @@
 Embed gaitplotter figure canvas into PyQt5 GUI
 WIP
 
+TODO:
+    Plotter should probably create figure at init()
+    (so that valid figure instance is available without loading trial)
+    
 
-open trial 
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -20,16 +23,6 @@ from gaitutils import Plotter, layouts, cfg
 import logging
 
 
-class gpCanvas(FigureCanvas):
-    
-    def __init__(self, figure):
-        super(gpCanvas, self).__init__(figure)
-
-    def refresh(self, figure):
-        super(gpCanvas, self).__init__(figure)
-        self.draw()
-    
-
 class PlotterWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(PlotterWindow, self).__init__(parent)
@@ -37,16 +30,17 @@ class PlotterWindow(QtWidgets.QMainWindow):
         uifile = 'plotter_gui.ui'
         uic.loadUi(uifile, self)
 
+
         self.pl = Plotter()
         self.pl.layout = cfg.layouts.lb_kin
-        self.pl.open_nexus_trial()
-        self.pl.plot_trial(interactive=False)
+        #self.pl.open_nexus_trial()
+        #self.pl.plot_trial(interactive=False)
         
         # this is the Canvas Widget that displays the `figure`
         # it takes the `figure` instance as a parameter to __init__
         # self.canvas = FigureCanvas(self.pl.fig)
         
-        self.canvas = gpCanvas(self.pl.fig)
+        self.canvas = FigureCanvas(self.pl.fig)
 
         # self.setStyleSheet("background-color: white;");
         # canvas into last column, span all rows
@@ -63,6 +57,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
     def draw_canvas(self):
         self.pl.fig.clear()
+        self.pl.layout = cfg.layouts.std_emg
         self.pl.plot_trial(interactive=False)
         # self.canvas.figure = self.pl.fig
         #self.canvas = FigureCanvas(self.pl.fig)

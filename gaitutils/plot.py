@@ -240,7 +240,7 @@ class Plotter(object):
                 after finished. If interactive=False, this has no effect.
         interactive: bool
                 If True, start the pyplot event loop to show the figure
-                in a GUI. If False, do not import pyplot (this needed for
+                in a GUI. If False, do not import pyplot (this is needed for
                 e.g. embedding in Qt).
         maintitle : str
                 Main title for the plot.

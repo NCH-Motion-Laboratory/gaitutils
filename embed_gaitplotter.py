@@ -33,8 +33,8 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
         self.pl = Plotter()
         self.pl.layout = cfg.layouts.lb_kin
-        #self.pl.open_nexus_trial()
-        #self.pl.plot_trial(interactive=False)
+        self.pl.open_nexus_trial()
+        self.pl.plot_trial(interactive=False)
         
         # this is the Canvas Widget that displays the `figure`
         # it takes the `figure` instance as a parameter to __init__
@@ -54,10 +54,11 @@ class PlotterWindow(QtWidgets.QMainWindow):
         # set up widgets
         self.btnOpenNexusTrial.clicked.connect(self.pl.open_nexus_trial)
         self.btnPlot.clicked.connect(self.draw_canvas)
+        self.cbLayout.addItems(cfg.layouts.__dict__.keys())
 
     def draw_canvas(self):
         self.pl.fig.clear()
-        self.pl.layout = cfg.layouts.std_emg
+        self.pl.layout = cfg.layouts.__dict__[self.cbLayout.currentText()]
         self.pl.plot_trial(interactive=False)
         # self.canvas.figure = self.pl.fig
         #self.canvas = FigureCanvas(self.pl.fig)

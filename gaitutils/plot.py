@@ -333,8 +333,8 @@ class Plotter(object):
                 self.fig = plt.figure(figsize=(self.figw, self.figh))
             else:
                 self.fig = Figure(figsize=(self.figw, self.figh))
-            self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
-                                              height_ratios=plotheightratios)
+        self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
+                                          height_ratios=plotheightratios)
 
         for i, var in enumerate(self.allvars):
             var_type = self._var_type(var)

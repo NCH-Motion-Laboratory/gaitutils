@@ -3,6 +3,10 @@
 
 Plot gait data
 
+
+
+
+
 @author: jnu@iki.fi
 """
 
@@ -317,7 +321,9 @@ class Plotter(object):
         if not (model_cycles or emg_cycles):
             raise ValueError('No matching gait cycles found in data')
 
-        if self.fig is None or not superpose:
+        if self.fig is None or (interactive and not superpose):
+        # do not create multiple figures, except in interactive mode when not
+        # superposing
             logger.debug('new figure: width %.2f, height %.2f'
                          % (self.figw, self.figh))
             self.interactive = interactive
@@ -521,7 +527,7 @@ class Plotter(object):
         self.tight_layout()
 
         if show and self.interactive:
-            plt.show()
+            self.show()
 
     def title_with_eclipse_info(self, prefix=''):
         """ Create title: prefix + trial name + Eclipse description and

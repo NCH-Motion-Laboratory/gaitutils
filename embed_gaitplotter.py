@@ -13,7 +13,7 @@ TODO:
 """
 
 import sys
-from PyQt5 import QtGui, QtWidgets, uic
+from PyQt5 import QtGui, QtWidgets, uic, QtCore
 from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
                                                 FigureCanvas)
 from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
@@ -30,12 +30,12 @@ class PlotterWindow(QtWidgets.QMainWindow):
         uifile = 'plotter_gui.ui'
         uic.loadUi(uifile, self)
 
-        self.trials = dict()
+        self.trials = list()
 
         self.pl = Plotter(interactive=False)
-        self.pl.open_nexus_trial()
-        self.pl.layout = cfg.layouts.std_emg
-        self.pl.plot_trial()
+        #self.pl.open_nexus_trial()
+        #self.pl.layout = cfg.layouts.std_emg
+        #self.pl.plot_trial()
         
         # this is the Canvas Widget that displays the `figure`
         # it takes the `figure` instance as a parameter to __init__
@@ -45,35 +45,64 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
         # self.setStyleSheet("background-color: white;");
         # canvas into last column, span all rows
-        self.mainGridLayout.addWidget(self.canvas, 0, 3, 
+        self.mainGridLayout.addWidget(self.canvas, 0, 4, 
                                       self.mainGridLayout.rowCount(), 1)
         # this is the Navigation widget
         # it takes the Canvas widget and a parent
         #self.toolbar = NavigationToolbar(self.canvas, self)
 
         # set up widgets
-        self.btnOpenNexusTrial.clicked.connect(self.pl.open_nexus_trial)
+        self.btnAddNexusTrial.clicked.connect(self._open_nexus_trial)
         self.btnPlot.clicked.connect(self.draw_canvas)
-        self.btnAddC3D.clicked.connect(self.load_dialog)
-        self.btnDelC3D.clicked.connect(self.rm_c3d)
-        self.cbLayout.addItems(cfg.layouts.__dict__.keys())
+        self.btnSelectAllCycles.clicked.connect(self._select_all_cycles)
+        self.btnAddC3DTrial.clicked.connect(self.load_dialog)
+        self.btnDeleteTrial.clicked.connect(self.rm_c3d)
+        self.cbLayout.addItems(sorted(cfg.layouts.__dict__.keys()))
 
 
     def rm_c3d(self):
         self.listC3D.takeItem(self.listC3D.row(self.listC3D.currentItem()))
     
-            
     @staticmethod
-    def _enum_cycles(cycles):
-        """ Enumerate cycles into strings R1, R2, L1 etc. """
-        for k, cyc in enumerate(cycles):
-            yield '%s%d' % (cyc.context, k)
+    def _describe_cycles(cycles, fp_info=True):
+        sidestr = {'R': 'Right', 'L': 'Left'}
+        counter = {'R': 0, 'L': 0}
+        for cyc in cycles:
+            counter[cyc.context] += 1
+            desc = '%s %d' % (sidestr[cyc.context], counter[cyc.context])
+            if fp_info:
+                desc += ' (on forceplate)' if cyc.on_forceplate else ''
+            yield desc
             
-    def _count_cycles(self, trial):
-        """ Enumerate all cycles of trial as above """
-        rcycles = [cyc for cyc in trial.cycles if cyc.context == 'R']
-        lcycles = [cyc for cyc in trial.cycles if cyc.context == 'L']
-        return list(self._enum_cycles(rcycles)) + list(self._enum_cycles(lcycles))
+    def _update_cycles_list(self):
+        """ Update displayed list of gait cycles according to loaded trials.
+        If multiple trials are loaded, cycles will be intersected (i.e. only
+        cycles that are present for all trials will be available for
+        selection) """
+        if len(self.trials) == 1:
+            cycles = self.trials[0].cycles
+            for cycle, desc in zip(cycles, self._describe_cycles(cycles)):
+                item = QtWidgets.QListWidgetItem(desc, self.listCycles)
+                item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+                item.setCheckState(QtCore.Qt.Unchecked)
+                item.setData(QtCore.Qt.UserRole, cycle)
+
+    def _cycles_to_plot(self):
+        """ Return gait cycles that the user has selected for plotting """
+        for i in range(self.listCycles.count()):
+            item = self.listCycles.item(i)
+            if item.checkState():
+                yield item.data(QtCore.Qt.UserRole)
+                
+    def _select_all_cycles(self):
+        for i in range(self.listCycles.count()):
+            item = self.listCycles.item(i)
+            item.setCheckState(QtCore.Qt.Checked)
+
+    def _open_nexus_trial(self):
+        self.pl.open_nexus_trial()
+        self.trials.append(self.pl.trial)
+        self._update_cycles_list()
     
     def _common_cycles(self):
         """ Find cycles that are common to all loaded c3d trials """
@@ -92,18 +121,29 @@ class PlotterWindow(QtWidgets.QMainWindow):
             self.trials[fname] = tr
             self.listC3D.addItem(fname)
             cycles = self._count_cycles(tr)
-            self.listCycles.addItems(cycles)
+            self.listCycles.addItems(self.describe_cycles(tr.cycles))
+
+    def message_dialog(self, msg):
+        """ Show message with an 'OK' button. """
+        dlg = QtWidgets.QMessageBox()
+        dlg.setWindowTitle('Message')
+        dlg.setText(msg)
+        dlg.addButton(QtWidgets.QPushButton('Ok'),
+                      QtWidgets.QMessageBox.YesRole)
+        dlg.exec_()
 
     def draw_canvas(self):
-        self.pl.fig.clear()
-        self.pl.layout = cfg.layouts.__dict__[self.cbLayout.currentText()]
-        self.pl.plot_trial()
-        # self.canvas.figure = self.pl.fig
-        #self.canvas = FigureCanvas(self.pl.fig)
-        #self.mainGridLayout.addWidget(self.canvas, 0,
-        #                              self.mainGridLayout.columnCount(), 
-        #                              self.mainGridLayout.rowCount(), 1)
-        self.canvas.draw()
+        cycles = list(self._cycles_to_plot())
+        if not cycles:
+            self.message_dialog('No cycles to plot')
+        else:
+            self.pl.layout = cfg.layouts.__dict__[self.cbLayout.currentText()]
+            match_pig_kinetics = self.xbKineticsFpOnly.checkState()
+            self.pl.plot_trial(model_cycles=cycles, emg_cycles=cycles,
+                               match_pig_kinetics=match_pig_kinetics,
+                               maintitle='')
+            self.canvas.draw()
+
 
 if __name__ == '__main__':
    

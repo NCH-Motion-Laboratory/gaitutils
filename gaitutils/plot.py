@@ -198,7 +198,7 @@ class Plotter(object):
 
         """ Create plot of variables. Parameters:
 
-        model_cycles : dict of int |  dict of list | 'all' | None
+        model_cycles : list | dict of int |  dict of list | 'all' | None
                 Gait cycles to plot. Defaults to first cycle (1) for
                 both contexts. Dict keys 'R' and 'L' specify the cycles
                 for right and left contexts. Multiple cycles can be given
@@ -206,7 +206,8 @@ class Plotter(object):
                 If None, plot unnormalized data. If 'all', plot all cycles.
                 If 'forceplate', plot all cycles that start on valid forceplate
                 contact.
-        emg_cycles : dict of int | int | dict of list | 'all' | None
+                Can also specify a list of Gaitcycle instances.
+        emg_cycles : list | dict of int | int | dict of list | 'all' | None
                 Same as above, applied to EMG variables.
         t : array-like
                 Time axis for unnormalized data. If None, plot complete time
@@ -340,8 +341,11 @@ class Plotter(object):
                           for ncycle in cycles[side] if ncycle]
             return cycles
 
-        model_cycles = _get_cycles(model_cycles)
-        emg_cycles = _get_cycles(emg_cycles)
+        model_cycles = (model_cycles if isinstance(model_cycles, list) else
+                        _get_cycles(model_cycles))
+
+        model_cycles = (emg_cycles if isinstance(emg_cycles, list) else
+                        _get_cycles(emg_cycles))
 
         if not (model_cycles or emg_cycles):
             raise ValueError('No matching gait cycles found in data')
@@ -509,6 +513,7 @@ class Plotter(object):
                                                         plot.label_fontsize)
 
             elif var_type in ('model_legend', 'emg_legend'):
+                # TODO: should probably use figlegend here
                 logger.debug('legend on ax %d' % id(ax))
                 ax.set_axis_off()
                 self.legendnames.append('%s   %s   %s' % (

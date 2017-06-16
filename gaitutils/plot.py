@@ -66,6 +66,9 @@ class Plotter(object):
 
     @layout.setter
     def layout(self, layout):
+        """ Set layout, (re)create gridspec """
+        if self.trial is None:
+            raise ValueError('Load data before setting layout')
         if (not isinstance(layout, list) or not
            all([isinstance(item, list) for item in layout])):
             raise ValueError('Layout must be a list of lists')
@@ -80,6 +83,9 @@ class Plotter(object):
                         self.cfg.plot.maxh)
         self.figw = min(self.ncols*self.cfg.plot.inch_per_col,
                         self.cfg.plot.maxw)
+        plotheightratios = self._plot_height_ratios()
+        self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
+                                          height_ratios=plotheightratios)
 
     def open_nexus_trial(self):
         source = nexus.viconnexus()
@@ -128,10 +134,10 @@ class Plotter(object):
         """ Automatically adjust height ratios, if they are not specified """
         plotheightratios = []
         for row in self._layout:
-            if all([self._var_type(var) == 'model' for var in row]):
-                plotheightratios.append(1)
-            else:
+            if any([self._var_type(var) == 'emg' for var in row]):
                 plotheightratios.append(self.cfg.plot.analog_plotheight)
+            else:
+                plotheightratios.append(1)
         return plotheightratios
 
     def _create_interactive_figure(self):
@@ -276,29 +282,20 @@ class Plotter(object):
         plotaxes = []
 
         # figure creation logic
-        # if we are superposing, do not recreate gridspec
         if self.interactive:
             if superpose:
                 if self.fig is None:
                     logger.debug('No figure to superpose on, creating new one')
                     self._create_interactive_figure()
-                    self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
-                                                      height_ratios=plotheightratios)
-                else:
-                    pass  # superposing on existing figure
             else:
                 # interactive, new figure
                 self._create_interactive_figure()
-                self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
-                                                  height_ratios=plotheightratios)
         else:  # non interactive - figure should exist already
             if superpose:
                 pass  # superposing on existing figure
             else:
                 # reusing the existing figure - no superpose
                 self.fig.clear()
-                self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
-                                                  height_ratios=plotheightratios)
 
         if maintitle is None:
             if maintitleprefix is None:
@@ -509,6 +506,8 @@ class Plotter(object):
                                                         plot.label_fontsize)
 
             elif var_type in ('model_legend', 'emg_legend'):
+                logger.debug('legend on ax %d' % id(ax))
+                ax.set_axis_off()
                 self.legendnames.append('%s   %s   %s' % (
                                         _shorten_name(self.trial.trialname),
                                         self.trial.eclipse_data['DESCRIPTION'],

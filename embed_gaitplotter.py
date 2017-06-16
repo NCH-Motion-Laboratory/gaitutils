@@ -33,8 +33,8 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self.trials = dict()
 
         self.pl = Plotter(interactive=False)
-        self.pl.layout = cfg.layouts.std_emg
         self.pl.open_nexus_trial()
+        self.pl.layout = cfg.layouts.std_emg
         self.pl.plot_trial()
         
         # this is the Canvas Widget that displays the `figure`
@@ -45,8 +45,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
         # self.setStyleSheet("background-color: white;");
         # canvas into last column, span all rows
-        self.mainGridLayout.addWidget(self.canvas, 0,
-                                      self.mainGridLayout.columnCount(), 
+        self.mainGridLayout.addWidget(self.canvas, 0, 3, 
                                       self.mainGridLayout.rowCount(), 1)
         # this is the Navigation widget
         # it takes the Canvas widget and a parent

@@ -65,8 +65,17 @@ class Plotter(object):
         return self._layout
 
     @layout.setter
-    def layout(self, layout):
-        """ Set layout, (re)create gridspec """
+    def layout(self, layout, plotheightratios=None, plotwidthratios=None):
+        """ Set plot layout.
+
+        plotheightratios: list
+            Height ratios for the plots. Length must equal n of rows in the
+            layout. If None, will be automatically computed.
+        plotwidthratios: list
+            Width ratios for the plots. Length must equal n of rows in the
+            layout.
+        """
+
         if self.trial is None:
             raise ValueError('Load data before setting layout')
         if (not isinstance(layout, list) or not
@@ -83,9 +92,13 @@ class Plotter(object):
                         self.cfg.plot.maxh)
         self.figw = min(self.ncols*self.cfg.plot.inch_per_col,
                         self.cfg.plot.maxw)
-        plotheightratios = self._plot_height_ratios()
+        if plotheightratios is None:
+            plotheightratios = self._plot_height_ratios()
+        elif len(plotheightratios) != len(self.nrows):
+            raise ValueError('n of height ratios must match n of rows')
         self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
-                                          height_ratios=plotheightratios)
+                                          height_ratios=plotheightratios,
+                                          width_ratios=plotwidthratios)
 
     def open_nexus_trial(self):
         source = nexus.viconnexus()
@@ -162,8 +175,6 @@ class Plotter(object):
     def plot_trial(self,
                    model_cycles=cfg.plot.default_model_cycles,
                    emg_cycles=cfg.plot.default_emg_cycles,
-                   plotheightratios=None,
-                   plotwidthratios=None,
                    model_tracecolor=None,
                    model_linestyle='-',
                    model_alpha=1.0,
@@ -200,9 +211,6 @@ class Plotter(object):
         t : array-like
                 Time axis for unnormalized data. If None, plot complete time
                 axis.
-        plotheightratios : list
-                Force height ratios of subplot rows, e.g. [1 2 2 2] would
-                make first row half the height of others.
         model_tracecolor : Matplotlib colorspec
                 Select line color for model variables. If None, will be
                 automatically selected
@@ -274,13 +282,6 @@ class Plotter(object):
         if self._layout is None:
             raise ValueError('Please set trial.layout before plotting')
 
-        # auto adjust plot height ratios
-        if plotheightratios is None:
-            plotheightratios = self._plot_height_ratios()
-        elif len(plotheightratios) != len(self.nrows):
-            raise ValueError('n of height ratios must match n of rows')
-        plotaxes = []
-
         # figure creation logic
         if self.interactive:
             if superpose:
@@ -344,6 +345,8 @@ class Plotter(object):
 
         if not (model_cycles or emg_cycles):
             raise ValueError('No matching gait cycles found in data')
+
+        plotaxes = []
 
         for i, var in enumerate(self.allvars):
             var_type = self._var_type(var)

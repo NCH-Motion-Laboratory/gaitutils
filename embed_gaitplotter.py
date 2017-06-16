@@ -4,10 +4,11 @@ Embed gaitplotter figure canvas into PyQt5 GUI
 WIP
 
 TODO:
-    Plotter should probably create figure at init()
-    (so that valid figure instance is available without loading trial)
-    
-
+    maybe inherit QListWidget for cycles widget to get neater code (methods)
+    realtime updates to plot on widget changes (needs plotter to be faster?)
+    status bar
+    treat Nexus trial like c3d trials (add to list)
+   
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -54,6 +55,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
         # set up widgets
         self.btnAddNexusTrial.clicked.connect(self._open_nexus_trial)
         self.btnPlot.clicked.connect(self.draw_canvas)
+        self.btnQuit.clicked.connect(self.close)
         self.btnSelectAllCycles.clicked.connect(self._select_all_cycles)
         self.btnAddC3DTrial.clicked.connect(self.load_dialog)
         self.btnDeleteTrial.clicked.connect(self.rm_c3d)
@@ -147,7 +149,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
 if __name__ == '__main__':
    
-    logging.basicConfig(level=logging.DEBUG)
+    #logging.basicConfig(level=logging.DEBUG)
 
     app = QtWidgets.QApplication(sys.argv)
     win = PlotterWindow()

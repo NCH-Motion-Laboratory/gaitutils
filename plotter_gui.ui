@@ -200,7 +200,7 @@
        </widget>
       </item>
       <item row="11" column="1" rowspan="3">
-       <widget class="QListWidget" name="listLayout">
+       <widget class="QListWidget" name="listCycles">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>

@@ -19,7 +19,7 @@ from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
 from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
                                                 NavigationToolbar)
 from matplotlib.figure import Figure
-from gaitutils import Plotter, layouts, cfg
+from gaitutils import Plotter, Trial, layouts, cfg
 import logging
 
 
@@ -30,6 +30,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
         uifile = 'plotter_gui.ui'
         uic.loadUi(uifile, self)
 
+        self.trials = dict()
 
         self.pl = Plotter()
         self.pl.layout = cfg.layouts.lb_kin
@@ -54,7 +55,45 @@ class PlotterWindow(QtWidgets.QMainWindow):
         # set up widgets
         self.btnOpenNexusTrial.clicked.connect(self.pl.open_nexus_trial)
         self.btnPlot.clicked.connect(self.draw_canvas)
+        self.btnAddC3D.clicked.connect(self.load_dialog)
+        self.btnDelC3D.clicked.connect(self.rm_c3d)
         self.cbLayout.addItems(cfg.layouts.__dict__.keys())
+
+
+    def rm_c3d(self):
+        self.listC3D.takeItem(self.listC3D.row(self.listC3D.currentItem()))
+    
+            
+    @staticmethod
+    def _enum_cycles(cycles):
+        """ Enumerate cycles into strings R1, R2, L1 etc. """
+        for k, cyc in enumerate(cycles):
+            yield '%s%d' % (cyc.context, k)
+            
+    def _count_cycles(self, trial):
+        """ Enumerate all cycles of trial as above """
+        rcycles = [cyc for cyc in trial.cycles if cyc.context == 'R']
+        lcycles = [cyc for cyc in trial.cycles if cyc.context == 'L']
+        return list(self._enum_cycles(rcycles)) + list(self._enum_cycles(lcycles))
+    
+    def _common_cycles(self):
+        """ Find cycles that are common to all loaded c3d trials """
+        allcycles = []
+        for trial in self.trials.items():
+            allcycles.append(set(self._count_cycles(trial.cycles)))
+        return set.intersection(*allcycles)
+
+    def load_dialog(self):
+        """ Bring up load dialog and load selected c3d file. """
+        fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open C3D file',
+                                                      '*.c3d')[0]
+        if fname:
+            fname = unicode(fname)
+            tr = Trial(fname)
+            self.trials[fname] = tr
+            self.listC3D.addItem(fname)
+            cycles = self._count_cycles(tr)
+            self.listCycles.addItems(cycles)
 
     def draw_canvas(self):
         self.pl.fig.clear()

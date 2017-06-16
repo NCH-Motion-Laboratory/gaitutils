@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 class Plotter(object):
 
-    def __init__(self, layout=None, normaldata=None):
+    def __init__(self, layout=None, normaldata=None, interactive=True):
         """ Plot gait data.
 
         layout: list of lists
@@ -38,13 +38,16 @@ class Plotter(object):
         normaldata: list of lists
             Corresponding normal data files for each plot. Will override
             default normal data settings.
+        interactive: bool
+                If True, start the pyplot event loop to show the figure
+                in a GUI. If False, do not import pyplot (this is needed for
+                e.g. embedding in Qt).
         """
         if layout:
             self.layout = layout
         else:
             self._layout = None
         self.trial = None
-        self.fig = None
         self.normaldata = normaldata
         self.legendnames = []
         self.modelartists = []
@@ -52,6 +55,10 @@ class Plotter(object):
         self.cfg = cfg
         self.nrows = 0
         self.ncols = 0
+        self.interactive = interactive
+        # if in interactive mode, create the figure later - otherwise we
+        # can create it now, as the size does not matter
+        self.fig = None if interactive else Figure()
 
     @property
     def layout(self):
@@ -68,6 +75,11 @@ class Plotter(object):
         if self.nrows == 0:
             raise ValueError('No data to plot')
         self.ncols = len(layout[0])
+        # compute figure width and height - only used for interactive figures
+        self.figh = min(self.nrows*self.cfg.plot.inch_per_row + 1,
+                        self.cfg.plot.maxh)
+        self.figw = min(self.ncols*self.cfg.plot.inch_per_col,
+                        self.cfg.plot.maxw)
 
     def open_nexus_trial(self):
         source = nexus.viconnexus()
@@ -122,9 +134,15 @@ class Plotter(object):
                 plotheightratios.append(self.cfg.plot.analog_plotheight)
         return plotheightratios
 
+    def _create_interactive_figure(self):
+        """ Create pyplot controlled figure """
+        import matplotlib.pylab as plt
+        # auto size fig according to n of subplots w, limit size
+        self.fig = plt.figure(figsize=(self.figw, self.figh))
+
     def tight_layout(self):
         """ Customized tight layout """
-        # space for main title
+        # try to leave space for main title
         top = (self.figh - self.cfg.plot.titlespace) / self.figh
         bottom = .07
         left = .07
@@ -158,7 +176,6 @@ class Plotter(object):
                    sharex=True,
                    superpose=False,
                    show=True,
-                   interactive=True,
                    maintitle=None,
                    maintitleprefix=None):
 
@@ -238,45 +255,55 @@ class Plotter(object):
                 Whether to show the plot after plotting is finished. Use
                 show=False if overlaying multiple trials and call show()
                 after finished. If interactive=False, this has no effect.
-        interactive: bool
-                If True, start the pyplot event loop to show the figure
-                in a GUI. If False, do not import pyplot (this is needed for
-                e.g. embedding in Qt).
         maintitle : str
                 Main title for the plot.
         maintitleprefix : str
                 If maintitle is not set, title will be set to
                 maintitleprefix + trial name.
         """
-        # auto size fig according to n of subplots w, limit size
-        self.figh = min(self.nrows*self.cfg.plot.inch_per_row + 1,
-                        self.cfg.plot.maxh)
-        self.figw = min(self.ncols*self.cfg.plot.inch_per_col,
-                        self.cfg.plot.maxw)
 
-        if not self.trial:
-            if not interactive:
-                # create empty figure
-                logger.debug('making empty figure')
-                self.fig = Figure(figsize=(self.figw, self.figh))
-                return
-            else:
-                raise ValueError('No trial to plot, call open_trial() first')
+        if self.trial is None:
+            raise ValueError('No trial to plot, call open_trial() first')
 
         if self._layout is None:
-            raise ValueError('No layout set')
+            raise ValueError('Please set trial.layout before plotting')
 
-        if maintitle is None:
-            if maintitleprefix is None:
-                maintitleprefix = ''
-            maintitle = maintitleprefix + self.trial.trialname
-
-        # auto adjust plot heights
+        # auto adjust plot height ratios
         if plotheightratios is None:
             plotheightratios = self._plot_height_ratios()
         elif len(plotheightratios) != len(self.nrows):
             raise ValueError('n of height ratios must match n of rows')
         plotaxes = []
+
+        # figure creation logic
+        # if we are superposing, do not recreate gridspec
+        if self.interactive:
+            if superpose:
+                if self.fig is None:
+                    logger.debug('No figure to superpose on, creating new one')
+                    self._create_interactive_figure()
+                    self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
+                                                      height_ratios=plotheightratios)
+                else:
+                    pass  # superposing on existing figure
+            else:
+                # interactive, new figure
+                self._create_interactive_figure()
+                self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
+                                                  height_ratios=plotheightratios)
+        else:  # non interactive - figure should exist already
+            if superpose:
+                pass  # superposing on existing figure
+            else:
+                # reusing the existing figure - no superpose
+                self.fig.clear()
+                self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
+                                                  height_ratios=plotheightratios)
+
+        if maintitle is None:
+            if maintitleprefix is None:
+                maintitleprefix = ''
+            maintitle = maintitleprefix + self.trial.trialname
 
         def _axis_annotate(ax, text):
             """ Annotate at center of axis """
@@ -321,25 +348,12 @@ class Plotter(object):
         if not (model_cycles or emg_cycles):
             raise ValueError('No matching gait cycles found in data')
 
-        if self.fig is None or (interactive and not superpose):
-        # do not create multiple figures, except in interactive mode when not
-        # superposing
-            logger.debug('new figure: width %.2f, height %.2f'
-                         % (self.figw, self.figh))
-            self.interactive = interactive
-            if interactive:
-                # figure needs to be created differently for interactive mode
-                import matplotlib.pylab as plt
-                self.fig = plt.figure(figsize=(self.figw, self.figh))
-            else:
-                self.fig = Figure(figsize=(self.figw, self.figh))
-        self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
-                                          height_ratios=plotheightratios)
-
         for i, var in enumerate(self.allvars):
             var_type = self._var_type(var)
-            if var_type is None:
+            if var_type is None:  # do not create new axis
                 continue
+            # if we are superposing, self.gridspec already exists so these
+            # calls do not actually add new axes to the plot
             if sharex and len(plotaxes) > 0:
                 ax = self.fig.add_subplot(self.gridspec[i],
                                           sharex=plotaxes[-1])

@@ -9,9 +9,8 @@ TODO:
     -status bar
     -treat Nexus trial like c3d trials (add to list)
     -cycle logic for multiple trials (common cycles ?)
-    -pdf writer
+    -title and legend options for pdf writer  (figlegend?)
     -trial averaging / stddev (separate plot button)
-   
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -162,7 +161,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
         fname = fout[0]
         if fname:
             fname = unicode(fname)
-            self.pl.set_title('boo')
+            self.pl.set_title(self.pl.title_with_eclipse_info())
             self.canvas.print_figure(fname)
             self.pl.set_title('')
             self.canvas.draw()

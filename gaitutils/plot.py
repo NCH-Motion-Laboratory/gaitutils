@@ -167,7 +167,7 @@ class Plotter(object):
             top = (self.figh - self.cfg.plot.titlespace) / self.figh
         else:
             top = .95
-        bottom = .07
+        bottom = .05
         left = .07
         right = .96
         hspace = .7

@@ -21,11 +21,58 @@ from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
 from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
                                                 NavigationToolbar)
 from matplotlib.figure import Figure
-from gaitutils import Plotter, Trial, layouts, cfg
+from gaitutils import Plotter, Trial, nexus, layouts, cfg
 import logging
 
 
+class TurboListWidget(QtWidgets.QListWidget):
+    """ Adds some convenience to QListWidget """
+
+    def __init__(self, parent=None):
+        super(TurboListWidget, self).__init__(parent)
+
+    def items(self):
+        """ Yield all items """
+        for i in range(self.count()):
+            yield self.item(i)
+
+    def selected_items(self):
+        """ Yield selected items """
+        for item in self.items():
+            if item.checkState():
+                yield item
+
+    def select_all(self):
+        """ Select all items """
+        for item in self.items:
+            item.setCheckState(QtCore.Qt.Checked)
+
+    def select_none(self):
+        """ Select all items """
+        for item in self.items:
+            item.setCheckState(QtCore.Qt.Unchecked)
+
+    def data_from_selected(self):
+        """ Yield data from selected items """
+        for item in self.selected_items():
+            yield item.data(QtCore.Qt.UserRole)
+
+    def add_item(self, txt, data=None, checkable=False, checked=False):
+        """ Add checkable item with data """
+        item = QtWidgets.QListWidgetItem(txt, self)
+        if checkable:
+            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+            item.setCheckState(QtCore.Qt.Checked if checked else
+                               QtCore.Qt.Unchecked)
+        if data is not None:
+            item.setData(QtCore.Qt.UserRole, data)
+
+    def rm_current_item(self):
+        self.takeItem(self.row(self.currentItem()))
+
+
 class PlotterWindow(QtWidgets.QMainWindow):
+
     def __init__(self, parent=None):
         super(PlotterWindow, self).__init__(parent)
 
@@ -82,7 +129,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
             if fp_info:
                 desc += ' (on forceplate)' if cyc.on_forceplate else ''
             yield desc
-            
+
     def _update_cycles_list(self):
         """ Update displayed list of gait cycles according to loaded trials.
         If multiple trials are loaded, cycles will be intersected (i.e. only
@@ -95,25 +142,19 @@ class PlotterWindow(QtWidgets.QMainWindow):
                 item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
                 item.setCheckState(QtCore.Qt.Unchecked)
                 item.setData(QtCore.Qt.UserRole, cycle)
+        else:
+            self.message_dialog('Too many trials')
 
-    def _cycles_to_plot(self):
-        """ Return gait cycles that the user has selected for plotting """
-        for i in range(self.listCycles.count()):
-            item = self.listCycles.item(i)
-            if item.checkState():
-                yield item.data(QtCore.Qt.UserRole)
-                
-    def _select_all_cycles(self):
-        for i in range(self.listCycles.count()):
-            item = self.listCycles.item(i)
-            item.setCheckState(QtCore.Qt.Checked)
 
     def _open_nexus_trial(self):
-        self.pl.open_nexus_trial()
-        self.trials.append(self.pl.trial)
+        self._open_trial(nexus.viconnexus())
+
+    def _open_trial(self, source):
+        tr = Trial(source)
+        self.trials.append(tr)
         self._update_cycles_list()
-        self._set_status('Loaded Nexus trial')
-    
+        self._set_status('Loaded trial %s' % tr.trialname)
+
     def _common_cycles(self):
         """ Find cycles that are common to all loaded c3d trials """
         allcycles = []
@@ -127,11 +168,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
                                                       '*.c3d')[0]
         if fname:
             fname = unicode(fname)
-            tr = Trial(fname)
-            self.trials[fname] = tr
-            self.listC3D.addItem(fname)
-            cycles = self._count_cycles(tr)
-            self.listCycles.addItems(self.describe_cycles(tr.cycles))
+            self._open_trial(fname)
 
     def message_dialog(self, msg):
         """ Show message with an 'OK' button. """
@@ -153,7 +190,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
                                match_pig_kinetics=match_pig_kinetics,
                                maintitle='')
             self.canvas.draw()
-            self.btnSavePDF.setEnabled(True)
+            self.btnSavePDF.setEnabled(True)  # can create pdf now
 
     def _write_pdf(self):
         """ Bring up save dialog and save data. """
@@ -161,7 +198,8 @@ class PlotterWindow(QtWidgets.QMainWindow):
         # TODO: where to write (in case of multiple session dirs)
         fout = QtWidgets.QFileDialog.getSaveFileName(self,
                                                      'Save PDF',
-                                                     self.trials[0].sessionpath,
+                                                     self.trials[0].
+                                                     sessionpath,
                                                      '*.pdf')
         fname = fout[0]
         if fname:

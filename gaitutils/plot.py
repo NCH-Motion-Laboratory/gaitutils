@@ -176,7 +176,7 @@ class Plotter(object):
                                  bottom=bottom, top=top,
                                  hspace=hspace, wspace=wspace)
 
-    def plot_trial(self,
+    def plot_trial(self, trial=None,
                    model_cycles=cfg.plot.default_model_cycles,
                    emg_cycles=cfg.plot.default_emg_cycles,
                    model_tracecolor=None,
@@ -202,6 +202,8 @@ class Plotter(object):
 
         """ Create plot of variables. Parameters:
 
+        trial : Trial
+                Trial to plot - if None, plot self.trial
         model_cycles : list | dict of int |  dict of list | 'all' | None
                 Gait cycles to plot. Defaults to first cycle (1) for
                 both contexts. Dict keys 'R' and 'L' specify the cycles
@@ -281,8 +283,8 @@ class Plotter(object):
                 maintitleprefix + trial name.
         """
 
-        if self.trial is None:
-            raise ValueError('No trial to plot, call open_trial() first')
+        if trial is None and self.trial is None:
+            raise ValueError('No trial, specify one or call open_trial()')
 
         if self._layout is None:
             raise ValueError('Please set trial.layout before plotting')

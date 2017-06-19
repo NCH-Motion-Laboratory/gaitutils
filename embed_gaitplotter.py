@@ -10,7 +10,6 @@ TODO:
     -treat Nexus trial like c3d trials (add to list)
     -cycle logic for multiple trials (common cycles ?)
     -pdf writer
-    -rename layouts
     -trial averaging / stddev (separate plot button)
    
 
@@ -62,6 +61,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self.btnQuit.clicked.connect(self.close)
         self.btnSelectAllCycles.clicked.connect(self._select_all_cycles)
         self.btnAddC3DTrial.clicked.connect(self.load_dialog)
+        self.btnSavePDF.clicked.connect(self._write_pdf)
         self.btnDeleteTrial.clicked.connect(self.rm_c3d)
         self.cbLayout.addItems(sorted(cfg.layouts.__dict__.keys()))
 
@@ -148,6 +148,23 @@ class PlotterWindow(QtWidgets.QMainWindow):
             self.pl.plot_trial(model_cycles=cycles, emg_cycles=cycles,
                                match_pig_kinetics=match_pig_kinetics,
                                maintitle='')
+            self.canvas.draw()
+            self.btnSavePDF.setEnabled(True)
+
+    def _write_pdf(self):
+        """ Bring up save dialog and save data. """
+        # TODO: set default PDF name?
+        # TODO: where to write (in case of multiple session dirs)
+        fout = QtWidgets.QFileDialog.getSaveFileName(self,
+                                                     'Save PDF',
+                                                     self.trials[0].sessionpath,
+                                                     '*.pdf')
+        fname = fout[0]
+        if fname:
+            fname = unicode(fname)
+            self.pl.set_title('boo')
+            self.canvas.print_figure(fname)
+            self.pl.set_title('')
             self.canvas.draw()
 
 

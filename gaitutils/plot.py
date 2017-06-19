@@ -159,10 +159,14 @@ class Plotter(object):
         # auto size fig according to n of subplots w, limit size
         self.fig = plt.figure(figsize=(self.figw, self.figh))
 
-    def tight_layout(self):
-        """ Customized tight layout """
+    def tight_layout(self, titlespace=None):
+        """ Customized tight layout. Leave space for main title if titlespace
+        evals to True """
         # try to leave space for main title
-        top = (self.figh - self.cfg.plot.titlespace) / self.figh
+        if titlespace:
+            top = (self.figh - self.cfg.plot.titlespace) / self.figh
+        else:
+            top = .95
         bottom = .07
         left = .07
         right = .96
@@ -300,7 +304,8 @@ class Plotter(object):
                 # reusing the existing figure - no superpose
                 self.fig.clear()
 
-        if maintitle is None:
+        # automatically set title if in interactive mode
+        if maintitle is None and self.interactive:
             if maintitleprefix is None:
                 maintitleprefix = ''
             maintitle = maintitleprefix + self.trial.trialname
@@ -543,12 +548,16 @@ class Plotter(object):
                           prop={'size': self.cfg.plot.legend_fontsize})
             plotaxes.append(ax)
 
-        self.fig.suptitle(maintitle, fontsize=self.cfg.plot.maintitle_fontsize,
-                          fontweight="bold")
-        self.tight_layout()
+        self.set_title(maintitle)
+        self.tight_layout(maintitle)
 
         if show and self.interactive:
             self.show()
+
+    def set_title(self, title):
+        self.fig.suptitle(title, fontsize=self.cfg.plot.maintitle_fontsize,
+                          fontweight="bold")
+        self.tight_layout(title)  # update plot spacing
 
     def title_with_eclipse_info(self, prefix=''):
         """ Create title: prefix + trial name + Eclipse description and

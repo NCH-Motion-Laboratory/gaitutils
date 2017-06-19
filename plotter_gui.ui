@@ -14,7 +14,7 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout">
+   <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <layout class="QGridLayout" name="mainGridLayout">
       <item row="0" column="1">
@@ -169,6 +169,16 @@
         </property>
        </spacer>
       </item>
+      <item row="17" column="1">
+       <widget class="QPushButton" name="btnSavePDF">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>Save PDF</string>
+        </property>
+       </widget>
+      </item>
       <item row="9" column="3">
        <widget class="QPushButton" name="btnSelectAllCycles">
         <property name="text">
@@ -186,14 +196,14 @@
         </property>
        </widget>
       </item>
-      <item row="19" column="1">
+      <item row="20" column="1">
        <widget class="QPushButton" name="btnQuit">
         <property name="text">
          <string>Quit</string>
         </property>
        </widget>
       </item>
-      <item row="17" column="1">
+      <item row="18" column="1">
        <spacer name="verticalSpacer_6">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
@@ -219,12 +229,18 @@
         </property>
        </spacer>
       </item>
-      <item row="15" column="2">
-       <widget class="QPushButton" name="pushButton">
-        <property name="text">
-         <string>Save PDF</string>
+      <item row="16" column="1">
+       <spacer name="verticalSpacer_7">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
         </property>
-       </widget>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
       </item>
      </layout>
     </item>

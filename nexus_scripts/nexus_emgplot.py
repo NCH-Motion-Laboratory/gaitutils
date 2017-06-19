@@ -21,7 +21,7 @@ def do_plot():
     maintitle = pl.title_with_eclipse_info('EMG plot for')
 
     vicon = nexus.viconnexus()
-    layout = cfg.layouts.std_emg
+    layout = cfg.layouts.lowerbody_emg
     pl.layout = layouts.rm_dead_channels(vicon, pl.trial.emg, layout)
     pl.plot_trial(maintitle=maintitle)
 

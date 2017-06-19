@@ -23,8 +23,8 @@ def do_plot():
     else:
         sides = [sides]
     for side in sides:
-        pl.layout = (cfg.layouts.lb_kinetics_emg_r if side == 'R' else
-                     cfg.layouts.lb_kinetics_emg_l)
+        pl.layout = (cfg.layouts.lowerbody_kinetics_emg_r if side == 'R' else
+                     cfg.layouts.lowerbody_kinetics_emg_l)
 
         s = 'right' if side == 'R' else 'left'
         maintitle = 'Kinetics-EMG (%s) for %s' % (s,

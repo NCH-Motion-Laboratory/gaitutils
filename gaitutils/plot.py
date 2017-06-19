@@ -345,8 +345,8 @@ class Plotter(object):
         model_cycles = (model_cycles if isinstance(model_cycles, list) else
                         _get_cycles(model_cycles))
 
-        model_cycles = (emg_cycles if isinstance(emg_cycles, list) else
-                        _get_cycles(emg_cycles))
+        emg_cycles = (emg_cycles if isinstance(emg_cycles, list) else
+                      _get_cycles(emg_cycles))
 
         if not (model_cycles or emg_cycles):
             raise ValueError('No matching gait cycles found in data')

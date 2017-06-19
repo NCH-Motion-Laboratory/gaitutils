@@ -34,7 +34,7 @@ def do_plot(search=None):
 
     pl = Plotter()
     pl.open_trial(enf2c3d(marked_trials[0]))
-    pl.layout = cfg.layouts.overlay_std_emg
+    pl.layout = cfg.layouts.overlay_lowerbody_emg
 
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
 

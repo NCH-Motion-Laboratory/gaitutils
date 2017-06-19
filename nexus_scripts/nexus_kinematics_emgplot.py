@@ -20,12 +20,12 @@ def do_plot():
     pdf_prefix = 'Kinematics_EMG_'
     maintitle = pl.title_with_eclipse_info('Kinematics-EMG for')
 
-    pl.layout = cfg.layouts.lb_kinematics_emg_l
+    pl.layout = cfg.layouts.lowerbody_kinematics_emg_l
     pl.plot_trial(maintitle=maintitle,
                   emg_cycles={'L': 1}, model_cycles={'L': 1},
                   emg_tracecolor='red', show=False, annotate_emg=False)
 
-    pl.layout = cfg.layouts.lb_kinematics_emg_r
+    pl.layout = cfg.layouts.lowerbody_kinematics_emg_r
     pl.plot_trial(maintitle=maintitle, model_cycles={'R': 1},
                   emg_cycles={'R': 1}, emg_tracecolor='green',
                   annotate_emg=False, superpose=True)

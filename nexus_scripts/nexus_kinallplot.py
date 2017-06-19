@@ -15,7 +15,7 @@ def do_plot():
 
     pl = Plotter()
     pl.open_nexus_trial()
-    pl.layout = cfg.layouts.lb_kin
+    pl.layout = cfg.layouts.lowerbody_kinall
     maintitleprefix = 'Kinetics/kinematics plot for '
 
     pl.plot_trial(maintitleprefix=maintitleprefix, show=False)

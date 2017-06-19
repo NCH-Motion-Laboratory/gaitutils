@@ -168,7 +168,7 @@ class Plotter(object):
         else:
             top = .95
         bottom = .05
-        left = .07
+        left = .1
         right = .96
         hspace = .7
         wspace = .3
@@ -413,6 +413,8 @@ class Plotter(object):
                                                     plot.label_fontsize)
                         ax.yaxis.label.set_fontsize(self.cfg.
                                                     plot.label_fontsize)
+                        # force ylabel pos
+                        # ax.yaxis.set_label_coords(-.12, .5)
                         subplot_title = model.varlabels[varname]
                         prev_title = ax.get_title()
                         if prev_title and prev_title != subplot_title:
@@ -428,6 +430,7 @@ class Plotter(object):
                             ax.set(xlabel=xlabel)
                             ax.xaxis.label.set_fontsize(self.cfg.
                                                         plot.label_fontsize)
+
                         if model.get_normaldata(varname):
                             if plot_model_normaldata and cycle is not None:
                                 tnor, ndata = model.get_normaldata(varname)
@@ -485,6 +488,8 @@ class Plotter(object):
                         ax.set(ylabel=self.cfg.plot.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.
                                                     plot.label_fontsize)
+                        # force ylabel pos
+                        # ax.yaxis.set_label_coords(-.12, .5)
                         subplot_title = (self.cfg.emg.channel_labels[var] if
                                          var in self.cfg.emg.channel_labels
                                          else var)

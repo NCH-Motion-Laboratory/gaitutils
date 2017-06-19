@@ -6,7 +6,6 @@ WIP
 TODO:
     -maybe inherit QListWidget for cycles widget to get neater code (methods)
     -realtime updates to plot on widget changes (needs plotter to be faster?)
-    -status bar
     -treat Nexus trial like c3d trials (add to list)
     -cycle logic for multiple trials (common cycles ?)
     -title and legend options for pdf writer  (figlegend?)
@@ -39,17 +38,19 @@ class PlotterWindow(QtWidgets.QMainWindow):
         #self.pl.open_nexus_trial()
         #self.pl.layout = cfg.layouts.std_emg
         #self.pl.plot_trial()
-        
         # this is the Canvas Widget that displays the `figure`
         # it takes the `figure` instance as a parameter to __init__
         # self.canvas = FigureCanvas(self.pl.fig)
-        
+
         self.canvas = FigureCanvas(self.pl.fig)
 
         # self.setStyleSheet("background-color: white;");
         # canvas into last column, span all rows
-        self.mainGridLayout.addWidget(self.canvas, 0, 4, 
+        self.mainGridLayout.addWidget(self.canvas, 0,
+                                      self.mainGridLayout.columnCount(),
                                       self.mainGridLayout.rowCount(), 1)
+        self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                  QtWidgets.QSizePolicy.Expanding)
         # this is the Navigation widget
         # it takes the Canvas widget and a parent
         #self.toolbar = NavigationToolbar(self.canvas, self)
@@ -63,11 +64,14 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self.btnSavePDF.clicked.connect(self._write_pdf)
         self.btnDeleteTrial.clicked.connect(self.rm_c3d)
         self.cbLayout.addItems(sorted(cfg.layouts.__dict__.keys()))
-
+        self._set_status('Ready')
 
     def rm_c3d(self):
         self.listC3D.takeItem(self.listC3D.row(self.listC3D.currentItem()))
-    
+
+    def _set_status(self, msg):
+        self.statusbar.showMessage(msg)
+
     @staticmethod
     def _describe_cycles(cycles, fp_info=True):
         sidestr = {'R': 'Right', 'L': 'Left'}
@@ -108,6 +112,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self.pl.open_nexus_trial()
         self.trials.append(self.pl.trial)
         self._update_cycles_list()
+        self._set_status('Loaded Nexus trial')
     
     def _common_cycles(self):
         """ Find cycles that are common to all loaded c3d trials """
@@ -140,7 +145,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
     def draw_canvas(self):
         cycles = list(self._cycles_to_plot())
         if not cycles:
-            self.message_dialog('No cycles to plot')
+            self.message_dialog('No cycles selected for plotting')
         else:
             self.pl.layout = cfg.layouts.__dict__[self.cbLayout.currentText()]
             match_pig_kinetics = self.xbKineticsFpOnly.checkState()

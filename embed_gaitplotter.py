@@ -190,20 +190,25 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
     def _plot_trials(self):
         """ Plot user-picked trials """
+        trials = dict()
         self.pl.fig.clear()
-        cycles = (cycle.mydata for cycle in self.listCyclesToPlot.items)
+        cycles = (item.mydata for item in self.listCyclesToPlot.items)
         if not cycles:
             self.message_dialog('No cycles selected for plotting')
-        else:
-            self.pl.layout = cfg.layouts.__dict__[self.cbLayout.currentText()]
-            match_pig_kinetics = self.xbKineticsFpOnly.checkState()
-            for cyc in cycles:
-                self.pl.plot_trial(trial=cyc.trial, model_cycles=[cyc],
-                                   emg_cycles=[cyc],
-                                   match_pig_kinetics=match_pig_kinetics,
-                                   maintitle='', superpose=True)
-            self.canvas.draw()
-            self.btnSavePDF.setEnabled(True)  # can create pdf now
+            return
+        for cycle in cycles:
+            if cycle.trial not in trials:
+                trials[cycle.trial] = []
+            trials[cycle.trial].append(cycle)
+        self.pl.layout = cfg.layouts.__dict__[self.cbLayout.currentText()]
+        match_pig_kinetics = self.xbKineticsFpOnly.checkState()
+        for trial in trials:
+            self.pl.plot_trial(trial=trial, model_cycles=trials[trial],
+                               emg_cycles=trials[trial],
+                               match_pig_kinetics=match_pig_kinetics,
+                               maintitle='', superpose=True)
+        self.canvas.draw()
+        self.btnSavePDF.setEnabled(True)  # can create pdf now
 
     def load_dialog(self):
         """ Bring up load dialog and load selected c3d file. """

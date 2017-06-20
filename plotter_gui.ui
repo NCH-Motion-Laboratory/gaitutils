@@ -17,16 +17,6 @@
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <layout class="QGridLayout" name="mainGridLayout">
-      <item row="20" column="1">
-       <widget class="QPushButton" name="btnSavePDF">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>Save PDF</string>
-        </property>
-       </widget>
-      </item>
       <item row="3" column="3">
        <widget class="QPushButton" name="btnAddNexusTrial">
         <property name="sizePolicy">
@@ -40,40 +30,14 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="5">
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="21" column="1">
-       <spacer name="verticalSpacer_6">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>40</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
       <item row="8" column="3">
        <widget class="QPushButton" name="btnSelectForceplateCycles">
         <property name="text">
-         <string>Forceplate</string>
+         <string>Select forceplate</string>
         </property>
        </widget>
       </item>
-      <item row="15" column="2" colspan="2">
+      <item row="17" column="2" colspan="2">
        <widget class="QComboBox" name="cbLayout">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -121,7 +85,7 @@
         </property>
        </spacer>
       </item>
-      <item row="17" column="1">
+      <item row="22" column="1">
        <spacer name="verticalSpacer_3">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
@@ -134,7 +98,7 @@
         </property>
        </spacer>
       </item>
-      <item row="15" column="1">
+      <item row="17" column="1">
        <widget class="QLabel" name="label">
         <property name="text">
          <string>Select layout:</string>
@@ -157,10 +121,13 @@
         </property>
        </spacer>
       </item>
-      <item row="16" column="1">
+      <item row="18" column="1">
        <widget class="QCheckBox" name="xbKineticsFpOnly">
         <property name="text">
          <string>Plot kinetics only for forceplate cycles</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -171,7 +138,7 @@
         </property>
        </widget>
       </item>
-      <item row="18" column="1">
+      <item row="23" column="1">
        <widget class="QPushButton" name="btnPlot">
         <property name="text">
          <string>Plot</string>
@@ -181,31 +148,18 @@
       <item row="7" column="3">
        <widget class="QPushButton" name="btnSelectAllCycles">
         <property name="text">
-         <string>All</string>
+         <string>Select all</string>
         </property>
        </widget>
       </item>
-      <item row="23" column="1">
+      <item row="30" column="1">
        <widget class="QPushButton" name="btnQuit">
         <property name="text">
          <string>Quit</string>
         </property>
        </widget>
       </item>
-      <item row="19" column="1">
-       <spacer name="verticalSpacer_7">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>40</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="24" column="1">
+      <item row="31" column="1">
        <spacer name="verticalSpacer">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
@@ -232,7 +186,7 @@
         </property>
        </widget>
       </item>
-      <item row="14" column="1">
+      <item row="16" column="1">
        <spacer name="verticalSpacer_4">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
@@ -245,7 +199,7 @@
         </property>
        </spacer>
       </item>
-      <item row="13" column="1" colspan="2">
+      <item row="13" column="1" rowspan="3" colspan="2">
        <widget class="NiceListWidget" name="listCyclesToPlot"/>
       </item>
       <item row="12" column="1">
@@ -275,12 +229,16 @@
       <item row="9" column="3">
        <widget class="QPushButton" name="btnSelect1stCycles">
         <property name="text">
-         <string>1st R and L</string>
+         <string>Select 1st R and L</string>
         </property>
        </widget>
       </item>
-      <item row="7" column="1" rowspan="3" colspan="2">
-       <widget class="NiceListWidget" name="listTrialCycles"/>
+      <item row="14" column="3">
+       <widget class="QPushButton" name="btnDeleteAll">
+        <property name="text">
+         <string>Delete all</string>
+        </property>
+       </widget>
       </item>
       <item row="10" column="1" colspan="2">
        <widget class="QToolButton" name="btnPickCycles">
@@ -295,6 +253,76 @@
         </property>
         <property name="arrowType">
          <enum>Qt::DownArrow</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="1" rowspan="3" colspan="2">
+       <widget class="NiceListWidget" name="listTrialCycles"/>
+      </item>
+      <item row="21" column="1">
+       <widget class="QPushButton" name="pushButton">
+        <property name="text">
+         <string>Load normal data...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="13" column="3">
+       <widget class="QPushButton" name="btnDeleteCycle">
+        <property name="text">
+         <string>Delete cycle</string>
+        </property>
+       </widget>
+      </item>
+      <item row="24" column="1">
+       <widget class="QPushButton" name="pushButton_2">
+        <property name="text">
+         <string>Plot average</string>
+        </property>
+       </widget>
+      </item>
+      <item row="26" column="1">
+       <spacer name="verticalSpacer_5">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="20" column="1">
+       <spacer name="verticalSpacer_6">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="25" column="1">
+       <widget class="QPushButton" name="btnSavePDF">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>Save PDF...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="19" column="1">
+       <widget class="QCheckBox" name="checkBox">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="text">
+         <string>Keep previous plot</string>
         </property>
        </widget>
       </item>

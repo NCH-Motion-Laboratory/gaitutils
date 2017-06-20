@@ -76,8 +76,6 @@ class Plotter(object):
             layout.
         """
 
-        if self.trial is None:
-            raise ValueError('Load data before setting layout')
         if (not isinstance(layout, list) or not
            all([isinstance(item, list) for item in layout])):
             raise ValueError('Layout must be a list of lists')
@@ -133,10 +131,11 @@ class Plotter(object):
             return None
         elif models.model_from_var(var):
             return 'model'
+        # XXX: changed to remove references to .trial - enables setting layout
+        # without loading trial
         # check whether it's a configured EMG channel or exists in the data
         # source (both are ok)
-        elif (self.trial.emg.is_channel(var) or
-              var in self.cfg.emg.channel_labels):
+        elif (var in self.cfg.emg.channel_labels):
             return 'emg'
         elif var in ('model_legend', 'emg_legend'):
             return var
@@ -285,6 +284,8 @@ class Plotter(object):
 
         if trial is None and self.trial is None:
             raise ValueError('No trial, specify one or call open_trial()')
+        elif trial is None:
+            trial = self.trial
 
         if self._layout is None:
             raise ValueError('Please set trial.layout before plotting')
@@ -310,7 +311,7 @@ class Plotter(object):
         if maintitle is None and self.interactive:
             if maintitleprefix is None:
                 maintitleprefix = ''
-            maintitle = maintitleprefix + self.trial.trialname
+            maintitle = maintitleprefix + trial.trialname
 
         def _axis_annotate(ax, text):
             """ Annotate at center of axis """
@@ -332,9 +333,9 @@ class Plotter(object):
             if cycles is None:
                 cycles = [None]  # listify
             elif cycles == 'all':
-                cycles = self.trial.cycles
+                cycles = trial.cycles
             elif cycles == 'forceplate':
-                cycles = [cyc for cyc in self.trial.cycles
+                cycles = [cyc for cyc in trial.cycles
                           if cyc.on_forceplate]
             elif isinstance(cycles, dict):
                 for side in ['L', 'R']:  # add L/R side if needed
@@ -344,7 +345,7 @@ class Plotter(object):
                 cycles.update({key: [val] for (key, val) in cycles.items()
                               if isinstance(val, int)})
                 # get the specified cycles from trial
-                cycles = [self.trial.get_cycle(side, ncycle)
+                cycles = [trial.get_cycle(side, ncycle)
                           for side in ['L', 'R']
                           for ncycle in cycles[side] if ncycle]
             return cycles
@@ -376,7 +377,7 @@ class Plotter(object):
                 model = models.model_from_var(var)
                 for cycle in model_cycles:
                     if cycle is not None:  # plot normalized data
-                        self.trial.set_norm_cycle(cycle)
+                        trial.set_norm_cycle(cycle)
                     if split_model_vars and var[0].upper() not in ['L', 'R']:
                         varname = cycle.context + var
                     else:
@@ -391,8 +392,8 @@ class Plotter(object):
                     if kin_ok and (varname[0] == cycle.context or not
                        auto_match_model_cycle or cycle is None):
                         logger.debug('plotting data for %s' % varname)
-                        x_, data = self.trial[varname]
-                        x = (x_ / self.trial.framerate if cycle is None and
+                        x_, data = trial[varname]
+                        x = (x_ / trial.framerate if cycle is None and
                              x_axis_is_time else x_)
                         tcolor = (model_tracecolor if model_tracecolor
                                   else self.cfg.plot.model_tracecolors
@@ -453,24 +454,24 @@ class Plotter(object):
             elif var_type == 'emg':
                 for cycle in emg_cycles:
                     if cycle is not None:  # plot normalized data
-                        self.trial.set_norm_cycle(cycle)
+                        trial.set_norm_cycle(cycle)
                     try:
-                        x_, data = self.trial[var]
+                        x_, data = trial[var]
                     except KeyError:  # channel not found
                         _no_ticks_or_labels(ax)
                         if annotate_emg:
                             _axis_annotate(ax, 'not found')
                         break  # skip all cycles
-                    if not self.trial.emg.status_ok(var):
+                    if not trial.emg.status_ok(var):
                         _no_ticks_or_labels(ax)
                         if annotate_emg:
                             _axis_annotate(ax, 'disconnected')
                         break  # data no good - skip all cycles
-                    x = (x_ / self.trial.analograte if cycle is None and
+                    x = (x_ / trial.analograte if cycle is None and
                          x_axis_is_time else x_ / 1.)
                     if cycle is None and not x_axis_is_time:
                         # analog -> frames
-                        x /= self.trial.samplesperframe
+                        x /= trial.samplesperframe
                     if (cycle is None or var[0] == cycle.context or not
                        auto_match_emg_cycle):
                         # plot data and/or rms
@@ -529,9 +530,9 @@ class Plotter(object):
                 logger.debug('legend on ax %d' % id(ax))
                 ax.set_axis_off()
                 self.legendnames.append('%s   %s   %s' % (
-                                        _shorten_name(self.trial.trialname),
-                                        self.trial.eclipse_data['DESCRIPTION'],
-                                        self.trial.eclipse_data['NOTES']))
+                                        _shorten_name(trial.trialname),
+                                        trial.eclipse_data['DESCRIPTION'],
+                                        trial.eclipse_data['NOTES']))
                 if var_type == 'model_legend':
                     legtitle = ['Model traces:']
                     artists = self.modelartists
@@ -566,10 +567,12 @@ class Plotter(object):
                           fontweight="bold")
         self.tight_layout(title)  # update plot spacing
 
-    def title_with_eclipse_info(self, prefix=''):
+    def title_with_eclipse_info(self, trial=None, prefix=''):
         """ Create title: prefix + trial name + Eclipse description and
         notes """
-        desc = self.trial.eclipse_data['DESCRIPTION']
+        if trial is None:
+            trial = self.trial
+        desc = trial.eclipse_data['DESCRIPTION']
         notes = self.trial.eclipse_data['NOTES']
         maintitle = ('%s %s' % (prefix, self.trial.trialname) if prefix else
                      self.trial.trialname)
@@ -583,10 +586,12 @@ class Plotter(object):
             import matplotlib.pyplot as plt
             plt.show()
 
-    def create_pdf(self, pdf_name=None, pdf_prefix=None):
+    def create_pdf(self, trial=None, pdf_name=None, pdf_prefix=None):
         """ Make a pdf out of the created figure into the Nexus session dir.
         If pdf_name is not specified, automatically name according to current
         trial. """
+        if trial is None:
+            trial = self.trial
         if not self.fig:
             raise ValueError('No figure to save!')
         # resize to A4

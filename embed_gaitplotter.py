@@ -32,20 +32,29 @@ class NiceListWidgetItem(QtWidgets.QListWidgetItem):
     bug-prone things like checkState() """
 
     def __init__(self, *args, **kwargs):
+        # don't pass this arg to superclass __init__
+        checkable = kwargs.pop('checkable')
         super(NiceListWidgetItem, self).__init__(*args, **kwargs)
+        if checkable:
+            self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
 
     @property
-    def data(self):
+    def mydata(self):
         return super(NiceListWidgetItem, self).data(QtCore.Qt.UserRole)
 
-    @data.setter
-    def data(self, _data):
+    @mydata.setter
+    def mydata(self, _data):
         if _data is not None:
-            super(NiceListWidgetItem, self).setData(_data, QtCore.Qt.UserRole)
+            super(NiceListWidgetItem, self).setData(QtCore.Qt.UserRole, _data)
 
     @property
-    def checkState(self):
+    def checkstate(self):
         return super(NiceListWidgetItem, self).checkState()
+
+    @checkstate.setter
+    def checkstate(self, checked):
+        state = QtCore.Qt.Checked if checked else QtCore.Qt.Unchecked
+        super(NiceListWidgetItem, self).setCheckState(state)
 
 
 class NiceListWidget(QtWidgets.QListWidget):
@@ -61,39 +70,26 @@ class NiceListWidget(QtWidgets.QListWidget):
             yield self.item(i)
 
     @property
-    def items_data(self):
-        """ Yield data from all items """
-        return (item.data(QtCore.Qt.UserRole) for item in self.items)
-
-    @property
-    def checked(self):
+    def checked_items(self):
         """ Yield checked items """
-        return (item for item in self.items if item.checkState)
-
-    @property
-    def checked_data(self):
-        """ Yield data from checked items """
-        for item in self.checked:
-            yield item.data(QtCore.Qt.UserRole)
+        return (item for item in self.items if item.checkstate)
 
     def check_all(self):
         """ Check all items """
         for item in self.items:
-            item.setCheckState(QtCore.Qt.Checked)
+            item.checkstate = True
 
     def check_none(self):
-        """ Check all items """
+        """ Uncheck all items """
         for item in self.items:
-            item.setCheckState(QtCore.Qt.Unchecked)
+            item.checkstate = False
 
     def add_item(self, txt, data=None, checkable=False, checked=False):
         """ Add checkable item with data """
-        item = NiceListWidgetItem(txt, self)
+        item = NiceListWidgetItem(txt, self, checkable=checkable)
+        item.mydata = data
         if checkable:
-            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-            item.setCheckState(QtCore.Qt.Checked if checked else
-                               QtCore.Qt.Unchecked)
-            item.data = data
+            item.checkstate = checked
 
     def rm_current_item(self):
         self.takeItem(self.row(self.currentItem()))
@@ -107,26 +103,16 @@ class PlotterWindow(QtWidgets.QMainWindow):
         uifile = 'plotter_gui.ui'
         uic.loadUi(uifile, self)
 
-        self.trials = list()
-
         self.pl = Plotter(interactive=False)
-        #self.pl.open_nexus_trial()
-        #self.pl.layout = cfg.layouts.std_emg
-        #self.pl.plot_trial()
-        # this is the Canvas Widget that displays the `figure`
-        # it takes the `figure` instance as a parameter to __init__
-        # self.canvas = FigureCanvas(self.pl.fig)
-
         self.canvas = FigureCanvas(self.pl.fig)
-
+        self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                  QtWidgets.QSizePolicy.Expanding)
         # self.setStyleSheet("background-color: white;");
         # canvas into last column, span all rows
         self.mainGridLayout.addWidget(self.canvas, 0,
                                       self.mainGridLayout.columnCount(),
                                       self.mainGridLayout.rowCount(), 1)
-        
-        self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                  QtWidgets.QSizePolicy.Expanding)
+
         # this is the Navigation widget
         # it takes the Canvas widget and a parent
         #self.toolbar = NavigationToolbar(self.canvas, self)
@@ -134,7 +120,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self.listTrials.itemClicked.connect(self._trial_selected)
         # set up widgets
         self.btnAddNexusTrial.clicked.connect(self._open_nexus_trial)
-        self.btnPlot.clicked.connect(self.draw_canvas)
+        self.btnPlot.clicked.connect(self._plot_trials)
         self.btnQuit.clicked.connect(self.close)
         self.btnSelectAllCycles.clicked.connect(self.listTrialCycles.check_all)
         self.btnSelectForceplateCycles.clicked.connect(self._select_forceplate_cycles)
@@ -142,83 +128,82 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self.btnPickCycles.clicked.connect(self._pick_cycles)
         self.btnAddC3DTrial.clicked.connect(self.load_dialog)
         self.btnSavePDF.clicked.connect(self._write_pdf)
-        self.btnDeleteTrial.clicked.connect(self.rm_c3d)
+        self.btnDeleteTrial.clicked.connect(self.rm_trial)
         self.cbLayout.addItems(sorted(cfg.layouts.__dict__.keys()))
         self._set_status('Ready')
 
-    def rm_c3d(self):
-        self.listC3D.rm_current_item()
+    def rm_trial(self):
+        if self.listTrials.currentItem():
+            self.listTrials.rm_current_item()
+            self.listTrialCycles.clear()
 
     def _set_status(self, msg):
         self.statusbar.showMessage(msg)
 
-    @staticmethod
-    def _describe_cycles(cycles, verbose=True, fp_info=True, trialname=False):
-        sidestrs = {'R': 'Right', 'L': 'Left'}
-        counter = {'R': 0, 'L': 0}
-        for cyc in cycles:
-            counter[cyc.context] += 1
-            sidestr = sidestrs[cyc.context] if verbose else cyc.context
-            desc = '%s %d' % (sidestr, counter[cyc.context])
-            if fp_info:
-                desc += ' (on forceplate)' if cyc.on_forceplate else ''
-            if trialname:
-                desc = '%s: %s' % (cyc.trial.trialname, desc)
-            yield desc
-
     def _trial_selected(self, item):
         """ User clicked on trial """
-        trial = item.data(QtCore.Qt.UserRole)
+        trial = item.mydata
         self._update_trial_cycles_list(trial)
 
     def _update_trial_cycles_list(self, trial):
         """ Show cycles of given trial in the trial cycle list """
         cycles = trial.cycles
         self.listTrialCycles.clear()
-        for cycle, desc in zip(cycles, self._describe_cycles(cycles)):
-            self.listTrialCycles.add_item(desc, data=cycle, checkable=True)
+        for cycle in cycles:
+            self.listTrialCycles.add_item(cycle.name, data=cycle,
+                                          checkable=True)
 
     def _select_forceplate_cycles(self):
         """ Select all forceplate cycles in the trial cycles list """
         self.listTrialCycles.check_none()
         for item in self.listTrialCycles.items:
-            if item.data(QtCore.Qt.UserRole).on_forceplate:
-                item.setCheckState(QtCore.Qt.Checked)
+            if item.mydata.on_forceplate:
+                item.checkstate = True
 
     def _select_1st_cycles(self):
         """ Select 1st L/R cycles in the trial cycles list """
         self.listTrialCycles.check_none()
-        descriptions = self._describe_cycles(self.listTrialCycles.items_data,
-                                             fp_info=False)
-        for desc, item in zip(descriptions, self.listTrialCycles.items):
-            if desc[-1] == '1':
-                item.setCheckState(QtCore.Qt.Checked)
+        for item in self.listTrialCycles.items:
+            if item.mydata.index == 1:
+                item.checkstate = True
 
     def _pick_cycles(self):
-        cycles = self.listTrialCycles.checked_data
-        items = self.listTrialCycles.checked
-        logger.debug(list(items))
-        for cycle in cycles:
-            self.listCyclesToPlot.add_item(cycle.name, data=cycle)
+        """ Add selected cycles to overall list """
+        old_cycles = (item.mydata for item in self.listCyclesToPlot.items)
+        new_cycles = (item.mydata for item in
+                      self.listTrialCycles.checked_items)
+        for cycle in set(new_cycles) - set(old_cycles):
+            name = '%s: %s' % (cycle.trial.trialname, cycle.name)
+            self.listCyclesToPlot.add_item(name, data=cycle)
 
     def _open_nexus_trial(self):
         self._open_trial(nexus.viconnexus())
 
     def _open_trial(self, source):
         tr = Trial(source)
-        if tr.trialname in [trial.trialname for trial in self.trials]:
+        trials = (item.mydata for item in self.listTrials.items)
+        if tr.trialname in [trial.trialname for trial in trials]:
             return  # trial already loaded (based on name) TODO: clashes?
-        self.trials.append(tr)
         self._update_trial_cycles_list(tr)
         self.listTrials.add_item(tr.trialname, data=tr)
         self._set_status('Loaded trial %s' % tr.trialname)
 
-    def _common_cycles(self):
-        """ Find cycles that are common to all loaded c3d trials """
-        allcycles = []
-        for trial in self.trials.items():
-            allcycles.append(set(self._count_cycles(trial.cycles)))
-        return set.intersection(*allcycles)
+    def _plot_trials(self):
+        """ Plot user-picked trials """
+        self.pl.fig.clear()
+        cycles = (cycle.mydata for cycle in self.listCyclesToPlot.items)
+        if not cycles:
+            self.message_dialog('No cycles selected for plotting')
+        else:
+            self.pl.layout = cfg.layouts.__dict__[self.cbLayout.currentText()]
+            match_pig_kinetics = self.xbKineticsFpOnly.checkState()
+            for cyc in cycles:
+                self.pl.plot_trial(trial=cyc.trial, model_cycles=[cyc],
+                                   emg_cycles=[cyc],
+                                   match_pig_kinetics=match_pig_kinetics,
+                                   maintitle='', superpose=True)
+            self.canvas.draw()
+            self.btnSavePDF.setEnabled(True)  # can create pdf now
 
     def load_dialog(self):
         """ Bring up load dialog and load selected c3d file. """
@@ -236,19 +221,6 @@ class PlotterWindow(QtWidgets.QMainWindow):
         dlg.addButton(QtWidgets.QPushButton('Ok'),
                       QtWidgets.QMessageBox.YesRole)
         dlg.exec_()
-
-    def draw_canvas(self):
-        cycles = list(self._cycles_to_plot())
-        if not cycles:
-            self.message_dialog('No cycles selected for plotting')
-        else:
-            self.pl.layout = cfg.layouts.__dict__[self.cbLayout.currentText()]
-            match_pig_kinetics = self.xbKineticsFpOnly.checkState()
-            self.pl.plot_trial(model_cycles=cycles, emg_cycles=cycles,
-                               match_pig_kinetics=match_pig_kinetics,
-                               maintitle='')
-            self.canvas.draw()
-            self.btnSavePDF.setEnabled(True)  # can create pdf now
 
     def _write_pdf(self):
         """ Bring up save dialog and save data. """

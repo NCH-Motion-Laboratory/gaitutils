@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 
 class Gaitcycle(object):
     """" Holds information about one gait cycle """
-    def __init__(self, start, end, offset, toeoff, context, on_forceplate,
-                 smp_per_frame):
+    def __init__(self, start, end, offset, toeoff, context,
+                 on_forceplate, smp_per_frame, trial=None):
         self.offset = offset
         self.len = end - start
         # convert frame indices to 0-based
@@ -229,4 +229,5 @@ class Trial(object):
                 else:
                     toeoff = toeoff[0]
                 yield Gaitcycle(start, end, self.offset, toeoff, context,
-                                on_forceplate, self.samplesperframe)
+                                on_forceplate, self.samplesperframe,
+                                trial=self)

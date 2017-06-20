@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class Gaitcycle(object):
     """" Holds information about one gait cycle """
     def __init__(self, start, end, offset, toeoff, context,
-                 on_forceplate, smp_per_frame, trial=None):
+                 on_forceplate, smp_per_frame, trial=None, name=None):
         self.offset = offset
         self.len = end - start
         # convert frame indices to 0-based
@@ -48,6 +48,8 @@ class Gaitcycle(object):
         self.tn = np.linspace(0, 100, 101)
         # normalize toe-off event to the cycle
         self.toeoffn = round(100*((self.toeoff - self.start) / self.len))
+        self.trial = trial
+        self.name = name
 
     def __repr__(self):
         s = '<Gaitcycle |'
@@ -198,6 +200,7 @@ class Trial(object):
     def _scan_cycles(self):
         """ Create gait cycle instances based on strike/toeoff markers. """
         STRIKE_TOL = 4  # tolerance for matching forceplate strikes (frames)
+        sidestrs = {'R': 'Right', 'L': 'Left'}
         for strikes in [self.lstrikes, self.rstrikes]:
             len_s = len(strikes)
             if len_s < 2:
@@ -228,6 +231,7 @@ class Trial(object):
                                         'at %d' % start)
                 else:
                     toeoff = toeoff[0]
+                name = '%s %d' % (sidestrs[context], (k+1))
                 yield Gaitcycle(start, end, self.offset, toeoff, context,
                                 on_forceplate, self.samplesperframe,
-                                trial=self)
+                                trial=self, name=name)

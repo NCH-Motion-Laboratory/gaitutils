@@ -139,7 +139,7 @@ def get_metadata(vicon):
     sessionpath = trialname_[0]
     trialname = trialname_[1]
     if not trialname:
-        raise GaitDataError('No trial loaded')
+        raise GaitDataError('No trial loaded in Nexus')
     # Get events - GetEvents() indices seem to often be 1 frame less than on
     # Nexus display - only happens with ROI?
     lstrikes = vicon.GetEvents(name, "Left", "Foot Strike")[0]

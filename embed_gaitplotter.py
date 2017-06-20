@@ -4,7 +4,7 @@ Embed gaitplotter figure canvas into PyQt5 GUI
 WIP
 
 TODO:
-    -maybe inherit QListWidget for cycles widget to get neater code (methods)
+     WIP
     -realtime updates to plot on widget changes (needs plotter to be faster?)
     -treat Nexus trial like c3d trials (add to list)
     -cycle logic for multiple trials (common cycles ?)
@@ -24,48 +24,76 @@ from matplotlib.figure import Figure
 from gaitutils import Plotter, Trial, nexus, layouts, cfg
 import logging
 
+logger = logging.getLogger(__name__)
 
-class TurboListWidget(QtWidgets.QListWidget):
+
+class NiceListWidgetItem(QtWidgets.QListWidgetItem):
+    """ Make list items more pythonic - otherwise would have to do horrible and
+    bug-prone things like checkState() """
+
+    def __init__(self, *args, **kwargs):
+        super(NiceListWidgetItem, self).__init__(*args, **kwargs)
+
+    @property
+    def data(self):
+        return super(NiceListWidgetItem, self).data(QtCore.Qt.UserRole)
+
+    @data.setter
+    def data(self, _data):
+        if _data is not None:
+            super(NiceListWidgetItem, self).setData(_data, QtCore.Qt.UserRole)
+
+    @property
+    def checkState(self):
+        return super(NiceListWidgetItem, self).checkState()
+
+
+class NiceListWidget(QtWidgets.QListWidget):
     """ Adds some convenience to QListWidget """
 
     def __init__(self, parent=None):
-        super(TurboListWidget, self).__init__(parent)
+        super(NiceListWidget, self).__init__(parent)
 
+    @property
     def items(self):
         """ Yield all items """
         for i in range(self.count()):
             yield self.item(i)
 
-    def selected_items(self):
-        """ Yield selected items """
-        for item in self.items():
-            if item.checkState():
-                yield item
+    @property
+    def items_data(self):
+        """ Yield data from all items """
+        return (item.data(QtCore.Qt.UserRole) for item in self.items)
 
-    def select_all(self):
-        """ Select all items """
+    @property
+    def checked(self):
+        """ Yield checked items """
+        return (item for item in self.items if item.checkState)
+
+    @property
+    def checked_data(self):
+        """ Yield data from checked items """
+        for item in self.checked:
+            yield item.data(QtCore.Qt.UserRole)
+
+    def check_all(self):
+        """ Check all items """
         for item in self.items:
             item.setCheckState(QtCore.Qt.Checked)
 
-    def select_none(self):
-        """ Select all items """
+    def check_none(self):
+        """ Check all items """
         for item in self.items:
             item.setCheckState(QtCore.Qt.Unchecked)
 
-    def data_from_selected(self):
-        """ Yield data from selected items """
-        for item in self.selected_items():
-            yield item.data(QtCore.Qt.UserRole)
-
     def add_item(self, txt, data=None, checkable=False, checked=False):
         """ Add checkable item with data """
-        item = QtWidgets.QListWidgetItem(txt, self)
+        item = NiceListWidgetItem(txt, self)
         if checkable:
             item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
             item.setCheckState(QtCore.Qt.Checked if checked else
                                QtCore.Qt.Unchecked)
-        if data is not None:
-            item.setData(QtCore.Qt.UserRole, data)
+            item.data = data
 
     def rm_current_item(self):
         self.takeItem(self.row(self.currentItem()))
@@ -96,17 +124,22 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self.mainGridLayout.addWidget(self.canvas, 0,
                                       self.mainGridLayout.columnCount(),
                                       self.mainGridLayout.rowCount(), 1)
+        
         self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                   QtWidgets.QSizePolicy.Expanding)
         # this is the Navigation widget
         # it takes the Canvas widget and a parent
         #self.toolbar = NavigationToolbar(self.canvas, self)
 
+        self.listTrials.itemClicked.connect(self._trial_selected)
         # set up widgets
         self.btnAddNexusTrial.clicked.connect(self._open_nexus_trial)
         self.btnPlot.clicked.connect(self.draw_canvas)
         self.btnQuit.clicked.connect(self.close)
-        self.btnSelectAllCycles.clicked.connect(self._select_all_cycles)
+        self.btnSelectAllCycles.clicked.connect(self.listTrialCycles.check_all)
+        self.btnSelectForceplateCycles.clicked.connect(self._select_forceplate_cycles)
+        self.btnSelect1stCycles.clicked.connect(self._select_1st_cycles)
+        self.btnPickCycles.clicked.connect(self._pick_cycles)
         self.btnAddC3DTrial.clicked.connect(self.load_dialog)
         self.btnSavePDF.clicked.connect(self._write_pdf)
         self.btnDeleteTrial.clicked.connect(self.rm_c3d)
@@ -114,45 +147,70 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self._set_status('Ready')
 
     def rm_c3d(self):
-        self.listC3D.takeItem(self.listC3D.row(self.listC3D.currentItem()))
+        self.listC3D.rm_current_item()
 
     def _set_status(self, msg):
         self.statusbar.showMessage(msg)
 
     @staticmethod
-    def _describe_cycles(cycles, fp_info=True):
-        sidestr = {'R': 'Right', 'L': 'Left'}
+    def _describe_cycles(cycles, verbose=True, fp_info=True, trialname=False):
+        sidestrs = {'R': 'Right', 'L': 'Left'}
         counter = {'R': 0, 'L': 0}
         for cyc in cycles:
             counter[cyc.context] += 1
-            desc = '%s %d' % (sidestr[cyc.context], counter[cyc.context])
+            sidestr = sidestrs[cyc.context] if verbose else cyc.context
+            desc = '%s %d' % (sidestr, counter[cyc.context])
             if fp_info:
                 desc += ' (on forceplate)' if cyc.on_forceplate else ''
+            if trialname:
+                desc = '%s: %s' % (cyc.trial.trialname, desc)
             yield desc
 
-    def _update_cycles_list(self):
-        """ Update displayed list of gait cycles according to loaded trials.
-        If multiple trials are loaded, cycles will be intersected (i.e. only
-        cycles that are present for all trials will be available for
-        selection) """
-        if len(self.trials) == 1:
-            cycles = self.trials[0].cycles
-            for cycle, desc in zip(cycles, self._describe_cycles(cycles)):
-                item = QtWidgets.QListWidgetItem(desc, self.listCycles)
-                item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-                item.setCheckState(QtCore.Qt.Unchecked)
-                item.setData(QtCore.Qt.UserRole, cycle)
-        else:
-            self.message_dialog('Too many trials')
+    def _trial_selected(self, item):
+        """ User clicked on trial """
+        trial = item.data(QtCore.Qt.UserRole)
+        self._update_trial_cycles_list(trial)
 
+    def _update_trial_cycles_list(self, trial):
+        """ Show cycles of given trial in the trial cycle list """
+        cycles = trial.cycles
+        self.listTrialCycles.clear()
+        for cycle, desc in zip(cycles, self._describe_cycles(cycles)):
+            self.listTrialCycles.add_item(desc, data=cycle, checkable=True)
+
+    def _select_forceplate_cycles(self):
+        """ Select all forceplate cycles in the trial cycles list """
+        self.listTrialCycles.check_none()
+        for item in self.listTrialCycles.items:
+            if item.data(QtCore.Qt.UserRole).on_forceplate:
+                item.setCheckState(QtCore.Qt.Checked)
+
+    def _select_1st_cycles(self):
+        """ Select 1st L/R cycles in the trial cycles list """
+        self.listTrialCycles.check_none()
+        descriptions = self._describe_cycles(self.listTrialCycles.items_data,
+                                             fp_info=False)
+        for desc, item in zip(descriptions, self.listTrialCycles.items):
+            if desc[-1] == '1':
+                item.setCheckState(QtCore.Qt.Checked)
+
+    def _pick_cycles(self):
+        cycles = self.listTrialCycles.checked_data
+        items = self.listTrialCycles.checked
+        logger.debug(list(items))
+        for cycle in cycles:
+            self.listCyclesToPlot.add_item(cycle.name, data=cycle)
 
     def _open_nexus_trial(self):
         self._open_trial(nexus.viconnexus())
 
     def _open_trial(self, source):
         tr = Trial(source)
+        if tr.trialname in [trial.trialname for trial in self.trials]:
+            return  # trial already loaded (based on name) TODO: clashes?
         self.trials.append(tr)
-        self._update_cycles_list()
+        self._update_trial_cycles_list(tr)
+        self.listTrials.add_item(tr.trialname, data=tr)
         self._set_status('Loaded trial %s' % tr.trialname)
 
     def _common_cycles(self):

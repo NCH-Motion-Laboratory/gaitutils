@@ -35,11 +35,12 @@ def do_plot():
     vels = np.array([trial_median_velocity(trial) for trial in c3ds])
     vavg = np.nanmean(vels)
 
+    plt.figure()
     plt.stem(vels)
     plt.xticks(range(len(vels)), labels, rotation='vertical')
     plt.ylabel('Velocity (m/s)')
     plt.tick_params(axis='both', which='major', labelsize=8)
-    plt.title('Velocity for dynamic trials (average %.2f m/s)' % vavg)
+    plt.title('Gait velocity for dynamic trials (average %.2f m/s)' % vavg)
     plt.tight_layout()
     plt.show()
 

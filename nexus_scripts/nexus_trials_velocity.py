@@ -23,6 +23,7 @@ def _trial_index(c3dfile):
 
 
 def trial_median_velocity(source):
+    MIN_VEL = .1
     try:
         frate = read_data.get_metadata(source)['framerate']
         dim = utils.principal_movement_direction(source, cfg.autoproc.
@@ -32,7 +33,8 @@ def trial_median_velocity(source):
     except (GaitDataError, ValueError):
         return np.nan
     vel = np.median(np.abs(vel_[np.where(vel_)]))
-    return vel * frate / 1000.
+    vel_ms = vel * frate / 1000.
+    return vel_ms if vel_ms >= MIN_VEL else np.nan
 
 
 def do_plot():

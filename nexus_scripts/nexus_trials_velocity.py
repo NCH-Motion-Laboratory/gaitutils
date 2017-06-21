@@ -13,6 +13,7 @@ import os.path as op
 
 
 def _trial_index(c3dfile):
+    """ Ugly hack to return trial index (last 2-3 chars of filename) """
     try:
         return int(op.splitext(c3dfile)[0][-3:])
     except ValueError:

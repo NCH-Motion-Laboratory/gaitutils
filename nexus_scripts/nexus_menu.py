@@ -18,6 +18,8 @@ import nexus_autoprocess_current
 import nexus_autoprocess_trials
 import nexus_kinallplot
 import nexus_tardieu
+import nexus_trials_velocity
+
 try:
     from nexus_scripts import nexus_customplot
     have_custom = True
@@ -83,6 +85,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self.btnCustom.clicked.connect(nexus_customplot.do_plot)
         else:
             self.btnCustom.clicked.connect(self._no_custom)
+        self.btnTrialVelocity.clicked.connect(nexus_trials_velocity.do_plot)
         self.btnEMGCons.clicked.connect(nexus_emg_consistency.do_plot)
         self.btnKinCons.clicked.connect(nexus_kin_consistency.do_plot)
         self.btnAutoprocTrial.clicked.connect(nexus_autoprocess_current.

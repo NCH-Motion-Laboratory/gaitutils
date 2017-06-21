@@ -38,7 +38,7 @@ def trial_median_velocity(source):
 
 def do_plot():
     enfs = nexus.get_trial_enfs()
-    sessionpath = op.split(op.split(enfs[0])[0])[1]
+    sessiondir = op.split(op.split(enfs[0])[0])[1]  # session dir name
     enfs_ = [enf for enf in enfs if
              eclipse.get_eclipse_keys(enf,
                                       return_empty=True)['TYPE'] == 'Dynamic']
@@ -51,7 +51,8 @@ def do_plot():
     plt.stem(indices, vels)
     plt.ylabel('Velocity (m/s)')
     plt.xlabel('Trial index')
-    plt.title('%s\nvelocity for dynamic trials (average %.2f m/s)' % (sessionpath, vavg))
+    plt.title('%s\nvelocity for dynamic trials (average %.2f m/s)'
+              % (sessiondir, vavg))
     plt.show()
 
 if __name__ == '__main__':

@@ -19,8 +19,7 @@ import logging
 
 def automark_single(plot=False):
 
-    if not nexus.pid():
-        raise Exception('Vicon Nexus not running')
+    nexus.check_nexus()
 
     vicon = nexus.viconnexus()
     vicon.ClearAllEvents()

@@ -18,8 +18,7 @@ logger = logging.getLogger(__name__)
 
 def do_copy():
 
-    if not nexus.pid():
-        raise Exception('Vicon Nexus does not seem to be running')
+    nexus.check_nexus()
 
     dest_dir = op.join(op.expanduser('~'), 'Desktop', 'nexus_videos')
     if not op.isdir(dest_dir):

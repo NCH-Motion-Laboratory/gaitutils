@@ -78,6 +78,11 @@ def viconnexus():
     return ViconNexus.ViconNexus()
 
 
+def check_nexus():
+    if not pid():
+        raise GaitDataError('Vicon Nexus does not seem to be running')
+
+
 def get_trial_enfs():
     """ Return list of .enf files for the session """
     vicon = viconnexus()

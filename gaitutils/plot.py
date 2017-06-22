@@ -106,6 +106,7 @@ class Plotter(object):
             raise ValueError('Unknown variable %s' % var)
 
     def _plot_height_ratios(self):
+        """ Automatically adjust height ratios, if they are not specified """
         plotheightratios = []
         for row in self._layout:
             if all([self._var_type(var) == 'model' for var in row]):
@@ -129,6 +130,7 @@ class Plotter(object):
                    model_cycles=cfg.plot.default_model_cycles,
                    emg_cycles=cfg.plot.default_emg_cycles,
                    plotheightratios=None,
+                   plotwidthratios=None,
                    model_tracecolor=None,
                    model_linestyle='-',
                    model_alpha=1.0,
@@ -154,9 +156,11 @@ class Plotter(object):
 
         model_cycles : dict of int |  dict of list | 'all' | None
                 Gait cycles to plot. Defaults to first cycle (1) for
-                both contexts. Multiple cycles can be given as lists.
+                both contexts. Dict keys 'R' and 'L' specify the cycles
+                for right and left contexts. Multiple cycles can be given
+                as lists.
                 If None, plot unnormalized data. If 'all', plot all cycles.
-                If 'forceplate', plot cycles that start on valid forceplate
+                If 'forceplate', plot all cycles that start on valid forceplate
                 contact.
         emg_cycles : dict of int | int | dict of list | 'all' | None
                 Same as above, applied to EMG variables.
@@ -241,25 +245,12 @@ class Plotter(object):
                 maintitleprefix = ''
             maintitle = maintitleprefix + self.trial.trialname
 
+        # auto adjust plot heights
         if plotheightratios is None:
             plotheightratios = self._plot_height_ratios()
         elif len(plotheightratios) != len(self.nrows):
             raise ValueError('n of height ratios must match n of rows')
         plotaxes = []
-
-        if self.fig is None or not superpose:
-            # auto size fig according to n of subplots w, limit size
-            self.figh = min(self.nrows*self.cfg.plot.inch_per_row + 1,
-                            self.cfg.plot.maxh)
-            self.figw = min(self.ncols*self.cfg.plot.inch_per_col,
-                            self.cfg.plot.maxw)
-            logger.debug('new figure: width %.2f, height %.2f'
-                         % (self.figw, self.figh))
-            self.fig = plt.figure(figsize=(self.figw, self.figh))
-            self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
-                                              height_ratios=plotheightratios)
-
-
 
         def _axis_annotate(ax, text):
             """ Annotate at center of axis """
@@ -300,6 +291,22 @@ class Plotter(object):
 
         model_cycles = _get_cycles(model_cycles)
         emg_cycles = _get_cycles(emg_cycles)
+
+        if not (model_cycles or emg_cycles):
+            raise ValueError('No matching gait cycles found in data')
+
+        if self.fig is None or not superpose:
+            # auto size fig according to n of subplots w, limit size
+            self.figh = min(self.nrows*self.cfg.plot.inch_per_row + 1,
+                            self.cfg.plot.maxh)
+            self.figw = min(self.ncols*self.cfg.plot.inch_per_col,
+                            self.cfg.plot.maxw)
+            logger.debug('new figure: width %.2f, height %.2f'
+                         % (self.figw, self.figh))
+            self.fig = plt.figure(figsize=(self.figw, self.figh))
+            self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
+                                              height_ratios=plotheightratios)
+
 
         for i, var in enumerate(self.allvars):
             var_type = self._var_type(var)
@@ -383,6 +390,8 @@ class Plotter(object):
                                                     model_normals_color,
                                                     alpha=self.cfg.plot.
                                                     model_normals_alpha)
+                                    # tighten x limits
+                                    ax.set_xlim(tnor[0], tnor[-1])
 
             elif var_type == 'emg':
                 for cycle in emg_cycles:

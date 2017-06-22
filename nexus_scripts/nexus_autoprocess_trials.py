@@ -68,6 +68,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
     """
 
     def _run_pipelines(plines):
+        if type(plines) != list:
+            plines = [plines]
         for pipeline in plines:
             logger.debug('Running pipeline: %s' % pipeline)
             vicon.RunPipeline(pipeline, '', cfg.autoproc.pipeline_timeout)
@@ -242,7 +244,9 @@ def _do_autoproc(enffiles, update_eclipse=True):
             eclipse_str = '%s,%s' % (trials[filepath].description,
                                      cfg.autoproc.enf_descriptions
                                      ['automark_failure'])
+            logger.debug('Automark failed')
             _save_trial()
+            trials[filepath].description = eclipse_str
             continue  # next trial
         # events ok
         # crop trial
@@ -261,8 +265,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         # run model pipeline and save
         eclipse_str = '%s,%s' % (cfg.autoproc.enf_descriptions['ok'],
                                  trial.description)
-        vicon.RunPipeline(cfg.autoproc.model_pipeline, '',
-                          cfg.autoproc.pipeline_timeout)
+        _run_pipelines(cfg.autoproc.model_pipeline)
         _save_trial()
         trials[filepath].description = eclipse_str
 

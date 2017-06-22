@@ -164,8 +164,11 @@ class Trial(object):
         return self._fp_events
 
     def set_norm_cycle(self, cycle=None):
-        """ Set normalization cycle. None to get unnormalized data.
-        Will affect data returned by __getitem__ """
+        """ Set normalization cycle (int for cycle index or a Gaitcycle
+        instance). None to get unnormalized data. Affects the data returned
+        by __getitem__ """
+        if type(cycle) == int:
+            cycle = self.cycles[cycle]
         self._normalize = cycle if cycle else None
 
     def get_cycle(self, context, ncycle):

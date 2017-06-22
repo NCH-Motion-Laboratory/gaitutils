@@ -17,6 +17,14 @@ import nexus_kin_consistency
 import nexus_autoprocess_current
 import nexus_autoprocess_trials
 import nexus_kinallplot
+import nexus_tardieu
+import nexus_trials_velocity
+
+try:
+    from nexus_scripts import nexus_customplot
+    have_custom = True
+except ImportError:
+    have_custom = False
 import sys
 import logging
 import traceback
@@ -72,6 +80,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnEMG.clicked.connect(nexus_emgplot.do_plot)
         self.btnKinEMG.clicked.connect(nexus_kinetics_emgplot.do_plot)
         self.btnKinall.clicked.connect(nexus_kinallplot.do_plot)
+        self.btnTardieu.clicked.connect(self._tardieu)
+        if have_custom:
+            self.btnCustom.clicked.connect(nexus_customplot.do_plot)
+        else:
+            self.btnCustom.clicked.connect(self._no_custom)
+        self.btnTrialVelocity.clicked.connect(nexus_trials_velocity.do_plot)
         self.btnEMGCons.clicked.connect(nexus_emg_consistency.do_plot)
         self.btnKinCons.clicked.connect(nexus_kin_consistency.do_plot)
         self.btnAutoprocTrial.clicked.connect(nexus_autoprocess_current.
@@ -90,6 +104,17 @@ class Gaitmenu(QtWidgets.QMainWindow):
         dlg.addButton(QtWidgets.QPushButton('Ok'),
                       QtWidgets.QMessageBox.YesRole)
         dlg.exec_()
+
+    def _no_custom(self):
+        self.message_dialog('No custom plot defined. Please create '
+                            'nexus_scripts/nexus_customplot.py')
+        
+    def _tardieu(self):
+        if self.rbtnR.isChecked():
+            nexus_tardieu.do_plot('R')
+        else:
+            nexus_tardieu.do_plot('L')
+            
 
 
 def main():

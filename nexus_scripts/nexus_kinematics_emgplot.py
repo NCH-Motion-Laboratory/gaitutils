@@ -22,12 +22,13 @@ def do_plot():
 
     pl.layout = cfg.layouts.lb_kinematics_emg_l
     pl.plot_trial(maintitle=maintitle,
-                  emg_cycles={'L': 1}, emg_tracecolor='red', show=False,
-                  annotate_emg=False)
+                  emg_cycles={'L': 1}, model_cycles={'L': 1},
+                  emg_tracecolor='red', show=False, annotate_emg=False)
 
     pl.layout = cfg.layouts.lb_kinematics_emg_r
-    pl.plot_trial(maintitle=maintitle, emg_tracecolor='green',
-                  emg_cycles={'R': 1}, annotate_emg=False, superpose=True)
+    pl.plot_trial(maintitle=maintitle, model_cycles={'R': 1},
+                  emg_cycles={'R': 1}, emg_tracecolor='green',
+                  annotate_emg=False, superpose=True)
 
     pl.create_pdf(pdf_prefix=pdf_prefix)
 

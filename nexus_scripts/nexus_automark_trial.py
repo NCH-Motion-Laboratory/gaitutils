@@ -12,12 +12,12 @@ whole session, since here we cannot use statistics for velocity thresholding.
 from __future__ import print_function
 from gaitutils import nexus, utils
 from gaitutils.config import cfg
+import argparse
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
 
 
-def automark_single():
+def automark_single(plot=False):
 
     if not nexus.pid():
         raise Exception('Vicon Nexus not running')
@@ -31,7 +31,14 @@ def automark_single():
     nexus.automark_events(vicon, vel_thresholds=vel,
                           max_dist=cfg.autoproc.automark_max_dist,
                           fp_events=fpe, ctr_pos=cfg.autoproc.walkway_ctr,
-                          plot=False)
+                          plot=plot)
 
 if __name__ == '__main__':
-    automark_single()
+    logging.basicConfig(level=logging.DEBUG)
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--plot', action='store_true',
+                        help='plot velocity curves')
+    args = parser.parse_args()
+    automark_single(args.plot)
+

@@ -117,6 +117,8 @@ def is_vicon_instance(obj):
 def get_metadata(vicon):
     """ Read trial and subject metadata """
     logger.debug('reading metadata from Vicon Nexus')
+    if not pid():
+        raise GaitDataError('Vicon Nexus does not seem to be running')
     subjectnames = vicon.GetSubjectNames()
     if len(subjectnames) > 1:
         raise GaitDataError('Nexus returns multiple subjects')
@@ -424,6 +426,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     # loop: same operations for left / right foot
     for ind, footctrv in enumerate((rfootctrv, lfootctrv)):
         this_side = 'R' if ind == 0 else 'L'
+        logger.debug('marking side %s' % this_side)
         # foot center position
         footctrP = rfootctrP if ind == 0 else lfootctrP
         # filter to scalar velocity data to suppress noise and spikes
@@ -432,8 +435,13 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         # compute local maxima of velocity: derivative crosses zero, values ok
         vd = np.gradient(footctrv)
         vdz_ind = falling_zerocross(vd)
+
         inds = np.where(np.logical_and(footctrv[vdz_ind] > MIN_PEAK_VELOCITY,
-                        footctrv[vdz_ind] < MAX_PEAK_VELOCITY))
+                        footctrv[vdz_ind] < MAX_PEAK_VELOCITY))[0]
+
+        if len(inds) == 0:
+            raise GaitDataError('Cannot find acceptable velocity peaks')
+
         maxv = np.median(footctrv[vdz_ind[inds]])
 
         if maxv > MAX_PEAK_VELOCITY:
@@ -527,6 +535,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
 
         # create the events in Vicon Nexus
         # Nexus frame numbers are 1-based so add 1
+        logger.debug('marking events in Nexus')
         side_str = 'Right' if this_side == 'R' else 'Left'
         if mark:
             for fr in strikes:

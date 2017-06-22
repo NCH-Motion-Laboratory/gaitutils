@@ -79,6 +79,11 @@ def viconnexus():
     return ViconNexus.ViconNexus()
 
 
+def check_nexus():
+    if not pid():
+        raise GaitDataError('Vicon Nexus does not seem to be running')
+
+
 def get_trial_enfs():
     """ Return list of .enf files for the session """
     vicon = viconnexus()
@@ -117,9 +122,8 @@ def is_vicon_instance(obj):
 
 def get_metadata(vicon):
     """ Read trial and subject metadata """
+    check_nexus()
     logger.debug('reading metadata from Vicon Nexus')
-    if not pid():
-        raise GaitDataError('Vicon Nexus does not seem to be running')
     subjectnames = vicon.GetSubjectNames()
     if len(subjectnames) > 1:
         raise GaitDataError('Nexus returns multiple subjects')

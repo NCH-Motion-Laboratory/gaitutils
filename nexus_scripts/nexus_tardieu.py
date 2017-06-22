@@ -63,10 +63,17 @@ class Tardieu_window(object):
         Pall = np.stack([Ptoe, Pank, Pknee], axis=1)
         # compute segment angles (deg)
         self.angd = segment_angles(Pall) / np.pi * 180
-        # normalize: plantarflexion negative, 0 at straight angle
-        # TODO: use the normal angle from Nexus
-        self.angd = 90-self.angd                          
-        
+        # this is our calculated starting angle
+        ang0_our = np.median(self.angd[~np.isnan(self.angd)][:10])
+        # the 'true' starting angle (in Nexus as subject param)
+        ang0_nexus = self.read_starting_angle(vicon)
+        # if it cannot be read, assume 90 deg
+        ang0_nexus = 90 if ang0_nexus is None else ang0_nexus
+        # normalize: plantarflexion negative, our starting angle equals
+        # the starting angle given in Nexus (i.e. if ang0_nexus is 95,
+        # we normalize the data to start at -5 deg)
+        self.angd = 90 - ang0_nexus - self.angd + ang0_our
+
         self.fig = plt.figure(figsize=(16, 10))
         self.gs = gridspec.GridSpec(len(self.emg_chs) + 3, 2,
                                width_ratios=self.width_ratio)
@@ -152,7 +159,14 @@ class Tardieu_window(object):
         self._update_status_text()
         
         plt.show()
-
+        
+        
+    @staticmethod
+    def read_starting_angle(vicon):
+        subjname = vicon.GetSubjectNames()[0]
+        asp = vicon.GetSubjectParam(subjname, 'AnkleStartPos')
+        return asp[0] if asp[1] else None
+        
     @staticmethod
     def _adj_fonts(ax):
         ax.xaxis.label.set_fontsize(cfg.plot.label_fontsize)
@@ -260,8 +274,9 @@ class Tardieu_window(object):
         self.fig.canvas.draw()
 
 
-def do_plot():
-    Tardieu_window(emg_chs=cfg.tardieu.emg_chs)
+def do_plot(side):
+    emg_chs = [side+ch for ch in cfg.tardieu.emg_chs]
+    Tardieu_window(emg_chs=emg_chs)
 
 if __name__ == '__main__':
-    do_plot()
+    do_plot('L')

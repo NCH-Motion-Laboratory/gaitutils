@@ -16,7 +16,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def copy_trial_videos():
+def do_copy():
 
     dest_dir = op.join(op.expanduser('~'), 'Desktop', 'nexus_videos')
     if not op.isdir(dest_dir):
@@ -48,5 +48,4 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     if not nexus.pid():
         raise Exception('Vicon Nexus not running')
-    copy_trial_videos()
-
+    do_copy()

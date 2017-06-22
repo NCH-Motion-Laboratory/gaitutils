@@ -18,6 +18,7 @@ import nexus_autoprocess_current
 import nexus_autoprocess_trials
 import nexus_kinallplot
 import nexus_tardieu
+import nexus_copy_trial_videos
 import nexus_trials_velocity
 
 try:
@@ -92,6 +93,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                               autoproc_single)
         self.btnAutoprocSession.clicked.connect(nexus_autoprocess_trials.
                                                 autoproc_session)
+        self.btnCopyVideos.clicked.connect(nexus_copy_trial_videos.do_copy)
         self.btnQuit.clicked.connect(self.close)
         XStream.stdout().messageWritten.connect(self.txtOutput.insertPlainText)
         XStream.stderr().messageWritten.connect(self.txtOutput.insertPlainText)

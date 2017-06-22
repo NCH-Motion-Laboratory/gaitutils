@@ -121,9 +121,8 @@ def is_vicon_instance(obj):
 
 def get_metadata(vicon):
     """ Read trial and subject metadata """
+    check_nexus()
     logger.debug('reading metadata from Vicon Nexus')
-    if not pid():
-        raise GaitDataError('Vicon Nexus does not seem to be running')
     subjectnames = vicon.GetSubjectNames()
     if len(subjectnames) > 1:
         raise GaitDataError('Nexus returns multiple subjects')

@@ -20,7 +20,6 @@ from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
                                                 FigureCanvas)
 from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
                                                 NavigationToolbar)
-from matplotlib.figure import Figure
 from gaitutils import Plotter, Trial, nexus, layouts, cfg
 import logging
 
@@ -208,6 +207,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
             if cycle.trial not in plot_cycles:
                 plot_cycles[cycle.trial] = []
             plot_cycles[cycle.trial].append(cycle)
+        # set options and create the plot
         self.pl.layout = cfg.layouts.__dict__[self.cbLayout.currentText()]
         match_pig_kinetics = self.xbKineticsFpOnly.checkState()
         for trial, cycs in plot_cycles.items():

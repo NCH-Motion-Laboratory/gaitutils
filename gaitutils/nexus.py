@@ -75,6 +75,7 @@ def true_ver():
 
 def viconnexus():
     """ Return a ViconNexus instance. """
+    check_nexus()
     return ViconNexus.ViconNexus()
 
 

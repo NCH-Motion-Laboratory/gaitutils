@@ -27,7 +27,6 @@ def trial_median_velocity(source):
 
 def do_plot():
 
-    nexus.check_nexus()
     enfs = nexus.get_trial_enfs()
     enfs_ = [enf for enf in enfs if
              eclipse.get_eclipse_keys(enf,

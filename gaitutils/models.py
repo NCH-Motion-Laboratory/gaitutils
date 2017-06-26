@@ -77,7 +77,7 @@ class GaitModel(object):
         self.varlabels = dict()  # descriptive label for each variable
         self.normaldata_path = None  # location of normal data
         # mapping from variable names to normal data variables (optional)
-        self.normaldata_map = dict()
+        self.gcd_normaldata_map = dict()
         # the actual normal data
         self._normaldata = dict()
         # y axis labels for plotting the variables (optional)
@@ -90,8 +90,8 @@ class GaitModel(object):
             return None
         if not self._normaldata:  # not read yet
             self._normaldata = self._read_normaldata()
-        if var in self.normaldata_map:
-            nvar = self.normaldata_map[var]
+        if var in self.gcd_normaldata_map:
+            nvar = self.gcd_normaldata_map[var]
             return self._normaldata[nvar]
         else:
             return None
@@ -175,7 +175,7 @@ pig_lowerbody.varlabels = _dict_with_side(pig_lowerbody.varlabels_noside)
 pig_lowerbody.varnames = pig_lowerbody.varlabels.keys()
 pig_lowerbody.varnames_noside = pig_lowerbody.varlabels_noside.keys()
 
-pig_lowerbody.normaldata_map = _dict_with_side({
+pig_lowerbody.gcd_normaldata_map = _dict_with_side({
              'AnkleAnglesX': 'DorsiPlanFlex',
              'AnkleAnglesZ': 'FootRotation',
              'AnkleMomentX': 'DorsiPlanFlexMoment',

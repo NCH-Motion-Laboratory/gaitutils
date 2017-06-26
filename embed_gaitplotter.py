@@ -4,12 +4,12 @@ Embed gaitplotter figure canvas into PyQt5 GUI
 WIP
 
 TODO:
-     WIP
     -realtime updates to plot on widget changes (needs plotter to be faster?)
-    -treat Nexus trial like c3d trials (add to list)
-    -cycle logic for multiple trials (common cycles ?)
     -title and legend options for pdf writer  (figlegend?)
     -trial averaging / stddev (separate plot button)
+    -set default fig size (larger)
+    -add color cycler and autolegend (for multiple trials / cycles)
+    
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -39,11 +39,11 @@ class NiceListWidgetItem(QtWidgets.QListWidgetItem):
             self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
 
     @property
-    def mydata(self):
+    def userdata(self):
         return super(NiceListWidgetItem, self).data(QtCore.Qt.UserRole)
 
-    @mydata.setter
-    def mydata(self, _data):
+    @userdata.setter
+    def userdata(self, _data):
         if _data is not None:
             super(NiceListWidgetItem, self).setData(QtCore.Qt.UserRole, _data)
 
@@ -87,7 +87,7 @@ class NiceListWidget(QtWidgets.QListWidget):
     def add_item(self, txt, data=None, checkable=False, checked=False):
         """ Add checkable item with data """
         item = NiceListWidgetItem(txt, self, checkable=checkable)
-        item.mydata = data
+        item.userdata = data
         if checkable:
             item.checkstate = checked
 
@@ -116,19 +116,20 @@ class PlotterWindow(QtWidgets.QMainWindow):
         # this is the Navigation widget
         # it takes the Canvas widget and a parent
         #self.toolbar = NavigationToolbar(self.canvas, self)
-
         self.listTrials.itemClicked.connect(self._trial_selected)
         # set up widgets
         self.btnAddNexusTrial.clicked.connect(self._open_nexus_trial)
         self.btnPlot.clicked.connect(self._plot_trials)
         self.btnQuit.clicked.connect(self.close)
         self.btnSelectAllCycles.clicked.connect(self.listTrialCycles.check_all)
-        self.btnSelectForceplateCycles.clicked.connect(self._select_forceplate_cycles)
+        self.btnSelectForceplateCycles.clicked.connect(self.
+                                                       _select_forceplate_cycles)
         self.btnSelect1stCycles.clicked.connect(self._select_1st_cycles)
         self.btnPickCycles.clicked.connect(self._pick_cycles)
         self.btnAddC3DTrial.clicked.connect(self.load_dialog)
         self.btnSavePDF.clicked.connect(self._write_pdf)
         self.btnDeleteTrial.clicked.connect(self.rm_trial)
+        self.btnClearCyclesToPlot.clicked.connect(self.listCyclesToPlot.clear)
         self.cbLayout.addItems(sorted(cfg.layouts.__dict__.keys()))
         self._set_status('Ready')
 
@@ -142,7 +143,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
     def _trial_selected(self, item):
         """ User clicked on trial """
-        trial = item.mydata
+        trial = item.userdata
         self._update_trial_cycles_list(trial)
 
     def _update_trial_cycles_list(self, trial):
@@ -157,22 +158,24 @@ class PlotterWindow(QtWidgets.QMainWindow):
         """ Select all forceplate cycles in the trial cycles list """
         self.listTrialCycles.check_none()
         for item in self.listTrialCycles.items:
-            if item.mydata.on_forceplate:
+            if item.userdata.on_forceplate:
                 item.checkstate = True
 
     def _select_1st_cycles(self):
         """ Select 1st L/R cycles in the trial cycles list """
         self.listTrialCycles.check_none()
         for item in self.listTrialCycles.items:
-            if item.mydata.index == 1:
+            if item.userdata.index == 1:
                 item.checkstate = True
 
     def _pick_cycles(self):
         """ Add selected cycles to overall list """
-        old_cycles = (item.mydata for item in self.listCyclesToPlot.items)
-        new_cycles = (item.mydata for item in
+        # only add cycles that were not already added
+        present_cycles = (item.userdata for item in
+                          self.listCyclesToPlot.items)
+        new_cycles = (item.userdata for item in
                       self.listTrialCycles.checked_items)
-        for cycle in set(new_cycles) - set(old_cycles):
+        for cycle in set(new_cycles) - set(present_cycles):
             name = '%s: %s' % (cycle.trial.trialname, cycle.name)
             self.listCyclesToPlot.add_item(name, data=cycle)
 
@@ -181,34 +184,42 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
     def _open_trial(self, source):
         tr = Trial(source)
-        trials = (item.mydata for item in self.listTrials.items)
+        trials = (item.userdata for item in self.listTrials.items)
+        # check if trial already loaded (based on name)
+        # TODO: might use smarter detection
         if tr.trialname in [trial.trialname for trial in trials]:
-            return  # trial already loaded (based on name) TODO: clashes?
+            return
         self._update_trial_cycles_list(tr)
         self.listTrials.add_item(tr.trialname, data=tr)
         self._set_status('Loaded trial %s' % tr.trialname)
 
     def _plot_trials(self):
         """ Plot user-picked trials """
-        trials = dict()
+        # Holds cycles to plot, keyed by trial. This will make for less calls
+        # to plot_trial() as we only need to call once per trial.
+        plot_cycles = dict()
         self.pl.fig.clear()
-        cycles = (item.mydata for item in self.listCyclesToPlot.items)
+        cycles = [item.userdata for item in self.listCyclesToPlot.items]
         if not cycles:
             self.message_dialog('No cycles selected for plotting')
             return
+        # gather the cycles and key by trial
         for cycle in cycles:
-            if cycle.trial not in trials:
-                trials[cycle.trial] = []
-            trials[cycle.trial].append(cycle)
+            if cycle.trial not in plot_cycles:
+                plot_cycles[cycle.trial] = []
+            plot_cycles[cycle.trial].append(cycle)
         self.pl.layout = cfg.layouts.__dict__[self.cbLayout.currentText()]
         match_pig_kinetics = self.xbKineticsFpOnly.checkState()
-        for trial in trials:
-            self.pl.plot_trial(trial=trial, model_cycles=trials[trial],
-                               emg_cycles=trials[trial],
+        for trial, cycs in plot_cycles.items():
+            self.pl.plot_trial(trial=trial, model_cycles=cycs,
+                               emg_cycles=cycs,
                                match_pig_kinetics=match_pig_kinetics,
                                maintitle='', superpose=True)
         self.canvas.draw()
         self.btnSavePDF.setEnabled(True)  # can create pdf now
+        # this is a lazy default for sessionpath (pick path from one trial)
+        # it is used as the default PDF output dir.
+        self._sessionpath = trial.sessionpath
 
     def load_dialog(self):
         """ Bring up load dialog and load selected c3d file. """
@@ -229,28 +240,27 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
     def _write_pdf(self):
         """ Bring up save dialog and save data. """
-        # TODO: set default PDF name?
-        # TODO: where to write (in case of multiple session dirs)
         fout = QtWidgets.QFileDialog.getSaveFileName(self,
                                                      'Save PDF',
-                                                     self.trials[0].
-                                                     sessionpath,
+                                                     self._sessionpath,
                                                      '*.pdf')
         fname = fout[0]
         if fname:
             fname = unicode(fname)
-            self.pl.set_title(self.pl.title_with_eclipse_info())
+            # TODO: need to figure out logic for the title
+            self.pl.set_title('Test plot')
+            # TODO: need to resize canvas to e.g. A4
             self.canvas.print_figure(fname)
+            # reset title for onscreen and redraw canvas
             self.pl.set_title('')
             self.canvas.draw()
 
 
 if __name__ == '__main__':
-   
+
     logging.basicConfig(level=logging.DEBUG)
 
     app = QtWidgets.QApplication(sys.argv)
     win = PlotterWindow()
     win.show()
-
     sys.exit(app.exec_())

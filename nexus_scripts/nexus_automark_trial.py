@@ -19,9 +19,6 @@ import logging
 
 def automark_single(plot=False):
 
-    if not nexus.pid():
-        raise Exception('Vicon Nexus not running')
-
     vicon = nexus.viconnexus()
     vicon.ClearAllEvents()
 
@@ -35,10 +32,9 @@ def automark_single(plot=False):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--plot', action='store_true',
                         help='plot velocity curves')
     args = parser.parse_args()
     automark_single(args.plot)
-

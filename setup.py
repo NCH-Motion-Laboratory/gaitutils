@@ -27,6 +27,7 @@ setup(name='gaitutils',
                'nexus_scripts/nexus_autoprocess_current.py',
                'nexus_scripts/nexus_autoprocess_trials.py',
                'nexus_scripts/nexus_menu.py',
-               'nexus_scripts/nexus_tardieu.py'],
+               'nexus_scripts/nexus_tardieu.py',
+	       'nexus_scripts/nexus_trials_velocity.py'],
       include_package_data=True,
       )

@@ -88,10 +88,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         else:
             return cfg.autoproc.enf_descriptions['context_both']
 
-    if not nexus.pid():
-        raise Exception('Vicon Nexus not running')
     vicon = nexus.viconnexus()
-
     subjectname = nexus.get_metadata(vicon)['name']
     nexus_ver = nexus.true_ver()
 

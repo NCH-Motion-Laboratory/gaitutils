@@ -9,7 +9,6 @@ TODO:
     -trial averaging / stddev (separate plot button)
     -set default fig size (larger)
     -add color cycler and autolegend (for multiple trials / cycles)
-    
 
 @author: Jussi (jnu@iki.fi)
 """

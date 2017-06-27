@@ -75,7 +75,13 @@ def true_ver():
 
 def viconnexus():
     """ Return a ViconNexus instance. """
+    check_nexus()
     return ViconNexus.ViconNexus()
+
+
+def check_nexus():
+    if not pid():
+        raise GaitDataError('Vicon Nexus does not seem to be running')
 
 
 def get_trial_enfs():

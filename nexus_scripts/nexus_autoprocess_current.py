@@ -15,9 +15,6 @@ import logging
 
 def autoproc_single():
 
-    if not nexus.pid():
-        raise Exception('Vicon Nexus not running')
-
     vicon = nexus.viconnexus()
     meta = nexus.get_metadata(vicon)
     enfname = meta['sessionpath'] + meta['trialname'] + '.Trial.enf'

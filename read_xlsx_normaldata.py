@@ -47,41 +47,38 @@ ws = wb.get_sheet_by_name('Normal')
 # print ws['A1'].value
 
         
-rows = ws.rows  # generator
+# rows = ws.rows  # generator
 
-colnames_ = list(rows.next())  # cells of first row
+# colnames_ = list(rows.next())  # cells of first row
 
-colnames = [cell.value for cell in colnames_]  # cell values of 1st row
+# colnames = [cell.value for cell in colnames_]  # cell values of 1st row
 
 # cols = list(ws.columns)  # need to read all anyway
 
-             
-# produce numpy array w/ lower and upper limits
-normaldata = dict()          
-varname_prev, data_prev = None, None
-for colname, col in zip(colnames, ws.columns):
-    # check for supported variable name
-    if (colname is None or
-       not any([x in colname for x in ['(1)', '(2)', '(3)', 'Power']])):
-        continue
-    # strip dim if it exists
-    varname = colname[:colname.find('(')].strip() if '(' in colname else colname
-    data_ = [cell.value for cell in col]
-    data = np.array(data_[3:])  # strip first rows with units, etc.
-    if data.shape[0] != 51:
-        raise ValueError('Normal data has unexpected shape')
-    if varname == varname_prev:
-        normaldata[varname] = np.stack([data, data_prev])
-    else:
-        varname_prev, data_prev = varname, data
-    
 
-    
-    
-    
-    
-        
-    
-    
+def read_xlsx_normaldata(filename):
+    """ Read normal data exported from Polygon (xlsx format).
+    Returns a dict of numpy arrays keyed by variable names. Arrays have shape
+    (2, d) where d is the dim of normal data (1 or 51). The first and second
+    rows are the upper and lower bounds, respectively.
+    """
+    wb = openpyxl.load_workbook(filename)
+    ws = wb.get_sheet_by_name('Normal')
+    colnames = (cell.value for cell in ws.rows.next())  # first row: col names
+    # read the columns and produce dict of numpy arrays
+    normaldata = dict()
+    for colname, col in zip(colnames, ws.columns):
+        if colname is None:
+            continue
+        # pick values from row 4 onwards (skips units etc.)
+        data = np.fromiter((c.value for k, c in enumerate(col) if k >= 3),
+                           float)
+        data = data[~np.isnan(data)]
+        if data.shape[0] not in [1, 51]:  # must be gait cycle data or scalar
+            raise ValueError('Normal data has unexpected dimensions')
+        normaldata[colname] = (np.stack([data, normaldata[colname]]) if colname
+                               in normaldata else data)
+        return normaldata
 
-           
+
+

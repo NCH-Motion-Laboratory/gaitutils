@@ -11,6 +11,7 @@ append to models_all.
 
 import os.path as op
 import numpy as np
+import normaldata
 from numutils import isfloat
 from config import cfg
 from exceptions import GaitDataError
@@ -88,33 +89,24 @@ class GaitModel(object):
             return self._normaldata[nvar]
         else:
             return None
-
+        
     def _read_normaldata(self):
         """ Read normal data into dict. Dict keys are variables and dict
         values are (t, data) tuples. t is the normalized x axis (0..100)
         of length n and data has shape (n, ndim). The ndim columns may
         represent e.g. mean and stddev etc. depending on the normal data
         file. """
-        normaldata = dict()
         filename = self.normaldata_path
         type = op.splitext(filename)[1].lower()
-        varname = None
         if type == '.gcd':
-            with open(filename, 'r') as f:
-                lines = f.readlines()
-            for li in lines:
-                lis = li.split()
-                if li[0] == '!':
-                    varname = lis[0][1:]
-                    normaldata[varname] = list()
-                elif varname and isfloat(lis[0]):
-                    normaldata[varname].append([float(x) for x in lis])
-            for var, data in normaldata.items():
-                normaldata[var] = (np.linspace(0, 100, len(data)),
-                                   np.array(data))
+            ndata = normaldata.read_gcd(filename)
+            if self.gcd_normaldata_map:
+                return {key: val for key, val in ndata}
+            
+        elif type == '.xlsx':
+            return normaldata.read_xlsx(filename)
         else:
-            raise ValueError('Only .gcd file format supported for now')
-        return normaldata
+            raise ValueError('Only .gcd or .xlsx file formats are supported')
 
 
 """ Create models """

@@ -8,12 +8,18 @@ Copy trial videos to desktop under nexus_videos
 """
 
 from gaitutils import nexus
+from gaitutils.guiutils import messagebox
 import os
 import os.path as op
 import glob
 import shutil
 import logging
 logger = logging.getLogger(__name__)
+
+
+def trial_videos(enffile):
+    trialname = enffile[:enffile.find('.Trial.enf')]
+    return glob.glob(trialname+'*avi')
 
 
 def do_copy():
@@ -27,24 +33,22 @@ def do_copy():
     search = ['R1', 'L1']
     eclkeys = ['DESCRIPTION', 'NOTES']
     enf_files = nexus.find_trials(eclkeys, search)
-
-    def trial_videos(enffile):
-        trialname = enffile[:enffile.find('.Trial.enf')]
-        return glob.glob(trialname+'*avi')
-
+    
     # concatenate video iterators for all .enf files
     vidfiles = []
     for enf in enf_files:
         vidfiles += trial_videos(enf)
 
     if not vidfiles:
-        raise Exception('No video files found for specified trials')
+        raise Exception('No video files found for R1/L1 trials')
 
     # copy each file
-    for vidfile in vidfiles:
+    for j, vidfile in enumerate(vidfiles):
         logger.debug('%s -> %s' % (vidfile, dest_dir))
         shutil.copy2(vidfile, dest_dir)
 
+    messagebox('Copied %d video file%s into %s' % ((j+1), 's' if j > 1 else '', 
+                                                   dest_dir))
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

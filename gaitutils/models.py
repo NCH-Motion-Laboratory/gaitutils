@@ -10,9 +10,7 @@ append to models_all.
 """
 
 import os.path as op
-import numpy as np
 import normaldata
-from numutils import isfloat
 from config import cfg
 from exceptions import GaitDataError
 

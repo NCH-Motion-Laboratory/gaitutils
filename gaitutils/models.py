@@ -41,21 +41,14 @@ def _list_with_side(vars):
     """ Prepend variables in vars with 'L' and 'R', creating a new list of
     variables. Many model variables share the same name, except for leading
     'L' or 'R' that indicates side. """
-    return ['L'+var for var in vars]+['R'+var for var in vars]
+    return [side+var for var in vars for side in ['L', 'R']]
 
 
 def _dict_with_side(dict, append_side=False):
     """ Prepend dict keys with 'R' or 'L'. If append_side,
     also append corresponding ' (R)' or ' (L)' to every dict value. """
-    di = {}
-    if append_side:
-        Rstr, Lstr = (' (R)', ' (L)')
-    else:
-        Rstr, Lstr = ('', '')
-    for key in dict:
-        di['R'+key] = dict[key]+Rstr
-        di['L'+key] = dict[key]+Lstr
-    return di
+    return {side+key: val + (' (%s)' % side) if append_side else ''
+            for key, val in dict.items() for side in ['R', 'L']}
 
 
 class GaitModel(object):

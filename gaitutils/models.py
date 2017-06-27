@@ -48,7 +48,7 @@ def _list_with_side(vars):
 def _dict_with_side(dict, append_side=False):
     """ Prepend dict keys with 'R' or 'L'. If append_side,
     also append corresponding ' (R)' or ' (L)' to every dict value. """
-    return {side+key: val + (' (%s)' % side) if append_side else ''
+    return {side+key: val + (' (%s)' % side if append_side else '')
             for key, val in dict.items() for side in ['R', 'L']}
 
 
@@ -89,20 +89,21 @@ class GaitModel(object):
             return self._normaldata[nvar]
         else:
             return None
-        
+
     def _read_normaldata(self):
-        """ Read normal data into dict. Dict keys are variables and dict
-        values are (t, data) tuples. t is the normalized x axis (0..100)
-        of length n and data has shape (n, ndim). The ndim columns may
-        represent e.g. mean and stddev etc. depending on the normal data
-        file. """
+        """ Read normal data into dict. Dict keys are variables and values
+        are Numpy arrays of shape (n, 2). n is either 1 (scalar variable)
+        or 51 (data on 0..100% gait cycle, defined every 2% of cycle).
+        The first and second columns are min and max values, respectively.
+        (May be e.g. mean-stddev and mean+stddev)
+        """
         filename = self.normaldata_path
         type = op.splitext(filename)[1].lower()
+        # TODO: translate vars, at least for GCD
         if type == '.gcd':
             ndata = normaldata.read_gcd(filename)
             if self.gcd_normaldata_map:
                 return {key: val for key, val in ndata}
-            
         elif type == '.xlsx':
             return normaldata.read_xlsx(filename)
         else:

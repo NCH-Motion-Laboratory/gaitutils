@@ -378,14 +378,11 @@ class Plotter(object):
                                                         plot.label_fontsize)
                         if model.get_normaldata(varname):
                             if plot_model_normaldata and cycle is not None:
-                                tnor, ndata = model.get_normaldata(varname)
+                                # TODO: WIP
+                                ndata = model.get_normaldata(varname)
                                 if ndata is not None:
-                                    # assume (mean, stddev) for normal data
-                                    # fill region between mean-stddev, mean+stddev
-                                    nor = ndata[:, 0]
-                                    nstd = (ndata[:, 1] if ndata.shape[1] == 2
-                                            else 0)
-                                    ax.fill_between(tnor, nor-nstd, nor+nstd,
+                                    ax.fill_between(tnor, ndata[:, 0],
+                                                    ndata[:, 1],
                                                     color=self.cfg.plot.
                                                     model_normals_color,
                                                     alpha=self.cfg.plot.
@@ -493,7 +490,7 @@ class Plotter(object):
         plt.suptitle(maintitle, fontsize=self.cfg.plot.maintitle_fontsize,
                      fontweight="bold")
         self.tight_layout()
-        
+
         if show:
             self.show()
 

@@ -77,21 +77,21 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # load user interface made with designer
         uifile = resource_filename(__name__, 'nexus_menu.ui')
         uic.loadUi(uifile, self)
-        self.btnEMG.clicked.connect(lambda ev: nexus_emgplot.do_plot)
-        self.btnKinEMG.clicked.connect(lambda ev: nexus_kinetics_emgplot.do_plot)
-        self.btnKinall.clicked.connect(lambda ev: nexus_kinallplot.do_plot)
-        self.btnTardieu.clicked.connect(lambda ev: self._tardieu)
+        self.btnEMG.clicked.connect(lambda ev: nexus_emgplot.do_plot())
+        self.btnKinEMG.clicked.connect(lambda ev: nexus_kinetics_emgplot.do_plot())
+        self.btnKinall.clicked.connect(lambda ev: nexus_kinallplot.do_plot())
+        self.btnTardieu.clicked.connect(lambda ev: self._tardieu())
         if have_custom:
-            self.btnCustom.clicked.connect(lambda ev: nexus_customplot.do_plot)
+            self.btnCustom.clicked.connect(lambda ev: nexus_customplot.do_plot())
         else:
             self.btnCustom.clicked.connect(self._no_custom)
-        self.btnTrialVelocity.clicked.connect(lambda ev: nexus_trials_velocity.do_plot)
-        self.btnEMGCons.clicked.connect(lambda ev: nexus_emg_consistency.do_plot)
-        self.btnKinCons.clicked.connect(lambda ev: nexus_kin_consistency.do_plot)
+        self.btnTrialVelocity.clicked.connect(lambda ev: nexus_trials_velocity.do_plot())
+        self.btnEMGCons.clicked.connect(lambda ev: nexus_emg_consistency.do_plot())
+        self.btnKinCons.clicked.connect(lambda ev: nexus_kin_consistency.do_plot())
         self.btnAutoprocTrial.clicked.connect(lambda ev: nexus_autoprocess_current.
-                                              autoproc_single)
+                                              autoproc_single())
         self.btnAutoprocSession.clicked.connect(lambda ev: nexus_autoprocess_trials.
-                                                autoproc_session)
+                                                autoproc_session())
         self.btnQuit.clicked.connect(self.close)
         XStream.stdout().messageWritten.connect(self.txtOutput.insertPlainText)
         XStream.stderr().messageWritten.connect(self.txtOutput.insertPlainText)

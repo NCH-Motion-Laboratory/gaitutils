@@ -129,7 +129,24 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self.btnDeleteTrial.clicked.connect(self.rm_trial)
         self.btnClearCyclesToPlot.clicked.connect(self.listCyclesToPlot.clear)
         self.cbLayout.addItems(sorted(cfg.layouts.__dict__.keys()))
+        
+        self.btnAddNormalData.clicked.connect(self._load_normaldata)
+        self.btnDeleteNormalData.clicked.connect(self._rm_normaldata)
+        self.btnClearNormalData.clicked.connect(self.listNormalData.clear)
+        
         self._set_status('Ready')
+
+
+    def _load_normaldata(self):
+        fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open normal data file', '',
+                                                      'GCD files (*.gcd);; XLSX files (*.xlsx)')[0]
+        if fname:
+            fname = unicode(fname)
+            self.listNormalData.add_item(fname)
+
+    def _rm_normaldata(self):
+        if self.listNormalData.currentItem():
+            self.listNormalData.rm_current_item()
 
     def rm_trial(self):
         if self.listTrials.currentItem():
@@ -209,9 +226,12 @@ class PlotterWindow(QtWidgets.QMainWindow):
         # set options and create the plot
         self.pl.layout = cfg.layouts.__dict__[self.cbLayout.currentText()]
         match_pig_kinetics = self.xbKineticsFpOnly.checkState()
+        normaldata_files = [item.userdata for item in
+                            self.listNormalData.items]
         for trial, cycs in plot_cycles.items():
             self.pl.plot_trial(trial=trial, model_cycles=cycs,
                                emg_cycles=cycs,
+                               normaldata_files=normaldata_files,
                                match_pig_kinetics=match_pig_kinetics,
                                maintitle='', superpose=True)
         self.canvas.draw()

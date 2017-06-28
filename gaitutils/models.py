@@ -10,8 +10,7 @@ append to models_all.
 """
 
 import os.path as op
-import numpy as np
-from numutils import isfloat
+import normaldata
 from config import cfg
 from exceptions import GaitDataError
 
@@ -19,8 +18,8 @@ models_all = []
 
 
 def model_from_var(var):
-    """ Return model for specified variable.
-    model: model instance that has the specified variable. """
+    """ Return model corresponding to specified variable.
+    Returns GaitModel instance that has the specified variable. """
     for model in models_all:
         if var in model.varnames or var in model.varnames_noside:
             return model
@@ -41,27 +40,21 @@ def _list_with_side(vars):
     """ Prepend variables in vars with 'L' and 'R', creating a new list of
     variables. Many model variables share the same name, except for leading
     'L' or 'R' that indicates side. """
-    return ['L'+var for var in vars]+['R'+var for var in vars]
+    return [side+var for var in vars for side in ['L', 'R']]
 
 
 def _dict_with_side(dict, append_side=False):
     """ Prepend dict keys with 'R' or 'L'. If append_side,
     also append corresponding ' (R)' or ' (L)' to every dict value. """
-    di = {}
-    if append_side:
-        Rstr, Lstr = (' (R)', ' (L)')
-    else:
-        Rstr, Lstr = ('', '')
-    for key in dict:
-        di['R'+key] = dict[key]+Rstr
-        di['L'+key] = dict[key]+Lstr
-    return di
+    return {side+key: val + (' (%s)' % side if append_side else '')
+            for key, val in dict.items() for side in ['R', 'L']}
 
 
 class GaitModel(object):
-    """ A class for storing a model information, e.g. Plug-in Gait. The data
-    indicates variable names etc. and is intended (currently not forced) to
-    be non-mutable. The actual data is stored elsewhere. """
+    """ A class (template) for storing information about a model, e.g.
+    Plug-in Gait. The data describes model-specific variable names etc.
+    and is intended (currently not forced) to be non-mutable.
+    The actual data is stored elsewhere. """
 
     def __init__(self):
         self.read_vars = list()  # vars to be read from data
@@ -75,53 +68,10 @@ class GaitModel(object):
         self.varnames_noside = list()  # variables without side
         self.varlabels_noside = dict()  # variables without side
         self.varlabels = dict()  # descriptive label for each variable
-        self.normaldata_path = None  # location of normal data
-        # mapping from variable names to normal data variables (optional)
-        self.normaldata_map = dict()
-        # the actual normal data
-        self._normaldata = dict()
+        # mapping from variable names to gcd normal data variables
+        self.gcd_normaldata_map = dict()
         # y axis labels for plotting the variables (optional)
         self.ylabels = dict()
-
-    def get_normaldata(self, var):
-        """ Get normal data for specified variable. Returns (t, data) tuple
-        (see below) """
-        if not self.normaldata_path:
-            return None
-        if not self._normaldata:  # not read yet
-            self._normaldata = self._read_normaldata()
-        if var in self.normaldata_map:
-            nvar = self.normaldata_map[var]
-            return self._normaldata[nvar]
-        else:
-            return None
-
-    def _read_normaldata(self):
-        """ Read normal data into dict. Dict keys are variables and dict
-        values are (t, data) tuples. t is the normalized x axis (0..100)
-        of length n and data has shape (n, ndim). The ndim columns may
-        represent e.g. mean and stddev etc. depending on the normal data
-        file. """
-        normaldata = dict()
-        filename = self.normaldata_path
-        type = op.splitext(filename)[1].lower()
-        varname = None
-        if type == '.gcd':
-            with open(filename, 'r') as f:
-                lines = f.readlines()
-            for li in lines:
-                lis = li.split()
-                if li[0] == '!':
-                    varname = lis[0][1:]
-                    normaldata[varname] = list()
-                elif varname and isfloat(lis[0]):
-                    normaldata[varname].append([float(x) for x in lis])
-            for var, data in normaldata.items():
-                normaldata[var] = (np.linspace(0, 100, len(data)),
-                                   np.array(data))
-        else:
-            raise ValueError('Only .gcd file format supported for now')
-        return normaldata
 
 
 """ Create models """
@@ -175,7 +125,7 @@ pig_lowerbody.varlabels = _dict_with_side(pig_lowerbody.varlabels_noside)
 pig_lowerbody.varnames = pig_lowerbody.varlabels.keys()
 pig_lowerbody.varnames_noside = pig_lowerbody.varlabels_noside.keys()
 
-pig_lowerbody.normaldata_map = _dict_with_side({
+pig_lowerbody.gcd_normaldata_map = {
              'AnkleAnglesX': 'DorsiPlanFlex',
              'AnkleAnglesZ': 'FootRotation',
              'AnkleMomentX': 'DorsiPlanFlexMoment',
@@ -197,7 +147,7 @@ pig_lowerbody.normaldata_map = _dict_with_side({
              'KneePowerZ': 'KneePower',
              'PelvisAnglesX': 'PelvicTilt',
              'PelvisAnglesY': 'PelvicObliquity',
-             'PelvisAnglesZ': 'PelvicRotation'})
+             'PelvisAnglesZ': 'PelvicRotation'}
 
 spacer = (2*(1*' ',))
 pig_lowerbody.ylabels = _dict_with_side({
@@ -223,8 +173,6 @@ pig_lowerbody.ylabels = _dict_with_side({
                          'PelvisAnglesX': 'Pst%s($^\\circ$)%sAnt' % spacer,
                          'PelvisAnglesY': 'Dwn%s($^\\circ$)%sUp' % spacer,
                          'PelvisAnglesZ': 'Bak%s($^\\circ$)%sFor' % spacer})
-
-pig_lowerbody.normaldata_path = cfg.general.pig_normaldata_path
 
 pig_lowerbody.is_kinetic_var = (lambda varname: 'Moment' in varname or
                                 'Power' in varname)

@@ -237,11 +237,14 @@ class Tardieu_window(object):
         # find the limits of the data that is shown
         tmin_ = max(self.time[0], self.tmin)
         tmax_ = min(self.time[-1], self.tmax)
-        s = u'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)
+        s = u'Note: EMG not delay corrected!\n\n'
+        s += u'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)
         # frame indices corresponding to time limits
         fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
         if fmin == fmax:
-            s = 'Zoomed in to a single frame\nPlease zoom out for info'
+            s += 'Zoomed in to a single frame\nPlease zoom out for info'
+            self._plot_text(s, 1, 'k')
+            return
         else:
             # analog sample indices ...
             smin, smax = self._time_to_frame([tmin_, tmax_], self.trial.analograte)

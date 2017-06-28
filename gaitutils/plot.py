@@ -355,8 +355,7 @@ class Plotter(object):
             elif cycles == 'all':
                 cycles = trial.cycles
             elif cycles == 'forceplate':
-                cycles = [cyc for cyc in trial.cycles
-                          if cyc.on_forceplate]
+                cycles = [cyc for cyc in trial.cycles if cyc.on_forceplate]
             elif isinstance(cycles, dict):
                 for side in ['L', 'R']:  # add L/R side if needed
                     if side not in cycles:
@@ -370,6 +369,7 @@ class Plotter(object):
                           for ncycle in cycles[side] if ncycle]
             return cycles
 
+        # get cycles from data if they were not directly specified as instances
         model_cycles = (model_cycles if isinstance(model_cycles, list) else
                         _get_cycles(model_cycles))
 

@@ -8,6 +8,28 @@ Created on Fri Nov 11 10:49:55 2016
 from numutils import isfloat
 import numpy as np
 import openpyxl
+import os.path as op
+
+
+def read_normaldata(filename, gcd_normaldata_map=None):
+    """ Read normal data into dict. Dict keys are variables and values
+    are Numpy arrays of shape (n, 2). n is either 1 (scalar variable)
+    or 51 (data on 0..100% gait cycle, defined every 2% of cycle).
+    The first and second columns are min and max values, respectively.
+    (May be e.g. mean-stddev and mean+stddev)
+    """
+    type = op.splitext(filename)[1].lower()
+    if type == '.gcd':
+        ndata = _read_gcd(filename)
+        if gcd_normaldata_map is not None:  # translate variable names
+            ndata = {realname: ndata[gcdname] for realname, gcdname
+                     in gcd_normaldata_map.items()
+                     if gcdname in ndata}
+        return ndata
+    elif type == '.xlsx':
+        return _read_xlsx(filename)
+    else:
+        raise ValueError('Only .gcd or .xlsx file formats are supported')
 
 
 def _check_normaldata(ndata):
@@ -17,20 +39,17 @@ def _check_normaldata(ndata):
             raise ValueError('Normal data not in min/max format')
         if val.shape[0] not in [1, 51]:  # must be gait cycle data or scalar
             raise ValueError('Normal data has unexpected dimensions')
+    return ndata
+
+def _interpolate(ndata):
+    """ Interpolate
 
 
-def read_gcd(filename):
+def _read_gcd(filename):
     """ Read normal data from a gcd file.
-    Returns a dict of numpy arrays keyed by variable names. Arrays have shape
-    (d, 2) where d is the dim of normal data (1 or 51). The first and second
-    columns are the lower and upper bounds, respectively.
-    Notes:
-        -usual gcd normal data variable names do not seem to match PiG variable
-         names; a translation dict is provided in models.py
         -gcd data is assumed to be in (mean, dev) 2-column format and is
          converted to (min, max) (Polygon normal data format) as
-         mean-dev, mean+dev
-    """
+         mean-dev, mean+dev """
     normaldata = dict()
     with open(filename, 'r') as f:
         lines = f.readlines()
@@ -47,16 +66,12 @@ def read_gcd(filename):
             normaldata[varname].append([mean-dev, mean+dev])
         else:  # comment etc.
             continue
-    _check_normaldata(normaldata)
-    return {key: np.array(val) for key, val in normaldata.items()}
+    normaldata = {key: np.array(val) for key, val in normaldata.items()}
+    return _check_normaldata(normaldata)
 
 
-def read_xlsx(filename):
-    """ Read normal data exported from Polygon (xlsx format).
-    Returns a dict of numpy arrays keyed by variable names. Arrays have shape
-    (d, 2) where d is the dim of normal data (1 or 51). The first and second
-    columns are the lower and upper bounds, respectively.
-    """
+def _read_xlsx(filename):
+    """ Read normal data exported from Polygon (xlsx format). """
     wb = openpyxl.load_workbook(filename)
     ws = wb.get_sheet_by_name('Normal')
     colnames = (cell.value for cell in ws.rows.next())  # first row: col names
@@ -71,5 +86,4 @@ def read_xlsx(filename):
         data = data[~np.isnan(data)]  # drop empty rows
         normaldata[colname] = (np.stack([normaldata[colname], data], axis=1)
                                if colname in normaldata else data)
-    _check_normaldata(normaldata)
-    return normaldata
+    return _check_normaldata(normaldata)

@@ -68,47 +68,10 @@ class GaitModel(object):
         self.varnames_noside = list()  # variables without side
         self.varlabels_noside = dict()  # variables without side
         self.varlabels = dict()  # descriptive label for each variable
-        self.normaldata_path = None  # location of normal data
         # mapping from variable names to gcd normal data variables
         self.gcd_normaldata_map = dict()
-        # the actual normal data
-        self._normaldata = dict()
         # y axis labels for plotting the variables (optional)
         self.ylabels = dict()
-
-    def get_normaldata(self, var):
-        """ Get normal data for specified variable. Returns (t, data) tuple
-        (see below) """
-        if not self.normaldata_path:
-            return None
-        if not self._normaldata:  # not read yet
-            self._normaldata = self._read_normaldata()
-        if var in self.gcd_normaldata_map:
-            nvar = self.gcd_normaldata_map[var]
-            return self._normaldata[nvar]
-        else:
-            return None
-
-    def _read_normaldata(self):
-        """ Read normal data into dict. Dict keys are variables and values
-        are Numpy arrays of shape (n, 2). n is either 1 (scalar variable)
-        or 51 (data on 0..100% gait cycle, defined every 2% of cycle).
-        The first and second columns are min and max values, respectively.
-        (May be e.g. mean-stddev and mean+stddev)
-        """
-        filename = self.normaldata_path
-        type = op.splitext(filename)[1].lower()
-        if type == '.gcd':
-            ndata = normaldata.read_gcd(filename)
-            if self.gcd_normaldata_map:  # translate variable names
-                ndata = {pigname: ndata[gcdname] for pigname, gcdname
-                         in self.gcd_normaldata_map.items()
-                         if gcdname in ndata}
-                return ndata
-        elif type == '.xlsx':
-            return normaldata.read_xlsx(filename)
-        else:
-            raise ValueError('Only .gcd or .xlsx file formats are supported')
 
 
 """ Create models """
@@ -210,8 +173,6 @@ pig_lowerbody.ylabels = _dict_with_side({
                          'PelvisAnglesX': 'Pst%s($^\\circ$)%sAnt' % spacer,
                          'PelvisAnglesY': 'Dwn%s($^\\circ$)%sUp' % spacer,
                          'PelvisAnglesZ': 'Bak%s($^\\circ$)%sFor' % spacer})
-
-pig_lowerbody.normaldata_path = cfg.general.pig_normaldata_path
 
 pig_lowerbody.is_kinetic_var = (lambda varname: 'Moment' in varname or
                                 'Power' in varname)

@@ -97,11 +97,13 @@ class GaitModel(object):
         """
         filename = self.normaldata_path
         type = op.splitext(filename)[1].lower()
-        # TODO: translate vars, at least for GCD
         if type == '.gcd':
             ndata = normaldata.read_gcd(filename)
-            if self.gcd_normaldata_map:
-                return {key: val for key, val in ndata}
+            if self.gcd_normaldata_map:  # translate variable names
+                ndata = {pigname: ndata[gcdname] for pigname, gcdname
+                         in self.gcd_normaldata_map.items()
+                         if gcdname in ndata}
+                return ndata
         elif type == '.xlsx':
             return normaldata.read_xlsx(filename)
         else:

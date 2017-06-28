@@ -18,8 +18,8 @@ models_all = []
 
 
 def model_from_var(var):
-    """ Return model for specified variable.
-    model: model instance that has the specified variable. """
+    """ Return model corresponding to specified variable.
+    Returns GaitModel instance that has the specified variable. """
     for model in models_all:
         if var in model.varnames or var in model.varnames_noside:
             return model
@@ -51,9 +51,10 @@ def _dict_with_side(dict, append_side=False):
 
 
 class GaitModel(object):
-    """ A class for storing a model information, e.g. Plug-in Gait. The data
-    indicates variable names etc. and is intended (currently not forced) to
-    be non-mutable. The actual data is stored elsewhere. """
+    """ A class (template) for storing information about a model, e.g.
+    Plug-in Gait. The data describes model-specific variable names etc.
+    and is intended (currently not forced) to be non-mutable.
+    The actual data is stored elsewhere. """
 
     def __init__(self):
         self.read_vars = list()  # vars to be read from data
@@ -68,7 +69,7 @@ class GaitModel(object):
         self.varlabels_noside = dict()  # variables without side
         self.varlabels = dict()  # descriptive label for each variable
         self.normaldata_path = None  # location of normal data
-        # mapping from variable names to normal data variables (optional)
+        # mapping from variable names to gcd normal data variables
         self.gcd_normaldata_map = dict()
         # the actual normal data
         self._normaldata = dict()

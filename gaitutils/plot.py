@@ -452,7 +452,8 @@ class Plotter(object):
                             ax.xaxis.label.set_fontsize(self.cfg.
                                                         plot.label_fontsize)
 
-                        if plot_model_normaldata and cycle is not None:
+                        if (plot_model_normaldata and cycle is not None and
+                           self._normaldata):
                             # normaldata vars are without preceding side
                             # this is a bit hackish
                             if varname[0].upper() in ['L', 'R']:
@@ -461,7 +462,9 @@ class Plotter(object):
                                 ndata = self._normaldata[nvarname]
                             elif nvarname in model.gcd_normaldata_map:
                                 nvarname_ = model.gcd_normaldata_map[nvarname]
-                                ndata = self._normaldata[nvarname_]
+                                ndata = (self._normaldata[nvarname_] if
+                                         nvarname_ in self._normaldata else
+                                         None)
                             else:
                                 ndata = None
                             if ndata is not None:

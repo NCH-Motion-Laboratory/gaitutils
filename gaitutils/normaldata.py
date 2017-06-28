@@ -32,6 +32,11 @@ def read_normaldata(filename, gcd_normaldata_map=None):
         raise ValueError('Only .gcd or .xlsx file formats are supported')
 
 
+def xaxis(npts=51):
+    """ Return x axis for normal data """
+    return np.linspace(0, 100, npts)
+
+
 def _check_normaldata(ndata):
     """ Sanity checks """
     for val in ndata.values():
@@ -40,9 +45,6 @@ def _check_normaldata(ndata):
         if val.shape[0] not in [1, 51]:  # must be gait cycle data or scalar
             raise ValueError('Normal data has unexpected dimensions')
     return ndata
-
-def _interpolate(ndata):
-    """ Interpolate
 
 
 def _read_gcd(filename):

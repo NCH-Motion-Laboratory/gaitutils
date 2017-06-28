@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 class Plotter(object):
 
-    def __init__(self, layout=None, normaldata=None):
+    def __init__(self, layout=None):
         """ Plot gait data.
 
         layout: list of lists
@@ -41,7 +41,6 @@ class Plotter(object):
             self._layout = None
         self.trial = None
         self.fig = None
-        self.normaldata = normaldata
         self.legendnames = []
         self.modelartists = []
         self.emgartists = []
@@ -136,6 +135,7 @@ class Plotter(object):
                    model_alpha=1.0,
                    split_model_vars=True,
                    auto_match_model_cycle=True,
+                   model_normaldata=cfg.general
                    x_axis_is_time=True,
                    match_pig_kinetics=True,
                    auto_match_emg_cycle=True,
@@ -187,6 +187,10 @@ class Plotter(object):
                 whose context matches the context of the variable. E.g.
                 'LHipMomentX' will be plotted only for left side cycles.
                 If False, the variable will be plotted for all cycles.
+        model_normaldata: list
+                Specifies a list normal data files (.gcd or .xlsx) for model
+                type variables. EMG normaldata is currently read from the
+                config file.
         x_axis_is_time: bool
                 For unnormalized variables, whether x axis is in seconds
                 (default) or in frames.

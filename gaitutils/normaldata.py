@@ -11,7 +11,7 @@ import openpyxl
 import os.path as op
 
 
-def read_normaldata(filename, gcd_normaldata_map=None):
+def read_normaldata(filename):
     """ Read normal data into dict. Dict keys are variables and values
     are Numpy arrays of shape (n, 2). n is either 1 (scalar variable)
     or 51 (data on 0..100% gait cycle, defined every 2% of cycle).
@@ -20,12 +20,7 @@ def read_normaldata(filename, gcd_normaldata_map=None):
     """
     type = op.splitext(filename)[1].lower()
     if type == '.gcd':
-        ndata = _read_gcd(filename)
-        if gcd_normaldata_map is not None:  # translate variable names
-            ndata = {realname: ndata[gcdname] for realname, gcdname
-                     in gcd_normaldata_map.items()
-                     if gcdname in ndata}
-        return ndata
+        return _read_gcd(filename)
     elif type == '.xlsx':
         return _read_xlsx(filename)
     else:

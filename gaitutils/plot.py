@@ -9,6 +9,7 @@ Plot gait data
 import models
 import nexus
 import numutils
+import normaldata
 from trial import Trial
 import matplotlib.pyplot as plt
 from matplotlib import pylab
@@ -44,6 +45,7 @@ class Plotter(object):
         self.legendnames = []
         self.modelartists = []
         self.emgartists = []
+        self._normaldata_files = []
         self.cfg = cfg
 
     @property
@@ -135,7 +137,7 @@ class Plotter(object):
                    model_alpha=1.0,
                    split_model_vars=True,
                    auto_match_model_cycle=True,
-                   model_normaldata=cfg.general
+                   normaldata_files=cfg.general.normaldata_files,
                    x_axis_is_time=True,
                    match_pig_kinetics=True,
                    auto_match_emg_cycle=True,
@@ -187,10 +189,9 @@ class Plotter(object):
                 whose context matches the context of the variable. E.g.
                 'LHipMomentX' will be plotted only for left side cycles.
                 If False, the variable will be plotted for all cycles.
-        model_normaldata: list
+        normaldata_files: list
                 Specifies a list normal data files (.gcd or .xlsx) for model
-                type variables. EMG normaldata is currently read from the
-                config file.
+                type variables.
         x_axis_is_time: bool
                 For unnormalized variables, whether x axis is in seconds
                 (default) or in frames.
@@ -248,6 +249,14 @@ class Plotter(object):
             if maintitleprefix is None:
                 maintitleprefix = ''
             maintitle = maintitleprefix + self.trial.trialname
+
+        # read normal data if any new files were specified
+        newfiles = set(normaldata_files) - set(self._normaldata_files)
+        if newfiles:
+            for fn in normaldata_files:
+                ndata = normaldata.read_normaldata(fn)
+                self._normaldata.update(ndata)
+                self._normaldata_files.append(fn)
 
         # auto adjust plot heights
         if plotheightratios is None:
@@ -310,7 +319,6 @@ class Plotter(object):
             self.fig = plt.figure(figsize=(self.figw, self.figh))
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)
-
 
         for i, var in enumerate(self.allvars):
             var_type = self._var_type(var)
@@ -380,19 +388,25 @@ class Plotter(object):
                             ax.set(xlabel=xlabel)
                             ax.xaxis.label.set_fontsize(self.cfg.
                                                         plot.label_fontsize)
-                        if model.get_normaldata(varname):
-                            if plot_model_normaldata and cycle is not None:
-                                # TODO: WIP
-                                ndata = model.get_normaldata(varname)
-                                if ndata is not None:
-                                    ax.fill_between(tnor, ndata[:, 0],
-                                                    ndata[:, 1],
-                                                    color=self.cfg.plot.
-                                                    model_normals_color,
-                                                    alpha=self.cfg.plot.
-                                                    model_normals_alpha)
-                                    # tighten x limits
-                                    ax.set_xlim(tnor[0], tnor[-1])
+
+                        if plot_model_normaldata and cycle is not None:
+                            if varname in self._normaldata:
+                                ndata = self._normaldata[varname]
+                            elif varname in model.gcd_normaldata_map:
+                                varname_ = model.gcd_normaldata_map[varname]
+                                ndata = self._normaldata[varname_]
+                            else:
+                                ndata = None
+                            if ndata is not None:
+                                normalx = np.linspace(0, 100, ndata.shape[0])                                                    
+                                ax.fill_between(normalx, ndata[:, 0],
+                                                ndata[:, 1],
+                                                color=self.cfg.plot.
+                                                model_normals_color,
+                                                alpha=self.cfg.plot.
+                                                model_normals_alpha)
+                                # tighten x limits
+                                ax.set_xlim(normalx[0], normalx[-1])
 
             elif var_type == 'emg':
                 for cycle in emg_cycles:

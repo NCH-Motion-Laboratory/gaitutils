@@ -125,7 +125,7 @@ pig_lowerbody.varlabels = _dict_with_side(pig_lowerbody.varlabels_noside)
 pig_lowerbody.varnames = pig_lowerbody.varlabels.keys()
 pig_lowerbody.varnames_noside = pig_lowerbody.varlabels_noside.keys()
 
-pig_lowerbody.gcd_normaldata_map = _dict_with_side({
+pig_lowerbody.gcd_normaldata_map = {
              'AnkleAnglesX': 'DorsiPlanFlex',
              'AnkleAnglesZ': 'FootRotation',
              'AnkleMomentX': 'DorsiPlanFlexMoment',
@@ -147,7 +147,7 @@ pig_lowerbody.gcd_normaldata_map = _dict_with_side({
              'KneePowerZ': 'KneePower',
              'PelvisAnglesX': 'PelvicTilt',
              'PelvisAnglesY': 'PelvicObliquity',
-             'PelvisAnglesZ': 'PelvicRotation'})
+             'PelvisAnglesZ': 'PelvicRotation'}
 
 spacer = (2*(1*' ',))
 pig_lowerbody.ylabels = _dict_with_side({

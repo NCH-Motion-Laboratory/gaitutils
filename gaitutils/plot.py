@@ -19,6 +19,7 @@ import os.path as op
 import os
 import subprocess
 from config import cfg
+import numpy as np
 import logging
 
 logger = logging.getLogger(__name__)
@@ -42,10 +43,11 @@ class Plotter(object):
             self._layout = None
         self.trial = None
         self.fig = None
-        self.legendnames = []
-        self.modelartists = []
-        self.emgartists = []
-        self._normaldata_files = []
+        self.legendnames = list()
+        self.modelartists = list()
+        self.emgartists = list()
+        self._normaldata_files = list()
+        self._normaldata = dict()
         self.cfg = cfg
 
     @property
@@ -254,6 +256,7 @@ class Plotter(object):
         newfiles = set(normaldata_files) - set(self._normaldata_files)
         if newfiles:
             for fn in normaldata_files:
+                logger.debug('Reading new normal data from %s' % fn)
                 ndata = normaldata.read_normaldata(fn)
                 self._normaldata.update(ndata)
                 self._normaldata_files.append(fn)
@@ -390,15 +393,19 @@ class Plotter(object):
                                                         plot.label_fontsize)
 
                         if plot_model_normaldata and cycle is not None:
-                            if varname in self._normaldata:
-                                ndata = self._normaldata[varname]
-                            elif varname in model.gcd_normaldata_map:
-                                varname_ = model.gcd_normaldata_map[varname]
-                                ndata = self._normaldata[varname_]
+                            # normaldata vars are without preceding side
+                            # this is a bit hackish
+                            if varname[0].upper() in ['L', 'R']:
+                                nvarname = varname[1:]
+                            if nvarname in self._normaldata:
+                                ndata = self._normaldata[nvarname]
+                            elif nvarname in model.gcd_normaldata_map:
+                                nvarname_ = model.gcd_normaldata_map[nvarname]
+                                ndata = self._normaldata[nvarname_]
                             else:
                                 ndata = None
                             if ndata is not None:
-                                normalx = np.linspace(0, 100, ndata.shape[0])                                                    
+                                normalx = np.linspace(0, 100, ndata.shape[0])
                                 ax.fill_between(normalx, ndata[:, 0],
                                                 ndata[:, 1],
                                                 color=self.cfg.plot.

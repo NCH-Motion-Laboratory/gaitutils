@@ -27,11 +27,6 @@ def read_normaldata(filename):
         raise ValueError('Only .gcd or .xlsx file formats are supported')
 
 
-def xaxis(npts=51):
-    """ Return x axis for normal data """
-    return np.linspace(0, 100, npts)
-
-
 def _check_normaldata(ndata):
     """ Sanity checks """
     for val in ndata.values():
@@ -53,7 +48,6 @@ def _read_gcd(filename):
     varname = None
     for li in lines:
         lis = li.split()
-        print lis
         if li[0] == '!':  # new variable
             varname = lis[0][1:]
             normaldata[varname] = list()
@@ -81,6 +75,10 @@ def _read_xlsx(filename):
         data = np.fromiter((c.value for k, c in enumerate(col) if k >= 3),
                            float)
         data = data[~np.isnan(data)]  # drop empty rows
+        # rewrite the coordinate
+        colname = colname.replace(' (1)', 'X')
+        colname = colname.replace(' (2)', 'Y')
+        colname = colname.replace(' (3)', 'Z')
         normaldata[colname] = (np.stack([normaldata[colname], data], axis=1)
                                if colname in normaldata else data)
     return _check_normaldata(normaldata)

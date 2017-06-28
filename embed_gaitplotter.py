@@ -142,7 +142,8 @@ class PlotterWindow(QtWidgets.QMainWindow):
                                                       'GCD files (*.gcd);; XLSX files (*.xlsx)')[0]
         if fname:
             fname = unicode(fname)
-            self.listNormalData.add_item(fname)
+            # store the filename as user data - could just use the name
+            self.listNormalData.add_item(fname, data=fname)
 
     def _rm_normaldata(self):
         if self.listNormalData.currentItem():

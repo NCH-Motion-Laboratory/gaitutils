@@ -14,12 +14,13 @@ TODO:
 """
 
 import sys
+import traceback
 from PyQt5 import QtGui, QtWidgets, uic, QtCore
 from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
                                                 FigureCanvas)
 from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
                                                 NavigationToolbar)
-from gaitutils import Plotter, Trial, nexus, layouts, cfg
+from gaitutils import Plotter, Trial, nexus, layouts, cfg, GaitDataError
 import logging
 
 logger = logging.getLogger(__name__)
@@ -196,7 +197,11 @@ class PlotterWindow(QtWidgets.QMainWindow):
             self.listCyclesToPlot.add_item(name, data=cycle)
 
     def _open_nexus_trial(self):
-        self._open_trial(nexus.viconnexus())
+        try:
+            vicon = nexus.viconnexus()
+            self._open_trial(vicon)
+        except GaitDataError:
+            self.message_dialog('Vicon Nexus is not running')
 
     def _open_trial(self, source):
         tr = Trial(source)
@@ -282,5 +287,24 @@ if __name__ == '__main__':
 
     app = QtWidgets.QApplication(sys.argv)
     win = PlotterWindow()
+
+    def my_excepthook(type, value, tback):
+        """ Custom exception handler for fatal (unhandled) exceptions:
+        report to user via GUI and terminate. """
+        tb_full = u''.join(traceback.format_exception(type, value, tback))
+        win.message_dialog('Unhandled exception: %s' % tb_full)
+        # dump traceback to file
+        # try:
+        #    with io.open(Config.traceback_file, 'w', encoding='utf-8') as f:
+        #        f.write(tb_full)
+        # here is a danger of infinitely looping the exception hook,
+        # so try to catch any exceptions...
+        # except Exception:
+        #    print('Cannot dump traceback!')
+        sys.__excepthook__(type, value, tback)
+        app.quit()
+
+    sys.excepthook = my_excepthook
+
     win.show()
     sys.exit(app.exec_())

@@ -139,8 +139,10 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
 
     def _load_normaldata(self):
-        fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open normal data file', '',
-                                                      'GCD files (*.gcd);; XLSX files (*.xlsx)')[0]
+        fname = QtWidgets.QFileDialog.getOpenFileName(self,
+                                                      'Open normal data', '',
+                                                      'XLSX files (*.xlsx);;'
+                                                      'GCD files (*.gcd);; ')[0]
         if fname:
             fname = unicode(fname)
             # store the filename as user data - could just use the name

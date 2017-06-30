@@ -5,6 +5,7 @@ Created on Fri Nov 11 10:49:55 2016
 @author: hus20664877
 """
 
+from exceptions import GaitDataError
 from numutils import isfloat
 import numpy as np
 import openpyxl
@@ -24,7 +25,7 @@ def read_normaldata(filename):
     elif type == '.xlsx':
         return _read_xlsx(filename)
     else:
-        raise ValueError('Only .gcd or .xlsx file formats are supported')
+        raise GaitDataError('Only .gcd or .xlsx file formats are supported')
 
 
 def _check_normaldata(ndata):
@@ -33,7 +34,7 @@ def _check_normaldata(ndata):
         if not all(np.diff(val) >= 0):
             raise ValueError('Normal data not in min/max format')
         if val.shape[0] not in [1, 51]:  # must be gait cycle data or scalar
-            raise ValueError('Normal data has unexpected dimensions')
+            raise GaitDataError('Normal data has unexpected dimensions')
     return ndata
 
 

@@ -8,7 +8,7 @@ automatically run by 'nose2'
 """
 
 from gaitutils.numutils import segment_angles, best_match
-from gaitutils import eclipse
+from gaitutils import eclipse, Trial
 import numpy as np
 from nose.tools import (assert_set_equal, assert_in, assert_equal,
                         assert_raises)
@@ -17,6 +17,14 @@ from shutil import copyfile
 
 trial_enf = 'testdata/anon.Trial.enf'
 trial_enf_write = 'testdata/writetest.enf'
+c3dfile = 'testdata/trial.c3d'
+
+
+def test_c3d_reader():
+    tr = Trial(c3dfile)
+    assert_equal(tr.analograte, 1000.)
+    assert_equal(tr.framerate, 100.)
+    assert_equal(tr.bodymass, 24.)
 
 
 def test_segment_angles():

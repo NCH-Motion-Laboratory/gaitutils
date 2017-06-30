@@ -84,7 +84,7 @@ def check_nexus():
         raise GaitDataError('Vicon Nexus does not seem to be running')
 
 
-def get_trial_enfs():
+def get_session_enfs():
     """ Return list of .enf files for the session """
     vicon = viconnexus()
     trialname_ = vicon.GetTrialName()
@@ -105,7 +105,7 @@ def find_trials(eclipse_keys, strings):
     """ Yield .enf files for trials in current Nexus session directory whose
     Eclipse fields (list) contain any of strings (list). Case insensitive. """
     strings = [st.upper() for st in strings]
-    enffiles = get_trial_enfs()
+    enffiles = get_session_enfs()
     if enffiles is None:
         return
     for enf in enffiles:

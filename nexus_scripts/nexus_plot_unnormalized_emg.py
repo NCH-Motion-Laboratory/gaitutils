@@ -13,7 +13,7 @@ import os.path as op
 
 lout = [['LVas', 'RVas'], ['LRec', 'RRec'], ['LHam', 'RHam']]
 
-enffiles = nexus.get_trial_enfs()
+enffiles = nexus.get_session_enfs()
 
 for filepath_ in enffiles:
     filepath = filepath__[:filepath__.find('.Trial')]  # rm .Trial and .enf

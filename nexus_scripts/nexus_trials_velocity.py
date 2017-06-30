@@ -29,7 +29,7 @@ def trial_median_velocity(source):
 
 def do_plot():
 
-    enfs = nexus.get_trial_enfs()
+    enfs = nexus.get_session_enfs()
     if enfs is None:
         raise Exception('Cannot read session from Nexus (maybe in live mode?)')
     enfs_ = [enf for enf in enfs if

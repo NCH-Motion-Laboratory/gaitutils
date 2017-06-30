@@ -16,7 +16,7 @@ from gaitutils import nexus, eclipse
 KEY = 'DESCRIPTION'  # Eclipse key
 NEWVAL = ''      # change into this value
 
-enffiles = nexus.get_trial_enfs()
+enffiles = nexus.get_session_enfs()
 
 if not enffiles:
     raise ValueError('No enf files')

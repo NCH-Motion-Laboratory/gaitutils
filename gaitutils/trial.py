@@ -176,10 +176,10 @@ class Trial(object):
         cycles = [cycle for cycle in self.cycles
                   if cycle.context == context.upper()]
         if ncycle < 1:
-            raise GaitDataError('Index of gait cycle must be >= 1')
+            raise ValueError('Index of gait cycle must be >= 1')
         if len(cycles) < ncycle:
-            raise GaitDataError('Requested gait cycle %d does not '
-                                'exist in data' % ncycle)
+            raise ValueError('Requested gait cycle %d does not '
+                             'exist in data' % ncycle)
         else:
             return cycles[ncycle-1]
 
@@ -188,7 +188,7 @@ class Trial(object):
         model if needed """
         model_ = models.model_from_var(var)
         if not model_:
-            raise GaitDataError('No model found for %s' % var)
+            raise ValueError('No model found for %s' % var)
         if model_.desc not in self._models_data:
             # read and cache model data
             modeldata = read_data.get_model_data(self.source, model_)

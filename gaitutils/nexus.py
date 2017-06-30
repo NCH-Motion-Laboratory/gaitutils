@@ -145,7 +145,7 @@ def get_metadata(vicon):
     sessionpath = trialname_[0]
     trialname = trialname_[1]
     if not trialname:
-        raise GaitDataError('No trial loaded')
+        raise GaitDataError('No trial loaded in Nexus')
     # Get events - GetEvents() indices seem to often be 1 frame less than on
     # Nexus display - only happens with ROI?
     lstrikes = vicon.GetEvents(name, "Left", "Foot Strike")[0]
@@ -289,7 +289,8 @@ def get_marker_data(vicon, markers):
     for marker in markers:
         x, y, z, _ = vicon.GetTrajectory(subjectnames[0], marker)
         if len(x) == 0:
-            raise GaitDataError('Cannot get marker trajectory: %s' % marker)
+            raise GaitDataError('Cannot read marker trajectory '
+                                'from Nexus: \'%s\'' % marker)
         mP = np.array([x, y, z]).transpose()
         mdata[marker + '_P'] = mP
         mdata[marker + '_V'] = np.gradient(mP)[0]

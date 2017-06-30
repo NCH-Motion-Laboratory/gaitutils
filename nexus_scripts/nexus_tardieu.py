@@ -53,7 +53,7 @@ class Tardieu_window(object):
             self.trial = Trial(vicon)
         except GaitDataError as e:
             messagebox(e.message)
-            sys.exit()
+            return
         self.time = self.trial.t / self.trial.framerate  # time axis in sec
         self.tmax = self.time[-1]
         self.nframes = len(self.time)
@@ -62,7 +62,7 @@ class Tardieu_window(object):
             data = read_data.get_marker_data(vicon, ['Toe', 'Ankle', 'Knee'])
         except GaitDataError as e:
             messagebox(e.message)
-            sys.exit()
+            return
         Ptoe = data['Toe_P']
         Pank = data['Ankle_P']
         Pknee = data['Knee_P']

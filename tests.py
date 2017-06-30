@@ -41,14 +41,13 @@ def test_best_match():
 def test_enf_reader():
     edi = eclipse.get_eclipse_keys(trial_enf)
     assert('STAGES' not in edi)  # empty
-    assert_equal(len(edi), 8)
+    assert_equal(len(edi), 7)
     desc = edi['DESCRIPTION']
     assert_equal(desc, u'ok, no contact, forward')
     edi_full = eclipse.get_eclipse_keys(trial_enf, return_empty=True)
-    assert_equal(len(edi_full), 17)
+    assert_equal(len(edi_full), 16)
     assert('STAGES' in edi_full)  # empty but should be read now
-    uni_ok = all([type(key) == unicode for key in edi_full])
+    uni_ok = all([type(val) == unicode for val in edi_full.values()])
     assert(uni_ok)
-
 
 

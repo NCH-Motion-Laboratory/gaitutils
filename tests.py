@@ -51,6 +51,7 @@ def test_enf_reader():
     assert('STAGES' in edi_full)  # empty but should be read now
     uni_ok = all([type(val) == unicode for val in edi_full.values()])
     assert(uni_ok)
+    assert_raises(IOError, eclipse.get_eclipse_keys, 'no.enf')
 
 
 def test_enf_writer():
@@ -63,4 +64,4 @@ def test_enf_writer():
     eclipse.set_eclipse_keys(trial_enf_write, edi_set, update_existing=True)
     edi = eclipse.get_eclipse_keys(trial_enf_write)
     assert_equal(edi['DESCRIPTION'], 'testing')
-
+    assert_raises(IOError, eclipse.set_eclipse_keys, 'no.enf', {})

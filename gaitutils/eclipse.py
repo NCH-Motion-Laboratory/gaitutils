@@ -19,7 +19,8 @@ def get_eclipse_keys(fname_enf, return_empty=False):
     """
     cp = ConfigParser.SafeConfigParser()
     cp.optionxform = str  # case sensitive
-    cp.read(fname_enf)
+    if not cp.read(fname_enf):
+        raise IOError('No such .enf file')
     return {key: unicode(val) for key, val in cp.items('TRIAL_INFO')
             if val != '' or return_empty}
 
@@ -30,7 +31,8 @@ def set_eclipse_keys(fname_enf, eclipse_dict, update_existing=False):
     """
     cp = ConfigParser.SafeConfigParser()
     cp.optionxform = str  # case sensitive
-    cp.read(fname_enf)
+    if not cp.read(fname_enf):
+        raise IOError('No such .enf file')
     did_set = False
     for key, val in eclipse_dict.items():
         if key not in zip(*cp.items('TRIAL_INFO'))[0] or update_existing:

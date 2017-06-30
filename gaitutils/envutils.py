@@ -13,7 +13,7 @@ import sys
 import traceback
 
 
-def register_gui_exception_handler():
+def register_gui_exception_handler(full_traceback=False):
     """ Registers an exception handler that reports uncaught exceptions
     via GUI"""
 
@@ -21,11 +21,13 @@ def register_gui_exception_handler():
         """ Custom exception handler for fatal (unhandled) exceptions:
         report to user via GUI and terminate. """
         # exception and message, but no traceback
-        msg = ''.join(traceback.format_exception(type, value, ''))
+        tbackstr = tback if full_traceback else ''
+        msg = ''.join(traceback.format_exception(type, value, tbackstr))
         error_exit(msg)
         # just the message (e.g. ValueError: "blah" -> "blah")
         # may sometimes be confusing, since type of exception is not printed
         # error_exit(value)
+        #
         sys.__excepthook__(type, value, tback)
         sys.exit()
     sys.excepthook = _my_excepthook

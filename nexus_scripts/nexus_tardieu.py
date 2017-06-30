@@ -2,23 +2,23 @@
 """
 
 Interactive script for analysis of Tardieu trials.
-Work in progress
+
 
 @author: Jussi (jnu@iki.fi)
 """
 
 from __future__ import print_function
 from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
-                       Trial, Plotter, layouts, utils)
+                       Trial, Plotter, layouts, utils, GaitDataError,
+                       register_gui_exception_handler)
 from gaitutils.numutils import segment_angles, rms
 from gaitutils.guiutils import messagebox
 from collections import OrderedDict
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button
 import matplotlib.gridspec as gridspec
-import sys
 import logging
-import scipy.linalg
+import sys
 import numpy as np
 
 
@@ -48,14 +48,21 @@ class Tardieu_window(object):
         self.texts = []
         self.data_axes = list()  # axes that actually contain data
         # read data from Nexus and initialize plot
-        vicon = nexus.viconnexus()
-        # x axis will be same as Nexus (here data is shown starting at frame 0)
-        self.trial = Trial(vicon)
+        try:
+            vicon = nexus.viconnexus()
+            self.trial = Trial(vicon)
+        except GaitDataError as e:
+            messagebox(e.message)
+            sys.exit()
         self.time = self.trial.t / self.trial.framerate  # time axis in sec
         self.tmax = self.time[-1]
         self.nframes = len(self.time)
         # read marker data from Nexus
-        data = read_data.get_marker_data(vicon, ['Toe', 'Ankle', 'Knee'])
+        try:
+            data = read_data.get_marker_data(vicon, ['Toe', 'Ankle', 'Knee'])
+        except GaitDataError as e:
+            messagebox(e.message)
+            sys.exit()
         Ptoe = data['Toe_P']
         Pank = data['Ankle_P']
         Pknee = data['Knee_P']
@@ -76,12 +83,16 @@ class Tardieu_window(object):
 
         self.fig = plt.figure(figsize=(16, 10))
         self.gs = gridspec.GridSpec(len(self.emg_chs) + 3, 2,
-                               width_ratios=self.width_ratio)
+                                    width_ratios=self.width_ratio)
 
         # plot EMG signals
         self.emg_rms = dict()
         for ind, ch in enumerate(emg_chs):
-            t_, emgdata = self.trial[ch]
+            try:
+                t_, emgdata = self.trial[ch]
+            except KeyError:
+                messagebox('EMG channel not found: %s' % ch)
+                sys.exit()
             t = t_ / self.trial.analograte
             self.emg_rms[ch] = rms(emgdata, cfg.emg.rms_win)
             sharex = None if ind == 0 else self.data_axes[0]
@@ -157,16 +168,15 @@ class Tardieu_window(object):
 
         self.tmin, self.tmax = self.data_axes[0].get_xlim()
         self._update_status_text()
-        
+
         plt.show()
-        
-        
+
     @staticmethod
     def read_starting_angle(vicon):
         subjname = vicon.GetSubjectNames()[0]
         asp = vicon.GetSubjectParam(subjname, 'AnkleStartPos')
         return asp[0] if asp[1] else None
-        
+
     @staticmethod
     def _adj_fonts(ax):
         ax.xaxis.label.set_fontsize(cfg.plot.label_fontsize)
@@ -247,21 +257,24 @@ class Tardieu_window(object):
             return
         else:
             # analog sample indices ...
-            smin, smax = self._time_to_frame([tmin_, tmax_], self.trial.analograte)
+            smin, smax = self._time_to_frame([tmin_, tmax_],
+                                             self.trial.analograte)
             s += u'In frames: %d - %d\n' % (fmin, fmax)
             # foot angle in chosen range and the maximum
             angr = self.angd[fmin:fmax]
-            angmax, angmaxind = np.nanmax(angr), np.nanargmax(angr)/self.trial.framerate + tmin_
+            angmax = np.nanmax(angr)
+            angmaxind = np.nanargmax(angr)/self.trial.framerate + tmin_
             # same for velocity
             velr = self.angveld[fmin:fmax]
-            velmax, velmaxind = np.nanmax(velr), np.nanargmax(velr)/self.trial.framerate + tmin_
+            velmax = np.nanmax(velr)
+            velmaxind = np.nanargmax(velr)/self.trial.framerate + tmin_
             s += u'Max angle: %.2f °/s @ %.2f s\n' % (angmax, angmaxind)
             s += u'Max velocity: %.2f °/s @ %.2f s\n' % (velmax, velmaxind)
-    
             s += u'\nEMG RMS peaks:\n'
             for ch in self.emg_chs:
                 rms = self.emg_rms[ch][smin:smax]
-                rmsmax, rmsmaxind = rms.max(), np.argmax(rms)/self.trial.analograte + tmin_
+                rmsmax = rms.max()
+                rmsmaxind = np.argmax(rms)/self.trial.analograte + tmin_
                 s += u'%s: %.2f mV @ %.2f s\n' % (ch, rmsmax*1e3, rmsmaxind)
             self._plot_text(s, 1, 'k')
             # annotate markers
@@ -282,4 +295,6 @@ def do_plot(side):
     Tardieu_window(emg_chs=emg_chs)
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+    register_gui_exception_handler(full_traceback=True)
     do_plot('L')

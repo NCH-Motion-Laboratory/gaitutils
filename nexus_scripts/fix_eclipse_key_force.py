@@ -22,4 +22,4 @@ if not enffiles:
     raise ValueError('No enf files')
 
 for enffile in enffiles:
-    eclipse.set_eclipse_key(enffile, KEY, NEWVAL, update_existing=True)
+    eclipse.set_eclipse_keys(enffile, {KEY: NEWVAL}, update_existing=True)

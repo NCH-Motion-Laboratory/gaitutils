@@ -270,8 +270,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
     if cfg.autoproc.eclipse_write_key and update_eclipse:
         for filepath, trial in trials.items():
             enf_file = filepath + '.Trial.enf'
-            eclipse.set_eclipse_key(enf_file, cfg.autoproc.eclipse_write_key,
-                                    trial.description, update_existing=True)
+            eclipse.set_eclipse_keys(enf_file, {cfg.autoproc.eclipse_write_key:
+                                     trial.description}, update_existing=True)
     else:
         logger.debug('Not updating Eclipse entries')
 

@@ -14,6 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 def get_eclipse_keys(fname_enf, return_empty=False):
+    """ Read key/value pairs from ENF file into a dict. Only keys in the
+    TRIAL_INFO section will be read.
+    """
     cp = ConfigParser.SafeConfigParser()
     cp.optionxform = str  # case sensitive
     cp.read(fname_enf)
@@ -21,25 +24,21 @@ def get_eclipse_keys(fname_enf, return_empty=False):
             if val != '' or return_empty}
 
 
-def set_eclipse_key(fname_enf, keyname, newval, update_existing=False):
-    """ Update specified Eclipse file, changing 'keyname' to 'value'.
-    If update_existing=True, update also keys that already have a value. """
-    with open(fname_enf, 'r') as f:
-        eclipselines = f.read().splitlines()
-    linesnew = []
-    for line in eclipselines:
-        eqpos = line.find('=')
-        if eqpos > 0:
-            key = line[:eqpos]
-            val = line[eqpos+1:]
-            if key == keyname and (not val or update_existing):
-                newline = key + '=' + newval
-            else:  # key mismatch - copy line as is
-                newline = line
-        else:  # comment or section header - copy as is
-            newline = line
-        linesnew.append(newline)
-    with open(fname_enf, 'w') as f:
-        logger.debug('writing %s' % fname_enf)
-        for li in linesnew:
-            f.write(li + '\n')
+def set_eclipse_keys(fname_enf, eclipse_dict, update_existing=False):
+    """ Set key/value pairs in an ENF file. If update_existing is True,
+    overwrite existing keys. Keys will be written into the TRIAL_INFO section.
+    """
+    cp = ConfigParser.SafeConfigParser()
+    cp.optionxform = str  # case sensitive
+    cp.read(fname_enf)
+    did_set = False
+    for key, val in eclipse_dict.items():
+        if key not in zip(*cp.items('TRIAL_INFO'))[0] or update_existing:
+            cp.set('TRIAL_INFO', key, val)
+            did_set = True
+    if did_set:
+        with open(fname_enf, 'w') as fp:
+            logger.debug('writing %s' % fname_enf)
+            cp.write(fp)
+    else:
+        logger.warning('Did not set any keys')

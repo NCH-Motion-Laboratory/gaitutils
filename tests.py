@@ -13,8 +13,10 @@ import numpy as np
 from nose.tools import (assert_set_equal, assert_in, assert_equal,
                         assert_raises)
 from numpy.testing import assert_allclose
+from shutil import copyfile
 
 trial_enf = 'testdata/anon.Trial.enf'
+trial_enf_write = 'testdata/writetest.enf'
 
 
 def test_segment_angles():
@@ -50,4 +52,15 @@ def test_enf_reader():
     uni_ok = all([type(val) == unicode for val in edi_full.values()])
     assert(uni_ok)
 
+
+def test_enf_writer():
+    copyfile(trial_enf, trial_enf_write)  # make a fresh copy
+    edi_set = {'DESCRIPTION': 'testing', 'NEWKEY': 'value'}
+    eclipse.set_eclipse_keys(trial_enf_write, edi_set, update_existing=False)
+    edi = eclipse.get_eclipse_keys(trial_enf_write)
+    assert_equal(edi['DESCRIPTION'], 'ok, no contact, forward')  # no update
+    assert_equal(edi['NEWKEY'], 'value')
+    eclipse.set_eclipse_keys(trial_enf_write, edi_set, update_existing=True)
+    edi = eclipse.get_eclipse_keys(trial_enf_write)
+    assert_equal(edi['DESCRIPTION'], 'testing')
 

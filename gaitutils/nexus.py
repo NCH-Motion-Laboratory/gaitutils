@@ -79,6 +79,14 @@ def viconnexus():
     return ViconNexus.ViconNexus()
 
 
+def getsubjectnames():
+    """ Workaround a Nexus 2.6 bug (?) that creates extra names with
+    weird unicode strings """
+    vicon = viconnexus()
+    names_ = vicon.GetSubjectNames()
+    return [name for name in names_ if u'\ufffd1' not in name]
+
+
 def check_nexus():
     if not pid():
         raise GaitDataError('Vicon Nexus does not seem to be running')
@@ -125,7 +133,7 @@ def get_metadata(vicon):
     logger.debug('reading metadata from Vicon Nexus')
     if not pid():
         raise GaitDataError('Vicon Nexus does not seem to be running')
-    subjectnames = vicon.GetSubjectNames()
+    subjectnames = getsubjectnames()
     if len(subjectnames) > 1:
         raise GaitDataError('Nexus returns multiple subjects')
     if not subjectnames:
@@ -282,7 +290,7 @@ def get_marker_data(vicon, markers):
     specified markers.  """
     if not isinstance(markers, list):
         markers = [markers]
-    subjectnames = vicon.GetSubjectNames()
+    subjectnames = getsubjectnames()
     if not subjectnames:
         raise GaitDataError('No subject defined in Nexus')
     mdata = dict()
@@ -327,7 +335,7 @@ def get_fp_strike_and_toeoff(vicon):
 def get_model_data(vicon, model):
     """ Read model output variables (e.g. Plug-in Gait) """
     modeldata = dict()
-    subjectname = vicon.GetSubjectNames()[0]
+    subjectname = getsubjectnames()[0]
     for var in model.read_vars:
         nums, bools = vicon.GetModelOutput(subjectname, var)
         if not nums:
@@ -403,7 +411,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     STRIKE_TOL = 5
 
     # get subject info
-    subjectnames = vicon.GetSubjectNames()
+    subjectnames = getsubjectnames()
     if not subjectnames:
         raise GaitDataError('No subject defined in Nexus')
     subjectname = subjectnames[0]

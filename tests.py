@@ -8,10 +8,13 @@ automatically run by 'nose2'
 """
 
 from gaitutils.numutils import segment_angles, best_match
+from gaitutils import eclipse
 import numpy as np
 from nose.tools import (assert_set_equal, assert_in, assert_equal,
                         assert_raises)
 from numpy.testing import assert_allclose
+
+trial_enf = 'testdata/anon.Trial.enf'
 
 
 def test_segment_angles():
@@ -33,5 +36,19 @@ def test_best_match():
     assert_allclose(best_match(v, b), r)
     b = []
     assert_allclose(best_match(v, b), v)
+
+
+def test_enf_reader():
+    edi = eclipse.get_eclipse_keys(trial_enf)
+    assert('STAGES' not in edi)  # empty
+    assert_equal(len(edi), 8)
+    desc = edi['DESCRIPTION']
+    assert_equal(desc, u'ok, no contact, forward')
+    edi_full = eclipse.get_eclipse_keys(trial_enf, return_empty=True)
+    assert_equal(len(edi_full), 17)
+    assert('STAGES' in edi_full)  # empty but should be read now
+    uni_ok = all([type(key) == unicode for key in edi_full])
+    assert(uni_ok)
+
 
 

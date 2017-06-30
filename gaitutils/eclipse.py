@@ -7,23 +7,18 @@ Eclipse (database) hacks.
 @author: jnu@iki.fi
 """
 import logging
+import ConfigParser
+
 
 logger = logging.getLogger(__name__)
 
 
 def get_eclipse_keys(fname_enf, return_empty=False):
-    """ Get Eclipse database entries as a dict. If return_empty,
-    return also keys without value. """
-    edi = dict()
-    with open(fname_enf, 'r') as f:
-        eclipselines = f.read().splitlines()
-    for line in eclipselines:
-        eqpos = line.find('=')
-        if eqpos > 0:
-            key, val = line.split('=')
-            if return_empty or val:
-                edi[key] = unicode(val, 'utf-8')  # Eclipse text is utf-8
-    return edi
+    cp = ConfigParser.SafeConfigParser()
+    cp.optionxform = str  # case sensitive
+    cp.read(fname_enf)
+    return {key: unicode(val) for key, val in cp.items('TRIAL_INFO')
+            if val != '' or return_empty}
 
 
 def set_eclipse_key(fname_enf, keyname, newval, update_existing=False):

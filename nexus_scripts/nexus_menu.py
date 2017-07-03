@@ -7,6 +7,7 @@ Created on Tue Feb 07 10:05:28 2017
 
 from __future__ import print_function
 from PyQt5 import QtGui, QtCore, uic, QtWidgets
+from PyQt5.QtCore import QRunnable, QThreadPool
 from pkg_resources import resource_filename
 import sys
 from gaitutils import nexus
@@ -87,14 +88,17 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self.btnCustom.clicked.connect(self._no_custom)
         self.btnTrialVelocity.clicked.connect(lambda ev: nexus_trials_velocity.do_plot())
         self.btnEMGCons.clicked.connect(lambda ev: nexus_emg_consistency.do_plot())
-        self.btnKinCons.clicked.connect(lambda ev: nexus_kin_consistency.do_plot())
+        self.btnKinCons.clicked.connect(lambda ev: self.run_in_worker_thread(nexus_kin_consistency.do_plot))
         self.btnAutoprocTrial.clicked.connect(lambda ev: nexus_autoprocess_current.
                                               autoproc_single())
-        self.btnAutoprocSession.clicked.connect(lambda ev: nexus_autoprocess_trials.
-                                                autoproc_session())
+        self.btnAutoprocSession.clicked.connect(lambda ev: self.run_in_worker_thread(nexus_autoprocess_trials.autoproc_session))
+        
         self.btnQuit.clicked.connect(self.close)
         XStream.stdout().messageWritten.connect(self.txtOutput.insertPlainText)
         XStream.stderr().messageWritten.connect(self.txtOutput.insertPlainText)
+        
+        self.threadpool = QThreadPool()
+        
 
     def message_dialog(self, msg):
         """ Show message with an 'OK' button. """
@@ -114,6 +118,22 @@ class Gaitmenu(QtWidgets.QMainWindow):
             nexus_tardieu.do_plot('R')
         else:
             nexus_tardieu.do_plot('L')
+
+
+    def run_in_worker_thread(self, fun):
+        runner = Runner()
+        runner.fun = fun
+        self.threadpool.start(runner)
+    
+
+class Runner(QRunnable):
+    
+
+    def run(self):
+        self.fun()
+        
+        
+    
             
 
 

@@ -30,7 +30,7 @@ by Eclipse?)
 """
 
 from gaitutils import (nexus, eclipse, utils, register_gui_exception_handler,
-                       GaitDataError)
+                       GaitDataError, messagebox)
 from gaitutils.config import cfg
 import os
 import numpy as np

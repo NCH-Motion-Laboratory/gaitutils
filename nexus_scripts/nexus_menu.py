@@ -7,7 +7,7 @@ Created on Tue Feb 07 10:05:28 2017
 
 from __future__ import print_function
 from PyQt5 import QtGui, QtCore, uic, QtWidgets
-from PyQt5.QtCore import QRunnable, QThreadPool
+from PyQt5.QtCore import QRunnable, QThreadPool, pyqtSignal, QObject
 from pkg_resources import resource_filename
 import sys
 from gaitutils import nexus
@@ -78,22 +78,28 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # load user interface made with designer
         uifile = resource_filename(__name__, 'nexus_menu.ui')
         uic.loadUi(uifile, self)
-        self.btnEMG.clicked.connect(lambda ev: nexus_emgplot.do_plot())
-        self.btnKinEMG.clicked.connect(lambda ev: nexus_kinetics_emgplot.do_plot())
-        self.btnKinall.clicked.connect(lambda ev: nexus_kinallplot.do_plot())
-        self.btnTardieu.clicked.connect(lambda ev: self._tardieu())
+        
+        self.btnEMG.clicked.connect(lambda ev: nexus_emgplot.do_plot)
+        self.btnKinEMG.clicked.connect(lambda ev: nexus_kinetics_emgplot.do_plot)
+        self.btnKinall.clicked.connect(lambda ev: nexus_kinallplot.do_plot)
+        self.btnTardieu.clicked.connect(lambda ev: self._tardieu)
         if have_custom:
-            self.btnCustom.clicked.connect(lambda ev: nexus_customplot.do_plot())
+            self.btnCustom.clicked.connect(lambda ev: nexus_customplot.do_plot)
         else:
             self.btnCustom.clicked.connect(self._no_custom)
-        self.btnTrialVelocity.clicked.connect(lambda ev: nexus_trials_velocity.do_plot())
-        self.btnEMGCons.clicked.connect(lambda ev: nexus_emg_consistency.do_plot())
-        self.btnKinCons.clicked.connect(lambda ev: self.run_in_worker_thread(nexus_kin_consistency.do_plot))
-        self.btnAutoprocTrial.clicked.connect(lambda ev: nexus_autoprocess_current.
-                                              autoproc_single())
-        self.btnAutoprocSession.clicked.connect(lambda ev: self.run_in_worker_thread(nexus_autoprocess_trials.autoproc_session))
+        self.btnTrialVelocity.clicked.connect(lambda ev: nexus_trials_velocity.do_plot)
+        self.btnEMGCons.clicked.connect(lambda ev: nexus_emg_consistency.do_plot)
+        self.btnKinCons.clicked.connect(lambda ev: nexus_kin_consistency.do_plot)
+        self.btnAutoprocTrial.clicked.connect(lambda ev: self._run_in_worker_thread(nexus_autoprocess_current.autoproc_single))
+        self.btnAutoprocSession.clicked.connect(lambda ev: self._run_in_worker_thread(nexus_autoprocess_trials.autoproc_session))
         
         self.btnQuit.clicked.connect(self.close)
+
+        self.opWidgets = list()
+        for widget in self.__dict__:
+            if (widget[:3] == 'btn' or widget[:4] == 'rbtn') and widget != 'btnQuit':
+                self.opWidgets.append(widget)
+        
         XStream.stdout().messageWritten.connect(self.txtOutput.insertPlainText)
         XStream.stderr().messageWritten.connect(self.txtOutput.insertPlainText)
         
@@ -112,25 +118,50 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _no_custom(self):
         self.message_dialog('No custom plot defined. Please create '
                             'nexus_scripts/nexus_customplot.py')
-        
+
+    def _disable_op_buttons(self):
+        """ Disable all operation buttons """
+        for widget in self.opWidgets:
+                self.__dict__[widget].setEnabled(False)
+
+    def _enable_op_buttons(self):
+        """ Disable all operation buttons """
+        for widget in self.opWidgets:
+                self.__dict__[widget].setEnabled(True)
+
     def _tardieu(self):
         if self.rbtnR.isChecked():
             nexus_tardieu.do_plot('R')
         else:
             nexus_tardieu.do_plot('L')
 
+    def _finished(self):
+        self._enable_op_buttons()
 
-    def run_in_worker_thread(self, fun):
-        runner = Runner()
-        runner.fun = fun
-        self.threadpool.start(runner)
+    def _run_in_worker_thread(self, fun):
+        """ Run function in a separate thread """
+        self._disable_op_buttons()
+        self.runner = Runner(fun)
+        self.runner.signals.finished.connect(self._finished)
+        self.threadpool.start(self.runner)
+
+
+class RunnerSignals(QObject):
+    """ Need a separate class since QRunnable cannot emit signals """
+    
+    finished = pyqtSignal()
     
 
 class Runner(QRunnable):
     
-
+    def __init__(self, fun):
+        super(Runner, self).__init__()
+        self.fun = fun
+        self.signals = RunnerSignals()
+    
     def run(self):
         self.fun()
+        self.signals.finished.emit()
         
         
     

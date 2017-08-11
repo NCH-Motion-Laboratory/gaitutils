@@ -20,7 +20,7 @@
       <item row="21" column="1">
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>Select layout:</string>
+         <string>Layout:</string>
         </property>
        </widget>
       </item>
@@ -165,7 +165,7 @@
       <item row="7" column="1">
        <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>Gait cycles in trial:</string>
+         <string>Gait cycles in selected trial:</string>
         </property>
        </widget>
       </item>
@@ -189,7 +189,7 @@
       <item row="1" column="1">
        <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>Load trials:</string>
+         <string>Trials:</string>
         </property>
        </widget>
       </item>
@@ -254,9 +254,9 @@
        <widget class="NiceListWidget" name="listTrialCycles"/>
       </item>
       <item row="6" column="3">
-       <widget class="QPushButton" name="btnDeleteTrial">
+       <widget class="QPushButton" name="btnClearTrials">
         <property name="text">
-         <string>Delete trial</string>
+         <string>Clear</string>
         </property>
        </widget>
       </item>

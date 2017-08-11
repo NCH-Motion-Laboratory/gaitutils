@@ -128,7 +128,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self.btnPickCycles.clicked.connect(self._pick_cycles)
         self.btnAddC3DTrial.clicked.connect(self.load_dialog)
         self.btnSavePDF.clicked.connect(self._write_pdf)
-        self.btnDeleteTrial.clicked.connect(self.rm_trial)
+        self.btnClearTrials.clicked.connect(self._clear_trials)
         self.btnClearCyclesToPlot.clicked.connect(self.listCyclesToPlot.clear)
         self.cbLayout.addItems(sorted(cfg.layouts.__dict__.keys()))
         
@@ -173,7 +173,12 @@ class PlotterWindow(QtWidgets.QMainWindow):
         for cycle in cycles:
             self.listTrialCycles.add_item(cycle.name, data=cycle,
                                           checkable=True)
-
+    
+    def _clear_trials(self):
+        self.listTrials.clear()
+        self.listTrialCycles.clear()
+        
+    
     def _select_forceplate_cycles(self):
         """ Select all forceplate cycles in the trial cycles list """
         self.listTrialCycles.check_none()

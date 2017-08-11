@@ -84,11 +84,12 @@ class NiceListWidget(QtWidgets.QListWidget):
             item.checkstate = False
 
     def add_item(self, txt, data=None, checkable=False, checked=False):
-        """ Add checkable item with data """
+        """ Add checkable item with data. Select new item. """
         item = NiceListWidgetItem(txt, self, checkable=checkable)
         item.userdata = data
         if checkable:
             item.checkstate = checked
+        self.setCurrentItem(item)
 
     def rm_current_item(self):
         self.takeItem(self.row(self.currentItem()))
@@ -212,8 +213,8 @@ class PlotterWindow(QtWidgets.QMainWindow):
         # TODO: might use smarter detection
         if tr.trialname in [trial.trialname for trial in trials]:
             return
-        self._update_trial_cycles_list(tr)
         self.listTrials.add_item(tr.trialname, data=tr)
+        self._update_trial_cycles_list(tr)
         self._set_status('Loaded trial %s' % tr.trialname)
 
     def _plot_trials(self):

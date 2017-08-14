@@ -79,12 +79,20 @@ def viconnexus():
     return ViconNexus.ViconNexus()
 
 
+def getsubjectnames():
+    """ Workaround a Nexus 2.6 bug (?) that creates extra names with
+    weird unicode strings """
+    vicon = viconnexus()
+    names_ = vicon.GetSubjectNames()
+    return [name for name in names_ if u'\ufffd1' not in name]
+
+
 def check_nexus():
     if not pid():
         raise GaitDataError('Vicon Nexus does not seem to be running')
 
 
-def get_trial_enfs():
+def get_session_enfs():
     """ Return list of .enf files for the session """
     vicon = viconnexus()
     trialname_ = vicon.GetTrialName()
@@ -105,7 +113,7 @@ def find_trials(eclipse_keys, strings):
     """ Yield .enf files for trials in current Nexus session directory whose
     Eclipse fields (list) contain any of strings (list). Case insensitive. """
     strings = [st.upper() for st in strings]
-    enffiles = get_trial_enfs()
+    enffiles = get_session_enfs()
     if enffiles is None:
         return
     for enf in enffiles:
@@ -124,7 +132,9 @@ def get_metadata(vicon):
     """ Read trial and subject metadata """
     check_nexus()
     logger.debug('reading metadata from Vicon Nexus')
-    subjectnames = vicon.GetSubjectNames()
+    if not pid():
+        raise GaitDataError('Vicon Nexus does not seem to be running')
+    subjectnames = getsubjectnames()
     if len(subjectnames) > 1:
         raise GaitDataError('Nexus returns multiple subjects')
     if not subjectnames:
@@ -144,7 +154,7 @@ def get_metadata(vicon):
     sessionpath = trialname_[0]
     trialname = trialname_[1]
     if not trialname:
-        raise GaitDataError('No trial loaded')
+        raise GaitDataError('No trial loaded in Nexus')
     # Get events - GetEvents() indices seem to often be 1 frame less than on
     # Nexus display - only happens with ROI?
     lstrikes = vicon.GetEvents(name, "Left", "Foot Strike")[0]
@@ -281,14 +291,15 @@ def get_marker_data(vicon, markers):
     specified markers.  """
     if not isinstance(markers, list):
         markers = [markers]
-    subjectnames = vicon.GetSubjectNames()
+    subjectnames = getsubjectnames()
     if not subjectnames:
         raise GaitDataError('No subject defined in Nexus')
     mdata = dict()
     for marker in markers:
         x, y, z, _ = vicon.GetTrajectory(subjectnames[0], marker)
         if len(x) == 0:
-            raise GaitDataError('Cannot get marker trajectory: %s' % marker)
+            raise GaitDataError('Cannot read marker trajectory '
+                                'from Nexus: \'%s\'' % marker)
         mP = np.array([x, y, z]).transpose()
         mdata[marker + '_P'] = mP
         mdata[marker + '_V'] = np.gradient(mP)[0]
@@ -325,7 +336,7 @@ def get_fp_strike_and_toeoff(vicon):
 def get_model_data(vicon, model):
     """ Read model output variables (e.g. Plug-in Gait) """
     modeldata = dict()
-    subjectname = vicon.GetSubjectNames()[0]
+    subjectname = getsubjectnames()[0]
     for var in model.read_vars:
         nums, bools = vicon.GetModelOutput(subjectname, var)
         if not nums:
@@ -401,7 +412,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     STRIKE_TOL = 5
 
     # get subject info
-    subjectnames = vicon.GetSubjectNames()
+    subjectnames = getsubjectnames()
     if not subjectnames:
         raise GaitDataError('No subject defined in Nexus')
     subjectname = subjectnames[0]

@@ -13,13 +13,13 @@ Be careful! Overwrites files without asking anything.
 
 from gaitutils import nexus, eclipse
 
-KEY = 'Description'  # Eclipse key
+KEY = 'DESCRIPTION'  # Eclipse key
 NEWVAL = ''      # change into this value
 
-enffiles = nexus.get_trial_enfs()
+enffiles = nexus.get_session_enfs()
 
 if not enffiles:
     raise ValueError('No enf files')
 
 for enffile in enffiles:
-    eclipse.set_eclipse_key(enffile, KEY, NEWVAL, update_existing=True)
+    eclipse.set_eclipse_keys(enffile, {KEY: NEWVAL}, update_existing=True)

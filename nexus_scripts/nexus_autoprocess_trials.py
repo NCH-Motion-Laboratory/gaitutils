@@ -89,7 +89,6 @@ def _do_autoproc(enffiles, update_eclipse=True):
             return cfg.autoproc.enf_descriptions['context_both']
 
     vicon = nexus.viconnexus()
-    subjectname = nexus.get_metadata(vicon)['name']
     nexus_ver = nexus.true_ver()
 
     # used to store stats about foot velocity
@@ -106,6 +105,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         filename = os.path.split(filepath)[1]
         logger.debug('\nprocessing: %s' % filename)
         vicon.OpenTrial(filepath, cfg.autoproc.trial_open_timeout)
+        subjectname = nexus.get_metadata(vicon)['name']
         edi = eclipse.get_eclipse_keys(filepath_, return_empty=True)
         trial_type = edi['TYPE']
         trial_desc = edi['DESCRIPTION']
@@ -270,8 +270,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
     if cfg.autoproc.eclipse_write_key and update_eclipse:
         for filepath, trial in trials.items():
             enf_file = filepath + '.Trial.enf'
-            eclipse.set_eclipse_key(enf_file, cfg.autoproc.eclipse_write_key,
-                                    trial.description, update_existing=True)
+            eclipse.set_eclipse_keys(enf_file, {cfg.autoproc.eclipse_write_key:
+                                     trial.description}, update_existing=True)
     else:
         logger.debug('Not updating Eclipse entries')
 
@@ -284,7 +284,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
 
 
 def autoproc_session(patterns=None, update_eclipse=True):
-    enffiles = nexus.get_trial_enfs()
+
+    enffiles = nexus.get_session_enfs()
 
     if patterns:
         # filter trial names according to patterns

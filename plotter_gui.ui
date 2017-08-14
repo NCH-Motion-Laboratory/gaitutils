@@ -110,7 +110,7 @@
       <item row="23" column="1">
        <widget class="QCheckBox" name="xbLegend">
         <property name="text">
-         <string>Create legend</string>
+         <string>Include legend</string>
         </property>
         <property name="checked">
          <bool>true</bool>

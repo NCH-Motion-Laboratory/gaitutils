@@ -95,6 +95,14 @@ class NiceListWidget(QtWidgets.QListWidget):
         self.takeItem(self.row(self.currentItem()))
 
 
+class Dialog(QtWidgets.QDialog):
+    
+    def __init__(self, parent=None):
+        super(Dialog, self).__init__(parent)
+        uifile = 'dialog.ui'
+        uic.loadUi(uifile, self)
+
+
 class PlotterWindow(QtWidgets.QMainWindow):
 
     def __init__(self, parent=None):
@@ -118,9 +126,9 @@ class PlotterWindow(QtWidgets.QMainWindow):
         #self.toolbar = NavigationToolbar(self.canvas, self)
         self.listTrials.itemClicked.connect(self._trial_selected)
         # set up widgets
+        # buttons
         self.btnAddNexusTrial.clicked.connect(self._open_nexus_trial)
         self.btnPlot.clicked.connect(self._plot_trials)
-        self.btnQuit.clicked.connect(self.close)
         self.btnSelectAllCycles.clicked.connect(self.listTrialCycles.check_all)
         self.btnSelectForceplateCycles.clicked.connect(self.
                                                        _select_forceplate_cycles)
@@ -130,14 +138,19 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self.btnSavePDF.clicked.connect(self._write_pdf)
         self.btnClearTrials.clicked.connect(self._clear_trials)
         self.btnClearCyclesToPlot.clicked.connect(self.listCyclesToPlot.clear)
+        # menu actions
+        self.actionQuit.triggered.connect(self.close)
+        self.actionNormal_data.triggered.connect(self._dialog)
+        # add predefined plot layouts to combobox
         self.cbLayout.addItems(sorted(cfg.layouts.__dict__.keys()))
-        
-        self.btnAddNormalData.clicked.connect(self._load_normaldata)
-        self.btnDeleteNormalData.clicked.connect(self._rm_normaldata)
-        self.btnClearNormalData.clicked.connect(self.listNormalData.clear)
-        
+                
         self._set_status('Ready')
 
+
+    def _dialog(self):
+        d = Dialog()
+        d.exec_()
+        
 
     def _load_normaldata(self):
         fname = QtWidgets.QFileDialog.getOpenFileName(self,

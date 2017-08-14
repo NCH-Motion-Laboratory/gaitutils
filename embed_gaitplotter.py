@@ -243,11 +243,15 @@ class PlotterWindow(QtWidgets.QMainWindow):
         normaldata_files = [item.userdata for item in
                             self.listNormalData.items]
         for trial, cycs in plot_cycles.items():
-            self.pl.plot_trial(trial=trial, model_cycles=cycs,
-                               emg_cycles=cycs,
-                               normaldata_files=normaldata_files,
-                               match_pig_kinetics=match_pig_kinetics,
-                               maintitle='', superpose=True)
+            try:
+                self.pl.plot_trial(trial=trial, model_cycles=cycs,
+                                   emg_cycles=cycs,
+                                   normaldata_files=normaldata_files,
+                                   match_pig_kinetics=match_pig_kinetics,
+                                   maintitle='', superpose=True)
+            except GaitDataError as e:
+                self.message_dialog('Error: %s' % str(e))
+                self.pl.fig.clear()  # fig may have been partially drawn
         self.canvas.draw()
         self.btnSavePDF.setEnabled(True)  # can create pdf now
         # this is a lazy default for sessionpath (pick path from one trial)

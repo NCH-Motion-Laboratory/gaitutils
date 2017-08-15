@@ -8,6 +8,7 @@ Eclipse (database) hacks.
 """
 import logging
 import ConfigParser
+import io
 
 
 logger = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ class FileStripper(object):
     ignore = ['=\n']
     
     def __init__(self, f):
-        self.fileobj = open(f)
+        self.fileobj = io.open(f, 'r', encoding='utf8')
         self.data = (x for x in self.fileobj if x not in
                      FileStripper.ignore)
 
@@ -48,7 +49,7 @@ def get_eclipse_keys(fname_enf, return_empty=False):
     TRIAL_INFO section will be read.
     """
     cp = _enf_reader(fname_enf)
-    return {key: unicode(val) for key, val in cp.items('TRIAL_INFO')
+    return {key: val for key, val in cp.items('TRIAL_INFO')
             if val != '' or return_empty}
 
 
@@ -59,11 +60,12 @@ def set_eclipse_keys(fname_enf, eclipse_dict, update_existing=False):
     cp = _enf_reader(fname_enf)
     did_set = False
     for key, val in eclipse_dict.items():
+        key, val = unicode(key), unicode(val)
         if key not in zip(*cp.items('TRIAL_INFO'))[0] or update_existing:
             cp.set('TRIAL_INFO', key, val)
             did_set = True
     if did_set:
-        with open(fname_enf, 'w') as fp:
+        with io.open(fname_enf, 'w', encoding='utf8') as fp:
             logger.debug('writing %s' % fname_enf)
             cp.write(fp)
     else:

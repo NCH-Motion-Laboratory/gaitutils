@@ -357,7 +357,7 @@ def _list_to_str(li):
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                     'R_strike': None, 'R_toeoff': None}, ctr_pos=[0, 0, 0],
                     max_dist=None, fp_events=None, start_on_forceplate=False,
-                    plot=False, mark=True):
+                    restrict_to_roi=False, plot=False, mark=True):
     """ Mark events based on velocity thresholding. Absolute thresholds
     can be specified as arguments. Otherwise, relative thresholds will be
     calculated based on the data. Optimal results will be obtained when
@@ -542,6 +542,14 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                 not_ok = np.where(strikes < fp_strikes[0])
                 strikes = np.delete(strikes, not_ok)
 
+        if restrict_to_roi:
+            roi = vicon.GetTrialRegionOfInterest()
+            strikes = np.extract(np.logical_and(roi[0] <= strikes+1,
+                                                strikes+1 <= roi[1]), strikes)
+            
+            toeoffs = np.extract(np.logical_and(roi[0] <= toeoffs+1,
+                                                toeoffs+1 <= roi[1]), toeoffs)
+
         # delete toeoffs that are not between strike events
         not_ok = np.where(np.logical_or(toeoffs <= min(strikes),
                                         toeoffs >= max(strikes)))
@@ -556,11 +564,11 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         side_str = 'Right' if this_side == 'R' else 'Left'
         if mark:
             for fr in strikes:
-                    vicon.CreateAnEvent(subjectname, side_str,
-                                        'Foot Strike', fr+1, 0.0)
+                vicon.CreateAnEvent(subjectname, side_str,
+                                    'Foot Strike', fr+1, 0.0)
             for fr in toeoffs:
-                    vicon.CreateAnEvent(subjectname, side_str,
-                                        'Foot Off', fr+1, 0.0)
+                vicon.CreateAnEvent(subjectname, side_str,
+                                    'Foot Off', fr+1, 0.0)
         strikes_all[this_side] = strikes
         toeoffs_all[this_side] = toeoffs
 

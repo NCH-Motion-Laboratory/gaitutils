@@ -13,12 +13,31 @@ import ConfigParser
 logger = logging.getLogger(__name__)
 
 
+class FileStripper(object):
+    """ File filter class that will skip lines listed in ignore """
+    ignore = ['=\n']
+    
+    def __init__(self, f):
+        self.fileobj = open(f)
+        self.data = (x for x in self.fileobj if x not in
+                     FileStripper.ignore)
+
+    def readline(self):
+        try:
+            return next(self.data)
+        except StopIteration:
+            return ''
+    
+    def close(self):
+        self.fileobj.close()
+    
+
 def _enf_reader(fname_enf):
     """ Return enf reader """
-    cp = ConfigParser.SafeConfigParser()
+    cp = ConfigParser.SafeConfigParser(allow_no_value=True)
     cp.optionxform = str  # case sensitive
-    if not cp.read(fname_enf):
-        raise IOError('No such .enf file')
+    fp = FileStripper(fname_enf)
+    cp.readfp(fp)
     if 'TRIAL_INFO' not in cp.sections():
         raise ValueError('This does not look like an Eclipse .enf file')
     return cp

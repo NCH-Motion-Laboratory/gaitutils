@@ -9,7 +9,7 @@ Eclipse (database) hacks.
 import logging
 import io
 from configobj import ConfigObj
-
+from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
@@ -67,9 +67,11 @@ def get_eclipse_keys(fname_enf, return_empty=False):
     TRIAL_INFO section will be read. Return keys without value if
     return_empty.
     """
+    di = defaultdict(lambda: u'')
     cp = _enf_reader(fname_enf)
-    return {key: val for key, val in cp['TRIAL_INFO'].items()
-            if val != '' or return_empty}
+    di.update({key: val for key, val in cp['TRIAL_INFO'].items()
+               if val != '' or return_empty})
+    return di
 
 
 def set_eclipse_keys(fname_enf, eclipse_dict, update_existing=False):

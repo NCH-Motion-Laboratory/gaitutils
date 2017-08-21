@@ -79,17 +79,17 @@ class Gaitmenu(QtWidgets.QMainWindow):
         uifile = resource_filename(__name__, 'nexus_menu.ui')
         uic.loadUi(uifile, self)
         
-        self.btnEMG.clicked.connect(lambda ev: nexus_emgplot.do_plot())
-        self.btnKinEMG.clicked.connect(lambda ev: nexus_kinetics_emgplot.do_plot())
-        self.btnKinall.clicked.connect(lambda ev: nexus_kinallplot.do_plot())
-        self.btnTardieu.clicked.connect(lambda ev: self._tardieu())
+        self.btnEMG.clicked.connect(lambda ev: self._run_in_worker_thread(nexus_emgplot.do_plot))
+        self.btnKinEMG.clicked.connect(lambda ev: self._run_in_worker_thread(nexus_kinetics_emgplot.do_plot))
+        self.btnKinall.clicked.connect(lambda ev: self._run_in_worker_thread(nexus_kinallplot.do_plot))
+        self.btnTardieu.clicked.connect(lambda ev: self._run_in_worker_thread(self._tardieu))
         if have_custom:
-            self.btnCustom.clicked.connect(lambda ev: nexus_customplot.do_plot())
+            self.btnCustom.clicked.connect(lambda ev: self._run_in_worker_thread(nexus_customplot.do_plot))
         else:
             self.btnCustom.clicked.connect(self._no_custom)
-        self.btnTrialVelocity.clicked.connect(lambda ev: nexus_trials_velocity.do_plot())
-        self.btnEMGCons.clicked.connect(lambda ev: nexus_emg_consistency.do_plot())
-        self.btnKinCons.clicked.connect(lambda ev: nexus_kin_consistency.do_plot())
+        self.btnTrialVelocity.clicked.connect(lambda ev: self._run_in_worker_thread(nexus_trials_velocity.do_plot))
+        self.btnEMGCons.clicked.connect(lambda ev: self._run_in_worker_thread(nexus_emg_consistency.do_plot))
+        self.btnKinCons.clicked.connect(lambda ev: self._run_in_worker_thread(nexus_kin_consistency.do_plot))
         self.btnAutoprocTrial.clicked.connect(lambda ev: self._run_in_worker_thread(nexus_autoprocess_current.autoproc_single))
         self.btnAutoprocSession.clicked.connect(lambda ev: self._run_in_worker_thread(nexus_autoprocess_trials.autoproc_session))
         
@@ -105,6 +105,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         XStream.stderr().messageWritten.connect(self.txtOutput.insertPlainText)
         
         self.threadpool = QThreadPool()
+        logging.debug('started threadpool with max %d threads' %
+                      self.threadpool.maxThreadCount())
         
 
     def message_dialog(self, msg):
@@ -119,6 +121,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _no_custom(self):
         self.message_dialog('No custom plot defined. Please create '
                             'nexus_scripts/nexus_customplot.py')
+
+    def _exception(self, e):
+        self.message_dialog('%s' % str(e))
 
     def _disable_op_buttons(self):
         """ Disable all operation buttons """
@@ -144,14 +149,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._disable_op_buttons()
         self.runner = Runner(fun)
         self.runner.signals.finished.connect(self._finished)
+        self.runner.signals.error.connect(lambda e: self._exception(e))
         self.threadpool.start(self.runner)
 
 
 class RunnerSignals(QObject):
     """ Need a separate class since QRunnable cannot emit signals """
-    
+
     finished = pyqtSignal()
-    
+    error = pyqtSignal(Exception)
+
 
 class Runner(QRunnable):
 
@@ -161,8 +168,13 @@ class Runner(QRunnable):
         self.signals = RunnerSignals()
 
     def run(self):
-        self.fun()
-        self.signals.finished.emit()
+        try:
+            self.fun()
+        except Exception as e:
+            logging.debug('Caught exception while running task')
+            self.signals.error.emit(e)
+        finally:
+            self.signals.finished.emit()
 
 
 def main():
@@ -178,18 +190,8 @@ def main():
     logger.setLevel(logging.DEBUG)
 
     gaitmenu = Gaitmenu()
-
-    def my_excepthook(type, value, tback):
-        """ Custom exception handler for fatal (unhandled) exceptions:
-        report to user via GUI and terminate. """
-        tb_full = u''.join(traceback.format_exception(type, value, tback))
-        gaitmenu.message_dialog('%s' % value)
-        sys.__excepthook__(type, value, tback)
-        #app.quit()
-
-    sys.excepthook = my_excepthook
-
     gaitmenu.show()
+
     nexus_status = 'Vicon Nexus is %srunning' % ('' if nexus.pid() else 'not ')
     logger.debug(nexus_status)
     app.exec_()

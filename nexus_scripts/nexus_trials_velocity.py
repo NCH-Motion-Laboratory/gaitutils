@@ -5,20 +5,27 @@ Created on Wed Jun 21 13:48:27 2017
 @author: HUS20664877
 """
 
-from gaitutils import nexus, cfg, utils, read_data, eclipse
+from gaitutils import (nexus, cfg, utils, read_data, eclipse,
+                       register_gui_exception_handler)
 from gaitutils.exceptions import GaitDataError
 import numpy as np
 import matplotlib.pyplot as plt
 import os.path as op
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def trial_median_velocity(source):
     MIN_VEL = .1
     try:
+
         frate = read_data.get_metadata(source)['framerate']
+
         dim = utils.principal_movement_direction(source, cfg.autoproc.
                                                  track_markers)
         mkr = cfg.autoproc.track_markers[0]
+
         vel_ = read_data.get_marker_data(source, mkr)[mkr+'_V'][:, dim]
     except (GaitDataError, ValueError):
         return np.nan
@@ -50,4 +57,6 @@ def do_plot():
     plt.show()
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+    register_gui_exception_handler()
     do_plot()

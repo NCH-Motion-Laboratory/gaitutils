@@ -98,6 +98,8 @@ def get_session_enfs():
     trialname_ = vicon.GetTrialName()
     sessionpath = trialname_[0]
     enffiles = glob.glob(sessionpath+'*Trial*.enf') if sessionpath else None
+    logger.debug('found %d .enf files for session %s' % (len(enffiles),
+                                                         sessionpath))
     return enffiles
 
 

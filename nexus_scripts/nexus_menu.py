@@ -89,7 +89,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         So far this has not been done since the plotting functions return
         rather quickly.
         Running the plotting functions directly from the GUI thread is also a
-        bit ugly since the mpl event loop gets called twice, but this does not
+        bit ugly since the Qt event loop gets called twice, but this does not
         seem to do any harm.
         _execute runs the given function and handles exceptions. Passing
         thread=True runs it in a separate worker thread, enabling GUI updates
@@ -116,8 +116,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
             if (widget[:3] == 'btn' or widget[:4] == 'rbtn') and widget != 'btnQuit':
                 self.opWidgets.append(widget)
         
-        XStream.stdout().messageWritten.connect(self.txtOutput.insertPlainText)
-        XStream.stderr().messageWritten.connect(self.txtOutput.insertPlainText)
+        XStream.stdout().messageWritten.connect(self._log_message)
+        XStream.stderr().messageWritten.connect(self._log_message)
         
         self.threadpool = QThreadPool()
         logging.debug('started threadpool with max %d threads' %
@@ -133,12 +133,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
                       QtWidgets.QMessageBox.YesRole)
         dlg.exec_()
 
+    def _log_message(self, msg):
+        self.txtOutput.insertPlainText(msg)
+        self.txtOutput.ensureCursorVisible()
+
     def _no_custom(self):
         self.message_dialog('No custom plot defined. Please create '
                             'nexus_scripts/nexus_customplot.py')
 
     def _exception(self, e):
-        logging.debug('Caught exception while running task')
+        logging.debug('caught exception while running task')
         self.message_dialog('%s' % str(e))
 
     def _disable_op_buttons(self):

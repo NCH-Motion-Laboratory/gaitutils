@@ -290,10 +290,11 @@ def autoproc_session(patterns=None, update_eclipse=True):
     if patterns:
         # filter trial names according to patterns
         enffiles = [s for s in enffiles if any([p in s for p in patterns])]
-        if not enffiles:
-            logger.info('No trials match specified include patterns')
+    if enffiles:
+        _do_autoproc(enffiles, update_eclipse=update_eclipse)
+    else:
+        raise GaitDataError('No trials to process')
 
-    _do_autoproc(enffiles, update_eclipse=update_eclipse)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

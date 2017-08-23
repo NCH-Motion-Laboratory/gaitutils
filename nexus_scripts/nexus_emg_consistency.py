@@ -14,7 +14,7 @@ import logging
 import argparse
 
 
-def do_plot(search=None):
+def do_plot(search=None, show=True):
 
     MAX_TRIALS = 8
 
@@ -46,7 +46,9 @@ def do_plot(search=None):
                       maintitle=maintitle, annotate_emg=False,
                       superpose=True, show=False)
 
-    pl.show()
+    if show:
+        pl.show()
+        
     pl.create_pdf('emg_consistency.pdf')
 
 

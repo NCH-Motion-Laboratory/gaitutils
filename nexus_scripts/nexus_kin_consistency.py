@@ -16,7 +16,7 @@ import argparse
 logger = logging.getLogger(__name__)
 
 
-def do_plot(search=None):
+def do_plot(search=None, show=True):
 
     MAX_TRIALS = 8
 
@@ -47,7 +47,9 @@ def do_plot(search=None):
                      'session %s' % pl.trial.trialdirname)
         pl.plot_trial(model_tracecolor=linecolors[i], linestyles_context=True,
                       maintitle=maintitle, superpose=True, show=False)
-    pl.show()
+    if show:
+        pl.show()
+        
     pl.create_pdf('kin_consistency.pdf')
 
 

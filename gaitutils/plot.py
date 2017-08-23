@@ -270,8 +270,8 @@ class Plotter(object):
 
         def _axis_annotate(ax, text):
             """ Annotate at center of axis """
-            ctr = sum(ax.get_xlim())/2, sum(ax.get_ylim())/2.
-            ax.annotate(text, xy=ctr, ha="center", va="center")
+            ax.annotate(text, xy=(.5, .5), xycoords='axes fraction',
+                        ha="center", va="center")
 
         def _no_ticks_or_labels(ax):
             ax.tick_params(axis='both', which='both', bottom='off',

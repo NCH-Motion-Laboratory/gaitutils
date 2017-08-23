@@ -416,6 +416,17 @@ class Plotter(object):
                                 ax.set_xlim(normalx[0], normalx[-1])
 
             elif var_type == 'emg':
+                # set title first, since we may end up not plotting the emg at
+                # all (i.e for missing / disconnected channels)
+                subplot_title = (self.cfg.emg.channel_labels[var] if
+                                 var in self.cfg.emg.channel_labels
+                                 else var)
+                prev_title = ax.get_title()
+                if prev_title and prev_title != subplot_title:
+                    subplot_title = prev_title + ' / ' + subplot_title
+                ax.set_title(subplot_title)
+                ax.title.set_fontsize(self.cfg.plot.title_fontsize)
+
                 for cycle in emg_cycles:
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
@@ -430,15 +441,6 @@ class Plotter(object):
                         _no_ticks_or_labels(ax)
                         if annotate_emg:
                             _axis_annotate(ax, 'disconnected')
-                        # set plot title, since it won't be done after breaking
-                        subplot_title = (self.cfg.emg.channel_labels[var] if
-                                         var in self.cfg.emg.channel_labels
-                                         else var)
-                        prev_title = ax.get_title()
-                        if prev_title and prev_title != subplot_title:
-                            subplot_title = prev_title + ' / ' + subplot_title
-                        ax.set_title(subplot_title)
-                        ax.title.set_fontsize(self.cfg.plot.title_fontsize)
                         break  # data no good - skip all cycles
                     x = (x_ / self.trial.analograte if cycle is None and
                          x_axis_is_time else x_ / 1.)
@@ -464,14 +466,6 @@ class Plotter(object):
                         ax.set(ylabel=self.cfg.plot.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.
                                                     plot.label_fontsize)
-                        subplot_title = (self.cfg.emg.channel_labels[var] if
-                                         var in self.cfg.emg.channel_labels
-                                         else var)
-                        prev_title = ax.get_title()
-                        if prev_title and prev_title != subplot_title:
-                            subplot_title = prev_title + ' / ' + subplot_title
-                        ax.set_title(subplot_title)
-                        ax.title.set_fontsize(self.cfg.plot.title_fontsize)
                         ax.locator_params(axis='y', nbins=4)
                         # tick font size
                         ax.tick_params(axis='both', which='major',

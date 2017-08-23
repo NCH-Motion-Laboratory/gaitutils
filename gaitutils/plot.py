@@ -430,6 +430,15 @@ class Plotter(object):
                         _no_ticks_or_labels(ax)
                         if annotate_emg:
                             _axis_annotate(ax, 'disconnected')
+                        # set plot title, since it won't be done after breaking
+                        subplot_title = (self.cfg.emg.channel_labels[var] if
+                                         var in self.cfg.emg.channel_labels
+                                         else var)
+                        prev_title = ax.get_title()
+                        if prev_title and prev_title != subplot_title:
+                            subplot_title = prev_title + ' / ' + subplot_title
+                        ax.set_title(subplot_title)
+                        ax.title.set_fontsize(self.cfg.plot.title_fontsize)
                         break  # data no good - skip all cycles
                     x = (x_ / self.trial.analograte if cycle is None and
                          x_axis_is_time else x_ / 1.)

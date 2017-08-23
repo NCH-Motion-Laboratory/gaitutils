@@ -21,6 +21,7 @@ import nexus_kinallplot
 import nexus_tardieu
 import nexus_copy_trial_videos
 import nexus_trials_velocity
+import nexus_make_all_plots
 
 try:
     from nexus_scripts import nexus_customplot
@@ -118,6 +119,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnAutoprocSession,
                                   nexus_autoprocess_trials.autoproc_session,
                                   thread=True)
+        self._button_connect_task(self.btnCreatePDFs,
+                                  nexus_make_all_plots.do_plot, thread=True)
         self.btnQuit.clicked.connect(self.close)
 
         # collect operation widgets

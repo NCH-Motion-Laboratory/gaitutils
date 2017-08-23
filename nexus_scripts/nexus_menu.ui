@@ -17,6 +17,13 @@
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <layout class="QGridLayout" name="gridLayout">
+      <item row="2" column="7">
+       <widget class="QPushButton" name="btnAutoprocTrial">
+        <property name="text">
+         <string>Autoprocess single trial</string>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="0">
        <spacer name="horizontalSpacer_3">
         <property name="orientation">
@@ -62,19 +69,6 @@
       </item>
       <item row="2" column="6">
        <spacer name="horizontalSpacer_2">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="2" column="4">
-       <spacer name="horizontalSpacer">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
@@ -159,13 +153,6 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="7">
-       <widget class="QPushButton" name="btnAutoprocTrial">
-        <property name="text">
-         <string>Autoprocess single trial</string>
-        </property>
-       </widget>
-      </item>
       <item row="4" column="1">
        <widget class="QPushButton" name="btnCustom">
         <property name="text">
@@ -210,6 +197,29 @@
          <string>Copy trial videos</string>
         </property>
        </widget>
+      </item>
+      <item row="4" column="7">
+       <widget class="QPushButton" name="btnCreatePDFs">
+        <property name="text">
+         <string>Create all PDF plots</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="4">
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>30</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
       </item>
      </layout>
     </item>

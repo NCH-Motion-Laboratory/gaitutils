@@ -194,7 +194,7 @@
       <item row="3" column="7">
        <widget class="QPushButton" name="btnCopyVideos">
         <property name="text">
-         <string>Copy trial videos</string>
+         <string>Copy session videos to desktop</string>
         </property>
        </widget>
       </item>

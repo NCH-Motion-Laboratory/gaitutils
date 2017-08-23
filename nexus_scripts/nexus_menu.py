@@ -26,9 +26,8 @@ try:
     have_custom = True
 except ImportError:
     have_custom = False
-import sys
 import logging
-import traceback
+
 
 class QtHandler(logging.Handler):
 
@@ -80,7 +79,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         uic.loadUi(uifile, self)
         """ Stuff that shows matplotlib plots cannot be run in directly in
         worker threads. To put plotting stuff into a worker thread, need to:
-        -make the plotting function return a figure (and not invoke the qt 
+        -make the plotting function return a figure (and not invoke the qt
         event loop)
         -put the plotting function into a worker thread
         -call plotting function
@@ -95,34 +94,47 @@ class Gaitmenu(QtWidgets.QMainWindow):
         thread=True runs it in a separate worker thread, enabling GUI updates
         (e.g. logging dialog) which can be nice.
         """
-        self.btnEMG.clicked.connect(lambda ev: self._execute(nexus_emgplot.do_plot))
-        self.btnKinEMG.clicked.connect(lambda ev: self._execute(nexus_kinetics_emgplot.do_plot))
-        self.btnKinall.clicked.connect(lambda ev: self._execute(nexus_kinallplot.do_plot))
-        self.btnTardieu.clicked.connect(lambda ev: self._execute(self._tardieu))
+        self._button_connect_task(self.btnEMG, nexus_emgplot.do_plot)
+        self._button_connect_task(self.btnKinEMG,
+                                  nexus_kinetics_emgplot.do_plot)
+        self._button_connect_task(self.btnKinall, nexus_kinallplot.do_plot)
+        self._button_connect_task(self.btnTardieu, self._tardieu)
         if have_custom:
-            self.btnCustom.clicked.connect(lambda ev: self._execute(nexus_customplot.do_plot))
+            self._button_connect_task(self.btnCustom, nexus_customplot.do_plot)
         else:
             self.btnCustom.clicked.connect(self._no_custom)
-        self.btnTrialVelocity.clicked.connect(lambda ev: self._execute(nexus_trials_velocity.do_plot))
-        self.btnEMGCons.clicked.connect(lambda ev: self._execute(nexus_emg_consistency.do_plot))
-        self.btnKinCons.clicked.connect(lambda ev: self._execute(nexus_kin_consistency.do_plot))
-        self.btnAutoprocTrial.clicked.connect(lambda ev: self._execute(nexus_autoprocess_current.autoproc_single, thread=True))
-        self.btnAutoprocSession.clicked.connect(lambda ev: self._execute(nexus_autoprocess_trials.autoproc_session, thread=True))
+        self._button_connect_task(self.btnTrialVelocity,
+                                  nexus_trials_velocity.do_plot)
+        self._button_connect_task(self.btnEMGCons,
+                                  nexus_emg_consistency.do_plot)
+        self._button_connect_task(self.btnKinCons,
+                                  nexus_kin_consistency.do_plot)
+        self._button_connect_task(self.btnAutoprocTrial,
+                                  nexus_autoprocess_current.autoproc_single,
+                                  thread=True)
+        self._button_connect_task(self.btnAutoprocSession,
+                                  nexus_autoprocess_trials.autoproc_session,
+                                  thread=True)
         self.btnQuit.clicked.connect(self.close)
 
         # collect operation widgets
         self.opWidgets = list()
         for widget in self.__dict__:
-            if (widget[:3] == 'btn' or widget[:4] == 'rbtn') and widget != 'btnQuit':
+            if ((widget[:3] == 'btn' or widget[:4] == 'rbtn') and
+               widget != 'btnQuit'):
                 self.opWidgets.append(widget)
-        
+
         XStream.stdout().messageWritten.connect(self._log_message)
         XStream.stderr().messageWritten.connect(self._log_message)
-        
+
         self.threadpool = QThreadPool()
         logging.debug('started threadpool with max %d threads' %
                       self.threadpool.maxThreadCount())
-        
+
+    def _button_connect_task(self, button, fun, thread=False):
+        """ Helper to connect button with task function. Use lambda to consume
+        unused argument. If thread=True, lauch in separate worker thread. """
+        button.clicked.connect(lambda ev: self._execute(fun, thread=thread))
 
     def message_dialog(self, msg):
         """ Show message with an 'OK' button. """
@@ -163,7 +175,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _finished(self):
         self._enable_op_buttons()
-        
+
     def _execute(self, fun, thread=False):
         """ Run some function. If thread==True, run in a separate worker
         thread. """

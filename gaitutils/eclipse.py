@@ -9,7 +9,7 @@ Eclipse (database) hacks.
 import logging
 import io
 from configobj import ConfigObj
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,8 @@ class FileFilter(object):
     """ File-like class that will replace strings according to the replace
     dict below. This is needed for prefiltering before configobj parsing,
     since configobj will not tolerate lines with neither key nor value
-    (which seem to occasionally appear in Eclipse files) """
+    (which seem to occasionally appear in Eclipse files).
+    Also deduplicates successive identical lines for same reason """
 
     replace = {'\n=\n': '\n'}
 
@@ -27,26 +28,14 @@ class FileFilter(object):
         self.fp = io.open(fname, encoding='utf8')
 
     def read(self):
+        """ ConfigObj seems to use only this method """
         data = self.fp.read()
+        # filter
         for val, newval in FileFilter.replace.items():
             data = data.replace(val, newval)
+        # rm subsequent duplicate lines - a bit cryptic
+        data = '\n'.join(list(OrderedDict.fromkeys(data.split('\n'))))
         return data
-
-    def readline(self):
-        line = self.fp.readline()
-        for val, newval in FileFilter.replace.items():
-            line = line.replace(val, newval)
-        return line
-
-    def readlines(self):
-        lines = list()
-        while True:
-            line = self.readline()
-            if not line:
-                break
-            else:
-                lines.append(line)
-        return lines
 
     def close(self):
         self.fp.close()
@@ -56,6 +45,7 @@ def _enf_reader(fname_enf):
     """ Return enf reader """
     fp = FileFilter(fname_enf)
     # do not listify comma-separated values
+    logger.debug('loading %s' % fname_enf)
     cp = ConfigObj(fp, encoding='utf8', list_values=False)
     if 'TRIAL_INFO' not in cp.sections:
         raise ValueError('No trial info in .enf file')

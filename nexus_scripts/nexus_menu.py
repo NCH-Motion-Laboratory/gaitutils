@@ -152,6 +152,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         dlg.exec_()
 
     def _log_message(self, msg):
+        c = self.txtOutput.textCursor()
+        c.movePosition(QtGui.QTextCursor.End)
+        self.txtOutput.setTextCursor(c)
         self.txtOutput.insertPlainText(msg)
         self.txtOutput.ensureCursorVisible()
 

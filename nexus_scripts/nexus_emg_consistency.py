@@ -8,15 +8,18 @@ description and defined search strings.
 @author: Jussi
 """
 
-from gaitutils import Plotter, cfg, register_gui_exception_handler
+from gaitutils import Plotter, cfg, register_gui_exception_handler, EMG
 from gaitutils.nexus import enf2c3d, find_trials
 import logging
 import argparse
+
+logger = logging.getLogger(__name__)
 
 
 def do_plot(search=None):
 
     MAX_TRIALS = 8
+    linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
 
     # Eclipse trial notes/description must contain one of these strings
     if search is None:
@@ -34,9 +37,22 @@ def do_plot(search=None):
 
     pl = Plotter()
     pl.open_trial(enf2c3d(marked_trials[0]))
-    pl.layout = cfg.layouts.overlay_std_emg
+    layout = cfg.layouts.overlay_std_emg
 
-    linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
+    # from layout, drop rows that do not have good data in any of the trials
+    chs_ok = None
+    for i, enf in enumerate(marked_trials):
+        emg = EMG(enf2c3d(enf))
+        chs_prev_ok = chs_ok if i > 0 else None
+        chs_ok = [not emg.is_channel(ch) or emg.status_ok(ch) for row in
+                  layout for ch in row]
+        if i > 0:
+            chs_ok = chs_ok or chs_prev_ok
+    rowlen = len(layout[0])
+    lout = zip(*[iter(chs_ok)]*rowlen)  # grouper recipe from itertools
+    rows_ok = [any(row) for row in lout]
+    layout = [row for i, row in enumerate(layout) if rows_ok[i]]
+    pl.layout = layout
 
     for i, trialpath in enumerate(marked_trials):
         pl.open_trial(enf2c3d(marked_trials[i]))
@@ -58,5 +74,5 @@ if __name__ == '__main__':
                         'description or notes')
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG)
-    register_gui_exception_handler()
+    #register_gui_exception_handler()
     do_plot(search=args.search)

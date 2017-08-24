@@ -64,7 +64,7 @@ def do_plot(search=None, show=True):
 
     if show:
         pl.show()
-        
+
     pl.create_pdf('emg_consistency.pdf')
 
 
@@ -76,5 +76,5 @@ if __name__ == '__main__':
                         'description or notes')
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG)
-    #register_gui_exception_handler()
+    register_gui_exception_handler()
     do_plot(search=args.search)

@@ -11,6 +11,7 @@ from PyQt5.QtCore import QRunnable, QThreadPool, pyqtSignal, QObject
 from pkg_resources import resource_filename
 import sys
 from gaitutils import nexus
+from gaitutils.config import cfg as defaultcfg
 import nexus_emgplot
 import nexus_kinetics_emgplot
 import nexus_emg_consistency
@@ -68,6 +69,15 @@ class XStream(QtCore.QObject):
             XStream._stderr = XStream()
             sys.stderr = XStream._stderr
         return XStream._stderr
+
+
+class AutoprocDialog(QtWidgets.QDialog):
+
+    def __init__(self):
+        super(self.__class__, self).__init__()
+        # load user interface made with designer
+        uifile = resource_filename(__name__, 'autoproc_dialog.ui')
+        uic.loadUi(uifile, self)
 
 
 class Gaitmenu(QtWidgets.QMainWindow):
@@ -128,6 +138,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         XStream.stdout().messageWritten.connect(self._log_message)
         XStream.stderr().messageWritten.connect(self._log_message)
 
+        self.cfg = defaultcfg   # the config
+
         self.threadpool = QThreadPool()
         logging.debug('started threadpool with max %d threads' %
                       self.threadpool.maxThreadCount())
@@ -148,9 +160,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def autoproc_dialog(self):
         """ Show the autoprocessing options dialog """
-        dlg = QtWidgets.QDialog()
-        uifile = resource_filename(__name__, 'autoproc_dialog.ui')
-        uic.loadUi(uifile, dlg)
+        dlg = AutoprocDialog()
         dlg.exec_()
 
     def _log_message(self, msg):

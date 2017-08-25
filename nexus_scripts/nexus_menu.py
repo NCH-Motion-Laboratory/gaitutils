@@ -115,6 +115,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnAutoprocSession,
                                   nexus_autoprocess_trials.autoproc_session,
                                   thread=True)
+        self.btnAutoprocDialog.clicked.connect(self.autoproc_dialog)
         self.btnQuit.clicked.connect(self.close)
 
         # collect operation widgets
@@ -147,7 +148,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def autoproc_dialog(self):
         """ Show the autoprocessing options dialog """
-        
+        dlg = QtWidgets.QDialog()
+        uifile = resource_filename(__name__, 'autoproc_dialog.ui')
+        uic.loadUi(uifile, dlg)
+        dlg.exec_()
 
     def _log_message(self, msg):
         c = self.txtOutput.textCursor()

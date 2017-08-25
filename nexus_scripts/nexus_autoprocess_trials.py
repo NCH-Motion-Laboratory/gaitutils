@@ -31,7 +31,7 @@ by Eclipse?)
 
 from gaitutils import (nexus, eclipse, utils, register_gui_exception_handler,
                        GaitDataError, messagebox)
-from gaitutils.config import cfg
+from gaitutils.config import cfg as defaultcfg
 import os
 import numpy as np
 import time
@@ -62,7 +62,7 @@ class Trial:
         return s
 
 
-def _do_autoproc(enffiles, update_eclipse=True):
+def _do_autoproc(enffiles, cfg=defaultcfg, update_eclipse=True):
     """ Do autoprocessing for all trials listed in enffiles (list of
     paths to .enf files).
     """
@@ -283,7 +283,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
     logger.debug('Automarked: %d' % n_events)
 
 
-def autoproc_session(patterns=None, update_eclipse=True):
+def autoproc_session(patterns=None, cfg=defaultcfg, update_eclipse=True):
 
     enffiles = nexus.get_session_enfs()
 
@@ -291,7 +291,7 @@ def autoproc_session(patterns=None, update_eclipse=True):
         # filter trial names according to patterns
         enffiles = [s for s in enffiles if any([p in s for p in patterns])]
     if enffiles:
-        _do_autoproc(enffiles, update_eclipse=update_eclipse)
+        _do_autoproc(enffiles, cfg=cfg, update_eclipse=update_eclipse)
     else:
         raise GaitDataError('No trials to process')
 

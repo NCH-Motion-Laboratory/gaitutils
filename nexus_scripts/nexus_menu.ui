@@ -204,6 +204,13 @@
         </property>
        </widget>
       </item>
+      <item row="3" column="7">
+       <widget class="QPushButton" name="btnAutoprocDialog">
+        <property name="text">
+         <string>Autoprocessing options...</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>

@@ -145,6 +145,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
                       QtWidgets.QMessageBox.YesRole)
         dlg.exec_()
 
+    def autoproc_dialog(self):
+        """ Show the autoprocessing options dialog """
+        
+
     def _log_message(self, msg):
         c = self.txtOutput.textCursor()
         c.movePosition(QtGui.QTextCursor.End)

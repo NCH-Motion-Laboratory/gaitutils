@@ -146,7 +146,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _button_connect_task(self, button, fun, thread=False):
         """ Helper to connect button with task function. Use lambda to consume
-        unused argument. If thread=True, lauch in separate worker thread. """
+        unused events argument. If thread=True, launch in a separate worker
+        thread. """
         button.clicked.connect(lambda ev: self._execute(fun, thread=thread))
 
     def message_dialog(self, msg):

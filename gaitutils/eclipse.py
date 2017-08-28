@@ -46,7 +46,8 @@ def _enf_reader(fname_enf):
     fp = FileFilter(fname_enf)
     # do not listify comma-separated values
     logger.debug('loading %s' % fname_enf)
-    cp = ConfigObj(fp, encoding='utf8', list_values=False)
+    cp = ConfigObj(fp, encoding='utf8', list_values=False,
+                   write_empty_values=True)
     if 'TRIAL_INFO' not in cp.sections:
         raise ValueError('No trial info in .enf file')
     return cp

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 
-Process all trials in current session directory. Need to load a trial first
-(to get session path.)
+Autoprocess all trials in current Nexus session directory.
 
+See autoproc section in config for options.
 
 1st pass (all trials):
 -recon+label
@@ -22,8 +22,6 @@ Process all trials in current session directory. Need to load a trial first
 NOTES:
 
 -ROI operations only work for Nexus >= 2.5
--Eclipse desc of last processed trial is not updated properly (gets overwritten
-by Eclipse?)
 
 
 @author: Jussi
@@ -41,7 +39,6 @@ import sys
 
 
 logger = logging.getLogger(__name__)
-
 
 
 class Trial:

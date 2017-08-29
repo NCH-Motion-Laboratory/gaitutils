@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>386</width>
-    <height>421</height>
+    <width>413</width>
+    <height>492</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -65,67 +65,67 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
+     <item row="2" column="0">
       <widget class="QLabel" name="label">
        <property name="text">
         <string>Sideways tolerance for ankle marker (mm)</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="2" column="1">
       <widget class="QSpinBox" name="spinBox"/>
      </item>
-     <item row="2" column="0">
+     <item row="3" column="0">
       <widget class="QLabel" name="label_7">
        <property name="text">
         <string>Toeoff tolerance in forward direction (mm)</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
+     <item row="3" column="1">
       <widget class="QSpinBox" name="spinBox_7"/>
      </item>
-     <item row="3" column="0">
+     <item row="4" column="0">
       <widget class="QLabel" name="label_9">
        <property name="text">
         <string>Tolerance for heel marker (mm)</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="4" column="1">
       <widget class="QSpinBox" name="spinBox_6"/>
      </item>
-     <item row="4" column="0">
+     <item row="5" column="0">
       <widget class="QLabel" name="label_4">
        <property name="text">
         <string>Force threshold for forceplate contact (% of subject weight)</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
+     <item row="5" column="1">
       <widget class="QSpinBox" name="spinBox_5"/>
      </item>
-     <item row="5" column="0">
+     <item row="6" column="0">
       <widget class="QLabel" name="label_5">
        <property name="text">
         <string>Minimum peak force (% of subject weight)</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="6" column="1">
       <widget class="QSpinBox" name="spinBox_4"/>
      </item>
-     <item row="6" column="0">
+     <item row="7" column="0">
       <widget class="QLabel" name="label_8">
        <property name="text">
         <string>Maximum center of pressure shift</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="7" column="1">
       <widget class="QSpinBox" name="spinBox_3"/>
      </item>
-     <item row="7" column="0">
+     <item row="8" column="0">
       <widget class="QLabel" name="label_10">
        <property name="font">
         <font>
@@ -138,61 +138,61 @@
        </property>
       </widget>
      </item>
-     <item row="8" column="0">
+     <item row="9" column="0">
       <widget class="QLabel" name="label_6">
        <property name="text">
         <string>Strike events start on forceplate</string>
        </property>
       </widget>
      </item>
-     <item row="8" column="1">
+     <item row="9" column="1">
       <widget class="QCheckBox" name="checkBox">
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
-     <item row="9" column="0">
+     <item row="10" column="0">
       <widget class="QLabel" name="label_2">
        <property name="text">
         <string>Max distance of marked events from walkway center</string>
        </property>
       </widget>
      </item>
-     <item row="9" column="1">
+     <item row="10" column="1">
       <widget class="QSpinBox" name="spinBox_2"/>
      </item>
-     <item row="14" column="0">
+     <item row="15" column="0">
       <widget class="QLabel" name="label_15">
        <property name="text">
         <string>X</string>
        </property>
       </widget>
      </item>
-     <item row="14" column="1">
+     <item row="15" column="1">
       <widget class="QSpinBox" name="spinBox_8"/>
      </item>
-     <item row="15" column="0">
+     <item row="16" column="0">
       <widget class="QLabel" name="label_16">
        <property name="text">
         <string>Y</string>
        </property>
       </widget>
      </item>
-     <item row="15" column="1">
+     <item row="16" column="1">
       <widget class="QSpinBox" name="spinBox_9"/>
      </item>
-     <item row="16" column="0">
+     <item row="17" column="0">
       <widget class="QLabel" name="label_17">
        <property name="text">
         <string>Z</string>
        </property>
       </widget>
      </item>
-     <item row="16" column="1">
+     <item row="17" column="1">
       <widget class="QSpinBox" name="spinBox_10"/>
      </item>
-     <item row="17" column="0">
+     <item row="18" column="0">
       <widget class="QLabel" name="label_11">
        <property name="font">
         <font>
@@ -205,34 +205,59 @@
        </property>
       </widget>
      </item>
-     <item row="18" column="0">
+     <item row="19" column="0">
       <widget class="QLabel" name="label_13">
        <property name="text">
-        <string>Write autoprocess info into Eclipse</string>
+        <string>Write autoprocessing results  into Eclipse</string>
        </property>
       </widget>
      </item>
-     <item row="18" column="1">
+     <item row="19" column="1">
       <widget class="QCheckBox" name="checkBox_2">
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
-     <item row="19" column="0">
+     <item row="20" column="0">
       <widget class="QLabel" name="label_12">
        <property name="text">
         <string>Eclipse key to update</string>
        </property>
       </widget>
      </item>
-     <item row="19" column="1">
-      <widget class="QComboBox" name="comboBox"/>
+     <item row="20" column="1">
+      <widget class="QComboBox" name="comboBox">
+       <item>
+        <property name="text">
+         <string>DESCRIPTION</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>NOTES</string>
+        </property>
+       </item>
+      </widget>
      </item>
-     <item row="13" column="0">
+     <item row="14" column="0">
       <widget class="QLabel" name="label_18">
        <property name="text">
         <string>Location of walkway center:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_14">
+       <property name="text">
+        <string>Use Eclipse forceplate info if available</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QCheckBox" name="checkBox_3">
+       <property name="text">
+        <string/>
        </property>
       </widget>
      </item>

@@ -41,6 +41,14 @@ def isfloat(x):
         return False
 
 
+def isint(x):
+    try:
+        int(x)
+        return True
+    except ValueError:
+        return False
+
+
 def _baseline(v):
     """ Baseline v using histogram. Subtracts the most prominent
     signal level """
@@ -120,4 +128,3 @@ def rms(data, win):
     # pad ends of RMS data so that lengths are matched
     pad = np.repeat(0, (win-1)/2)
     return np.concatenate([pad, rms, pad])
-

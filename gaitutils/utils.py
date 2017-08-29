@@ -13,13 +13,10 @@ from scipy import signal
 from scipy.signal import medfilt
 import numpy as np
 import logging
-import matplotlib.pyplot as plt
 
 from config import cfg
 
 logger = logging.getLogger(__name__)
-
-
 
 
 def get_crossing_frame(source, marker, dim=1, p0=0):
@@ -83,18 +80,23 @@ def principal_movement_direction(source, markers):
     return fwd_dir
 
 
-def detect_forceplate_events(source):
-    """ See whether the trial has valid forceplate contact.
+def detect_forceplate_events(source, fp_info=None):
+    """ Detect frames where valid forceplate strikes and toeoffs occur.
     Uses forceplate data and marker positions.
+
+    If fp_info dict is set, no marker and COP checks will be done;
+    instead the Eclipse forceplate info will be used. Eclipse info is written
+    e.g. as {FP1: 'Left'} where plate indices start from 1 and the value can be
+    'Left', 'Right' or 'Invalid'. Even if Eclipse info is used, the foot strike
+    and toeoff frames must be determined from forceplate data.
 
     Conditions:
     -check max total force, must correspond to subject weight
     -center of pressure must not change too much during contact time
     -foot markers must be inside plate edges at strike time
 
-    Returns dict with keys R_strikes, L_strikes, R_toeoffs, L_toeoffs:
-    lists of frames where valid forceplate contact occurs for each event
-
+    Returns dict with keys R_strikes, L_strikes, R_toeoffs, L_toeoffs.
+    Values are lists of frames where valid forceplate contact occurs.
     """
 
     # get subject info
@@ -120,6 +122,7 @@ def detect_forceplate_events(source):
                  {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])
 
     for plate_ind, fp in enumerate(fpdata):
+        # first identify candidates for footstrike by looking at fp data
         logger.debug('analyzing plate %d' % plate_ind)
         # test the force data
         # FIXME: filter should maybe depend on sampling freq
@@ -148,66 +151,84 @@ def detect_forceplate_events(source):
         except IndexError:
             logger.debug('cannot detect force rise/fall')
             continue
-        # check shift of center of pressure during roi in fwd dir
-        cop_roi = fp['CoP'][friseind:ffallind, fwd_dir]
-        cop_shift = cop_roi.max() - cop_roi.min()
-        total_shift = np.sqrt(np.sum(cop_shift**2))
-        logger.debug('CoP total shift %.2f mm' % total_shift)
-        if total_shift > cfg.autoproc.cop_shift_max:
-            logger.debug('center of pressure shifts too much '
-                         '(double contact?)')
-            continue
-
         # we work with 0-based frame indices (=1 less than Nexus frame index)
         strike_fr = int(np.round(friseind / info['samplesperframe']))
         toeoff_fr = int(np.round(ffallind / info['samplesperframe']))
         logger.debug('strike @ frame %d, toeoff @ %d' % (strike_fr, toeoff_fr))
 
-        # if we got here, force data looked ok; next, check marker data
-        # first compute plate boundaries in world coords
-        mins = fp['lowerbounds']
-        maxes = fp['upperbounds']
+        # confirm whether it's a valid foot strike; look at Eclipse info or
+        # use our own autodetection routine
+        plate = 'FP' + str(plate_ind+1)
+        if fp_info is not None and plate in fp_info:
+            # TODO: are we sure that the plate indices match Eclipse?
+            valid = fp_info[plate]
+            logger.debug('using Eclipse forceplate info: %s' % valid)
+            if valid == 'Right':
+                this_valid = 'R'
+            elif valid == 'Left':
+                this_valid = 'L'
+            elif valid == 'Invalid':
+                this_valid = None
+            else:
+                raise Exception('unexpected Eclipse forceplate info')
 
-        # check markers
-        this_valid = None
-        for markers in [cfg.autoproc.right_foot_markers,
-                        cfg.autoproc.left_foot_markers]:
-            ok = True
-            for marker_ in markers:
-                mins_s, maxes_s = mins.copy(), maxes.copy()
-                mins_t, maxes_t = mins.copy(), maxes.copy()
-                # extra tolerance for ankle marker in sideways direction
-                if 'ANK' in marker_:
-                    mins_t[orth_dir] -= cfg.autoproc.ankle_sideways_tol
-                    maxes_t[orth_dir] += cfg.autoproc.ankle_sideways_tol
-                    mins_s[orth_dir] -= cfg.autoproc.ankle_sideways_tol
-                    maxes_s[orth_dir] += cfg.autoproc.ankle_sideways_tol
-                # extra tolerance for all markers in gait direction @ toeoff
-                maxes_t[fwd_dir] += cfg.autoproc.toeoff_marker_tol
-                mins_t[fwd_dir] -= cfg.autoproc.toeoff_marker_tol
-                # extra tol for heel marker in gait dir during foot strike
-                if 'HEE' in marker_:
-                    maxes_s[fwd_dir] += cfg.autoproc.heel_strike_tol
-                    mins_s[fwd_dir] -= cfg.autoproc.heel_strike_tol
-                marker = marker_ + '_P'
-                ok &= mins_s[0] < mrkdata[marker][strike_fr, 0] < maxes_s[0]
-                ok &= mins_s[1] < mrkdata[marker][strike_fr, 1] < maxes_s[1]
-                if not ok:
-                    logger.debug('marker %s failed on-plate check during foot '
-                                 'strike' % marker_)
-                    break
-                ok &= mins_t[0] < mrkdata[marker][toeoff_fr, 0] < maxes_t[0]
-                ok &= mins_t[1] < mrkdata[marker][toeoff_fr, 1] < maxes_t[1]
-                if not ok:
-                    logger.debug('marker %s failed on-plate check during '
-                                 'toeoff ' % marker_)
-                    break
-            if ok:
-                if this_valid:
-                    raise GaitDataError('valid contact on both feet (??)')
-                this_valid = ('R' if markers == cfg.autoproc.right_foot_markers
-                              else 'L')
-                logger.debug('on-plate check ok for side %s' % this_valid)
+        else:  # use our own autodetection
+            logger.debug('using autodetection')
+            # check shift of center of pressure during roi in fwd dir
+            cop_roi = fp['CoP'][friseind:ffallind, fwd_dir]
+            cop_shift = cop_roi.max() - cop_roi.min()
+            total_shift = np.sqrt(np.sum(cop_shift**2))
+            logger.debug('CoP total shift %.2f mm' % total_shift)
+            if total_shift > cfg.autoproc.cop_shift_max:
+                logger.debug('center of pressure shifts too much '
+                             '(double contact?)')
+                continue
+
+            # first compute plate boundaries in world coords
+            mins = fp['lowerbounds']
+            maxes = fp['upperbounds']
+
+            # check markers
+            this_valid = None
+            for markers in [cfg.autoproc.right_foot_markers,
+                            cfg.autoproc.left_foot_markers]:
+                ok = True
+                for marker_ in markers:
+                    mins_s, maxes_s = mins.copy(), maxes.copy()
+                    mins_t, maxes_t = mins.copy(), maxes.copy()
+                    # extra tolerance for ankle marker in sideways direction
+                    if 'ANK' in marker_:
+                        mins_t[orth_dir] -= cfg.autoproc.ankle_sideways_tol
+                        maxes_t[orth_dir] += cfg.autoproc.ankle_sideways_tol
+                        mins_s[orth_dir] -= cfg.autoproc.ankle_sideways_tol
+                        maxes_s[orth_dir] += cfg.autoproc.ankle_sideways_tol
+                    # extra tol for all markers in gait direction @ toeoff
+                    maxes_t[fwd_dir] += cfg.autoproc.toeoff_marker_tol
+                    mins_t[fwd_dir] -= cfg.autoproc.toeoff_marker_tol
+                    # extra tol for heel marker in gait dir during foot strike
+                    if 'HEE' in marker_:
+                        maxes_s[fwd_dir] += cfg.autoproc.heel_strike_tol
+                        mins_s[fwd_dir] -= cfg.autoproc.heel_strike_tol
+                    marker = marker_ + '_P'
+                    ok &= mins_s[0] < mrkdata[marker][strike_fr, 0] < maxes_s[0]
+                    ok &= mins_s[1] < mrkdata[marker][strike_fr, 1] < maxes_s[1]
+                    if not ok:
+                        logger.debug('marker %s failed on-plate check during '
+                                     'foot strike' % marker_)
+                        break
+                    ok &= mins_t[0] < mrkdata[marker][toeoff_fr, 0] < maxes_t[0]
+                    ok &= mins_t[1] < mrkdata[marker][toeoff_fr, 1] < maxes_t[1]
+                    if not ok:
+                        logger.debug('marker %s failed on-plate check during '
+                                     'toeoff ' % marker_)
+                        break
+                if ok:
+                    if this_valid:
+                        raise GaitDataError('valid contact on both feet (??)')
+                    this_valid = ('R'
+                                  if markers == cfg.autoproc.right_foot_markers
+                                  else 'L')
+                    logger.debug('on-plate check ok for side %s' % this_valid)
 
         if not this_valid:
             logger.debug('plate %d: no valid foot strike' % plate_ind)

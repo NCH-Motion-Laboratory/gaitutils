@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 
-Process all trials in current session directory. Need to load a trial first
-(to get session path.)
+Autoprocess all trials in current Nexus session directory.
 
+See autoproc section in config for options.
 
 1st pass (all trials):
 -recon+label
@@ -22,8 +22,6 @@ Process all trials in current session directory. Need to load a trial first
 NOTES:
 
 -ROI operations only work for Nexus >= 2.5
--Eclipse desc of last processed trial is not updated properly (gets overwritten
-by Eclipse?)
 
 
 @author: Jussi
@@ -41,7 +39,6 @@ import sys
 
 
 logger = logging.getLogger(__name__)
-
 
 
 class Trial:
@@ -186,7 +183,9 @@ def _do_autoproc(enffiles, cfg=defaultcfg, update_eclipse=True):
             trials[filepath].recon_ok = True
 
         # preprocessing ok, check forceplate data
-        fpev = utils.detect_forceplate_events(vicon)
+        fp_info = (eclipse.eclipse_fp_keys(edi) if
+                   cfg.autoproc.use_eclipse_fp_info else None)
+        fpev = utils.detect_forceplate_events(vicon, fp_info=fp_info)
         # get foot velocity info for all events (do not reduce to median)
         vel = utils.get_foot_velocity(vicon, fpev, medians=False)
         valid = fpev['valid']

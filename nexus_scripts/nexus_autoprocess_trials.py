@@ -186,7 +186,9 @@ def _do_autoproc(enffiles, update_eclipse=True):
             trials[filepath].recon_ok = True
 
         # preprocessing ok, check forceplate data
-        fpev = utils.detect_forceplate_events(vicon)
+        fp_info = (eclipse.eclipse_fp_keys(edi) if
+                   cfg.autoproc.use_eclipse_fp_info else None)
+        fpev = utils.detect_forceplate_events(vicon, fp_info=fp_info)
         # get foot velocity info for all events (do not reduce to median)
         vel = utils.get_foot_velocity(vicon, fpev, medians=False)
         valid = fpev['valid']

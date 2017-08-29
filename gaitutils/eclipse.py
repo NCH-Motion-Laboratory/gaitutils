@@ -10,6 +10,7 @@ import logging
 import io
 from configobj import ConfigObj
 from collections import defaultdict, OrderedDict
+from gaitutils.numutils import isint
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +64,12 @@ def get_eclipse_keys(fname_enf, return_empty=False):
     di.update({key: val for key, val in cp['TRIAL_INFO'].items()
                if val != '' or return_empty})
     return di
+
+
+def eclipse_fp_keys(eclipse_keys):
+    """ Filter that returns Eclipse forceplate keys/values as a dict """
+    return {key: val for key, val in eclipse_keys.items()
+            if key[:2] == 'FP' and len(key) == 3 and isint(key[2])}
 
 
 def set_eclipse_keys(fname_enf, eclipse_dict, update_existing=False):

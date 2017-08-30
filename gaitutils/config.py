@@ -42,8 +42,15 @@ class EpicParser(ConfigParser.SafeConfigParser):
     type. """
 
     def __getitem__(self, section):
-        """ Returns the parser section dictionary. """
+        """ Returns the parser section dictionary. Not implemented by
+        SafeConfigParser """
         return self._sections[section]
+    
+    def __repr__(self):
+        """ For completeness; not implemented by SafeConfigParser """
+        return '<%s.%s at %s>' % (self.__class__.__module__,
+                                  self.__class__.__name__,
+                                  str(hex(id(self))))
 
     def __getattr__(self, section):
         """ Implements attribute access, i.e. parser.section or more commonly

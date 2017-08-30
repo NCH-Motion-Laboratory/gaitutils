@@ -22,6 +22,7 @@ def automark_single(plot=False):
     vicon = nexus.viconnexus()
     vicon.ClearAllEvents()
 
+    # TODO: might want to use Eclipse forceplate info also here
     fpe = utils.detect_forceplate_events(vicon)
     vel = utils.get_foot_velocity(vicon, fpe)
 

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Feb 15 13:14:16 2017
+Handles gaitutils config files.
 
-@author: hus20664877
+@author: jnu@iki.fi
 """
 
 import ConfigParser
@@ -18,40 +18,40 @@ cfg_user = homedir + '/.gaitutils.cfg'
 
 
 class Section(object):
-    """ Holds data for sections """
+    """ A config section """
 
     def __init__(self, dict):
-        """ The config items are provided as key/value dict, where values
-        are strings. """
+        """ The config items for the section are provided as key/value dict,
+        where values are strings. """
         self._dict = dict
 
     def __getattr__(self, item):
-        """ This implements attribute access. The items don't directly
+        """ Implements attribute access, i.e. section.item. The items don't
         exist as instance variables, so referencing them will cause
-        __getattr__ to be called. The items are automatically converted from
-        strings to Python types. """
+        __getattr__ to be called. The items are returned from the section dict
+        and automatically converted from strings to Python types. """
         return ast.literal_eval(self._dict[item])
 
 
 class EpicParser(ConfigParser.SafeConfigParser):
     """ Extends SafeConfigParser by providing convenient attribute access
-    (by parser.section.value) and autoconversion from strings to Python
+    (by parser.section.item) and autoconversion from strings to Python
     types.
     For modifying config items, it's still necessary to use the
     syntax parser[section][item] = data, where data must always be a string
     type. """
 
     def __getitem__(self, section):
-        """ This returns the parser section dictionary. """
+        """ Returns the parser section dictionary. """
         return self._sections[section]
 
     def __getattr__(self, section):
-        """ This implements attribute access. The sections don't directly
-        exist as instance variables, so referencing them will cause
-        __getattr__ to be called. """
+        """ Implements attribute access, i.e. parser.section or more commonly
+        parser.section.item. A new Section instance is created from the parser
+        data. """
         return Section(self._sections[section])
 
-
+# provide the global cfg instance
 cfg = EpicParser()
 cfg.read(cfg_template)
 if not op.isfile(cfg_user):

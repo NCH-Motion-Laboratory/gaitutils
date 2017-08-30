@@ -176,8 +176,8 @@ def detect_forceplate_events(source):
             for marker_ in markers:
                 mins_s, maxes_s = mins.copy(), maxes.copy()
                 mins_t, maxes_t = mins.copy(), maxes.copy()
-                # extra tolerance for ankle + heel in sideways direction
-                if 'ANK' in marker_ or 'HEE' in marker_:
+                # extra tolerance for ankle marker in sideways direction
+                if 'ANK' in marker_:
                     mins_t[orth_dir] -= cfg.autoproc.ankle_sideways_tol
                     maxes_t[orth_dir] += cfg.autoproc.ankle_sideways_tol
                     mins_s[orth_dir] -= cfg.autoproc.ankle_sideways_tol

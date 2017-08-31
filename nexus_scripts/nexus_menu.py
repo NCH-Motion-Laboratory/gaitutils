@@ -11,7 +11,7 @@ from PyQt5.QtCore import QRunnable, QThreadPool, pyqtSignal, QObject
 from pkg_resources import resource_filename
 import sys
 from gaitutils import nexus
-from gaitutils.config import cfg as defaultcfg
+from gaitutils import cfg
 import nexus_emgplot
 import nexus_kinetics_emgplot
 import nexus_emg_consistency
@@ -60,7 +60,7 @@ class XStream(QtCore.QObject):
     def stdout():
         if not XStream._stdout:
             XStream._stdout = XStream()
-            sys.stdout = XStream._stdout
+            #sys.stdout = XStream._stdout  # DEBUG
         return XStream._stdout
 
     @staticmethod
@@ -78,6 +78,70 @@ class AutoprocDialog(QtWidgets.QDialog):
         # load user interface made with designer
         uifile = resource_filename(__name__, 'autoproc_dialog.ui')
         uic.loadUi(uifile, self)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+        """ Collect config widgets into a dict """
+        self.cfg_widgets = dict()
+        for page in [self.tabWidget.widget(n) for n in
+                     range(self.tabWidget.count())]:
+            pname = page.objectName()
+            self.cfg_widgets[pname] = dict()
+            for w in page.findChildren(QtWidgets.QWidget):
+                wname = unicode(w.objectName())
+                if wname[:4] == 'cfg_':  # config widgets are specially named
+                    self.cfg_widgets[pname][wname] = w
+        self.update_widgets()
+
+    def update_widgets(self):
+        """ Update config widgets according to current cfg """
+        for section in self.cfg_widgets.keys():
+            for wname, widget in self.cfg_widgets[section].items():
+                item = wname[4:]
+                cfgval = getattr(getattr(cfg, section), item)
+                if cfgval != self.getval(widget):
+                    self.setval(widget, cfgval)
+
+    def getval(self, widget):
+        """ Universal value getter that takes any type of config widget """
+        if isinstance(widget, QtWidgets.QSpinBox):
+            return widget.value()
+        elif isinstance(widget, QtWidgets.QCheckBox):
+            return bool(widget.checkState())
+        elif isinstance(widget, QtWidgets.QComboBox):
+            return unicode(widget.currentText())
+        elif isinstance(widget, QtWidgets.QLineEdit):
+            return unicode(widget.text())
+        else:
+            raise Exception('Unhandled type of config widget')
+
+    def setval(self, widget, val):
+        """ Universal value setter that takes any type of config widget """
+        print('%s -> %s of %s' % (widget, val, type(val)))
+        if isinstance(widget, QtWidgets.QSpinBox):
+            widget.setValue(val)
+        elif isinstance(widget, QtWidgets.QCheckBox):
+            widget.setCheckState(2 if val else 0)
+        elif isinstance(widget, QtWidgets.QComboBox):
+            idx = widget.findText(val)
+            if idx >= 0:
+                widget.setCurrentIndex(idx)
+            else:
+                raise ValueError('Tried to set combobox to invalid value.')
+        elif isinstance(widget, QtWidgets.QLineEdit):
+            widget.setText(str(val))
+        else:
+            raise Exception('Unhandled type of config widget')
+
+    def update_cfg(self):
+        """ Update cfg according to current dialog settings """
+        global cfg
+        for section in self.cfg_widgets.keys():
+            for wname, widget in self.cfg_widgets[section].items():
+                item = wname[4:]
+                if cfg[section][item] != self.getval(widget):
+                    print('changed %s:%s = %s' % (section, wname,
+                                                  self.getval(widget)))
+                    cfg[section][item] = self.getval(widget)
 
 
 class Gaitmenu(QtWidgets.QMainWindow):
@@ -104,6 +168,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         thread=True runs it in a separate worker thread, enabling GUI updates
         (e.g. logging dialog) which can be nice.
         """
+        
         self._button_connect_task(self.btnEMG, nexus_emgplot.do_plot)
         self._button_connect_task(self.btnKinEMG,
                                   nexus_kinetics_emgplot.do_plot)
@@ -138,8 +203,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         XStream.stdout().messageWritten.connect(self._log_message)
         XStream.stderr().messageWritten.connect(self._log_message)
 
-        self.cfg = defaultcfg   # the config
-
         self.threadpool = QThreadPool()
         logging.debug('started threadpool with max %d threads' %
                       self.threadpool.maxThreadCount())
@@ -162,7 +225,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def autoproc_dialog(self):
         """ Show the autoprocessing options dialog """
         dlg = AutoprocDialog()
-        dlg.exec_()
+        ret = dlg.exec_()
+        if ret:
+            dlg.update_cfg()
 
     def _log_message(self, msg):
         c = self.txtOutput.textCursor()
@@ -248,7 +313,9 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
 
     logger = logging.getLogger()
-    handler = QtHandler()
+    # handler = QtHandler()  # DEBUG
+    handler = logging.StreamHandler()
+    
     handler.setFormatter(logging.
                          Formatter("%(name)s: %(levelname)s: %(message)s"))
     handler.setFormatter(logging.Formatter("%(name)s: %(message)s"))

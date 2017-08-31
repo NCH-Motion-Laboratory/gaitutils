@@ -90,18 +90,12 @@
            </property>
           </widget>
          </item>
-         <item row="5" column="1">
-          <widget class="QSpinBox" name="cfg_forceplate_contact_threshold"/>
-         </item>
          <item row="6" column="0">
           <widget class="QLabel" name="label_5">
            <property name="text">
             <string>Minimum peak force (% of subject weight)</string>
            </property>
           </widget>
-         </item>
-         <item row="6" column="1">
-          <widget class="QSpinBox" name="cfg_forceplate_min_weight"/>
          </item>
          <item row="7" column="0">
           <widget class="QLabel" name="label_8">
@@ -111,7 +105,11 @@
           </widget>
          </item>
          <item row="7" column="1">
-          <widget class="QSpinBox" name="cfg_cop_shift_max"/>
+          <widget class="QSpinBox" name="cfg_cop_shift_max">
+           <property name="maximum">
+            <number>500</number>
+           </property>
+          </widget>
          </item>
          <item row="8" column="0">
           <widget class="QLabel" name="label_10">
@@ -148,7 +146,14 @@
           </widget>
          </item>
          <item row="10" column="1">
-          <widget class="QSpinBox" name="cfg_automark_max_dist"/>
+          <widget class="QSpinBox" name="cfg_automark_max_dist">
+           <property name="suffix">
+            <string/>
+           </property>
+           <property name="maximum">
+            <number>10000</number>
+           </property>
+          </widget>
          </item>
          <item row="11" column="0">
           <widget class="QLabel" name="label_18">
@@ -198,6 +203,12 @@
             </property>
            </item>
           </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QDoubleSpinBox" name="cfg_forceplate_contact_threshold"/>
+         </item>
+         <item row="6" column="1">
+          <widget class="QDoubleSpinBox" name="cfg_forceplate_min_weight"/>
          </item>
         </layout>
        </item>

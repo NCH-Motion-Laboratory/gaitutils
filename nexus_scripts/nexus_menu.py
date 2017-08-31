@@ -60,14 +60,14 @@ class XStream(QtCore.QObject):
     def stdout():
         if not XStream._stdout:
             XStream._stdout = XStream()
-            #sys.stdout = XStream._stdout  # DEBUG
+            sys.stdout = XStream._stdout  # also capture stdout
         return XStream._stdout
 
     @staticmethod
     def stderr():
         if not XStream._stderr:
             XStream._stderr = XStream()
-            sys.stderr = XStream._stderr
+            sys.stderr = XStream._stderr  # ... and stderr
         return XStream._stderr
 
 
@@ -98,12 +98,13 @@ class AutoprocDialog(QtWidgets.QDialog):
             for wname, widget in self.cfg_widgets[section].items():
                 item = wname[4:]
                 cfgval = getattr(getattr(cfg, section), item)
-                if cfgval != self.getval(widget):
-                    self.setval(widget, cfgval)
+                if str(cfgval) != str(self.getval(widget)):
+                    self.setval(widget, cfgval)  # set using native type
 
     def getval(self, widget):
-        """ Universal value getter that takes any type of config widget """
-        if isinstance(widget, QtWidgets.QSpinBox):
+        """ Universal value getter that takes any type of config widget.
+        Returns native types. """
+        if isinstance(widget, QtWidgets.QSpinBox) or isinstance(widget, QtWidgets.QDoubleSpinBox):
             return widget.value()
         elif isinstance(widget, QtWidgets.QCheckBox):
             return bool(widget.checkState())
@@ -115,9 +116,10 @@ class AutoprocDialog(QtWidgets.QDialog):
             raise Exception('Unhandled type of config widget')
 
     def setval(self, widget, val):
-        """ Universal value setter that takes any type of config widget """
+        """ Universal value setter that takes any type of config widget.
+        val is a native type. """
         print('%s -> %s of %s' % (widget, val, type(val)))
-        if isinstance(widget, QtWidgets.QSpinBox):
+        if isinstance(widget, QtWidgets.QSpinBox) or isinstance(widget, QtWidgets.QDoubleSpinBox):
             widget.setValue(val)
         elif isinstance(widget, QtWidgets.QCheckBox):
             widget.setCheckState(2 if val else 0)
@@ -138,10 +140,12 @@ class AutoprocDialog(QtWidgets.QDialog):
         for section in self.cfg_widgets.keys():
             for wname, widget in self.cfg_widgets[section].items():
                 item = wname[4:]
-                if cfg[section][item] != self.getval(widget):
-                    print('changed %s:%s = %s' % (section, wname,
-                                                  self.getval(widget)))
-                    cfg[section][item] = self.getval(widget)
+                widgetval = str(self.getval(widget))
+                cfgval = str(getattr(getattr(cfg, section), item))  # FIXME
+                if widgetval != cfgval:
+                    print('changing %s:%s = %s (was %s))' % (section, wname,
+                                                            widgetval, cfgval))
+                    cfg[section][item] = widgetval
 
 
 class Gaitmenu(QtWidgets.QMainWindow):
@@ -313,9 +317,9 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
 
     logger = logging.getLogger()
-    # handler = QtHandler()  # DEBUG
-    handler = logging.StreamHandler()
-    
+    handler = QtHandler()
+    # handler = logging.StreamHandler()   # to sys.stdout
+
     handler.setFormatter(logging.
                          Formatter("%(name)s: %(levelname)s: %(message)s"))
     handler.setFormatter(logging.Formatter("%(name)s: %(message)s"))

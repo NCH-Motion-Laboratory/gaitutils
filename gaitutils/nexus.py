@@ -92,11 +92,16 @@ def check_nexus():
         raise GaitDataError('Vicon Nexus does not seem to be running')
 
 
-def get_session_enfs():
-    """ Return list of .enf files for the session """
+def get_sessionpath():
+    """ Get path to current session """
     vicon = viconnexus()
     trialname_ = vicon.GetTrialName()
-    sessionpath = trialname_[0]
+    return trialname_[0]
+
+
+def get_session_enfs():
+    """ Return list of .enf files for the session """
+    sessionpath = get_sessionpath()
     enffiles = glob.glob(sessionpath+'*Trial*.enf') if sessionpath else None
     logger.debug('found %d .enf files for session %s' %
                  (len(enffiles) if enffiles else 0, sessionpath))

@@ -10,6 +10,7 @@ from gaitutils import (nexus, cfg, utils, read_data, eclipse,
 from gaitutils.exceptions import GaitDataError
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 import os.path as op
 import logging
 
@@ -50,13 +51,18 @@ def do_plot():
     vels = np.array([trial_median_velocity(trial) for trial in c3ds])
     vavg = np.nanmean(vels)
 
-    plt.figure()
+    fig = plt.figure()
     plt.stem(vels)
     plt.xticks(range(len(vels)), labels, rotation='vertical')
     plt.ylabel('Velocity (m/s)')
     plt.tick_params(axis='both', which='major', labelsize=8)
     plt.title('Gait velocity for dynamic trials (average %.2f m/s)' % vavg)
     plt.tight_layout()
+
+    pdf_name = op.join(nexus.get_sessionpath(), 'trial_velocity.pdf')
+    with PdfPages(pdf_name) as pdf:
+        pdf.savefig(fig)
+
     plt.show()
 
 if __name__ == '__main__':

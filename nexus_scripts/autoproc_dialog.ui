@@ -56,32 +56,44 @@
          <item row="2" column="0">
           <widget class="QLabel" name="label">
            <property name="text">
-            <string>Sideways tolerance for ankle marker (mm)</string>
+            <string>Sideways tolerance for ankle marker</string>
            </property>
           </widget>
          </item>
          <item row="2" column="1">
-          <widget class="QSpinBox" name="cfg_ankle_sideways_tol"/>
+          <widget class="QSpinBox" name="cfg_ankle_sideways_tol">
+           <property name="suffix">
+            <string> mm</string>
+           </property>
+          </widget>
          </item>
          <item row="3" column="0">
           <widget class="QLabel" name="label_7">
            <property name="text">
-            <string>Marker tolerance during toeoff in forward direction (mm)</string>
+            <string>Marker tolerance during toeoff in forward direction</string>
            </property>
           </widget>
          </item>
          <item row="3" column="1">
-          <widget class="QSpinBox" name="cfg_toeoff_marker_tol"/>
+          <widget class="QSpinBox" name="cfg_toeoff_marker_tol">
+           <property name="suffix">
+            <string> mm</string>
+           </property>
+          </widget>
          </item>
          <item row="4" column="0">
           <widget class="QLabel" name="label_9">
            <property name="text">
-            <string>Tolerance for heel marker (mm)</string>
+            <string>Tolerance for heel marker</string>
            </property>
           </widget>
          </item>
          <item row="4" column="1">
-          <widget class="QSpinBox" name="cfg_heel_strike_tol"/>
+          <widget class="QSpinBox" name="cfg_heel_strike_tol">
+           <property name="suffix">
+            <string> mm</string>
+           </property>
+          </widget>
          </item>
          <item row="5" column="0">
           <widget class="QLabel" name="label_4">
@@ -106,6 +118,9 @@
          </item>
          <item row="7" column="1">
           <widget class="QSpinBox" name="cfg_cop_shift_max">
+           <property name="suffix">
+            <string> mm</string>
+           </property>
            <property name="maximum">
             <number>500</number>
            </property>
@@ -148,7 +163,7 @@
          <item row="10" column="1">
           <widget class="QSpinBox" name="cfg_automark_max_dist">
            <property name="suffix">
-            <string/>
+            <string> mm</string>
            </property>
            <property name="maximum">
             <number>10000</number>
@@ -158,7 +173,7 @@
          <item row="11" column="0">
           <widget class="QLabel" name="label_18">
            <property name="text">
-            <string>Location of walkway center:</string>
+            <string>Location of walkway center (mm):</string>
            </property>
           </widget>
          </item>
@@ -205,10 +220,18 @@
           </widget>
          </item>
          <item row="5" column="1">
-          <widget class="QDoubleSpinBox" name="cfg_forceplate_contact_threshold"/>
+          <widget class="QDoubleSpinBox" name="cfg_forceplate_contact_threshold">
+           <property name="suffix">
+            <string> %</string>
+           </property>
+          </widget>
          </item>
          <item row="6" column="1">
-          <widget class="QDoubleSpinBox" name="cfg_forceplate_min_weight"/>
+          <widget class="QDoubleSpinBox" name="cfg_forceplate_min_weight">
+           <property name="suffix">
+            <string> %</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>

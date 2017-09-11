@@ -30,7 +30,11 @@ class Section(object):
         exist as instance variables, so referencing them will cause
         __getattr__ to be called. The items are returned from the section dict
         and automatically converted from strings to Python types. """
-        return ast.literal_eval(self._dict[item])
+        try:
+            return ast.literal_eval(self._dict[item])
+        except ValueError:
+            raise ValueError('Could not convert value %s to Python type' %
+                             self._dict[item])
 
 
 class EpicParser(ConfigParser.SafeConfigParser):

@@ -44,8 +44,10 @@ def do_plot(search=None, show=True):
     for i, enf in enumerate(marked_trials):
         emg = EMG(enf2c3d(enf))
         chs_prev_ok = chs_ok if i > 0 else None
-        chs_ok = [not emg.is_channel(ch) or emg.status_ok(ch) for row in
-                  layout for ch in row]
+        # plot channels w/ status ok, or anything that is not a
+        # configured EMG channel
+        chs_ok = [ch not in cfg.emg.channel_labels or emg.status_ok(ch) for
+                  row in layout for ch in row]
         if i > 0:
             chs_ok = chs_ok or chs_prev_ok
     rowlen = len(layout[0])

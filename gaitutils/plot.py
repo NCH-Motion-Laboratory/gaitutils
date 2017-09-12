@@ -9,6 +9,7 @@ Plot gait data
 import models
 import nexus
 import numutils
+import normaldata
 from trial import Trial
 import matplotlib.pyplot as plt
 from matplotlib import pylab
@@ -18,6 +19,7 @@ import os.path as op
 import os
 import subprocess
 from config import cfg
+import numpy as np
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 class Plotter(object):
 
-    def __init__(self, layout=None, normaldata=None):
+    def __init__(self, layout=None):
         """ Plot gait data.
 
         layout: list of lists
@@ -41,10 +43,11 @@ class Plotter(object):
             self._layout = None
         self.trial = None
         self.fig = None
-        self.normaldata = normaldata
-        self.legendnames = []
-        self.modelartists = []
-        self.emgartists = []
+        self.legendnames = list()
+        self.modelartists = list()
+        self.emgartists = list()
+        self._normaldata_files = list()
+        self._normaldata = dict()
         self.cfg = cfg
 
     @property
@@ -136,6 +139,7 @@ class Plotter(object):
                    model_alpha=1.0,
                    split_model_vars=True,
                    auto_match_model_cycle=True,
+                   normaldata_files=cfg.general.normaldata_files,
                    x_axis_is_time=True,
                    match_pig_kinetics=True,
                    auto_match_emg_cycle=True,
@@ -187,6 +191,9 @@ class Plotter(object):
                 whose context matches the context of the variable. E.g.
                 'LHipMomentX' will be plotted only for left side cycles.
                 If False, the variable will be plotted for all cycles.
+        normaldata_files: list
+                Specifies a list normal data files (.gcd or .xlsx) for model
+                type variables.
         x_axis_is_time: bool
                 For unnormalized variables, whether x axis is in seconds
                 (default) or in frames.
@@ -245,6 +252,15 @@ class Plotter(object):
                 maintitleprefix = ''
             maintitle = maintitleprefix + self.trial.trialname
 
+        # read normal data if any new files were specified
+        newfiles = set(normaldata_files) - set(self._normaldata_files)
+        if newfiles:
+            for fn in normaldata_files:
+                logger.debug('Reading new normal data from %s' % fn)
+                ndata = normaldata.read_normaldata(fn)
+                self._normaldata.update(ndata)
+                self._normaldata_files.append(fn)
+
         # auto adjust plot heights
         if plotheightratios is None:
             plotheightratios = self._plot_height_ratios()
@@ -254,8 +270,8 @@ class Plotter(object):
 
         def _axis_annotate(ax, text):
             """ Annotate at center of axis """
-            ctr = sum(ax.get_xlim())/2, sum(ax.get_ylim())/2.
-            ax.annotate(text, xy=ctr, ha="center", va="center")
+            ax.annotate(text, xy=(.5, .5), xycoords='axes fraction',
+                        ha="center", va="center")
 
         def _no_ticks_or_labels(ax):
             ax.tick_params(axis='both', which='both', bottom='off',
@@ -306,7 +322,6 @@ class Plotter(object):
             self.fig = plt.figure(figsize=(self.figw, self.figh))
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)
-
 
         for i, var in enumerate(self.allvars):
             var_type = self._var_type(var)
@@ -376,24 +391,42 @@ class Plotter(object):
                             ax.set(xlabel=xlabel)
                             ax.xaxis.label.set_fontsize(self.cfg.
                                                         plot.label_fontsize)
-                        if model.get_normaldata(varname):
-                            if plot_model_normaldata and cycle is not None:
-                                tnor, ndata = model.get_normaldata(varname)
-                                if ndata is not None:
-                                    # assume (mean, stddev) for normal data
-                                    # fill region between mean-stddev, mean+stddev
-                                    nor = ndata[:, 0]
-                                    nstd = (ndata[:, 1] if ndata.shape[1] == 2
-                                            else 0)
-                                    ax.fill_between(tnor, nor-nstd, nor+nstd,
-                                                    color=self.cfg.plot.
-                                                    model_normals_color,
-                                                    alpha=self.cfg.plot.
-                                                    model_normals_alpha)
-                                    # tighten x limits
-                                    ax.set_xlim(tnor[0], tnor[-1])
+
+                        if plot_model_normaldata and cycle is not None:
+                            # normaldata vars are without preceding side
+                            # this is a bit hackish
+                            if varname[0].upper() in ['L', 'R']:
+                                nvarname = varname[1:]
+                            if nvarname in self._normaldata:
+                                ndata = self._normaldata[nvarname]
+                            elif nvarname in model.gcd_normaldata_map:
+                                nvarname_ = model.gcd_normaldata_map[nvarname]
+                                ndata = self._normaldata[nvarname_]
+                            else:
+                                ndata = None
+                            if ndata is not None:
+                                normalx = np.linspace(0, 100, ndata.shape[0])
+                                ax.fill_between(normalx, ndata[:, 0],
+                                                ndata[:, 1],
+                                                color=self.cfg.plot.
+                                                model_normals_color,
+                                                alpha=self.cfg.plot.
+                                                model_normals_alpha)
+                                # tighten x limits
+                                ax.set_xlim(normalx[0], normalx[-1])
 
             elif var_type == 'emg':
+                # set title first, since we may end up not plotting the emg at
+                # all (i.e for missing / disconnected channels)
+                subplot_title = (self.cfg.emg.channel_labels[var] if
+                                 var in self.cfg.emg.channel_labels
+                                 else var)
+                prev_title = ax.get_title()
+                if prev_title and prev_title != subplot_title:
+                    subplot_title = prev_title + ' / ' + subplot_title
+                ax.set_title(subplot_title)
+                ax.title.set_fontsize(self.cfg.plot.title_fontsize)
+
                 for cycle in emg_cycles:
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
@@ -433,14 +466,6 @@ class Plotter(object):
                         ax.set(ylabel=self.cfg.plot.emg_ylabel)
                         ax.yaxis.label.set_fontsize(self.cfg.
                                                     plot.label_fontsize)
-                        subplot_title = (self.cfg.emg.channel_labels[var] if
-                                         var in self.cfg.emg.channel_labels
-                                         else var)
-                        prev_title = ax.get_title()
-                        if prev_title and prev_title != subplot_title:
-                            subplot_title = prev_title + ' / ' + subplot_title
-                        ax.set_title(subplot_title)
-                        ax.title.set_fontsize(self.cfg.plot.title_fontsize)
                         ax.locator_params(axis='y', nbins=4)
                         # tick font size
                         ax.tick_params(axis='both', which='major',
@@ -493,7 +518,7 @@ class Plotter(object):
         plt.suptitle(maintitle, fontsize=self.cfg.plot.maintitle_fontsize,
                      fontweight="bold")
         self.tight_layout()
-        
+
         if show:
             self.show()
 

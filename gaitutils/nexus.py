@@ -76,7 +76,16 @@ def true_ver():
 
 def viconnexus():
     """ Return a ViconNexus instance. """
+    check_nexus()
     return ViconNexus.ViconNexus()
+
+
+def getsubjectnames():
+    """ Workaround a Nexus 2.6 bug (?) that creates extra names with
+    weird unicode strings """
+    vicon = viconnexus()
+    names_ = vicon.GetSubjectNames()
+    return [name for name in names_ if u'\ufffd1' not in name]
 
 
 def check_nexus():
@@ -84,12 +93,19 @@ def check_nexus():
         raise GaitDataError('Vicon Nexus does not seem to be running')
 
 
-def get_trial_enfs():
-    """ Return list of .enf files for the session """
+def get_sessionpath():
+    """ Get path to current session """
     vicon = viconnexus()
     trialname_ = vicon.GetTrialName()
-    sessionpath = trialname_[0]
+    return trialname_[0]
+
+
+def get_session_enfs():
+    """ Return list of .enf files for the session """
+    sessionpath = get_sessionpath()
     enffiles = glob.glob(sessionpath+'*Trial*.enf') if sessionpath else None
+    logger.debug('found %d .enf files for session %s' %
+                 (len(enffiles) if enffiles else 0, sessionpath))
     return enffiles
 
 
@@ -105,7 +121,7 @@ def find_trials(eclipse_keys, strings):
     """ Yield .enf files for trials in current Nexus session directory whose
     Eclipse fields (list) contain any of strings (list). Case insensitive. """
     strings = [st.upper() for st in strings]
-    enffiles = get_trial_enfs()
+    enffiles = get_session_enfs()
     if enffiles is None:
         return
     for enf in enffiles:
@@ -124,7 +140,9 @@ def get_metadata(vicon):
     """ Read trial and subject metadata """
     check_nexus()
     logger.debug('reading metadata from Vicon Nexus')
-    subjectnames = vicon.GetSubjectNames()
+    if not pid():
+        raise GaitDataError('Vicon Nexus does not seem to be running')
+    subjectnames = getsubjectnames()
     if len(subjectnames) > 1:
         raise GaitDataError('Nexus returns multiple subjects')
     if not subjectnames:
@@ -144,7 +162,7 @@ def get_metadata(vicon):
     sessionpath = trialname_[0]
     trialname = trialname_[1]
     if not trialname:
-        raise GaitDataError('No trial loaded')
+        raise GaitDataError('No trial loaded in Nexus')
     # Get events - GetEvents() indices seem to often be 1 frame less than on
     # Nexus display - only happens with ROI?
     lstrikes = vicon.GetEvents(name, "Left", "Foot Strike")[0]
@@ -281,14 +299,15 @@ def get_marker_data(vicon, markers):
     specified markers.  """
     if not isinstance(markers, list):
         markers = [markers]
-    subjectnames = vicon.GetSubjectNames()
+    subjectnames = getsubjectnames()
     if not subjectnames:
         raise GaitDataError('No subject defined in Nexus')
     mdata = dict()
     for marker in markers:
         x, y, z, _ = vicon.GetTrajectory(subjectnames[0], marker)
         if len(x) == 0:
-            raise GaitDataError('Cannot get marker trajectory: %s' % marker)
+            raise GaitDataError('Cannot read marker trajectory '
+                                'from Nexus: \'%s\'' % marker)
         mP = np.array([x, y, z]).transpose()
         mdata[marker + '_P'] = mP
         mdata[marker + '_V'] = np.gradient(mP)[0]
@@ -325,7 +344,7 @@ def get_fp_strike_and_toeoff(vicon):
 def get_model_data(vicon, model):
     """ Read model output variables (e.g. Plug-in Gait) """
     modeldata = dict()
-    subjectname = vicon.GetSubjectNames()[0]
+    subjectname = getsubjectnames()[0]
     for var in model.read_vars:
         nums, bools = vicon.GetModelOutput(subjectname, var)
         if not nums:
@@ -344,8 +363,8 @@ def _list_to_str(li):
 
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                     'R_strike': None, 'R_toeoff': None}, ctr_pos=[0, 0, 0],
-                    events_range=None, fp_events=None,
-                    start_on_forceplate=False, plot=False, mark=True):
+                    max_dist=None, fp_events=None, start_on_forceplate=False,
+                    restrict_to_roi=False, plot=False, mark=True):
     """ Mark events based on velocity thresholding. Absolute thresholds
     can be specified as arguments. Otherwise, relative thresholds will be
     calculated based on the data. Optimal results will be obtained when
@@ -401,7 +420,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     STRIKE_TOL = 5
 
     # get subject info
-    subjectnames = vicon.GetSubjectNames()
+    subjectnames = getsubjectnames()
     if not subjectnames:
         raise GaitDataError('No subject defined in Nexus')
     subjectname = subjectnames[0]
@@ -529,6 +548,14 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                 not_ok = np.where(strikes < fp_strikes[0])
                 strikes = np.delete(strikes, not_ok)
 
+        if restrict_to_roi:
+            roi = vicon.GetTrialRegionOfInterest()
+            strikes = np.extract(np.logical_and(roi[0] <= strikes+1,
+                                                strikes+1 <= roi[1]), strikes)
+            
+            toeoffs = np.extract(np.logical_and(roi[0] <= toeoffs+1,
+                                                toeoffs+1 <= roi[1]), toeoffs)
+
         # delete toeoffs that are not between strike events
         not_ok = np.where(np.logical_or(toeoffs <= min(strikes),
                                         toeoffs >= max(strikes)))
@@ -543,11 +570,11 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         side_str = 'Right' if this_side == 'R' else 'Left'
         if mark:
             for fr in strikes:
-                    vicon.CreateAnEvent(subjectname, side_str,
-                                        'Foot Strike', fr+1, 0.0)
+                vicon.CreateAnEvent(subjectname, side_str,
+                                    'Foot Strike', fr+1, 0.0)
             for fr in toeoffs:
-                    vicon.CreateAnEvent(subjectname, side_str,
-                                        'Foot Off', fr+1, 0.0)
+                vicon.CreateAnEvent(subjectname, side_str,
+                                    'Foot Off', fr+1, 0.0)
         strikes_all[this_side] = strikes
         toeoffs_all[this_side] = toeoffs
 

@@ -17,6 +17,7 @@ import os.path as op
 import glob
 import models
 from emg import EMG
+from config import cfg
 import logging
 
 logger = logging.getLogger(__name__)
@@ -108,10 +109,12 @@ class Trial(object):
         # TODO: sometimes trial .enf name seems to be different?
         enfpath = self.sessionpath + self.trialname + '.Trial.enf'
         if op.isfile(enfpath):
+            logger.debug('reading Eclipse info from %s' % enfpath)
             edata = eclipse.get_eclipse_keys(enfpath)
             # for convenience, eclipse_data returns '' for nonexistent keys
             self.eclipse_data = defaultdict(lambda: '', edata)
         else:
+            logger.debug('no .enf file found')
             self.eclipse_data = defaultdict(lambda: '', {})
         # analog and model data are lazily read
         self.emg = EMG(self.source)
@@ -158,7 +161,10 @@ class Trial(object):
     def fp_events(self):
         if not self._fp_events:
             try:
-                self._fp_events = utils.detect_forceplate_events(self.source)
+                fp_info = (eclipse.eclipse_fp_keys(self.eclipse_data) if
+                           cfg.trial.use_eclipse_fp_info else None)
+                self._fp_events = utils.detect_forceplate_events(self.source,
+                                                                 fp_info=fp_info)
             except GaitDataError:
                 self._fp_events = None
         return self._fp_events

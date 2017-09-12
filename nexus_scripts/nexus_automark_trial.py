@@ -19,25 +19,23 @@ import logging
 
 def automark_single(plot=False):
 
-    nexus.check_nexus()
-
     vicon = nexus.viconnexus()
     vicon.ClearAllEvents()
 
+    # TODO: might want to use Eclipse forceplate info also here
     fpe = utils.detect_forceplate_events(vicon)
     vel = utils.get_foot_velocity(vicon, fpe)
 
     nexus.automark_events(vicon, vel_thresholds=vel,
                           max_dist=cfg.autoproc.automark_max_dist,
                           fp_events=fpe, ctr_pos=cfg.autoproc.walkway_ctr,
-                          plot=plot)
+                          restrict_to_roi=True, plot=plot)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--plot', action='store_true',
                         help='plot velocity curves')
     args = parser.parse_args()
     automark_single(args.plot)
-

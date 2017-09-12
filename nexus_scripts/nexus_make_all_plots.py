@@ -9,6 +9,8 @@ Script to create / update all kinetics/EMG plots for the marked trials
 
 from gaitutils import Plotter, cfg, register_gui_exception_handler, layouts
 from gaitutils.nexus import enf2c3d, find_trials
+import nexus_kin_consistency
+import nexus_emg_consistency
 
 import logging
 logger = logging.getLogger(__name__)
@@ -65,6 +67,9 @@ def do_plot():
         pl.plot_trial(maintitle=maintitle, show=False)
         pl.create_pdf(pdf_prefix=pdf_prefix)
 
+    # consistency plots
+    nexus_emg_consistency.do_plot(show=False)
+    nexus_kin_consistency.do_plot(show=False)    
 
 
 if __name__ == '__main__':

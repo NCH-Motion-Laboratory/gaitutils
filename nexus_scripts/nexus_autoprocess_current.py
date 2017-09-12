@@ -15,7 +15,6 @@ import logging
 
 def autoproc_single():
 
-    nexus.check_nexus()
     vicon = nexus.viconnexus()
     meta = nexus.get_metadata(vicon)
     enfname = meta['sessionpath'] + meta['trialname'] + '.Trial.enf'

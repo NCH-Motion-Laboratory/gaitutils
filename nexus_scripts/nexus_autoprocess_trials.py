@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 
-Process all trials in current session directory. Need to load a trial first
-(to get session path.)
+Autoprocess all trials in current Nexus session directory.
 
+See autoproc section in config for options.
 
 1st pass (all trials):
 -recon+label
@@ -22,15 +22,13 @@ Process all trials in current session directory. Need to load a trial first
 NOTES:
 
 -ROI operations only work for Nexus >= 2.5
--Eclipse desc of last processed trial is not updated properly (gets overwritten
-by Eclipse?)
 
 
 @author: Jussi
 """
 
 from gaitutils import (nexus, eclipse, utils, register_gui_exception_handler,
-                       GaitDataError)
+                       GaitDataError, messagebox)
 from gaitutils.config import cfg
 import os
 import numpy as np
@@ -41,7 +39,6 @@ import sys
 
 
 logger = logging.getLogger(__name__)
-
 
 
 class Trial:
@@ -88,10 +85,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         else:
             return cfg.autoproc.enf_descriptions['context_both']
 
-    nexus.check_nexus()
     vicon = nexus.viconnexus()
-
-    subjectname = nexus.get_metadata(vicon)['name']
     nexus_ver = nexus.true_ver()
 
     # used to store stats about foot velocity
@@ -108,6 +102,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         filename = os.path.split(filepath)[1]
         logger.debug('\nprocessing: %s' % filename)
         vicon.OpenTrial(filepath, cfg.autoproc.trial_open_timeout)
+        subjectname = nexus.get_metadata(vicon)['name']
         edi = eclipse.get_eclipse_keys(filepath_, return_empty=True)
         trial_type = edi['TYPE']
         trial_desc = edi['DESCRIPTION']
@@ -188,7 +183,9 @@ def _do_autoproc(enffiles, update_eclipse=True):
             trials[filepath].recon_ok = True
 
         # preprocessing ok, check forceplate data
-        fpev = utils.detect_forceplate_events(vicon)
+        fp_info = (eclipse.eclipse_fp_keys(edi) if
+                   cfg.autoproc.use_eclipse_fp_info else None)
+        fpev = utils.detect_forceplate_events(vicon, fp_info=fp_info)
         # get foot velocity info for all events (do not reduce to median)
         vel = utils.get_foot_velocity(vicon, fpev, medians=False)
         valid = fpev['valid']
@@ -272,8 +269,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
     if cfg.autoproc.eclipse_write_key and update_eclipse:
         for filepath, trial in trials.items():
             enf_file = filepath + '.Trial.enf'
-            eclipse.set_eclipse_key(enf_file, cfg.autoproc.eclipse_write_key,
-                                    trial.description, update_existing=True)
+            eclipse.set_eclipse_keys(enf_file, {cfg.autoproc.eclipse_write_key:
+                                     trial.description}, update_existing=True)
     else:
         logger.debug('Not updating Eclipse entries')
 
@@ -286,15 +283,17 @@ def _do_autoproc(enffiles, update_eclipse=True):
 
 
 def autoproc_session(patterns=None, update_eclipse=True):
-    enffiles = nexus.get_trial_enfs()
+
+    enffiles = nexus.get_session_enfs()
 
     if patterns:
         # filter trial names according to patterns
         enffiles = [s for s in enffiles if any([p in s for p in patterns])]
-        if not enffiles:
-            logger.info('No trials match specified include patterns')
+    if enffiles:
+        _do_autoproc(enffiles, update_eclipse=update_eclipse)
+    else:
+        raise GaitDataError('No trials to process')
 
-    _do_autoproc(enffiles, update_eclipse=update_eclipse)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

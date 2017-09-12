@@ -363,8 +363,9 @@ def _list_to_str(li):
 
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                     'R_strike': None, 'R_toeoff': None}, ctr_pos=[0, 0, 0],
-                    max_dist=None, fp_events=None, start_on_forceplate=False,
-                    restrict_to_roi=False, plot=False, mark=True):
+                    fp_events=None, start_on_forceplate=False,
+                    events_range=None, restrict_to_roi=False, plot=False,
+                    mark=True):
     """ Mark events based on velocity thresholding. Absolute thresholds
     can be specified as arguments. Otherwise, relative thresholds will be
     calculated based on the data. Optimal results will be obtained when

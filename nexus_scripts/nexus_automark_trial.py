@@ -27,7 +27,7 @@ def automark_single(plot=False):
     vel = utils.get_foot_velocity(vicon, fpe)
 
     nexus.automark_events(vicon, vel_thresholds=vel,
-                          max_dist=cfg.autoproc.automark_max_dist,
+                          events_range=cfg.autoproc.events_range,
                           fp_events=fpe, ctr_pos=cfg.autoproc.walkway_ctr,
                           restrict_to_roi=True, plot=plot)
 

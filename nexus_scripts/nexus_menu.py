@@ -10,6 +10,8 @@ from PyQt5 import QtGui, QtCore, uic, QtWidgets
 from PyQt5.QtCore import QRunnable, QThreadPool, pyqtSignal, QObject
 from pkg_resources import resource_filename
 import sys
+import ast
+import traceback
 from gaitutils import nexus
 from gaitutils import cfg
 import nexus_emgplot
@@ -60,14 +62,14 @@ class XStream(QtCore.QObject):
     def stdout():
         if not XStream._stdout:
             XStream._stdout = XStream()
-            sys.stdout = XStream._stdout  # also capture stdout
+          #  sys.stdout = XStream._stdout  # also capture stdout DEBUG
         return XStream._stdout
 
     @staticmethod
     def stderr():
         if not XStream._stderr:
             XStream._stderr = XStream()
-            sys.stderr = XStream._stderr  # ... and stderr
+          #  sys.stderr = XStream._stderr  # ... and stderr DEBUG
         return XStream._stderr
 
 
@@ -103,23 +105,29 @@ class AutoprocDialog(QtWidgets.QDialog):
 
     def getval(self, widget):
         """ Universal value getter that takes any type of config widget.
-        Returns native types. """
-        if isinstance(widget, QtWidgets.QSpinBox) or isinstance(widget, QtWidgets.QDoubleSpinBox):
+        Returns native types, except QLineEdit input is auto-evaluated """
+        if (isinstance(widget, QtWidgets.QSpinBox) or
+           isinstance(widget, QtWidgets.QDoubleSpinBox)):
             return widget.value()
         elif isinstance(widget, QtWidgets.QCheckBox):
             return bool(widget.checkState())
         elif isinstance(widget, QtWidgets.QComboBox):
-            return unicode(widget.currentText())
+            return widget.currentText()
         elif isinstance(widget, QtWidgets.QLineEdit):
-            return unicode(widget.text())
+            # Directly eval lineEdit contents. This means that string vars
+            # must be quoted in the lineEdit.
+            txt = widget.text()
+            return ast.literal_eval(txt) if txt else None
         else:
             raise Exception('Unhandled type of config widget')
 
     def setval(self, widget, val):
         """ Universal value setter that takes any type of config widget.
-        val is a native type. """
+        val must match widget type, except for QLineEdit that can take
+        any type -> converted to its repr """
         print('%s -> %s of %s' % (widget, val, type(val)))
-        if isinstance(widget, QtWidgets.QSpinBox) or isinstance(widget, QtWidgets.QDoubleSpinBox):
+        if (isinstance(widget, QtWidgets.QSpinBox) or
+           isinstance(widget, QtWidgets.QDoubleSpinBox)):
             widget.setValue(val)
         elif isinstance(widget, QtWidgets.QCheckBox):
             widget.setCheckState(2 if val else 0)
@@ -130,7 +138,7 @@ class AutoprocDialog(QtWidgets.QDialog):
             else:
                 raise ValueError('Tried to set combobox to invalid value.')
         elif isinstance(widget, QtWidgets.QLineEdit):
-            widget.setText(str(val))
+            widget.setText(repr(val))
         else:
             raise Exception('Unhandled type of config widget')
 
@@ -140,8 +148,8 @@ class AutoprocDialog(QtWidgets.QDialog):
         for section in self.cfg_widgets.keys():
             for wname, widget in self.cfg_widgets[section].items():
                 item = wname[4:]
-                widgetval = str(self.getval(widget))
-                cfgval = str(getattr(getattr(cfg, section), item))  # FIXME
+                widgetval = self.getval(widget)
+                cfgval = getattr(getattr(cfg, section), item)
                 if widgetval != cfgval:
                     print('changing %s:%s = %s (was %s))' % (section, wname,
                                                             widgetval, cfgval))
@@ -172,7 +180,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         thread=True runs it in a separate worker thread, enabling GUI updates
         (e.g. logging dialog) which can be nice.
         """
-        
+
         self._button_connect_task(self.btnEMG, nexus_emgplot.do_plot)
         self._button_connect_task(self.btnKinEMG,
                                   nexus_kinetics_emgplot.do_plot)
@@ -318,7 +326,7 @@ def main():
 
     logger = logging.getLogger()
     handler = QtHandler()
-    # handler = logging.StreamHandler()   # to sys.stdout
+    handler = logging.StreamHandler()   # to sys.stdout  DEBUG
 
     handler.setFormatter(logging.
                          Formatter("%(name)s: %(levelname)s: %(message)s"))

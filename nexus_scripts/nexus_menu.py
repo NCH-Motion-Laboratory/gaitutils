@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Feb 07 10:05:28 2017
+Show a Qt menu for running various Nexus tasks.
 
-@author: HUS20664877
+@author: jnu@iki.fi
 """
 
 from __future__ import print_function
@@ -181,7 +181,7 @@ class AutoprocDialog(QtWidgets.QDialog):
         res, txt = self._check_widget_inputs()
         if res:
             self.update_cfg()
-            self.done(QtWidgets.QDialog.Accepted)
+            self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
             message_dialog('Invalid input: %s' % txt)
 
@@ -254,8 +254,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         unused events argument. If thread=True, launch in a separate worker
         thread. """
         button.clicked.connect(lambda ev: self._execute(fun, thread=thread))
-
-
 
     def autoproc_dialog(self):
         """ Show the autoprocessing options dialog """

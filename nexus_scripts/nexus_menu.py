@@ -32,6 +32,16 @@ except ImportError:
 import logging
 
 
+def message_dialog(msg):
+    """ Show message with an 'OK' button. """
+    dlg = QtWidgets.QMessageBox()
+    dlg.setWindowTitle('Message')
+    dlg.setText(msg)
+    dlg.addButton(QtWidgets.QPushButton('Ok'),
+                  QtWidgets.QMessageBox.YesRole)
+    dlg.exec_()
+
+
 class QtHandler(logging.Handler):
 
     def __init__(self):
@@ -169,16 +179,11 @@ class AutoprocDialog(QtWidgets.QDialog):
         """ Update config and close dialog, if widget inputs are ok. Otherwise
         show an error dialog """
         res, txt = self._check_widget_inputs()
-        if not res:
-            dlg = QtWidgets.QMessageBox()
-            dlg.setWindowTitle('Error')
-            dlg.setText('Invalid input: %s' % txt)
-            dlg.addButton(QtWidgets.QPushButton('Ok'),
-                          QtWidgets.QMessageBox.YesRole)
-            dlg.exec_()
-        else:
+        if res:
             self.update_cfg()
             self.done(QtWidgets.QDialog.Accepted)
+        else:
+            message_dialog('Invalid input: %s' % txt)
 
 
 class Gaitmenu(QtWidgets.QMainWindow):
@@ -250,14 +255,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         thread. """
         button.clicked.connect(lambda ev: self._execute(fun, thread=thread))
 
-    def message_dialog(self, msg):
-        """ Show message with an 'OK' button. """
-        dlg = QtWidgets.QMessageBox()
-        dlg.setWindowTitle('Message')
-        dlg.setText(msg)
-        dlg.addButton(QtWidgets.QPushButton('Ok'),
-                      QtWidgets.QMessageBox.YesRole)
-        dlg.exec_()
+
 
     def autoproc_dialog(self):
         """ Show the autoprocessing options dialog """
@@ -272,12 +270,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.txtOutput.ensureCursorVisible()
 
     def _no_custom(self):
-        self.message_dialog('No custom plot defined. Please create '
-                            'nexus_scripts/nexus_customplot.py')
+        message_dialog('No custom plot defined. Please create '
+                       'nexus_scripts/nexus_customplot.py')
 
     def _exception(self, e):
         logging.debug('caught exception while running task')
-        self.message_dialog('%s' % str(e))
+        message_dialog('%s' % str(e))
 
     def _disable_op_buttons(self):
         """ Disable all operation buttons """

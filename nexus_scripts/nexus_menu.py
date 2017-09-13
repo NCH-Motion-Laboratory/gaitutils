@@ -80,9 +80,8 @@ class AutoprocDialog(QtWidgets.QDialog):
         # load user interface made with designer
         uifile = resource_filename(__name__, 'autoproc_dialog.ui')
         uic.loadUi(uifile, self)
-        self.buttonBox.accepted.connect(self.accept)
-        self.buttonBox.rejected.connect(self.reject)
-        """ Collect config widgets into a dict """
+        """ Collect config widgets into a dict of dict. First key is tab
+        (same as category, i.e. autoproc), second key is widget name """
         self.cfg_widgets = dict()
         for page in [self.tabWidget.widget(n) for n in
                      range(self.tabWidget.count())]:
@@ -92,18 +91,31 @@ class AutoprocDialog(QtWidgets.QDialog):
                 wname = unicode(w.objectName())
                 if wname[:4] == 'cfg_':  # config widgets are specially named
                     self.cfg_widgets[pname][wname] = w
-        self.update_widgets()
+        self._update_widgets()
 
-    def update_widgets(self):
+    def _update_widgets(self):
         """ Update config widgets according to current cfg """
-        for section in self.cfg_widgets.keys():
+        for section in self.cfg_widgets:
             for wname, widget in self.cfg_widgets[section].items():
                 item = wname[4:]
                 cfgval = getattr(getattr(cfg, section), item)
-                if str(cfgval) != str(self.getval(widget)):
-                    self.setval(widget, cfgval)  # set using native type
+                if str(cfgval) != str(self._getval(widget)):
+                    self._setval(widget, cfgval)  # set using native type
 
-    def getval(self, widget):
+    def _check_widget_inputs(self):
+        """ Check widget inputs. Currently only QLineEdits are checked for
+        eval - ability """
+        for section in self.cfg_widgets:
+            for widget in self.cfg_widgets[section].values():
+                if isinstance(widget, QtWidgets.QLineEdit):
+                    txt = widget.text()
+                    try:
+                        ast.literal_eval(txt)
+                    except (SyntaxError, ValueError):
+                        return (False, txt)
+        return (True, '')
+
+    def _getval(self, widget):
         """ Universal value getter that takes any type of config widget.
         Returns native types, except QLineEdit input is auto-evaluated """
         if (isinstance(widget, QtWidgets.QSpinBox) or
@@ -121,10 +133,10 @@ class AutoprocDialog(QtWidgets.QDialog):
         else:
             raise Exception('Unhandled type of config widget')
 
-    def setval(self, widget, val):
+    def _setval(self, widget, val):
         """ Universal value setter that takes any type of config widget.
         val must match widget type, except for QLineEdit that can take
-        any type -> converted to its repr """
+        any type, which will be converted to its repr """
         print('%s -> %s of %s' % (widget, val, type(val)))
         if (isinstance(widget, QtWidgets.QSpinBox) or
            isinstance(widget, QtWidgets.QDoubleSpinBox)):
@@ -148,12 +160,25 @@ class AutoprocDialog(QtWidgets.QDialog):
         for section in self.cfg_widgets.keys():
             for wname, widget in self.cfg_widgets[section].items():
                 item = wname[4:]
-                widgetval = self.getval(widget)
+                widgetval = self._getval(widget)
                 cfgval = getattr(getattr(cfg, section), item)
                 if widgetval != cfgval:
-                    print('changing %s:%s = %s (was %s))' % (section, wname,
-                                                            widgetval, cfgval))
-                    cfg[section][item] = widgetval
+                    cfg[section][item] = repr(widgetval)
+
+    def accept(self):
+        """ Update config and close dialog, if widget inputs are ok. Otherwise
+        show an error dialog """
+        res, txt = self._check_widget_inputs()
+        if not res:
+            dlg = QtWidgets.QMessageBox()
+            dlg.setWindowTitle('Error')
+            dlg.setText('Invalid input: %s' % txt)
+            dlg.addButton(QtWidgets.QPushButton('Ok'),
+                          QtWidgets.QMessageBox.YesRole)
+            dlg.exec_()
+        else:
+            self.update_cfg()
+            self.done(QtWidgets.QDialog.Accepted)
 
 
 class Gaitmenu(QtWidgets.QMainWindow):
@@ -237,9 +262,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def autoproc_dialog(self):
         """ Show the autoprocessing options dialog """
         dlg = AutoprocDialog()
-        ret = dlg.exec_()
-        if ret:
-            dlg.update_cfg()
+        dlg.exec_()
 
     def _log_message(self, msg):
         c = self.txtOutput.textCursor()

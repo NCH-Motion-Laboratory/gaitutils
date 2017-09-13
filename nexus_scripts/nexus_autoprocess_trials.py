@@ -150,7 +150,7 @@ def _do_autoproc(enffiles, cfg=defaultcfg, update_eclipse=True):
                     break
             if ctr is not None:
                 logger.debug('walkway center frame: %d' % ctr)
-            # cannot find center frame - possible rasi or lasi gaps
+            # cannot find center frame - possibly gaps in track_markers
             if not ctr:
                 fail = 'gaps_or_short'
                 gaps_found = True

@@ -158,10 +158,12 @@ def detect_forceplate_events(source, fp_info=None):
 
         # confirm whether it's a valid foot strike; look at Eclipse info or
         # use our own autodetection routine
+        detect = True
         plate = 'FP' + str(plate_ind+1)
         if fp_info is not None and plate in fp_info:
             # TODO: are we sure that the plate indices match Eclipse?
             valid = fp_info[plate]
+            detect = False
             logger.debug('using Eclipse forceplate info: %s' % valid)
             if valid == 'Right':
                 this_valid = 'R'
@@ -169,10 +171,12 @@ def detect_forceplate_events(source, fp_info=None):
                 this_valid = 'L'
             elif valid == 'Invalid':
                 this_valid = None
+            elif valid == 'Auto':
+                detect = True
             else:
                 raise Exception('unexpected Eclipse forceplate info')
 
-        else:  # use our own autodetection
+        if detect:
             logger.debug('using autodetection')
             # check shift of center of pressure during roi in fwd dir
             cop_roi = fp['CoP'][friseind:ffallind, fwd_dir]

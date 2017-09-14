@@ -11,6 +11,7 @@ from PyQt5.QtCore import QRunnable, QThreadPool, pyqtSignal, QObject
 from pkg_resources import resource_filename
 import sys
 import ast
+import os
 import traceback
 from gaitutils import nexus
 from gaitutils import cfg
@@ -347,6 +348,7 @@ class Runner(QRunnable):
 
 def main():
 
+   
     app = QtWidgets.QApplication(sys.argv)
 
     logger = logging.getLogger()

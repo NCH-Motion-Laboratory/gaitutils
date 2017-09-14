@@ -8,15 +8,25 @@ Handles gaitutils config files.
 import ConfigParser
 import ast
 import os.path as op
+import os
 import copy
 import sys
 from pkg_resources import resource_filename
+
+
+""" Work around stdout and stderr not being available, if we are run
+using pythonw.exe on Windows. Without this, exception will be raised
+e.g. on any print statement. """
+if sys.platform.find('win') != -1 and sys.executable.find('pythonw') != -1:
+    blackhole = file(os.devnull, 'w')
+    sys.stdout = sys.stderr = blackhole
 
 # default config
 cfg_template = resource_filename(__name__, 'default.cfg')
 # user specific config
 homedir = op.expanduser('~')
 cfg_user = homedir + '/.gaitutils.cfg'
+
 
 
 class Section(object):

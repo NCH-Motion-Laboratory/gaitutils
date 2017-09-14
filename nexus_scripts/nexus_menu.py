@@ -72,14 +72,14 @@ class XStream(QtCore.QObject):
     def stdout():
         if not XStream._stdout:
             XStream._stdout = XStream()
-          #  sys.stdout = XStream._stdout  # also capture stdout DEBUG
+            sys.stdout = XStream._stdout  # also capture stdout
         return XStream._stdout
 
     @staticmethod
     def stderr():
         if not XStream._stderr:
             XStream._stderr = XStream()
-          #  sys.stderr = XStream._stderr  # ... and stderr DEBUG
+            sys.stderr = XStream._stderr  # ... and stderr
         return XStream._stderr
 
 
@@ -149,7 +149,6 @@ class AutoprocDialog(QtWidgets.QDialog):
         """ Universal value setter that takes any type of config widget.
         val must match widget type, except for QLineEdit that can take
         any type, which will be converted to its repr """
-        print('%s -> %s of %s' % (widget, val, type(val)))
         if (isinstance(widget, QtWidgets.QSpinBox) or
            isinstance(widget, QtWidgets.QDoubleSpinBox)):
             widget.setValue(val)
@@ -346,8 +345,8 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
 
     logger = logging.getLogger()
-    handler = QtHandler()
-    handler = logging.StreamHandler()   # to sys.stdout  DEBUG
+    handler = QtHandler()  # log to Qt logging widget
+    # handler = logging.StreamHandler()   # log to sys.stdout
 
     handler.setFormatter(logging.
                          Formatter("%(name)s: %(levelname)s: %(message)s"))

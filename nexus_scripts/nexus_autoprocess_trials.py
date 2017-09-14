@@ -70,6 +70,10 @@ def _do_autoproc(enffiles, update_eclipse=True):
         for pipeline in plines:
             logger.debug('Running pipeline: %s' % pipeline)
             vicon.RunPipeline(pipeline, '', cfg.autoproc.pipeline_timeout)
+            result = vicon.Client.RunPipeline(pipeline.encode('utf-8'), '',
+                                              cfg.autoproc.pipeline_timeout)
+            if result.Error():
+                raise GaitDataError('Cannot run pipeline: "%s"' % pipeline)
 
     def _save_trial():
         logger.debug('Saving trial')
@@ -106,10 +110,12 @@ def _do_autoproc(enffiles, update_eclipse=True):
         edi = eclipse.get_eclipse_keys(filepath_, return_empty=True)
         trial_type = edi['TYPE']
         trial_desc = edi['DESCRIPTION']
+        trial_notes = edi['NOTES']
         if trial_type in cfg.autoproc.type_skip:
             logger.debug('Not a dynamic trial, skipping')
             continue
-        if trial_desc.upper() in [s.upper() for s in cfg.autoproc.desc_skip]:
+        skip = [s.upper() for s in cfg.autoproc.eclipse_skip]
+        if trial_desc.upper() in skip or trial_notes.upper in skip:
             logger.debug('Skipping based on description')
             # run preprocessing + save even for skipped trials, to mark
             # them as processed
@@ -150,7 +156,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
                     break
             if ctr is not None:
                 logger.debug('walkway center frame: %d' % ctr)
-            # cannot find center frame - possible rasi or lasi gaps
+            # cannot find center frame - possibly gaps in track_markers
             if not ctr:
                 fail = 'gaps_or_short'
                 gaps_found = True
@@ -260,7 +266,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         # run model pipeline and save
         eclipse_str = '%s,%s' % (cfg.autoproc.enf_descriptions['ok'],
                                  trial.description)
-        _run_pipelines(cfg.autoproc.model_pipeline)
+        _run_pipelines(cfg.autoproc.model_pipelines)
         _save_trial()
         trials[filepath].description = eclipse_str
 

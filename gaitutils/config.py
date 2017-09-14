@@ -8,6 +8,8 @@ Handles gaitutils config files.
 import ConfigParser
 import ast
 import os.path as op
+import copy
+import sys
 from pkg_resources import resource_filename
 
 # default config
@@ -30,7 +32,11 @@ class Section(object):
         exist as instance variables, so referencing them will cause
         __getattr__ to be called. The items are returned from the section dict
         and automatically converted from strings to Python types. """
-        return ast.literal_eval(self._dict[item])
+        try:
+            return ast.literal_eval(self._dict[item])
+        except ValueError:
+            raise ValueError('Could not convert value %s to Python type' %
+                             self._dict[item])
 
 
 class EpicParser(ConfigParser.SafeConfigParser):
@@ -42,15 +48,8 @@ class EpicParser(ConfigParser.SafeConfigParser):
     type. """
 
     def __getitem__(self, section):
-        """ Returns the parser section dictionary. Not implemented by
-        SafeConfigParser """
+        """ Returns the parser section dictionary. """
         return self._sections[section]
-    
-    def __repr__(self):
-        """ For completeness; not implemented by SafeConfigParser """
-        return '<%s.%s at %s>' % (self.__class__.__module__,
-                                  self.__class__.__name__,
-                                  str(hex(id(self))))
 
     def __getattr__(self, section):
         """ Implements attribute access, i.e. parser.section or more commonly
@@ -59,8 +58,12 @@ class EpicParser(ConfigParser.SafeConfigParser):
         return Section(self._sections[section])
 
 # provide the global cfg instance
+# read template config
 cfg = EpicParser()
 cfg.read(cfg_template)
+cfg_tpl_di = copy.deepcopy(cfg._sections)  # save the template config
+
+# read user config
 if not op.isfile(cfg_user):
     print('no config file, trying to create %s' % cfg_user)
     cfg_file = open(cfg_user, 'wt')
@@ -68,3 +71,15 @@ if not op.isfile(cfg_user):
     cfg_file.close()
 else:
     cfg.read(cfg_user)
+
+# check for extra entries in user config
+cfg_user_di = cfg._sections
+for sname, section in cfg_user_di.items():
+    if sname not in cfg_tpl_di:
+        print('WARNING: unused (deprecated?) section %s in user config'
+              % sname)
+    for key in section:
+        if key not in cfg_tpl_di[sname]:
+            print('WARNING: unused (deprecated?) key %s in user config' % key)
+
+sys.stdout.flush()  # make sure that warnings are printed out

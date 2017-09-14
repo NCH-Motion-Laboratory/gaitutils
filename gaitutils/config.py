@@ -25,8 +25,7 @@ if sys.platform.find('win') != -1 and sys.executable.find('pythonw') != -1:
 cfg_template = resource_filename(__name__, 'default.cfg')
 # user specific config
 homedir = op.expanduser('~')
-cfg_user = homedir + '/.gaitutils.cfg'
-
+cfg_user = op.join(homedir, '.gaitutils.cfg')
 
 
 class Section(object):

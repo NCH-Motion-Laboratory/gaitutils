@@ -93,6 +93,10 @@ class AutoprocDialog(QtWidgets.QDialog):
         # load user interface made with designer
         uifile = resource_filename(__name__, 'autoproc_dialog.ui')
         uic.loadUi(uifile, self)
+        loadButton = QtWidgets.QPushButton('Load...')
+        self.buttonBox.addButton(loadButton,
+                                 QtWidgets.QDialogButtonBox.ActionRole)
+        loadButton.clicked.connect(self.load_config_dialog)
         """ Collect config widgets into a dict of dict. First key is tab
         (same as category, i.e. autoproc), second key is widget name """
         self.cfg_widgets = dict()
@@ -105,6 +109,22 @@ class AutoprocDialog(QtWidgets.QDialog):
                 if wname[:4] == 'cfg_':  # config widgets are specially named
                     self.cfg_widgets[pname][wname] = w
         self._update_widgets()
+
+    def load_config_dialog(self):
+        """ Bring up load dialog and load selected file. """
+        global cfg
+        homedir = os.path.expanduser('~')
+        fout = QtWidgets.QFileDialog.getOpenFileName(self,
+                                                     'Load config file',
+                                                     homedir,
+                                                     'Config files (*.cfg)')
+        #TODO : filedialog set filter -> PyQt5.QtCore.QDir.Hidden
+        fname = fout[0]
+        if fname:
+            fname = unicode(fname)
+            # TODO: check for errors
+            cfg.read(fname)
+            self._update_widgets()
 
     def _update_widgets(self):
         """ Update config widgets according to current cfg """

@@ -359,6 +359,9 @@ def main():
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
 
+    # uiparser logger makes too much noise
+    logging.getLogger('PyQt5.uic').setLevel(logging.WARNING)
+
     gaitmenu = Gaitmenu()
     gaitmenu.show()
 

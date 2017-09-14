@@ -111,6 +111,8 @@ class AutoprocDialog(QtWidgets.QDialog):
                 cfgval = getattr(getattr(cfg, section), item)
                 if str(cfgval) != str(self._getval(widget)):
                     self._setval(widget, cfgval)  # set using native type
+                if isinstance(widget, QtWidgets.QLineEdit):
+                    widget.setCursorPosition(0)  # show beginning of line
 
     def _check_widget_inputs(self):
         """ Check widget inputs. Currently only QLineEdits are checked for

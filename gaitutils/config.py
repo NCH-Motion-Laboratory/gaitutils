@@ -8,6 +8,7 @@ Handles gaitutils config files.
 import ConfigParser
 import ast
 import os.path as op
+import copy
 from pkg_resources import resource_filename
 
 # default config
@@ -56,8 +57,12 @@ class EpicParser(ConfigParser.SafeConfigParser):
         return Section(self._sections[section])
 
 # provide the global cfg instance
+# read template config
 cfg = EpicParser()
 cfg.read(cfg_template)
+cfg_tpl_di = copy.deepcopy(cfg._sections)  # save the template config
+
+# read user config
 if not op.isfile(cfg_user):
     print('no config file, trying to create %s' % cfg_user)
     cfg_file = open(cfg_user, 'wt')
@@ -65,3 +70,13 @@ if not op.isfile(cfg_user):
     cfg_file.close()
 else:
     cfg.read(cfg_user)
+
+# check for extra entries in user config
+cfg_user_di = cfg._sections
+for sname, section in cfg_user_di.items():
+    if sname not in cfg_tpl_di:
+        print('warning: unused (deprecated?) section %s in user config'
+              % sname)
+    for key in section:
+        if key not in cfg_tpl_di[sname]:
+            print('warning: unused (deprecated?) key %s in user config' % key)

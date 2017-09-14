@@ -9,6 +9,7 @@ import ConfigParser
 import ast
 import os.path as op
 import copy
+import sys
 from pkg_resources import resource_filename
 
 # default config
@@ -75,8 +76,10 @@ else:
 cfg_user_di = cfg._sections
 for sname, section in cfg_user_di.items():
     if sname not in cfg_tpl_di:
-        print('warning: unused (deprecated?) section %s in user config'
+        print('WARNING: unused (deprecated?) section %s in user config'
               % sname)
     for key in section:
         if key not in cfg_tpl_di[sname]:
-            print('warning: unused (deprecated?) key %s in user config' % key)
+            print('WARNING: unused (deprecated?) key %s in user config' % key)
+
+sys.stdout.flush()  # make sure that warnings are printed out

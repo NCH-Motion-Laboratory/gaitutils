@@ -112,13 +112,14 @@ def _do_autoproc(enffiles, update_eclipse=True):
         trial_desc = edi['DESCRIPTION']
         trial_notes = edi['NOTES']
         if trial_type in cfg.autoproc.type_skip:
-            logger.debug('Not a dynamic trial, skipping')
+            logger.debug('Skipping trial type: %s' % trial_type)
             continue
         skip = [s.upper() for s in cfg.autoproc.eclipse_skip]
         if trial_desc.upper() in skip or trial_notes.upper in skip:
             logger.debug('Skipping based on description')
             # run preprocessing + save even for skipped trials, to mark
-            # them as processed
+            # them as processed - mostly so that Eclipse export to Polygon
+            # will work
             _run_pipelines(cfg.autoproc.pre_pipelines)
             _save_trial()
             continue
@@ -132,13 +133,14 @@ def _do_autoproc(enffiles, update_eclipse=True):
         # try to run preprocessing pipelines
         fail = None
         _run_pipelines(cfg.autoproc.pre_pipelines)
-        # trial sanity checks
-        trange = vicon.GetTrialRange()
+        # check trial validity; trial long enough, labeling and gaps ok
         gaps_found = False
+        trange = vicon.GetTrialRange()
         if (trange[1] - trange[0]) < cfg.autoproc.min_trial_duration:
             fail = 'short'
         else:  # duration ok
-            # try to figure out trial center frame
+            # try to figure out trial center frame using 
+            # track markers (only one needs to be ok)
             for marker in cfg.autoproc.track_markers:
                 try:
                     dim = utils.principal_movement_direction(vicon, cfg.
@@ -150,7 +152,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
                                                    walkway_ctr[dim])
                 except (GaitDataError, ValueError):
                     ctr = None
-                ctr = ctr[0] if ctr else None
+                ctr = ctr[0] if ctr else None  # deal w/ multiple crossings
                 if ctr:  # ok and no gaps
                     trials[filepath].ctr_frame = ctr
                     break
@@ -161,7 +163,9 @@ def _do_autoproc(enffiles, update_eclipse=True):
                 fail = 'gaps_or_short'
                 gaps_found = True
             else:
-                for marker in allmarkers:  # check for gaps / lbl failures
+                # check markers for gaps or label failures
+                for marker in (set(allmarkers) -
+                               set(cfg.autoproc.ignore_markers)):
                     try:
                         gaps = (nexus.get_marker_data(vicon, marker)
                                 [marker + '_gaps'])

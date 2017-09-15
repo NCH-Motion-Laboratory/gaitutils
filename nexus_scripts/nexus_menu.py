@@ -94,18 +94,18 @@ class AutoprocDialog(QtWidgets.QDialog):
         uifile = resource_filename(__name__, 'autoproc_dialog.ui')
         uic.loadUi(uifile, self)
 
+        # add some buttons to the standard button box
         loadButton = QtWidgets.QPushButton('Load...')
         self.buttonBox.addButton(loadButton,
                                  QtWidgets.QDialogButtonBox.ActionRole)
         loadButton.clicked.connect(self.load_config_dialog)
-
         saveButton = QtWidgets.QPushButton('Save...')
         self.buttonBox.addButton(saveButton,
                                  QtWidgets.QDialogButtonBox.ActionRole)
         saveButton.clicked.connect(self.save_config_dialog)
 
         """ Collect config widgets into a dict of dict. First key is tab
-        (same as category, i.e. autoproc), second key is widget name """
+        (same as config category, e.g. autoproc), second key is widget name """
         self.cfg_widgets = dict()
         for page in [self.tabWidget.widget(n) for n in
                      range(self.tabWidget.count())]:
@@ -393,7 +393,6 @@ class Runner(QRunnable):
 
 def main():
 
-   
     app = QtWidgets.QApplication(sys.argv)
 
     logger = logging.getLogger()

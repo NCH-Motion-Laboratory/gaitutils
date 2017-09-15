@@ -78,7 +78,7 @@
          <item row="2" column="1">
           <widget class="QLineEdit" name="cfg_track_markers"/>
          </item>
-         <item row="3" column="0">
+         <item row="4" column="0">
           <spacer name="verticalSpacer_5">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
@@ -91,7 +91,7 @@
            </property>
           </spacer>
          </item>
-         <item row="4" column="0">
+         <item row="5" column="0">
           <widget class="QLabel" name="label_16">
            <property name="font">
             <font>
@@ -104,27 +104,27 @@
            </property>
           </widget>
          </item>
-         <item row="5" column="0">
+         <item row="6" column="0">
           <widget class="QLabel" name="label_17">
            <property name="text">
             <string>Preprocessing</string>
            </property>
           </widget>
          </item>
-         <item row="5" column="1">
+         <item row="6" column="1">
           <widget class="QLineEdit" name="cfg_pre_pipelines"/>
          </item>
-         <item row="6" column="0">
+         <item row="7" column="0">
           <widget class="QLabel" name="label_19">
            <property name="text">
             <string>Model</string>
            </property>
           </widget>
          </item>
-         <item row="6" column="1">
+         <item row="7" column="1">
           <widget class="QLineEdit" name="cfg_model_pipelines"/>
          </item>
-         <item row="7" column="0">
+         <item row="8" column="0">
           <spacer name="verticalSpacer_4">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
@@ -137,7 +137,7 @@
            </property>
           </spacer>
          </item>
-         <item row="8" column="0">
+         <item row="9" column="0">
           <widget class="QLabel" name="label_3">
            <property name="font">
             <font>
@@ -150,28 +150,28 @@
            </property>
           </widget>
          </item>
-         <item row="9" column="0">
+         <item row="10" column="0">
           <widget class="QLabel" name="label_14">
            <property name="text">
             <string>Use Eclipse forceplate info if available</string>
            </property>
           </widget>
          </item>
-         <item row="9" column="1">
+         <item row="10" column="1">
           <widget class="QCheckBox" name="cfg_use_eclipse_fp_info">
            <property name="text">
             <string/>
            </property>
           </widget>
          </item>
-         <item row="10" column="0">
+         <item row="11" column="0">
           <widget class="QLabel" name="label">
            <property name="text">
             <string>Sideways tolerance for ankle marker</string>
            </property>
           </widget>
          </item>
-         <item row="10" column="1">
+         <item row="11" column="1">
           <widget class="QSpinBox" name="cfg_ankle_sideways_tol">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -187,42 +187,42 @@
            </property>
           </widget>
          </item>
-         <item row="11" column="0">
+         <item row="12" column="0">
           <widget class="QLabel" name="label_7">
            <property name="text">
             <string>Marker tolerance during toeoff in forward direction</string>
            </property>
           </widget>
          </item>
-         <item row="11" column="1">
+         <item row="12" column="1">
           <widget class="QSpinBox" name="cfg_toeoff_marker_tol">
            <property name="suffix">
             <string> mm</string>
            </property>
           </widget>
          </item>
-         <item row="12" column="0">
+         <item row="13" column="0">
           <widget class="QLabel" name="label_9">
            <property name="text">
             <string>Tolerance for heel marker</string>
            </property>
           </widget>
          </item>
-         <item row="12" column="1">
+         <item row="13" column="1">
           <widget class="QSpinBox" name="cfg_heel_strike_tol">
            <property name="suffix">
             <string> mm</string>
            </property>
           </widget>
          </item>
-         <item row="13" column="0">
+         <item row="14" column="0">
           <widget class="QLabel" name="label_4">
            <property name="text">
             <string>Force threshold for forceplate contact (relative to subject weight)</string>
            </property>
           </widget>
          </item>
-         <item row="13" column="1">
+         <item row="14" column="1">
           <widget class="QDoubleSpinBox" name="cfg_forceplate_contact_threshold">
            <property name="suffix">
             <string/>
@@ -235,14 +235,14 @@
            </property>
           </widget>
          </item>
-         <item row="14" column="0">
+         <item row="15" column="0">
           <widget class="QLabel" name="label_5">
            <property name="text">
             <string>Minimum peak force (relative to subject weight)</string>
            </property>
           </widget>
          </item>
-         <item row="14" column="1">
+         <item row="15" column="1">
           <widget class="QDoubleSpinBox" name="cfg_forceplate_min_weight">
            <property name="suffix">
             <string/>
@@ -255,14 +255,14 @@
            </property>
           </widget>
          </item>
-         <item row="15" column="0">
+         <item row="16" column="0">
           <widget class="QLabel" name="label_8">
            <property name="text">
             <string>Maximum center of pressure shift</string>
            </property>
           </widget>
          </item>
-         <item row="15" column="1">
+         <item row="16" column="1">
           <widget class="QSpinBox" name="cfg_cop_shift_max">
            <property name="suffix">
             <string> mm</string>
@@ -272,7 +272,7 @@
            </property>
           </widget>
          </item>
-         <item row="16" column="0">
+         <item row="17" column="0">
           <spacer name="verticalSpacer_2">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
@@ -285,7 +285,7 @@
            </property>
           </spacer>
          </item>
-         <item row="17" column="0">
+         <item row="18" column="0">
           <widget class="QLabel" name="label_10">
            <property name="font">
             <font>
@@ -298,41 +298,41 @@
            </property>
           </widget>
          </item>
-         <item row="18" column="0">
+         <item row="19" column="0">
           <widget class="QLabel" name="label_6">
            <property name="text">
             <string>Strike events start on forceplate</string>
            </property>
           </widget>
          </item>
-         <item row="18" column="1">
+         <item row="19" column="1">
           <widget class="QCheckBox" name="cfg_start_on_forceplate">
            <property name="text">
             <string/>
            </property>
           </widget>
          </item>
-         <item row="19" column="0">
+         <item row="20" column="0">
           <widget class="QLabel" name="label_2">
            <property name="text">
-            <string>Coordinate range for events (gait forward coordinate, mm):</string>
-           </property>
-          </widget>
-         </item>
-         <item row="19" column="1">
-          <widget class="QLineEdit" name="cfg_events_range"/>
-         </item>
-         <item row="20" column="0">
-          <widget class="QLabel" name="label_18">
-           <property name="text">
-            <string>Location of walkway center (mm):</string>
+            <string>Coordinate range for events (gait forward coordinate, mm)</string>
            </property>
           </widget>
          </item>
          <item row="20" column="1">
-          <widget class="QLineEdit" name="cfg_walkway_ctr"/>
+          <widget class="QLineEdit" name="cfg_events_range"/>
          </item>
          <item row="21" column="0">
+          <widget class="QLabel" name="label_18">
+           <property name="text">
+            <string>Location of walkway center (mm)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="21" column="1">
+          <widget class="QLineEdit" name="cfg_walkway_ctr"/>
+         </item>
+         <item row="22" column="0">
           <spacer name="verticalSpacer_3">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
@@ -345,7 +345,7 @@
            </property>
           </spacer>
          </item>
-         <item row="22" column="0">
+         <item row="23" column="0">
           <widget class="QLabel" name="label_11">
            <property name="font">
             <font>
@@ -358,14 +358,14 @@
            </property>
           </widget>
          </item>
-         <item row="23" column="0">
+         <item row="24" column="0">
           <widget class="QLabel" name="label_12">
            <property name="text">
             <string>Eclipse key to update</string>
            </property>
           </widget>
          </item>
-         <item row="23" column="1">
+         <item row="24" column="1">
           <widget class="QComboBox" name="cfg_eclipse_write_key">
            <item>
             <property name="text">
@@ -384,15 +384,25 @@
            </item>
           </widget>
          </item>
-         <item row="24" column="0">
+         <item row="25" column="0">
           <widget class="QLabel" name="label_20">
            <property name="text">
             <string>Eclipse strings to write for the different conditions</string>
            </property>
           </widget>
          </item>
-         <item row="24" column="1">
+         <item row="25" column="1">
           <widget class="QLineEdit" name="cfg_enf_descriptions"/>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_21">
+           <property name="text">
+            <string>Skip labeling and gap checks for these markers</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="cfg_ignore_markers"/>
          </item>
         </layout>
        </item>

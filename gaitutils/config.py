@@ -66,6 +66,15 @@ class EpicParser(ConfigParser.SafeConfigParser):
         data. """
         return Section(self._sections[section])
 
+    def write_file(self, filename):
+        """ Save config into file """
+        # using the with statement would force-close the file even in case
+        # of errors, which could lead to broken (e.g. empty) files
+        fh = open(filename, 'wt')
+        cfg.write(fh)
+        fh.close()
+
+
 # provide the global cfg instance
 # read template config
 cfg = EpicParser()
@@ -75,9 +84,7 @@ cfg_tpl_di = copy.deepcopy(cfg._sections)  # save the template config
 # read user config
 if not op.isfile(cfg_user):
     print('no config file, trying to create %s' % cfg_user)
-    cfg_file = open(cfg_user, 'wt')
-    cfg.write(cfg_file)
-    cfg_file.close()
+    cfg.write_file(cfg_user)
 else:
     cfg.read(cfg_user)
 

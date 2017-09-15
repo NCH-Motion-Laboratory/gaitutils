@@ -93,10 +93,17 @@ class AutoprocDialog(QtWidgets.QDialog):
         # load user interface made with designer
         uifile = resource_filename(__name__, 'autoproc_dialog.ui')
         uic.loadUi(uifile, self)
+
         loadButton = QtWidgets.QPushButton('Load...')
         self.buttonBox.addButton(loadButton,
                                  QtWidgets.QDialogButtonBox.ActionRole)
         loadButton.clicked.connect(self.load_config_dialog)
+
+        saveButton = QtWidgets.QPushButton('Save...')
+        self.buttonBox.addButton(saveButton,
+                                 QtWidgets.QDialogButtonBox.ActionRole)
+        saveButton.clicked.connect(self.save_config_dialog)
+
         """ Collect config widgets into a dict of dict. First key is tab
         (same as category, i.e. autoproc), second key is widget name """
         self.cfg_widgets = dict()
@@ -105,26 +112,42 @@ class AutoprocDialog(QtWidgets.QDialog):
             pname = page.objectName()
             self.cfg_widgets[pname] = dict()
             for w in page.findChildren(QtWidgets.QWidget):
-                wname = unicode(w.objectName())
+                wname = w.objectName()
                 if wname[:4] == 'cfg_':  # config widgets are specially named
                     self.cfg_widgets[pname][wname] = w
         self._update_widgets()
+        self.homedir = os.path.expanduser('~')
 
     def load_config_dialog(self):
         """ Bring up load dialog and load selected file. """
         global cfg
-        homedir = os.path.expanduser('~')
         fout = QtWidgets.QFileDialog.getOpenFileName(self,
                                                      'Load config file',
-                                                     homedir,
+                                                     self.homedir,
                                                      'Config files (*.cfg)')
-        #TODO : filedialog set filter -> PyQt5.QtCore.QDir.Hidden
+        # TODO : filedialog set filter -> PyQt5.QtCore.QDir.Hidden?
         fname = fout[0]
         if fname:
-            fname = unicode(fname)
-            # TODO: check for errors
+            # TODO: check for errors on config read
             cfg.read(fname)
             self._update_widgets()
+
+    def save_config_dialog(self):
+        """ Bring up save dialog and save data. """
+        global cfg
+        res, txt = self._check_widget_inputs()
+        if not res:
+            message_dialog('Invalid input: %s\nPlease fix before saving' % txt)
+        else:
+            fout = QtWidgets.QFileDialog.getSaveFileName(self,
+                                                         'Save config file',
+                                                         self.homedir,
+                                                         'Config files '
+                                                         '(*.cfg)')
+            fname = fout[0]
+            if fname:
+                self.update_cfg()
+                cfg.write_file(fname)
 
     def _update_widgets(self):
         """ Update config widgets according to current cfg """
@@ -159,7 +182,9 @@ class AutoprocDialog(QtWidgets.QDialog):
         elif isinstance(widget, QtWidgets.QCheckBox):
             return bool(widget.checkState())
         elif isinstance(widget, QtWidgets.QComboBox):
-            return widget.currentText()
+            # convert to str to avoid writing out unicode repr() into config
+            # files unnecessarily
+            return str(widget.currentText())
         elif isinstance(widget, QtWidgets.QLineEdit):
             # Directly eval lineEdit contents. This means that string vars
             # must be quoted in the lineEdit.
@@ -207,7 +232,7 @@ class AutoprocDialog(QtWidgets.QDialog):
             self.update_cfg()
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
-            message_dialog('Invalid input: %s' % txt)
+            message_dialog("Invalid input: %s" % txt)
 
 
 class Gaitmenu(QtWidgets.QMainWindow):

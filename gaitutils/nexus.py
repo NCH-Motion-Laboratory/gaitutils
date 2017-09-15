@@ -430,17 +430,20 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                               cfg.autoproc.left_foot_markers)
     data_shape = mrkdata[cfg.autoproc.right_foot_markers[0]+'_V'].shape
 
+    # average the foot marker velocities to get velocity data
     rfootctrV = np.zeros(data_shape)
     for marker in cfg.autoproc.right_foot_markers:
         rfootctrV += mrkdata[marker+'_V'] / len(cfg.autoproc.
                                                 right_foot_markers)
+        #logger.debug(mrkdata[marker+'_gaps'])
     rfootctrv = np.sqrt(np.sum(rfootctrV**2, 1))
-
     lfootctrV = np.zeros(data_shape)
     for marker in cfg.autoproc.left_foot_markers:
         lfootctrV += mrkdata[marker+'_V'] / len(cfg.autoproc.left_foot_markers)
+        #logger.debug(mrkdata[marker+'_gaps'])
     lfootctrv = np.sqrt(np.sum(lfootctrV**2, 1))
 
+    # position data: use ANK marker
     rfootctrP = mrkdata['RANK_P']
     lfootctrP = mrkdata['LANK_P']
 
@@ -524,8 +527,12 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
             fwd_dim = principal_movement_direction(vicon, cfg.
                                                    autoproc.track_markers)
             strike_pos = footctrP[strikes, fwd_dim]
+            logger.debug(strike_pos)
             dist_ok = np.logical_and(strike_pos > events_range[0],
                                      strike_pos < events_range[1])
+            # exactly zero position at strike should indicate a gap -> exclude
+            # TODO: smarter gap handling
+            dist_ok = np.logical_and(dist_ok, strike_pos != 0)
             strikes = strikes[dist_ok]
 
         if len(strikes) == 0:

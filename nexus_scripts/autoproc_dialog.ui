@@ -70,6 +70,9 @@
          </item>
          <item row="2" column="0">
           <widget class="QLabel" name="label_15">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Used for general tracking of subject and velocity computation. Choose reliable markers.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Markers for tracking subject movement</string>
            </property>
@@ -106,6 +109,9 @@
          </item>
          <item row="6" column="0">
           <widget class="QLabel" name="label_17">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Preprocessing pipelines; should yield reconstructed, labeled and filtered marker trajectories.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Preprocessing</string>
            </property>
@@ -116,6 +122,9 @@
          </item>
          <item row="7" column="0">
           <widget class="QLabel" name="label_19">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Modeling pipelines; any models that you want to run in Nexus (e.g. Plug-in Gait). Save operations are not needed here (and will slow down processing).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Model</string>
            </property>
@@ -152,6 +161,9 @@
          </item>
          <item row="10" column="0">
           <widget class="QLabel" name="label_14">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Read forceplate contact info from Eclipse fields FP1, FP2 etc. Otherwise it will be autodetected. FPx='Auto' will trigger autodetection in any case.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Use Eclipse forceplate info if available</string>
            </property>
@@ -300,6 +312,9 @@
          </item>
          <item row="19" column="0">
           <widget class="QLabel" name="label_6">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Whether to start strike events (on a particular side) on the first forceplate contact. This means that kinetics will be available for the 1st gait cycle for the side in question.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Strike events start on forceplate</string>
            </property>
@@ -314,6 +329,9 @@
          </item>
          <item row="20" column="0">
           <widget class="QLabel" name="label_2">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Limit events to the given range. The values refer to the principal forward direction of gait, i.e. dimension of largest variance in the trial, which is usually the major axis of the lab.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Coordinate range for events (gait forward coordinate, mm)</string>
            </property>
@@ -324,6 +342,9 @@
          </item>
          <item row="21" column="0">
           <widget class="QLabel" name="label_18">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Approximate location of the walkway center.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Location of walkway center (mm)</string>
            </property>
@@ -396,6 +417,9 @@
          </item>
          <item row="3" column="0">
           <widget class="QLabel" name="label_21">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The listed markers will not be checked for gaps and labeling errors.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Skip labeling and gap checks for these markers</string>
            </property>

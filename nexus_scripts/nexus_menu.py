@@ -129,6 +129,7 @@ class AutoprocDialog(QtWidgets.QDialog):
         fname = fout[0]
         if fname:
             # TODO: check for errors on config read
+            # cfg.load_default()  TODO: load defaults before loading cfg file?
             cfg.read(fname)
             self._update_widgets()
 
@@ -347,7 +348,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._enable_op_buttons()
 
     def _execute(self, fun, thread=False):
-        """ Run some function. If thread==True, run in a separate worker
+        """ Run function fun. If thread==True, run in a separate worker
         thread. """
         self._disable_op_buttons()
         if thread:

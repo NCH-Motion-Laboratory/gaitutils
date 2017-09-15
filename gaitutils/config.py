@@ -73,12 +73,16 @@ class EpicParser(ConfigParser.SafeConfigParser):
         fh = open(filename, 'wt')
         cfg.write(fh)
         fh.close()
+        
+    def load_default(self):
+        """ Load default config """
+        self.read(cfg_template)
 
 
 # provide the global cfg instance
 # read template config
 cfg = EpicParser()
-cfg.read(cfg_template)
+cfg.load_default()
 cfg_tpl_di = copy.deepcopy(cfg._sections)  # save the template config
 
 # read user config

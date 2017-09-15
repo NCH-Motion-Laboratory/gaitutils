@@ -13,8 +13,6 @@ import logging
 
 def do_plot():
     
-    raise Exception('%d' % cfg.autoproc.ankle_sideways_tol)
-
     pl = Plotter()
     pl.open_nexus_trial()
     pl.layout = cfg.layouts.lb_kin

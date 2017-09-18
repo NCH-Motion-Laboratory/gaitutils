@@ -69,7 +69,6 @@ def _do_autoproc(enffiles, update_eclipse=True):
             plines = [plines]
         for pipeline in plines:
             logger.debug('Running pipeline: %s' % pipeline)
-            vicon.RunPipeline(pipeline, '', cfg.autoproc.pipeline_timeout)
             result = vicon.Client.RunPipeline(pipeline.encode('utf-8'), '',
                                               cfg.autoproc.pipeline_timeout)
             if result.Error():

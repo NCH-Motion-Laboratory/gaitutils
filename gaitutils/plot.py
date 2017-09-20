@@ -112,10 +112,11 @@ class Plotter(object):
         """ Automatically adjust height ratios, if they are not specified """
         plotheightratios = []
         for row in self._layout:
-            if all([self._var_type(var) == 'model' for var in row]):
-                plotheightratios.append(1)
-            else:
+            # this should take into account any analog variable
+            if all([self._var_type(var) == 'emg' for var in row]):
                 plotheightratios.append(self.cfg.plot.analog_plotheight)
+            else:
+                plotheightratios.append(1)
         return plotheightratios
 
     def tight_layout(self):

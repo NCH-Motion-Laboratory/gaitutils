@@ -13,6 +13,7 @@ import os.path as op
 import normaldata
 from config import cfg
 from exceptions import GaitDataError
+from collections import defaultdict
 
 models_all = []
 
@@ -75,6 +76,61 @@ class GaitModel(object):
 
 
 """ Create models """
+
+#
+# Plug-in Gait upper body
+# for now, kinematics only
+#
+pig_upperbody = GaitModel()
+pig_upperbody.desc = 'Plug-in Gait upper body kinematics'
+pig_upperbody.type = 'PiG'
+pig_upperbody.read_strategy = 'split_xyz'
+
+pig_upperbody.read_vars = _list_with_side(['ThoraxAngles',
+                                           'ShoulderAngles',
+                                           'SpineAngles',
+                                           'WristAngles',
+                                           'ElbowAngles',
+                                           'NeckAngles',
+                                           'HeadAngles'])
+
+pig_upperbody.varlabels_noside = {'ThoraxAnglesX': 'Thorax flex/ext',
+                                  'ThoraxAnglesY': 'Thorax lateral flex',
+                                  'ThoraxAnglesZ': 'Thorax rotation',
+                                  'ShoulderAnglesX': 'Shoulder flex/ext',
+                                  'ShoulderAnglesY': 'Shoulder abd/add',
+                                  'ShoulderAnglesZ': 'Shoulder rotation',                                  
+                                  'SpineAnglesX': 'Spine flex/ext',
+                                  'SpineAnglesY': 'Spine lateral flex',
+                                  'SpineAnglesZ': 'Spine rotation',
+                                  'WristAnglesX': 'Wrist flex/ext',
+                                  'WristAnglesY': 'Wrist ulnar/radial',
+                                  'WristAnglesZ': 'Wrist sup/pron',
+                                  'ElbowAnglesX': 'Elbow flex/ext',
+                                  'ElbowAnglesY': 'Elbow Y',
+                                  'ElbowAnglesZ': 'Elbow Z',
+                                  'NeckAnglesX': 'Neck sagittal',
+                                  'NeckAnglesY': 'Neck frontal',
+                                  'NeckAnglesZ': 'Neck rotation',                                  
+                                  'HeadAnglesX': 'Head sagittal',
+                                  'HeadAnglesY': 'Head frontal',
+                                  'HeadAnglesZ': 'Head rotation'}
+
+# for now, ylabel is just the degree sign for all vars
+pig_upperbody.ylabels = defaultdict(lambda: 'deg')
+
+pig_upperbody.varlabels = _dict_with_side(pig_upperbody.varlabels_noside)
+pig_upperbody.varnames = pig_upperbody.varlabels.keys()
+pig_upperbody.varnames_noside = pig_upperbody.varlabels_noside.keys()
+
+pig_upperbody.is_kinetic_var = (lambda varname: 'Moment' in varname or
+                                'Power' in varname)
+
+# TODO: add kinetic vars
+# TODO: ylabels
+
+models_all.append(pig_upperbody)
+
 
 #
 # Plug-in Gait lowerbody

@@ -6,8 +6,7 @@ Created on Wed Jun 21 13:48:27 2017
 """
 
 from gaitutils import (nexus, cfg, utils, read_data, eclipse,
-                       register_gui_exception_handler)
-from gaitutils.exceptions import GaitDataError
+                       register_gui_exception_handler, GaitDataError)
 import numpy as np
 import matplotlib.pyplot as plt
 import os.path as op

@@ -15,7 +15,6 @@ import read_data
 from config import cfg
 import logging
 from nexus import _list_to_str
-from numutils import running_sum
 
 logger = logging.getLogger(__name__)
 

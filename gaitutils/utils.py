@@ -6,7 +6,7 @@ Utility functions for processing gait data.
 @author: Jussi (jnu@iki.fi)
 """
 
-from exceptions import GaitDataError
+from envutils import GaitDataError
 from read_data import get_marker_data, get_forceplate_data, get_metadata
 from numutils import rising_zerocross, falling_zerocross, _baseline
 from scipy import signal

@@ -12,7 +12,7 @@ import logging
 import numpy as np
 import os
 from numutils import center_of_pressure, change_coords
-from exceptions import GaitDataError
+from envutils import GaitDataError
 logger = logging.getLogger(__name__)
 try:
     import btk

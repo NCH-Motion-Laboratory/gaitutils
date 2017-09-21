@@ -9,10 +9,7 @@ append to models_all.
 @author: Jussi
 """
 
-import os.path as op
-import normaldata
-from config import cfg
-from exceptions import GaitDataError
+from envutils import GaitDataError
 from collections import defaultdict
 
 models_all = []
@@ -21,6 +18,8 @@ models_all = []
 def model_from_var(var):
     """ Return model corresponding to specified variable.
     Returns GaitModel instance that has the specified variable. """
+    if not isinstance(var, basestring):
+        raise ValueError('Variable name must be a string')
     for model in models_all:
         if var in model.varnames or var in model.varnames_noside:
             return model
@@ -125,10 +124,8 @@ pig_upperbody.varnames_noside = pig_upperbody.varlabels_noside.keys()
 
 pig_upperbody.is_kinetic_var = (lambda varname: 'Moment' in varname or
                                 'Power' in varname)
-
 # TODO: add kinetic vars
 # TODO: ylabels
-
 models_all.append(pig_upperbody)
 
 

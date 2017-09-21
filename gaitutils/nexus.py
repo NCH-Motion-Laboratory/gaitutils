@@ -18,7 +18,7 @@ import glob
 from numutils import (rising_zerocross, best_match, falling_zerocross,
                       change_coords)
 from utils import principal_movement_direction
-from exceptions import GaitDataError
+from envutils import GaitDataError
 from eclipse import get_eclipse_keys
 import matplotlib.pyplot as plt
 from config import cfg

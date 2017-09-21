@@ -9,8 +9,8 @@ Read gait trials.
 
 
 from __future__ import division
-from exceptions import GaitDataError
 from . import read_data, utils, eclipse
+from envutils import GaitDataError
 from collections import defaultdict
 import numpy as np
 import os.path as op

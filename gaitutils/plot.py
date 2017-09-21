@@ -141,6 +141,7 @@ class Plotter(object):
                    split_model_vars=True,
                    auto_match_model_cycle=True,
                    normaldata_files=cfg.general.normaldata_files,
+                   model_stddev=None,
                    x_axis_is_time=True,
                    match_pig_kinetics=True,
                    auto_match_emg_cycle=True,
@@ -195,6 +196,10 @@ class Plotter(object):
         normaldata_files: list
                 Specifies a list normal data files (.gcd or .xlsx) for model
                 type variables.
+        model_stddev : None or dict
+                Specifies 'standard deviation' for model variables. Can be
+                used to plot e.g. confidence intervals, or stddev if plotting
+                averaged data.
         x_axis_is_time: bool
                 For unnormalized variables, whether x axis is in seconds
                 (default) or in frames.
@@ -370,6 +375,20 @@ class Plotter(object):
                     else:
                         logging.debug('not plotting data for %s' % varname)
 
+                    # each cycle gets its own stddev
+                    if model_stddev and cycle is not None:
+                        if varname in model_stddev:
+                            sdata = model_stddev[varname]
+                            stdx = np.linspace(0, 100, sdata.shape[0])
+                            ax.fill_between(stdx, data-sdata,
+                                            data+sdata,
+                                            color=self.cfg.plot.
+                                            model_normals_color,
+                                            alpha=self.cfg.plot.
+                                            model_normals_alpha)
+                            # tighten x limits
+                            ax.set_xlim(stdx[0], stdx[-1])
+
                     # set labels, ticks, etc. after plotting last cycle
                     if cycle == model_cycles[-1]:
                         ax.set(ylabel=model.ylabels[varname])  # no xlabel now
@@ -415,6 +434,7 @@ class Plotter(object):
                                                 model_normals_alpha)
                                 # tighten x limits
                                 ax.set_xlim(normalx[0], normalx[-1])
+
 
             elif var_type == 'emg':
                 # set title first, since we may end up not plotting the emg at

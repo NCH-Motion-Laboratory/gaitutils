@@ -420,12 +420,11 @@ class Plotter(object):
                             if varname[0].upper() in ['L', 'R']:
                                 nvarname = varname[1:]
                             if nvarname in self._normaldata:
-                                ndata = self._normaldata[nvarname]
+                                key = nvarname
                             elif nvarname in model.gcd_normaldata_map:
-                                nvarname_ = model.gcd_normaldata_map[nvarname]
-                                ndata = self._normaldata[nvarname_]
-                            else:
-                                ndata = None
+                                key = model.gcd_normaldata_map[nvarname]
+                            ndata = (self._normaldata[key] if key in
+                                     self._normaldata else None)
                             if ndata is not None:
                                 normalx = np.linspace(0, 100, ndata.shape[0])
                                 ax.fill_between(normalx, ndata[:, 0],

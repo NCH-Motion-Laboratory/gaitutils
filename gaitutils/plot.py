@@ -383,9 +383,9 @@ class Plotter(object):
                             ax.fill_between(stdx, data-sdata,
                                             data+sdata,
                                             color=self.cfg.plot.
-                                            model_normals_color,
+                                            model_stddev_colors[cycle.context],
                                             alpha=self.cfg.plot.
-                                            model_normals_alpha)
+                                            model_stddev_alpha)
                             # tighten x limits
                             ax.set_xlim(stdx[0], stdx[-1])
 

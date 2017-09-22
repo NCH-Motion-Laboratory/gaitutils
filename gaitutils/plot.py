@@ -355,6 +355,7 @@ class Plotter(object):
                             if model.is_kinetic_var(var):
                                 kin_ok = cycle.on_forceplate
                     # do the actual plotting if necessary
+                    data = None
                     if kin_ok and (varname[0] == cycle.context or not
                        auto_match_model_cycle or cycle is None):
                         logging.debug('plotting data for %s' % varname)
@@ -375,8 +376,9 @@ class Plotter(object):
                     else:
                         logging.debug('not plotting data for %s' % varname)
 
-                    # each cycle gets its own stddev
-                    if model_stddev and cycle is not None:
+                    # each cycle gets its own stddev plot (if data was found)
+                    if (model_stddev is not None and cycle is not None
+                        and data is not None):
                         if varname in model_stddev:
                             sdata = model_stddev[varname]
                             stdx = np.linspace(0, 100, sdata.shape[0])

@@ -71,6 +71,8 @@ class Gaitcycle(object):
         cycle; no interpolation. """
         return self.tn_analog, var[self.start_smp:self.end_smp]
 
+    
+
 
 class Trial(object):
     """ A gait trial. Contains:
@@ -236,3 +238,33 @@ class Trial(object):
                     toeoff = toeoff[0]
                 yield Gaitcycle(start, end, self.offset, toeoff, context,
                                 on_forceplate, self.samplesperframe)
+
+
+class AvgTrial(Trial):
+    """ Trial containing cycle-averaged data """
+       
+    def __init__(self, modeldata_avg, trialname=None, subjname=None,
+                 navg_r=None, navg_l=None):
+        self.trialname = trialname if trialname else 'multiple trials'
+        self.source = 'averaged data'
+        self.name = subjname if subjname else 'Unknown'
+        self.modeldata = modeldata_avg
+        self.t = np.arange(101)  # 0..100%
+        self.cycles = list()
+        self.cycles.append(Gaitcycle(0, 101, 1, 60, 'R', True, 1000))
+        self.cycles.append(Gaitcycle(0, 101, 1, 60, 'L', True, 1000))        
+        self.ncycles = 2
+
+    def __getitem__(self, item):
+        return self.t, self.modeldata[item]
+       
+    def set_norm_cycle(self, cycle):
+        if cycle is None:
+            raise ValueError('AvgTrial does not support unnormalized data')
+        else:
+            logger.debug('setting norm. cycle for AvgTrial (no effect)')
+        
+        
+        
+       
+      

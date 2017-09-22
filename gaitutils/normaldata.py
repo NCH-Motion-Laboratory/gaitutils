@@ -18,6 +18,8 @@ def read_normaldata(filename):
     The first and second columns are min and max values, respectively.
     (May be e.g. mean-stddev and mean+stddev)
     """
+    if not op.isfile(filename):
+        raise ValueError('No such file %s' % filename)
     type = op.splitext(filename)[1].lower()
     if type == '.gcd':
         return _read_gcd(filename)

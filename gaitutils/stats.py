@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Various stats on trials
+Compute statistics across/within trials
 
 
 @author: Jussi (jnu@iki.fi)
@@ -56,7 +56,7 @@ def _collect_model_data(trials, models):
         try:
             tr = Trial(file)
         except GaitDataError:
-            logger.debug('cannot load %s for averaging' % file)
+            logger.warning('cannot load %s for averaging' % file)
         models_ok = True
         for model in models:
             # test whether read is ok for all models (only test 1st var)
@@ -64,8 +64,8 @@ def _collect_model_data(trials, models):
             try:
                 data = tr[var][1]
             except GaitDataError:
-                logger.debug('Cannot read %s from %s' %
-                             (var, file))
+                logger.warning('cannot read variable %s from %s' %
+                              (var, file))
                 models_ok = False
         if not models_ok:
             continue

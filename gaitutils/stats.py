@@ -40,6 +40,9 @@ def _collect_model_data(trials, models):
         filename, or list of filenames (c3d) to read trials from
     models: model (GaitModel instance) or list of models to average
     """
+    if not trials:
+        logger.debug('no trials')
+        return
     if not isinstance(trials, list):
         trials = [trials]
     if not isinstance(models, list):
@@ -54,6 +57,18 @@ def _collect_model_data(trials, models):
             tr = Trial(file)
         except GaitDataError:
             logger.debug('cannot load %s for averaging' % file)
+        models_ok = True
+        for model in models:
+            # test whether read is ok for all models (only test 1st var)
+            var = model.varnames[0]
+            try:
+                data = tr[var][1]
+            except GaitDataError:
+                logger.debug('Cannot read %s from %s' %
+                             (var, file))
+                models_ok = False
+        if not models_ok:
+            continue
         for cycle in tr.cycles:
             tr.set_norm_cycle(cycle)
             side = cycle.context

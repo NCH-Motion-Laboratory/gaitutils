@@ -11,6 +11,7 @@ import nexus
 import numutils
 import normaldata
 from trial import Trial
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import pylab
 from matplotlib.backends.backend_pdf import PdfPages
@@ -24,6 +25,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+matplotlib.style.use(cfg.plot.mpl_style)
 
 class Plotter(object):
 

@@ -13,6 +13,10 @@ import sys
 import traceback
 
 
+class GaitDataError(Exception):
+    """ Exception specific to erroneous or unexpected gait data """
+    pass
+
 def register_gui_exception_handler(full_traceback=False):
     """ Registers an exception handler that reports uncaught exceptions
     via GUI"""

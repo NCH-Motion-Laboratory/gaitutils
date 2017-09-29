@@ -14,22 +14,40 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def average_trials(trials, models):
+def average_trials(trials, models, max_dist=None):
     """ Average model data from several trials.
 
     trials: list
         filename, or list of filenames (c3d) to read trials from
     models: model (GaitModel instance) or list of models to average
+    max_dist: maximum curve distance from median, for outlier rejection
     """
     data, Ncyc = _collect_model_data(trials, models)
 
     stddata = dict()
     avgdata = dict()
-    for var in data:
-        stddata[var] = data[var].std(axis=0)
-        avgdata[var] = data[var].mean(axis=0)
-        
-    return (avgdata, stddata, Ncyc)
+    N_ok = dict()
+    
+    for var, vardata in data.items():
+        Ntot = vardata.shape[0]
+        outliers = _outlier_rows(vardata, max_dist)
+        N_out = np.count_nonzero(outliers)
+        if N_out > 0:
+            logger.debug('%s: dropping %d outlier curves' % (var, N_out))
+        vardata_ = vardata[~outliers, :] if N_out else vardata
+        stddata[var] = vardata_.std(axis=0)
+        avgdata[var] = vardata_.mean(axis=0)
+        n_ok = vardata_.shape[0]        
+        logger.debug('%s: averaged %d/%d curves' % (var, n_ok, Ntot))
+        N_ok[var] = n_ok
+    
+    return (avgdata, stddata, N_ok, Ncyc)
+
+
+def _outlier_rows(A, max_dist):
+    """ Find outlier rows from A, defined as max distance from median row """
+    med = np.median(A, axis=0)
+    return (np.abs(A-med)).max(axis=1) > max_dist
 
 
 def _collect_model_data(trials, models):
@@ -87,7 +105,7 @@ def _collect_model_data(trials, models):
                                          else
                                          np.concatenate([data_all[var],
                                                         data[None, :]]))
-    logger.debug('averaged %d trials, %d/%d R/L cycles, %d/%d kinetics cycles'
+    logger.debug('collected %d trials, %d/%d R/L cycles, %d/%d kinetics cycles'
                  % (n, nc['R'], nc['L'], nc['Rkin'], nc['Lkin']))
     return data_all, nc
         

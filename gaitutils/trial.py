@@ -241,7 +241,8 @@ class Trial(object):
 
 
 class AvgTrial(Trial):
-    """ Trial containing cycle-averaged data """
+    """ Trial containing cycle-averaged data, for use with plotter
+    TODO: does not support legends yet """
        
     def __init__(self, modeldata_avg, trialname=None, subjname=None,
                  navg_r=None, navg_l=None):

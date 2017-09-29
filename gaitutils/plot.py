@@ -406,7 +406,7 @@ class Plotter(object):
                             subplot_title = prev_title + ' / ' + subplot_title
                         ax.set_title(subplot_title)
                         ax.title.set_fontsize(self.cfg.plot.title_fontsize)
-                        ax.axhline(0, color='black')  # zero line
+                        ax.axhline(0, color='black', linewidth=.5)  # zero line
                         ax.locator_params(axis='y', nbins=6)  # less tick marks
                         ax.tick_params(axis='both', which='major',
                                        labelsize=self.cfg.plot.ticks_fontsize)

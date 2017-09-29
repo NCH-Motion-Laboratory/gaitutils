@@ -22,6 +22,7 @@ from eclipse import get_eclipse_keys
 import matplotlib.pyplot as plt
 from config import cfg
 import logging
+import platform
 
 
 logger = logging.getLogger(__name__)
@@ -33,7 +34,10 @@ if cfg.general.nexus_path:
         if not cfg.general.nexus_path + "/SDK/Python" in sys.path:
             sys.path.append(cfg.general.nexus_path + "/SDK/Python")
             # needed at least when running outside Nexus
-            sys.path.append(cfg.general.nexus_path + "/SDK/Win32")
+            # this should import the 32- or 64- bit version depending
+            # on the interpreter
+            bitness = platform.architecture()[0][:2]
+            sys.path.append(cfg.general.nexus_path + "/SDK/Win" + bitness)
 try:
     import ViconNexus
 except ImportError:

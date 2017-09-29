@@ -100,13 +100,13 @@ class Plotter(object):
             return None
         elif models.model_from_var(var):
             return 'model'
+        elif var in ('model_legend', 'emg_legend'):
+            return var
         # check whether it's a configured EMG channel or exists in the data
         # source (both are ok)
         elif (self.trial.emg.is_channel(var) or
               var in self.cfg.emg.channel_labels):
             return 'emg'
-        elif var in ('model_legend', 'emg_legend'):
-            return var
         else:
             raise ValueError('Unknown variable %s' % var)
 

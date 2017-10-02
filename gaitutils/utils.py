@@ -138,7 +138,8 @@ def detect_forceplate_events(source, fp_info=None):
                            f_threshold)
         else:
             logger.debug('body mass %.2f kg' % bodymass)
-            f_threshold = cfg.autoproc.forceplate_contact_threshold * bodymass
+            f_threshold = (cfg.autoproc.forceplate_contact_threshold *
+                           bodymass * 9.81)
             if fmax < cfg.autoproc.forceplate_min_weight * bodymass * 9.81:
                 logger.debug('insufficient max. force on plate')
                 continue
@@ -198,6 +199,7 @@ def detect_forceplate_events(source, fp_info=None):
                             cfg.autoproc.left_foot_markers]:
                 ok = True
                 for marker_ in markers:
+                    logger.debug('Checking %s' % marker_)
                     mins_s, maxes_s = mins.copy(), maxes.copy()
                     mins_t, maxes_t = mins.copy(), maxes.copy()
                     # extra tolerance for ankle marker in sideways direction

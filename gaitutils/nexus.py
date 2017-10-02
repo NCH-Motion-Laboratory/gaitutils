@@ -527,7 +527,6 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
             fwd_dim = principal_movement_direction(vicon, cfg.
                                                    autoproc.track_markers)
             strike_pos = footctrP[strikes, fwd_dim]
-            logger.debug(strike_pos)
             dist_ok = np.logical_and(strike_pos > events_range[0],
                                      strike_pos < events_range[1])
             # exactly zero position at strike should indicate a gap -> exclude

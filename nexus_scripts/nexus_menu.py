@@ -34,6 +34,8 @@ except ImportError:
     have_custom = False
 import logging
 
+logger = logging.getLogger(__name__)
+
 
 def message_dialog(msg):
     """ Show message with an 'OK' button. """
@@ -299,8 +301,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         XStream.stderr().messageWritten.connect(self._log_message)
 
         self.threadpool = QThreadPool()
-        logging.debug('started threadpool with max %d threads' %
-                      self.threadpool.maxThreadCount())
+        logger.debug('started threadpool with max %d threads' %
+                     self.threadpool.maxThreadCount())
 
     def _button_connect_task(self, button, fun, thread=False):
         """ Helper to connect button with task function. Use lambda to consume
@@ -325,7 +327,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                        'nexus_scripts/nexus_customplot.py')
 
     def _exception(self, e):
-        logging.debug('caught exception while running task')
+        logger.debug('caught exception while running task')
         message_dialog('%s' % str(e))
 
     def _disable_op_buttons(self):

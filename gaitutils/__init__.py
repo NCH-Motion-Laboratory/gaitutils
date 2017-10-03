@@ -13,7 +13,6 @@ from . import trial
 from . import config
 from . import guiutils
 from . import utils
-from . import stats
 from .emg import EMG
 from .envutils import register_gui_exception_handler, GaitDataError
 from .numutils import rising_zerocross, falling_zerocross

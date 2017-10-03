@@ -292,7 +292,8 @@ def autoproc_session(patterns=None, update_eclipse=True):
     if enffiles:
         _do_autoproc(enffiles, update_eclipse=update_eclipse)
     else:
-        raise GaitDataError('No trials to process')
+        raise GaitDataError('No trials found. Please make sure Nexus is not '
+                            'in live mode.')
 
 
 if __name__ == '__main__':

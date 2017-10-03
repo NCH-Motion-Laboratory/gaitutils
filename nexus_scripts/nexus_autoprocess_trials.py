@@ -72,7 +72,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
             result = vicon.Client.RunPipeline(pipeline.encode('utf-8'), '',
                                               cfg.autoproc.pipeline_timeout)
             if result.Error():
-                raise GaitDataError('Cannot run pipeline: "%s"' % pipeline)
+                raise GaitDataError('Error while trying to run pipeline: "%s"'
+                                    % pipeline)
 
     def _save_trial():
         logger.debug('Saving trial')

@@ -49,28 +49,33 @@ def do_plot():
 
         side_str = 'right' if side == 'R' else 'left'
 
-        # kinetics-EMG            
-        pl.layout = (cfg.layouts.lb_kinetics_emg_r if side == 'R' else
-                     cfg.layouts.lb_kinetics_emg_l)
+        # try to figure out whether we have any valid EMG signals
+        emg_active = any([pl.trial.emg.status_ok(ch) for ch in
+                          cfg.emg.channel_labels])
 
-        maintitle = 'Kinetics-EMG (%s) for %s' % (side_str,
-                                                  pl.title_with_eclipse_info())
-        pl.plot_trial(maintitle=maintitle, show=False)
-        pdf_name = 'Kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname, side_str)
-        pl.create_pdf(pdf_name=pdf_name)
-
-        # EMG
-        pdf_prefix = 'EMG_'
-        maintitle = pl.title_with_eclipse_info('EMG plot for')
-        layout = cfg.layouts.std_emg
-        pl.layout = layouts.rm_dead_channels(c3d, pl.trial.emg, layout)
-        pl.plot_trial(maintitle=maintitle, show=False)
-        pl.create_pdf(pdf_prefix=pdf_prefix)
+        if emg_active:
+            # kinetics-EMG            
+            pl.layout = (cfg.layouts.lb_kinetics_emg_r if side == 'R' else
+                         cfg.layouts.lb_kinetics_emg_l)
+    
+            maintitle = 'Kinetics-EMG (%s) for %s' % (side_str,
+                                                      pl.title_with_eclipse_info())
+            pl.plot_trial(maintitle=maintitle, show=False)
+            pdf_name = 'Kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname, side_str)
+            pl.create_pdf(pdf_name=pdf_name)
+    
+            # EMG
+            pdf_prefix = 'EMG_'
+            maintitle = pl.title_with_eclipse_info('EMG plot for')
+            layout = cfg.layouts.std_emg
+            pl.layout = layouts.rm_dead_channels(c3d, pl.trial.emg, layout)
+            pl.plot_trial(maintitle=maintitle, show=False)
+            pl.create_pdf(pdf_prefix=pdf_prefix)
 
     # consistency plots
-    nexus_emg_consistency.do_plot(show=False)
     nexus_kin_consistency.do_plot(show=False)    
-
+    if emg_active:
+        nexus_emg_consistency.do_plot(show=False)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

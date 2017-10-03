@@ -425,6 +425,8 @@ class Plotter(object):
                                 key = nvarname
                             elif nvarname in model.gcd_normaldata_map:
                                 key = model.gcd_normaldata_map[nvarname]
+                            else:
+                                key = None
                             ndata = (self._normaldata[key] if key in
                                      self._normaldata else None)
                             if ndata is not None:

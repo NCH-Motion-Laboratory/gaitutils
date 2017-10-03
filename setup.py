@@ -30,6 +30,7 @@ setup(name='gaitutils',
                'nexus_scripts/nexus_tardieu.py',
                'nexus_scripts/nexus_copy_trial_videos.py',
                'nexus_scripts/nexus_trials_velocity.py',
-               'nexus_scripts/nexus_make_all_plots.py'],
+               'nexus_scripts/nexus_make_all_plots.py',
+               'nexus_scripts/nexus_musclelen_plot.py'],
       include_package_data=True,
       )

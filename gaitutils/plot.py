@@ -364,6 +364,7 @@ class Plotter(object):
                         x_, data = self.trial[varname]
                         x = (x_ / self.trial.framerate if cycle is None and
                              x_axis_is_time else x_)
+                        # FIXME: cycle may not have context?
                         tcolor = (model_tracecolor if model_tracecolor
                                   else self.cfg.plot.model_tracecolors
                                   [cycle.context])

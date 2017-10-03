@@ -292,6 +292,6 @@ musclelen.varnames_noside = musclelen.varlabels_noside.keys()
 
 musclelen.ylabels = {}
 for var in musclelen.varnames:
-    musclelen.ylabels[var] = 'Length (mm)'
+    musclelen.ylabels[var] = 'Length norm.'
 
 models_all.append(musclelen)

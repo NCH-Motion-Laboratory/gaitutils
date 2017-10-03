@@ -38,12 +38,18 @@ if cfg.general.nexus_path:
             # this should import the 32- or 64- bit version depending
             # on the interpreter
             bitness = platform.architecture()[0][:2]
-            sys.path.append(cfg.general.nexus_path + "/SDK/Win" + bitness)
+            if bitness not in ['32', '64']:
+                raise Exception('Unexpected architecture')
+            _sdk_path = cfg.general.nexus_path + "/SDK/Win" + bitness
+            print('Trying to import Nexus SDK from %s' % _sdk_path)
+            sys.path.append(_sdk_path)
 try:
     import ViconNexus
 except ImportError:
     # logging handlers are not installed at this point, so use print
     print('Cannot import Nexus SDK, unable to communicate with Nexus')
+
+sys.stdout.flush()
 
 
 def pid():

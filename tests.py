@@ -7,6 +7,7 @@ automatically run by 'nose2'
 @author: jussi (jnu@iki.fi)
 """
 
+from gaitutils.config import cfg
 from gaitutils.numutils import segment_angles, best_match
 from gaitutils import eclipse, Trial
 from gaitutils.utils import detect_forceplate_events
@@ -19,6 +20,9 @@ from shutil import copyfile
 trial_enf = 'testdata/anon.Trial.enf'
 trial_enf_write = 'testdata/writetest.enf'
 c3dfile = 'testdata/trial.c3d'
+
+# so that user settings will not affect testing
+cfg.load_default()
 
 
 def test_c3d_reader():

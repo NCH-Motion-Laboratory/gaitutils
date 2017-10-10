@@ -9,6 +9,7 @@ automatically run by 'nose2'
 
 from gaitutils.numutils import segment_angles, best_match
 from gaitutils import eclipse, Trial
+from gaitutils.utils import detect_forceplate_events
 import numpy as np
 from nose.tools import (assert_set_equal, assert_in, assert_equal,
                         assert_raises)
@@ -25,6 +26,12 @@ def test_c3d_reader():
     assert_equal(tr.analograte, 1000.)
     assert_equal(tr.framerate, 100.)
     assert_equal(tr.bodymass, 24.)
+
+
+def test_fp_detection():
+    c3d1 = 'testdata/slight_overstep.c3d'
+    valid = detect_forceplate_events(c3d1)['valid']
+    assert_equal(valid, '')
 
 
 def test_segment_angles():

@@ -518,11 +518,12 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         footctrv_med = np.pad(footctrv_med, ((VELOCITY_MEDIAN_WIDTH - 1) / 2,),
                               mode='constant')
         stop_check = strikes + STOP_DELAY
-        no_stop = np.where(footctrv_med[stop_check] > MAX_STOP_VELOCITY)
-        if no_stop:
+        no_stop = np.where(footctrv_med[stop_check] > MAX_STOP_VELOCITY)[0]
+
+        if len(no_stop) > 0:
             logger.debug('foot not coming to rest for candidate strike '
                          'events: %s' % strikes[no_stop])
-        strikes = np.delete(strikes, no_stop)
+            strikes = np.delete(strikes, no_stop)
 
         if len(strikes) == 0:
             raise GaitDataError('No valid foot strikes detected')
@@ -539,6 +540,14 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
 
         if len(toeoffs) == 0:
             raise GaitDataError('Could not detect any toe-off events')
+
+        # check for multiple toeoffs
+        for s1, s2 in zip(strikes, np.roll(strikes, -1))[:-1]:
+            to_this = np.where(np.logical_and(toeoffs > s1, toeoffs < s2))[0]
+            if len(to_this) > 1:
+                logger.debug('%d toeoffs during cycle, keeping only the last'
+                             % len(to_this))
+                toeoffs = np.delete(toeoffs, to_this[:-1])
 
         logger.debug('all strike events: %s' % _list_to_str(strikes))
         logger.debug('all toeoff events: %s' % _list_to_str(toeoffs))

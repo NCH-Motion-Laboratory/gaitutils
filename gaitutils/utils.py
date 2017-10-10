@@ -96,7 +96,7 @@ def detect_forceplate_events(source, fp_info=None):
     -foot markers must be inside plate edges at strike time
 
     Returns dict with keys R_strikes, L_strikes, R_toeoffs, L_toeoffs.
-    Values are lists of frames where valid forceplate contact occurs.
+    Dict values are lists of frames where valid forceplate contact occurs.
     """
 
     # get subject info
@@ -195,9 +195,22 @@ def detect_forceplate_events(source, fp_info=None):
 
             # check markers
             this_valid = None
+
             for markers in [cfg.autoproc.right_foot_markers,
                             cfg.autoproc.left_foot_markers]:
-                ok = True
+
+                data_shape = mrkdata[markers[0]+'_P'].shape
+                footctrP = np.zeros(data_shape)
+                for marker in markers:
+                    footctrP += mrkdata[marker+'_P'] / len(markers)
+
+                if footctrP[toeoff_fr, 2] < 1.5 * footctrP[strike_fr, 2]:
+                    logger.debug('toeoff height too low')
+                    ok = False
+                    break
+                else:
+                    ok = True
+
                 for marker_ in markers:
                     logger.debug('Checking %s' % marker_)
                     mins_s, maxes_s = mins.copy(), maxes.copy()
@@ -228,6 +241,7 @@ def detect_forceplate_events(source, fp_info=None):
                         logger.debug('marker %s failed on-plate check during '
                                      'toeoff ' % marker_)
                         break
+                
                 if ok:
                     if this_valid:
                         raise GaitDataError('valid contact on both feet (??)')

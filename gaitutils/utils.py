@@ -196,23 +196,28 @@ def detect_forceplate_events(source, fp_info=None):
             # check markers
             this_valid = None
 
-            for markers in [cfg.autoproc.right_foot_markers,
-                            cfg.autoproc.left_foot_markers]:
-
+            for side, markers in zip(['R', 'L'],
+                                     [cfg.autoproc.right_foot_markers,
+                                      cfg.autoproc.left_foot_markers]):
+                logger.debug('checking forceplate contact for side %s' % side)
+                # check average of all markers
                 data_shape = mrkdata[markers[0]+'_P'].shape
                 footctrP = np.zeros(data_shape)
                 for marker in markers:
                     footctrP += mrkdata[marker+'_P'] / len(markers)
 
+                # check foot height at toeoff
                 if footctrP[toeoff_fr, 2] < 1.5 * footctrP[strike_fr, 2]:
                     logger.debug('toeoff height too low')
                     ok = False
-                    break
+                    continue
                 else:
+                    # go on to check individual markers
                     ok = True
 
+                # individual marker checks
                 for marker_ in markers:
-                    logger.debug('Checking %s' % marker_)
+                    logger.debug('checking %s' % marker_)
                     mins_s, maxes_s = mins.copy(), maxes.copy()
                     mins_t, maxes_t = mins.copy(), maxes.copy()
                     # extra tolerance for ankle marker in sideways direction
@@ -241,13 +246,11 @@ def detect_forceplate_events(source, fp_info=None):
                         logger.debug('marker %s failed on-plate check during '
                                      'toeoff ' % marker_)
                         break
-                
+
                 if ok:
                     if this_valid:
                         raise GaitDataError('valid contact on both feet (??)')
-                    this_valid = ('R'
-                                  if markers == cfg.autoproc.right_foot_markers
-                                  else 'L')
+                    this_valid = side
                     logger.debug('on-plate check ok for side %s' % this_valid)
 
         if not this_valid:

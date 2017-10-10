@@ -16,7 +16,7 @@ import os.path as op
 import psutil
 import glob
 from numutils import (rising_zerocross, best_match, falling_zerocross,
-                      change_coords)
+                      change_coords, rolling_fun_strided)
 from utils import principal_movement_direction
 from envutils import GaitDataError
 from eclipse import get_eclipse_keys
@@ -422,10 +422,13 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     # reasonable limits for velocity on slope (increasing/decreasing)
     MAX_SLOPE_VELOCITY = 6 * VEL_CONV
     MIN_SLOPE_VELOCITY = 0  # not currently in use
+    # max velocity when foot is 'stopped'
+    MAX_STOP_VELOCITY = .2 * VEL_CONV
+    # foot must come to stop this time after strike event
+    STOP_DELAY = int(.1 * frate)
+    VELOCITY_MEDIAN_WIDTH = 5
     # median prefilter width
     MEDIAN_WIDTH = 3
-    # minimum distance between subsequent events (of same kind)
-    MIN_EVENT_DISTANCE = 50
     # tolerance between specified and actual first strike
     STRIKE_TOL = 5
 
@@ -466,7 +469,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         logger.debug('marking side %s' % this_side)
         # foot center position
         footctrP = rfootctrP if ind == 0 else lfootctrP
-        # filter to scalar velocity data to suppress noise and spikes
+        # filter scalar velocity data to suppress noise and spikes
         footctrv = signal.medfilt(footctrv, MEDIAN_WIDTH)
 
         # compute local maxima of velocity: derivative crosses zero, values ok
@@ -500,15 +503,26 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         # foot strikes (velocity decreases)
         cross = falling_zerocross(footctrv - threshold_fall_)
         # exclude edges of data vector
-        cross = cross[np.where(np.logical_and(cross > 0,
-                                              cross < (len(footctrv) - 1)))]
+        fmax = len(footctrv) - STOP_DELAY - (VELOCITY_MEDIAN_WIDTH - 1) / 2
+        cross = cross[np.where(np.logical_and(cross > 0, cross < fmax))]
+        # check velocity on slope
         cind_min = np.logical_and(footctrv[cross-1] < MAX_SLOPE_VELOCITY,
                                   footctrv[cross-1] > MIN_SLOPE_VELOCITY)
         cind_max = np.logical_and(footctrv[cross+1] < MAX_SLOPE_VELOCITY,
                                   footctrv[cross+1] > MIN_SLOPE_VELOCITY)
         strikes = cross[np.logical_and(cind_min, cind_max)]
-        too_near = np.where(np.diff(strikes) < MIN_EVENT_DISTANCE)[0] + 1
-        strikes = np.delete(strikes, too_near)
+
+        # check that median velocity falls close to zero soon after the event
+        footctrv_med = rolling_fun_strided(footctrv, np.median,
+                                           VELOCITY_MEDIAN_WIDTH)
+        footctrv_med = np.pad(footctrv_med, ((VELOCITY_MEDIAN_WIDTH - 1) / 2,),
+                              mode='constant')
+        stop_check = strikes + STOP_DELAY
+        no_stop = np.where(footctrv_med[stop_check] > MAX_STOP_VELOCITY)[0]
+        if no_stop:
+            logger.debug('foot not coming to rest for candidate strike '
+                         'events: %s' % strikes[no_stop])
+        strikes = np.delete(strikes, no_stop)
 
         if len(strikes) == 0:
             raise GaitDataError('No valid foot strikes detected')
@@ -522,9 +536,6 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         cind_max = np.logical_and(footctrv[cross+1] < MAX_SLOPE_VELOCITY,
                                   footctrv[cross+1] > MIN_SLOPE_VELOCITY)
         toeoffs = cross[np.logical_and(cind_min, cind_max)]
-
-        too_near = np.where(np.diff(toeoffs) < MIN_EVENT_DISTANCE)[0] + 1
-        toeoffs = np.delete(toeoffs, too_near)
 
         if len(toeoffs) == 0:
             raise GaitDataError('Could not detect any toe-off events')
@@ -587,10 +598,10 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         if mark:
             for fr in strikes:
                 vicon.CreateAnEvent(subjectname, side_str,
-                                    'Foot Strike', fr+1, 0.0)
+                                    'Foot Strike', int(fr+1), 0)
             for fr in toeoffs:
                 vicon.CreateAnEvent(subjectname, side_str,
-                                    'Foot Off', fr+1, 0.0)
+                                    'Foot Off', int(fr+1), 0)
         strikes_all[this_side] = strikes
         toeoffs_all[this_side] = toeoffs
 

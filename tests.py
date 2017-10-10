@@ -29,9 +29,22 @@ def test_c3d_reader():
 
 
 def test_fp_detection():
+    # detect slight overstep (toeoff not on plate)
     c3d1 = 'testdata/slight_overstep.c3d'
     valid = detect_forceplate_events(c3d1)['valid']
     assert_equal(valid, '')
+    # detect double contact (both feet on plate)
+    c3d2 = 'testdata/double_contact.c3d'
+    valid = detect_forceplate_events(c3d2)['valid']
+    assert_equal(valid, '')
+    # almost overstepped but should be flagged as ok
+    c3d3 = 'testdata/barely_ok.c3d'
+    valid = detect_forceplate_events(c3d3)['valid']
+    assert_equal(valid, 'R')
+    # inside but on the edge
+    c3d4 = 'testdata/side_edge.c3d'
+    valid = detect_forceplate_events(c3d4)['valid']
+    assert_equal(valid, 'L')
 
 
 def test_segment_angles():

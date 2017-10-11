@@ -19,7 +19,7 @@ from pkg_resources import resource_filename
 using pythonw.exe on Windows. Without this, exception will be raised
 e.g. on any print statement. """
 if (sys.platform.find('win') != -1 and sys.executable.find('pythonw') != -1 and
-    not run_from_ipython()):
+   not run_from_ipython()):
     blackhole = file(os.devnull, 'w')
     sys.stdout = sys.stderr = blackhole
 
@@ -75,7 +75,7 @@ class EpicParser(ConfigParser.SafeConfigParser):
         fh = open(filename, 'wt')
         cfg.write(fh)
         fh.close()
-        
+
     def load_default(self):
         """ Load default config """
         self.read(cfg_template)
@@ -95,13 +95,17 @@ else:
     cfg.read(cfg_user)
 
 # check for extra entries in user config
+no_check = ['layouts']
 cfg_user_di = cfg._sections
 for sname, section in cfg_user_di.items():
     if sname not in cfg_tpl_di:
         print('WARNING: unused (deprecated?) section %s in user config'
               % sname)
-    for key in section:
-        if key not in cfg_tpl_di[sname]:
-            print('WARNING: unused (deprecated?) key %s in user config' % key)
+    else:
+        if sname not in no_check:
+            for key in section:
+                if key not in cfg_tpl_di[sname]:
+                    print('WARNING: unused (deprecated?) key '
+                          '%s in user config' % key)
 
 sys.stdout.flush()  # make sure that warnings are printed out

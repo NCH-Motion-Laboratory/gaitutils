@@ -424,10 +424,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     MIN_SLOPE_VELOCITY = 0  # not currently in use
     # max velocity when foot is 'stopped'
     MAX_STOP_VELOCITY = .2 * VEL_CONV
-    # foot must come to stop this time after strike event
-    STOP_DELAY = int(.1 * frate)
-    # median filter for velocity check
-    VELOCITY_MEDIAN_WIDTH = 5
+    # foot must come to stop latest at this time after strike event is marked
+    STOP_WIN = int(.3 * frate)
     # median prefilter width
     PREFILTER_MEDIAN_WIDTH = 3
     # tolerance between specified and actual first strike event
@@ -502,7 +500,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         # foot strikes (velocity decreases)
         cross = falling_zerocross(footctrv - threshold_fall_)
         # exclude edges of data vector
-        fmax = len(footctrv) - STOP_DELAY - (VELOCITY_MEDIAN_WIDTH - 1) / 2
+        fmax = len(footctrv) - STOP_WIN - 1
         cross = cross[np.where(np.logical_and(cross > 0, cross < fmax))]
         # check velocity on slope
         cind_min = np.logical_and(footctrv[cross-1] < MAX_SLOPE_VELOCITY,
@@ -511,18 +509,13 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                                   footctrv[cross+1] > MIN_SLOPE_VELOCITY)
         strikes = cross[np.logical_and(cind_min, cind_max)]
 
-        # check that median velocity falls close to zero soon after the event
-        footctrv_med = rolling_fun_strided(footctrv, np.median,
-                                           VELOCITY_MEDIAN_WIDTH)
-        footctrv_med = np.pad(footctrv_med, ((VELOCITY_MEDIAN_WIDTH - 1) / 2,),
-                              mode='constant')
-        stop_check = strikes + STOP_DELAY
-        no_stop = np.where(footctrv_med[stop_check] > MAX_STOP_VELOCITY)[0]
-
-        if len(no_stop) > 0:
-            logger.debug('foot not coming to rest for candidate strike '
-                         'events: %s' % strikes[no_stop])
-            strikes = np.delete(strikes, no_stop)
+        bad = []
+        for ind, strike in enumerate(strikes):
+            if footctrv[strike:strike+STOP_WIN].min() > MAX_STOP_VELOCITY:
+                logger.debug('foot not coming to rest after strike %d'
+                             % strike)
+                bad.append(ind)
+        strikes = np.delete(strikes, bad)
 
         if len(strikes) == 0:
             raise GaitDataError('No valid foot strikes detected')

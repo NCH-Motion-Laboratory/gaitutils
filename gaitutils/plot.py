@@ -380,8 +380,8 @@ class Plotter(object):
                         logger.debug('not plotting data for %s' % varname)
 
                     # each cycle gets its own stddev plot (if data was found)
-                    if (model_stddev is not None and cycle is not None
-                        and data is not None):
+                    if (model_stddev is not None and cycle is not None and
+                       data is not None):
                         if varname in model_stddev:
                             sdata = model_stddev[varname]
                             stdx = np.linspace(0, 100, sdata.shape[0])

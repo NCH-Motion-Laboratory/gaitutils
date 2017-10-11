@@ -199,16 +199,16 @@ def detect_forceplate_events(source, fp_info=None):
                                       cfg.autoproc.left_foot_markers]):
                 logger.debug('checking forceplate contact for side %s' % side)
 
-                # first check 'foot position' (average of all markers)
+                # check foot height at toeoff
                 data_shape = mrkdata[markers[0]+'_P'].shape
                 footctrP = np.zeros(data_shape)
                 for marker in markers:
                     footctrP += mrkdata[marker+'_P'] / len(markers)
-                # check foot height at toeoff
                 foot_h = footctrP[:, 2]
                 min_h = foot_h[np.nonzero(foot_h)].min()
-                if (footctrP[toeoff_fr, 2] < cfg.autoproc.toeoff_rel_height *
-                   min_h):
+                rel_h = footctrP[toeoff_fr, 2] / min_h
+                logger.debug('toeoff rel. height: %.2f' % rel_h)
+                if (rel_h < cfg.autoproc.toeoff_rel_height):
                     logger.debug('toeoff height too low')
                     ok = False
                     continue

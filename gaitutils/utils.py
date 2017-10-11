@@ -10,7 +10,6 @@ from envutils import GaitDataError
 from read_data import get_marker_data, get_forceplate_data, get_metadata
 from numutils import rising_zerocross, falling_zerocross, _baseline
 from scipy import signal
-from scipy.signal import medfilt
 import numpy as np
 import logging
 
@@ -111,7 +110,7 @@ def detect_forceplate_events(source, fp_info=None):
     results['L_toeoffs'] = []
     results['valid'] = ''
 
-    # get marker data and find "forward" direction
+    # get marker data and find "forward" direction (by max variance)
     mrkdata = get_marker_data(source, cfg.autoproc.right_foot_markers +
                               cfg.autoproc.left_foot_markers)
     pos = sum([mrkdata[name+'_P'] for name in
@@ -175,7 +174,7 @@ def detect_forceplate_events(source, fp_info=None):
             elif valid == 'Auto':
                 detect = True
             else:
-                raise Exception('unexpected Eclipse forceplate info')
+                raise Exception('unexpected Eclipse forceplate field')
 
         if detect:
             logger.debug('using autodetection')
@@ -195,24 +194,22 @@ def detect_forceplate_events(source, fp_info=None):
 
             # check markers
             this_valid = None
-
             for side, markers in zip(['R', 'L'],
                                      [cfg.autoproc.right_foot_markers,
                                       cfg.autoproc.left_foot_markers]):
                 logger.debug('checking forceplate contact for side %s' % side)
-                # check average of all markers
+
+                # first check 'foot position' (average of all markers)
                 data_shape = mrkdata[markers[0]+'_P'].shape
                 footctrP = np.zeros(data_shape)
                 for marker in markers:
                     footctrP += mrkdata[marker+'_P'] / len(markers)
-
                 # check foot height at toeoff
                 if footctrP[toeoff_fr, 2] < 1.5 * footctrP[strike_fr, 2]:
                     logger.debug('toeoff height too low')
                     ok = False
                     continue
                 else:
-                    # go on to check individual markers
                     ok = True
 
                 # individual marker checks
@@ -234,14 +231,18 @@ def detect_forceplate_events(source, fp_info=None):
                         maxes_s[fwd_dir] += cfg.autoproc.heel_strike_tol
                         mins_s[fwd_dir] -= cfg.autoproc.heel_strike_tol
                     marker = marker_ + '_P'
-                    ok &= mins_s[0] < mrkdata[marker][strike_fr, 0] < maxes_s[0]
-                    ok &= mins_s[1] < mrkdata[marker][strike_fr, 1] < maxes_s[1]
+                    ok &= (mins_s[0] < mrkdata[marker][strike_fr, 0] <
+                           maxes_s[0])
+                    ok &= (mins_s[1] < mrkdata[marker][strike_fr, 1] <
+                           maxes_s[1])
                     if not ok:
                         logger.debug('marker %s failed on-plate check during '
                                      'foot strike' % marker_)
                         break
-                    ok &= mins_t[0] < mrkdata[marker][toeoff_fr, 0] < maxes_t[0]
-                    ok &= mins_t[1] < mrkdata[marker][toeoff_fr, 1] < maxes_t[1]
+                    ok &= (mins_t[0] < mrkdata[marker][toeoff_fr, 0] <
+                           maxes_t[0])
+                    ok &= (mins_t[1] < mrkdata[marker][toeoff_fr, 1] <
+                           maxes_t[1])
                     if not ok:
                         logger.debug('marker %s failed on-plate check during '
                                      'toeoff ' % marker_)
@@ -249,7 +250,7 @@ def detect_forceplate_events(source, fp_info=None):
 
                 if ok:
                     if this_valid:
-                        raise GaitDataError('valid contact on both feet (??)')
+                        raise GaitDataError('valid contact on both feet (?)')
                     this_valid = side
                     logger.debug('on-plate check ok for side %s' % this_valid)
 

@@ -410,7 +410,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         raise GaitDataError('Cannot get framerate from Nexus')
 
     # TODO: move into config
-    # relative thresholds (of maximum velocity)
+    # thresholds (relative to maximum velocity) for detecting strike/toeoff
     REL_THRESHOLD_FALL = .2
     REL_THRESHOLD_RISE = .5
     # marker data is assumed to be in mm
@@ -426,10 +426,11 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     MAX_STOP_VELOCITY = .2 * VEL_CONV
     # foot must come to stop this time after strike event
     STOP_DELAY = int(.1 * frate)
+    # median filter for velocity check
     VELOCITY_MEDIAN_WIDTH = 5
     # median prefilter width
-    MEDIAN_WIDTH = 3
-    # tolerance between specified and actual first strike
+    PREFILTER_MEDIAN_WIDTH = 3
+    # tolerance between specified and actual first strike event
     STRIKE_TOL = 5
 
     # get subject info
@@ -448,12 +449,10 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     for marker in cfg.autoproc.right_foot_markers:
         rfootctrV += mrkdata[marker+'_V'] / len(cfg.autoproc.
                                                 right_foot_markers)
-        #logger.debug(mrkdata[marker+'_gaps'])
     rfootctrv = np.sqrt(np.sum(rfootctrV**2, 1))
     lfootctrV = np.zeros(data_shape)
     for marker in cfg.autoproc.left_foot_markers:
         lfootctrV += mrkdata[marker+'_V'] / len(cfg.autoproc.left_foot_markers)
-        #logger.debug(mrkdata[marker+'_gaps'])
     lfootctrv = np.sqrt(np.sum(lfootctrV**2, 1))
 
     # position data: use ANK marker
@@ -470,7 +469,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         # foot center position
         footctrP = rfootctrP if ind == 0 else lfootctrP
         # filter scalar velocity data to suppress noise and spikes
-        footctrv = signal.medfilt(footctrv, MEDIAN_WIDTH)
+        footctrv = signal.medfilt(footctrv, PREFILTER_MEDIAN_WIDTH)
 
         # compute local maxima of velocity: derivative crosses zero, values ok
         vd = np.gradient(footctrv)
@@ -614,7 +613,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         strikes_all[this_side] = strikes
         toeoffs_all[this_side] = toeoffs
 
-        # plot velocities w/ thresholds
+        # plot velocities w/ thresholds and marked events
         if plot:
             if ind == 0:
                 plt.figure()

@@ -205,8 +205,10 @@ def detect_forceplate_events(source, fp_info=None):
                 for marker in markers:
                     footctrP += mrkdata[marker+'_P'] / len(markers)
                 # check foot height at toeoff
+                foot_h = footctrP[:, 2]
+                min_h = foot_h[np.nonzero(foot_h)].min()
                 if (footctrP[toeoff_fr, 2] < cfg.autoproc.toeoff_rel_height *
-                   footctrP[:, 2].min()):
+                   min_h):
                     logger.debug('toeoff height too low')
                     ok = False
                     continue

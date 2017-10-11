@@ -27,20 +27,21 @@ def average_trials(trials, models, max_dist=None):
     stddata = dict()
     avgdata = dict()
     N_ok = dict()
-    
+
     for var, vardata in data.items():
         Ntot = vardata.shape[0]
-        outliers = _outlier_rows(vardata, max_dist)
-        N_out = np.count_nonzero(outliers)
-        if N_out > 0:
-            logger.debug('%s: dropping %d outlier curves' % (var, N_out))
-        vardata_ = vardata[~outliers, :] if N_out else vardata
-        stddata[var] = vardata_.std(axis=0)
-        avgdata[var] = vardata_.mean(axis=0)
-        n_ok = vardata_.shape[0]        
+        if max_dist is not None:
+            outliers = _outlier_rows(vardata, max_dist)
+            N_out = np.count_nonzero(outliers)
+            if N_out > 0:
+                logger.debug('%s: dropping %d outlier curves' % (var, N_out))
+                vardata = vardata[~outliers, :] if N_out else vardata
+        stddata[var] = vardata.std(axis=0)
+        avgdata[var] = vardata.mean(axis=0)
+        n_ok = vardata.shape[0]
         logger.debug('%s: averaged %d/%d curves' % (var, n_ok, Ntot))
         N_ok[var] = n_ok
-    
+
     return (avgdata, stddata, N_ok, Ncyc)
 
 
@@ -74,7 +75,7 @@ def _collect_model_data(trials, models):
         try:
             tr = Trial(file)
         except GaitDataError:
-            logger.warning('cannot load %s for averaging' % file)
+            logger.warning('cannot load %s while collecting trial data' % file)
         models_ok = True
         for model in models:
             # test whether read is ok for all models (only test 1st var)
@@ -95,13 +96,14 @@ def _collect_model_data(trials, models):
             nc[side] += 1
             for model in models:
                 for var in model.varnames:
+                    data_all[var] = None
                     # pick data only if var context matches cycle context
                     if var[0] == side:
                         # don't collect kinetics data if cycle not on forceplate
                         if model.is_kinetic_var(var) and not cycle.on_forceplate:
                             continue
                         data = tr[var][1]
-                        data_all[var] = (data[None, :] if var not in data_all
+                        data_all[var] = (data[None, :] if data_all[var] is None
                                          else
                                          np.concatenate([data_all[var],
                                                         data[None, :]]))

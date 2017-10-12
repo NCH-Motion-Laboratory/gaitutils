@@ -20,7 +20,7 @@ class AvgTrial(Trial):
 
     def __init__(self, c3dfiles, models):
         avgdata, stddata, n_ok, _ = average_trials(c3dfiles, models)
-        self.trialname = 'average from %d trials' % len(c3dfiles)
+        self.trialname = 'Averages from %d trials' % len(c3dfiles)
         self.source = 'averaged data'
         self.name = 'Unknown'
         self._model_data = avgdata

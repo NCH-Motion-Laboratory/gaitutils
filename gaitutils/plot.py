@@ -11,6 +11,7 @@ import nexus
 import numutils
 import normaldata
 from trial import Trial
+from stats import AvgTrial
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import pylab
@@ -26,6 +27,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 matplotlib.style.use(cfg.plot.mpl_style)
+
 
 class Plotter(object):
 
@@ -331,6 +333,8 @@ class Plotter(object):
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)
 
+        is_avg_trial = isinstance(self.trial, AvgTrial)
+
         for i, var in enumerate(self.allvars):
             var_type = self._var_type(var)
             if var_type is None:
@@ -357,11 +361,10 @@ class Plotter(object):
                             if model.is_kinetic_var(var):
                                 kin_ok = cycle.on_forceplate
                     # do the actual plotting if necessary
-                    data = None
-                    if kin_ok and (varname[0] == cycle.context or not
+                    x_, data = self.trial[varname]
+                    if data is not None and kin_ok and (varname[0] == cycle.context or not
                        auto_match_model_cycle or cycle is None):
                         logger.debug('plotting data for %s' % varname)
-                        x_, data = self.trial[varname]
                         x = (x_ / self.trial.framerate if cycle is None and
                              x_axis_is_time else x_)
                         # FIXME: cycle may not have context?
@@ -378,6 +381,8 @@ class Plotter(object):
                         ax.set_xlim(x[0], x[-1])
                     else:
                         logger.debug('not plotting data for %s' % varname)
+                        if data is None:
+                            logger.debug('(no data)')
 
                     # each cycle gets its own stddev plot (if data was found)
                     if (model_stddev is not None and cycle is not None and
@@ -402,6 +407,10 @@ class Plotter(object):
                         ax.yaxis.label.set_fontsize(self.cfg.
                                                     plot.label_fontsize)
                         subplot_title = model.varlabels[varname]
+                        # add n of averages for AvgTrial
+                        if is_avg_trial:
+                            subplot_title += (' (avg of %d cycles)' %
+                                              self.trial.n_ok[varname])
                         prev_title = ax.get_title()
                         if prev_title and prev_title != subplot_title:
                             subplot_title = prev_title + ' / ' + subplot_title

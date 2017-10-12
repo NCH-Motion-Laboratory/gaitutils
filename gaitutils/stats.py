@@ -6,12 +6,41 @@ Compute statistics across/within trials
 @author: Jussi (jnu@iki.fi)
 """
 
-from trial import Trial
+from trial import Trial, Gaitcycle
 from envutils import GaitDataError
 import logging
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
+
+class AvgTrial(Trial):
+    """ Trial containing cycle-averaged data, for use with plotter
+    TODO: does not support legends yet """
+
+    def __init__(self, c3dfiles, models):
+        avgdata, stddata, n_ok, _ = average_trials(c3dfiles, models)
+        self.trialname = 'average from %d trials' % len(c3dfiles)
+        self.source = 'averaged data'
+        self.name = 'Unknown'
+        self._model_data = avgdata
+        self.stddev_data = stddata
+        self.n_ok = n_ok
+        self.t = np.arange(101)  # 0..100%
+        # fake 2 gait cycles, L/R
+        self.cycles = list()
+        self.cycles.append(Gaitcycle(0, 101, 1, 60, 'R', True, 1000))
+        self.cycles.append(Gaitcycle(0, 101, 1, 60, 'L', True, 1000))
+        self.ncycles = 2
+
+    def __getitem__(self, item):
+        return self.t, self._model_data[item]
+
+    def set_norm_cycle(self, cycle):
+        if cycle is None:
+            raise ValueError('AvgTrial does not support unnormalized data')
+        else:
+            logger.debug('setting norm. cycle for AvgTrial (no effect)')
 
 
 def average_trials(trials, models, max_dist=None):
@@ -21,6 +50,17 @@ def average_trials(trials, models, max_dist=None):
         filename, or list of filenames (c3d) to read trials from
     models: model (GaitModel instance) or list of models to average
     max_dist: maximum curve distance from median, for outlier rejection
+
+    Returns:
+
+    avgdata: dict
+        The data
+    stddata: dict
+        Standard dev for each var
+    N_ok: dict
+        N of accepted trials for each var
+    Ncyc: dict
+        WIP
     """
     data, Ncyc = _collect_model_data(trials, models)
 
@@ -29,18 +69,25 @@ def average_trials(trials, models, max_dist=None):
     N_ok = dict()
 
     for var, vardata in data.items():
-        Ntot = vardata.shape[0]
-        if max_dist is not None:
-            outliers = _outlier_rows(vardata, max_dist)
-            N_out = np.count_nonzero(outliers)
-            if N_out > 0:
-                logger.debug('%s: dropping %d outlier curves' % (var, N_out))
-                vardata = vardata[~outliers, :] if N_out else vardata
-        stddata[var] = vardata.std(axis=0)
-        avgdata[var] = vardata.mean(axis=0)
-        n_ok = vardata.shape[0]
-        logger.debug('%s: averaged %d/%d curves' % (var, n_ok, Ntot))
-        N_ok[var] = n_ok
+        if vardata is None:
+            stddata[var] = None
+            avgdata[var] = None
+            continue
+        else:
+            Ntot = vardata.shape[0]
+            # identify outliers
+            if max_dist is not None:
+                outliers = _outlier_rows(vardata, max_dist)
+                N_out = np.count_nonzero(outliers)
+                if N_out > 0:
+                    logger.debug('%s: dropping %d outlier curves' %
+                                 (var, N_out))
+                    vardata = vardata[~outliers, :] if N_out else vardata
+            stddata[var] = vardata.std(axis=0)
+            avgdata[var] = vardata.mean(axis=0)
+            n_ok = vardata.shape[0]
+            logger.debug('%s: averaged %d/%d curves' % (var, n_ok, Ntot))
+            N_ok[var] = n_ok
 
     return (avgdata, stddata, N_ok, Ncyc)
 
@@ -68,6 +115,9 @@ def _collect_model_data(trials, models):
         models = [models]
 
     data_all = dict()
+    for model in models:
+        for var in model.varnames:
+            data_all[var] = None
     nc = dict()
     nc['R'], nc['L'], nc['Rkin'], nc['Lkin'] = (0,)*4
 
@@ -75,7 +125,7 @@ def _collect_model_data(trials, models):
         try:
             tr = Trial(file)
         except GaitDataError:
-            logger.warning('cannot load %s while collecting trial data' % file)
+            logger.warning('cannot load %s' % file)
         models_ok = True
         for model in models:
             # test whether read is ok for all models (only test 1st var)
@@ -84,7 +134,7 @@ def _collect_model_data(trials, models):
                 data = tr[var][1]
             except GaitDataError:
                 logger.warning('cannot read variable %s from %s' %
-                              (var, file))
+                               (var, file))
                 models_ok = False
         if not models_ok:
             continue
@@ -96,7 +146,6 @@ def _collect_model_data(trials, models):
             nc[side] += 1
             for model in models:
                 for var in model.varnames:
-                    data_all[var] = None
                     # pick data only if var context matches cycle context
                     if var[0] == side:
                         # don't collect kinetics data if cycle not on forceplate
@@ -110,7 +159,3 @@ def _collect_model_data(trials, models):
     logger.debug('collected %d trials, %d/%d R/L cycles, %d/%d kinetics cycles'
                  % (n, nc['R'], nc['L'], nc['Rkin'], nc['Lkin']))
     return data_all, nc
-        
-        
-        
-        

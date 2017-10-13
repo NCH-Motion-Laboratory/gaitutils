@@ -113,6 +113,9 @@ def get_sessionpath():
 def get_session_enfs():
     """ Return list of .enf files for the session """
     sessionpath = get_sessionpath()
+    if not sessionpath:
+        raise GaitDataError('Cannot get Nexus session path, '
+                            'no session or maybe in Live mode?')
     enffiles = glob.glob(sessionpath+'*Trial*.enf') if sessionpath else None
     logger.debug('found %d .enf files for session %s' %
                  (len(enffiles) if enffiles else 0, sessionpath))

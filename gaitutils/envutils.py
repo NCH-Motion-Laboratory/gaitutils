@@ -9,6 +9,7 @@ Stuff related to Python environment
 
 
 from guiutils import error_exit
+from config import cfg
 import sys
 import traceback
 
@@ -35,7 +36,9 @@ def register_gui_exception_handler(full_traceback=False):
         #
         sys.__excepthook__(type, value, tback)
         sys.exit()
-    sys.excepthook = _my_excepthook
+
+    if cfg.general.gui_exceptions:
+        sys.excepthook = _my_excepthook
 
 
 def run_from_ipython():

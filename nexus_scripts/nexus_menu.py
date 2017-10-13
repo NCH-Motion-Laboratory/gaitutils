@@ -13,6 +13,7 @@ import sys
 import ast
 import os
 import traceback
+
 from gaitutils import nexus
 from gaitutils import cfg
 import nexus_emgplot

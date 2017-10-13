@@ -10,7 +10,7 @@ Stuff related to Python environment
 import sys
 import traceback
 from .guiutils import error_exit
-from .config import cfg
+from config import cfg
 
 
 class GaitDataError(Exception):

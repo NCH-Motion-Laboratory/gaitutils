@@ -5,6 +5,7 @@ __init__.py
 @author: jnu@iki.fi
 """
 
+from .config import cfg
 from . import models
 from . import nexus
 from . import eclipse
@@ -19,5 +20,5 @@ from .numutils import rising_zerocross, falling_zerocross
 from .guiutils import messagebox
 from .plot import Plotter
 from .trial import Trial
-from .config import cfg
+
 

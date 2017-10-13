@@ -19,8 +19,8 @@ import nexus_emgplot
 import nexus_kinetics_emgplot
 import nexus_emg_consistency
 import nexus_kin_consistency
-import nexus_autoprocess_current
-import nexus_autoprocess_trials
+import nexus_autoprocess_trial
+import nexus_autoprocess_session
 import nexus_kinallplot
 import nexus_tardieu
 import nexus_copy_trial_videos
@@ -284,10 +284,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnKinAverage,
                                   nexus_kin_average.do_plot)
         self._button_connect_task(self.btnAutoprocTrial,
-                                  nexus_autoprocess_current.autoproc_single,
+                                  nexus_autoprocess_trial.autoproc_single,
                                   thread=True)
         self._button_connect_task(self.btnAutoprocSession,
-                                  nexus_autoprocess_trials.autoproc_session,
+                                  nexus_autoprocess_session.autoproc_session,
                                   thread=True)
         self._button_connect_task(self.btnCreatePDFs,
                                   nexus_make_all_plots.do_plot, thread=True)

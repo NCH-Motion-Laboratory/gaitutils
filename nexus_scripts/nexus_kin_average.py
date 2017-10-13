@@ -15,9 +15,7 @@ import logging
 def do_plot():
 
     sessionpath = nexus.get_sessionpath()
-    if not sessionpath:
-        raise GaitDataError('Cannot get Nexus session path. Make sure Nexus is'
-                            ' not in live mode.')
+
     files = [nexus.enf2c3d(enf) for enf in nexus.get_session_enfs() if
              eclipse.get_eclipse_keys(enf)['TYPE'] == 'Dynamic']
     if not files:

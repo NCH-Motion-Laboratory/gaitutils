@@ -36,8 +36,7 @@ def trial_median_velocity(source):
 def do_plot():
 
     enfs = nexus.get_session_enfs()
-    if enfs is None:
-        raise Exception('Cannot read session from Nexus (maybe in live mode?)')
+
     enfs_ = [enf for enf in enfs if
              eclipse.get_eclipse_keys(enf,
                                       return_empty=True)['TYPE'] == 'Dynamic']

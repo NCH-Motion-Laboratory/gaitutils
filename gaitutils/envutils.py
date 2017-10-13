@@ -17,6 +17,7 @@ class GaitDataError(Exception):
     """ Exception specific to erroneous or unexpected gait data """
     pass
 
+
 def register_gui_exception_handler(full_traceback=False):
     """ Registers an exception handler that reports uncaught exceptions
     via GUI"""
@@ -43,10 +44,3 @@ def run_from_ipython():
         return True
     except NameError:
         return False
-
-""" Print debug messages only if running under IPython. Debug may prevent
-scripts from working in Nexus (??) """
-if run_from_ipython():
-    DEBUG = True
-else:
-    DEBUG = False

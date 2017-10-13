@@ -26,6 +26,8 @@ import nexus_tardieu
 import nexus_copy_trial_videos
 import nexus_trials_velocity
 import nexus_make_all_plots
+import nexus_kin_average
+
 
 try:
     from nexus_scripts import nexus_customplot
@@ -279,6 +281,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   nexus_emg_consistency.do_plot)
         self._button_connect_task(self.btnKinCons,
                                   nexus_kin_consistency.do_plot)
+        self._button_connect_task(self.btnKinAverage,
+                                  nexus_kin_average.do_plot)
         self._button_connect_task(self.btnAutoprocTrial,
                                   nexus_autoprocess_current.autoproc_single,
                                   thread=True)
@@ -334,6 +338,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         """ Disable all operation buttons """
         for widget in self.opWidgets:
                 self.__dict__[widget].setEnabled(False)
+        # update display immediately in case thread gets blocked
+        QtWidgets.QApplication.processEvents()
 
     def _enable_op_buttons(self):
         """ Disable all operation buttons """
@@ -353,6 +359,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         """ Run function fun. If thread==True, run in a separate worker
         thread. """
         self._disable_op_buttons()
+        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         if thread:
             self._run_in_worker_thread(fun)
         else:
@@ -362,6 +369,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 self._exception(e)
             finally:
                 self._enable_op_buttons()
+                QtWidgets.QApplication.restoreOverrideCursor()
 
     def _run_in_worker_thread(self, fun):
         """ Run function in a separate thread """

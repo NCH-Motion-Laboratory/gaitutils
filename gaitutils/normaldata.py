@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Nov 11 10:49:55 2016
+Normal data readers
 
-@author: hus20664877
+@author: jnu@iki.fi
 """
 
-from numutils import isfloat
+
 import numpy as np
 import openpyxl
 import os.path as op
+from .numutils import isfloat
 
 
 def read_normaldata(filename):

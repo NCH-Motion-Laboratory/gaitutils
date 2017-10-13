@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Sep 23 10:27:56 2016
+
+Data readers & processing utils, Nexus specific
 
 @author: jnu@iki.fi
-
-Data readers & processing utils for Vicon Nexus.
-
 """
 
 from __future__ import print_function
@@ -15,15 +13,15 @@ from scipy import signal
 import os.path as op
 import psutil
 import glob
-from numutils import (rising_zerocross, best_match, falling_zerocross,
-                      change_coords, rolling_fun_strided)
-from utils import principal_movement_direction
-from envutils import GaitDataError
-from eclipse import get_eclipse_keys
 import matplotlib.pyplot as plt
-from config import cfg
 import logging
 import platform
+from .numutils import (rising_zerocross, best_match, falling_zerocross,
+                       change_coords, rolling_fun_strided)
+from . import utils
+from .envutils import GaitDataError
+from .eclipse import get_eclipse_keys
+from .config import cfg
 
 
 logger = logging.getLogger(__name__)
@@ -549,8 +547,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
 
         # select events for which the foot is close enough to center frame
         if events_range:
-            fwd_dim = principal_movement_direction(vicon, cfg.
-                                                   autoproc.track_markers)
+            fwd_dim = utils.principal_movement_direction(vicon, cfg.
+                                                         autoproc.track_markers)
             strike_pos = footctrP[strikes, fwd_dim]
             dist_ok = np.logical_and(strike_pos > events_range[0],
                                      strike_pos < events_range[1])

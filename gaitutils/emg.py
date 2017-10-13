@@ -11,10 +11,10 @@ Class for reading EMG
 from __future__ import division
 import numpy as np
 from scipy import signal
-import read_data
-from config import cfg
 import logging
-from nexus import _list_to_str
+from . import read_data
+from .config import cfg
+from .nexus import _list_to_str
 
 logger = logging.getLogger(__name__)
 

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Sep 23 11:19:07 2016
+__init__.py
 
-@author: hus20664877
+@author: jnu@iki.fi
 """
-#from .config import Config
+
 from . import models
 from . import nexus
 from . import eclipse

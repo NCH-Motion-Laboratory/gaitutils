@@ -6,10 +6,10 @@ Compute statistics across/within trials
 @author: Jussi (jnu@iki.fi)
 """
 
-from trial import Trial, Gaitcycle
-from envutils import GaitDataError
 import logging
 import numpy as np
+from .trial import Trial, Gaitcycle
+from .envutils import GaitDataError
 
 logger = logging.getLogger(__name__)
 

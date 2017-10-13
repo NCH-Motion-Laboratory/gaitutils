@@ -6,12 +6,6 @@ Plot gait data
 @author: jnu@iki.fi
 """
 
-import models
-import nexus
-import numutils
-import normaldata
-from trial import Trial
-from stats import AvgTrial
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import pylab
@@ -20,9 +14,15 @@ import matplotlib.gridspec as gridspec
 import os.path as op
 import os
 import subprocess
-from config import cfg
 import numpy as np
 import logging
+from . import models
+from . import nexus
+from . import numutils
+from . import normaldata
+from .trial import Trial
+from .stats import AvgTrial
+from .config import cfg
 
 logger = logging.getLogger(__name__)
 

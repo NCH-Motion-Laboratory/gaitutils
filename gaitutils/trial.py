@@ -9,16 +9,19 @@ Read gait trials.
 
 
 from __future__ import division
-from . import read_data, utils, eclipse
-from envutils import GaitDataError
 from collections import defaultdict
 import numpy as np
 import os.path as op
 import glob
-import models
-from emg import EMG
-from config import cfg
 import logging
+from . import read_data
+from . import utils
+from . import eclipse
+from . import models
+from .emg import EMG
+from .config import cfg
+from .envutils import GaitDataError
+
 
 logger = logging.getLogger(__name__)
 

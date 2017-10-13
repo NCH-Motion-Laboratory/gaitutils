@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """
 
-models.py - definitions for various models (PiG, muscle length, etc.)
+Definitions for various models (PiG, muscle length, etc.)
 
 To create a new model, create a GaitModel() instance, fill in the data and
 append to models_all.
 
-@author: Jussi
+@author: jnu@iki.fi
 """
 
-from envutils import GaitDataError
 from collections import defaultdict
+from .envutils import GaitDataError
 
 models_all = []
 

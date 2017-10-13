@@ -6,14 +6,13 @@ Utility functions for processing gait data.
 @author: Jussi (jnu@iki.fi)
 """
 
-from envutils import GaitDataError
-from read_data import get_marker_data, get_forceplate_data, get_metadata
-from numutils import rising_zerocross, falling_zerocross, _baseline
 from scipy import signal
 import numpy as np
 import logging
+from .envutils import GaitDataError
 
-from config import cfg
+from .numutils import rising_zerocross, falling_zerocross, _baseline
+from .config import cfg
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +21,8 @@ def get_crossing_frame(source, marker, dim=1, p0=0):
     """ Return frame(s) where marker position (dimension dim) crosses p0
     (units are as returned by Nexus, usually mm).
     Dims are x=0, y=1, z=2. """
-    mrkdata = get_marker_data(source, marker)
+    from . import read_data
+    mrkdata = read_data.get_marker_data(source, marker)
     P = mrkdata[marker + '_P']
     y = P[:, dim]
     nzind = np.where(y != 0)  # nonzero elements == valid data (not nice)
@@ -43,9 +43,10 @@ def get_crossing_frame(source, marker, dim=1, p0=0):
 def get_movement_direction(source, marker, dir):
     """ Return direction of movement (negative/positive)
     for given marker and movement direction """
+    from . import read_data
     dir = dir.lower()
     dir = {'x': 0, 'y': 1, 'z': 2}[dir]
-    mrkdata = get_marker_data(source, marker)
+    mrkdata = read_data.get_marker_data(source, marker)
     P = mrkdata[marker+'_P']
     ddiff = np.median(np.diff(P[:, dir]))  # median of derivative
     return 1 if ddiff > 0 else -1
@@ -73,7 +74,8 @@ def butter_filt(data, passband, sfreq, bord=5):
 
 def principal_movement_direction(source, markers):
     """ Return principal movement direction """
-    mrkdata = get_marker_data(source, markers)
+    from . import read_data
+    mrkdata = read_data.get_marker_data(source, markers)
     pos = sum([mrkdata[name+'_P'] for name in markers])
     fwd_dir = np.argmax(np.var(pos, axis=0))
     return fwd_dir
@@ -100,8 +102,9 @@ def detect_forceplate_events(source, fp_info=None):
 
     # get subject info
     logger.debug('detect forceplate events from %s' % source)
-    info = get_metadata(source)
-    fpdata = get_forceplate_data(source)
+    from . import read_data
+    info = read_data.get_metadata(source)
+    fpdata = read_data.get_forceplate_data(source)
 
     results = dict()
     results['R_strikes'] = []
@@ -111,8 +114,8 @@ def detect_forceplate_events(source, fp_info=None):
     results['valid'] = ''
 
     # get marker data and find "forward" direction (by max variance)
-    mrkdata = get_marker_data(source, cfg.autoproc.right_foot_markers +
-                              cfg.autoproc.left_foot_markers)
+    mrkdata = read_data.get_marker_data(source, cfg.autoproc.right_foot_markers +
+                                        cfg.autoproc.left_foot_markers)
     pos = sum([mrkdata[name+'_P'] for name in
                cfg.autoproc.left_foot_markers+cfg.autoproc.right_foot_markers])
     fwd_dir = np.argmax(np.var(pos, axis=0))
@@ -274,8 +277,9 @@ def get_foot_velocity(source, fp_events, medians=True):
     """ Return foot velocities during forceplate strike/toeoff frames.
     fp_events is from detect_forceplate_events()
     If medians=True, return median values. """
-    mrkdata = get_marker_data(source, cfg.autoproc.right_foot_markers +
-                              cfg.autoproc.left_foot_markers)
+    from . import read_data
+    mrkdata = read_data.get_marker_data(source, cfg.autoproc.right_foot_markers +
+                                        cfg.autoproc.left_foot_markers)
     results = dict()
     for context, markers in zip(('R', 'L'), [cfg.autoproc.right_foot_markers,
                                 cfg.autoproc.left_foot_markers]):

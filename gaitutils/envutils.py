@@ -7,11 +7,10 @@ Stuff related to Python environment
 @author: Jussi (jnu@iki.fi)
 """
 
-
-from guiutils import error_exit
-from config import cfg
 import sys
 import traceback
+from .guiutils import error_exit
+from .config import cfg
 
 
 class GaitDataError(Exception):

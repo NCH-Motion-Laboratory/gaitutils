@@ -7,15 +7,21 @@ Average cycles over the session trials.
 """
 
 import gaitutils
-from gaitutils import cfg, nexus, layouts, eclipse
+from gaitutils import (cfg, nexus, layouts, eclipse, GaitDataError,
+                       register_gui_exception_handler)
 import logging
 
 
 def do_plot():
 
     sessionpath = nexus.get_sessionpath()
+    if not sessionpath:
+        raise GaitDataError('Cannot get Nexus session path. Make sure Nexus is'
+                            ' not in live mode.')
     files = [nexus.enf2c3d(enf) for enf in nexus.get_session_enfs() if
              eclipse.get_eclipse_keys(enf)['TYPE'] == 'Dynamic']
+    if not files:
+        raise GaitDataError('No dynamic trials found for current session')
     models = [gaitutils.models.pig_lowerbody]
 
     atrial = gaitutils.stats.AvgTrial(files, models)
@@ -36,4 +42,5 @@ def do_plot():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
+    register_gui_exception_handler()
     do_plot()

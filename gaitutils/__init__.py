@@ -10,7 +10,6 @@ from . import nexus
 from . import eclipse
 from . import read_data
 from . import trial
-from . import config
 from . import guiutils
 from . import utils
 from . import stats

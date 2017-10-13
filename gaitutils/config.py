@@ -11,8 +11,8 @@ import os.path as op
 import os
 import copy
 import sys
-import envutils
 from pkg_resources import resource_filename
+import envutils
 
 
 """ Work around stdout and stderr not being available, if we are run

@@ -2,7 +2,7 @@
 """
 Created on Mon Nov 14 15:50:55 2016
 
-@author: jussi
+@author: Jussi (jnu@iki.fi)
 """
 
 from setuptools import setup, find_packages

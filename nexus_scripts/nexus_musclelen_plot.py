@@ -2,7 +2,7 @@
 """
 Created on Tue Apr 28 11:25:38 2015
 
-EMG plot from Nexus.
+Muscle length plot from Nexus.
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -16,13 +16,15 @@ from gaitutils.config import cfg
 def do_plot():
     pl = Plotter()
     pl.open_nexus_trial()
-    pdf_prefix = 'EMG_'
-    maintitle = pl.title_with_eclipse_info('EMG plot for')
+    pdf_prefix = 'MuscleLen_'
+    maintitle = pl.title_with_eclipse_info('Muscle length plot for')
 
-    vicon = nexus.viconnexus()
-    layout = cfg.layouts.std_emg
-    pl.layout = layouts.rm_dead_channels(vicon, pl.trial.emg, layout)
-    pl.plot_trial(maintitle=maintitle)
+    pl.layout = cfg.layouts.musclelen_r
+    pl.plot_trial(maintitle=maintitle, split_model_vars=False, show=False)
+
+    pl.layout = cfg.layouts.musclelen_l
+    pl.plot_trial(maintitle=maintitle, split_model_vars=False,
+                  superpose=True)
 
     pl.create_pdf(pdf_prefix=pdf_prefix)
 

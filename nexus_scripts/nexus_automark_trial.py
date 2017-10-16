@@ -6,7 +6,7 @@ Run automark for single trial.
 Note: event detection is less accurate compared to running autoprocess for the
 whole session, since here we cannot use statistics for velocity thresholding.
 
-@author: Jussi
+@author: Jussi (jnu@iki.fi)
 """
 
 from __future__ import print_function

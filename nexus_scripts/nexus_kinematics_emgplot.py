@@ -6,7 +6,7 @@ Kinematics-EMG plot from Nexus.
 
 Instead of separate plots, this overlays EMGs from both sides on one plot.
 
-@author: Jussi
+@author: Jussi (jnu@iki.fi)
 """
 
 import logging

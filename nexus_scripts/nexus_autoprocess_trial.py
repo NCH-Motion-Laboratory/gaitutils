@@ -4,7 +4,7 @@
 Auto process single trial.
 Note: does not use stats for event detection -> less accurate
 
-@author: Jussi
+@author: Jussi (jnu@iki.fi)
 """
 
 import logging

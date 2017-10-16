@@ -4,7 +4,7 @@ Created on Thu Sep 03 14:54:34 2015
 
 Copy trial videos to desktop under nexus_videos
 
-@author: Jussi
+@author: Jussi (jnu@iki.fi)
 """
 
 import os

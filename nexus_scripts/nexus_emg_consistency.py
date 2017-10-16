@@ -5,7 +5,7 @@ Created on Thu Sep 03 14:54:34 2015
 EMG consistency plot from Nexus. Automatically picks trials based on Eclipse
 description and defined search strings.
 
-@author: Jussi
+@author: Jussi (jnu@iki.fi)
 """
 
 import logging

@@ -2,7 +2,7 @@
 """
 Handles gaitutils config files.
 
-@author: jnu@iki.fi
+@author: Jussi (jnu@iki.fi)
 """
 
 import ConfigParser

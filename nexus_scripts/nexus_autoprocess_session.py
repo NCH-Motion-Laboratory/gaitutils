@@ -24,7 +24,7 @@ NOTES:
 -ROI operations only work for Nexus >= 2.5
 
 
-@author: Jussi
+@author: Jussi (jnu@iki.fi)
 """
 
 import os

@@ -3,7 +3,7 @@
 
 Plot gait data
 
-@author: jnu@iki.fi
+@author: Jussi (jnu@iki.fi)
 """
 
 import matplotlib

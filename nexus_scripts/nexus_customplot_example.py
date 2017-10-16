@@ -6,7 +6,7 @@ Example of a custom plot
 
 Copy to nexus_scripts/nexus_customplot.py
 
-@author: Jussi
+@author: Jussi (jnu@iki.fi)
 """
 
 import logging

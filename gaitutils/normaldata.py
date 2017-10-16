@@ -2,7 +2,7 @@
 """
 Normal data readers
 
-@author: jnu@iki.fi
+@author: Jussi (jnu@iki.fi)
 """
 
 

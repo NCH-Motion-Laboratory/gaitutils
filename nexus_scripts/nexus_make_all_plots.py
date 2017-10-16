@@ -4,7 +4,7 @@ Created on Thu Sep 03 14:54:34 2015
 
 Script to create / update all kinetics/EMG plots for the marked trials
 
-@author: Jussi
+@author: Jussi (jnu@iki.fi)
 """
 
 import logging

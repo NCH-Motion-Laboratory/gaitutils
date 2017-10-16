@@ -4,7 +4,7 @@ Created on Tue Apr 28 11:37:51 2015
 
 Kinetics-EMG plot from Nexus.
 
-@author: Jussi
+@author: Jussi (jnu@iki.fi)
 """
 import logging
 import argparse

@@ -2,7 +2,7 @@
 """
 Handling layouts.
 
-@author: Jussi
+@author: Jussi (jnu@iki.fi)
 """
 
 import logging

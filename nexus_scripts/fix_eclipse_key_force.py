@@ -7,7 +7,7 @@ Fixes all enf files in given directory.
 
 Be careful! Overwrites files without asking anything.
 
-@author: jussi
+@author: Jussi (jnu@iki.fi)
 """
 
 

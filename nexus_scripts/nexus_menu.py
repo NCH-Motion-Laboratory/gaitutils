@@ -2,7 +2,7 @@
 """
 Show a Qt menu for running various Nexus tasks.
 
-@author: jnu@iki.fi
+@author: Jussi (jnu@iki.fi)
 """
 
 from __future__ import print_function

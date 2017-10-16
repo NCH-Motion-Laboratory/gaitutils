@@ -4,7 +4,7 @@ Created on Fri Sep 23 11:17:10 2016
 
 Misc numerical utils
 
-@author: jnu@iki.fi
+@author: Jussi (jnu@iki.fi)
 """
 
 import numpy as np

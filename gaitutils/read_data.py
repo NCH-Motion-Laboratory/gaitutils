@@ -6,7 +6,7 @@ Wrapper methods that read from either Vicon Nexus or c3d files.
 a path to a c3d file.
 
 
-@author: jnu@iki.fi
+@author: Jussi (jnu@iki.fi)
 
 """
 

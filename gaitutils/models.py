@@ -6,7 +6,7 @@ Definitions for various models (PiG, muscle length, etc.)
 To create a new model, create a GaitModel() instance, fill in the data and
 append to models_all.
 
-@author: jnu@iki.fi
+@author: Jussi (jnu@iki.fi)
 """
 
 from collections import defaultdict

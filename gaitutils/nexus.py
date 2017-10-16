@@ -3,7 +3,7 @@
 
 Data readers & processing utils, Nexus specific
 
-@author: jnu@iki.fi
+@author: Jussi (jnu@iki.fi)
 """
 
 from __future__ import print_function

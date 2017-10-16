@@ -4,7 +4,7 @@ Created on Tue Jan 26 15:31:11 2016
 
 Misc functions for Gaitplotter (OS dialogs etc)
 
-@author: Jussi
+@author: Jussi (jnu@iki.fi)
 """
 
 import ctypes

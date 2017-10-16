@@ -2,7 +2,7 @@
 """
 __init__.py
 
-@author: jnu@iki.fi
+@author: Jussi (jnu@iki.fi)
 """
 
 from .config import cfg

@@ -12,7 +12,7 @@ import os
 import copy
 import sys
 from pkg_resources import resource_filename
-import envutils
+from . import envutils
 
 
 """ Work around stdout and stderr not being available, if we are run

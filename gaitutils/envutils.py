@@ -10,7 +10,6 @@ Stuff related to Python environment
 import sys
 import traceback
 from .guiutils import error_exit
-from config import cfg
 
 
 class GaitDataError(Exception):
@@ -21,6 +20,7 @@ class GaitDataError(Exception):
 def register_gui_exception_handler(full_traceback=False):
     """ Registers an exception handler that reports uncaught exceptions
     via GUI"""
+    from .config import cfg
 
     def _my_excepthook(type, value, tback):
         """ Custom exception handler for fatal (unhandled) exceptions:

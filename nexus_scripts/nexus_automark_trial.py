@@ -10,11 +10,11 @@ whole session, since here we cannot use statistics for velocity thresholding.
 """
 
 from __future__ import print_function
+import argparse
+import logging
+
 from gaitutils import nexus, utils
 from gaitutils.config import cfg
-import argparse
-
-import logging
 
 
 def automark_single(plot=False):

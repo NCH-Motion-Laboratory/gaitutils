@@ -11,6 +11,7 @@ from __future__ import print_function
 import logging
 import numpy as np
 import os
+
 from .numutils import center_of_pressure, change_coords
 from .envutils import GaitDataError
 

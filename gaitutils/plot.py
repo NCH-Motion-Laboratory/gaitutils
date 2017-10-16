@@ -16,6 +16,7 @@ import os
 import subprocess
 import numpy as np
 import logging
+
 from . import models
 from . import nexus
 from . import numutils
@@ -23,6 +24,7 @@ from . import normaldata
 from .trial import Trial
 from .stats import AvgTrial
 from .config import cfg
+
 
 logger = logging.getLogger(__name__)
 

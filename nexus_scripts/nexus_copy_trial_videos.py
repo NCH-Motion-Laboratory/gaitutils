@@ -7,13 +7,16 @@ Copy trial videos to desktop under nexus_videos
 @author: Jussi
 """
 
-from gaitutils import nexus
-from gaitutils.guiutils import messagebox
 import os
 import os.path as op
 import glob
 import shutil
 import logging
+
+from gaitutils import nexus
+from gaitutils.guiutils import messagebox
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,7 +36,7 @@ def do_copy():
     search = ['R1', 'L1']
     eclkeys = ['DESCRIPTION', 'NOTES']
     enf_files = nexus.find_trials(eclkeys, search)
-    
+
     # concatenate video iterators for all .enf files
     vidfiles = []
     for enf in enf_files:
@@ -47,7 +50,7 @@ def do_copy():
         logger.debug('%s -> %s' % (vidfile, dest_dir))
         shutil.copy2(vidfile, dest_dir)
 
-    messagebox('Copied %d video file%s into %s' % ((j+1), 's' if j > 1 else '', 
+    messagebox('Copied %d video file%s into %s' % ((j+1), 's' if j > 1 else '',
                                                    dest_dir))
 
 if __name__ == '__main__':

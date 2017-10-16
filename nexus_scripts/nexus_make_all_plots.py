@@ -7,12 +7,13 @@ Script to create / update all kinetics/EMG plots for the marked trials
 @author: Jussi
 """
 
+import logging
+
 from gaitutils import Plotter, cfg, register_gui_exception_handler, layouts
 from gaitutils.nexus import enf2c3d, find_trials
 import nexus_kin_consistency
 import nexus_emg_consistency
 
-import logging
 logger = logging.getLogger(__name__)
 
 
@@ -37,12 +38,12 @@ def do_plot():
         raise Exception('Too many marked trials found!')
 
     pl = Plotter()
-        
+
     for trial in marked_trials:
 
         c3d = enf2c3d(trial)
         pl.open_trial(c3d)
-    
+
         side = pl.trial.fp_events['valid']
         if side not in ['L', 'R']:
             raise Exception('Need one kinetics cycle per trial')
@@ -54,16 +55,17 @@ def do_plot():
                           cfg.emg.channel_labels])
 
         if emg_active:
-            # kinetics-EMG            
+            # kinetics-EMG
             pl.layout = (cfg.layouts.lb_kinetics_emg_r if side == 'R' else
                          cfg.layouts.lb_kinetics_emg_l)
-    
+
             maintitle = 'Kinetics-EMG (%s) for %s' % (side_str,
                                                       pl.title_with_eclipse_info())
             pl.plot_trial(maintitle=maintitle, show=False)
-            pdf_name = 'Kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname, side_str)
+            pdf_name = 'Kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname,
+                                                   side_str)
             pl.create_pdf(pdf_name=pdf_name)
-    
+
             # EMG
             pdf_prefix = 'EMG_'
             maintitle = pl.title_with_eclipse_info('EMG plot for')
@@ -73,7 +75,7 @@ def do_plot():
             pl.create_pdf(pdf_prefix=pdf_prefix)
 
     # consistency plots
-    nexus_kin_consistency.do_plot(show=False)    
+    nexus_kin_consistency.do_plot(show=False)
     if emg_active:
         nexus_emg_consistency.do_plot(show=False)
 

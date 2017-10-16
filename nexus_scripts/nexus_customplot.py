@@ -9,8 +9,9 @@ Copy to nexus_scripts/nexus_customplot.py
 @author: Jussi
 """
 
-from gaitutils import Plotter, register_gui_exception_handler, cfg
 import logging
+
+from gaitutils import Plotter, register_gui_exception_handler, cfg
 
 
 # this function does the actual plotting - edit it to your needs

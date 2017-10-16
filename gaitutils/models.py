@@ -10,7 +10,9 @@ append to models_all.
 """
 
 from collections import defaultdict
+
 from .envutils import GaitDataError
+
 
 models_all = []
 

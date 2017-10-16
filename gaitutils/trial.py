@@ -14,6 +14,7 @@ import numpy as np
 import os.path as op
 import glob
 import logging
+
 from . import read_data
 from . import utils
 from . import eclipse

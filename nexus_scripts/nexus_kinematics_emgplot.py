@@ -9,8 +9,9 @@ Instead of separate plots, this overlays EMGs from both sides on one plot.
 @author: Jussi
 """
 
-from gaitutils import Plotter, layouts, register_gui_exception_handler, cfg
 import logging
+
+from gaitutils import Plotter, register_gui_exception_handler, cfg
 
 
 def do_plot():

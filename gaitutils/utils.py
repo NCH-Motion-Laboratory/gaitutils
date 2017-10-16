@@ -9,10 +9,11 @@ Utility functions for processing gait data.
 from scipy import signal
 import numpy as np
 import logging
-from .envutils import GaitDataError
 
+from .envutils import GaitDataError
 from .numutils import rising_zerocross, falling_zerocross, _baseline
 from .config import cfg
+
 
 logger = logging.getLogger(__name__)
 

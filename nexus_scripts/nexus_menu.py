@@ -12,7 +12,6 @@ from pkg_resources import resource_filename
 import sys
 import ast
 import os
-import traceback
 
 from gaitutils import nexus
 from gaitutils import cfg

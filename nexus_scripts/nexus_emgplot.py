@@ -7,11 +7,10 @@ EMG plot from Nexus.
 @author: Jussi
 """
 
+import logging
 
 from gaitutils import Plotter, layouts, nexus, register_gui_exception_handler
 from gaitutils.config import cfg
-
-import logging
 
 
 def do_plot():

@@ -6,10 +6,10 @@ Kinetics-EMG plot from Nexus.
 
 @author: Jussi
 """
-
-from gaitutils import Plotter, register_gui_exception_handler, cfg
 import logging
 import argparse
+
+from gaitutils import Plotter, register_gui_exception_handler, cfg
 
 
 def do_plot(force_side=None):
@@ -18,8 +18,8 @@ def do_plot(force_side=None):
     pl = Plotter()
     pl.open_nexus_trial()
 
-    sides = pl.trial.fp_events['valid'] if force_side == None else force_side
-          
+    sides = pl.trial.fp_events['valid'] if force_side is None else force_side
+
     if force_side is None:  # autodetect
         if not sides:
             raise Exception('No kinetics available')
@@ -38,22 +38,20 @@ def do_plot(force_side=None):
         maintitle = 'Kinetics-EMG (%s) for %s' % (s,
                                                   pl.title_with_eclipse_info())
         # for EMG, plot only the cycle that has kinetics info
-        pl.plot_trial(maintitle=maintitle, match_pig_kinetics=
-                      False if force_side else True)
+        pl.plot_trial(maintitle=maintitle, match_pig_kinetics=False
+                      if force_side else True)
         pdf_name = 'Kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname, s)
         pl.create_pdf(pdf_name=pdf_name)
 
 if __name__ == '__main__':
-    
+
     logging.basicConfig(level=logging.DEBUG)
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--side', type=str, nargs='+',
                         help='strings that must appear in trial name',
-                        choices=['R','L','r','l'])
+                        choices=['R', 'L', 'r', 'l'])
     args = parser.parse_args()
-    
+
     register_gui_exception_handler()
     do_plot(force_side=args.side)
-
-

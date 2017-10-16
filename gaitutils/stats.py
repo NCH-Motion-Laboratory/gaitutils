@@ -8,8 +8,10 @@ Compute statistics across/within trials
 
 import logging
 import numpy as np
+
 from .trial import Trial, Gaitcycle
 from .envutils import GaitDataError
+
 
 logger = logging.getLogger(__name__)
 

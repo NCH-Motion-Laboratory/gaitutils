@@ -6,10 +6,11 @@ Average cycles over the session trials.
 @author: Jussi (jnu@iki.fi)
 """
 
+import logging
+
 import gaitutils
 from gaitutils import (cfg, nexus, layouts, eclipse, GaitDataError,
                        register_gui_exception_handler)
-import logging
 
 
 def do_plot():

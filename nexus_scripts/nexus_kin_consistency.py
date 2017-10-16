@@ -8,11 +8,12 @@ description and defined search strings.
 @author: Jussi
 """
 
+import logging
+import argparse
+
 from gaitutils import Plotter, cfg, register_gui_exception_handler
 from gaitutils.nexus import enf2c3d, find_trials
 
-import logging
-import argparse
 logger = logging.getLogger(__name__)
 
 

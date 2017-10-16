@@ -7,12 +7,13 @@ Plot Plug-in Gait outputs (online) from Nexus.
 @author: Jussi
 """
 
-from gaitutils import Plotter, cfg, register_gui_exception_handler
 import logging
+
+from gaitutils import Plotter, cfg, register_gui_exception_handler
 
 
 def do_plot():
-    
+
     pl = Plotter()
     pl.open_nexus_trial()
     pl.layout = cfg.layouts.lb_kin
@@ -25,8 +26,6 @@ def do_plot():
     pl.plot_trial(maintitleprefix=maintitleprefix, show=False)
     pl.move_plot_window(10, 30)
     pl.show()
-
-
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

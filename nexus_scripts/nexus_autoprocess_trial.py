@@ -7,10 +7,9 @@ Note: does not use stats for event detection -> less accurate
 @author: Jussi
 """
 
+import logging
 from nexus_autoprocess_session import _do_autoproc
 from gaitutils import nexus, register_gui_exception_handler
-
-import logging
 
 
 def autoproc_single():

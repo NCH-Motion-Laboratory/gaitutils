@@ -27,15 +27,14 @@ NOTES:
 @author: Jussi
 """
 
+import os
+import numpy as np
+import argparse
+import logging
+
 from gaitutils import (nexus, eclipse, utils, register_gui_exception_handler,
                        GaitDataError)
 from gaitutils.config import cfg
-import os
-import numpy as np
-import time
-import argparse
-import logging
-import sys
 
 
 logger = logging.getLogger(__name__)
@@ -306,6 +305,7 @@ def autoproc_session(patterns=None, update_eclipse=True):
 
 
 if __name__ == '__main__':
+
     logging.basicConfig(level=logging.DEBUG)
 
     parser = argparse.ArgumentParser()

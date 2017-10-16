@@ -8,10 +8,11 @@ description and defined search strings.
 @author: Jussi
 """
 
-from gaitutils import Plotter, cfg, register_gui_exception_handler, EMG
-from gaitutils.nexus import enf2c3d, find_trials
 import logging
 import argparse
+
+from gaitutils import Plotter, cfg, register_gui_exception_handler, EMG
+from gaitutils.nexus import enf2c3d, find_trials
 
 logger = logging.getLogger(__name__)
 
@@ -78,5 +79,5 @@ if __name__ == '__main__':
                         'description or notes')
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG)
-    #register_gui_exception_handler()
+    register_gui_exception_handler()
     do_plot(search=args.search)

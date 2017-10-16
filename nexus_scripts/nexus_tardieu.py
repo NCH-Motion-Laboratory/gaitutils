@@ -8,11 +8,6 @@ Interactive script for analysis of Tardieu trials.
 """
 
 from __future__ import print_function
-from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
-                       Trial, Plotter, layouts, utils, GaitDataError,
-                       register_gui_exception_handler)
-from gaitutils.numutils import segment_angles, rms
-from gaitutils.guiutils import messagebox
 from collections import OrderedDict
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button
@@ -20,6 +15,12 @@ import matplotlib.gridspec as gridspec
 import logging
 import sys
 import numpy as np
+
+from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
+                       Trial, Plotter, layouts, utils, GaitDataError,
+                       register_gui_exception_handler)
+from gaitutils.numutils import segment_angles, rms
+from gaitutils.guiutils import messagebox
 
 
 class Tardieu_window(object):

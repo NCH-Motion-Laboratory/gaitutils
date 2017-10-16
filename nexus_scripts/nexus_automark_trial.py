@@ -30,6 +30,7 @@ def automark_single(plot=False):
                           events_range=cfg.autoproc.events_range,
                           fp_events=fpe, restrict_to_roi=True, plot=plot)
 
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
 

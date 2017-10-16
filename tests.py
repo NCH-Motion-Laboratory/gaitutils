@@ -30,6 +30,11 @@ def test_c3d_reader():
     assert_equal(tr.analograte, 1000.)
     assert_equal(tr.framerate, 100.)
     assert_equal(tr.bodymass, 24.)
+    assert_equal(tr.name, 'Iiris')
+    #assert_equal(tr.n_forceplates, 1)  fails??
+    #assert_equal(tr.length, 794)
+    assert_equal(tr.samplesperframe, 10.0)
+
 
 
 def test_fp_detection():

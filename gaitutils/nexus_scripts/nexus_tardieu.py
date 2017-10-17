@@ -22,6 +22,9 @@ from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
 from gaitutils.numutils import segment_angles, rms
 from gaitutils.guiutils import messagebox
 
+# increase default DPI for figure saving
+plt.rcParams['savefig.dpi'] = 200
+
 
 class Tardieu_window(object):
     """ Open a matplotlib window for Tardieu analysis """
@@ -249,6 +252,8 @@ class Tardieu_window(object):
         tmin_ = max(self.time[0], self.tmin)
         tmax_ = min(self.time[-1], self.tmax)
         s = u'Note: EMG not delay corrected!\n\n'
+        s += u'Trial name: %s\n' % self.trial.trialname
+        s += u'EMG passband: %s Hz\n' % str(self.trial.emg.passband)
         s += u'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)
         # frame indices corresponding to time limits
         fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
@@ -269,8 +274,8 @@ class Tardieu_window(object):
             velr = self.angveld[fmin:fmax]
             velmax = np.nanmax(velr)
             velmaxind = np.nanargmax(velr)/self.trial.framerate + tmin_
-            s += u'Max angle: %.2f °/s @ %.2f s\n' % (angmax, angmaxind)
-            s += u'Max velocity: %.2f °/s @ %.2f s\n' % (velmax, velmaxind)
+            s += u'Max. dorsiflexion: %.2f° @ %.2f s\n' % (angmax, angmaxind)
+            s += u'Max velocity: %.2f°/s @ %.2f s\n' % (velmax, velmaxind)
             s += u'\nEMG RMS peaks:\n'
             for ch in self.emg_chs:
                 rms = self.emg_rms[ch][smin:smax]

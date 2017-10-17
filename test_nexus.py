@@ -8,20 +8,31 @@ automatically run by 'nose2'
 """
 
 
-from gaitutils import nexus, utils
-from gaitutils.config import cfg
-from gaitutils import Trial
-from gaitutils.utils import detect_forceplate_events
 import numpy as np
 from nose.tools import (assert_set_equal, assert_in, assert_equal,
                         assert_raises, assert_less_equal)
 from numpy.testing import assert_allclose
 import os.path as op
+import os
+import subprocess
+import time
 
+from gaitutils import nexus, utils
+from gaitutils.config import cfg
+from gaitutils import Trial
+from gaitutils.utils import detect_forceplate_events
 
 cfg.load_default()  # so that user settings will not affect testing
 if not nexus.pid():
-    raise Exception('Please start Vicon Nexus first')
+    # try to start Nexus for tests...
+    exe = op.join(cfg.general.nexus_path, 'Nexus.exe')
+    # silence Nexus output
+    blackhole = file(os.devnull, 'w')
+    subprocess.Popen([exe], stdout=blackhole)
+    time.sleep(9)
+    if not nexus.pid():
+        raise Exception('Please start Vicon Nexus first')
+
 vicon = nexus.viconnexus()
 
 

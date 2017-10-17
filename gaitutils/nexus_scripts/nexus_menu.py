@@ -15,22 +15,22 @@ import os
 
 from gaitutils import nexus
 from gaitutils import cfg
-import nexus_emgplot
-import nexus_kinetics_emgplot
-import nexus_emg_consistency
-import nexus_kin_consistency
-import nexus_autoprocess_trial
-import nexus_autoprocess_session
-import nexus_kinallplot
-import nexus_tardieu
-import nexus_copy_trial_videos
-import nexus_trials_velocity
-import nexus_make_all_plots
-import nexus_kin_average
+from gaitutils import nexus_emgplot
+from gaitutils import nexus_kinetics_emgplot
+from gaitutils import nexus_emg_consistency
+from gaitutils import nexus_kin_consistency
+from gaitutils import nexus_autoprocess_trial
+from gaitutils import nexus_autoprocess_session
+from gaitutils import nexus_kinallplot
+from gaitutils import nexus_tardieu
+from gaitutils import nexus_copy_trial_videos
+from gaitutils import nexus_trials_velocity
+from gaitutils import nexus_make_all_plots
+from gaitutils import nexus_kin_average
 
 
 try:
-    from nexus_scripts import nexus_customplot
+    from gaitutils import nexus_customplot
     have_custom = True
 except ImportError:
     have_custom = False

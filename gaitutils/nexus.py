@@ -18,7 +18,7 @@ import logging
 import platform
 
 from .numutils import (rising_zerocross, best_match, falling_zerocross,
-                       change_coords)
+                       change_coords, isint)
 from . import utils
 from .envutils import GaitDataError
 from .eclipse import get_eclipse_keys
@@ -30,6 +30,23 @@ logger = logging.getLogger(__name__)
 
 # try to import Nexus Python SDK
 if cfg.general.nexus_path:
+    # see if there are more recent versions
+    try:
+        cfg_ver = float(op.split(cfg.general.nexus_path)[1][5:])
+    except ValueError:
+        cfg_ver = 0
+    if cfg_ver > 2:
+        vicondir = op.split(cfg.general.nexus_path)[0]
+        nexus_glob = op.join(vicondir, 'Nexus2*')
+        nexus_dirs = glob.glob(nexus_glob)
+        if len(nexus_dirs) > 1:
+            nexus_vers = [op.split(dir)[1][5:] for dir in nexus_dirs]
+            if any([float(ver) > cfg_ver for ver in nexus_vers]):
+                print('NOTE: you may have more recent Vicon Nexus versions '
+                      'installed than is specified in config. It is '
+                      'recommended to edit .gaitutils.cfg in your '
+                      'home directory and change cfg.general.nexus_path '
+                      'to the latest version')
     if op.isdir(cfg.general.nexus_path):
         if not cfg.general.nexus_path + "/SDK/Python" in sys.path:
             sys.path.append(cfg.general.nexus_path + "/SDK/Python")
@@ -40,15 +57,19 @@ if cfg.general.nexus_path:
             if bitness not in ['32', '64']:
                 raise Exception('Unexpected architecture')
             _sdk_path = cfg.general.nexus_path + "/SDK/Win" + bitness
-            print('Trying to import Nexus SDK from %s' % _sdk_path)
+            print('Trying to import Vicon Nexus SDK from %s' % _sdk_path)
             sys.path.append(_sdk_path)
+    else:
+        print('The configured Vicon Nexus directory at %s does not exist'
+              % cfg.general.nexus_path)
+
 try:
     import ViconNexus
 except ImportError:
     # logging handlers are not installed at this point, so use print
-    print('Cannot import Nexus SDK, unable to communicate with Nexus')
+    print('Cannot import Vicon Nexus SDK, unable to communicate with Nexus')
 
-sys.stdout.flush()
+sys.stdout.flush()  # make sure import warnings get printed
 
 
 def pid():

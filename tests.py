@@ -7,15 +7,20 @@ automatically run by 'nose2'
 @author: jussi (jnu@iki.fi)
 """
 
-from gaitutils.config import cfg
-from gaitutils.numutils import segment_angles, best_match
-from gaitutils import eclipse, Trial
-from gaitutils.utils import detect_forceplate_events
 import numpy as np
+import sys
 from nose.tools import (assert_set_equal, assert_in, assert_equal,
                         assert_raises)
 from numpy.testing import assert_allclose
 from shutil import copyfile
+from PyQt5 import uic, QtGui, QtWidgets
+
+from gaitutils.config import cfg
+from gaitutils.numutils import segment_angles, best_match
+from gaitutils import eclipse, Trial
+from gaitutils.utils import detect_forceplate_events
+from gaitutils.nexus_scripts import nexus_menu
+
 
 trial_enf = 'testdata/anon.Trial.enf'
 trial_enf_write = 'testdata/writetest.enf'
@@ -23,6 +28,14 @@ c3dfile = 'testdata/trial.c3d'
 
 # so that user settings will not affect testing
 cfg.load_default()
+
+
+def test_qt_menu():
+    app = QtWidgets.QApplication([])  # needed for Qt stuff to function
+    """ Create instance of dialog that is not shown on screen (Qt event loop
+    is not entered) but can be used to test various methods. """
+    menu = nexus_menu.Gaitmenu()
+    dlg = nexus_menu.AutoprocDialog()
 
 
 def test_c3d_reader():
@@ -34,7 +47,6 @@ def test_c3d_reader():
     #assert_equal(tr.n_forceplates, 1)  fails??
     #assert_equal(tr.length, 794)
     assert_equal(tr.samplesperframe, 10.0)
-
 
 
 def test_fp_detection():

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>551</width>
-    <height>809</height>
+    <height>842</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,8 +27,597 @@
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
+     <widget class="QWidget" name="plot">
+      <attribute name="title">
+       <string>Plotting</string>
+      </attribute>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <layout class="QFormLayout" name="formLayout_3">
+         <item row="0" column="0">
+          <spacer name="verticalSpacer_7">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_28">
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>General</string>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="0">
+          <widget class="QLabel" name="label_29">
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Model data</string>
+           </property>
+          </widget>
+         </item>
+         <item row="16" column="0">
+          <widget class="QLabel" name="label_30">
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>EMG data</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_31">
+           <property name="text">
+            <string>Matplotlib style</string>
+           </property>
+          </widget>
+         </item>
+         <item row="22" column="0">
+          <widget class="QLabel" name="label_32">
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Plot size &amp; font size</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="cfg_mpl_style"/>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_34">
+           <property name="text">
+            <string>Show trial videos automatically</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QCheckBox" name="cfg_show_videos">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="label_35">
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Default gait cycles to plot</string>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="0">
+          <widget class="QLabel" name="label_36">
+           <property name="text">
+            <string>Model cycles</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="0">
+          <widget class="QLabel" name="label_37">
+           <property name="text">
+            <string>EMG cycles</string>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="1">
+          <widget class="QLineEdit" name="cfg_default_model_cycles"/>
+         </item>
+         <item row="7" column="1">
+          <widget class="QLineEdit" name="cfg_default_emg_cycles"/>
+         </item>
+         <item row="10" column="1">
+          <widget class="QLineEdit" name="cfg_model_linestyles"/>
+         </item>
+         <item row="10" column="0">
+          <widget class="QLabel" name="label_38">
+           <property name="text">
+            <string>Model line styles</string>
+           </property>
+          </widget>
+         </item>
+         <item row="11" column="0">
+          <widget class="QLabel" name="label_39">
+           <property name="text">
+            <string>Model line width</string>
+           </property>
+          </widget>
+         </item>
+         <item row="13" column="0">
+          <widget class="QLabel" name="label_40">
+           <property name="text">
+            <string>Normaldata transparency</string>
+           </property>
+          </widget>
+         </item>
+         <item row="12" column="0">
+          <widget class="QLabel" name="label_41">
+           <property name="text">
+            <string>Normaldata color</string>
+           </property>
+          </widget>
+         </item>
+         <item row="18" column="0">
+          <widget class="QLabel" name="label_42">
+           <property name="text">
+            <string>EMG line width</string>
+           </property>
+          </widget>
+         </item>
+         <item row="20" column="0">
+          <widget class="QLabel" name="label_43">
+           <property name="text">
+            <string>EMG RMS line width</string>
+           </property>
+          </widget>
+         </item>
+         <item row="19" column="0">
+          <widget class="QLabel" name="label_44">
+           <property name="text">
+            <string>EMG transparency</string>
+           </property>
+          </widget>
+         </item>
+         <item row="9" column="0">
+          <widget class="QLabel" name="label_45">
+           <property name="text">
+            <string>Model line colors</string>
+           </property>
+          </widget>
+         </item>
+         <item row="17" column="0">
+          <widget class="QLabel" name="label_46">
+           <property name="text">
+            <string>EMG line colors</string>
+           </property>
+          </widget>
+         </item>
+         <item row="21" column="0">
+          <widget class="QLabel" name="label_47">
+           <property name="text">
+            <string>EMG default y scale</string>
+           </property>
+          </widget>
+         </item>
+         <item row="14" column="0">
+          <widget class="QLabel" name="label_48">
+           <property name="text">
+            <string>Stddev colors</string>
+           </property>
+          </widget>
+         </item>
+         <item row="15" column="0">
+          <widget class="QLabel" name="label_49">
+           <property name="text">
+            <string>Stddev transparency</string>
+           </property>
+          </widget>
+         </item>
+         <item row="9" column="1">
+          <widget class="QLineEdit" name="cfg_model_tracecolors"/>
+         </item>
+         <item row="11" column="1">
+          <widget class="QDoubleSpinBox" name="cfg_model_linewidth">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="12" column="1">
+          <widget class="QLineEdit" name="cfg_model_normals_color"/>
+         </item>
+         <item row="13" column="1">
+          <widget class="QDoubleSpinBox" name="cfg_model_normals_alpha">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="14" column="1">
+          <widget class="QLineEdit" name="cfg_model_stddev_colors"/>
+         </item>
+         <item row="15" column="1">
+          <widget class="QDoubleSpinBox" name="cfg_model_stddev_alpha">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="17" column="1">
+          <widget class="QLineEdit" name="cfg_emg_tracecolor"/>
+         </item>
+         <item row="18" column="1">
+          <widget class="QDoubleSpinBox" name="cfg_emg_linewidth">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="19" column="1">
+          <widget class="QDoubleSpinBox" name="cfg_emg_alpha">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="20" column="1">
+          <widget class="QDoubleSpinBox" name="cfg_emg_rms_linewidth">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="21" column="1">
+          <widget class="QLineEdit" name="cfg_emg_yscale"/>
+         </item>
+         <item row="25" column="0">
+          <widget class="QLabel" name="label_50">
+           <property name="text">
+            <string>Max. plot width</string>
+           </property>
+          </widget>
+         </item>
+         <item row="26" column="0">
+          <widget class="QLabel" name="label_51">
+           <property name="text">
+            <string>Max. plot height</string>
+           </property>
+          </widget>
+         </item>
+         <item row="27" column="0">
+          <widget class="QLabel" name="label_33">
+           <property name="text">
+            <string>Relative subplot height for analog variables</string>
+           </property>
+          </widget>
+         </item>
+         <item row="27" column="1">
+          <widget class="QDoubleSpinBox" name="cfg_analog_plotheight">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="25" column="1">
+          <widget class="QDoubleSpinBox" name="cfg_maxw">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="26" column="1">
+          <widget class="QDoubleSpinBox" name="cfg_maxh">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="28" column="0">
+          <widget class="QLabel" name="label_52">
+           <property name="text">
+            <string>Space reserved for plot title</string>
+           </property>
+          </widget>
+         </item>
+         <item row="29" column="0">
+          <widget class="QLabel" name="label_53">
+           <property name="text">
+            <string>Main title font size</string>
+           </property>
+          </widget>
+         </item>
+         <item row="31" column="0">
+          <widget class="QLabel" name="label_54">
+           <property name="text">
+            <string>Ticks font size</string>
+           </property>
+          </widget>
+         </item>
+         <item row="32" column="0">
+          <widget class="QLabel" name="label_55">
+           <property name="text">
+            <string>Label font size</string>
+           </property>
+          </widget>
+         </item>
+         <item row="23" column="0">
+          <widget class="QLabel" name="label_56">
+           <property name="text">
+            <string>Inches per plot row</string>
+           </property>
+          </widget>
+         </item>
+         <item row="24" column="0">
+          <widget class="QLabel" name="label_57">
+           <property name="text">
+            <string>Inches per plot column</string>
+           </property>
+          </widget>
+         </item>
+         <item row="23" column="1">
+          <widget class="QDoubleSpinBox" name="cfg_inch_per_row">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="24" column="1">
+          <widget class="QDoubleSpinBox" name="cfg_inch_per_col">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="28" column="1">
+          <widget class="QDoubleSpinBox" name="cfg_titlespace">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="29" column="1">
+          <widget class="QSpinBox" name="cfg_maintitle_fontsize">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="31" column="1">
+          <widget class="QSpinBox" name="cfg_ticks_fontsize">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="32" column="1">
+          <widget class="QSpinBox" name="cfg_label_fontsize">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="33" column="0">
+          <widget class="QLabel" name="label_58">
+           <property name="text">
+            <string>Legend font size</string>
+           </property>
+          </widget>
+         </item>
+         <item row="33" column="1">
+          <widget class="QSpinBox" name="cfg_legend_fontsize">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="30" column="0">
+          <widget class="QLabel" name="label_59">
+           <property name="text">
+            <string>Subplot title font size</string>
+           </property>
+          </widget>
+         </item>
+         <item row="30" column="1">
+          <widget class="QSpinBox" name="cfg_title_fontsize">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="emg">
+      <attribute name="title">
+       <string>EMG</string>
+      </attribute>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <layout class="QFormLayout" name="formLayout_2">
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_22">
+           <property name="text">
+            <string>Channel labels</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="cfg_channel_labels"/>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="cfg_channel_normaldata"/>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_23">
+           <property name="text">
+            <string>Channel normal data</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_24">
+           <property name="text">
+            <string>EMG device to read from</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="label_25">
+           <property name="text">
+            <string>EMG passband (Hz)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="0">
+          <widget class="QLabel" name="label_26">
+           <property name="text">
+            <string>Line frequency</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLineEdit" name="cfg_devname"/>
+         </item>
+         <item row="6" column="1">
+          <widget class="QSpinBox" name="linefreq">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="suffix">
+            <string> Hz</string>
+           </property>
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="value">
+            <number>50</number>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QLineEdit" name="cfg_passband"/>
+         </item>
+         <item row="7" column="0">
+          <widget class="QLabel" name="label_27">
+           <property name="text">
+            <string>Window length for EMG RMS (samples) </string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="1">
+          <widget class="QSpinBox" name="cfg_rms_win">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <spacer name="verticalSpacer_6">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
      <widget class="QWidget" name="autoproc">
       <attribute name="title">
        <string>Autoprocessing</string>
@@ -431,11 +1020,6 @@
         </layout>
        </item>
       </layout>
-     </widget>
-     <widget class="QWidget" name="emg">
-      <attribute name="title">
-       <string>EMG</string>
-      </attribute>
      </widget>
     </widget>
    </item>

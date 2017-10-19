@@ -43,6 +43,7 @@ class Tardieu_window(object):
         self.narrow = False
         self.hspace = .4
         self.wspace = .4
+        self.linewidth = 1
 
         # use OrderedDict to remember the order in which the markers were added
         self.markers = OrderedDict()
@@ -101,8 +102,9 @@ class Tardieu_window(object):
             self.emg_rms[ch] = rms(emgdata, cfg.emg.rms_win)
             sharex = None if ind == 0 else self.data_axes[0]
             ax = plt.subplot(self.gs[ind, 1:], sharex=sharex)
-            ax.plot(t, emgdata*1e3)
-            ax.plot(t, self.emg_rms[ch]*1e3)
+            ax.plot(t, emgdata*1e3, linewidth=self.linewidth)
+            ax.plot(t, self.emg_rms[ch]*1e3, linewidth=self.linewidth,
+                    color='black')
             ax.set_ylim(self.emg_yrange[0]*1e3, self.emg_yrange[1]*1e3)
             ax.set(ylabel='mV')
             ax.set_title(ch)
@@ -112,7 +114,7 @@ class Tardieu_window(object):
         pos = len(emg_chs)
         # add angle plot
         ax = plt.subplot(self.gs[pos, 1:], sharex=self.data_axes[0])
-        ax.plot(self.time, self.angd)
+        ax.plot(self.time, self.angd, linewidth=self.linewidth)
         ax.set(ylabel='deg')
         ax.set_title('Angle')
         self._adj_fonts(ax)
@@ -121,7 +123,7 @@ class Tardieu_window(object):
         # add angular velocity plot
         ax = plt.subplot(self.gs[pos+1, 1:], sharex=self.data_axes[0])
         self.angveld = self.trial.framerate * np.diff(self.angd, axis=0)
-        ax.plot(self.time[:-1], self.angveld)
+        ax.plot(self.time[:-1], self.angveld, linewidth=self.linewidth)
         ax.set(ylabel='deg/s')
         ax.set_title('Angular velocity')
         self._adj_fonts(ax)
@@ -130,7 +132,7 @@ class Tardieu_window(object):
         # add angular acceleration plot
         ax = plt.subplot(self.gs[pos+2, 1:], sharex=self.data_axes[0])
         self.angaccd = np.diff(self.angveld, axis=0)
-        ax.plot(self.time[:-2], self.angaccd)
+        ax.plot(self.time[:-2], self.angaccd, linewidth=self.linewidth)
         ax.set(xlabel='Time (s)', ylabel=u'deg/s²')
         ax.set_title('Angular acceleration')
         self._adj_fonts(ax)

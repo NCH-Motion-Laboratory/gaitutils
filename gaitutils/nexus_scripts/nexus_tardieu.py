@@ -33,7 +33,9 @@ class Tardieu_window(object):
 
         self.marker_button = 1  # mouse button for placing markers
         self.marker_key = 'shift'  # modifier key for markers
-        self.m_colors = ['r', 'g', 'b']  # colors for markers
+        self.m_colors = ['r', 'g', 'b', 'k', 'm']  # colors for markers
+        # take marker colors from mpl default cycle
+        self.m_colors = plt.rcParams['axes.prop_cycle'].by_key()['color'][1:6]
         self.marker_width = 1.5
         self.emg_yrange = [-.5e-3, .5e-3]
         self.width_ratio = [1, 4]
@@ -46,8 +48,9 @@ class Tardieu_window(object):
         # use OrderedDict to remember the order in which the markers were added
         self.markers = OrderedDict()
         self.max_markers = len(self.m_colors)
-        markers_start = .65
-        markers_end = markers_start - (.05 * self.max_markers)
+        markers_start = .55
+        marker_spacing = .04
+        markers_end = markers_start - (marker_spacing * self.max_markers)
         self.markers_pos = np.linspace(markers_start, markers_end,
                                        self.max_markers)
         self.emg_chs = emg_chs
@@ -226,18 +229,22 @@ class Tardieu_window(object):
             return
         if event.button != self.marker_button or event.key != 'shift':
             return
-        if len(self.markers) == self.max_markers:
-            messagebox('You can place a maximum of %d markers' %
-                       self.max_markers)
-            return
         x = event.xdata
         if x not in self.markers:
+            if len(self.markers) == self.max_markers:
+                messagebox('You can place a maximum of %d markers' %
+                           self.max_markers)
+                return
             col = self.m_colors[len(self.markers)]  # pick next available color
             self.markers[x] = dict()
             for ax in self.data_axes:
                 self.markers[x][ax] = ax.axvline(x=x, color=col,
                                                  linewidth=self.marker_width)
-            self._redraw(event.inaxes)
+        else:  # del marker
+            for ax in self.data_axes:
+                self.markers[x][ax].remove()
+            self.markers.pop(x)
+        self._redraw(event.inaxes)
 
     def _time_to_frame(self, times, rate):
         # convert time to frames or analog frames (according to rate)
@@ -256,7 +263,9 @@ class Tardieu_window(object):
         # find the limits of the data that is shown
         tmin_ = max(self.time[0], self.tmin)
         tmax_ = min(self.time[-1], self.tmax)
-        s = u'Note: EMG not delay corrected!\n\n'
+        s = u'Shift+left click to set a marker\n'
+        s += u'Tab to toggle wide/narrow display\n\n'
+        s += u'Note: EMG not delay corrected!\n\n'
         s += u'Trial name: %s\n' % self.trial.trialname
         s += u'EMG passband: %.1f Hz - %.1f Hz\n' % (self.trial.emg.passband)
         s += u'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)

@@ -104,7 +104,7 @@ class Tardieu_window(object):
                          u'#64B5CD']
         marker_width = 1.5
         self.emg_yrange = [-.5e-3, .5e-3]
-        self.width_ratio = [1, 4]
+        self.width_ratio = [1, 5]
         self.text_fontsize = 9
         self.margin = .025  # margin at edge of plots
         self.narrow = False
@@ -292,23 +292,27 @@ class Tardieu_window(object):
 
     @staticmethod
     def _time_to_frame(times, rate):
-        # convert time to frames or analog frames (according to rate)
+        """Convert time to samples (according to rate)"""
         return np.round(rate * np.array(times)).astype(int)
 
     def close(self, event):
+        """Close window"""
         plt.close(self.fig)
 
     def _redraw(self, ax):
+        """Update display on e.g. zoom"""
         # we need to get the limits from the axis that was zoomed
         # (the limits are not instantly updated by sharex)
         self.tmin, self.tmax = ax.get_xlim()
         self._update_status_text()
 
     def _clear_callback(self, event):
+        """Clear all line markers"""
         self.markers.clear()
         self._update_status_text()
 
     def _toggle_narrow_callback(self, event):
+        """Toggle narrow/wide display"""
         self.narrow = not self.narrow
         wratios = [1, 1] if self.narrow else self.width_ratio
         btext = 'Wide view' if self.narrow else 'Narrow view'
@@ -318,26 +322,29 @@ class Tardieu_window(object):
         self.fig.canvas.draw()
 
     def _onpress(self, event):
-        # keyboard handler
+        """Keyboard event handler"""
         if event.key == 'tab':
             self._toggle_narrow_callback(event)
 
     def _onclick(self, event):
+        """Mouse click handler"""
         if event.inaxes not in self.data_axes:
             return
         if event.button != self.marker_button or event.key != 'shift':
             return
         x = event.xdata
         self.markers.clicked(x)
-        self._redraw(event.inaxes)  # to update marker status texts
+        self._redraw(event.inaxes)  # marker status needs to be updated
 
     def _plot_text(self, s, ypos, color):
+        """Plot string s at y position ypos (relative to text frame)"""
         self.texts.append(self.textax.text(0, ypos, s, ha='left', va='top',
                                            transform=self.textax.transAxes,
                                            fontsize=self.text_fontsize,
                                            color=color, wrap=True))
 
     def _update_status_text(self):
+        """Create status text & update display"""
         if self.texts:
             [txt.remove() for txt in self.texts]
             self.texts = []
@@ -390,8 +397,6 @@ class Tardieu_window(object):
                                                           self.angveld[frame])
                     ms += u' acc: %.2f°/s²\n\n' % self.angaccd[frame]
                 self._plot_text(ms, pos, col)
-        
-        logger.debug('%s' % str([x for x in self.markers._markers]))
         self.fig.canvas.draw()
 
 

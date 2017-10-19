@@ -27,8 +27,6 @@ from .config import cfg
 
 logger = logging.getLogger(__name__)
 
-matplotlib.style.use(cfg.plot.mpl_style)
-
 
 class Plotter(object):
 
@@ -42,6 +40,8 @@ class Plotter(object):
             Corresponding normal data files for each plot. Will override
             default normal data settings.
         """
+        matplotlib.style.use(cfg.plot.mpl_style)
+
         if layout:
             self.layout = layout
         else:

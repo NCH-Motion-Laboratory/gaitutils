@@ -30,7 +30,6 @@ class Tardieu_window(object):
     """ Open a matplotlib window for Tardieu analysis """
 
     def __init__(self, emg_chs=None):
-        # line markers
 
         self.marker_button = 1  # mouse button for placing markers
         self.marker_key = 'shift'  # modifier key for markers
@@ -43,15 +42,18 @@ class Tardieu_window(object):
         self.narrow = False
         self.hspace = .4
         self.wspace = .4
-        self.linewidth = 1
 
         # use OrderedDict to remember the order in which the markers were added
         self.markers = OrderedDict()
         self.max_markers = len(self.m_colors)
-        self.markers_pos = np.linspace(.75, .6, self.max_markers)
+        markers_start = .65
+        markers_end = markers_start - (.05 * self.max_markers)
+        self.markers_pos = np.linspace(markers_start, markers_end,
+                                       self.max_markers)
         self.emg_chs = emg_chs
         self.texts = []
         self.data_axes = list()  # axes that actually contain data
+
         # read data from Nexus and initialize plot
         try:
             vicon = nexus.viconnexus()
@@ -62,6 +64,7 @@ class Tardieu_window(object):
         self.time = self.trial.t / self.trial.framerate  # time axis in sec
         self.tmax = self.time[-1]
         self.nframes = len(self.time)
+
         # read marker data from Nexus
         try:
             data = read_data.get_marker_data(vicon, ['Toe', 'Ankle', 'Knee'])
@@ -102,8 +105,8 @@ class Tardieu_window(object):
             self.emg_rms[ch] = rms(emgdata, cfg.emg.rms_win)
             sharex = None if ind == 0 else self.data_axes[0]
             ax = plt.subplot(self.gs[ind, 1:], sharex=sharex)
-            ax.plot(t, emgdata*1e3, linewidth=self.linewidth)
-            ax.plot(t, self.emg_rms[ch]*1e3, linewidth=self.linewidth,
+            ax.plot(t, emgdata*1e3, linewidth=cfg.plot.emg_linewidth)
+            ax.plot(t, self.emg_rms[ch]*1e3, linewidth=cfg.plot.emg_rms_linewidth,
                     color='black')
             ax.set_ylim(self.emg_yrange[0]*1e3, self.emg_yrange[1]*1e3)
             ax.set(ylabel='mV')
@@ -114,7 +117,7 @@ class Tardieu_window(object):
         pos = len(emg_chs)
         # add angle plot
         ax = plt.subplot(self.gs[pos, 1:], sharex=self.data_axes[0])
-        ax.plot(self.time, self.angd, linewidth=self.linewidth)
+        ax.plot(self.time, self.angd, linewidth=cfg.plot.model_linewidth)
         ax.set(ylabel='deg')
         ax.set_title('Angle')
         self._adj_fonts(ax)
@@ -123,7 +126,7 @@ class Tardieu_window(object):
         # add angular velocity plot
         ax = plt.subplot(self.gs[pos+1, 1:], sharex=self.data_axes[0])
         self.angveld = self.trial.framerate * np.diff(self.angd, axis=0)
-        ax.plot(self.time[:-1], self.angveld, linewidth=self.linewidth)
+        ax.plot(self.time[:-1], self.angveld, linewidth=cfg.plot.model_linewidth)
         ax.set(ylabel='deg/s')
         ax.set_title('Angular velocity')
         self._adj_fonts(ax)
@@ -132,7 +135,7 @@ class Tardieu_window(object):
         # add angular acceleration plot
         ax = plt.subplot(self.gs[pos+2, 1:], sharex=self.data_axes[0])
         self.angaccd = np.diff(self.angveld, axis=0)
-        ax.plot(self.time[:-2], self.angaccd, linewidth=self.linewidth)
+        ax.plot(self.time[:-2], self.angaccd, linewidth=cfg.plot.model_linewidth)
         ax.set(xlabel='Time (s)', ylabel=u'deg/s²')
         ax.set_title('Angular acceleration')
         self._adj_fonts(ax)
@@ -145,7 +148,7 @@ class Tardieu_window(object):
         # refresh text field on zoom
         for ax in self.data_axes:
             ax.callbacks.connect('xlim_changed', self._redraw)
-            
+
         # catch mouse click to add events
         self.fig.canvas.mpl_connect('button_press_event', self._onclick)
         # catch key press
@@ -255,7 +258,7 @@ class Tardieu_window(object):
         tmax_ = min(self.time[-1], self.tmax)
         s = u'Note: EMG not delay corrected!\n\n'
         s += u'Trial name: %s\n' % self.trial.trialname
-        s += u'EMG passband: %s Hz\n' % str(self.trial.emg.passband)
+        s += u'EMG passband: %.1f Hz - %.1f Hz\n' % (self.trial.emg.passband)
         s += u'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)
         # frame indices corresponding to time limits
         fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
@@ -267,7 +270,7 @@ class Tardieu_window(object):
             # analog sample indices ...
             smin, smax = self._time_to_frame([tmin_, tmax_],
                                              self.trial.analograte)
-            s += u'In frames: %d - %d\n' % (fmin, fmax)
+            s += u'In frames: %d - %d\n\n' % (fmin, fmax)
             # foot angle in chosen range and the maximum
             angr = self.angd[fmin:fmax]
             angmax = np.nanmax(angr)
@@ -292,7 +295,7 @@ class Tardieu_window(object):
                 if frame < 0 or frame >= self.nframes:
                     ms = u'Marker outside data range'
                 else:
-                    ms = u'marker @%.2f s:\npos %.2f° vel %.2f°/s acc %.2f°/s²\n\n' % (marker, self.angd[frame], self.angveld[frame], self.angaccd[frame])
+                    ms = u'marker @%.2f s:\ndflex: %.2f° vel: %.2f°/s acc: %.2f°/s²\n\n' % (marker, self.angd[frame], self.angveld[frame], self.angaccd[frame])
                 self._plot_text(ms, pos, col)
 
         self.fig.canvas.draw()

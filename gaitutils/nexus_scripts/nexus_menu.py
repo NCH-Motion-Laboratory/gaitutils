@@ -332,7 +332,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _exception(self, e):
         logger.debug('caught exception while running task')
-        message_dialog('%s' % str(e))
+        message_dialog('Error: %s' % str(e))
 
     def _disable_op_buttons(self):
         """ Disable all operation buttons """

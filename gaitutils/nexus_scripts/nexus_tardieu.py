@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-
 Interactive script for analysis of Tardieu trials.
 
 
@@ -64,18 +63,31 @@ class Markers(object):
         if x in self._markers.keys():
             return
         else:
-            col = self.marker_colors[len(self._markers)]  # next available col
+            cols_in_use = [m['color'] for m in self._markers.values()]
+            col = list((set(self.marker_colors) - set(cols_in_use)))[0]
             self._markers[x] = dict()
             self._markers[x]['annotation'] = annotation
-            # each axis gets its own line
+            self._markers[x]['color'] = col
+            # each axis gets its own line artist
             for ax in self._axes:
                 self._markers[x][ax] = ax.axvline(x=x, color=col,
                                                   linewidth=self.marker_width)
+                # generate picker events at given tolerance
+                self._markers[x][ax].set_picker(1)
 
     def delete(self, x):
+        """ Delete by location """
         for ax in self._axes:
             self._markers[x][ax].remove()
         self._markers.pop(x)
+
+    def delete_artist(self, artist, ax):
+        """ Delete by artist at axis ax """
+        # need to find the marker that has the corresponding artist
+        for x, m in self._markers.items():
+            if m[ax] == artist:
+                self.delete(x)
+                return
 
     def clear(self):
         for marker in self._markers:
@@ -96,6 +108,7 @@ class Tardieu_window(object):
         # adjustable params
         # TODO: some could go into config
         self.marker_button = 1  # mouse button for placing markers
+        self.marker_del_button = 3  # remove marker
         self.marker_key = 'shift'  # modifier key for markers
         # take marker colors from mpl default cycle, but skip the first color
         # (which is used for angle plots). n of colors determined max n of
@@ -225,6 +238,8 @@ class Tardieu_window(object):
         self.fig.canvas.mpl_connect('button_press_event', self._onclick)
         # catch key press
         self.fig.canvas.mpl_connect('key_press_event', self._onpress)
+        # pick handler
+        self.fig.canvas.mpl_connect('pick_event', self._onpick)
 
         # adjust plot layout
         self.gs.tight_layout(self.fig)
@@ -321,6 +336,13 @@ class Tardieu_window(object):
         self.gs.update()
         self.fig.canvas.draw()
 
+    def _onpick(self, event):
+        mevent = event.mouseevent
+        if mevent.button != self.marker_del_button or mevent.key != 'shift':
+            return
+        self.markers.delete_artist(event.artist, mevent.inaxes)
+        self._redraw(mevent.inaxes)  # marker status needs to be updated
+
     def _onpress(self, event):
         """Keyboard event handler"""
         if event.key == 'tab':
@@ -351,7 +373,8 @@ class Tardieu_window(object):
         # find the limits of the data that is shown
         tmin_ = max(self.time[0], self.tmin)
         tmax_ = min(self.time[-1], self.tmax)
-        s = u'Shift+left click to set a marker\n'
+        s = u'Shift+left click to add a new marker\n'
+        s += u'Shift+right click to remove a marker\n'
         s += u'Tab to toggle wide/narrow display\n\n'
         s += u'Note: EMG not delay corrected!\n\n'
         s += u'Trial name: %s\n' % self.trial.trialname

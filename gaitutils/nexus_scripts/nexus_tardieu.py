@@ -73,7 +73,7 @@ class Markers(object):
                 self._markers[x][ax] = ax.axvline(x=x, color=col,
                                                   linewidth=self.marker_width)
                 # generate picker events at given tolerance
-                self._markers[x][ax].set_picker(1)
+                self._markers[x][ax].set_picker(3)
 
     def delete(self, x):
         """ Delete by location """
@@ -96,8 +96,9 @@ class Markers(object):
     def marker_pos_col(self):
         """ Return tuple of marker, annotation, position and color """
         annotations = [m['annotation'] for m in self._markers.values()]
+        cols_in_use = [m['color'] for m in self._markers.values()]
         return zip(self._markers.keys(), annotations, self.markers_text_pos,
-                   self.marker_colors)
+                   cols_in_use)
 
 
 class Tardieu_window(object):

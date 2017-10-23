@@ -33,7 +33,7 @@ def trial_median_velocity(source):
     return vel_ms if vel_ms >= MIN_VEL else np.nan
 
 
-def do_plot():
+def do_plot(show=True):
 
     enfs = nexus.get_session_enfs()
 
@@ -60,7 +60,10 @@ def do_plot():
     with PdfPages(pdf_name) as pdf:
         pdf.savefig(fig)
 
-    plt.show()
+    if show:
+        plt.show()
+
+    return fig
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

@@ -60,6 +60,8 @@ def do_plot(search=None, show=True):
 
     pl.create_pdf('emg_consistency.pdf')
 
+    return pl.fig
+
 
 if __name__ == '__main__':
 

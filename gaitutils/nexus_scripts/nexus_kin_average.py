@@ -15,6 +15,8 @@ from gaitutils import (cfg, nexus, layouts, eclipse, GaitDataError,
 
 def do_plot(show=True):
 
+    figs = []
+
     sessionpath = nexus.get_sessionpath()
 
     files = [nexus.enf2c3d(enf) for enf in nexus.get_session_enfs() if
@@ -35,15 +37,19 @@ def do_plot(show=True):
     for side in ['R', 'L']:
         maintitle = maintitle_ + ' (side %s)' % side
         pl.layout = layouts.onesided_layout(layout, side)
-        pl.plot_trial(split_model_vars=False, plot_model_normaldata=True,
-                      model_stddev=atrial.stddev_data, maintitle=maintitle,
-                      show=False)
+        figs.append(pl.plot_trial(split_model_vars=False,
+                                  plot_model_normaldata=True,
+                                  model_stddev=atrial.stddev_data,
+                                  maintitle=maintitle,
+                                  show=False))
 
         pl.create_pdf(pdf_name='kin_average_%s.pdf' % side,
                       sessionpath=sessionpath)
 
     if show:
         pl.show()
+
+    return figs
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

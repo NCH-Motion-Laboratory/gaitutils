@@ -559,6 +559,8 @@ class Plotter(object):
         if show:
             self.show()
 
+        return self.fig
+
     def title_with_eclipse_info(self, prefix=''):
         """ Create title: prefix + trial name + Eclipse description and
         notes """
@@ -598,5 +600,5 @@ class Plotter(object):
             with PdfPages(pdf_name) as pdf:
                 pdf.savefig(self.fig)
         except IOError:
-            raise IOError('Error writing PDF file, '
-                          'check that file is not already open.')
+            raise IOError('Error writing %s, '
+                          'check that file is not already open.' % pdf_name)

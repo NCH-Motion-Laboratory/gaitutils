@@ -127,7 +127,15 @@ def get_sessionpath():
     """ Get path to current session """
     vicon = viconnexus()
     trialname_ = vicon.GetTrialName()
-    return trialname_[0]
+    # split the trailing '\\' from the session path
+    return op.split(trialname_[0])[0]
+
+
+def get_trialname():
+    """ Get trial name without session path """
+    vicon = viconnexus()
+    trialname_ = vicon.GetTrialName()
+    return trialname_[1]
 
 
 def get_session_enfs():
@@ -136,7 +144,8 @@ def get_session_enfs():
     if not sessionpath:
         raise GaitDataError('Cannot get Nexus session path, '
                             'no session or maybe in Live mode?')
-    enffiles = glob.glob(sessionpath+'*Trial*.enf') if sessionpath else None
+    enfglob = op.join(sessionpath, '*Trial*.enf')
+    enffiles = glob.glob(enfglob) if sessionpath else None
     logger.debug('found %d .enf files for session %s' %
                  (len(enffiles) if enffiles else 0, sessionpath))
     return enffiles

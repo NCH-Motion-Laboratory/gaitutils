@@ -112,8 +112,8 @@ class Tardieu_window(object):
         # take marker colors from mpl default cycle, but skip the first color
         # (which is used for angle plots). n of colors determined max n of
         # markers.
-        marker_colors = [u'#55A868', u'#C44E52', u'#8172B2', u'#CCB974',
-                         u'#64B5CD']
+        marker_colors = ['tab:orange', 'tab:green', 'tab:red', 'tab:brown',
+                         'tab:pink', 'tab:gray', 'tab:olive']
         marker_width = 1.5
         self.emg_yrange = [-.5e-3, .5e-3]
         self.width_ratio = [1, 5]
@@ -343,7 +343,7 @@ class Tardieu_window(object):
         # markers get picked)
         if self._last_click_event == mevent:
             return
-        if mevent.button != self.marker_del_button or mevent.key != 'shift':
+        if mevent.button != self.marker_del_button or mevent.key != self.marker_key:
             return
         self.markers.delete_artist(event.artist, mevent.inaxes)
         self._last_click_event = mevent
@@ -364,7 +364,7 @@ class Tardieu_window(object):
         # simultaneously
         if event == self._last_click_event:
             return
-        if event.button != self.marker_button or event.key != 'shift':
+        if event.button != self.marker_button or event.key != self.marker_key:
             return
         x = event.xdata
         self.markers.add_on_click(x)

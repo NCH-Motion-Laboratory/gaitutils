@@ -22,15 +22,14 @@ def do_plot(search=None, show=True):
     MAX_TRIALS = 8
 
     if search is None:
-        # default Eclipse search strings
-        search = ['R1', 'R2', 'R3', 'R4', 'L1', 'L2', 'L3', 'L4']
+        search = cfg.plot.eclipse_tags
 
     eclkeys = ['DESCRIPTION', 'NOTES']
     marked_trials = list(find_trials(eclkeys, search))
 
     if not marked_trials:
-        raise Exception('Did not find any matching trials in current '
-                        'session directory')
+        raise Exception('Did not find any trials matching %s in current '
+                        'session directory' % str(search))
 
     if len(marked_trials) > MAX_TRIALS:
         raise Exception('Too many marked trials found!')

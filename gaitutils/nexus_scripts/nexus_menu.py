@@ -354,6 +354,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _finished(self):
         self._enable_op_buttons()
+        QtWidgets.QApplication.restoreOverrideCursor()
 
     def _execute(self, fun, thread=False):
         """ Run function fun. If thread==True, run in a separate worker

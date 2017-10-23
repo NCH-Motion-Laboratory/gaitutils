@@ -38,6 +38,8 @@ def do_plot():
         pl.plot_trial(split_model_vars=False, plot_model_normaldata=False,
                       model_stddev=atrial.stddev_data, maintitle=maintitle)
 
+        pl.create_pdf(pdf_name='kin_average_%s.pdf' % side,
+                      sessionpath=sessionpath)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

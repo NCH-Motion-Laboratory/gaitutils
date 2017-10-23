@@ -440,6 +440,8 @@ class Plotter(object):
                             ndata = (self._normaldata[key] if key in
                                      self._normaldata else None)
                             if ndata is not None:
+                                logger.debug('plotting model normaldata for %s'
+                                             % varname)
                                 normalx = np.linspace(0, 100, ndata.shape[0])
                                 ax.fill_between(normalx, ndata[:, 0],
                                                 ndata[:, 1],

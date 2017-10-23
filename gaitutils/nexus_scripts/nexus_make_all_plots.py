@@ -14,6 +14,7 @@ from gaitutils import Plotter, cfg, register_gui_exception_handler, layouts
 from gaitutils.nexus import enf2c3d
 import nexus_kin_consistency
 import nexus_emg_consistency
+import nexus_kin_average
 from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
 
 logger = logging.getLogger(__name__)
@@ -65,6 +66,8 @@ def do_plot():
     nexus_kin_consistency.do_plot(show=False)
     if emg_active:
         nexus_emg_consistency.do_plot(show=False)
+
+    nexus_kin_average.do_plot(show=False)
 
     # close all created figures, otherwise they'll pop up on next show() call
     plt.close('all')

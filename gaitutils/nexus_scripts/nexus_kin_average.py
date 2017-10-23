@@ -13,7 +13,7 @@ from gaitutils import (cfg, nexus, layouts, eclipse, GaitDataError,
                        register_gui_exception_handler)
 
 
-def do_plot():
+def do_plot(show=True):
 
     sessionpath = nexus.get_sessionpath()
 
@@ -35,11 +35,15 @@ def do_plot():
     for side in ['R', 'L']:
         maintitle = maintitle_ + ' (side %s)' % side
         pl.layout = layouts.onesided_layout(layout, side)
-        pl.plot_trial(split_model_vars=False, plot_model_normaldata=False,
-                      model_stddev=atrial.stddev_data, maintitle=maintitle)
+        pl.plot_trial(split_model_vars=False, plot_model_normaldata=True,
+                      model_stddev=atrial.stddev_data, maintitle=maintitle,
+                      show=False)
 
         pl.create_pdf(pdf_name='kin_average_%s.pdf' % side,
                       sessionpath=sessionpath)
+
+    if show:
+        pl.show()
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

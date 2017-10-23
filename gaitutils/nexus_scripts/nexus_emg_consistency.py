@@ -12,37 +12,25 @@ import logging
 import argparse
 
 from gaitutils import Plotter, cfg, register_gui_exception_handler, EMG
-from gaitutils.nexus import enf2c3d, find_trials
+from gaitutils.nexus import enf2c3d
+from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
 
 logger = logging.getLogger(__name__)
 
 
 def do_plot(search=None, show=True):
 
-    MAX_TRIALS = 8
+    tagged_trials = find_tagged(search)
+
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
 
-    # Eclipse trial notes/description must contain one of these strings
-    if search is None:
-        search = ['R1', 'R2', 'R3', 'R4', 'L1', 'L2', 'L3', 'L4']
-
-    eclkeys = ['DESCRIPTION', 'NOTES']
-    marked_trials = list(find_trials(eclkeys, search))
-
-    if not marked_trials:
-        raise Exception('Did not find any marked trials in current '
-                        'session directory')
-
-    if len(marked_trials) > MAX_TRIALS:
-        raise Exception('Too many marked trials found!')
-
     pl = Plotter()
-    pl.open_trial(enf2c3d(marked_trials[0]))
+    pl.open_trial(enf2c3d(tagged_trials[0]))
     layout = cfg.layouts.overlay_std_emg
 
     # from layout, drop rows that do not have good data in any of the trials
     chs_ok = None
-    for i, enf in enumerate(marked_trials):
+    for i, enf in enumerate(tagged_trials):
         emg = EMG(enf2c3d(enf))
         chs_prev_ok = chs_ok if i > 0 else None
         # plot channels w/ status ok, or anything that is not a
@@ -57,8 +45,8 @@ def do_plot(search=None, show=True):
     layout = [row for i, row in enumerate(layout) if rows_ok[i]]
     pl.layout = layout
 
-    for i, trialpath in enumerate(marked_trials):
-        pl.open_trial(enf2c3d(marked_trials[i]))
+    for i, trialpath in enumerate(tagged_trials):
+        pl.open_trial(enf2c3d(tagged_trials[i]))
         maintitle = ('EMG consistency plot, '
                      'session %s' % pl.trial.trialdirname)
         pl.plot_trial(emg_tracecolor=linecolors[i],

@@ -17,7 +17,8 @@ from gaitutils.nexus import enf2c3d, find_trials
 logger = logging.getLogger(__name__)
 
 
-def do_plot(search=None, show=True):
+def find_tagged(search=None):
+    """ Find tagged Eclipse trials """
 
     MAX_TRIALS = 8
 
@@ -25,24 +26,31 @@ def do_plot(search=None, show=True):
         search = cfg.plot.eclipse_tags
 
     eclkeys = ['DESCRIPTION', 'NOTES']
-    marked_trials = list(find_trials(eclkeys, search))
+    tagged_trials = list(find_trials(eclkeys, search))
 
-    if not marked_trials:
+    if not tagged_trials:
         raise Exception('Did not find any trials matching %s in current '
                         'session directory' % str(search))
 
-    if len(marked_trials) > MAX_TRIALS:
-        raise Exception('Too many marked trials found!')
+    if len(tagged_trials) > MAX_TRIALS:
+        raise Exception('Too many tagged trials found!')
+
+    return tagged_trials
+
+
+def do_plot(search=None, show=True):
+
+    tagged_trials = find_tagged(search=search)
 
     pl = Plotter()
-    pl.open_trial(enf2c3d(marked_trials[0]))
+    pl.open_trial(enf2c3d(tagged_trials[0]))
     pl.layout = cfg.layouts.overlay_lb_kin
 
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
 
-    for i, trialpath in enumerate(marked_trials):
-        logger.debug('plotting %s' % marked_trials[i])
-        pl.open_trial(enf2c3d(marked_trials[i]))
+    for i, trialpath in enumerate(tagged_trials):
+        logger.debug('plotting %s' % tagged_trials[i])
+        pl.open_trial(enf2c3d(tagged_trials[i]))
         maintitle = ('Kinematics/kinetics consistency plot, '
                      'session %s' % pl.trial.trialdirname)
         pl.plot_trial(model_tracecolor=linecolors[i], linestyles_context=True,
@@ -63,6 +71,3 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     register_gui_exception_handler()
     do_plot(search=args.search)
-
-
-

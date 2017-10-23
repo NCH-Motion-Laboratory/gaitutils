@@ -11,36 +11,21 @@ import logging
 import matplotlib.pyplot as plt
 
 from gaitutils import Plotter, cfg, register_gui_exception_handler, layouts
-from gaitutils.nexus import enf2c3d, find_trials
+from gaitutils.nexus import enf2c3d
 import nexus_kin_consistency
 import nexus_emg_consistency
+from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
 
 logger = logging.getLogger(__name__)
 
 
 def do_plot():
 
-    MAX_TRIALS = 8
-
-    # Eclipse trial notes/description must contain one of these strings
-    strs = ['R1', 'R2', 'R3', 'R4', 'L1', 'L2', 'L3', 'L4']
-
-    eclkeys = ['DESCRIPTION', 'NOTES']
-    marked_trials = list(find_trials(eclkeys, strs))
-
-    if not marked_trials:
-        # try to find anything marked with 'ok' (kinematics-only sessions)
-        marked_trials = list(find_trials(eclkeys, strs))
-        if not marked_trials:
-            raise Exception('Did not find any marked trials in current '
-                            'session directory')
-
-    if len(marked_trials) > MAX_TRIALS:
-        raise Exception('Too many marked trials found!')
+    tagged_trials = find_tagged()
 
     pl = Plotter()
 
-    for trial in marked_trials:
+    for trial in tagged_trials:
 
         c3d = enf2c3d(trial)
         pl.open_trial(c3d)

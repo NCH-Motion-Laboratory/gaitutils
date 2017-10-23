@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-
 Interactive script for analysis of Tardieu trials.
 
 
@@ -8,12 +7,8 @@ Interactive script for analysis of Tardieu trials.
 """
 
 from __future__ import print_function
-from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
-                       Trial, Plotter, layouts, utils, GaitDataError,
-                       register_gui_exception_handler)
-from gaitutils.numutils import segment_angles, rms
-from gaitutils.guiutils import messagebox
 from collections import OrderedDict
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button
 import matplotlib.gridspec as gridspec
@@ -21,32 +16,122 @@ import logging
 import sys
 import numpy as np
 
+from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
+                       Trial, Plotter, layouts, utils, GaitDataError,
+                       register_gui_exception_handler)
+from gaitutils.numutils import segment_angles, rms
+from gaitutils.guiutils import messagebox
+
+# increase default DPI for figure saving
+plt.rcParams['savefig.dpi'] = 200
+# TODO: eventually take from config
+matplotlib.style.use('seaborn')
+
+
+logger = logging.getLogger(__name__)
+
+
+class Markers(object):
+    """ Manage the marker lines at given axes """
+
+    def __init__(self, marker_colors, marker_width, markers_text_start,
+                 markers_text_spacing, axes):
+        self._markers = OrderedDict()  # keyed by time coordinate
+        self._axes = axes
+        self.marker_colors = marker_colors
+        self.marker_width = marker_width
+        self.max_markers = len(self.marker_colors)
+        # calculate text positions for markers
+        markers_text_end = (markers_text_start -
+                            (markers_text_spacing * self.max_markers))
+        self.markers_text_pos = np.linspace(markers_text_start,
+                                            markers_text_end,
+                                            self.max_markers)
+
+    def add_on_click(self, x):
+        if x not in self._markers.keys():
+            if len(self._markers) == self.max_markers:
+                messagebox('You can place a maximum of %d markers' %
+                           self.max_markers)
+            else:
+                self.add(x)
+
+    def add(self, x, annotation=''):
+        """ Add marker at x at given axes """
+        if x in self._markers.keys():
+            return
+        else:
+            cols_in_use = [m['color'] for m in self._markers.values()]
+            col = list((set(self.marker_colors) - set(cols_in_use)))[0]
+            self._markers[x] = dict()
+            self._markers[x]['annotation'] = annotation
+            self._markers[x]['color'] = col
+            # each axis gets its own line artist
+            for ax in self._axes:
+                self._markers[x][ax] = ax.axvline(x=x, color=col,
+                                                  linewidth=self.marker_width)
+                # generate picker events at given tolerance
+                self._markers[x][ax].set_picker(3)
+
+    def delete(self, x):
+        """ Delete by location """
+        for ax in self._axes:
+            self._markers[x][ax].remove()
+        self._markers.pop(x)
+
+    def delete_artist(self, artist, ax):
+        """ Delete by artist at axis ax """
+        # need to find the marker that has the corresponding artist
+        for x, m in self._markers.items():
+            if m[ax] == artist:
+                self.delete(x)
+                return
+
+    def clear(self):
+        for marker in self._markers:
+            self.delete(marker)
+
+    def marker_pos_col(self):
+        """ Return tuple of marker, annotation, position and color """
+        annotations = [m['annotation'] for m in self._markers.values()]
+        cols_in_use = [m['color'] for m in self._markers.values()]
+        return zip(self._markers.keys(), annotations, self.markers_text_pos,
+                   cols_in_use)
+
 
 class Tardieu_window(object):
     """ Open a matplotlib window for Tardieu analysis """
 
     def __init__(self, emg_chs=None):
-        # line markers
 
+        # adjustable params
+        # TODO: some could go into config
         self.marker_button = 1  # mouse button for placing markers
+        self.marker_del_button = 3  # remove marker
         self.marker_key = 'shift'  # modifier key for markers
-        self.m_colors = ['r', 'g', 'b']  # colors for markers
-        self.marker_width = 1.5
+        # take marker colors from mpl default cycle, but skip the first color
+        # (which is used for angle plots). n of colors determined max n of
+        # markers.
+        marker_colors = ['tab:orange', 'tab:green', 'tab:red', 'tab:brown',
+                         'tab:pink', 'tab:gray', 'tab:olive']
+        marker_width = 1.5
         self.emg_yrange = [-.5e-3, .5e-3]
-        self.width_ratio = [1, 4]
+        self.width_ratio = [1, 5]
         self.text_fontsize = 9
         self.margin = .025  # margin at edge of plots
         self.narrow = False
         self.hspace = .4
         self.wspace = .4
-
-        # use OrderedDict to remember the order in which the markers were added
-        self.markers = OrderedDict()
-        self.max_markers = len(self.m_colors)
-        self.markers_pos = np.linspace(.75, .6, self.max_markers)
+        markers_text_start = .5  # relative to the text axis
+        markers_text_spacing = .05
+        buttonwidth = .125
+        buttonheight = .04
+        buttongap = .025
         self.emg_chs = emg_chs
+        self.emg_automark_chs = ['Gas', 'Sol']
         self.texts = []
         self.data_axes = list()  # axes that actually contain data
+
         # read data from Nexus and initialize plot
         try:
             vicon = nexus.viconnexus()
@@ -57,6 +142,7 @@ class Tardieu_window(object):
         self.time = self.trial.t / self.trial.framerate  # time axis in sec
         self.tmax = self.time[-1]
         self.nframes = len(self.time)
+
         # read marker data from Nexus
         try:
             data = read_data.get_marker_data(vicon, ['Toe', 'Ankle', 'Knee'])
@@ -97,8 +183,9 @@ class Tardieu_window(object):
             self.emg_rms[ch] = rms(emgdata, cfg.emg.rms_win)
             sharex = None if ind == 0 else self.data_axes[0]
             ax = plt.subplot(self.gs[ind, 1:], sharex=sharex)
-            ax.plot(t, emgdata*1e3)
-            ax.plot(t, self.emg_rms[ch]*1e3)
+            ax.plot(t, emgdata*1e3, linewidth=cfg.plot.emg_linewidth)
+            ax.plot(t, self.emg_rms[ch]*1e3,
+                    linewidth=cfg.plot.emg_rms_linewidth, color='black')
             ax.set_ylim(self.emg_yrange[0]*1e3, self.emg_yrange[1]*1e3)
             ax.set(ylabel='mV')
             ax.set_title(ch)
@@ -108,7 +195,7 @@ class Tardieu_window(object):
         pos = len(emg_chs)
         # add angle plot
         ax = plt.subplot(self.gs[pos, 1:], sharex=self.data_axes[0])
-        ax.plot(self.time, self.angd)
+        ax.plot(self.time, self.angd, linewidth=cfg.plot.model_linewidth)
         ax.set(ylabel='deg')
         ax.set_title('Angle')
         self._adj_fonts(ax)
@@ -117,7 +204,8 @@ class Tardieu_window(object):
         # add angular velocity plot
         ax = plt.subplot(self.gs[pos+1, 1:], sharex=self.data_axes[0])
         self.angveld = self.trial.framerate * np.diff(self.angd, axis=0)
-        ax.plot(self.time[:-1], self.angveld)
+        ax.plot(self.time[:-1], self.angveld,
+                linewidth=cfg.plot.model_linewidth)
         ax.set(ylabel='deg/s')
         ax.set_title('Angular velocity')
         self._adj_fonts(ax)
@@ -126,48 +214,82 @@ class Tardieu_window(object):
         # add angular acceleration plot
         ax = plt.subplot(self.gs[pos+2, 1:], sharex=self.data_axes[0])
         self.angaccd = np.diff(self.angveld, axis=0)
-        ax.plot(self.time[:-2], self.angaccd)
+        ax.plot(self.time[:-2], self.angaccd,
+                linewidth=cfg.plot.model_linewidth)
         ax.set(xlabel='Time (s)', ylabel=u'deg/s²')
         ax.set_title('Angular acceleration')
         self._adj_fonts(ax)
         self.data_axes.append(ax)
 
-        # add text axis spanning the left column
-        self.textax = plt.subplot(self.gs[1:, 0])
+        # create markers
+        self.markers = Markers(marker_colors, marker_width, markers_text_start,
+                               markers_text_spacing, self.data_axes)
+
+        # add text axis spanning the left column (leave top rows for buttons)
+        self.textax = plt.subplot(self.gs[2:, 0])
         self.textax.set_axis_off()
 
         # refresh text field on zoom
         for ax in self.data_axes:
             ax.callbacks.connect('xlim_changed', self._redraw)
-            
+
         # catch mouse click to add events
         self.fig.canvas.mpl_connect('button_press_event', self._onclick)
         # catch key press
         self.fig.canvas.mpl_connect('key_press_event', self._onpress)
+        # pick handler
+        self.fig.canvas.mpl_connect('pick_event', self._onpick)
 
         # adjust plot layout
         self.gs.tight_layout(self.fig)
         self.gs.update(hspace=self.hspace, wspace=self.wspace,
                        left=self.margin, right=1-self.margin)
 
-        # add the 'Clear markers' button
-        # axes = left, bottom, width, height
-        buttonwidth = .125
-        buttonheight = .05
+        # add buttons
+        # add the clear button
         ax = plt.axes([self.margin, 1-self.margin-buttonheight,
                        buttonwidth, buttonheight])
         self._clearbutton = Button(ax, 'Clear markers')
         self._clearbutton.label.set_fontsize(self.text_fontsize)
         self._clearbutton.on_clicked(self._clear_callback)
         # add the narrow view button
-        ax = plt.axes([self.margin, 1-self.margin-2*buttonheight-.025,
+        ax = plt.axes([self.margin, 1-self.margin-2*buttonheight-buttongap,
                        buttonwidth, buttonheight])
         self._narrowbutton = Button(ax, 'Narrow view')
         self._narrowbutton.label.set_fontsize(self.text_fontsize)
         self._narrowbutton.on_clicked(self._toggle_narrow_callback)
+        # add quit button
+        ax = plt.axes([self.margin, 1-self.margin-3*buttonheight-2*buttongap,
+                       buttonwidth, buttonheight])
+        self._quitbutton = Button(ax, 'Quit')
+        self._quitbutton.label.set_fontsize(self.text_fontsize)
+        self._quitbutton.on_clicked(self.close)
 
         self.tmin, self.tmax = self.data_axes[0].get_xlim()
+
+        # automatically place markers
+        tmin_ = max(self.time[0], self.tmin)
+        tmax_ = min(self.time[-1], self.tmax)
+        fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
+        smin, smax = self._time_to_frame([tmin_, tmax_], self.trial.analograte)
+        angr = self.angd[fmin:fmax]
+        angminind = np.nanargmin(angr)/self.trial.framerate + tmin_
+        self.markers.add(angminind, annotation='Min. dorsiflex')
+        velr = self.angveld[fmin:fmax]
+        velmaxind = np.nanargmax(velr)/self.trial.framerate + tmin_
+        self.markers.add(velmaxind, annotation='Max. velocity')
+        for ch in self.emg_chs:
+            # check if ch is tagged for automark
+            if any([s in ch for s in self.emg_automark_chs]):
+                rmsdata = self.emg_rms[ch][smin:smax]
+                rmsmaxind = np.argmax(rmsdata)/self.trial.analograte + tmin_
+                self.markers.add(rmsmaxind, annotation='Max. RMS %s' % ch)
+
+        # init status text
         self._update_status_text()
+        self._last_click_event = None
+
+        self._toolbar = plt.get_current_fig_manager().toolbar
 
         plt.show()
 
@@ -185,20 +307,29 @@ class Tardieu_window(object):
         ax.tick_params(axis='both', which='major',
                        labelsize=cfg.plot.ticks_fontsize)
 
+    @staticmethod
+    def _time_to_frame(times, rate):
+        """Convert time to samples (according to rate)"""
+        return np.round(rate * np.array(times)).astype(int)
+
+    def close(self, event):
+        """Close window"""
+        plt.close(self.fig)
+
     def _redraw(self, ax):
+        """Update display on e.g. zoom"""
         # we need to get the limits from the axis that was zoomed
         # (the limits are not instantly updated by sharex)
         self.tmin, self.tmax = ax.get_xlim()
         self._update_status_text()
 
     def _clear_callback(self, event):
-        for m in self.markers:
-            for ax in self.data_axes:
-                self.markers[m][ax].remove()
+        """Clear all line markers"""
         self.markers.clear()
         self._update_status_text()
 
     def _toggle_narrow_callback(self, event):
+        """Toggle narrow/wide display"""
         self.narrow = not self.narrow
         wratios = [1, 1] if self.narrow else self.width_ratio
         btext = 'Wide view' if self.narrow else 'Narrow view'
@@ -207,47 +338,65 @@ class Tardieu_window(object):
         self.gs.update()
         self.fig.canvas.draw()
 
+    def _onpick(self, event):
+        if self._toolbar.mode:
+            return
+        mevent = event.mouseevent
+        # prevent handling an onpick event multiple times (e.g. if multiple
+        # markers get picked)
+        if self._last_click_event == mevent:
+            return
+        if (mevent.button != self.marker_del_button or
+           mevent.key != self.marker_key):
+            return
+        self.markers.delete_artist(event.artist, mevent.inaxes)
+        self._last_click_event = mevent
+        self._redraw(mevent.inaxes)  # marker status needs to be updated
+
     def _onpress(self, event):
-        # keyboard handler
+        """Keyboard event handler"""
         if event.key == 'tab':
             self._toggle_narrow_callback(event)
 
     def _onclick(self, event):
+        """Mouse click handler"""
+        if self._toolbar.mode:
+            return
         if event.inaxes not in self.data_axes:
             return
-        if event.button != self.marker_button or event.key != 'shift':
+        # prevent handling a click event multiple times
+        # check is also needed here since onpick and onclick may get triggered
+        # simultaneously
+        if event == self._last_click_event:
             return
-        if len(self.markers) == self.max_markers:
-            messagebox('You can place a maximum of %d markers' %
-                       self.max_markers)
+        if event.button != self.marker_button or event.key != self.marker_key:
             return
         x = event.xdata
-        if x not in self.markers:
-            col = self.m_colors[len(self.markers)]  # pick next available color
-            self.markers[x] = dict()
-            for ax in self.data_axes:
-                self.markers[x][ax] = ax.axvline(x=x, color=col,
-                                                 linewidth=self.marker_width)
-            self._redraw(event.inaxes)
-
-    def _time_to_frame(self, times, rate):
-        # convert time to frames or analog frames (according to rate)
-        return np.round(rate * np.array(times)).astype(int)
+        self.markers.add_on_click(x)
+        self._last_click_event = event
+        self._redraw(event.inaxes)  # marker status needs to be updated
 
     def _plot_text(self, s, ypos, color):
+        """Plot string s at y position ypos (relative to text frame)"""
         self.texts.append(self.textax.text(0, ypos, s, ha='left', va='top',
                                            transform=self.textax.transAxes,
                                            fontsize=self.text_fontsize,
                                            color=color, wrap=True))
 
     def _update_status_text(self):
+        """Create status text & update display"""
         if self.texts:
             [txt.remove() for txt in self.texts]
             self.texts = []
         # find the limits of the data that is shown
         tmin_ = max(self.time[0], self.tmin)
         tmax_ = min(self.time[-1], self.tmax)
-        s = u'Note: EMG not delay corrected!\n\n'
+        s = u'Shift+left click to add a new marker\n'
+        s += u'Shift+right click to remove a marker\n'
+        s += u'Tab to toggle wide/narrow display\n\n'
+        s += u'Note: EMG not delay corrected!\n\n'
+        s += u'Trial name: %s\n' % self.trial.trialname
+        s += u'EMG passband: %.1f Hz - %.1f Hz\n' % (self.trial.emg.passband)
         s += u'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)
         # frame indices corresponding to time limits
         fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
@@ -259,7 +408,7 @@ class Tardieu_window(object):
             # analog sample indices ...
             smin, smax = self._time_to_frame([tmin_, tmax_],
                                              self.trial.analograte)
-            s += u'In frames: %d - %d\n' % (fmin, fmax)
+            s += u'In frames: %d - %d\n\n' % (fmin, fmax)
             # foot angle in chosen range and the maximum
             angr = self.angd[fmin:fmax]
             angmax = np.nanmax(angr)
@@ -268,31 +417,34 @@ class Tardieu_window(object):
             velr = self.angveld[fmin:fmax]
             velmax = np.nanmax(velr)
             velmaxind = np.nanargmax(velr)/self.trial.framerate + tmin_
-            s += u'Max angle: %.2f °/s @ %.2f s\n' % (angmax, angmaxind)
-            s += u'Max velocity: %.2f °/s @ %.2f s\n' % (velmax, velmaxind)
+            s += u'Max. dorsiflexion: %.2f° @ %.2f s\n' % (angmax, angmaxind)
+            s += u'Max velocity: %.2f°/s @ %.2f s\n' % (velmax, velmaxind)
             s += u'\nEMG RMS peaks:\n'
             for ch in self.emg_chs:
-                rms = self.emg_rms[ch][smin:smax]
-                rmsmax = rms.max()
-                rmsmaxind = np.argmax(rms)/self.trial.analograte + tmin_
+                rmsdata = self.emg_rms[ch][smin:smax]
+                rmsmax = rmsdata.max()
+                rmsmaxind = np.argmax(rmsdata)/self.trial.analograte + tmin_
                 s += u'%s: %.2f mV @ %.2f s\n' % (ch, rmsmax*1e3, rmsmaxind)
             self._plot_text(s, 1, 'k')
             # annotate markers
-            for marker, pos, col in zip(self.markers, self.markers_pos,
-                                        self.m_colors):
+            for marker, anno, pos, col in self.markers.marker_pos_col():
                 frame = self._time_to_frame(marker, self.trial.framerate)
                 if frame < 0 or frame >= self.nframes:
                     ms = u'Marker outside data range'
                 else:
-                    ms = u'marker @%.2f s:\npos %.2f° vel %.2f°/s acc %.2f°/s²\n\n' % (marker, self.angd[frame], self.angveld[frame], self.angaccd[frame])
+                    ms = u'Marker @%.3f s' % marker
+                    ms += (' (%s):\n') % anno if anno else ':\n'
+                    ms += u'dflex: %.2f° vel: %.2f°/s' % (self.angd[frame],
+                                                          self.angveld[frame])
+                    ms += u' acc: %.2f°/s²\n\n' % self.angaccd[frame]
                 self._plot_text(ms, pos, col)
-
         self.fig.canvas.draw()
 
 
 def do_plot(side):
     emg_chs = [side+ch for ch in cfg.tardieu.emg_chs]
     Tardieu_window(emg_chs=emg_chs)
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

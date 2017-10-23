@@ -576,23 +576,32 @@ class Plotter(object):
         """ Show all figures """
         plt.show()
 
-    def create_pdf(self, pdf_name=None, pdf_prefix=None, sessionpath=None):
-        """ Make a pdf out of the created figure into the Nexus session dir.
-        If pdf_name is not specified, automatically name according to current
-        trial. """
+    def create_pdf(self, pdf_name=None, pdf_prefix='Nexus_plot',
+                   sessionpath=None):
+        """ Make a pdf out of the created figure.
+
+        pdf_name: string
+            Name of pdf file to create, without path. If not specified, Nexus
+            trial name will be used.
+        pdf_prefix: string
+            Optional prefix for the name
+        sessionpath: string
+            Where to write the pdf. If not specified, written into the
+            session directory of currently loaded trial.
+        """
         if not self.fig:
             raise ValueError('No figure to save!')
         if sessionpath is None:
             sessionpath = self.trial.sessionpath
+        if not sessionpath:
+            raise ValueError('Cannot get session path')
         # resize to A4
-        # self.fig.set_size_inches([8.27,11.69])
+        # self.fig.set_size_inches([8.27, 11.69])
         if pdf_name:
-            pdf_name = sessionpath + pdf_name
+            pdf_name = op.join(sessionpath, pdf_name)
         else:
-            if not pdf_prefix:
-                pdf_prefix = 'Nexus_plot_'
-            pdf_name = (sessionpath + pdf_prefix +
-                        self.trial.trialname + '.pdf')
+            pdf_name = pdf_prefix + self.trial.trialname + '.pdf'
+            pdf_name = op.join(sessionpath, pdf_name)
         if op.isfile(pdf_name):
             pass  # can prevent overwriting here
         try:

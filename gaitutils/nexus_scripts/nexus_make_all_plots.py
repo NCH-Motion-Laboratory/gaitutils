@@ -2,7 +2,11 @@
 """
 Created on Thu Sep 03 14:54:34 2015
 
-Script to create / update all kinetics/EMG plots for the marked trials.
+Script to create / update all plots for the tagged trials.
+
+This is specific to the Helsinki gait lab.
+
+
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -82,7 +86,9 @@ def do_plot():
 
     sessionpath = get_sessionpath()
     session = op.split(sessionpath)[-1]
+    session_root = op.split(sessionpath)[0]
     pdfname = 'ALL_' + session + '.pdf'
+    patient_code = op.split(session_root)[1]
 
     pdf_all = op.join(sessionpath, pdfname)
 
@@ -93,8 +99,9 @@ def do_plot():
     txt = 'HUS Liikelaboratorio\n'
     txt += u'Kävelyanalyysin tulokset\n'
     txt += '\n'
-    txt += 'Sessio: %s\n' % session
-    txt += 'Raportti laadittu: %s' % time.strftime("%d.%m.%Y")
+    txt += 'Mittaus: %s\n' % session
+    txt += 'Raportti laadittu: %s\n' % time.strftime("%d.%m.%Y")
+    txt += 'Liikelaboratorion potilaskoodi: %s\n' % patient_code
     ax.text(.5, .8, txt, ha='center', va='center', weight='bold', fontsize=14)
 
     logger.debug('creating multipage pdf %s' % pdf_all)

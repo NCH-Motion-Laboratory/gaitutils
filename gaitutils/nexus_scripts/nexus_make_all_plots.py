@@ -26,12 +26,6 @@ logger = logging.getLogger(__name__)
 figs = []
 
 
-def _coverpage():
-
-    session = get_sessionpath()
-    
-
-
 def do_plot():
 
     tagged_trials = find_tagged()

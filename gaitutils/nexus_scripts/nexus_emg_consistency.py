@@ -18,7 +18,7 @@ from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
 logger = logging.getLogger(__name__)
 
 
-def do_plot(search=None, show=True):
+def do_plot(search=None, show=True, make_pdf=True):
 
     tagged_trials = find_tagged(search)
 
@@ -58,7 +58,8 @@ def do_plot(search=None, show=True):
     if show:
         pl.show()
 
-    pl.create_pdf('emg_consistency.pdf')
+    if make_pdf:
+        pl.create_pdf('emg_consistency.pdf')
 
     return pl.fig
 

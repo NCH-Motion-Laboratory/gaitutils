@@ -13,7 +13,7 @@ from gaitutils import (cfg, nexus, layouts, eclipse, GaitDataError,
                        register_gui_exception_handler)
 
 
-def do_plot(show=True):
+def do_plot(show=True, make_pdf=True):
 
     figs = []
 
@@ -43,8 +43,9 @@ def do_plot(show=True):
                                   maintitle=maintitle,
                                   show=False))
 
-        pl.create_pdf(pdf_name='kin_average_%s.pdf' % side,
-                      sessionpath=sessionpath)
+        if make_pdf:
+            pl.create_pdf(pdf_name='kin_average_%s.pdf' % side,
+                          sessionpath=sessionpath)
 
     if show:
         pl.show()

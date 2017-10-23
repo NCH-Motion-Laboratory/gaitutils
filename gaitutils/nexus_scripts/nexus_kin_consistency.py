@@ -38,7 +38,7 @@ def find_tagged(search=None):
     return tagged_trials
 
 
-def do_plot(search=None, show=True):
+def do_plot(search=None, show=True, make_pdf=True):
 
     tagged_trials = find_tagged(search=search)
 
@@ -61,7 +61,8 @@ def do_plot(search=None, show=True):
     if show:
         pl.show()
 
-    pl.create_pdf('kin_consistency.pdf')
+    if make_pdf:
+        pl.create_pdf('kin_consistency.pdf')
 
     return pl.fig
 

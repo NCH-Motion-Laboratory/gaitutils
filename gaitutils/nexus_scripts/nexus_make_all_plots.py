@@ -27,11 +27,14 @@ from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
 
 logger = logging.getLogger(__name__)
 
-# collect Figure instances for creation of multipage PDF
-figs = []
+sort_field = 'NOTES'  # sort trials by the given Eclipse key
 
 
 def do_plot():
+
+    # collect Figure instances for creation of multipage PDF
+    figs = []
+    eclipse_tags = dict()
 
     tagged_trials = find_tagged()
 
@@ -59,37 +62,46 @@ def do_plot():
 
             maintitle = 'Kinetics-EMG (%s) for %s' % (side_str,
                                                       pl.title_with_eclipse_info())
-            figs.append(pl.plot_trial(maintitle=maintitle, show=False))
-            pdf_name = 'Kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname,
-                                                   side_str)
-            pl.create_pdf(pdf_name=pdf_name)
+            fig = pl.plot_trial(maintitle=maintitle, show=False)
+            figs.append(fig)
+            eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
+
+            # do not create individual pdfs
+            # pdf_name = 'Kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname,
+            #                                       side_str)
+            # pl.create_pdf(pdf_name=pdf_name)
 
             # EMG
-            pdf_prefix = 'EMG_'
             maintitle = pl.title_with_eclipse_info('EMG plot for')
             layout = cfg.layouts.std_emg
             pl.layout = layouts.rm_dead_channels(c3d, pl.trial.emg, layout)
-            figs.append(pl.plot_trial(maintitle=maintitle, show=False))
-            pl.create_pdf(pdf_prefix=pdf_prefix)
+            fig = pl.plot_trial(maintitle=maintitle, show=False)
+            figs.append(fig)
+            eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
+            # do not create individual pdfs
+            # pdf_prefix = 'EMG_'
+            # pl.create_pdf(pdf_prefix=pdf_prefix)
+
+    figs.sort(key=lambda fig: eclipse_tags[fig])
 
     fig_vel = nexus_trials_velocity.do_plot(show=False)
 
     # consistency plots
-    # these will automatically create pdfs
-    fig_cons = nexus_kin_consistency.do_plot(show=False)
+    fig_cons = nexus_kin_consistency.do_plot(show=False, make_pdf=False)
     if emg_active:
-        fig_emg_cons = nexus_emg_consistency.do_plot(show=False)
+        fig_emg_cons = nexus_emg_consistency.do_plot(show=False,
+                                                     make_pdf=False)
     else:
         fig_emg_cons = None
 
-    figs_averages = nexus_kin_average.do_plot(show=False)
+    # average plots
+    figs_averages = nexus_kin_average.do_plot(show=False, make_pdf=False)
 
     sessionpath = get_sessionpath()
     session = op.split(sessionpath)[-1]
     session_root = op.split(sessionpath)[0]
-    pdfname = 'ALL_' + session + '.pdf'
     patient_code = op.split(session_root)[1]
-
+    pdfname = session + '.pdf'
     pdf_all = op.join(sessionpath, pdfname)
 
     # make header page

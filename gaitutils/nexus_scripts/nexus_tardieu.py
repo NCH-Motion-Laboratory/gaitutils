@@ -24,8 +24,8 @@ from gaitutils.guiutils import messagebox
 
 # increase default DPI for figure saving
 plt.rcParams['savefig.dpi'] = 200
-# style
-matplotlib.style.use(cfg.plot.mpl_style)
+# TODO: eventually take from config
+matplotlib.style.use('seaborn')
 
 
 logger = logging.getLogger(__name__)
@@ -48,15 +48,13 @@ class Markers(object):
                                             markers_text_end,
                                             self.max_markers)
 
-    def clicked(self, x):
+    def add_on_click(self, x):
         if x not in self._markers.keys():
             if len(self._markers) == self.max_markers:
                 messagebox('You can place a maximum of %d markers' %
                            self.max_markers)
             else:
                 self.add(x)
-        else:
-            self.delete(x)  # secret delete-on-click feature
 
     def add(self, x, annotation=''):
         """ Add marker at x at given axes """
@@ -289,6 +287,7 @@ class Tardieu_window(object):
 
         # init status text
         self._update_status_text()
+        self._last_click_event = None
 
         plt.show()
 
@@ -338,10 +337,16 @@ class Tardieu_window(object):
         self.fig.canvas.draw()
 
     def _onpick(self, event):
+        logger.debug('onpick mouseevent %s' % event.mouseevent)
         mevent = event.mouseevent
+        # prevent handling an onpick event multiple times (e.g. if multiple
+        # markers get picked)
+        if self._last_click_event == mevent:
+            return
         if mevent.button != self.marker_del_button or mevent.key != 'shift':
             return
         self.markers.delete_artist(event.artist, mevent.inaxes)
+        self._last_click_event = mevent
         self._redraw(mevent.inaxes)  # marker status needs to be updated
 
     def _onpress(self, event):
@@ -351,12 +356,19 @@ class Tardieu_window(object):
 
     def _onclick(self, event):
         """Mouse click handler"""
+        logger.debug('onclick event %s' % event)
         if event.inaxes not in self.data_axes:
+            return
+        # prevent handling a click event multiple times
+        # check is also needed here since onpick and onclick may get triggered
+        # simultaneously
+        if event == self._last_click_event:
             return
         if event.button != self.marker_button or event.key != 'shift':
             return
         x = event.xdata
-        self.markers.clicked(x)
+        self.markers.add_on_click(x)
+        self._last_click_event = event
         self._redraw(event.inaxes)  # marker status needs to be updated
 
     def _plot_text(self, s, ypos, color):

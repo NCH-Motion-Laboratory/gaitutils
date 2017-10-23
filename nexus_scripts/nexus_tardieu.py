@@ -109,11 +109,9 @@ class Tardieu_window(object):
         self.marker_button = 1  # mouse button for placing markers
         self.marker_del_button = 3  # remove marker
         self.marker_key = 'shift'  # modifier key for markers
-        # take marker colors from mpl default cycle, but skip the first color
-        # (which is used for angle plots). n of colors determined max n of
-        # markers.
         marker_colors = ['tab:orange', 'tab:green', 'tab:red', 'tab:brown',
                          'tab:pink', 'tab:gray', 'tab:olive']
+
         marker_width = 1.5
         self.emg_yrange = [-.5e-3, .5e-3]
         self.width_ratio = [1, 5]
@@ -183,7 +181,8 @@ class Tardieu_window(object):
             self.emg_rms[ch] = rms(emgdata, cfg.emg.rms_win)
             sharex = None if ind == 0 else self.data_axes[0]
             ax = plt.subplot(self.gs[ind, 1:], sharex=sharex)
-            ax.plot(t, emgdata*1e3, linewidth=cfg.plot.emg_linewidth)
+            ax.plot(t, emgdata*1e3, linewidth=cfg.plot.emg_linewidth,
+                    color='tab:blue')
             ax.plot(t, self.emg_rms[ch]*1e3,
                     linewidth=cfg.plot.emg_rms_linewidth, color='black')
             ax.set_ylim(self.emg_yrange[0]*1e3, self.emg_yrange[1]*1e3)

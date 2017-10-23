@@ -16,6 +16,7 @@ import glob
 import logging
 
 from . import read_data
+from . import nexus
 from . import utils
 from . import eclipse
 from . import models
@@ -25,6 +26,11 @@ from .envutils import GaitDataError
 
 
 logger = logging.getLogger(__name__)
+
+
+def nexus_trial():
+    vicon = nexus.viconnexus()
+    return Trial(vicon)
 
 
 class Gaitcycle(object):

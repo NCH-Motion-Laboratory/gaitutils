@@ -18,10 +18,9 @@ import numpy as np
 import logging
 
 from . import models
-from . import nexus
 from . import numutils
 from . import normaldata
-from .trial import Trial
+from .trial import Trial, nexus_trial
 from .stats import AvgTrial
 from .config import cfg
 
@@ -73,8 +72,7 @@ class Plotter(object):
         self.ncols = len(layout[0])
 
     def open_nexus_trial(self):
-        source = nexus.viconnexus()
-        self.open_trial(source)
+        self.trial = nexus_trial()
 
     def open_trial(self, source):
         self.trial = Trial(source)

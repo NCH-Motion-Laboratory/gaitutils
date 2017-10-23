@@ -49,9 +49,11 @@ def do_plot(search=None, show=True):
         pl.open_trial(enf2c3d(tagged_trials[i]))
         maintitle = ('EMG consistency plot, '
                      'session %s' % pl.trial.trialdirname)
+        plot_emg_normaldata = (trialpath == tagged_trials[-1])
         pl.plot_trial(emg_tracecolor=linecolors[i],
                       maintitle=maintitle, annotate_emg=False,
-                      superpose=True, show=False)
+                      superpose=True, show=False,
+                      plot_emg_normaldata=plot_emg_normaldata)
 
     if show:
         pl.show()

@@ -289,6 +289,8 @@ class Tardieu_window(object):
         self._update_status_text()
         self._last_click_event = None
 
+        self._toolbar = plt.get_current_fig_manager().toolbar
+
         plt.show()
 
     @staticmethod
@@ -337,13 +339,15 @@ class Tardieu_window(object):
         self.fig.canvas.draw()
 
     def _onpick(self, event):
-        logger.debug('onpick mouseevent %s' % event.mouseevent)
+        if self._toolbar.mode:
+            return
         mevent = event.mouseevent
         # prevent handling an onpick event multiple times (e.g. if multiple
         # markers get picked)
         if self._last_click_event == mevent:
             return
-        if mevent.button != self.marker_del_button or mevent.key != self.marker_key:
+        if (mevent.button != self.marker_del_button or
+           mevent.key != self.marker_key):
             return
         self.markers.delete_artist(event.artist, mevent.inaxes)
         self._last_click_event = mevent
@@ -356,7 +360,8 @@ class Tardieu_window(object):
 
     def _onclick(self, event):
         """Mouse click handler"""
-        logger.debug('onclick event %s' % event)
+        if self._toolbar.mode:
+            return
         if event.inaxes not in self.data_axes:
             return
         # prevent handling a click event multiple times

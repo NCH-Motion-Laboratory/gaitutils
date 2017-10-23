@@ -73,7 +73,7 @@ class EMG(object):
         connected electrodes.
         TODO: should use multiple-zero IIR notch filter """
         # max. relative interference at 50 Hz harmonics
-        emg_max_interference = 30  # maximum relative interference level (dB)
+        emg_max_interference = 20  # maximum relative interference level (dB)
         # bandwidth of broadband signal. should be less than dist between
         # the powerline harmonics
         broadband_bw = 30

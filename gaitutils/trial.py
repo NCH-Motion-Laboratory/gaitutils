@@ -29,12 +29,13 @@ logger = logging.getLogger(__name__)
 
 
 def nexus_trial():
+    """ Return Trial instance reading from Nexus """
     vicon = nexus.viconnexus()
     return Trial(vicon)
 
 
 class Gaitcycle(object):
-    """" Holds information about one gait cycle """
+    """ Holds information about one gait cycle """
     def __init__(self, start, end, offset, toeoff, context, on_forceplate,
                  smp_per_frame):
         self.offset = offset
@@ -80,8 +81,6 @@ class Gaitcycle(object):
         """ Crop analog variable (EMG, forceplate, etc. ) to the
         cycle; no interpolation. """
         return self.tn_analog, var[self.start_smp:self.end_smp]
-
-    
 
 
 class Trial(object):

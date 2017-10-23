@@ -452,7 +452,6 @@ class Plotter(object):
                                 # tighten x limits
                                 ax.set_xlim(normalx[0], normalx[-1])
 
-
             elif var_type == 'emg':
                 # set title first, since we may end up not plotting the emg at
                 # all (i.e for missing / disconnected channels)

@@ -50,7 +50,7 @@ def do_plot(search=None, show=True):
                       maintitle=maintitle, superpose=True, show=False)
     if show:
         pl.show()
-        
+
     pl.create_pdf('kin_consistency.pdf')
 
 

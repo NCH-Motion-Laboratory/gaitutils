@@ -2,12 +2,13 @@
 """
 Created on Thu Sep 03 14:54:34 2015
 
-Script to create / update all kinetics/EMG plots for the marked trials
+Script to create / update all kinetics/EMG plots for the marked trials.
 
 @author: Jussi (jnu@iki.fi)
 """
 
 import logging
+import matplotlib.pyplot as plt
 
 from gaitutils import Plotter, cfg, register_gui_exception_handler, layouts
 from gaitutils.nexus import enf2c3d, find_trials
@@ -75,9 +76,14 @@ def do_plot():
             pl.create_pdf(pdf_prefix=pdf_prefix)
 
     # consistency plots
+    # these will automatically create pdfs
     nexus_kin_consistency.do_plot(show=False)
     if emg_active:
         nexus_emg_consistency.do_plot(show=False)
+
+    # close all created figures, otherwise they'll pop up on next show() call
+    plt.close('all')
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

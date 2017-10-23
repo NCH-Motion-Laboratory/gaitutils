@@ -33,7 +33,7 @@ def trial_median_velocity(source):
     return vel_ms if vel_ms >= MIN_VEL else np.nan
 
 
-def do_plot(show=True):
+def do_plot(show=True, make_pdf=True):
 
     enfs = nexus.get_session_enfs()
 
@@ -56,9 +56,10 @@ def do_plot(show=True):
     plt.title('Gait velocity for dynamic trials (average %.2f m/s)' % vavg)
     plt.tight_layout()
 
-    pdf_name = op.join(nexus.get_sessionpath(), 'trial_velocity.pdf')
-    with PdfPages(pdf_name) as pdf:
-        pdf.savefig(fig)
+    if make_pdf:
+        pdf_name = op.join(nexus.get_sessionpath(), 'trial_velocity.pdf')
+        with PdfPages(pdf_name) as pdf:
+            pdf.savefig(fig)
 
     if show:
         plt.show()

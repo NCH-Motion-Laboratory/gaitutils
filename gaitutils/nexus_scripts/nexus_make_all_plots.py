@@ -84,7 +84,8 @@ def do_plot():
 
     figs.sort(key=lambda fig: eclipse_tags[fig])
 
-    fig_vel = nexus_trials_velocity.do_plot(show=False)
+    # trial velocity plot
+    fig_vel = nexus_trials_velocity.do_plot(show=False, make_pdf=False)
 
     # consistency plots
     fig_cons = nexus_kin_consistency.do_plot(show=False, make_pdf=False)

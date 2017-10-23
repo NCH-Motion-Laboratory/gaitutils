@@ -7,6 +7,7 @@ Script to create / update all kinetics/EMG plots for the marked trials.
 @author: Jussi (jnu@iki.fi)
 """
 
+import time
 import logging
 import os.path as op
 import matplotlib.pyplot as plt
@@ -80,12 +81,25 @@ def do_plot():
     figs_averages = nexus_kin_average.do_plot(show=False)
 
     sessionpath = get_sessionpath()
-    pdfname = 'ALL_'+op.split(sessionpath)[-1]+'.pdf'
+    session = op.split(sessionpath)[-1]
+    pdfname = 'ALL_' + session + '.pdf'
 
     pdf_all = op.join(sessionpath, pdfname)
 
+    # make header page
+    fig_hdr = plt.figure()
+    ax = plt.subplot(111)
+    plt.axis('off')
+    txt = 'HUS Liikelaboratorio\n'
+    txt += u'Kävelyanalyysin tulokset\n'
+    txt += '\n'
+    txt += 'Sessio: %s\n' % session
+    txt += 'Raportti laadittu: %s' % time.strftime("%d.%m.%Y")
+    ax.text(.5, .8, txt, ha='center', va='center', weight='bold', fontsize=14)
+
     logger.debug('creating multipage pdf %s' % pdf_all)
     with PdfPages(pdf_all) as pdf:
+        pdf.savefig(fig_hdr)
         pdf.savefig(fig_vel)
         pdf.savefig(fig_cons)
         if fig_emg_cons is not None:

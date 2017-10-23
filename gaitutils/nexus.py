@@ -164,11 +164,6 @@ def find_trials(eclipse_keys, strings):
             yield enf
 
 
-def find_tagged_trials(eclipse_tags, eclipse_keys):
-    """ Find trials which have given tags (list of str) """
-
-
-
 def is_vicon_instance(obj):
     """ Check if obj is an instance of ViconNexus """
     return obj.__class__.__name__ == 'ViconNexus'

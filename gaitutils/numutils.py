@@ -51,6 +51,7 @@ def best_match(v, b):
 
 
 def isfloat(x):
+    """ Return True for float-conversible values, False otherwise """
     try:
         float(x)
         return True
@@ -59,6 +60,7 @@ def isfloat(x):
 
 
 def isint(x):
+    """ Return True for int-conversible values, False otherwise """
     try:
         int(x)
         return True

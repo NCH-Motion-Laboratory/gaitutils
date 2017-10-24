@@ -189,7 +189,9 @@ class Trial(object):
         self._normalize = cycle if cycle else None
 
     def get_cycle(self, context, ncycle):
-        """ e.g. ncycle=2 and context='L' returns 2nd left gait cycle. """
+        """ e.g. ncycle=2 and context='L' returns 2nd left gait cycle.
+        Note that this uses 1-based indexing in contrast to
+        set_norm_cycle() """
         cycles = [cycle for cycle in self.cycles
                   if cycle.context == context.upper()]
         if ncycle < 1:

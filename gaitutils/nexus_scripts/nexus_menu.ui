@@ -24,13 +24,6 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="7">
-       <widget class="QPushButton" name="btnCreatePDFs">
-        <property name="text">
-         <string>Create all PDF plots</string>
-        </property>
-       </widget>
-      </item>
       <item row="2" column="7">
        <widget class="QPushButton" name="btnAutoprocTrial">
         <property name="text">
@@ -200,20 +193,6 @@
         </property>
        </spacer>
       </item>
-      <item row="3" column="7">
-       <widget class="QPushButton" name="btnAutoprocDialog">
-        <property name="text">
-         <string>Autoprocessing options...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="7">
-       <widget class="QPushButton" name="btnCopyVideos">
-        <property name="text">
-         <string>Copy session videos to desktop</string>
-        </property>
-       </widget>
-      </item>
       <item row="4" column="5">
        <widget class="QPushButton" name="btnTrialVelocity">
         <property name="text">
@@ -235,6 +214,20 @@
         </property>
        </widget>
       </item>
+      <item row="3" column="7">
+       <widget class="QPushButton" name="btnCreatePDFs">
+        <property name="text">
+         <string>Create all PDF plots</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="7">
+       <widget class="QPushButton" name="btnCopyVideos">
+        <property name="text">
+         <string>Copy session videos to desktop</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>
@@ -248,17 +241,34 @@
      <widget class="QPlainTextEdit" name="txtOutput"/>
     </item>
     <item>
-     <widget class="QPushButton" name="btnQuit">
-      <property name="maximumSize">
-       <size>
-        <width>50</width>
-        <height>16777215</height>
-       </size>
-      </property>
-      <property name="text">
-       <string>Quit</string>
-      </property>
-     </widget>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QPushButton" name="btnAutoprocDialog">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Options...</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnQuit">
+        <property name="maximumSize">
+         <size>
+          <width>50</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Quit</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>

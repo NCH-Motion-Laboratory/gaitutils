@@ -29,12 +29,13 @@ logger = logging.getLogger(__name__)
 
 
 def nexus_trial():
+    """ Return Trial instance reading from Nexus """
     vicon = nexus.viconnexus()
     return Trial(vicon)
 
 
 class Gaitcycle(object):
-    """" Holds information about one gait cycle """
+    """ Holds information about one gait cycle """
     def __init__(self, start, end, offset, toeoff, context, on_forceplate,
                  smp_per_frame):
         self.offset = offset
@@ -80,8 +81,6 @@ class Gaitcycle(object):
         """ Crop analog variable (EMG, forceplate, etc. ) to the
         cycle; no interpolation. """
         return self.tn_analog, var[self.start_smp:self.end_smp]
-
-    
 
 
 class Trial(object):
@@ -190,7 +189,9 @@ class Trial(object):
         self._normalize = cycle if cycle else None
 
     def get_cycle(self, context, ncycle):
-        """ e.g. ncycle=2 and context='L' returns 2nd left gait cycle. """
+        """ e.g. ncycle=2 and context='L' returns 2nd left gait cycle.
+        Note that this uses 1-based indexing in contrast to
+        set_norm_cycle() """
         cycles = [cycle for cycle in self.cycles
                   if cycle.context == context.upper()]
         if ncycle < 1:

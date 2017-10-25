@@ -18,7 +18,7 @@ import logging
 import platform
 
 from .numutils import (rising_zerocross, best_match, falling_zerocross,
-                       change_coords, isint)
+                       change_coords)
 from . import utils
 from .envutils import GaitDataError
 from .eclipse import get_eclipse_keys

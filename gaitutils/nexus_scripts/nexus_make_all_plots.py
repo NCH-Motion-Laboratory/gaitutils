@@ -37,6 +37,7 @@ def do_plot():
     eclipse_tags = dict()
 
     tagged_trials = find_tagged()
+    do_emg_consistency = False
 
     pl = Plotter()
 
@@ -56,6 +57,8 @@ def do_plot():
                           cfg.emg.channel_labels])
 
         if emg_active:
+
+            do_emg_consistency = True
             # kinetics-EMG
             pl.layout = (cfg.layouts.lb_kinetics_emg_r if side == 'R' else
                          cfg.layouts.lb_kinetics_emg_l)
@@ -89,7 +92,7 @@ def do_plot():
 
     # consistency plots
     fig_cons = nexus_kin_consistency.do_plot(show=False, make_pdf=False)
-    if emg_active:
+    if do_emg_consistency:
         fig_emg_cons = nexus_emg_consistency.do_plot(show=False,
                                                      make_pdf=False)
     else:

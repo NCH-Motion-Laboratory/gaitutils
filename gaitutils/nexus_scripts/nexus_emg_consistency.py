@@ -11,7 +11,8 @@ description and defined search strings.
 import logging
 import argparse
 
-from gaitutils import Plotter, cfg, register_gui_exception_handler, EMG
+from gaitutils import (Plotter, cfg, register_gui_exception_handler, EMG,
+                       GaitDataError)
 from gaitutils.nexus import enf2c3d
 from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
 
@@ -47,6 +48,12 @@ def do_plot(search=None, show=True, make_pdf=True):
 
     for i, trialpath in enumerate(tagged_trials):
         pl.open_trial(enf2c3d(tagged_trials[i]))
+
+        emg_active = any([pl.trial.emg.status_ok(ch) for ch in
+                          cfg.emg.channel_labels])
+        if not emg_active:
+            continue
+
         maintitle = ('EMG consistency plot, '
                      'session %s' % pl.trial.trialdirname)
         plot_emg_normaldata = (trialpath == tagged_trials[-1])
@@ -54,6 +61,9 @@ def do_plot(search=None, show=True, make_pdf=True):
                       maintitle=maintitle, annotate_emg=False,
                       superpose=True, show=False,
                       plot_emg_normaldata=plot_emg_normaldata)
+
+    if not pl.fig:
+        raise GaitDataError('None of the marked trials have valid EMG data')
 
     if show:
         pl.show()

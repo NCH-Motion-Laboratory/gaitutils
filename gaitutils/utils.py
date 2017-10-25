@@ -125,8 +125,29 @@ def detect_forceplate_events(source, fp_info=None):
                  {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])
 
     for plate_ind, fp in enumerate(fpdata):
-        # first identify candidates for footstrike by looking at fp data
+
         logger.debug('analyzing plate %d' % plate_ind)
+
+        # check Eclipse info if it exists
+        detect = True
+        plate = 'FP' + str(plate_ind+1)
+        if fp_info is not None and plate in fp_info:
+            # TODO: are we sure that the plate indices match Eclipse?
+            valid = fp_info[plate]
+            detect = False
+            logger.debug('using Eclipse forceplate info: %s' % valid)
+            if valid == 'Right':
+                this_valid = 'R'
+            elif valid == 'Left':
+                this_valid = 'L'
+            elif valid == 'Invalid':
+                continue
+            elif valid == 'Auto':
+                detect = True
+            else:
+                raise Exception('unexpected Eclipse forceplate field')
+
+        # first identify candidates for footstrike by looking at fp data
         # test the force data
         # FIXME: filter should maybe depend on sampling freq
         forcetot = signal.medfilt(fp['Ftot'])
@@ -143,7 +164,8 @@ def detect_forceplate_events(source, fp_info=None):
             logger.debug('body mass %.2f kg' % bodymass)
             f_threshold = (cfg.autoproc.forceplate_contact_threshold *
                            bodymass * 9.81)
-            if fmax < cfg.autoproc.forceplate_min_weight * bodymass * 9.81:
+            if (detect and fmax < cfg.autoproc.forceplate_min_weight *
+               bodymass * 9.81):
                 logger.debug('insufficient max. force on plate')
                 continue
         # find indices where force crosses threshold
@@ -159,26 +181,6 @@ def detect_forceplate_events(source, fp_info=None):
         strike_fr = int(np.round(friseind / info['samplesperframe']))
         toeoff_fr = int(np.round(ffallind / info['samplesperframe']))
         logger.debug('strike @ frame %d, toeoff @ %d' % (strike_fr, toeoff_fr))
-
-        # confirm whether it's a valid foot strike; look at Eclipse info or
-        # use our own autodetection routine
-        detect = True
-        plate = 'FP' + str(plate_ind+1)
-        if fp_info is not None and plate in fp_info:
-            # TODO: are we sure that the plate indices match Eclipse?
-            valid = fp_info[plate]
-            detect = False
-            logger.debug('using Eclipse forceplate info: %s' % valid)
-            if valid == 'Right':
-                this_valid = 'R'
-            elif valid == 'Left':
-                this_valid = 'L'
-            elif valid == 'Invalid':
-                this_valid = None
-            elif valid == 'Auto':
-                detect = True
-            else:
-                raise Exception('unexpected Eclipse forceplate field')
 
         if detect:
             logger.debug('using autodetection')

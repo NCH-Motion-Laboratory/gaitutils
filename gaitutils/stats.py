@@ -75,6 +75,7 @@ def average_trials(trials, models, max_dist=None):
         if vardata is None:
             stddata[var] = None
             avgdata[var] = None
+            N_ok[var] = 0
             continue
         else:
             Ntot = vardata.shape[0]

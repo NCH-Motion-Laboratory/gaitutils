@@ -542,11 +542,11 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         strikes = cross[np.logical_and(cind_min, cind_max)]
 
         bad = []
-        for ind, strike in enumerate(strikes):
+        for sind, strike in enumerate(strikes):
             if footctrv[strike:strike+STOP_WIN].min() > MAX_STOP_VELOCITY:
                 logger.debug('foot not coming to rest after strike %d'
                              % strike)
-                bad.append(ind)
+                bad.append(sind)
         strikes = np.delete(strikes, bad)
 
         if len(strikes) == 0:

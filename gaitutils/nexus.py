@@ -448,16 +448,13 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     # marker data is assumed to be in mm
     # mm/frame = 1000 m/frame = 1000/frate m/s
     VEL_CONV = 1000/frate
-    # reasonable limits for peak velocity (m/s before multiplier)
+    # reasonable limit for peak velocity (m/s before multiplier)
     MAX_PEAK_VELOCITY = 12 * VEL_CONV
-    MIN_PEAK_VELOCITY = .5 * VEL_CONV
     # reasonable limits for velocity on slope (increasing/decreasing)
     MAX_SLOPE_VELOCITY = 6 * VEL_CONV
     MIN_SLOPE_VELOCITY = 0  # not currently in use
-    # max velocity when foot is 'stopped'
-    MAX_STOP_VELOCITY = .2 * VEL_CONV
-    # foot must come to stop latest at this time after strike event is marked
-    STOP_WIN = int(.3 * frate)
+    # minimum swing velocity (rel to max velocity)
+    MIN_SWING_VELOCITY = .65
     # median prefilter width
     PREFILTER_MEDIAN_WIDTH = 3
     # tolerance between specified and actual first strike event
@@ -501,21 +498,19 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         # filter scalar velocity data to suppress noise and spikes
         footctrv = signal.medfilt(footctrv, PREFILTER_MEDIAN_WIDTH)
 
-        # compute local maxima of velocity: derivative crosses zero, values ok
+        # find maxima of velocity: derivative crosses zero and values ok
         vd = np.gradient(footctrv)
         vdz_ind = falling_zerocross(vd)
-
-        inds = np.where(np.logical_and(footctrv[vdz_ind] > MIN_PEAK_VELOCITY,
-                        footctrv[vdz_ind] < MAX_PEAK_VELOCITY))[0]
-
+        inds = np.where(footctrv[vdz_ind] < MAX_PEAK_VELOCITY)[0]
         if len(inds) == 0:
             raise GaitDataError('Cannot find acceptable velocity peaks')
 
-        maxv = np.median(footctrv[vdz_ind[inds]])
-
-        if maxv > MAX_PEAK_VELOCITY:
-            raise GaitDataError('Velocity thresholds too high, data may '
-                                'be noisy')
+        # delete spurious peaks (where min swing velocity is not attained)
+        vs = footctrv[vdz_ind[inds]]
+        not_ok = np.where(vs < vs.max() * MIN_SWING_VELOCITY)
+        vs = np.delete(vs, not_ok)
+        maxv = np.median(vs)
+        logger.debug('swing velocity %.2f' % maxv)
 
         # compute thresholds
         threshold_fall_ = (vel_thresholds[this_side+'_strike'] or
@@ -532,7 +527,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         # foot strikes (velocity decreases)
         cross = falling_zerocross(footctrv - threshold_fall_)
         # exclude edges of data vector
-        fmax = len(footctrv) - STOP_WIN - 1
+        fmax = len(footctrv) - 1
         cross = cross[np.where(np.logical_and(cross > 0, cross < fmax))]
         # check velocity on slope
         cind_min = np.logical_and(footctrv[cross-1] < MAX_SLOPE_VELOCITY,
@@ -541,12 +536,22 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                                   footctrv[cross+1] > MIN_SLOPE_VELOCITY)
         strikes = cross[np.logical_and(cind_min, cind_max)]
 
+        # check for foot swing (velocity maximum) between consecutive strikes
+        # if no swing, keep deleting the latter event until swing is found
         bad = []
-        for sind, strike in enumerate(strikes):
-            if footctrv[strike:strike+STOP_WIN].min() > MAX_STOP_VELOCITY:
-                logger.debug('foot not coming to rest after strike %d'
-                             % strike)
-                bad.append(sind)
+        for sind in range(len(strikes)):
+            if sind in bad:
+                continue
+            for sind2 in range(sind+1, len(strikes)):
+                swing_max_vel = footctrv[strikes[sind]:strikes[sind2]].max()
+                # logger.debug('check %d-%d' % (strikes[sind], strikes[sind2]))
+                if swing_max_vel < maxv * MIN_SWING_VELOCITY:
+                    logger.debug('no swing between strikes %d-%d, deleting %d'
+                                 % (strikes[sind], strikes[sind2],
+                                    strikes[sind2]))
+                    bad.append(sind2)
+                else:
+                    break
         strikes = np.delete(strikes, bad)
 
         if len(strikes) == 0:
@@ -569,7 +574,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         for s1, s2 in zip(strikes, np.roll(strikes, -1))[:-1]:
             to_this = np.where(np.logical_and(toeoffs > s1, toeoffs < s2))[0]
             if len(to_this) > 1:
-                logger.debug('%d toeoffs during cycle, keeping only the last'
+                logger.debug('%d toeoffs during cycle, keeping the last one'
                              % len(to_this))
                 toeoffs = np.delete(toeoffs, to_this[:-1])
 
@@ -578,8 +583,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
 
         # select events for which the foot is close enough to center frame
         if events_range:
-            fwd_dim = utils.principal_movement_direction(vicon, cfg.
-                                                         autoproc.track_markers)
+            fwd_dim = utils.principal_movement_direction(vicon, cfg.autoproc.
+                                                         track_markers)
             strike_pos = footctrP[strikes, fwd_dim]
             dist_ok = np.logical_and(strike_pos > events_range[0],
                                      strike_pos < events_range[1])

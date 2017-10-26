@@ -151,13 +151,20 @@ def test_read_data_errors():
 def test_event_marking():
     """Test automarking of events"""
     ev_tol = 3  # tolerance for event marking (frames)
-    events_dict = dict()  # ground truth
+    events_dict = dict()  # ground truth with forceplate info
     events_dict['Right'] = dict()
-    events_dict['Right']['Foot Strike'] = [381, 503, 614]
+    events_dict['Right']['Foot Strike'] = [384, 505, 616]
     events_dict['Right']['Foot Off'] = [465, 570]
     events_dict['Left'] = dict()
     events_dict['Left']['Foot Strike'] = [311, 441, 562]
     events_dict['Left']['Foot Off'] = [402, 517]
+    events_dict_nofp = dict()  # ground truth without forceplate info
+    events_dict_nofp['Right'] = dict()
+    events_dict_nofp['Right']['Foot Strike'] = [379, 501, 613]
+    events_dict_nofp['Right']['Foot Off'] = [468, 572]
+    events_dict_nofp['Left'] = dict()
+    events_dict_nofp['Left']['Foot Strike'] = [310, 440, 561]
+    events_dict_nofp['Left']['Foot Off'] = [401, 516]
 
     def _events_check(events_dict):
         """Helper to check whether Nexus events are close to ground truth"""
@@ -171,10 +178,10 @@ def test_event_marking():
 
     _nexus_open_trial('2015_10_22_girl6v_IN02')
 
-    # automatic thresholding
+    # automatic thresholding (do not respect fp events)
     vicon.ClearAllEvents()
     nexus.automark_events(vicon, events_range=[-1500, 1500])
-    _events_check(events_dict)
+    _events_check(events_dict_nofp)
 
     # using forceplate thresholds
     vicon.ClearAllEvents()

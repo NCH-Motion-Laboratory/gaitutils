@@ -454,7 +454,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     MAX_SLOPE_VELOCITY = 6 * VEL_CONV
     MIN_SLOPE_VELOCITY = 0  # not currently in use
     # minimum swing velocity (rel to max velocity)
-    MIN_SWING_VELOCITY = .65
+    MIN_SWING_VELOCITY = .5
     # median prefilter width
     PREFILTER_MEDIAN_WIDTH = 3
     # tolerance between specified and actual first strike event

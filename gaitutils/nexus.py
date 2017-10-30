@@ -646,21 +646,23 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         # plot velocities w/ thresholds and marked events
         if plot:
             if ind == 0:
-                plt.figure()
-            plt.subplot(2, 1, ind+1)
-            plt.plot(footctrv, 'g', label='foot center velocity ' + this_side)
+                f, (ax1, ax2) = plt.subplots(2, 1)
+            ax = ax1 if ind == 0 else ax2
+            ax.plot(footctrv, 'g', label='foot center velocity ' + this_side)
             # algorithm, fixed thresholds
-            plt.plot(strikes, footctrv[strikes], 'kD', markersize=10,
-                     label='strike')
-            plt.plot(toeoffs, footctrv[toeoffs], 'k^', markersize=10,
-                     label='toeoff')
-            plt.legend(numpoints=1, fontsize=10)
-            plt.ylim(0, maxv+10)
+            ax.plot(strikes, footctrv[strikes], 'kD', markersize=10,
+                    label='strike')
+            ax.plot(toeoffs, footctrv[toeoffs], 'k^', markersize=10,
+                    label='toeoff')
+            ax.legend(numpoints=1, fontsize=10)
+            ax.set_ylim(0, maxv+10)
             if ind == 1:
                 plt.xlabel('Frame')
-            plt.ylabel('Velocity (mm/frame)')
-            plt.title('Left' if this_side == 'L' else 'Right')
-            plt.show()
+            ax.set_ylabel('Velocity (mm/frame)')
+            ax.set_title('Left' if this_side == 'L' else 'Right')
+
+    if plot:
+        plt.show()
 
     return (strikes_all['R'], strikes_all['L'],
             toeoffs_all['R'], toeoffs_all['L'])

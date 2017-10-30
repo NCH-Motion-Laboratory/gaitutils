@@ -9,6 +9,7 @@ from gaitutils import (nexus, cfg, utils, read_data, eclipse,
                        register_gui_exception_handler, GaitDataError)
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 import os.path as op
 import logging
 
@@ -16,15 +17,14 @@ logger = logging.getLogger(__name__)
 
 
 def trial_median_velocity(source):
+    """ Compute median velocity over whole trial by differentiation of marker
+    data """
     MIN_VEL = .1
     try:
-
         frate = read_data.get_metadata(source)['framerate']
-
         dim = utils.principal_movement_direction(source, cfg.autoproc.
                                                  track_markers)
         mkr = cfg.autoproc.track_markers[0]
-
         vel_ = read_data.get_marker_data(source, mkr)[mkr+'_V'][:, dim]
     except (GaitDataError, ValueError):
         return np.nan
@@ -33,11 +33,10 @@ def trial_median_velocity(source):
     return vel_ms if vel_ms >= MIN_VEL else np.nan
 
 
-def do_plot():
+def do_plot(show=True, make_pdf=True):
 
     enfs = nexus.get_session_enfs()
-    if enfs is None:
-        raise Exception('Cannot read session from Nexus (maybe in live mode?)')
+
     enfs_ = [enf for enf in enfs if
              eclipse.get_eclipse_keys(enf,
                                       return_empty=True)['TYPE'] == 'Dynamic']
@@ -49,14 +48,23 @@ def do_plot():
     vels = np.array([trial_median_velocity(trial) for trial in c3ds])
     vavg = np.nanmean(vels)
 
-    plt.figure()
+    fig = plt.figure()
     plt.stem(vels)
     plt.xticks(range(len(vels)), labels, rotation='vertical')
     plt.ylabel('Velocity (m/s)')
     plt.tick_params(axis='both', which='major', labelsize=8)
     plt.title('Gait velocity for dynamic trials (average %.2f m/s)' % vavg)
     plt.tight_layout()
-    plt.show()
+
+    if make_pdf:
+        pdf_name = op.join(nexus.get_sessionpath(), 'trial_velocity.pdf')
+        with PdfPages(pdf_name) as pdf:
+            pdf.savefig(fig)
+
+    if show:
+        plt.show()
+
+    return fig
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

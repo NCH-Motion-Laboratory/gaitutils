@@ -11,8 +11,11 @@ from __future__ import print_function
 import logging
 import numpy as np
 import os
-from numutils import center_of_pressure, change_coords
-from envutils import GaitDataError
+
+from .numutils import center_of_pressure, change_coords
+from .envutils import GaitDataError
+
+
 logger = logging.getLogger(__name__)
 try:
     import btk
@@ -88,11 +91,16 @@ def get_metadata(c3dfile):
     analograte = acq.GetAnalogFrequency()
     samplesperframe = acq.GetNumberAnalogSamplePerFrame()
     # count forceplates
-    n_forceplates = 0
+    n_force_comps = 0
     for i in btk.Iterate(acq.GetAnalogs()):
         desc = i.GetLabel()
         if desc.find('Force.') >= 0 and i.GetUnit() == 'N':
-            n_forceplates += 1
+            n_force_comps += 1
+    if n_force_comps % 3 != 0:
+        raise GaitDataError('Unexpected number of force components')
+    else:
+        n_forceplates = int(n_force_comps / 3)
+
     #  get events
     rstrikes, lstrikes, rtoeoffs, ltoeoffs = [], [], [], []
     for i in btk.Iterate(acq.GetEvents()):

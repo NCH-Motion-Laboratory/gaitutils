@@ -2,9 +2,11 @@
 """
 Handling layouts.
 
-@author: Jussi
+@author: Jussi (jnu@iki.fi)
 """
+
 import logging
+
 
 logger = logging.getLogger(__name__)
 
@@ -20,3 +22,11 @@ def rm_dead_channels(source, emg, layout):
     if not layout_:
         logger.warning('removed all - no valid EMG channels')
     return layout_
+
+
+def onesided_layout(layout, side):
+    """ Add 'R' or 'L' to layout variable names """
+    if side not in ['R', 'L']:
+        raise ValueError('Invalid side')
+    return [[(side + item) if item is not None else None for item in row]
+            for row in layout]

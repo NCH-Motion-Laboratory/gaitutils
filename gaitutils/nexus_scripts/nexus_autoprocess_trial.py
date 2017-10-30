@@ -4,13 +4,12 @@
 Auto process single trial.
 Note: does not use stats for event detection -> less accurate
 
-@author: Jussi
+@author: Jussi (jnu@iki.fi)
 """
 
-from nexus_autoprocess_trials import _do_autoproc
-from gaitutils import nexus, register_gui_exception_handler
-
 import logging
+from nexus_autoprocess_session import _do_autoproc
+from gaitutils import nexus, register_gui_exception_handler
 
 
 def autoproc_single():
@@ -23,4 +22,5 @@ def autoproc_single():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
+    register_gui_exception_handler()
     autoproc_single()

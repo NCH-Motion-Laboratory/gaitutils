@@ -24,18 +24,17 @@ NOTES:
 -ROI operations only work for Nexus >= 2.5
 
 
-@author: Jussi
+@author: Jussi (jnu@iki.fi)
 """
 
-from gaitutils import (nexus, eclipse, utils, register_gui_exception_handler,
-                       GaitDataError, messagebox)
-from gaitutils.config import cfg
 import os
 import numpy as np
-import time
 import argparse
 import logging
-import sys
+
+from gaitutils import (nexus, eclipse, utils, register_gui_exception_handler,
+                       GaitDataError)
+from gaitutils.config import cfg
 
 
 logger = logging.getLogger(__name__)
@@ -69,7 +68,11 @@ def _do_autoproc(enffiles, update_eclipse=True):
             plines = [plines]
         for pipeline in plines:
             logger.debug('Running pipeline: %s' % pipeline)
-            vicon.RunPipeline(pipeline, '', cfg.autoproc.pipeline_timeout)
+            result = vicon.Client.RunPipeline(pipeline.encode('utf-8'), '',
+                                              cfg.autoproc.pipeline_timeout)
+            if result.Error():
+                raise GaitDataError('Error while trying to run pipeline: "%s"'
+                                    % pipeline)
 
     def _save_trial():
         logger.debug('Saving trial')
@@ -106,13 +109,16 @@ def _do_autoproc(enffiles, update_eclipse=True):
         edi = eclipse.get_eclipse_keys(filepath_, return_empty=True)
         trial_type = edi['TYPE']
         trial_desc = edi['DESCRIPTION']
+        trial_notes = edi['NOTES']
         if trial_type in cfg.autoproc.type_skip:
-            logger.debug('Not a dynamic trial, skipping')
+            logger.debug('Skipping trial type: %s' % trial_type)
             continue
-        if trial_desc.upper() in [s.upper() for s in cfg.autoproc.desc_skip]:
+        skip = [s.upper() for s in cfg.autoproc.eclipse_skip]
+        if trial_desc.upper() in skip or trial_notes.upper in skip:
             logger.debug('Skipping based on description')
             # run preprocessing + save even for skipped trials, to mark
-            # them as processed
+            # them as processed - mostly so that Eclipse export to Polygon
+            # will work
             _run_pipelines(cfg.autoproc.pre_pipelines)
             _save_trial()
             continue
@@ -126,13 +132,14 @@ def _do_autoproc(enffiles, update_eclipse=True):
         # try to run preprocessing pipelines
         fail = None
         _run_pipelines(cfg.autoproc.pre_pipelines)
-        # trial sanity checks
-        trange = vicon.GetTrialRange()
+        # check trial validity; trial long enough, labeling and gaps ok
         gaps_found = False
+        trange = vicon.GetTrialRange()
         if (trange[1] - trange[0]) < cfg.autoproc.min_trial_duration:
             fail = 'short'
         else:  # duration ok
-            # try to figure out trial center frame
+            # try to figure out trial center frame using 
+            # track markers (only one needs to be ok)
             for marker in cfg.autoproc.track_markers:
                 try:
                     dim = utils.principal_movement_direction(vicon, cfg.
@@ -144,18 +151,20 @@ def _do_autoproc(enffiles, update_eclipse=True):
                                                    walkway_ctr[dim])
                 except (GaitDataError, ValueError):
                     ctr = None
-                ctr = ctr[0] if ctr else None
+                ctr = ctr[0] if ctr else None  # deal w/ multiple crossings
                 if ctr:  # ok and no gaps
                     trials[filepath].ctr_frame = ctr
                     break
             if ctr is not None:
                 logger.debug('walkway center frame: %d' % ctr)
-            # cannot find center frame - possible rasi or lasi gaps
+            # cannot find center frame - possibly gaps in track_markers
             if not ctr:
                 fail = 'gaps_or_short'
                 gaps_found = True
             else:
-                for marker in allmarkers:  # check for gaps / lbl failures
+                # check markers for gaps or label failures
+                for marker in (set(allmarkers) -
+                               set(cfg.autoproc.ignore_markers)):
                     try:
                         gaps = (nexus.get_marker_data(vicon, marker)
                                 [marker + '_gaps'])
@@ -230,11 +239,10 @@ def _do_autoproc(enffiles, update_eclipse=True):
         try:
             vicon.ClearAllEvents()
             nexus.automark_events(vicon, vel_thresholds=vel_th,
-                                  max_dist=cfg.autoproc.automark_max_dist,
                                   fp_events=trial.fpev, plot=False,
-                                  start_on_forceplate=
-                                  cfg.autoproc.start_on_forceplate,
-                                  ctr_pos=cfg.autoproc.walkway_ctr)
+                                  events_range=cfg.autoproc.events_range,
+                                  start_on_forceplate=cfg.autoproc.
+                                  start_on_forceplate)
             trial.events = True
         except GaitDataError:  # cannot automark
             eclipse_str = '%s,%s' % (trials[filepath].description,
@@ -261,7 +269,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         # run model pipeline and save
         eclipse_str = '%s,%s' % (cfg.autoproc.enf_descriptions['ok'],
                                  trial.description)
-        _run_pipelines(cfg.autoproc.model_pipeline)
+        _run_pipelines(cfg.autoproc.model_pipelines)
         _save_trial()
         trials[filepath].description = eclipse_str
 
@@ -297,6 +305,7 @@ def autoproc_session(patterns=None, update_eclipse=True):
 
 
 if __name__ == '__main__':
+
     logging.basicConfig(level=logging.DEBUG)
 
     parser = argparse.ArgumentParser()

@@ -6,12 +6,12 @@ Wrapper methods that read from either Vicon Nexus or c3d files.
 a path to a c3d file.
 
 
-@author: jnu@iki.fi
+@author: Jussi (jnu@iki.fi)
 
 """
 
-import nexus
-import c3d
+from . import nexus
+from . import c3d
 
 
 def _reader_module(source):

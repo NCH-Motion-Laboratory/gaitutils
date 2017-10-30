@@ -11,10 +11,12 @@ Class for reading EMG
 from __future__ import division
 import numpy as np
 from scipy import signal
-import read_data
-from config import cfg
 import logging
-from nexus import _list_to_str
+
+from . import read_data
+from .config import cfg
+from .nexus import _list_to_str
+
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +73,7 @@ class EMG(object):
         connected electrodes.
         TODO: should use multiple-zero IIR notch filter """
         # max. relative interference at 50 Hz harmonics
-        emg_max_interference = 30  # maximum relative interference level (dB)
+        emg_max_interference = 20  # maximum relative interference level (dB)
         # bandwidth of broadband signal. should be less than dist between
         # the powerline harmonics
         broadband_bw = 30

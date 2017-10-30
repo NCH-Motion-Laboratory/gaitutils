@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Sep 23 10:27:56 2016
 
-@author: jnu@iki.fi
+Data readers & processing utils, Nexus specific
 
-Data readers & processing utils for Vicon Nexus.
-
+@author: Jussi (jnu@iki.fi)
 """
 
 from __future__ import print_function
@@ -15,15 +13,16 @@ from scipy import signal
 import os.path as op
 import psutil
 import glob
-from numutils import (rising_zerocross, best_match, falling_zerocross,
-                      change_coords)
-from utils import principal_movement_direction
-from envutils import GaitDataError
-from eclipse import get_eclipse_keys
 import matplotlib.pyplot as plt
-from config import cfg
 import logging
 import platform
+
+from .numutils import (rising_zerocross, best_match, falling_zerocross,
+                       change_coords)
+from . import utils
+from .envutils import GaitDataError
+from .eclipse import get_eclipse_keys
+from .config import cfg
 
 
 logger = logging.getLogger(__name__)
@@ -31,6 +30,23 @@ logger = logging.getLogger(__name__)
 
 # try to import Nexus Python SDK
 if cfg.general.nexus_path:
+    # see if there are more recent versions
+    try:
+        cfg_ver = float(op.split(cfg.general.nexus_path)[1][5:])
+    except ValueError:
+        cfg_ver = 0
+    if cfg_ver > 2:
+        vicondir = op.split(cfg.general.nexus_path)[0]
+        nexus_glob = op.join(vicondir, 'Nexus2*')
+        nexus_dirs = glob.glob(nexus_glob)
+        if len(nexus_dirs) > 1:
+            nexus_vers = [op.split(dir)[1][5:] for dir in nexus_dirs]
+            if any([float(ver) > cfg_ver for ver in nexus_vers]):
+                print('NOTE: you may have more recent Vicon Nexus versions '
+                      'installed than is specified in config. It is '
+                      'recommended to edit .gaitutils.cfg in your '
+                      'home directory and change cfg.general.nexus_path '
+                      'to the latest version')
     if op.isdir(cfg.general.nexus_path):
         if not cfg.general.nexus_path + "/SDK/Python" in sys.path:
             sys.path.append(cfg.general.nexus_path + "/SDK/Python")
@@ -41,15 +57,19 @@ if cfg.general.nexus_path:
             if bitness not in ['32', '64']:
                 raise Exception('Unexpected architecture')
             _sdk_path = cfg.general.nexus_path + "/SDK/Win" + bitness
-            print('Trying to import Nexus SDK from %s' % _sdk_path)
+            print('Trying to import Vicon Nexus SDK from %s' % _sdk_path)
             sys.path.append(_sdk_path)
+    else:
+        print('The configured Vicon Nexus directory at %s does not exist'
+              % cfg.general.nexus_path)
+
 try:
     import ViconNexus
 except ImportError:
     # logging handlers are not installed at this point, so use print
-    print('Cannot import Nexus SDK, unable to communicate with Nexus')
+    print('Cannot import Vicon Nexus SDK, unable to communicate with Nexus')
 
-sys.stdout.flush()
+sys.stdout.flush()  # make sure import warnings get printed
 
 
 def pid():
@@ -107,13 +127,25 @@ def get_sessionpath():
     """ Get path to current session """
     vicon = viconnexus()
     trialname_ = vicon.GetTrialName()
-    return trialname_[0]
+    # split the trailing '\\' from the session path
+    return op.split(trialname_[0])[0]
+
+
+def get_trialname():
+    """ Get trial name without session path """
+    vicon = viconnexus()
+    trialname_ = vicon.GetTrialName()
+    return trialname_[1]
 
 
 def get_session_enfs():
     """ Return list of .enf files for the session """
     sessionpath = get_sessionpath()
-    enffiles = glob.glob(sessionpath+'*Trial*.enf') if sessionpath else None
+    if not sessionpath:
+        raise GaitDataError('Cannot get Nexus session path, '
+                            'no session or maybe in Live mode?')
+    enfglob = op.join(sessionpath, '*Trial*.enf')
+    enffiles = glob.glob(enfglob) if sessionpath else None
     logger.debug('found %d .enf files for session %s' %
                  (len(enffiles) if enffiles else 0, sessionpath))
     return enffiles
@@ -148,6 +180,7 @@ def is_vicon_instance(obj):
 
 def get_metadata(vicon):
     """ Read trial and subject metadata """
+    check_nexus()
     logger.debug('reading metadata from Vicon Nexus')
     if not pid():
         raise GaitDataError('Vicon Nexus does not seem to be running')
@@ -371,9 +404,10 @@ def _list_to_str(li):
 
 
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
-                    'R_strike': None, 'R_toeoff': None}, ctr_pos=[0, 0, 0],
-                    max_dist=None, fp_events=None, start_on_forceplate=False,
-                    restrict_to_roi=False, plot=False, mark=True):
+                    'R_strike': None, 'R_toeoff': None}, events_range=None,
+                    fp_events=None, restrict_to_roi=False,
+                    start_on_forceplate=False, plot=False, mark=True):
+
     """ Mark events based on velocity thresholding. Absolute thresholds
     can be specified as arguments. Otherwise, relative thresholds will be
     calculated based on the data. Optimal results will be obtained when
@@ -383,14 +417,13 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     can be obtained from forceplate data (utils.check_forceplate_contact).
     Separate thresholds for left and right side.
 
-    ctr_pos is the walkway center position (used by max_dist).
-
-    max_dist is the maximum allowed distance of the foot from ctr_pos.
-    Events where the foot is further than this will be discarded.
-
     fp_events is dict specifying the forceplate detected strikes and toeoffs
     (see utils.detect_forceplate_events). These will not be marked by
     velocity thresholding.
+
+    If events_range is specified, the events will be restricted to given
+    coordinate range in the principal gait direction.
+    E.g. events_range=[-1000, 1000]
 
     If start_on_forceplate is True, the first cycle will start on forceplate
     (i.e. events earlier than the first foot strike events in fp_events will
@@ -409,23 +442,22 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         raise GaitDataError('Cannot get framerate from Nexus')
 
     # TODO: move into config
-    # relative thresholds (of maximum velocity)
+    # thresholds (relative to maximum velocity) for detecting strike/toeoff
     REL_THRESHOLD_FALL = .2
     REL_THRESHOLD_RISE = .5
     # marker data is assumed to be in mm
     # mm/frame = 1000 m/frame = 1000/frate m/s
     VEL_CONV = 1000/frate
-    # reasonable limits for peak velocity (m/s before multiplier)
+    # reasonable limit for peak velocity (m/s before multiplier)
     MAX_PEAK_VELOCITY = 12 * VEL_CONV
-    MIN_PEAK_VELOCITY = .5 * VEL_CONV
     # reasonable limits for velocity on slope (increasing/decreasing)
     MAX_SLOPE_VELOCITY = 6 * VEL_CONV
     MIN_SLOPE_VELOCITY = 0  # not currently in use
+    # minimum swing velocity (rel to max velocity)
+    MIN_SWING_VELOCITY = .5
     # median prefilter width
-    MEDIAN_WIDTH = 3
-    # minimum distance between subsequent events (of same kind)
-    MIN_EVENT_DISTANCE = 50
-    # tolerance between specified and actual first strike
+    PREFILTER_MEDIAN_WIDTH = 3
+    # tolerance between specified and actual first strike event
     STRIKE_TOL = 5
 
     # get subject info
@@ -439,17 +471,18 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                               cfg.autoproc.left_foot_markers)
     data_shape = mrkdata[cfg.autoproc.right_foot_markers[0]+'_V'].shape
 
+    # average the foot marker velocities to get velocity data
     rfootctrV = np.zeros(data_shape)
     for marker in cfg.autoproc.right_foot_markers:
         rfootctrV += mrkdata[marker+'_V'] / len(cfg.autoproc.
                                                 right_foot_markers)
     rfootctrv = np.sqrt(np.sum(rfootctrV**2, 1))
-
     lfootctrV = np.zeros(data_shape)
     for marker in cfg.autoproc.left_foot_markers:
         lfootctrV += mrkdata[marker+'_V'] / len(cfg.autoproc.left_foot_markers)
     lfootctrv = np.sqrt(np.sum(lfootctrV**2, 1))
 
+    # position data: use ANK marker
     rfootctrP = mrkdata['RANK_P']
     lfootctrP = mrkdata['LANK_P']
 
@@ -462,24 +495,22 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         logger.debug('marking side %s' % this_side)
         # foot center position
         footctrP = rfootctrP if ind == 0 else lfootctrP
-        # filter to scalar velocity data to suppress noise and spikes
-        footctrv = signal.medfilt(footctrv, MEDIAN_WIDTH)
+        # filter scalar velocity data to suppress noise and spikes
+        footctrv = signal.medfilt(footctrv, PREFILTER_MEDIAN_WIDTH)
 
-        # compute local maxima of velocity: derivative crosses zero, values ok
+        # find maxima of velocity: derivative crosses zero and values ok
         vd = np.gradient(footctrv)
         vdz_ind = falling_zerocross(vd)
-
-        inds = np.where(np.logical_and(footctrv[vdz_ind] > MIN_PEAK_VELOCITY,
-                        footctrv[vdz_ind] < MAX_PEAK_VELOCITY))[0]
-
+        inds = np.where(footctrv[vdz_ind] < MAX_PEAK_VELOCITY)[0]
         if len(inds) == 0:
             raise GaitDataError('Cannot find acceptable velocity peaks')
 
-        maxv = np.median(footctrv[vdz_ind[inds]])
-
-        if maxv > MAX_PEAK_VELOCITY:
-            raise GaitDataError('Velocity thresholds too high, data may '
-                                'be noisy')
+        # delete spurious peaks (where min swing velocity is not attained)
+        vs = footctrv[vdz_ind[inds]]
+        not_ok = np.where(vs < vs.max() * MIN_SWING_VELOCITY)
+        vs = np.delete(vs, not_ok)
+        maxv = np.median(vs)
+        logger.debug('swing velocity %.2f' % maxv)
 
         # compute thresholds
         threshold_fall_ = (vel_thresholds[this_side+'_strike'] or
@@ -496,15 +527,32 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         # foot strikes (velocity decreases)
         cross = falling_zerocross(footctrv - threshold_fall_)
         # exclude edges of data vector
-        cross = cross[np.where(np.logical_and(cross > 0,
-                                              cross < (len(footctrv) - 1)))]
+        fmax = len(footctrv) - 1
+        cross = cross[np.where(np.logical_and(cross > 0, cross < fmax))]
+        # check velocity on slope
         cind_min = np.logical_and(footctrv[cross-1] < MAX_SLOPE_VELOCITY,
                                   footctrv[cross-1] > MIN_SLOPE_VELOCITY)
         cind_max = np.logical_and(footctrv[cross+1] < MAX_SLOPE_VELOCITY,
                                   footctrv[cross+1] > MIN_SLOPE_VELOCITY)
         strikes = cross[np.logical_and(cind_min, cind_max)]
-        too_near = np.where(np.diff(strikes) < MIN_EVENT_DISTANCE)[0] + 1
-        strikes = np.delete(strikes, too_near)
+
+        # check for foot swing (velocity maximum) between consecutive strikes
+        # if no swing, keep deleting the latter event until swing is found
+        bad = []
+        for sind in range(len(strikes)):
+            if sind in bad:
+                continue
+            for sind2 in range(sind+1, len(strikes)):
+                swing_max_vel = footctrv[strikes[sind]:strikes[sind2]].max()
+                # logger.debug('check %d-%d' % (strikes[sind], strikes[sind2]))
+                if swing_max_vel < maxv * MIN_SWING_VELOCITY:
+                    logger.debug('no swing between strikes %d-%d, deleting %d'
+                                 % (strikes[sind], strikes[sind2],
+                                    strikes[sind2]))
+                    bad.append(sind2)
+                else:
+                    break
+        strikes = np.delete(strikes, bad)
 
         if len(strikes) == 0:
             raise GaitDataError('No valid foot strikes detected')
@@ -519,24 +567,31 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                                   footctrv[cross+1] > MIN_SLOPE_VELOCITY)
         toeoffs = cross[np.logical_and(cind_min, cind_max)]
 
-        too_near = np.where(np.diff(toeoffs) < MIN_EVENT_DISTANCE)[0] + 1
-        toeoffs = np.delete(toeoffs, too_near)
-
         if len(toeoffs) == 0:
             raise GaitDataError('Could not detect any toe-off events')
+
+        # check for multiple toeoffs
+        for s1, s2 in zip(strikes, np.roll(strikes, -1))[:-1]:
+            to_this = np.where(np.logical_and(toeoffs > s1, toeoffs < s2))[0]
+            if len(to_this) > 1:
+                logger.debug('%d toeoffs during cycle, keeping the last one'
+                             % len(to_this))
+                toeoffs = np.delete(toeoffs, to_this[:-1])
 
         logger.debug('all strike events: %s' % _list_to_str(strikes))
         logger.debug('all toeoff events: %s' % _list_to_str(toeoffs))
 
         # select events for which the foot is close enough to center frame
-        if max_dist:
-            strike_pos = footctrP[strikes, :]
-            # pick points where data is ok (no gaps)
-            nz = [all(row) for row in strike_pos != 0]
-            distv = np.sqrt(np.sum((strike_pos-ctr_pos)**2, 1))
-            dist_ok = distv < max_dist
-            strike_ok = np.where(np.logical_and(nz, dist_ok))
-            strikes = strikes[strike_ok]
+        if events_range:
+            fwd_dim = utils.principal_movement_direction(vicon, cfg.autoproc.
+                                                         track_markers)
+            strike_pos = footctrP[strikes, fwd_dim]
+            dist_ok = np.logical_and(strike_pos > events_range[0],
+                                     strike_pos < events_range[1])
+            # exactly zero position at strike should indicate a gap -> exclude
+            # TODO: smarter gap handling
+            dist_ok = np.logical_and(dist_ok, strike_pos != 0)
+            strikes = strikes[dist_ok]
 
         if len(strikes) == 0:
             raise GaitDataError('No valid foot strikes detected')
@@ -562,7 +617,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
             roi = vicon.GetTrialRegionOfInterest()
             strikes = np.extract(np.logical_and(roi[0] <= strikes+1,
                                                 strikes+1 <= roi[1]), strikes)
-            
+
             toeoffs = np.extract(np.logical_and(roi[0] <= toeoffs+1,
                                                 toeoffs+1 <= roi[1]), toeoffs)
 
@@ -581,31 +636,33 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         if mark:
             for fr in strikes:
                 vicon.CreateAnEvent(subjectname, side_str,
-                                    'Foot Strike', fr+1, 0.0)
+                                    'Foot Strike', int(fr+1), 0)
             for fr in toeoffs:
                 vicon.CreateAnEvent(subjectname, side_str,
-                                    'Foot Off', fr+1, 0.0)
+                                    'Foot Off', int(fr+1), 0)
         strikes_all[this_side] = strikes
         toeoffs_all[this_side] = toeoffs
 
-        # plot velocities w/ thresholds
+        # plot velocities w/ thresholds and marked events
         if plot:
             if ind == 0:
-                plt.figure()
-            plt.subplot(2, 1, ind+1)
-            plt.plot(footctrv, 'g', label='foot center velocity ' + this_side)
+                f, (ax1, ax2) = plt.subplots(2, 1)
+            ax = ax1 if ind == 0 else ax2
+            ax.plot(footctrv, 'g', label='foot center velocity ' + this_side)
             # algorithm, fixed thresholds
-            plt.plot(strikes, footctrv[strikes], 'kD', markersize=10,
-                     label='strike')
-            plt.plot(toeoffs, footctrv[toeoffs], 'k^', markersize=10,
-                     label='toeoff')
-            plt.legend(numpoints=1, fontsize=10)
-            plt.ylim(0, maxv+10)
+            ax.plot(strikes, footctrv[strikes], 'kD', markersize=10,
+                    label='strike')
+            ax.plot(toeoffs, footctrv[toeoffs], 'k^', markersize=10,
+                    label='toeoff')
+            ax.legend(numpoints=1, fontsize=10)
+            ax.set_ylim(0, maxv+10)
             if ind == 1:
                 plt.xlabel('Frame')
-            plt.ylabel('Velocity (mm/frame)')
-            plt.title('Left' if this_side == 'L' else 'Right')
-            plt.show()
+            ax.set_ylabel('Velocity (mm/frame)')
+            ax.set_title('Left' if this_side == 'L' else 'Right')
+
+    if plot:
+        plt.show()
 
     return (strikes_all['R'], strikes_all['L'],
             toeoffs_all['R'], toeoffs_all['L'])

@@ -7,19 +7,21 @@ Stuff related to Python environment
 @author: Jussi (jnu@iki.fi)
 """
 
-
-from guiutils import error_exit
 import sys
 import traceback
+
+from .guiutils import error_exit
 
 
 class GaitDataError(Exception):
     """ Exception specific to erroneous or unexpected gait data """
     pass
 
+
 def register_gui_exception_handler(full_traceback=False):
     """ Registers an exception handler that reports uncaught exceptions
     via GUI"""
+    from .config import cfg
 
     def _my_excepthook(type, value, tback):
         """ Custom exception handler for fatal (unhandled) exceptions:
@@ -34,7 +36,9 @@ def register_gui_exception_handler(full_traceback=False):
         #
         sys.__excepthook__(type, value, tback)
         sys.exit()
-    sys.excepthook = _my_excepthook
+
+    if cfg.general.gui_exceptions:
+        sys.excepthook = _my_excepthook
 
 
 def run_from_ipython():
@@ -43,10 +47,3 @@ def run_from_ipython():
         return True
     except NameError:
         return False
-
-""" Print debug messages only if running under IPython. Debug may prevent
-scripts from working in Nexus (??) """
-if run_from_ipython():
-    DEBUG = True
-else:
-    DEBUG = False

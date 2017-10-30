@@ -6,15 +6,14 @@ Utility functions for processing gait data.
 @author: Jussi (jnu@iki.fi)
 """
 
-from envutils import GaitDataError
-from read_data import get_marker_data, get_forceplate_data, get_metadata
-from numutils import rising_zerocross, falling_zerocross, _baseline
 from scipy import signal
-from scipy.signal import medfilt
 import numpy as np
 import logging
 
-from config import cfg
+from .envutils import GaitDataError
+from .numutils import rising_zerocross, falling_zerocross, _baseline
+from .config import cfg
+
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +22,8 @@ def get_crossing_frame(source, marker, dim=1, p0=0):
     """ Return frame(s) where marker position (dimension dim) crosses p0
     (units are as returned by Nexus, usually mm).
     Dims are x=0, y=1, z=2. """
-    mrkdata = get_marker_data(source, marker)
+    from . import read_data
+    mrkdata = read_data.get_marker_data(source, marker)
     P = mrkdata[marker + '_P']
     y = P[:, dim]
     nzind = np.where(y != 0)  # nonzero elements == valid data (not nice)
@@ -44,9 +44,10 @@ def get_crossing_frame(source, marker, dim=1, p0=0):
 def get_movement_direction(source, marker, dir):
     """ Return direction of movement (negative/positive)
     for given marker and movement direction """
+    from . import read_data
     dir = dir.lower()
     dir = {'x': 0, 'y': 1, 'z': 2}[dir]
-    mrkdata = get_marker_data(source, marker)
+    mrkdata = read_data.get_marker_data(source, marker)
     P = mrkdata[marker+'_P']
     ddiff = np.median(np.diff(P[:, dir]))  # median of derivative
     return 1 if ddiff > 0 else -1
@@ -74,7 +75,8 @@ def butter_filt(data, passband, sfreq, bord=5):
 
 def principal_movement_direction(source, markers):
     """ Return principal movement direction """
-    mrkdata = get_marker_data(source, markers)
+    from . import read_data
+    mrkdata = read_data.get_marker_data(source, markers)
     pos = sum([mrkdata[name+'_P'] for name in markers])
     fwd_dir = np.argmax(np.var(pos, axis=0))
     return fwd_dir
@@ -96,13 +98,14 @@ def detect_forceplate_events(source, fp_info=None):
     -foot markers must be inside plate edges at strike time
 
     Returns dict with keys R_strikes, L_strikes, R_toeoffs, L_toeoffs.
-    Values are lists of frames where valid forceplate contact occurs.
+    Dict values are lists of frames where valid forceplate contact occurs.
     """
 
     # get subject info
     logger.debug('detect forceplate events from %s' % source)
-    info = get_metadata(source)
-    fpdata = get_forceplate_data(source)
+    from . import read_data
+    info = read_data.get_metadata(source)
+    fpdata = read_data.get_forceplate_data(source)
 
     results = dict()
     results['R_strikes'] = []
@@ -111,9 +114,9 @@ def detect_forceplate_events(source, fp_info=None):
     results['L_toeoffs'] = []
     results['valid'] = ''
 
-    # get marker data and find "forward" direction
-    mrkdata = get_marker_data(source, cfg.autoproc.right_foot_markers +
-                              cfg.autoproc.left_foot_markers)
+    # get marker data and find "forward" direction (by max variance)
+    mrkdata = read_data.get_marker_data(source, cfg.autoproc.right_foot_markers +
+                                        cfg.autoproc.left_foot_markers)
     pos = sum([mrkdata[name+'_P'] for name in
                cfg.autoproc.left_foot_markers+cfg.autoproc.right_foot_markers])
     fwd_dir = np.argmax(np.var(pos, axis=0))
@@ -122,8 +125,29 @@ def detect_forceplate_events(source, fp_info=None):
                  {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])
 
     for plate_ind, fp in enumerate(fpdata):
-        # first identify candidates for footstrike by looking at fp data
+
         logger.debug('analyzing plate %d' % plate_ind)
+
+        # check Eclipse info if it exists
+        detect = True
+        plate = 'FP' + str(plate_ind+1)
+        if fp_info is not None and plate in fp_info:
+            # TODO: are we sure that the plate indices match Eclipse?
+            valid = fp_info[plate]
+            detect = False
+            logger.debug('using Eclipse forceplate info: %s' % valid)
+            if valid == 'Right':
+                this_valid = 'R'
+            elif valid == 'Left':
+                this_valid = 'L'
+            elif valid == 'Invalid':
+                continue
+            elif valid == 'Auto':
+                detect = True
+            else:
+                raise Exception('unexpected Eclipse forceplate field')
+
+        # first identify candidates for footstrike by looking at fp data
         # test the force data
         # FIXME: filter should maybe depend on sampling freq
         forcetot = signal.medfilt(fp['Ftot'])
@@ -140,7 +164,8 @@ def detect_forceplate_events(source, fp_info=None):
             logger.debug('body mass %.2f kg' % bodymass)
             f_threshold = (cfg.autoproc.forceplate_contact_threshold *
                            bodymass * 9.81)
-            if fmax < cfg.autoproc.forceplate_min_weight * bodymass * 9.81:
+            if (detect and fmax < cfg.autoproc.forceplate_min_weight *
+               bodymass * 9.81):
                 logger.debug('insufficient max. force on plate')
                 continue
         # find indices where force crosses threshold
@@ -156,26 +181,6 @@ def detect_forceplate_events(source, fp_info=None):
         strike_fr = int(np.round(friseind / info['samplesperframe']))
         toeoff_fr = int(np.round(ffallind / info['samplesperframe']))
         logger.debug('strike @ frame %d, toeoff @ %d' % (strike_fr, toeoff_fr))
-
-        # confirm whether it's a valid foot strike; look at Eclipse info or
-        # use our own autodetection routine
-        detect = True
-        plate = 'FP' + str(plate_ind+1)
-        if fp_info is not None and plate in fp_info:
-            # TODO: are we sure that the plate indices match Eclipse?
-            valid = fp_info[plate]
-            detect = False
-            logger.debug('using Eclipse forceplate info: %s' % valid)
-            if valid == 'Right':
-                this_valid = 'R'
-            elif valid == 'Left':
-                this_valid = 'L'
-            elif valid == 'Invalid':
-                this_valid = None
-            elif valid == 'Auto':
-                detect = True
-            else:
-                raise Exception('unexpected Eclipse forceplate info')
 
         if detect:
             logger.debug('using autodetection')
@@ -195,11 +200,30 @@ def detect_forceplate_events(source, fp_info=None):
 
             # check markers
             this_valid = None
-            for markers in [cfg.autoproc.right_foot_markers,
-                            cfg.autoproc.left_foot_markers]:
-                ok = True
+            for side, markers in zip(['R', 'L'],
+                                     [cfg.autoproc.right_foot_markers,
+                                      cfg.autoproc.left_foot_markers]):
+                logger.debug('checking forceplate contact for side %s' % side)
+
+                # check foot height at toeoff
+                data_shape = mrkdata[markers[0]+'_P'].shape
+                footctrP = np.zeros(data_shape)
+                for marker in markers:
+                    footctrP += mrkdata[marker+'_P'] / len(markers)
+                foot_h = footctrP[:, 2]
+                min_h = foot_h[np.nonzero(foot_h)].min()
+                rel_h = footctrP[toeoff_fr, 2] / min_h
+                logger.debug('toeoff rel. height: %.2f' % rel_h)
+                if (rel_h < cfg.autoproc.toeoff_rel_height):
+                    logger.debug('toeoff height too low')
+                    ok = False
+                    continue
+                else:
+                    ok = True
+
+                # individual marker checks
                 for marker_ in markers:
-                    logger.debug('Checking %s' % marker_)
+                    logger.debug('checking %s' % marker_)
                     mins_s, maxes_s = mins.copy(), maxes.copy()
                     mins_t, maxes_t = mins.copy(), maxes.copy()
                     # extra tolerance for ankle marker in sideways direction
@@ -216,24 +240,27 @@ def detect_forceplate_events(source, fp_info=None):
                         maxes_s[fwd_dir] += cfg.autoproc.heel_strike_tol
                         mins_s[fwd_dir] -= cfg.autoproc.heel_strike_tol
                     marker = marker_ + '_P'
-                    ok &= mins_s[0] < mrkdata[marker][strike_fr, 0] < maxes_s[0]
-                    ok &= mins_s[1] < mrkdata[marker][strike_fr, 1] < maxes_s[1]
+                    ok &= (mins_s[0] < mrkdata[marker][strike_fr, 0] <
+                           maxes_s[0])
+                    ok &= (mins_s[1] < mrkdata[marker][strike_fr, 1] <
+                           maxes_s[1])
                     if not ok:
                         logger.debug('marker %s failed on-plate check during '
                                      'foot strike' % marker_)
                         break
-                    ok &= mins_t[0] < mrkdata[marker][toeoff_fr, 0] < maxes_t[0]
-                    ok &= mins_t[1] < mrkdata[marker][toeoff_fr, 1] < maxes_t[1]
+                    ok &= (mins_t[0] < mrkdata[marker][toeoff_fr, 0] <
+                           maxes_t[0])
+                    ok &= (mins_t[1] < mrkdata[marker][toeoff_fr, 1] <
+                           maxes_t[1])
                     if not ok:
                         logger.debug('marker %s failed on-plate check during '
                                      'toeoff ' % marker_)
                         break
+
                 if ok:
                     if this_valid:
-                        raise GaitDataError('valid contact on both feet (??)')
-                    this_valid = ('R'
-                                  if markers == cfg.autoproc.right_foot_markers
-                                  else 'L')
+                        raise GaitDataError('valid contact on both feet (?)')
+                    this_valid = side
                     logger.debug('on-plate check ok for side %s' % this_valid)
 
         if not this_valid:
@@ -253,8 +280,9 @@ def get_foot_velocity(source, fp_events, medians=True):
     """ Return foot velocities during forceplate strike/toeoff frames.
     fp_events is from detect_forceplate_events()
     If medians=True, return median values. """
-    mrkdata = get_marker_data(source, cfg.autoproc.right_foot_markers +
-                              cfg.autoproc.left_foot_markers)
+    from . import read_data
+    mrkdata = read_data.get_marker_data(source, cfg.autoproc.right_foot_markers +
+                                        cfg.autoproc.left_foot_markers)
     results = dict()
     for context, markers in zip(('R', 'L'), [cfg.autoproc.right_foot_markers,
                                 cfg.autoproc.left_foot_markers]):

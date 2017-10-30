@@ -3,14 +3,9 @@
 
 Plot gait data
 
-@author: jnu@iki.fi
+@author: Jussi (jnu@iki.fi)
 """
 
-import models
-import nexus
-import numutils
-import normaldata
-from trial import Trial
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import pylab
@@ -19,13 +14,19 @@ import matplotlib.gridspec as gridspec
 import os.path as op
 import os
 import subprocess
-from config import cfg
 import numpy as np
 import logging
 
+from . import models
+from . import numutils
+from . import normaldata
+from .trial import Trial, nexus_trial
+from .stats import AvgTrial
+from .config import cfg
+
+
 logger = logging.getLogger(__name__)
 
-matplotlib.style.use(cfg.plot.mpl_style)
 
 class Plotter(object):
 
@@ -39,6 +40,8 @@ class Plotter(object):
             Corresponding normal data files for each plot. Will override
             default normal data settings.
         """
+        matplotlib.style.use(cfg.plot.mpl_style)
+
         if layout:
             self.layout = layout
         else:
@@ -69,8 +72,7 @@ class Plotter(object):
         self.ncols = len(layout[0])
 
     def open_nexus_trial(self):
-        source = nexus.viconnexus()
-        self.open_trial(source)
+        self.trial = nexus_trial()
 
     def open_trial(self, source):
         self.trial = Trial(source)
@@ -100,13 +102,13 @@ class Plotter(object):
             return None
         elif models.model_from_var(var):
             return 'model'
+        elif var in ('model_legend', 'emg_legend'):
+            return var
         # check whether it's a configured EMG channel or exists in the data
         # source (both are ok)
         elif (self.trial.emg.is_channel(var) or
               var in self.cfg.emg.channel_labels):
             return 'emg'
-        elif var in ('model_legend', 'emg_legend'):
-            return var
         else:
             raise ValueError('Unknown variable %s' % var)
 
@@ -114,10 +116,11 @@ class Plotter(object):
         """ Automatically adjust height ratios, if they are not specified """
         plotheightratios = []
         for row in self._layout:
-            if all([self._var_type(var) == 'model' for var in row]):
-                plotheightratios.append(1)
-            else:
+            # this should take into account any analog variable
+            if all([self._var_type(var) == 'emg' for var in row]):
                 plotheightratios.append(self.cfg.plot.analog_plotheight)
+            else:
+                plotheightratios.append(1)
         return plotheightratios
 
     def tight_layout(self):
@@ -142,10 +145,12 @@ class Plotter(object):
                    split_model_vars=True,
                    auto_match_model_cycle=True,
                    normaldata_files=cfg.general.normaldata_files,
+                   model_stddev=None,
                    x_axis_is_time=True,
                    match_pig_kinetics=True,
                    auto_match_emg_cycle=True,
                    linestyles_context=False,
+                   toeoff_markers=cfg.plot.toeoff_markers,
                    annotate_emg=True,
                    emg_tracecolor=cfg.plot.emg_tracecolor,
                    emg_alpha=cfg.plot.emg_alpha,
@@ -196,6 +201,10 @@ class Plotter(object):
         normaldata_files: list
                 Specifies a list normal data files (.gcd or .xlsx) for model
                 type variables.
+        model_stddev : None or dict
+                Specifies 'standard deviation' for model variables. Can be
+                used to plot e.g. confidence intervals, or stddev if plotting
+                averaged data.
         x_axis_is_time: bool
                 For unnormalized variables, whether x axis is in seconds
                 (default) or in frames.
@@ -325,6 +334,8 @@ class Plotter(object):
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)
 
+        is_avg_trial = isinstance(self.trial, AvgTrial)
+
         for i, var in enumerate(self.allvars):
             var_type = self._var_type(var)
             if var_type is None:
@@ -337,7 +348,7 @@ class Plotter(object):
             if var_type == 'model':
                 model = models.model_from_var(var)
                 for cycle in model_cycles:
-                    logging.debug('cycle %s' % cycle)
+                    logger.debug('cycle %s' % cycle)
                     if cycle is not None:  # plot normalized data
                         self.trial.set_norm_cycle(cycle)
                     if split_model_vars and var[0].upper() not in ['L', 'R']:
@@ -351,12 +362,13 @@ class Plotter(object):
                             if model.is_kinetic_var(var):
                                 kin_ok = cycle.on_forceplate
                     # do the actual plotting if necessary
-                    if kin_ok and (varname[0] == cycle.context or not
+                    x_, data = self.trial[varname]
+                    if data is not None and kin_ok and (varname[0] == cycle.context or not
                        auto_match_model_cycle or cycle is None):
-                        logging.debug('plotting data for %s' % varname)
-                        x_, data = self.trial[varname]
+                        logger.debug('plotting data for %s' % varname)
                         x = (x_ / self.trial.framerate if cycle is None and
                              x_axis_is_time else x_)
+                        # FIXME: cycle may not have context?
                         tcolor = (model_tracecolor if model_tracecolor
                                   else self.cfg.plot.model_tracecolors
                                   [cycle.context])
@@ -369,22 +381,49 @@ class Plotter(object):
                         # tighten x limits
                         ax.set_xlim(x[0], x[-1])
                     else:
-                        logging.debug('not plotting data for %s' % varname)
+                        logger.debug('not plotting data for %s' % varname)
+                        if data is None:
+                            logger.debug('(no data)')
+
+                    # add toeoff marker
+                    if cycle is not None and toeoff_markers:
+                        toeoff = cycle.toeoffn
+                        ax.axvline(toeoff, color=tcolor, linewidth=.5)
+
+                    # each cycle gets its own stddev plot (if data was found)
+                    if (model_stddev is not None and cycle is not None and
+                       data is not None):
+                        if varname in model_stddev:
+                            sdata = model_stddev[varname]
+                            stdx = np.linspace(0, 100, sdata.shape[0])
+                            ax.fill_between(stdx, data-sdata,
+                                            data+sdata,
+                                            color=self.cfg.plot.
+                                            model_stddev_colors[cycle.context],
+                                            alpha=self.cfg.plot.
+                                            model_stddev_alpha)
+                            # tighten x limits
+                            ax.set_xlim(stdx[0], stdx[-1])
 
                     # set labels, ticks, etc. after plotting last cycle
                     if cycle == model_cycles[-1]:
+
                         ax.set(ylabel=model.ylabels[varname])  # no xlabel now
                         ax.xaxis.label.set_fontsize(self.cfg.
                                                     plot.label_fontsize)
                         ax.yaxis.label.set_fontsize(self.cfg.
                                                     plot.label_fontsize)
                         subplot_title = model.varlabels[varname]
+                        # add n of averages for AvgTrial
+                        if is_avg_trial:
+                            subplot_title += (' (avg of %d cycles)' %
+                                              self.trial.n_ok[varname])
                         prev_title = ax.get_title()
                         if prev_title and prev_title != subplot_title:
                             subplot_title = prev_title + ' / ' + subplot_title
                         ax.set_title(subplot_title)
                         ax.title.set_fontsize(self.cfg.plot.title_fontsize)
-                        ax.axhline(0, color='black')  # zero line
+                        ax.axhline(0, color='black', linewidth=.5)  # zero line
                         ax.locator_params(axis='y', nbins=6)  # less tick marks
                         ax.tick_params(axis='both', which='major',
                                        labelsize=self.cfg.plot.ticks_fontsize)
@@ -403,9 +442,13 @@ class Plotter(object):
                                 key = nvarname
                             elif nvarname in model.gcd_normaldata_map:
                                 key = model.gcd_normaldata_map[nvarname]
+                            else:
+                                key = None
                             ndata = (self._normaldata[key] if key in
                                      self._normaldata else None)
                             if ndata is not None:
+                                logger.debug('plotting model normaldata for %s'
+                                             % varname)
                                 normalx = np.linspace(0, 100, ndata.shape[0])
                                 ax.fill_between(normalx, ndata[:, 0],
                                                 ndata[:, 1],
@@ -415,6 +458,7 @@ class Plotter(object):
                                                 model_normals_alpha)
                                 # tighten x limits
                                 ax.set_xlim(normalx[0], normalx[-1])
+
 
             elif var_type == 'emg':
                 # set title first, since we may end up not plotting the emg at
@@ -491,6 +535,9 @@ class Plotter(object):
                             ax.xaxis.label.set_fontsize(self.cfg.
                                                         plot.label_fontsize)
 
+
+
+
             elif var_type in ('model_legend', 'emg_legend'):
                 self.legendnames.append('%s   %s   %s' % (
                                         _shorten_name(self.trial.trialname),
@@ -523,6 +570,8 @@ class Plotter(object):
         if show:
             self.show()
 
+        return self.fig
+
     def title_with_eclipse_info(self, prefix=''):
         """ Create title: prefix + trial name + Eclipse description and
         notes """
@@ -538,21 +587,32 @@ class Plotter(object):
         """ Show all figures """
         plt.show()
 
-    def create_pdf(self, pdf_name=None, pdf_prefix=None):
-        """ Make a pdf out of the created figure into the Nexus session dir.
-        If pdf_name is not specified, automatically name according to current
-        trial. """
+    def create_pdf(self, pdf_name=None, pdf_prefix='Nexus_plot',
+                   sessionpath=None):
+        """ Make a pdf out of the created figure.
+
+        pdf_name: string
+            Name of pdf file to create, without path. If not specified, Nexus
+            trial name will be used.
+        pdf_prefix: string
+            Optional prefix for the name
+        sessionpath: string
+            Where to write the pdf. If not specified, written into the
+            session directory of currently loaded trial.
+        """
         if not self.fig:
             raise ValueError('No figure to save!')
+        if sessionpath is None:
+            sessionpath = self.trial.sessionpath
+        if not sessionpath:
+            raise ValueError('Cannot get session path')
         # resize to A4
-        # self.fig.set_size_inches([8.27,11.69])
+        # self.fig.set_size_inches([8.27, 11.69])
         if pdf_name:
-            pdf_name = self.trial.sessionpath + pdf_name
+            pdf_name = op.join(sessionpath, pdf_name)
         else:
-            if not pdf_prefix:
-                pdf_prefix = 'Nexus_plot_'
-            pdf_name = (self.trial.sessionpath + pdf_prefix +
-                        self.trial.trialname + '.pdf')
+            pdf_name = pdf_prefix + self.trial.trialname + '.pdf'
+            pdf_name = op.join(sessionpath, pdf_name)
         if op.isfile(pdf_name):
             pass  # can prevent overwriting here
         try:
@@ -560,5 +620,5 @@ class Plotter(object):
             with PdfPages(pdf_name) as pdf:
                 pdf.savefig(self.fig)
         except IOError:
-            raise IOError('Error writing PDF file, '
-                          'check that file is not already open.')
+            raise IOError('Error writing %s, '
+                          'check that file is not already open.' % pdf_name)

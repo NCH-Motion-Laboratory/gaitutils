@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Nov 11 10:49:55 2016
+Normal data readers
 
-@author: hus20664877
+@author: Jussi (jnu@iki.fi)
 """
 
-from numutils import isfloat
+
 import numpy as np
 import openpyxl
 import os.path as op
+
+from .numutils import isfloat
 
 
 def read_normaldata(filename):
@@ -18,6 +20,8 @@ def read_normaldata(filename):
     The first and second columns are min and max values, respectively.
     (May be e.g. mean-stddev and mean+stddev)
     """
+    if not op.isfile(filename):
+        raise ValueError('No such file %s' % filename)
     type = op.splitext(filename)[1].lower()
     if type == '.gcd':
         return _read_gcd(filename)

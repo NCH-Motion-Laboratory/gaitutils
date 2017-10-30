@@ -4,11 +4,12 @@ Created on Tue Apr 28 11:37:51 2015
 
 Plot Plug-in Gait outputs (online) from Nexus.
 
-@author: Jussi
+@author: Jussi (jnu@iki.fi)
 """
 
-from gaitutils import Plotter, cfg, register_gui_exception_handler
 import logging
+
+from gaitutils import Plotter, cfg, register_gui_exception_handler
 
 
 def do_plot():
@@ -25,8 +26,6 @@ def do_plot():
     pl.plot_trial(maintitleprefix=maintitleprefix, show=False)
     pl.move_plot_window(10, 30)
     pl.show()
-
-
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

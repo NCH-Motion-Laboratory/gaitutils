@@ -4,13 +4,14 @@ Created on Fri Sep 23 10:59:28 2016
 
 Eclipse (database) hacks.
 
-@author: jnu@iki.fi
+@author: Jussi (jnu@iki.fi)
 """
 import logging
 import io
 from configobj import ConfigObj
 from collections import defaultdict, OrderedDict
-from gaitutils.numutils import isint
+
+from .numutils import isint
 
 logger = logging.getLogger(__name__)
 

@@ -57,6 +57,7 @@ def do_plot(search=None, show=True, make_pdf=True):
         # only plot normaldata for last trial to speed up things
         plot_model_normaldata = (trialpath == tagged_trials[-1])
         pl.plot_trial(model_tracecolor=linecolors[i], linestyles_context=True,
+                      toeoff_markers=False,
                       maintitle=maintitle, superpose=True, show=False,
                       plot_model_normaldata=plot_model_normaldata)
     if show:

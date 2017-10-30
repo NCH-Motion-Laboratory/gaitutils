@@ -150,6 +150,7 @@ class Plotter(object):
                    match_pig_kinetics=True,
                    auto_match_emg_cycle=True,
                    linestyles_context=False,
+                   toeoff_markers=cfg.plot.toeoff_markers,
                    annotate_emg=True,
                    emg_tracecolor=cfg.plot.emg_tracecolor,
                    emg_alpha=cfg.plot.emg_alpha,
@@ -384,6 +385,11 @@ class Plotter(object):
                         if data is None:
                             logger.debug('(no data)')
 
+                    # add toeoff marker
+                    if cycle is not None and toeoff_markers:
+                        toeoff = cycle.toeoffn
+                        ax.axvline(toeoff, color=tcolor, linewidth=.5)
+
                     # each cycle gets its own stddev plot (if data was found)
                     if (model_stddev is not None and cycle is not None and
                        data is not None):
@@ -401,6 +407,7 @@ class Plotter(object):
 
                     # set labels, ticks, etc. after plotting last cycle
                     if cycle == model_cycles[-1]:
+
                         ax.set(ylabel=model.ylabels[varname])  # no xlabel now
                         ax.xaxis.label.set_fontsize(self.cfg.
                                                     plot.label_fontsize)
@@ -451,6 +458,7 @@ class Plotter(object):
                                                 model_normals_alpha)
                                 # tighten x limits
                                 ax.set_xlim(normalx[0], normalx[-1])
+
 
             elif var_type == 'emg':
                 # set title first, since we may end up not plotting the emg at
@@ -526,6 +534,9 @@ class Plotter(object):
                             ax.set(xlabel=xlabel)
                             ax.xaxis.label.set_fontsize(self.cfg.
                                                         plot.label_fontsize)
+
+
+
 
             elif var_type in ('model_legend', 'emg_legend'):
                 self.legendnames.append('%s   %s   %s' % (

@@ -29,8 +29,9 @@ def find_tagged(search=None):
     tagged_trials = list(find_trials(eclkeys, search))
 
     if not tagged_trials:
-        raise Exception('Did not find any trials matching %s in current '
-                        'session directory' % str(search))
+        raise Exception('Did not find any trials matching the Eclipse search '
+                        'strings %s in the current session directory'
+                        % str(search))
 
     if len(tagged_trials) > MAX_TRIALS:
         raise Exception('Too many tagged trials found!')

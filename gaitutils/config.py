@@ -93,6 +93,7 @@ if not op.isfile(cfg_user):
     print('no config file, trying to create %s' % cfg_user)
     cfg.write_file(cfg_user)
 else:
+    print('reading user config from %s' % cfg_user)
     cfg.read(cfg_user)
 
 # check for extra entries in user config

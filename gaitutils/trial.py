@@ -9,35 +9,24 @@ Read gait trials.
 
 
 from __future__ import division
+from exceptions import GaitDataError
+from . import read_data, utils, eclipse
 from collections import defaultdict
 import numpy as np
 import os.path as op
 import glob
+import models
+from emg import EMG
 import logging
-
-from . import read_data
-from . import nexus
-from . import utils
-from . import eclipse
-from . import models
-from .emg import EMG
-from .config import cfg
-from .envutils import GaitDataError
-
 
 logger = logging.getLogger(__name__)
 
 
-def nexus_trial():
-    """ Return Trial instance reading from Nexus """
-    vicon = nexus.viconnexus()
-    return Trial(vicon)
-
-
 class Gaitcycle(object):
-    """ Holds information about one gait cycle """
-    def __init__(self, start, end, offset, toeoff, context, on_forceplate,
-                 smp_per_frame):
+    """" Holds information about one gait cycle """
+    def __init__(self, start, end, offset, toeoff, context,
+                 on_forceplate, smp_per_frame, trial=None, name=None,
+                 index=None):
         self.offset = offset
         self.len = end - start
         # convert frame indices to 0-based
@@ -60,6 +49,9 @@ class Gaitcycle(object):
         self.tn = np.linspace(0, 100, 101)
         # normalize toe-off event to the cycle
         self.toeoffn = round(100*((self.toeoff - self.start) / self.len))
+        self.trial = trial
+        self.index = index
+        self.name = name
 
     def __repr__(self):
         s = '<Gaitcycle |'
@@ -217,6 +209,7 @@ class Trial(object):
     def _scan_cycles(self):
         """ Create gait cycle instances based on strike/toeoff markers. """
         STRIKE_TOL = 4  # tolerance for matching forceplate strikes (frames)
+        sidestrs = {'R': 'Right', 'L': 'Left'}
         for strikes in [self.lstrikes, self.rstrikes]:
             len_s = len(strikes)
             if len_s < 2:
@@ -247,5 +240,8 @@ class Trial(object):
                                         'at %d' % start)
                 else:
                     toeoff = toeoff[0]
+                fp_str = '(on forceplate)' if on_forceplate else ''
+                name = '%s %d %s' % (sidestrs[context], (k+1), fp_str)
                 yield Gaitcycle(start, end, self.offset, toeoff, context,
-                                on_forceplate, self.samplesperframe)
+                                on_forceplate, self.samplesperframe,
+                                trial=self, index=k+1, name=name)

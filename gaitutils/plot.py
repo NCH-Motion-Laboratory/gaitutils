@@ -79,27 +79,37 @@ class Plotter(object):
             Width ratios for the plots. Length must equal number of columns in
             the layout. If None, will be equal.
         """
-        if (not isinstance(layout, list) or not
-           all([isinstance(item, list) for item in layout])):
+        if (not isinstance(layout, list) or not all([isinstance(item, list)
+           for item in layout])):
             raise ValueError('Layout must be a list of lists')
+
         self._layout = layout
         self.allvars = [item for row in layout for item in row]
         self.nrows = len(layout)
         if self.nrows == 0:
             raise ValueError('No data to plot')
         self.ncols = len(layout[0])
+
         # compute figure width and height - only used for interactive figures
         self.figh = min(self.nrows*self.cfg.plot.inch_per_row + 1,
                         self.cfg.plot.maxh)
         self.figw = min(self.ncols*self.cfg.plot.inch_per_col,
                         self.cfg.plot.maxw)
+
         if plotheightratios is None:
             plotheightratios = self._plot_height_ratios()
         elif len(plotheightratios) != len(self.nrows):
             raise ValueError('n of height ratios must match n of rows')
+
         self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                           height_ratios=plotheightratios,
                                           width_ratios=plotwidthratios)
+
+    def _create_interactive_figure(self):
+        """ Create pyplot controlled figure """
+        import matplotlib.pylab as plt
+        # auto size fig according to n of subplots w, limit size
+        self.fig = plt.figure(figsize=(self.figw, self.figh))
 
     def open_nexus_trial(self):
         self.trial = nexus_trial()
@@ -155,12 +165,6 @@ class Plotter(object):
                 plotheightratios.append(1)
         return plotheightratios
 
-    def _create_interactive_figure(self):
-        """ Create pyplot controlled figure """
-        import matplotlib.pylab as plt
-        # auto size fig according to n of subplots w, limit size
-        self.fig = plt.figure(figsize=(self.figw, self.figh))
-
     def tight_layout(self):
         """ Customized tight layout """
         self.gridspec.tight_layout(self.fig)
@@ -213,17 +217,20 @@ class Plotter(object):
                 If None, plot unnormalized data. If 'all', plot all cycles.
                 If 'forceplate', plot all cycles that start on valid forceplate
                 contact.
-        emg_cycles : dict of int | int | dict of list | 'all' | None
+                If list, must be a list of cycle instances.
+        emg_cycles : list | dict of int | int | dict of list | 'all' | None
                 Same as above, applied to EMG variables.
-        t : array-like
-                Time axis for unnormalized data. If None, plot complete time
-                axis.
         plotheightratios : list
                 Force height ratios of subplot rows, e.g. [1 2 2 2] would
                 make first row half the height of others.
+        plotheightratios : list
+                Force width ratios of subplot columns.
         model_tracecolor : Matplotlib colorspec
-                Select line color for model variables. If None, will be
-                automatically selected
+                Line color for model variables. If None, will be
+                taken from config.
+        model_linestyle : Matplotlib line style
+                Line style for model variables. If None, will be
+                taken from config.
         model_alpha : float
                 Alpha value for model variable traces (0.0 - 1.0)
         split_model_vars: bool
@@ -231,13 +238,17 @@ class Plotter(object):
                 will be prepended according to the gait cycle context.
                 E.g. 'HipMoment' -> 'LHipMoment'.
                 This allows convenient L/R overlay of e.g. kinematics variables
-                by specifying the variable without context (and plotting cycles
-                with both contexts)
+                by specifying the variable without context.
         auto_match_model_cycle: bool
                 If True, the model variable will be plotted only for cycles
                 whose context matches the context of the variable. E.g.
                 'LHipMomentX' will be plotted only for left side cycles.
                 If False, the variable will be plotted for all cycles.
+        auto_match_emg_cycle: bool
+                If True, the EMG channel will be plotted only for cycles
+                whose context matches the context of the channel name. E.g.
+                'LRec' will be plotted only for left side cycles.
+                If False, the channel will be plotted for all cycles.
         normaldata_files: list
                 Specifies a list normal data files (.gcd or .xlsx) for model
                 type variables.
@@ -246,18 +257,11 @@ class Plotter(object):
                 used to plot e.g. confidence intervals, or stddev if plotting
                 averaged data.
         x_axis_is_time: bool
-                For unnormalized variables, whether x axis is in seconds
+                For unnormalized variables, whether to plot x axis in seconds
                 (default) or in frames.
         match_pig_kinetics: bool
                 If True, Plug-in Gait kinetics variables will be plotted only
-                for cycles that begin with forceplate strike.
-        auto_match_emg_cycle: bool
-                If True, the EMG channel will be plotted only for cycles
-                whose context matches the context of the channel name. E.g.
-                'LRec' will be plotted only for left side cycles.
-                If False, the channel will be plotted for all cycles.
-        model_linestyle : Matplotlib linestyle
-                Select line style for model variables.
+                for cycles that begin with a valid forceplate strike.
         linestyles_context:
                 Automatically select line style for model variables according
                 to context (defined in config)
@@ -277,6 +281,11 @@ class Plotter(object):
         plot_emg_rms : bool | string
                 Whether to plot EMG RMS superposed on the EMG signal.
                 If 'rms_only', plot only RMS.
+        maintitle : str
+                Main title for the plot.
+        maintitleprefix : str
+                If maintitle is not set, title will be set to
+                maintitleprefix + trial name.
         sharex : bool
                 Link the x axes together (will affect zooming)
         superpose : bool
@@ -286,11 +295,6 @@ class Plotter(object):
                 Whether to show the plot after plotting is finished. Use
                 show=False if overlaying multiple trials and call show()
                 after finished. If interactive=False, this has no effect.
-        maintitle : str
-                Main title for the plot.
-        maintitleprefix : str
-                If maintitle is not set, title will be set to
-                maintitleprefix + trial name.
         """
 
         if trial is None and self.trial is None:
@@ -301,8 +305,8 @@ class Plotter(object):
         if self._layout is None:
             raise ValueError('Please set layout before plotting')
 
-        # figure creation logic
-        # TODO: simplify code
+        # figure creation
+        # TODO: simplify
         if self.interactive:
             if superpose:
                 if self.fig is None:
@@ -483,10 +487,12 @@ class Plotter(object):
                         ax.yaxis.label.set_fontsize(self.cfg.
                                                     plot.label_fontsize)
                         subplot_title = model.varlabels[varname]
+                        
                         # add n of averages for AvgTrial
                         if is_avg_trial:
                             subplot_title += (' (avg of %d cycles)' %
                                               self.trial.n_ok[varname])
+
                         prev_title = ax.get_title()
                         if prev_title and prev_title != subplot_title:
                             subplot_title = prev_title + ' / ' + subplot_title
@@ -496,6 +502,7 @@ class Plotter(object):
                         ax.locator_params(axis='y', nbins=6)  # less tick marks
                         ax.tick_params(axis='both', which='major',
                                        labelsize=self.cfg.plot.ticks_fontsize)
+
                         if cycle is None and var in self.layout[-1]:
                             xlabel = 'Time (s)' if x_axis_is_time else 'Frame'
                             ax.set(xlabel=xlabel)
@@ -528,7 +535,6 @@ class Plotter(object):
                                 # tighten x limits
                                 ax.set_xlim(normalx[0], normalx[-1])
 
-
             elif var_type == 'emg':
                 # set title first, since we may end up not plotting the emg at
                 # all (i.e for missing / disconnected channels)
@@ -558,9 +564,11 @@ class Plotter(object):
                         break  # data no good - skip all cycles
                     x = (x_ / trial.analograte if cycle is None and
                          x_axis_is_time else x_ / 1.)
+
                     if cycle is None and not x_axis_is_time:
                         # analog -> frames
                         x /= trial.samplesperframe
+
                     if (cycle is None or var[0] == cycle.context or not
                        auto_match_emg_cycle):
                         # plot data and/or rms
@@ -569,7 +577,8 @@ class Plotter(object):
                                     emg_tracecolor,
                                     linewidth=self.cfg.plot.emg_linewidth,
                                     alpha=emg_alpha)
-                        if plot_emg_rms is not False:
+
+                        if plot_emg_rms:
                             rms = numutils.rms(data, self.cfg.emg.rms_win)
                             ax.plot(x, rms*self.cfg.plot.emg_multiplier,
                                     emg_tracecolor,

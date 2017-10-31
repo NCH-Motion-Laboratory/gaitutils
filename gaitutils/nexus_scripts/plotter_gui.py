@@ -13,15 +13,18 @@ TODO:
 @author: Jussi (jnu@iki.fi)
 """
 
+import logging
 import sys
 import traceback
+from pkg_resources import resource_filename
 from PyQt5 import QtGui, QtWidgets, uic, QtCore
 from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
                                                 FigureCanvas)
 from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
                                                 NavigationToolbar)
+
+
 from gaitutils import Plotter, Trial, nexus, layouts, cfg, GaitDataError
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +111,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(PlotterWindow, self).__init__(parent)
 
-        uifile = 'plotter_gui.ui'
+        uifile = resource_filename(__name__, 'plotter_gui.ui')
         uic.loadUi(uifile, self)
 
         self.pl = Plotter(interactive=False)

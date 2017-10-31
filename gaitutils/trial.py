@@ -9,17 +9,29 @@ Read gait trials.
 
 
 from __future__ import division
-from exceptions import GaitDataError
-from . import read_data, utils, eclipse
 from collections import defaultdict
 import numpy as np
 import os.path as op
 import glob
-import models
-from emg import EMG
 import logging
 
+from . import read_data
+from . import nexus
+from . import utils
+from . import eclipse
+from . import models
+from .emg import EMG
+from .config import cfg
+from .envutils import GaitDataError
+
+
 logger = logging.getLogger(__name__)
+
+
+def nexus_trial():
+    """ Return Trial instance reading from Nexus """
+    vicon = nexus.viconnexus()
+    return Trial(vicon)
 
 
 class Gaitcycle(object):

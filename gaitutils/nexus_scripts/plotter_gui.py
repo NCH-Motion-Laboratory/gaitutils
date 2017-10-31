@@ -96,7 +96,7 @@ class NiceListWidget(QtWidgets.QListWidget):
 
 
 class Dialog(QtWidgets.QDialog):
-    
+
     def __init__(self, parent=None):
         super(Dialog, self).__init__(parent)
         uifile = 'dialog.ui'

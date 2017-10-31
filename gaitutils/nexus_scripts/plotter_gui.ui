@@ -305,6 +305,7 @@
     </property>
     <addaction name="actionSave_as_PDF"/>
     <addaction name="actionNormal_data"/>
+    <addaction name="separator"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuPlot"/>

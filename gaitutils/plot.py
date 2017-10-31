@@ -422,16 +422,18 @@ class Plotter(object):
                         varname = cycle.context + var
                     else:
                         varname = var
+
                     # check for kinetics variable
                     kin_ok = True
                     if match_pig_kinetics:
                         if model == models.pig_lowerbody:
                             if model.is_kinetic_var(var):
                                 kin_ok = cycle.on_forceplate
+
                     # do the actual plotting if necessary
                     x_, data = trial[varname]
-                    if data is not None and kin_ok and (varname[0] == cycle.context or not
-                       auto_match_model_cycle or cycle is None):
+                    if (data is not None and kin_ok and (varname[0] == cycle.context or not
+                       auto_match_model_cycle or cycle is None)):
                         logger.debug('plotting data for %s' % varname)
                         x = (x_ / trial.framerate if cycle is None and
                              x_axis_is_time else x_)
@@ -445,17 +447,17 @@ class Plotter(object):
                         ax.plot(x, data, tcolor, linestyle=lstyle,
                                 linewidth=self.cfg.plot.model_linewidth,
                                 alpha=model_alpha)
+                        # add toeoff marker for this cycle
+                        if (cycle is not None and not is_avg_trial and
+                           toeoff_markers):
+                            toeoff = cycle.toeoffn
+                            ax.axvline(toeoff, color=tcolor, linewidth=.5)
                         # tighten x limits
                         ax.set_xlim(x[0], x[-1])
                     else:
                         logger.debug('not plotting data for %s' % varname)
                         if data is None:
                             logger.debug('(no data)')
-
-                    # add toeoff marker
-                    if cycle is not None and toeoff_markers:
-                        toeoff = cycle.toeoffn
-                        ax.axvline(toeoff, color=tcolor, linewidth=.5)
 
                     # each cycle gets its own stddev plot (if data was found)
                     if (model_stddev is not None and cycle is not None and

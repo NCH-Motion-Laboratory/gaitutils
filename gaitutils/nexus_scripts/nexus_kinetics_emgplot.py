@@ -43,6 +43,7 @@ def do_plot(force_side=None):
         pdf_name = 'Kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname, s)
         pl.create_pdf(pdf_name=pdf_name)
 
+
 if __name__ == '__main__':
 
     logging.basicConfig(level=logging.DEBUG)

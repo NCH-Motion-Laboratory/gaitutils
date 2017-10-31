@@ -52,6 +52,7 @@ def do_plot(show=True, make_pdf=True):
 
     return figs
 
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     register_gui_exception_handler()

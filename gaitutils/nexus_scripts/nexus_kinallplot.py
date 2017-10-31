@@ -27,6 +27,7 @@ def do_plot():
     pl.move_plot_window(10, 30)
     pl.show()
 
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     register_gui_exception_handler()

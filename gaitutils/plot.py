@@ -387,6 +387,7 @@ class Plotter(object):
         if not (model_cycles or emg_cycles):
             raise ValueError('No matching gait cycles found in data')
 
+        """
         if self.fig is None or not superpose:
             # auto size fig according to n of subplots w, limit size
             self.figh = min(self.nrows*self.cfg.plot.inch_per_row + 1,
@@ -398,7 +399,7 @@ class Plotter(object):
             self.fig = plt.figure(figsize=(self.figw, self.figh))
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)
-
+        """
         is_avg_trial = isinstance(trial, AvgTrial)
 
         for i, var in enumerate(self.allvars):
@@ -605,8 +606,9 @@ class Plotter(object):
 
 
             elif var_type in ('model_legend', 'emg_legend'):
+                ax.set_axis_off()
                 self.legendnames.append('%s   %s   %s' % (
-                                        _shorten_name(self.trial.trialname),
+                                        _shorten_name(trial.trialname),
                                         trial.eclipse_data['DESCRIPTION'],
                                         trial.eclipse_data['NOTES']))
                 if var_type == 'model_legend':
@@ -620,7 +622,7 @@ class Plotter(object):
                     artists = self.emgartists
                     artists.append(matplotlib.lines.Line2D((0, 1), (0, 0), linewidth=2,
                                               color=emg_tracecolor))
-                plt.axis('off')
+
                 nothing = [matplotlib.patches.Rectangle((0, 0), 1, 1, fc="w", fill=False,
                                          edgecolor='none', linewidth=0)]
                 ax.legend(nothing+artists,
@@ -630,7 +632,7 @@ class Plotter(object):
             plotaxes.append(ax)
 
         self.set_title(maintitle)
-        self.tight_layout(maintitle)
+        self.tight_layout()
 
         if show and self.interactive:
             self.show()
@@ -640,7 +642,7 @@ class Plotter(object):
     def set_title(self, title):
         self.fig.suptitle(title, fontsize=self.cfg.plot.maintitle_fontsize,
                           fontweight="bold")
-        self.tight_layout(title)  # update plot spacing
+        self.tight_layout()  # update plot spacing
 
     def title_with_eclipse_info(self, trial=None, prefix=''):
         """ Create title: prefix + trial name + Eclipse description and
@@ -656,8 +658,9 @@ class Plotter(object):
         return maintitle
 
     def show(self):
-        # start the pyplot event loop
+        # start the pyplot event loop to show the figure
         if self.interactive and self.fig is not None:
+            logger.debug('starting pyplot event loop')
             import matplotlib.pyplot as plt
             plt.show()
 

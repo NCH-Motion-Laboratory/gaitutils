@@ -575,6 +575,7 @@ class Plotter(object):
                                     emg_tracecolor,
                                     linewidth=self.cfg.plot.emg_rms_linewidth,
                                     alpha=emg_alpha)
+
                     if cycle == emg_cycles[-1]:
                         # last cycle; plot scales, titles etc.
                         ax.set(ylabel=self.cfg.plot.emg_ylabel)
@@ -588,6 +589,7 @@ class Plotter(object):
                         ysc = self.cfg.plot.emg_yscale
                         ax.set_ylim(ysc[0]*self.cfg.plot.emg_multiplier,
                                     ysc[1]*self.cfg.plot.emg_multiplier)
+
                         if (plot_emg_normaldata and cycle is not None and
                            var in self.cfg.emg.channel_normaldata):
                             # plot EMG normal bars
@@ -595,17 +597,14 @@ class Plotter(object):
                             for k in range(len(emgbar_ind)):
                                 inds = emgbar_ind[k]
                                 ax.axvspan(inds[0], inds[1], alpha=self.cfg.
-                                            plot.emg_normals_alpha,
-                                            color=self.cfg.
-                                            plot.emg_normals_color)
+                                           plot.emg_normals_alpha,
+                                           color=self.cfg.plot.emg_normals_color)
+
                         if cycle is None and var in self.layout[-1]:
                             xlabel = 'Time (s)' if x_axis_is_time else 'Frame'
                             ax.set(xlabel=xlabel)
                             ax.xaxis.label.set_fontsize(self.cfg.
                                                         plot.label_fontsize)
-
-
-
 
             elif var_type in ('model_legend', 'emg_legend'):
                 ax.set_axis_off()
@@ -622,15 +621,19 @@ class Plotter(object):
                 else:
                     legtitle = ['EMG traces:']
                     artists = self.emgartists
-                    artists.append(matplotlib.lines.Line2D((0, 1), (0, 0), linewidth=2,
-                                              color=emg_tracecolor))
+                    artists.append(matplotlib.lines.Line2D((0, 1), (0, 0),
+                                                           linewidth=2,
+                                                           color=emg_tracecolor))
 
-                nothing = [matplotlib.patches.Rectangle((0, 0), 1, 1, fc="w", fill=False,
-                                         edgecolor='none', linewidth=0)]
+                nothing = [matplotlib.patches.Rectangle((0, 0), 1, 1, fc="w",
+                                                        fill=False,
+                                                        edgecolor='none',
+                                                        linewidth=0)]
                 ax.legend(nothing+artists,
                           legtitle+self.legendnames, loc='upper center',
                           ncol=2,
                           prop={'size': self.cfg.plot.legend_fontsize})
+
             plotaxes.append(ax)
 
         self.set_title(maintitle)

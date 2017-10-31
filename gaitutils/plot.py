@@ -7,8 +7,7 @@ Plot gait data
 """
 
 import matplotlib
-import matplotlib.pyplot as plt
-from matplotlib import pylab
+from matplotlib.figure import Figure
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.gridspec as gridspec
 import os.path as op
@@ -30,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 class Plotter(object):
 
-    def __init__(self, layout=None):
+    def __init__(self, layout=None, interactive=True):
         """ Plot gait data.
 
         layout: list of lists
@@ -39,6 +38,10 @@ class Plotter(object):
         normaldata: list of lists
             Corresponding normal data files for each plot. Will override
             default normal data settings.
+        interactive: bool
+                If True, start the pyplot event loop to show the figure
+                in a GUI. If False, do not import pyplot (this is needed for
+                e.g. embedding in Qt).
         """
         matplotlib.style.use(cfg.plot.mpl_style)
 
@@ -54,13 +57,28 @@ class Plotter(object):
         self._normaldata_files = list()
         self._normaldata = dict()
         self.cfg = cfg
+        self.nrows = 0
+        self.ncols = 0
+        self.interactive = interactive
+        # if in interactive mode, create the figure later - otherwise we
+        # can create it now, as the size does not matter
+        self.fig = None if interactive else Figure()
 
     @property
     def layout(self):
         return self._layout
 
     @layout.setter
-    def layout(self, layout):
+    def layout(self, layout, plotheightratios=None, plotwidthratios=None):
+        """ Set plot layout.
+
+        plotheightratios: list
+            Height ratios for the plots. Length must equal number of rows in
+            the layout. If None, will be automatically computed.
+        plotwidthratios: list
+            Width ratios for the plots. Length must equal number of columns in
+            the layout. If None, will be equal.
+        """
         if (not isinstance(layout, list) or not
            all([isinstance(item, list) for item in layout])):
             raise ValueError('Layout must be a list of lists')
@@ -70,6 +88,18 @@ class Plotter(object):
         if self.nrows == 0:
             raise ValueError('No data to plot')
         self.ncols = len(layout[0])
+        # compute figure width and height - only used for interactive figures
+        self.figh = min(self.nrows*self.cfg.plot.inch_per_row + 1,
+                        self.cfg.plot.maxh)
+        self.figw = min(self.ncols*self.cfg.plot.inch_per_col,
+                        self.cfg.plot.maxw)
+        if plotheightratios is None:
+            plotheightratios = self._plot_height_ratios()
+        elif len(plotheightratios) != len(self.nrows):
+            raise ValueError('n of height ratios must match n of rows')
+        self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
+                                          height_ratios=plotheightratios,
+                                          width_ratios=plotwidthratios)
 
     def open_nexus_trial(self):
         self.trial = nexus_trial()
@@ -91,13 +121,15 @@ class Plotter(object):
     def move_plot_window(self, x, y):
         """ Move figure upper left corner to x,y. Only works with
         Qt backend. """
-        if 'Qt4' in pylab.get_backend():
-            cman = pylab.get_current_fig_manager()
-            _, _, dx, dy = cman.window.geometry().getRect()
-            cman.window.setGeometry(x, y, dx, dy)
+        pass  # pylab not imported
+        # if 'Qt4' in pylab.get_backend():
+        #    cman = pylab.get_current_fig_manager()
+        #    _, _, dx, dy = cman.window.geometry().getRect()
+        #    cman.window.setGeometry(x, y, dx, dy)
 
     def _var_type(self, var):
         """ Helper to return variable type """
+        # FIXME: better checks for analog vars
         if var is None:
             return None
         elif models.model_from_var(var):
@@ -106,8 +138,8 @@ class Plotter(object):
             return var
         # check whether it's a configured EMG channel or exists in the data
         # source (both are ok)
-        elif (self.trial.emg.is_channel(var) or
-              var in self.cfg.emg.channel_labels):
+        elif (self.trial and self.trial.emg.is_channel(var) or var in
+              self.cfg.emg.channel_labels):
             return 'emg'
         else:
             raise ValueError('Unknown variable %s' % var)
@@ -123,6 +155,12 @@ class Plotter(object):
                 plotheightratios.append(1)
         return plotheightratios
 
+    def _create_interactive_figure(self):
+        """ Create pyplot controlled figure """
+        import matplotlib.pylab as plt
+        # auto size fig according to n of subplots w, limit size
+        self.fig = plt.figure(figsize=(self.figw, self.figh))
+
     def tight_layout(self):
         """ Customized tight layout """
         self.gridspec.tight_layout(self.fig)
@@ -134,7 +172,7 @@ class Plotter(object):
         # self.gridspec.update(top=top)
         self.gridspec.update(top=top, hspace=hspace)
 
-    def plot_trial(self,
+    def plot_trial(self, trial=None,
                    model_cycles=cfg.plot.default_model_cycles,
                    emg_cycles=cfg.plot.default_emg_cycles,
                    plotheightratios=None,
@@ -165,7 +203,9 @@ class Plotter(object):
 
         """ Create plot of variables. Parameters:
 
-        model_cycles : dict of int |  dict of list | 'all' | None
+        trial : Trial
+                Trial to plot. If None, plot self.trial.
+        model_cycles : list | dict of int |  dict of list | 'all' | None
                 Gait cycles to plot. Defaults to first cycle (1) for
                 both contexts. Dict keys 'R' and 'L' specify the cycles
                 for right and left contexts. Multiple cycles can be given
@@ -243,8 +283,9 @@ class Plotter(object):
                 If superpose=False, create new figure. Otherwise superpose
                 on existing figure.
         show : bool
-                Whether to show the plot after plotting is finished. Can also
-                set show=False and call plotter.show() explicitly.
+                Whether to show the plot after plotting is finished. Use
+                show=False if overlaying multiple trials and call show()
+                after finished. If interactive=False, this has no effect.
         maintitle : str
                 Main title for the plot.
         maintitleprefix : str
@@ -252,16 +293,36 @@ class Plotter(object):
                 maintitleprefix + trial name.
         """
 
-        if not self.trial:
-            raise ValueError('No trial to plot, call open_trial() first')
+        if trial is None and self.trial is None:
+            raise ValueError('No trial, specify one or call open_trial()')
+        elif trial is None:
+            trial = self.trial
 
         if self._layout is None:
-            raise ValueError('No layout set')
+            raise ValueError('Please set layout before plotting')
 
-        if maintitle is None:
+        # figure creation logic
+        # TODO: simplify code
+        if self.interactive:
+            if superpose:
+                if self.fig is None:
+                    logger.debug('No figure to superpose on, creating new one')
+                    self._create_interactive_figure()
+            else:
+                # interactive, new figure
+                self._create_interactive_figure()
+        else:  # non interactive - figure should exist already
+            if superpose:
+                pass  # superposing on existing figure
+            else:
+                # reusing the existing figure - no superpose
+                self.fig.clear()
+
+        # automatically set title if in interactive mode
+        if maintitle is None and self.interactive:
             if maintitleprefix is None:
                 maintitleprefix = ''
-            maintitle = maintitleprefix + self.trial.trialname
+            maintitle = maintitleprefix + trial.trialname
 
         # read normal data if any new files were specified
         newfiles = set(normaldata_files) - set(self._normaldata_files)
@@ -299,9 +360,9 @@ class Plotter(object):
             if cycles is None:
                 cycles = [None]  # listify
             elif cycles == 'all':
-                cycles = self.trial.cycles
+                cycles = trial.cycles
             elif cycles == 'forceplate':
-                cycles = [cyc for cyc in self.trial.cycles
+                cycles = [cyc for cyc in trial.cycles
                           if cyc.on_forceplate]
             elif isinstance(cycles, dict):
                 for side in ['L', 'R']:  # add L/R side if needed
@@ -311,13 +372,17 @@ class Plotter(object):
                 cycles.update({key: [val] for (key, val) in cycles.items()
                               if isinstance(val, int)})
                 # get the specified cycles from trial
-                cycles = [self.trial.get_cycle(side, ncycle)
+                cycles = [trial.get_cycle(side, ncycle)
                           for side in ['L', 'R']
                           for ncycle in cycles[side] if ncycle]
             return cycles
 
-        model_cycles = _get_cycles(model_cycles)
-        emg_cycles = _get_cycles(emg_cycles)
+        # get cycles from data if they were not directly specified as instances
+        model_cycles = (model_cycles if isinstance(model_cycles, list) else
+                        _get_cycles(model_cycles))
+
+        emg_cycles = (emg_cycles if isinstance(emg_cycles, list) else
+                      _get_cycles(emg_cycles))
 
         if not (model_cycles or emg_cycles):
             raise ValueError('No matching gait cycles found in data')
@@ -334,23 +399,24 @@ class Plotter(object):
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)
 
-        is_avg_trial = isinstance(self.trial, AvgTrial)
+        is_avg_trial = isinstance(trial, AvgTrial)
 
         for i, var in enumerate(self.allvars):
             var_type = self._var_type(var)
             if var_type is None:
                 continue
             if sharex and len(plotaxes) > 0:
-                ax = plt.subplot(self.gridspec[i], sharex=plotaxes[-1])
+                ax = self.fig.add_subplot(self.gridspec[i],
+                                          sharex=plotaxes[-1])
             else:
-                ax = plt.subplot(self.gridspec[i])
+                ax = self.fig.add_subplot(self.gridspec[i])
 
             if var_type == 'model':
                 model = models.model_from_var(var)
                 for cycle in model_cycles:
                     logger.debug('cycle %s' % cycle)
                     if cycle is not None:  # plot normalized data
-                        self.trial.set_norm_cycle(cycle)
+                        trial.set_norm_cycle(cycle)
                     if split_model_vars and var[0].upper() not in ['L', 'R']:
                         varname = cycle.context + var
                     else:
@@ -362,11 +428,11 @@ class Plotter(object):
                             if model.is_kinetic_var(var):
                                 kin_ok = cycle.on_forceplate
                     # do the actual plotting if necessary
-                    x_, data = self.trial[varname]
+                    x_, data = trial[varname]
                     if data is not None and kin_ok and (varname[0] == cycle.context or not
                        auto_match_model_cycle or cycle is None):
                         logger.debug('plotting data for %s' % varname)
-                        x = (x_ / self.trial.framerate if cycle is None and
+                        x = (x_ / trial.framerate if cycle is None and
                              x_axis_is_time else x_)
                         # FIXME: cycle may not have context?
                         tcolor = (model_tracecolor if model_tracecolor
@@ -474,24 +540,24 @@ class Plotter(object):
 
                 for cycle in emg_cycles:
                     if cycle is not None:  # plot normalized data
-                        self.trial.set_norm_cycle(cycle)
+                        trial.set_norm_cycle(cycle)
                     try:
-                        x_, data = self.trial[var]
+                        x_, data = trial[var]
                     except KeyError:  # channel not found
                         _no_ticks_or_labels(ax)
                         if annotate_emg:
                             _axis_annotate(ax, 'not found')
                         break  # skip all cycles
-                    if not self.trial.emg.status_ok(var):
+                    if not trial.emg.status_ok(var):
                         _no_ticks_or_labels(ax)
                         if annotate_emg:
                             _axis_annotate(ax, 'disconnected')
                         break  # data no good - skip all cycles
-                    x = (x_ / self.trial.analograte if cycle is None and
+                    x = (x_ / trial.analograte if cycle is None and
                          x_axis_is_time else x_ / 1.)
                     if cycle is None and not x_axis_is_time:
                         # analog -> frames
-                        x /= self.trial.samplesperframe
+                        x /= trial.samplesperframe
                     if (cycle is None or var[0] == cycle.context or not
                        auto_match_emg_cycle):
                         # plot data and/or rms
@@ -525,7 +591,7 @@ class Plotter(object):
                             emgbar_ind = self.cfg.emg.channel_normaldata[var]
                             for k in range(len(emgbar_ind)):
                                 inds = emgbar_ind[k]
-                                plt.axvspan(inds[0], inds[1], alpha=self.cfg.
+                                ax.axvspan(inds[0], inds[1], alpha=self.cfg.
                                             plot.emg_normals_alpha,
                                             color=self.cfg.
                                             plot.emg_normals_color)
@@ -541,21 +607,21 @@ class Plotter(object):
             elif var_type in ('model_legend', 'emg_legend'):
                 self.legendnames.append('%s   %s   %s' % (
                                         _shorten_name(self.trial.trialname),
-                                        self.trial.eclipse_data['DESCRIPTION'],
-                                        self.trial.eclipse_data['NOTES']))
+                                        trial.eclipse_data['DESCRIPTION'],
+                                        trial.eclipse_data['NOTES']))
                 if var_type == 'model_legend':
                     legtitle = ['Model traces:']
                     artists = self.modelartists
-                    artists.append(plt.Line2D((0, 1), (0, 0),
+                    artists.append(matplotlib.lines.Line2D((0, 1), (0, 0),
                                    color=model_tracecolor, linewidth=2,
                                    linestyle=lstyle))
                 else:
                     legtitle = ['EMG traces:']
                     artists = self.emgartists
-                    artists.append(plt.Line2D((0, 1), (0, 0), linewidth=2,
+                    artists.append(matplotlib.lines.Line2D((0, 1), (0, 0), linewidth=2,
                                               color=emg_tracecolor))
                 plt.axis('off')
-                nothing = [plt.Rectangle((0, 0), 1, 1, fc="w", fill=False,
+                nothing = [matplotlib.patches.Rectangle((0, 0), 1, 1, fc="w", fill=False,
                                          edgecolor='none', linewidth=0)]
                 ax.legend(nothing+artists,
                           legtitle+self.legendnames, loc='upper center',
@@ -563,18 +629,24 @@ class Plotter(object):
                           prop={'size': self.cfg.plot.legend_fontsize})
             plotaxes.append(ax)
 
-        plt.suptitle(maintitle, fontsize=self.cfg.plot.maintitle_fontsize,
-                     fontweight="bold")
-        self.tight_layout()
+        self.set_title(maintitle)
+        self.tight_layout(maintitle)
 
-        if show:
+        if show and self.interactive:
             self.show()
 
         return self.fig
 
-    def title_with_eclipse_info(self, prefix=''):
+    def set_title(self, title):
+        self.fig.suptitle(title, fontsize=self.cfg.plot.maintitle_fontsize,
+                          fontweight="bold")
+        self.tight_layout(title)  # update plot spacing
+
+    def title_with_eclipse_info(self, trial=None, prefix=''):
         """ Create title: prefix + trial name + Eclipse description and
         notes """
+        if trial is None:
+            trial = self.trial
         desc = self.trial.eclipse_data['DESCRIPTION']
         notes = self.trial.eclipse_data['NOTES']
         maintitle = ('%s %s' % (prefix, self.trial.trialname) if prefix else
@@ -584,10 +656,12 @@ class Plotter(object):
         return maintitle
 
     def show(self):
-        """ Show all figures """
-        plt.show()
+        # start the pyplot event loop
+        if self.interactive and self.fig is not None:
+            import matplotlib.pyplot as plt
+            plt.show()
 
-    def create_pdf(self, pdf_name=None, pdf_prefix='Nexus_plot',
+    def create_pdf(self, pdf_name=None, trial=None, pdf_prefix='Nexus_plot',
                    sessionpath=None):
         """ Make a pdf out of the created figure.
 
@@ -600,6 +674,8 @@ class Plotter(object):
             Where to write the pdf. If not specified, written into the
             session directory of currently loaded trial.
         """
+        if trial is None:
+            trial = self.trial
         if not self.fig:
             raise ValueError('No figure to save!')
         if sessionpath is None:

@@ -649,7 +649,7 @@ class Plotter(object):
             plotaxes.append(ax)
 
         self.set_title(maintitle)
-        self.tight_layout()
+        self.fig.subplots_adjust(left=0, bottom=0, right=1, top=1)
 
         if show and self.interactive:
             self.show()

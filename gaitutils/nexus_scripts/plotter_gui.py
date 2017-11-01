@@ -17,7 +17,8 @@ from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
 from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
                                                 NavigationToolbar)
 
-from gaitutils import Plotter, Trial, nexus, layouts, cfg, GaitDataError
+from gaitutils import (Plotter, Trial, nexus, layouts, cfg, GaitDataError,
+                       stats, models)
 
 
 logger = logging.getLogger(__name__)
@@ -121,6 +122,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
         # this is the Navigation widget
         # it takes the Canvas widget and a parent
         #self.toolbar = NavigationToolbar(self.canvas, self)
+        # self.listTrials.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
         self.listTrials.itemClicked.connect(self._trial_selected)
         # set up widgets
         # buttons
@@ -131,6 +133,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
                                                        _select_forceplate_cycles)
         self.btnSelect1stCycles.clicked.connect(self._select_1st_cycles)
         self.btnPickCycles.clicked.connect(self._pick_cycles)
+        self.btnAverageSelected.clicked.connect(self._average_selected)
         self.btnAddC3DTrial.clicked.connect(self.load_dialog)
         self.btnSavePDF.clicked.connect(self._write_pdf)
         self.btnClearTrials.clicked.connect(self._clear_trials)
@@ -211,6 +214,14 @@ class PlotterWindow(QtWidgets.QMainWindow):
             name = '%s: %s' % (cycle.trial.trialname, cycle.name)
             self.listCyclesToPlot.add_item(name, data=cycle)
 
+    def _average_selected(self):
+        """ Make AvgTrial from selected trials """
+        # only add cycles that were not already added
+        trials = list(self.listTrialCycles.checked_items)
+        avgtr = stats.average_trials(trials, models.models_all)
+        self.listTrials.add_item(avgtr.trialname, data=avgtr)
+        self._update_trial_cycles_list(avgtr)
+
     def _open_nexus_trial(self):
         try:
             vicon = nexus.viconnexus()
@@ -225,7 +236,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
         # TODO: might use smarter detection
         if tr.trialname in [trial.trialname for trial in trials]:
             return
-        self.listTrials.add_item(tr.trialname, data=tr)
+        self.listTrials.add_item(tr.trialname, data=tr, checkable=True)
         self._update_trial_cycles_list(tr)
         self._set_status('Loaded trial %s' % tr.trialname)
 
@@ -283,17 +294,23 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
     def _write_pdf(self):
         """ Bring up save dialog and save data. """
-        fout = QtWidgets.QFileDialog.getSaveFileName(self,
-                                                     'Save PDF',
-                                                     self._sessionpath,
-                                                     '*.pdf')[0]
+        fname = QtWidgets.QFileDialog.getSaveFileName(self,
+                                                      'Save PDF',
+                                                      self._sessionpath,
+                                                      '*.pdf')[0]
         if fname:
             # TODO: need to figure out logic for the title
-            self.pl.set_title('Test plot')
-            # TODO: need to resize canvas to e.g. A4
-            self.canvas.print_figure(fname)
+            self.pl.set_title('Just a test')
+            old_size = self.pl.fig.get_size_inches()
+            self.pl.fig.set_size_inches([8.27, 11.69])
+            try:
+                self.canvas.print_figure(fname)
+            except IOError:
+                self.message_dialog('Error writing PDF file, check that file '
+                                    'is not open')
             # reset title for onscreen and redraw canvas
             self.pl.set_title('')
+            self.pl.fig.set_size_inches(old_size)  # needed?
             self.canvas.draw()
 
 

@@ -218,7 +218,8 @@ class PlotterWindow(QtWidgets.QMainWindow):
         """ Make AvgTrial from selected trials """
         # only add cycles that were not already added
         trials = [item.userdata for item in self.listTrials.checked_items]
-        avgtr = stats.AvgTrial(trials, models.models_all)
+        # FIXME: only averages PiG lower for now
+        avgtr = stats.AvgTrial(trials, models.models_all[1])
         self.listTrials.add_item('Average trial', data=avgtr)
         self._update_trial_cycles_list(avgtr)
 
@@ -228,7 +229,6 @@ class PlotterWindow(QtWidgets.QMainWindow):
             self._open_trial(vicon)
         except GaitDataError:
             self.message_dialog('Vicon Nexus is not running')
-
 
     def _open_trial(self, source):
         tr = Trial(source)

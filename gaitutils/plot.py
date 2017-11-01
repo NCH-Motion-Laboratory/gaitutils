@@ -492,7 +492,7 @@ class Plotter(object):
                         # add n of averages for AvgTrial
                         if is_avg_trial:
                             subplot_title += (' (avg of %d cycles)' %
-                                              self.trial.n_ok[varname])
+                                              trial.n_ok[varname])
 
                         prev_title = ax.get_title()
                         if prev_title and prev_title != subplot_title:

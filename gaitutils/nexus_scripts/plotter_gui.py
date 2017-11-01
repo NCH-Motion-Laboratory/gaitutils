@@ -217,9 +217,9 @@ class PlotterWindow(QtWidgets.QMainWindow):
     def _average_selected(self):
         """ Make AvgTrial from selected trials """
         # only add cycles that were not already added
-        trials = list(self.listTrialCycles.checked_items)
-        avgtr = stats.average_trials(trials, models.models_all)
-        self.listTrials.add_item(avgtr.trialname, data=avgtr)
+        trials = [item.userdata for item in self.listTrials.checked_items]
+        avgtr = stats.AvgTrial(trials, models.models_all)
+        self.listTrials.add_item('Average trial', data=avgtr)
         self._update_trial_cycles_list(avgtr)
 
     def _open_nexus_trial(self):
@@ -228,6 +228,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
             self._open_trial(vicon)
         except GaitDataError:
             self.message_dialog('Vicon Nexus is not running')
+
 
     def _open_trial(self, source):
         tr = Trial(source)

@@ -50,8 +50,10 @@ def average_trials(trials, models, max_dist=None):
     """ Average model data from several trials.
 
     trials: list
-        filename, or list of filenames (c3d) to read trials from
-    models: model (GaitModel instance) or list of models to average
+        filename, or list of filenames (c3d) to read trials from, or list
+        of Trial instances
+    models: model (GaitModel instance) or list of GaitModel instances to
+            average
     max_dist: maximum curve distance from median, for outlier rejection
 
     Returns:
@@ -107,8 +109,10 @@ def _collect_model_data(trials, models):
     Returns a dict of numpy arrays keyed by variable.
 
     trials: list
-        filename, or list of filenames (c3d) to read trials from
-    models: model (GaitModel instance) or list of models to average
+        filename, or list of filenames (c3d) to read trials from, or list
+        of Trial instances
+    models: model (GaitModel instance) or list of GaitModel instances to
+            average
     """
     if not trials:
         logger.debug('no trials')
@@ -125,11 +129,15 @@ def _collect_model_data(trials, models):
     nc = dict()
     nc['R'], nc['L'], nc['Rkin'], nc['Lkin'] = (0,)*4
 
-    for n, file in enumerate(trials):
-        try:
-            tr = Trial(file)
-        except GaitDataError:
-            logger.warning('cannot load %s' % file)
+    for n, trial in enumerate(trials):
+        # see whether it's already a Trial instance or we need to create one
+        if isinstance(trial, Trial):
+            tr = trial
+        else:
+            try:
+                tr = Trial(file)
+            except GaitDataError:
+                logger.warning('cannot load %s' % file)
         models_ok = True
         for model in models:
             # test whether read is ok for all models (only test 1st var)
@@ -138,7 +146,7 @@ def _collect_model_data(trials, models):
                 data = tr[var][1]
             except GaitDataError:
                 logger.warning('cannot read variable %s from %s' %
-                               (var, file))
+                               (var, trial))
                 models_ok = False
         if not models_ok:
             continue

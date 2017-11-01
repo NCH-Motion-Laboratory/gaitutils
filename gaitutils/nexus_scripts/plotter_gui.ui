@@ -331,7 +331,7 @@
   <customwidget>
    <class>NiceListWidget</class>
    <extends>QListWidget</extends>
-   <header>embed_gaitplotter</header>
+   <header>plotter_gui</header>
   </customwidget>
  </customwidgets>
  <resources/>

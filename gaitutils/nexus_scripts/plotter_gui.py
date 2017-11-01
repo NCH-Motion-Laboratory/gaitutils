@@ -145,8 +145,8 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self.actionQuit.triggered.connect(self.close)
         self.actionNormal_data.triggered.connect(self._dialog)
         # add predefined plot layouts to combobox
-        self.cbLayout.addItems(sorted(cfg.layouts.__dict__.keys()))
-                
+        self.cbLayout.addItems(sorted(cfg.options('layouts')))
+
         self._set_status('Ready')
 
 
@@ -254,15 +254,14 @@ class PlotterWindow(QtWidgets.QMainWindow):
                 plot_cycles[cycle.trial] = []
             plot_cycles[cycle.trial].append(cycle)
         # set options and create the plot
-        self.pl.layout = cfg.layouts.__dict__[self.cbLayout.currentText()]
+        self.pl.layout = cfg.layouts.__getattr__(self.cbLayout.currentText())
         match_pig_kinetics = self.xbKineticsFpOnly.checkState()
-        normaldata_files = [item.userdata for item in
-                            self.listNormalData.items]
+#        normaldata_files = [item.userdata for item in
+#                            self.listNormalData.items]
         for trial, cycs in plot_cycles.items():
             try:
                 self.pl.plot_trial(trial=trial, model_cycles=cycs,
                                    emg_cycles=cycs,
-                                   normaldata_files=normaldata_files,
                                    match_pig_kinetics=match_pig_kinetics,
                                    maintitle='', superpose=True)
             except GaitDataError as e:

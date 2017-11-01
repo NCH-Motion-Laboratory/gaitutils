@@ -436,8 +436,9 @@ class Plotter(object):
 
                     # do the actual plotting if necessary
                     x_, data = trial[varname]
-                    if (data is not None and kin_ok and (varname[0] == cycle.context or not
-                       auto_match_model_cycle or cycle is None)):
+                    if (data is not None and kin_ok and
+                        (varname[0] == cycle.context or not
+                         auto_match_model_cycle or cycle is None)):
                         logger.debug('plotting data for %s' % varname)
                         x = (x_ / trial.framerate if cycle is None and
                              x_axis_is_time else x_)
@@ -487,7 +488,7 @@ class Plotter(object):
                         ax.yaxis.label.set_fontsize(self.cfg.
                                                     plot.label_fontsize)
                         subplot_title = model.varlabels[varname]
-                        
+
                         # add n of averages for AvgTrial
                         if is_avg_trial:
                             subplot_title += (' (avg of %d cycles)' %
@@ -607,7 +608,8 @@ class Plotter(object):
                                 inds = emgbar_ind[k]
                                 ax.axvspan(inds[0], inds[1], alpha=self.cfg.
                                            plot.emg_normals_alpha,
-                                           color=self.cfg.plot.emg_normals_color)
+                                           color=self.cfg.plot.
+                                           emg_normals_color)
 
                         if cycle is None and var in self.layout[-1]:
                             xlabel = 'Time (s)' if x_axis_is_time else 'Frame'
@@ -632,7 +634,8 @@ class Plotter(object):
                     artists = self.emgartists
                     artists.append(matplotlib.lines.Line2D((0, 1), (0, 0),
                                                            linewidth=2,
-                                                           color=emg_tracecolor))
+                                                           color=
+                                                           emg_tracecolor))
 
                 nothing = [matplotlib.patches.Rectangle((0, 0), 1, 1, fc="w",
                                                         fill=False,

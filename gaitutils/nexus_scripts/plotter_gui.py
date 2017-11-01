@@ -3,12 +3,6 @@
 Embed gaitplotter figure canvas into PyQt5 GUI
 WIP
 
-TODO:
-    -realtime updates to plot on widget changes (needs plotter to be faster?)
-    -title and legend options for pdf writer  (figlegend?)
-    -trial averaging / stddev (separate plot button)
-    -set default fig size (larger)
-    -add color cycler and autolegend (for multiple trials / cycles)
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -23,8 +17,8 @@ from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
 from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
                                                 NavigationToolbar)
 
-
 from gaitutils import Plotter, Trial, nexus, layouts, cfg, GaitDataError
+
 
 logger = logging.getLogger(__name__)
 
@@ -149,19 +143,17 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
         self._set_status('Ready')
 
-
     def _dialog(self):
         d = Dialog()
         d.exec_()
-        
 
     def _load_normaldata(self):
         fname = QtWidgets.QFileDialog.getOpenFileName(self,
                                                       'Open normal data', '',
                                                       'XLSX files (*.xlsx);;'
-                                                      'GCD files (*.gcd);; ')[0]
+                                                      'GCD files (*.gcd);; ')
+        fname = fname[0]
         if fname:
-            fname = unicode(fname)
             # store the filename as user data - could just use the name
             self.listNormalData.add_item(fname, data=fname)
 
@@ -189,12 +181,11 @@ class PlotterWindow(QtWidgets.QMainWindow):
         for cycle in cycles:
             self.listTrialCycles.add_item(cycle.name, data=cycle,
                                           checkable=True)
-    
+
     def _clear_trials(self):
         self.listTrials.clear()
         self.listTrialCycles.clear()
-        
-    
+
     def _select_forceplate_cycles(self):
         """ Select all forceplate cycles in the trial cycles list """
         self.listTrialCycles.check_none()
@@ -275,11 +266,11 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
     def load_dialog(self):
         """ Bring up load dialog and load selected c3d file. """
-        fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open C3D file',
-                                                      '*.c3d')[0]
-        if fname:
-            fname = unicode(fname)
-            self._open_trial(fname)
+        fnames = QtWidgets.QFileDialog.getOpenFileNames(self, 'Open C3D file',
+                                                        '*.c3d')[0]
+        if fnames:
+            for fname in fnames:
+                self._open_trial(fname)
 
     def message_dialog(self, msg):
         """ Show message with an 'OK' button. """
@@ -295,10 +286,8 @@ class PlotterWindow(QtWidgets.QMainWindow):
         fout = QtWidgets.QFileDialog.getSaveFileName(self,
                                                      'Save PDF',
                                                      self._sessionpath,
-                                                     '*.pdf')
-        fname = fout[0]
+                                                     '*.pdf')[0]
         if fname:
-            fname = unicode(fname)
             # TODO: need to figure out logic for the title
             self.pl.set_title('Test plot')
             # TODO: need to resize canvas to e.g. A4

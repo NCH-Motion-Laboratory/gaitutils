@@ -93,11 +93,11 @@ class NiceListWidget(QtWidgets.QListWidget):
         self.takeItem(self.row(self.currentItem()))
 
 
-class Dialog(QtWidgets.QDialog):
+class AveragerDialog(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
-        super(Dialog, self).__init__(parent)
-        uifile = 'dialog.ui'
+        super(self.__class__, self).__init__()
+        uifile = resource_filename(__name__, 'averager.ui')
         uic.loadUi(uifile, self)
 
 
@@ -113,6 +113,11 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self.canvas = FigureCanvas(self.pl.fig)
         self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                   QtWidgets.QSizePolicy.Expanding)
+
+        # these are needed for mpl callbacks to work (?)
+        self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
+        self.canvas.setFocus()
+
         # self.setStyleSheet("background-color: white;");
         # canvas into last column, span all rows
         self.mainGridLayout.addWidget(self.canvas, 0,
@@ -122,8 +127,9 @@ class PlotterWindow(QtWidgets.QMainWindow):
         # this is the Navigation widget
         # it takes the Canvas widget and a parent
         #self.toolbar = NavigationToolbar(self.canvas, self)
+        # can use this to enable selection of multiple items:
         # self.listTrials.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
-        self.listTrials.itemClicked.connect(self._trial_selected)
+        self.listTrials.itemPressed.connect(self._trial_selected)
         # set up widgets
         # buttons
         self.btnAddNexusTrial.clicked.connect(self._open_nexus_trial)
@@ -133,22 +139,28 @@ class PlotterWindow(QtWidgets.QMainWindow):
                                                        _select_forceplate_cycles)
         self.btnSelect1stCycles.clicked.connect(self._select_1st_cycles)
         self.btnPickCycles.clicked.connect(self._pick_cycles)
-        self.btnAverageSelected.clicked.connect(self._average_selected)
+        #self.btnAverageSelected.clicked.connect(self._average_selected)
         self.btnAddC3DTrial.clicked.connect(self.load_dialog)
         self.btnSavePDF.clicked.connect(self._write_pdf)
         self.btnClearTrials.clicked.connect(self._clear_trials)
         self.btnClearCyclesToPlot.clicked.connect(self.listCyclesToPlot.clear)
         # menu actions
         self.actionQuit.triggered.connect(self.close)
-        self.actionNormal_data.triggered.connect(self._dialog)
+        self.actionAverage.triggered.connect(self._averager_dialog)
         # add predefined plot layouts to combobox
         self.cbLayout.addItems(sorted(cfg.options('layouts')))
 
+        self.canvas.mpl_connect('button_press_event', self._onclick)
+
         self._set_status('Ready')
 
-    def _dialog(self):
-        d = Dialog()
-        d.exec_()
+    def _onclick(self, event):
+        logger.debug('click on %s' % event.inaxes)
+
+    def _averager_dialog(self):
+        """ Show the autoprocessing options dialog """
+        dlg = AveragerDialog()
+        dlg.exec_()
 
     def _load_normaldata(self):
         fname = QtWidgets.QFileDialog.getOpenFileName(self,
@@ -266,7 +278,8 @@ class PlotterWindow(QtWidgets.QMainWindow):
                 self.pl.plot_trial(trial=trial, model_cycles=cycs,
                                    emg_cycles=cycs,
                                    match_pig_kinetics=match_pig_kinetics,
-                                   maintitle='', superpose=True)
+                                   maintitle='', superpose=True,
+                                   model_stddev=trial.stddev_data)
             except GaitDataError as e:
                 self.message_dialog('Error: %s' % str(e))
                 self.pl.fig.clear()  # fig may have been partially drawn
@@ -278,7 +291,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
     def load_dialog(self):
         """ Bring up load dialog and load selected c3d file. """
-        fnames = QtWidgets.QFileDialog.getOpenFileNames(self, 'Open C3D file',
+        fnames = QtWidgets.QFileDialog.getOpenFileNames(self, 'Open C3D files',
                                                         '*.c3d')[0]
         if fnames:
             for fname in fnames:

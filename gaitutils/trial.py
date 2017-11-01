@@ -136,6 +136,7 @@ class Trial(object):
         self._forceplate_data = None
         self._fp_events = None
         self._models_data = dict()
+        self.stddev_data = None  # AvgTrial only
         # whether to normalize data
         self._normalize = None
         # frames 0...length

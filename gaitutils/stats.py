@@ -20,8 +20,8 @@ class AvgTrial(Trial):
     """ Trial containing cycle-averaged data, for use with plotter
     TODO: does not support legends yet """
 
-    def __init__(self, c3dfiles):
-        avgdata, stddata, n_ok, _ = average_trials(c3dfiles)
+    def __init__(self, c3dfiles, fp_cycles_only=False):
+        avgdata, stddata, n_ok, _ = average_trials(c3dfiles, fp_cycles_only=fp_cycles_only)
         # nfiles may be misleading since not all trials may contain valid data
         self.nfiles = len(c3dfiles)
         self.trialname = 'Averages from %d trials' % self.nfiles
@@ -50,13 +50,16 @@ class AvgTrial(Trial):
             logger.debug('setting norm. cycle for AvgTrial (no effect)')
 
 
-def average_trials(trials, max_dist=None):
+def average_trials(trials, max_dist=None, fp_cycles_only=False):
     """ Average model data from several trials.
 
     trials: list
         filename, or list of filenames (c3d) to read trials from, or list
         of Trial instances
     max_dist: maximum curve distance from median, for outlier rejection
+    fp_cycles_only: bool
+        If True, only collect data from forceplate cycles. Kinetics will always
+        be collected from forceplate cycles only.
 
     Returns:
 
@@ -69,7 +72,7 @@ def average_trials(trials, max_dist=None):
     Ncyc: dict
         WIP
     """
-    data, Ncyc = _collect_model_data(trials)
+    data, Ncyc = _collect_model_data(trials, fp_cycles_only=fp_cycles_only)
 
     stddata = dict()
     avgdata = dict()
@@ -106,14 +109,18 @@ def _outlier_rows(A, max_dist):
     return (np.abs(A-med)).max(axis=1) > max_dist
 
 
-def _collect_model_data(trials):
+def _collect_model_data(trials, fp_cycles_only=False):
     """ Collect given model data across trials and cycles.
     Returns a dict of numpy arrays keyed by variable.
 
     trials: list
         filename, or list of filenames (c3d) to read trials from, or list
         of Trial instances
+    fp_cycles_only: bool
+        If True, only collect data from forceplate cycles. Kinetics will always
+        be collected from forceplate cycles only.
     """
+
     if not trials:
         logger.debug('no trials')
         return
@@ -150,7 +157,6 @@ def _collect_model_data(trials):
                 logger.debug('cannot read variable %s from %s, skipping '
                              'corresponding model %s' % (var, trial.trialname,
                                                          model.desc))
-
         for model in models_ok:
             # gather data
             for cycle in trial.cycles:
@@ -162,14 +168,16 @@ def _collect_model_data(trials):
 
                 for var in model.varnames:
                     # pick data only if var context matches cycle context
+                    # FIXME: this may not work with all models
                     if var[0] == side:
                         # don't collect kinetics if cycle not on forceplate
-                        if (model.is_kinetic_var(var) and
+                        if ((model.is_kinetic_var(var) or fp_cycles_only) and
                            not cycle.on_forceplate):
-                            continue
+                                continue
                         data = trial[var][1]
-                        data_all[var] = (data[None, :] if data_all[var] is None
-                                         else
+                        # add as first row or concatenate to existing data
+                        data_all[var] = (data[None, :] if data_all[var]
+                                         is None else
                                          np.concatenate([data_all[var],
                                                         data[None, :]]))
 

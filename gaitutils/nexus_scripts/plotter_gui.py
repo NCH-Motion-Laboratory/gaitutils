@@ -100,6 +100,37 @@ class AveragerDialog(QtWidgets.QDialog):
         uifile = resource_filename(__name__, 'averager.ui')
         uic.loadUi(uifile, self)
 
+        self.btnAddNexusTrial.clicked.connect(self._open_nexus_trial)
+        self.btnAddC3DTrial.clicked.connect(self.load_dialog)
+
+    def _open_nexus_trial(self):
+        try:
+            vicon = nexus.viconnexus()
+            self._open_trial(vicon)
+        except GaitDataError:
+            self.message_dialog('Vicon Nexus is not running')
+
+    def _open_trial(self, source):
+        tr = Trial(source)
+        trials = (item.userdata for item in self.listTrials.items)
+        # check if trial already loaded (based on name)
+        # TODO: might use smarter detection
+        if tr.trialname in [trial.trialname for trial in trials]:
+            return
+        self.listTrials.add_item(tr.trialname, data=tr, checkable=True)
+
+    def _average(self):
+        """ Make AvgTrial from loaded trials """
+        trials = [item.userdata for item in self.listTrials.items]
+        avgtr = stats.AvgTrial(trials)
+        
+        self.listTrials.add_item('Average trial', data=avgtr)
+        self._update_trial_cycles_list(avgtr)
+
+
+
+
+
 
 class PlotterWindow(QtWidgets.QMainWindow):
 
@@ -226,14 +257,6 @@ class PlotterWindow(QtWidgets.QMainWindow):
             name = '%s: %s' % (cycle.trial.trialname, cycle.name)
             self.listCyclesToPlot.add_item(name, data=cycle)
 
-    def _average_selected(self):
-        """ Make AvgTrial from selected trials """
-        # only add cycles that were not already added
-        trials = [item.userdata for item in self.listTrials.checked_items]
-        # FIXME: only averages PiG lower for now
-        avgtr = stats.AvgTrial(trials, models.models_all[1])
-        self.listTrials.add_item('Average trial', data=avgtr)
-        self._update_trial_cycles_list(avgtr)
 
     def _open_nexus_trial(self):
         try:

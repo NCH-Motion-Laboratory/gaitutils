@@ -23,9 +23,8 @@ def do_plot(show=True, make_pdf=True):
              eclipse.get_eclipse_keys(enf)['TYPE'] == 'Dynamic']
     if not files:
         raise GaitDataError('No dynamic trials found for current session')
-    models = [gaitutils.models.pig_lowerbody]
 
-    atrial = gaitutils.stats.AvgTrial(files, models)
+    atrial = gaitutils.stats.AvgTrial(files)
 
     pl = gaitutils.Plotter()
     pl.trial = atrial

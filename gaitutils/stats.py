@@ -11,7 +11,7 @@ import numpy as np
 
 from .trial import Trial, Gaitcycle
 from .envutils import GaitDataError
-
+from . import models
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +20,9 @@ class AvgTrial(Trial):
     """ Trial containing cycle-averaged data, for use with plotter
     TODO: does not support legends yet """
 
-    def __init__(self, c3dfiles, models):
-        avgdata, stddata, n_ok, _ = average_trials(c3dfiles, models)
+    def __init__(self, c3dfiles):
+        avgdata, stddata, n_ok, _ = average_trials(c3dfiles)
+        # nfiles may be misleading since not all trials may contain valid data
         self.nfiles = len(c3dfiles)
         self.trialname = 'Averages from %d trials' % self.nfiles
         self.source = 'averaged data'
@@ -49,14 +50,12 @@ class AvgTrial(Trial):
             logger.debug('setting norm. cycle for AvgTrial (no effect)')
 
 
-def average_trials(trials, models, max_dist=None):
+def average_trials(trials, max_dist=None):
     """ Average model data from several trials.
 
     trials: list
         filename, or list of filenames (c3d) to read trials from, or list
         of Trial instances
-    models: model (GaitModel instance) or list of GaitModel instances to
-            average
     max_dist: maximum curve distance from median, for outlier rejection
 
     Returns:
@@ -66,11 +65,11 @@ def average_trials(trials, models, max_dist=None):
     stddata: dict
         Standard dev for each var
     N_ok: dict
-        N of accepted trials for each var
+        N of accepted cycles for each var
     Ncyc: dict
         WIP
     """
-    data, Ncyc = _collect_model_data(trials, models)
+    data, Ncyc = _collect_model_data(trials)
 
     stddata = dict()
     avgdata = dict()
@@ -107,63 +106,60 @@ def _outlier_rows(A, max_dist):
     return (np.abs(A-med)).max(axis=1) > max_dist
 
 
-def _collect_model_data(trials, models):
+def _collect_model_data(trials):
     """ Collect given model data across trials and cycles.
     Returns a dict of numpy arrays keyed by variable.
 
     trials: list
         filename, or list of filenames (c3d) to read trials from, or list
         of Trial instances
-    models: model (GaitModel instance) or list of GaitModel instances to
-            average
     """
     if not trials:
         logger.debug('no trials')
         return
     if not isinstance(trials, list):
         trials = [trials]
-    if not isinstance(models, list):
-        models = [models]
 
     data_all = dict()
 
-    for model in models:
+    for model in models.models_all:
         for var in model.varnames:
             data_all[var] = None
 
     nc = dict()
     nc['R'], nc['L'], nc['Rkin'], nc['Lkin'] = (0,)*4
 
-    for n, trial in enumerate(trials):
+    for n, trial_ in enumerate(trials):
         # see whether it's already a Trial instance or we need to create one
-        if isinstance(trial, Trial):
-            tr = trial
+        if isinstance(trial_, Trial):
+            trial = trial_
         else:
             try:
-                tr = Trial(file)
+                trial = Trial(trial_)
             except GaitDataError:
-                logger.warning('cannot load %s' % file)
+                logger.warning('cannot load %s' % trial)
 
         # see which models are included in trial
         models_ok = list()
-        for model in models:
+        for model in models.models_all:
             var = model.varnames[0]
             try:
-                data = tr[var][1]
+                data = trial[var][1]
                 models_ok.append(model)
             except GaitDataError:
                 logger.debug('cannot read variable %s from %s, skipping '
-                             'corresponding model %s' % (var, trial,
+                             'corresponding model %s' % (var, trial.trialname,
                                                          model.desc))
-        # gather data
-        for cycle in tr.cycles:
-            tr.set_norm_cycle(cycle)
-            side = cycle.context
-            if cycle.on_forceplate:
-                nc[side+'kin'] += 1
-            nc[side] += 1
 
-            for model in models_ok:
+        for model in models_ok:
+            # gather data
+            for cycle in trial.cycles:
+                trial.set_norm_cycle(cycle)
+                side = cycle.context
+                if cycle.on_forceplate:
+                    nc[side+'kin'] += 1
+                nc[side] += 1
+
                 for var in model.varnames:
                     # pick data only if var context matches cycle context
                     if var[0] == side:
@@ -171,7 +167,7 @@ def _collect_model_data(trials, models):
                         if (model.is_kinetic_var(var) and
                            not cycle.on_forceplate):
                             continue
-                        data = tr[var][1]
+                        data = trial[var][1]
                         data_all[var] = (data[None, :] if data_all[var] is None
                                          else
                                          np.concatenate([data_all[var],
@@ -179,4 +175,5 @@ def _collect_model_data(trials, models):
 
     logger.debug('collected %d trials, %d/%d R/L cycles, %d/%d kinetics cycles'
                  % (n, nc['R'], nc['L'], nc['Rkin'], nc['Lkin']))
+
     return data_all, nc

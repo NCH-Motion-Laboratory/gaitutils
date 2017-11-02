@@ -126,9 +126,11 @@ def _collect_model_data(trials, models):
         models = [models]
 
     data_all = dict()
+
     for model in models:
         for var in model.varnames:
             data_all[var] = None
+
     nc = dict()
     nc['R'], nc['L'], nc['Rkin'], nc['Lkin'] = (0,)*4
 
@@ -141,36 +143,40 @@ def _collect_model_data(trials, models):
                 tr = Trial(file)
             except GaitDataError:
                 logger.warning('cannot load %s' % file)
-        models_ok = True
+
+        # see which models are included in trial
+        models_ok = list()
         for model in models:
-            # test whether read is ok for all models (only test 1st var)
             var = model.varnames[0]
             try:
                 data = tr[var][1]
+                models_ok.append(model)
             except GaitDataError:
-                logger.warning('cannot read variable %s from %s' %
-                               (var, trial))
-                models_ok = False
-        if not models_ok:
-            continue
+                logger.debug('cannot read variable %s from %s, skipping '
+                             'corresponding model %s' % (var, trial,
+                                                         model.desc))
+        # gather data
         for cycle in tr.cycles:
             tr.set_norm_cycle(cycle)
             side = cycle.context
             if cycle.on_forceplate:
                 nc[side+'kin'] += 1
             nc[side] += 1
-            for model in models:
+
+            for model in models_ok:
                 for var in model.varnames:
                     # pick data only if var context matches cycle context
                     if var[0] == side:
-                        # don't collect kinetics data if cycle not on forceplate
-                        if model.is_kinetic_var(var) and not cycle.on_forceplate:
+                        # don't collect kinetics if cycle not on forceplate
+                        if (model.is_kinetic_var(var) and
+                           not cycle.on_forceplate):
                             continue
                         data = tr[var][1]
                         data_all[var] = (data[None, :] if data_all[var] is None
                                          else
                                          np.concatenate([data_all[var],
                                                         data[None, :]]))
+
     logger.debug('collected %d trials, %d/%d R/L cycles, %d/%d kinetics cycles'
                  % (n, nc['R'], nc['L'], nc['Rkin'], nc['Lkin']))
     return data_all, nc

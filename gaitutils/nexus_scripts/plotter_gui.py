@@ -24,6 +24,16 @@ from gaitutils import (Plotter, Trial, nexus, layouts, cfg, GaitDataError,
 logger = logging.getLogger(__name__)
 
 
+def message_dialog(msg):
+    """ Show message with an 'OK' button. """
+    dlg = QtWidgets.QMessageBox()
+    dlg.setWindowTitle('Message')
+    dlg.setText(msg)
+    dlg.addButton(QtWidgets.QPushButton('Ok'),
+                  QtWidgets.QMessageBox.YesRole)
+    dlg.exec_()
+
+
 class NiceListWidgetItem(QtWidgets.QListWidgetItem):
     """ Make list items more pythonic - otherwise would have to do horrible and
     bug-prone things like checkState() """
@@ -102,6 +112,8 @@ class AveragerDialog(QtWidgets.QDialog):
 
         self.btnAddNexusTrial.clicked.connect(self._open_nexus_trial)
         self.btnAddC3DTrial.clicked.connect(self.load_dialog)
+        self.btnDoAverage.clicked.connect(self.accept)
+        self.btnCancel.clicked.connect(self.reject)
 
     def _open_nexus_trial(self):
         try:
@@ -117,19 +129,23 @@ class AveragerDialog(QtWidgets.QDialog):
         # TODO: might use smarter detection
         if tr.trialname in [trial.trialname for trial in trials]:
             return
-        self.listTrials.add_item(tr.trialname, data=tr, checkable=True)
+        self.listTrials.add_item(tr.trialname, data=tr)
 
-    def _average(self):
-        """ Make AvgTrial from loaded trials """
+    def accept(self):
+        """ Do the averaging """
         trials = [item.userdata for item in self.listTrials.items]
-        avgtr = stats.AvgTrial(trials)
-        
-        self.listTrials.add_item('Average trial', data=avgtr)
-        self._update_trial_cycles_list(avgtr)
+        fp_cycles_only = self.xpFpCyclesOnly.checkState()
+        self.avg = stats.AvgTrial(trials, fp_cycles_only=fp_cycles_only)
+        message_dialog('Averaging OK')
+        self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
 
-
-
-
+    def load_dialog(self):
+        """ Bring up load dialog and load selected c3d file. """
+        fnames = QtWidgets.QFileDialog.getOpenFileNames(self, 'Open C3D files',
+                                                        '*.c3d')[0]
+        if fnames:
+            for fname in fnames:
+                self._open_trial(fname)
 
 
 class PlotterWindow(QtWidgets.QMainWindow):
@@ -191,7 +207,9 @@ class PlotterWindow(QtWidgets.QMainWindow):
     def _averager_dialog(self):
         """ Show the autoprocessing options dialog """
         dlg = AveragerDialog()
-        dlg.exec_()
+        if dlg.exec_():
+            self.listTrials.add_item('Average trial', dlg.avg)
+            self._update_trial_cycles_list(dlg.avg)
 
     def _load_normaldata(self):
         fname = QtWidgets.QFileDialog.getOpenFileName(self,
@@ -257,13 +275,12 @@ class PlotterWindow(QtWidgets.QMainWindow):
             name = '%s: %s' % (cycle.trial.trialname, cycle.name)
             self.listCyclesToPlot.add_item(name, data=cycle)
 
-
     def _open_nexus_trial(self):
         try:
             vicon = nexus.viconnexus()
             self._open_trial(vicon)
         except GaitDataError:
-            self.message_dialog('Vicon Nexus is not running')
+            message_dialog('Vicon Nexus is not running')
 
     def _open_trial(self, source):
         tr = Trial(source)
@@ -272,7 +289,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
         # TODO: might use smarter detection
         if tr.trialname in [trial.trialname for trial in trials]:
             return
-        self.listTrials.add_item(tr.trialname, data=tr, checkable=True)
+        self.listTrials.add_item(tr.trialname, data=tr)
         self._update_trial_cycles_list(tr)
         self._set_status('Loaded trial %s' % tr.trialname)
 
@@ -284,7 +301,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self.pl.fig.clear()
         cycles = [item.userdata for item in self.listCyclesToPlot.items]
         if not cycles:
-            self.message_dialog('No cycles selected for plotting')
+            message_dialog('No cycles selected for plotting')
             return
         # gather the cycles and key by trial
         for cycle in cycles:
@@ -304,7 +321,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
                                    maintitle='', superpose=True,
                                    model_stddev=trial.stddev_data)
             except GaitDataError as e:
-                self.message_dialog('Error: %s' % str(e))
+                message_dialog('Error: %s' % str(e))
                 self.pl.fig.clear()  # fig may have been partially drawn
         self.canvas.draw()
         self.btnSavePDF.setEnabled(True)  # can create pdf now
@@ -320,14 +337,6 @@ class PlotterWindow(QtWidgets.QMainWindow):
             for fname in fnames:
                 self._open_trial(fname)
 
-    def message_dialog(self, msg):
-        """ Show message with an 'OK' button. """
-        dlg = QtWidgets.QMessageBox()
-        dlg.setWindowTitle('Message')
-        dlg.setText(msg)
-        dlg.addButton(QtWidgets.QPushButton('Ok'),
-                      QtWidgets.QMessageBox.YesRole)
-        dlg.exec_()
 
     def _write_pdf(self):
         """ Bring up save dialog and save data. """
@@ -343,7 +352,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
             try:
                 self.canvas.print_figure(fname)
             except IOError:
-                self.message_dialog('Error writing PDF file, check that file '
+                message_dialog('Error writing PDF file, check that file '
                                     'is not open')
             # reset title for onscreen and redraw canvas
             self.pl.set_title('')
@@ -362,7 +371,7 @@ if __name__ == '__main__':
         """ Custom exception handler for fatal (unhandled) exceptions:
         report to user via GUI and terminate. """
         tb_full = u''.join(traceback.format_exception(type, value, tback))
-        win.message_dialog('Unhandled exception: %s' % tb_full)
+        message_dialog('Unhandled exception: %s' % tb_full)
         # dump traceback to file
         # try:
         #    with io.open(Config.traceback_file, 'w', encoding='utf-8') as f:

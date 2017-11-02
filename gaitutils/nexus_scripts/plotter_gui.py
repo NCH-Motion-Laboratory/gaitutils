@@ -34,6 +34,11 @@ def message_dialog(msg):
     dlg.exec_()
 
 
+def _trial_namestr(trial):
+    return u'%s  %s  %s' % (trial.trialname, trial.eclipse_data['DESCRIPTION'],
+                            trial.eclipse_data['NOTES'])
+
+
 class NiceListWidgetItem(QtWidgets.QListWidgetItem):
     """ Make list items more pythonic - otherwise would have to do horrible and
     bug-prone things like checkState() """
@@ -129,7 +134,7 @@ class AveragerDialog(QtWidgets.QDialog):
         # TODO: might use smarter detection
         if tr.trialname in [trial.trialname for trial in trials]:
             return
-        self.listTrials.add_item(tr.trialname, data=tr)
+        self.listTrials.add_item(_trial_namestr(tr), data=tr)
 
     def accept(self):
         """ Do the averaging """
@@ -289,7 +294,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
         # TODO: might use smarter detection
         if tr.trialname in [trial.trialname for trial in trials]:
             return
-        self.listTrials.add_item(tr.trialname, data=tr)
+        self.listTrials.add_item(_trial_namestr(tr), data=tr)
         self._update_trial_cycles_list(tr)
         self._set_status('Loaded trial %s' % tr.trialname)
 

@@ -40,7 +40,7 @@
         </property>
        </spacer>
       </item>
-      <item row="24" column="1">
+      <item row="25" column="1">
        <widget class="Line" name="line_2">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -66,11 +66,11 @@
       <item row="11" column="2">
        <widget class="QPushButton" name="btnSelectForceplateCycles">
         <property name="text">
-         <string>Forceplate</string>
+         <string>Select forceplate cycles</string>
         </property>
        </widget>
       </item>
-      <item row="22" column="1" colspan="2">
+      <item row="23" column="1" colspan="2">
        <widget class="QCheckBox" name="xbKineticsFpOnly">
         <property name="text">
          <string>Plot kinetics for forceplate cycles only</string>
@@ -80,7 +80,7 @@
         </property>
        </widget>
       </item>
-      <item row="25" column="1">
+      <item row="26" column="1">
        <widget class="QPushButton" name="btnPlot">
         <property name="text">
          <string>Plot</string>
@@ -107,7 +107,7 @@
         </property>
        </spacer>
       </item>
-      <item row="23" column="1">
+      <item row="24" column="1">
        <widget class="QCheckBox" name="xbLegend">
         <property name="text">
          <string>Include legend</string>
@@ -202,7 +202,10 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>...</string>
+         <string>Include for plotting</string>
+        </property>
+        <property name="toolButtonStyle">
+         <enum>Qt::ToolButtonTextBesideIcon</enum>
         </property>
         <property name="arrowType">
          <enum>Qt::DownArrow</enum>
@@ -212,14 +215,14 @@
       <item row="11" column="3">
        <widget class="QPushButton" name="btnSelect1stCycles">
         <property name="text">
-         <string>1st R and L</string>
+         <string>Select 1st R and L</string>
         </property>
        </widget>
       </item>
       <item row="11" column="1">
        <widget class="QPushButton" name="btnSelectAllCycles">
         <property name="text">
-         <string>All</string>
+         <string>Select all</string>
         </property>
        </widget>
       </item>
@@ -233,7 +236,7 @@
         </property>
        </widget>
       </item>
-      <item row="28" column="1">
+      <item row="29" column="1">
        <spacer name="verticalSpacer_5">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
@@ -263,7 +266,7 @@
         </property>
        </widget>
       </item>
-      <item row="25" column="3">
+      <item row="26" column="3">
        <widget class="QPushButton" name="btnSavePDF">
         <property name="enabled">
          <bool>false</bool>
@@ -273,10 +276,27 @@
         </property>
        </widget>
       </item>
-      <item row="25" column="2">
+      <item row="26" column="2">
        <widget class="QPushButton" name="pushButton_2">
         <property name="text">
-         <string>Average and plot</string>
+         <string>Plotting options...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="22" column="1">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Normal data:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="22" column="2">
+       <widget class="QComboBox" name="cbNormalData"/>
+      </item>
+      <item row="22" column="3">
+       <widget class="QPushButton" name="pushButton">
+        <property name="text">
+         <string>Open...</string>
         </property>
        </widget>
       </item>

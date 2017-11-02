@@ -146,6 +146,8 @@ def _collect_model_data(trials, fp_cycles_only=False):
             except GaitDataError:
                 logger.warning('cannot load %s' % trial)
 
+        logger.debug('collecting data for %s' % trial.trialname)
+
         # see which models are included in trial
         models_ok = list()
         for model in models.models_all:

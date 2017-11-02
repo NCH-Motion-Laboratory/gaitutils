@@ -199,8 +199,12 @@ class PlotterWindow(QtWidgets.QMainWindow):
         # menu actions
         self.actionQuit.triggered.connect(self.close)
         self.actionAverage.triggered.connect(self._averager_dialog)
+
         # add predefined plot layouts to combobox
         self.cbLayout.addItems(sorted(cfg.options('layouts')))
+
+        # add normal data files
+        self.cbNormalData.addItems(sorted(cfg.general.normaldata_files))
 
         self.canvas.mpl_connect('button_press_event', self._onclick)
 

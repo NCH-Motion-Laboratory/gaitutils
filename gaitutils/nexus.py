@@ -211,8 +211,10 @@ def get_metadata(vicon):
     rstrikes = vicon.GetEvents(name, "Right", "Foot Strike")[0]
     ltoeoffs = vicon.GetEvents(name, "Left", "Foot Off")[0]
     rtoeoffs = vicon.GetEvents(name, "Right", "Foot Off")[0]
-    # frame info
-    offset = vicon.GetTrialRange()[0]
+    # Offset will be subtracted from event frame numbers to get correct
+    # 0-based index for frame data. For Nexus, it is always 1 (Nexus uses
+    # 1-based frame numbering)
+    offset = 1
     length = vicon.GetFrameCount()
     framerate = vicon.GetFrameRate()
     # Get analog rate. This may not be mandatory if analog devices

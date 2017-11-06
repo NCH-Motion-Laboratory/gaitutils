@@ -226,16 +226,16 @@ def detect_forceplate_events(source, fp_info=None):
                     logger.debug('checking %s' % marker_)
                     mins_s, maxes_s = mins.copy(), maxes.copy()
                     mins_t, maxes_t = mins.copy(), maxes.copy()
-                    # extra tolerance for ankle marker in sideways direction
+                    # add tolerance for ankle marker in sideways direction
                     if 'ANK' in marker_:
                         mins_t[orth_dir] -= cfg.autoproc.ankle_sideways_tol
                         maxes_t[orth_dir] += cfg.autoproc.ankle_sideways_tol
                         mins_s[orth_dir] -= cfg.autoproc.ankle_sideways_tol
                         maxes_s[orth_dir] += cfg.autoproc.ankle_sideways_tol
-                    # extra tol for all markers in gait direction @ toeoff
+                    # add tol for all markers in gait dir @ toeoff
                     maxes_t[fwd_dir] += cfg.autoproc.toeoff_marker_tol
                     mins_t[fwd_dir] -= cfg.autoproc.toeoff_marker_tol
-                    # extra tol for heel marker in gait dir during foot strike
+                    # add tol for heel marker in gait dir @ foot strike
                     if 'HEE' in marker_:
                         maxes_s[fwd_dir] += cfg.autoproc.heel_strike_tol
                         mins_s[fwd_dir] -= cfg.autoproc.heel_strike_tol

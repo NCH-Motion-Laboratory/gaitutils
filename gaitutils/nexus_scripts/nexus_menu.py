@@ -90,12 +90,13 @@ class XStream(QtCore.QObject):
         return XStream._stderr
 
 
-class AutoprocDialog(QtWidgets.QDialog):
+class OptionsDialog(QtWidgets.QDialog):
+    """ Display a tabbed dialog for changing gaitutils options """
 
-    def __init__(self):
+    def __init__(self, default_tab=0):
         super(self.__class__, self).__init__()
         # load user interface made with designer
-        uifile = resource_filename(__name__, 'autoproc_dialog.ui')
+        uifile = resource_filename(__name__, 'options_dialog.ui')
         uic.loadUi(uifile, self)
 
         # add some buttons to the standard button box
@@ -107,6 +108,9 @@ class AutoprocDialog(QtWidgets.QDialog):
         self.buttonBox.addButton(saveButton,
                                  QtWidgets.QDialogButtonBox.ActionRole)
         saveButton.clicked.connect(self.save_config_dialog)
+
+        # show page
+        self.tabWidget.setCurrentIndex(default_tab)
 
         """ Collect config widgets into a dict of dict. First key is tab
         (same as config category, e.g. autoproc), second key is widget name """
@@ -291,7 +295,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   thread=True)
         self._button_connect_task(self.btnCreatePDFs,
                                   nexus_make_all_plots.do_plot, thread=True)
-        self.btnAutoprocDialog.clicked.connect(self.autoproc_dialog)
+
+        self.btnOptions.clicked.connect(self._options_dialog)
         self.btnQuit.clicked.connect(self.close)
 
         # collect operation widgets
@@ -314,9 +319,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         thread. """
         button.clicked.connect(lambda ev: self._execute(fun, thread=thread))
 
-    def autoproc_dialog(self):
+    def _options_dialog(self):
         """ Show the autoprocessing options dialog """
-        dlg = AutoprocDialog()
+        dlg = OptionsDialog()
         dlg.exec_()
 
     def _log_message(self, msg):

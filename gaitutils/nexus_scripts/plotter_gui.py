@@ -19,6 +19,7 @@ from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
 
 from gaitutils import (Plotter, Trial, nexus, layouts, cfg, GaitDataError,
                        stats, models)
+from gaitutils.nexus_scripts.nexus_menu import OptionsDialog
 
 
 logger = logging.getLogger(__name__)
@@ -196,6 +197,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self.btnSavePDF.clicked.connect(self._write_pdf)
         self.btnClearTrials.clicked.connect(self._clear_trials)
         self.btnClearCyclesToPlot.clicked.connect(self.listCyclesToPlot.clear)
+        self.btnOptions.clicked.connect(self._options_dialog)
         # menu actions
         self.actionQuit.triggered.connect(self.close)
         self.actionAverage.triggered.connect(self._averager_dialog)
@@ -212,6 +214,11 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
     def _onclick(self, event):
         logger.debug('click on %s' % event.inaxes)
+
+    def _options_dialog(self):
+        """ Show the autoprocessing options dialog """
+        dlg = OptionsDialog(default_tab=1)
+        dlg.exec_()
 
     def _averager_dialog(self):
         """ Show the autoprocessing options dialog """

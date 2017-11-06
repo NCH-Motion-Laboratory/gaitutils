@@ -243,6 +243,9 @@ class Trial(object):
                     # offset is needed since events are not 0-offset here
                     diffs = np.abs(fp_strikes - start + self.offset)
                     on_forceplate = min(diffs) <= STRIKE_TOL
+                    logger.debug('side %s: detected fp events: %s'
+                                 % (context, fp_strikes))
+                    logger.debug('cycle start: %d' % (start - self.offset))
                 end = strikes[k+1]
                 toeoff = [x for x in toeoffs if x > start and x < end]
                 if len(toeoff) == 0:

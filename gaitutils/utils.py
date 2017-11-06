@@ -256,7 +256,6 @@ def detect_forceplate_events(source, fp_info=None):
                         logger.debug('marker %s failed on-plate check during '
                                      'toeoff ' % marker_)
                         break
-
                 if ok:
                     if this_valid:
                         raise GaitDataError('valid contact on both feet (?)')

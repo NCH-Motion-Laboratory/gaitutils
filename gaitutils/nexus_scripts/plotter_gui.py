@@ -327,7 +327,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
             plot_cycles[cycle.trial].append(cycle)
         # set options and create the plot
         self.pl.layout = cfg.layouts.__getattr__(self.cbLayout.currentText())
-        
+
         # normal data self.pl.layou = self.cbLayout.currentText()
         match_pig_kinetics = self.xbKineticsFpOnly.checkState()
 #        normaldata_files = [item.userdata for item in

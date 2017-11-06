@@ -56,7 +56,6 @@ class Plotter(object):
         self.emgartists = list()
         self._normaldata_files = list()
         self._normaldata = dict()
-        self.cfg = cfg
         self.nrows = 0
         self.ncols = 0
         self.interactive = interactive
@@ -91,10 +90,10 @@ class Plotter(object):
         self.ncols = len(layout[0])
 
         # compute figure width and height - only used for interactive figures
-        self.figh = min(self.nrows*self.cfg.plot.inch_per_row + 1,
-                        self.cfg.plot.maxh)
-        self.figw = min(self.ncols*self.cfg.plot.inch_per_col,
-                        self.cfg.plot.maxw)
+        self.figh = min(self.nrows*cfg.plot.inch_per_row + 1,
+                        cfg.plot.maxh)
+        self.figw = min(self.ncols*cfg.plot.inch_per_col,
+                        cfg.plot.maxw)
 
         if plotheightratios is None:
             plotheightratios = self._plot_height_ratios()
@@ -119,11 +118,11 @@ class Plotter(object):
 
     def external_play_video(self, vidfile):
         """ Launch video player (defined in config) to play vidfile. """
-        PLAYER_CMD = self.cfg.general.videoplayer_path
+        PLAYER_CMD = cfg.general.videoplayer_path
         if not (op.isfile(PLAYER_CMD) and os.access(PLAYER_CMD, os.X_OK)):
             raise ValueError('Invalid video player executable: %s'
                              % PLAYER_CMD)
-        PLAYER_OPTS = self.cfg.general.videoplayer_opts
+        PLAYER_OPTS = cfg.general.videoplayer_opts
         # command needs to be constructed in a very particular way
         # see subprocess.list2cmdline
         subprocess.Popen([PLAYER_CMD]+PLAYER_OPTS.split()+[vidfile])
@@ -149,7 +148,7 @@ class Plotter(object):
         # check whether it's a configured EMG channel or exists in the data
         # source (both are ok)
         elif (self.trial and self.trial.emg.is_channel(var) or var in
-              self.cfg.emg.channel_labels):
+              cfg.emg.channel_labels):
             return 'emg'
         else:
             raise ValueError('Unknown variable %s' % var)
@@ -160,7 +159,7 @@ class Plotter(object):
         for row in self._layout:
             # this should take into account any analog variable
             if all([self._var_type(var) == 'emg' for var in row]):
-                plotheightratios.append(self.cfg.plot.analog_plotheight)
+                plotheightratios.append(cfg.plot.analog_plotheight)
             else:
                 plotheightratios.append(1)
         return plotheightratios
@@ -169,7 +168,7 @@ class Plotter(object):
         """ Customized tight layout """
         self.gridspec.tight_layout(self.fig)
         # space for main title
-        top = (self.figh - self.cfg.plot.titlespace) / self.figh
+        top = (self.figh - cfg.plot.titlespace) / self.figh
         # decrease vertical spacing
         hspace = .6
         # self.gridspec.update(hspace=hspace)
@@ -177,8 +176,8 @@ class Plotter(object):
         self.gridspec.update(top=top, hspace=hspace)
 
     def plot_trial(self, trial=None,
-                   model_cycles=cfg.plot.default_model_cycles,
-                   emg_cycles=cfg.plot.default_emg_cycles,
+                   model_cycles=None,
+                   emg_cycles=None,
                    plotheightratios=None,
                    plotwidthratios=None,
                    model_tracecolor=None,
@@ -297,6 +296,7 @@ class Plotter(object):
                 after finished. If interactive=False, this has no effect.
         """
 
+
         if trial is None and self.trial is None:
             raise ValueError('No trial, specify one or call open_trial()')
         elif trial is None:
@@ -381,6 +381,12 @@ class Plotter(object):
                           for ncycle in cycles[side] if ncycle]
             return cycles
 
+        if model_cycles is None:
+            model_cycles = cfg.plot.default_model_cycles
+
+        if emg_cycles is None:
+            emg_cycles = cfg.plot.default_emg_cycles
+
         # get cycles from data if they were not directly specified as instances
         model_cycles = (model_cycles if isinstance(model_cycles, list) else
                         _get_cycles(model_cycles))
@@ -394,16 +400,17 @@ class Plotter(object):
         """
         if self.fig is None or not superpose:
             # auto size fig according to n of subplots w, limit size
-            self.figh = min(self.nrows*self.cfg.plot.inch_per_row + 1,
-                            self.cfg.plot.maxh)
-            self.figw = min(self.ncols*self.cfg.plot.inch_per_col,
-                            self.cfg.plot.maxw)
+            self.figh = min(self.nrows*cfg.plot.inch_per_row + 1,
+                            cfg.plot.maxh)
+            self.figw = min(self.ncols*cfg.plot.inch_per_col,
+                            cfg.plot.maxw)
             logger.debug('new figure: width %.2f, height %.2f'
                          % (self.figw, self.figh))
             self.fig = plt.figure(figsize=(self.figw, self.figh))
             self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                               height_ratios=plotheightratios)
         """
+
         is_avg_trial = isinstance(trial, AvgTrial)
 
         for i, var in enumerate(self.allvars):
@@ -444,13 +451,13 @@ class Plotter(object):
                              x_axis_is_time else x_)
                         # FIXME: cycle may not have context?
                         tcolor = (model_tracecolor if model_tracecolor
-                                  else self.cfg.plot.model_tracecolors
+                                  else cfg.plot.model_tracecolors
                                   [cycle.context])
-                        lstyle = (self.cfg.plot.model_linestyles
+                        lstyle = (cfg.plot.model_linestyles
                                   [cycle.context] if linestyles_context else
                                   model_linestyle)
                         ax.plot(x, data, tcolor, linestyle=lstyle,
-                                linewidth=self.cfg.plot.model_linewidth,
+                                linewidth=cfg.plot.model_linewidth,
                                 alpha=model_alpha)
                         # add toeoff marker for this cycle
                         if (cycle is not None and not is_avg_trial and
@@ -472,9 +479,9 @@ class Plotter(object):
                             stdx = np.linspace(0, 100, sdata.shape[0])
                             ax.fill_between(stdx, data-sdata,
                                             data+sdata,
-                                            color=self.cfg.plot.
+                                            color=cfg.plot.
                                             model_stddev_colors[cycle.context],
-                                            alpha=self.cfg.plot.
+                                            alpha=cfg.plot.
                                             model_stddev_alpha)
                             # tighten x limits
                             ax.set_xlim(stdx[0], stdx[-1])
@@ -483,9 +490,9 @@ class Plotter(object):
                     if cycle == model_cycles[-1]:
 
                         ax.set(ylabel=model.ylabels[varname])  # no xlabel now
-                        ax.xaxis.label.set_fontsize(self.cfg.
+                        ax.xaxis.label.set_fontsize(cfg.
                                                     plot.label_fontsize)
-                        ax.yaxis.label.set_fontsize(self.cfg.
+                        ax.yaxis.label.set_fontsize(cfg.
                                                     plot.label_fontsize)
                         subplot_title = model.varlabels[varname]
 
@@ -498,16 +505,16 @@ class Plotter(object):
                         if prev_title and prev_title != subplot_title:
                             subplot_title = prev_title + ' / ' + subplot_title
                         ax.set_title(subplot_title)
-                        ax.title.set_fontsize(self.cfg.plot.title_fontsize)
+                        ax.title.set_fontsize(cfg.plot.title_fontsize)
                         ax.axhline(0, color='black', linewidth=.5)  # zero line
                         ax.locator_params(axis='y', nbins=6)  # less tick marks
                         ax.tick_params(axis='both', which='major',
-                                       labelsize=self.cfg.plot.ticks_fontsize)
+                                       labelsize=cfg.plot.ticks_fontsize)
 
                         if cycle is None and var in self.layout[-1]:
                             xlabel = 'Time (s)' if x_axis_is_time else 'Frame'
                             ax.set(xlabel=xlabel)
-                            ax.xaxis.label.set_fontsize(self.cfg.
+                            ax.xaxis.label.set_fontsize(cfg.
                                                         plot.label_fontsize)
 
                         if plot_model_normaldata and cycle is not None:
@@ -529,9 +536,9 @@ class Plotter(object):
                                 normalx = np.linspace(0, 100, ndata.shape[0])
                                 ax.fill_between(normalx, ndata[:, 0],
                                                 ndata[:, 1],
-                                                color=self.cfg.plot.
+                                                color=cfg.plot.
                                                 model_normals_color,
-                                                alpha=self.cfg.plot.
+                                                alpha=cfg.plot.
                                                 model_normals_alpha)
                                 # tighten x limits
                                 ax.set_xlim(normalx[0], normalx[-1])
@@ -539,14 +546,14 @@ class Plotter(object):
             elif var_type == 'emg':
                 # set title first, since we may end up not plotting the emg at
                 # all (i.e for missing / disconnected channels)
-                subplot_title = (self.cfg.emg.channel_labels[var] if
-                                 var in self.cfg.emg.channel_labels
+                subplot_title = (cfg.emg.channel_labels[var] if
+                                 var in cfg.emg.channel_labels
                                  else var)
                 prev_title = ax.get_title()
                 if prev_title and prev_title != subplot_title:
                     subplot_title = prev_title + ' / ' + subplot_title
                 ax.set_title(subplot_title)
-                ax.title.set_fontsize(self.cfg.plot.title_fontsize)
+                ax.title.set_fontsize(cfg.plot.title_fontsize)
 
                 for cycle in emg_cycles:
                     if cycle is not None:  # plot normalized data
@@ -574,47 +581,47 @@ class Plotter(object):
                        auto_match_emg_cycle):
                         # plot data and/or rms
                         if plot_emg_rms != 'rms_only':
-                            ax.plot(x, data*self.cfg.plot.emg_multiplier,
+                            ax.plot(x, data*cfg.plot.emg_multiplier,
                                     emg_tracecolor,
-                                    linewidth=self.cfg.plot.emg_linewidth,
+                                    linewidth=cfg.plot.emg_linewidth,
                                     alpha=emg_alpha)
 
                         if plot_emg_rms:
-                            rms = numutils.rms(data, self.cfg.emg.rms_win)
-                            ax.plot(x, rms*self.cfg.plot.emg_multiplier,
+                            rms = numutils.rms(data, cfg.emg.rms_win)
+                            ax.plot(x, rms*cfg.plot.emg_multiplier,
                                     emg_tracecolor,
-                                    linewidth=self.cfg.plot.emg_rms_linewidth,
+                                    linewidth=cfg.plot.emg_rms_linewidth,
                                     alpha=emg_alpha)
 
                     if cycle == emg_cycles[-1]:
                         # last cycle; plot scales, titles etc.
-                        ax.set(ylabel=self.cfg.plot.emg_ylabel)
-                        ax.yaxis.label.set_fontsize(self.cfg.
+                        ax.set(ylabel=cfg.plot.emg_ylabel)
+                        ax.yaxis.label.set_fontsize(cfg.
                                                     plot.label_fontsize)
                         ax.locator_params(axis='y', nbins=4)
                         # tick font size
                         ax.tick_params(axis='both', which='major',
-                                       labelsize=self.cfg.plot.ticks_fontsize)
+                                       labelsize=cfg.plot.ticks_fontsize)
                         ax.set_xlim(min(x), max(x))
-                        ysc = self.cfg.plot.emg_yscale
-                        ax.set_ylim(ysc[0]*self.cfg.plot.emg_multiplier,
-                                    ysc[1]*self.cfg.plot.emg_multiplier)
+                        ysc = cfg.plot.emg_yscale
+                        ax.set_ylim(ysc[0]*cfg.plot.emg_multiplier,
+                                    ysc[1]*cfg.plot.emg_multiplier)
 
                         if (plot_emg_normaldata and cycle is not None and
-                           var in self.cfg.emg.channel_normaldata):
+                           var in cfg.emg.channel_normaldata):
                             # plot EMG normal bars
-                            emgbar_ind = self.cfg.emg.channel_normaldata[var]
+                            emgbar_ind = cfg.emg.channel_normaldata[var]
                             for k in range(len(emgbar_ind)):
                                 inds = emgbar_ind[k]
-                                ax.axvspan(inds[0], inds[1], alpha=self.cfg.
+                                ax.axvspan(inds[0], inds[1], alpha=cfg.
                                            plot.emg_normals_alpha,
-                                           color=self.cfg.plot.
+                                           color=cfg.plot.
                                            emg_normals_color)
 
                         if cycle is None and var in self.layout[-1]:
                             xlabel = 'Time (s)' if x_axis_is_time else 'Frame'
                             ax.set(xlabel=xlabel)
-                            ax.xaxis.label.set_fontsize(self.cfg.
+                            ax.xaxis.label.set_fontsize(cfg.
                                                         plot.label_fontsize)
 
             elif var_type in ('model_legend', 'emg_legend'):
@@ -644,7 +651,7 @@ class Plotter(object):
                 ax.legend(nothing+artists,
                           legtitle+self.legendnames, loc='upper center',
                           ncol=2,
-                          prop={'size': self.cfg.plot.legend_fontsize})
+                          prop={'size': cfg.plot.legend_fontsize})
 
             plotaxes.append(ax)
 
@@ -657,7 +664,7 @@ class Plotter(object):
         return self.fig
 
     def set_title(self, title):
-        self.fig.suptitle(title, fontsize=self.cfg.plot.maintitle_fontsize,
+        self.fig.suptitle(title, fontsize=cfg.plot.maintitle_fontsize,
                           fontweight="bold")
         self.tight_layout()  # update plot spacing
 

@@ -207,6 +207,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
         # add normal data files
         self.cbNormalData.addItems(sorted(cfg.general.normaldata_files))
+        
 
         self.canvas.mpl_connect('button_press_event', self._onclick)
 
@@ -326,6 +327,8 @@ class PlotterWindow(QtWidgets.QMainWindow):
             plot_cycles[cycle.trial].append(cycle)
         # set options and create the plot
         self.pl.layout = cfg.layouts.__getattr__(self.cbLayout.currentText())
+        
+        # normal data self.pl.layou = self.cbLayout.currentText()
         match_pig_kinetics = self.xbKineticsFpOnly.checkState()
 #        normaldata_files = [item.userdata for item in
 #                            self.listNormalData.items]
@@ -353,7 +356,6 @@ class PlotterWindow(QtWidgets.QMainWindow):
             for fname in fnames:
                 self._open_trial(fname)
 
-
     def _write_pdf(self):
         """ Bring up save dialog and save data. """
         fname = QtWidgets.QFileDialog.getSaveFileName(self,
@@ -369,7 +371,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
                 self.canvas.print_figure(fname)
             except IOError:
                 message_dialog('Error writing PDF file, check that file '
-                                    'is not open')
+                               'is not open')
             # reset title for onscreen and redraw canvas
             self.pl.set_title('')
             self.pl.fig.set_size_inches(old_size)  # needed?

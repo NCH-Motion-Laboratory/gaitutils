@@ -37,7 +37,6 @@ def do_plot(show=True, make_pdf=True):
         maintitle = maintitle_ + ' (side %s)' % side
         pl.layout = layouts.onesided_layout(layout, side)
         figs.append(pl.plot_trial(split_model_vars=False,
-                                  plot_model_normaldata=True,
                                   model_stddev=atrial.stddev_data,
                                   maintitle=maintitle,
                                   show=False))

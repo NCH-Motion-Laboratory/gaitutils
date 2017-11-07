@@ -120,7 +120,7 @@
       <item row="21" column="2" colspan="2">
        <widget class="QComboBox" name="cbLayout">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -200,6 +200,9 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
         </property>
         <property name="text">
          <string>Include for plotting</string>
@@ -291,7 +294,14 @@
        </widget>
       </item>
       <item row="22" column="2">
-       <widget class="QComboBox" name="cbNormalData"/>
+       <widget class="QComboBox" name="cbNormalData">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
       </item>
       <item row="22" column="3">
        <widget class="QPushButton" name="pushButton">

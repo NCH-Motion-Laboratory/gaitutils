@@ -316,22 +316,23 @@ class PlotterWindow(QtWidgets.QMainWindow):
         # to plot_trial() as we only need to call once per trial.
         plot_cycles = dict()
         self.pl.fig.clear()
+
         cycles = [item.userdata for item in self.listCyclesToPlot.items]
         if not cycles:
             message_dialog('No cycles selected for plotting')
             return
+
         # gather the cycles and key by trial
         for cycle in cycles:
             if cycle.trial not in plot_cycles:
                 plot_cycles[cycle.trial] = []
             plot_cycles[cycle.trial].append(cycle)
+
         # set options and create the plot
         self.pl.layout = cfg.layouts.__getattr__(self.cbLayout.currentText())
-
-        # normal data self.pl.layou = self.cbLayout.currentText()
+        self.pl.add_normaldata(self.cbNormalData.currentText())
         match_pig_kinetics = self.xbKineticsFpOnly.checkState()
-#        normaldata_files = [item.userdata for item in
-#                            self.listNormalData.items]
+
         for trial, cycs in plot_cycles.items():
             try:
                 self.pl.plot_trial(trial=trial, model_cycles=cycs,
@@ -342,6 +343,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
             except GaitDataError as e:
                 message_dialog('Error: %s' % str(e))
                 self.pl.fig.clear()  # fig may have been partially drawn
+
         self.canvas.draw()
         self.btnSavePDF.setEnabled(True)  # can create pdf now
         # this is a lazy default for sessionpath (pick path from one trial)

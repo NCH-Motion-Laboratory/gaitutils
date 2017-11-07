@@ -9,8 +9,12 @@ Normal data readers
 import numpy as np
 import openpyxl
 import os.path as op
+import logging
 
 from .numutils import isfloat
+from .models import models_all
+
+logger = logging.getLogger(__name__)
 
 
 def read_normaldata(filename):
@@ -45,8 +49,10 @@ def _read_gcd(filename):
     """ Read normal data from a gcd file.
         -gcd data is assumed to be in (mean, dev) 2-column format and is
          converted to (min, max) (Polygon normal data format) as
-         mean-dev, mean+dev """
-    normaldata = dict()
+         mean-dev, mean+dev
+        -gcd variable names may be weird and will be translated according
+        to each models translation table """
+    ndata = dict()
     with open(filename, 'r') as f:
         lines = f.readlines()
     varname = None
@@ -54,14 +60,24 @@ def _read_gcd(filename):
         lis = li.split()
         if li[0] == '!':  # new variable
             varname = lis[0][1:]
-            normaldata[varname] = list()
+            ndata[varname] = list()
         elif varname and isfloat(lis[0]):  # actual data
             # assume mean, dev format
             mean, dev = np.array(lis, dtype=float)
-            normaldata[varname].append([mean-dev, mean+dev])
+            ndata[varname].append([mean-dev, mean+dev])
         else:  # comment etc.
             continue
-    normaldata = {key: np.array(val) for key, val in normaldata.items()}
+    # translate variable names
+    ndata_ = dict()
+    for nvarname, nval in ndata.items():
+        for model in models_all:
+            if nvarname in model.gcd_normaldata_map:
+                logger.debug('mapping normal data variable %s -> %s' %
+                             (nvarname, model.gcd_normaldata_map[nvarname]))
+                nvarname = model.gcd_normaldata_map[nvarname]
+                break
+        ndata_[nvarname] = nval
+    normaldata = {key: np.array(val) for key, val in ndata_.items()}
     return _check_normaldata(normaldata)
 
 

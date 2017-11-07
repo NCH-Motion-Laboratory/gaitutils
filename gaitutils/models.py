@@ -180,29 +180,30 @@ pig_lowerbody.varlabels = _dict_with_side(pig_lowerbody.varlabels_noside)
 pig_lowerbody.varnames = pig_lowerbody.varlabels.keys()
 pig_lowerbody.varnames_noside = pig_lowerbody.varlabels_noside.keys()
 
+
 pig_lowerbody.gcd_normaldata_map = {
-             'AnkleAnglesX': 'DorsiPlanFlex',
-             'AnkleAnglesZ': 'FootRotation',
-             'AnkleMomentX': 'DorsiPlanFlexMoment',
-             'AnklePowerZ': 'AnklePower',
-             'FootProgressAnglesZ': 'FootProgression',
-             'HipAnglesX': 'HipFlexExt',
-             'HipAnglesY': 'HipAbAdduct',
-             'HipAnglesZ': 'HipRotation',
-             'HipMomentX': 'HipFlexExtMoment',
-             'HipMomentY': 'HipAbAdductMoment',
-             'HipMomentZ': 'HipRotationMoment',
-             'HipPowerZ': 'HipPower',
-             'KneeAnglesX': 'KneeFlexExt',
-             'KneeAnglesY': 'KneeValgVar',
-             'KneeAnglesZ': 'KneeRotation',
-             'KneeMomentX': 'KneeFlexExtMoment',
-             'KneeMomentY': 'KneeValgVarMoment',
-             'KneeMomentZ': 'KneeRotationMoment',
-             'KneePowerZ': 'KneePower',
-             'PelvisAnglesX': 'PelvicTilt',
-             'PelvisAnglesY': 'PelvicObliquity',
-             'PelvisAnglesZ': 'PelvicRotation'}
+            'AnklePower': 'AnklePowerZ',
+            'DorsiPlanFlex': 'AnkleAnglesX',
+            'DorsiPlanFlexMoment': 'AnkleMomentX',
+            'FootProgression': 'FootProgressAnglesZ',
+            'FootRotation': 'AnkleAnglesZ',
+            'HipAbAdduct': 'HipAnglesY',
+            'HipAbAdductMoment': 'HipMomentY',
+            'HipFlexExt': 'HipAnglesX',
+            'HipFlexExtMoment': 'HipMomentX',
+            'HipPower': 'HipPowerZ',
+            'HipRotation': 'HipAnglesZ',
+            'HipRotationMoment': 'HipMomentZ',
+            'KneeFlexExt': 'KneeAnglesX',
+            'KneeFlexExtMoment': 'KneeMomentX',
+            'KneePower': 'KneePowerZ',
+            'KneeRotation': 'KneeAnglesZ',
+            'KneeRotationMoment': 'KneeMomentZ',
+            'KneeValgVar': 'KneeAnglesY',
+            'KneeValgVarMoment': 'KneeMomentY',
+            'PelvicObliquity': 'PelvisAnglesY',
+            'PelvicRotation': 'PelvisAnglesZ',
+            'PelvicTilt': 'PelvisAnglesX'}
 
 spacer = (2*(1*' ',))
 pig_lowerbody.ylabels = _dict_with_side({

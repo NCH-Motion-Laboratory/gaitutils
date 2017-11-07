@@ -51,10 +51,11 @@ class Plotter(object):
         else:
             self._layout = None
 
-        self._normaldata_files = list()
+        self._normaldata_files = dict()
         self._normaldata = dict()
         if normaldata_files is None:
-            self.add_normaldata(cfg.general.normaldata_files)
+            for fn in cfg.general.normaldata_files:
+                self.add_normaldata(fn)
 
         self.trial = None
         self.fig = None
@@ -68,15 +69,18 @@ class Plotter(object):
         # can create it now, as the size does not matter
         self.fig = None if interactive else Figure()
 
-    def add_normaldata(self, normaldata_files):
-        """ Read the given normal data files and add into dict """
-        newfiles = set(normaldata_files) - set(self._normaldata_files)
-        if newfiles:
-            for fn in normaldata_files:
-                logger.debug('Reading new normal data from %s' % fn)
-                ndata = normaldata.read_normaldata(fn)
-                self._normaldata.update(ndata)
-                self._normaldata_files.append(fn)
+    def add_normaldata(self, filename):
+        """ Read the given normal data file if not already read. Take the
+        data from the file into use (i.e. it will be used as the default
+        normaldata for the plots) """
+        if filename in self._normaldata_files:
+            ndata = self._normaldata_files[filename]
+        else:
+            logger.debug('Reading new normal data from %s' % filename)
+            ndata = normaldata.read_normaldata(filename)
+            self._normaldata_files[filename] = ndata
+        logger.debug('Updating normal data from %s' % filename)
+        self._normaldata.update(ndata)
 
     @property
     def layout(self):
@@ -436,7 +440,7 @@ class Plotter(object):
             if var_type == 'model':
                 model = models.model_from_var(var)
                 for cycle in model_cycles:
-                    logger.debug('cycle %s' % cycle)
+                    logger.debug('cycle %d-%d' % (cycle.start, cycle.end))
                     if cycle is not None:  # plot normalized data
                         trial.set_norm_cycle(cycle)
                     if split_model_vars and var[0].upper() not in ['L', 'R']:
@@ -534,8 +538,6 @@ class Plotter(object):
                                 nvarname = varname[1:]
                             if nvarname in self._normaldata:
                                 key = nvarname
-                            elif nvarname in model.gcd_normaldata_map:
-                                key = model.gcd_normaldata_map[nvarname]
                             else:
                                 key = None
                             ndata = (self._normaldata[key] if key in

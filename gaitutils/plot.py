@@ -191,16 +191,16 @@ class Plotter(object):
                    match_pig_kinetics=True,
                    auto_match_emg_cycle=True,
                    linestyles_context=False,
-                   toeoff_markers=cfg.plot.toeoff_markers,
+                   toeoff_markers=None,
                    annotate_emg=True,
-                   emg_tracecolor=cfg.plot.emg_tracecolor,
-                   emg_alpha=cfg.plot.emg_alpha,
+                   emg_tracecolor=None,
+                   emg_alpha=None,
                    plot_model_normaldata=True,
                    plot_emg_normaldata=True,
                    plot_emg_rms=False,
                    sharex=True,
-                   superpose=False,
                    show=True,
+                   superpose=False,
                    maintitle=None,
                    maintitleprefix=None):
 
@@ -380,6 +380,17 @@ class Plotter(object):
                           for side in ['L', 'R']
                           for ncycle in cycles[side] if ncycle]
             return cycles
+
+        # set default values for vars
+
+        if toeoff_markers is None:
+            toeoff_markers = cfg.plot.toeoff_markers
+
+        if emg_tracecolor is None:
+            emg_tracecolor = cfg.plot.emg_tracecolor
+
+        if emg_alpha is None:
+            emg_alpha = cfg.plot.emg_alpha
 
         if model_cycles is None:
             model_cycles = cfg.plot.default_model_cycles

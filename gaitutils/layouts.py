@@ -30,3 +30,9 @@ def onesided_layout(layout, side):
         raise ValueError('Invalid side')
     return [[(side + item) if item is not None else None for item in row]
             for row in layout]
+
+
+def filter_layout(layout, key, repl):
+    """ Replace layout items """
+    return [[repl if (item and key in item) else item for item in row]
+            for row in layout]

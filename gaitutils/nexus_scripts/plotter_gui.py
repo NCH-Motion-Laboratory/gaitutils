@@ -335,7 +335,10 @@ class PlotterWindow(QtWidgets.QMainWindow):
             plot_cycles[cycle.trial].append(cycle)
 
         # set options and create the plot
-        self.pl.layout = cfg.layouts.__getattr__(self.cbLayout.currentText())
+        lout = cfg.layouts.__getattr__(self.cbLayout.currentText())
+        # remove legends - they do not make sense here
+        lout = layouts.filter_layout(lout, 'legend', None)
+        self.pl.layout = lout
         match_pig_kinetics = self.xbKineticsFpOnly.checkState()
 
         try:

@@ -304,7 +304,7 @@
        </widget>
       </item>
       <item row="22" column="3">
-       <widget class="QPushButton" name="pushButton">
+       <widget class="QPushButton" name="btnOpenNormalData">
         <property name="text">
          <string>Open...</string>
         </property>

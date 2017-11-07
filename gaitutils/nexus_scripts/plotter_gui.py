@@ -198,6 +198,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self.btnClearTrials.clicked.connect(self._clear_trials)
         self.btnClearCyclesToPlot.clicked.connect(self.listCyclesToPlot.clear)
         self.btnOptions.clicked.connect(self._options_dialog)
+        self.btnOpenNormalData.clicked.connect(self._load_normaldata)
         # menu actions
         self.actionQuit.triggered.connect(self.close)
         self.actionAverage.triggered.connect(self._averager_dialog)
@@ -235,12 +236,13 @@ class PlotterWindow(QtWidgets.QMainWindow):
                                                       'GCD files (*.gcd);; ')
         fname = fname[0]
         if fname:
-            # store the filename as user data - could just use the name
-            self.listNormalData.add_item(fname, data=fname)
-
-    def _rm_normaldata(self):
-        if self.listNormalData.currentItem():
-            self.listNormalData.rm_current_item()
+            idx = self.cbNormalData.findText(fname)
+            # add file into box if it's not yet there
+            if idx == -1:
+                self.cbNormalData.addItem(fname)
+            # select it in any case
+            idx = self.cbNormalData.findText(fname)
+            self.cbNormalData.setCurrentIndex(idx)
 
     def rm_trial(self):
         if self.listTrials.currentItem():
@@ -330,8 +332,14 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
         # set options and create the plot
         self.pl.layout = cfg.layouts.__getattr__(self.cbLayout.currentText())
-        self.pl.add_normaldata(self.cbNormalData.currentText())
         match_pig_kinetics = self.xbKineticsFpOnly.checkState()
+
+        try:
+            fn = self.cbNormalData.currentText()
+            self.pl.add_normaldata(fn)
+        except (ValueError, GaitDataError):
+                message_dialog('Error reading normal data from %s' % fn)
+                return
 
         for trial, cycs in plot_cycles.items():
             try:
@@ -343,6 +351,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
             except GaitDataError as e:
                 message_dialog('Error: %s' % str(e))
                 self.pl.fig.clear()  # fig may have been partially drawn
+                return
 
         self.canvas.draw()
         self.btnSavePDF.setEnabled(True)  # can create pdf now

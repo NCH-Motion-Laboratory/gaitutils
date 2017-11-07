@@ -35,7 +35,7 @@ def test_qt_menu():
     """ Create instance of dialog that is not shown on screen (Qt event loop
     is not entered) but can be used to test various methods. """
     menu = nexus_menu.Gaitmenu()
-    dlg = nexus_menu.AutoprocDialog()
+    dlg = nexus_menu.OptionsDialog()
 
 
 def test_c3d_reader():

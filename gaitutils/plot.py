@@ -29,19 +29,20 @@ logger = logging.getLogger(__name__)
 
 class Plotter(object):
 
-    def __init__(self, layout=None, interactive=True):
+    def __init__(self, layout=None, normaldata_files=None, interactive=True):
         """ Plot gait data.
 
         layout: list of lists
             Variables to be plotted. Each list is a row of variables.
-            If none, must be set before plotting (plotter.layout = layout)
-        normaldata: list of lists
-            Corresponding normal data files for each plot. Will override
-            default normal data settings.
+            If None, must be set before plotting (use plotter.layout = layout,
+            where plotter is a Plotter instance)
+        normaldata_files: list
+            Normal data files to read (.xlsx or .gcd). If None, read the files
+            specified from config.
         interactive: bool
-                If True, start the pyplot event loop to show the figure
-                in a GUI. If False, do not import pyplot (this is needed for
-                e.g. embedding in Qt).
+            If True, start the pyplot event loop to show the figure
+            in a GUI. If False, do not import pyplot (this is needed for
+            e.g. embedding in Qt).
         """
         matplotlib.style.use(cfg.plot.mpl_style)
 
@@ -49,19 +50,33 @@ class Plotter(object):
             self.layout = layout
         else:
             self._layout = None
+
+        self._normaldata_files = list()
+        self._normaldata = dict()
+        if normaldata_files is None:
+            self.add_normaldata(cfg.general.normaldata_files)
+
         self.trial = None
         self.fig = None
         self.legendnames = list()
         self.modelartists = list()
         self.emgartists = list()
-        self._normaldata_files = list()
-        self._normaldata = dict()
         self.nrows = 0
         self.ncols = 0
         self.interactive = interactive
         # if in interactive mode, create the figure later - otherwise we
         # can create it now, as the size does not matter
         self.fig = None if interactive else Figure()
+
+    def add_normaldata(self, normaldata_files):
+        """ Read the given normal data files and add into dict """
+        newfiles = set(normaldata_files) - set(self._normaldata_files)
+        if newfiles:
+            for fn in normaldata_files:
+                logger.debug('Reading new normal data from %s' % fn)
+                ndata = normaldata.read_normaldata(fn)
+                self._normaldata.update(ndata)
+                self._normaldata_files.append(fn)
 
     @property
     def layout(self):
@@ -185,7 +200,6 @@ class Plotter(object):
                    model_alpha=1.0,
                    split_model_vars=True,
                    auto_match_model_cycle=True,
-                   normaldata_files=cfg.general.normaldata_files,
                    model_stddev=None,
                    x_axis_is_time=True,
                    match_pig_kinetics=True,
@@ -248,9 +262,6 @@ class Plotter(object):
                 whose context matches the context of the channel name. E.g.
                 'LRec' will be plotted only for left side cycles.
                 If False, the channel will be plotted for all cycles.
-        normaldata_files: list
-                Specifies a list normal data files (.gcd or .xlsx) for model
-                type variables.
         model_stddev : None or dict
                 Specifies 'standard deviation' for model variables. Can be
                 used to plot e.g. confidence intervals, or stddev if plotting
@@ -270,9 +281,7 @@ class Plotter(object):
         emg_alpha : float
                 Alpha value for EMG traces (0.0 - 1.0)
         plot_model_normaldata : bool
-                Whether to plot normal data. Uses either default normal data
-                (in site_defs) or the data given when creating the plotter
-                instance.
+                Whether to plot normal data for model variables.
         plot_emg_normaldata : bool
                 Whether to plot normal data. Uses either default normal data
                 (in site_defs) or the data given when creating the plotter
@@ -295,7 +304,6 @@ class Plotter(object):
                 show=False if overlaying multiple trials and call show()
                 after finished. If interactive=False, this has no effect.
         """
-
 
         if trial is None and self.trial is None:
             raise ValueError('No trial, specify one or call open_trial()')
@@ -327,15 +335,6 @@ class Plotter(object):
             if maintitleprefix is None:
                 maintitleprefix = ''
             maintitle = maintitleprefix + trial.trialname
-
-        # read normal data if any new files were specified
-        newfiles = set(normaldata_files) - set(self._normaldata_files)
-        if newfiles:
-            for fn in normaldata_files:
-                logger.debug('Reading new normal data from %s' % fn)
-                ndata = normaldata.read_normaldata(fn)
-                self._normaldata.update(ndata)
-                self._normaldata_files.append(fn)
 
         # auto adjust plot heights
         if plotheightratios is None:

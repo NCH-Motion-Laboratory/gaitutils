@@ -46,6 +46,7 @@ class Plotter(object):
         """
         matplotlib.style.use(cfg.plot.mpl_style)
 
+        self.gridspec = None
         if layout:
             self.layout = layout
         else:
@@ -185,6 +186,9 @@ class Plotter(object):
 
     def tight_layout(self):
         """ Customized tight layout """
+        if self.gridspec is None:
+            return
+        logger.debug('Setting tight layout')
         self.gridspec.tight_layout(self.fig)
         # space for main title
         top = (self.figh - cfg.plot.titlespace) / self.figh

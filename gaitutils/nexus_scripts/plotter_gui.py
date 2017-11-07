@@ -208,11 +208,15 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
         # add normal data files
         self.cbNormalData.addItems(sorted(cfg.general.normaldata_files))
-        
 
         self.canvas.mpl_connect('button_press_event', self._onclick)
-
         self._set_status('Ready')
+
+    def resizeEvent(self, event):
+        pass
+        # adjust layout on resize
+        # this does not work super well - slow and can crash
+        # self.pl.tight_layout()
 
     def _onclick(self, event):
         logger.debug('click on %s' % event.inaxes)

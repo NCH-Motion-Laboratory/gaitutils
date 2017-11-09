@@ -52,10 +52,11 @@ def _get_c3dacq(c3dfile):
 
 
 def get_c3d_analysis(c3dfile):
-    """Get analysis values from c3d (e.g. gait parameters). Returns a list of
-    dicts with keys: (name, unit, context, value) """
+    """Get analysis values from c3d (e.g. gait parameters). Returns a dict
+    keyed by var and context"""
 
     def _strip_all(iterable):
+        """Strip all strings in iterable of strings"""
         return (it.strip() for it in iterable)
 
     acq = _get_c3dacq(c3dfile)
@@ -67,10 +68,15 @@ def get_c3d_analysis(c3dfile):
                                                   'CONTEXTS').ToString())
     vals = _get_c3d_metadata_field(acq, 'ANALYSIS', 'VALUES').ToDouble()
 
-    data = zip(vars, units, contexts, vals)
-    keys = ['name', 'unit', 'context', 'value']
-
-    return [{k: v for k, v in zip(keys, datarow)} for datarow in data]
+    # build a nice output dict
+    di = dict()
+    for (var, unit, context, val) in zip(vars, units, contexts, vals):
+        if var not in di:
+            di[var] = dict()
+            di[var]['unit'] = unit
+        if context not in di[var]:
+            di[var][context] = val
+    return di
 
 
 def get_emg_data(c3dfile):

@@ -51,6 +51,28 @@ def _get_c3dacq(c3dfile):
     return reader.GetOutput()
 
 
+def get_c3d_analysis(c3dfile):
+    """Get analysis values from c3d (e.g. gait parameters). Returns a list of
+    dicts with keys: (name, unit, context, value) """
+
+    def _strip_all(iterable):
+        return (it.strip() for it in iterable)
+
+    acq = _get_c3dacq(c3dfile)
+    vars = _strip_all(_get_c3d_metadata_field(acq, 'ANALYSIS',
+                                              'NAMES').ToString())
+    units = _strip_all(_get_c3d_metadata_field(acq, 'ANALYSIS',
+                                               'UNITS').ToString())
+    contexts = _strip_all(_get_c3d_metadata_field(acq, 'ANALYSIS',
+                                                  'CONTEXTS').ToString())
+    vals = _get_c3d_metadata_field(acq, 'ANALYSIS', 'VALUES').ToDouble()
+
+    data = zip(vars, units, contexts, vals)
+    keys = ['name', 'unit', 'context', 'value']
+
+    return [{k: v for k, v in zip(keys, datarow)} for datarow in data]
+
+
 def get_emg_data(c3dfile):
     """ Read EMG data from a c3d file. """
     acq = _get_c3dacq(c3dfile)

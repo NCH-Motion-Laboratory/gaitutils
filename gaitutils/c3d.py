@@ -32,12 +32,28 @@ def is_c3dfile(obj):
         return False
 
 
-def get_emg_data(c3dfile):
-    """ Read EMG data from a c3d file. """
+def _get_c3d_metadata_field(acq, field, subfield):
+    """Get c3d metadata FIELD:SUBFIELD. Returns btk.btkMetaDataInfo
+    proxy object that needs to be cast to the correct Python type"""
+    meta = acq.GetMetaData()
+
+    def _get_child(field, child):
+        return field.FindChild(child).value()
+
+    return _get_child(_get_child(meta, field), subfield).GetInfo()
+
+
+def _get_c3dacq(c3dfile):
+    """Get a btk.btkAcquisition object"""
     reader = btk.btkAcquisitionFileReader()
     reader.SetFilename(str(c3dfile))
     reader.Update()
-    acq = reader.GetOutput()
+    return reader.GetOutput()
+
+
+def get_emg_data(c3dfile):
+    """ Read EMG data from a c3d file. """
+    acq = _get_c3dacq(c3dfile)
     data = dict()
     elnames = []
     for i in btk.Iterate(acq.GetAnalogs()):
@@ -55,10 +71,7 @@ def get_emg_data(c3dfile):
 def get_marker_data(c3dfile, markers):
     if not isinstance(markers, list):  # listify if not already a list
         markers = [markers]
-    reader = btk.btkAcquisitionFileReader()
-    reader.SetFilename(str(c3dfile))
-    reader.Update()
-    acq = reader.GetOutput()
+    acq = _get_c3dacq(c3dfile)
     mdata = dict()
     for marker in markers:
         try:
@@ -76,13 +89,11 @@ def get_marker_data(c3dfile, markers):
 
 
 def get_metadata(c3dfile):
-    """ Read trial and subject metadata """
+    """ Read some trial and subject metadata """
+
     trialname = os.path.basename(os.path.splitext(c3dfile)[0])
     sessionpath = os.path.dirname(c3dfile)
-    reader = btk.btkAcquisitionFileReader()
-    reader.SetFilename(str(c3dfile))  # check existence?
-    reader.Update()
-    acq = reader.GetOutput()
+    acq = _get_c3dacq(c3dfile)
     # frame offset (start of trial data in frames)
     offset = acq.GetFirstFrame()
     lastfr = acq.GetLastFrame()
@@ -118,13 +129,13 @@ def get_metadata(c3dfile):
                 ltoeoffs.append(i.GetFrame())
             else:
                 raise GaitDataError("Unknown context on foot strike event")
+
     # get subject info
-    metadata = acq.GetMetaData()
-    # don't ask
-    name = (metadata.FindChild("SUBJECTS").value().
-            FindChild("NAMES").value().GetInfo().ToString()[0].strip())
-    bodymass = (metadata.FindChild("PROCESSING").value().
-                FindChild("Bodymass").value().GetInfo().ToDouble()[0])
+    name = _get_c3d_metadata_field(acq,
+                                   'SUBJECTS', 'NAMES').ToString()[0].strip()
+    bodymass = _get_c3d_metadata_field(acq,
+                                       'PROCESSING', 'Bodymass').ToDouble()[0]
+
     # sort events (may be in wrong temporal order, at least in c3d files)
     for li in [lstrikes, rstrikes, ltoeoffs, rtoeoffs]:
         li.sort()
@@ -138,17 +149,14 @@ def get_metadata(c3dfile):
 
 def get_model_data(c3dfile, model):
     modeldata = dict()
-    reader = btk.btkAcquisitionFileReader()
-    reader.SetFilename(str(c3dfile))
-    reader.Update()
-    acq = reader.GetOutput()
+    acq = _get_c3dacq(c3dfile)
     for var in model.read_vars:
         try:
             vals = acq.GetPoint(var).GetValues()
             modeldata[var] = np.transpose(np.squeeze(vals))
         except RuntimeError:
             raise GaitDataError('Cannot find model variable %s in c3d file' %
-                             var)
+                                var)
         # c3d stores scalars as last dim of 3-d array
         if model.read_strategy == 'last':
             modeldata[var] = modeldata[var][2, :]
@@ -158,10 +166,7 @@ def get_model_data(c3dfile, model):
 def get_forceplate_data(c3dfile):
     logger.debug('reading forceplate data from %s' % c3dfile)
     read_chs = ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz']
-    reader = btk.btkAcquisitionFileReader()
-    reader.SetFilename(str(c3dfile))  # btk does not tolerate unicode
-    reader.Update()
-    acq = reader.GetOutput()
+    acq = _get_c3dacq(c3dfile)
     fpe = btk.btkForcePlatformsExtractor()
     fpe.SetInput(acq)
     fpe.Update()

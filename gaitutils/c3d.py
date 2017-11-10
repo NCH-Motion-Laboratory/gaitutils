@@ -46,7 +46,10 @@ def _get_c3d_metadata_field(acq, field, subfield):
 def _get_c3dacq(c3dfile):
     """Get a btk.btkAcquisition object"""
     reader = btk.btkAcquisitionFileReader()
-    reader.SetFilename(str(c3dfile))
+    if isinstance(c3dfile, unicode):
+        # btk interface cannot take unicode, so encode to latin-1 first
+        c3dfile = c3dfile.encode('latin-1')
+    reader.SetFilename(c3dfile)
     reader.Update()
     return reader.GetOutput()
 

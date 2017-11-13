@@ -228,12 +228,14 @@ class Trial(object):
 
     def _scan_cycles(self):
         """ Create gait cycle instances based on strike/toeoff markers. """
-        STRIKE_TOL = 4  # tolerance for matching forceplate strikes (frames)
+        # the trial marked events need to be matched with our detected
+        # forceplate events, but may not match exactly, so use tolerance
+        STRIKE_TOL = 4
         sidestrs = {'R': 'Right', 'L': 'Left'}
         for strikes in [self.lstrikes, self.rstrikes]:
             len_s = len(strikes)
             if len_s < 2:
-                return
+                continue
             if strikes == self.lstrikes:
                 toeoffs = self.ltoeoffs
                 context = 'L'

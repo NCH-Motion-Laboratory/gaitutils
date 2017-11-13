@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-unit tests for gaitutils
+c3d unit tests for gaitutils
 automatically run by 'nose2'
 
 @author: jussi (jnu@iki.fi)

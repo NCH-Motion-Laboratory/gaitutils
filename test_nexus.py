@@ -35,19 +35,24 @@ if not nexus.pid():
         raise Exception('Please start Vicon Nexus first')
 
 vicon = nexus.viconnexus()
-nexus_sessionpath = 'testdata/test_session_IN'
 
 
-def _nexus_open_trial(trial):
-    """Helper to open given trial from test session"""
-    trial_ = op.abspath(op.join(nexus_sessionpath, trial))
-    vicon.OpenTrial(trial_, 60)
+def _trial_path(subject, trial):
+    """Return path to subject trial file"""
+    return op.abspath(op.join('testdata', 'test_subjects', subject,
+                              'test_session', trial))
+
+
+def _nexus_open_trial(subject, trial):
+    """Open trial in Nexus"""
+    tpath = op.splitext(_trial_path(subject, trial))[0]  # strip .c3d
+    vicon.OpenTrial(tpath, 60)
 
 
 def test_nexus_reader():
     """Test loading & trial instance creation"""
     trialname = '2015_10_22_girl6v_IN03'
-    _nexus_open_trial(trialname)
+    _nexus_open_trial('girl6v', trialname)
     tr = Trial(vicon)
     assert_equal(tr.analograte, 1000.)
     assert_equal(tr.framerate, 100.)
@@ -68,29 +73,52 @@ def test_nexus_reader():
     cyc = tr.get_cycle('R', 2)
     assert_equal(cyc.on_forceplate, True)
 
+    trialname = 'astrid_080515_02'
+    _nexus_open_trial('adult_3fp', trialname)
+    tr = Trial(vicon)
+    assert_equal(tr.analograte, 1000.)
+    assert_equal(tr.framerate, 200.)
+    assert_equal(tr.bodymass, 70.)
+    assert_equal(tr.name, 'Astrid')
+    assert_equal(tr.n_forceplates, 3)
+    assert_equal(tr.samplesperframe, 5.0)
+    assert_equal(tr.length, 1986)
+    assert_equal(tr.trialname, trialname)
+    assert_equal(tr.ncycles, 4)
+    assert_equal(tr.offset, 1)
+    cyc = tr.get_cycle('R', 2)
+    assert_equal(cyc.start, 1049)
+    assert_equal(cyc.end, 1275)
+    assert_equal(cyc.context, 'R')
+    assert_equal(cyc.on_forceplate, True)
+    assert_equal(cyc.toeoff, 1186)
+
 
 def test_fp_detection():
     """Test autodetection of forceplate contact"""
-    _nexus_open_trial('2015_10_22_girl6v_IN02')
+    _nexus_open_trial('girl6v', '2015_10_22_girl6v_IN02')
     valid = detect_forceplate_events(vicon)['valid']
     assert_equal(valid, 'R')
-    _nexus_open_trial('2015_10_22_girl6v_IN03')
+    _nexus_open_trial('girl6v', '2015_10_22_girl6v_IN03')
     valid = detect_forceplate_events(vicon)['valid']
     assert_equal(valid, 'R')
-    _nexus_open_trial('2015_10_22_girl6v_IN06')
+    _nexus_open_trial('girl6v', '2015_10_22_girl6v_IN06')
     valid = detect_forceplate_events(vicon)['valid']
     assert_equal(valid, '')
 
 
 def test_read_data_compare_nexus_and_c3d():
     """Compare data reads from Nexus and corresponding Nexus written .c3d """
-    trialname = '2015_10_22_girl6v_IN03'
-    NDEC = 3  # can only get 3 decimals of agreement between Nexus/c3d model vars (??)
+  # can only get 3 decimals of agreement between Nexus/c3d model vars (??)
+    NDEC = 3
     # vars to test
     modelvars = models.pig_lowerbody.varlabels.keys()
     emg_chs = cfg.emg.channel_labels.keys()
-    c3dfile = op.join(nexus_sessionpath, trialname+'.c3d')
-    _nexus_open_trial(trialname)
+
+    subj = 'girl6v'
+    trialname = '2015_10_22_girl6v_IN03.c3d'
+    _nexus_open_trial(subj, trialname)
+    c3dfile = _trial_path(subj, trialname)
     tr_nexus = Trial(vicon)
     tr_c3d = Trial(c3dfile)
     # metadata
@@ -139,9 +167,10 @@ def test_read_data_compare_nexus_and_c3d():
 
 def test_read_data_errors():
     """Test exceptions raised by invalid reads"""
-    trialname = '2015_10_22_girl6v_IN03'
-    c3dfile = op.join(nexus_sessionpath, trialname+'.c3d')
-    _nexus_open_trial(trialname)
+    subj = 'girl6v'
+    trialname = '2015_10_22_girl6v_IN03.c3d'
+    _nexus_open_trial(subj, trialname)
+    c3dfile = _trial_path(subj, trialname)
     tr_nexus = Trial(vicon)
     tr_c3d = Trial(c3dfile)
     assert_raises(KeyError, tr_nexus.__getitem__, 'foo')
@@ -176,7 +205,7 @@ def test_event_marking():
                 for j, ev in enumerate(nexus_events):
                     assert_less_equal(abs(ev-events[j]), ev_tol)
 
-    _nexus_open_trial('2015_10_22_girl6v_IN02')
+    _nexus_open_trial('girl6v', '2015_10_22_girl6v_IN02')
 
     # automatic thresholding (do not respect fp events)
     vicon.ClearAllEvents()
@@ -191,3 +220,5 @@ def test_event_marking():
                           events_range=[-1500, 1500], fp_events=fpe)
     _events_check(events_dict)
     vicon.SaveTrial(60)  # to prevent 'Save trial?' dialog on subsequent loads
+
+

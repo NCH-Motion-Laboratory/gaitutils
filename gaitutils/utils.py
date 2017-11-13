@@ -124,6 +124,14 @@ def detect_forceplate_events(source, fp_info=None):
     logger.debug('gait forward direction seems to be %s' %
                  {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])
 
+    def _foot_height(mrkdata, markers):
+        """Compute foot height (z coordinate)"""
+        data_shape = mrkdata[markers[0]+'_P'].shape
+        footctrP = np.zeros(data_shape)
+        for marker in markers:
+            footctrP += mrkdata[marker+'_P'] / len(markers)
+        return footctrP[:, 2]
+
     for plate_ind, fp in enumerate(fpdata):
 
         logger.debug('analyzing plate %d' % plate_ind)
@@ -184,6 +192,7 @@ def detect_forceplate_events(source, fp_info=None):
 
         if detect:
             logger.debug('using autodetection')
+
             # check shift of center of pressure during roi in fwd dir
             cop_roi = fp['CoP'][friseind:ffallind, fwd_dir]
             cop_shift = cop_roi.max() - cop_roi.min()
@@ -194,28 +203,37 @@ def detect_forceplate_events(source, fp_info=None):
                              '(double contact?)')
                 continue
 
-            # first compute plate boundaries in world coords
+            # plate boundaries in world coords
             mins = fp['lowerbounds']
             maxes = fp['upperbounds']
 
-            # check markers
+            # check foot & marker positions
             this_valid = None
             for side, markers in zip(['R', 'L'],
                                      [cfg.autoproc.right_foot_markers,
                                       cfg.autoproc.left_foot_markers]):
-                logger.debug('checking forceplate contact for side %s' % side)
+                logger.debug('checking side %s' % side)
 
-                # check foot height at toeoff
-                data_shape = mrkdata[markers[0]+'_P'].shape
-                footctrP = np.zeros(data_shape)
-                for marker in markers:
-                    footctrP += mrkdata[marker+'_P'] / len(markers)
-                foot_h = footctrP[:, 2]
+                # check foot height at strike and toeoff
+                foot_h = _foot_height(mrkdata, markers)
                 min_h = foot_h[np.nonzero(foot_h)].min()
-                rel_h = footctrP[toeoff_fr, 2] / min_h
-                logger.debug('toeoff rel. height: %.2f' % rel_h)
-                if (rel_h < cfg.autoproc.toeoff_rel_height):
-                    logger.debug('toeoff height too low')
+                toeoff_h = foot_h[toeoff_fr]
+                strike_h = foot_h[strike_fr]
+                logger.debug('foot height at strike: %.2f' % strike_h)
+                logger.debug('foot height at toeoff: %.2f' % toeoff_h)
+                logger.debug('foot height, trial min: %.2f' % min_h)
+                # foot strike must occur below given height limit
+                if (strike_h > min_h + cfg.autoproc.strike_max_height):
+                    logger.debug('strike too high')
+                    ok = False
+                    continue
+                # toeoff must occur in given height range
+                elif (toeoff_h > min_h + cfg.autoproc.toeoff_height_range[1]):
+                    logger.debug('toeoff too high')
+                    ok = False
+                    continue
+                elif (toeoff_h < min_h + cfg.autoproc.toeoff_height_range[0]):
+                    logger.debug('toeoff too low')
                     ok = False
                     continue
                 else:
@@ -258,7 +276,9 @@ def detect_forceplate_events(source, fp_info=None):
                         break
                 if ok:
                     if this_valid:
-                        raise GaitDataError('valid contact on both feet (?)')
+                        logger.debug('plate %d: valid contact on '
+                                     'both feet' % plate_ind)
+                        raise GaitDataError('valid contact on both feet')
                     this_valid = side
                     logger.debug('on-plate check ok for side %s' % this_valid)
 

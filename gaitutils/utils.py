@@ -112,7 +112,7 @@ def detect_forceplate_events(source, fp_info=None):
     results['R_toeoffs'] = []
     results['L_strikes'] = []
     results['L_toeoffs'] = []
-    results['valid'] = ''
+    results['valid'] = set()
 
     # get marker data and find "forward" direction (by max variance)
     mrkdata = read_data.get_marker_data(source, cfg.autoproc.right_foot_markers +
@@ -237,6 +237,7 @@ def detect_forceplate_events(source, fp_info=None):
                     ok = False
                     continue
                 else:
+                    logger.debug('foot height checks ok')
                     ok = True
 
                 # individual marker checks
@@ -287,10 +288,12 @@ def detect_forceplate_events(source, fp_info=None):
         else:
             logger.debug('plate %d: valid foot strike on %s at frame %d'
                          % (plate_ind, this_valid, strike_fr))
-            if this_valid not in results['valid']:
-                results['valid'] += this_valid
+            if this_valid:
+                results['valid'].add(this_valid)
             results[this_valid+'_strikes'].append(strike_fr)
             results[this_valid+'_toeoffs'].append(toeoff_fr)
+    # FIXME: should return e.g. a set and fix API calls
+    results['valid'] = ''.join(sorted(results['valid']))
     logger.debug(results)
     return results
 

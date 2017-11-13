@@ -173,16 +173,23 @@ class Trial(object):
             self._forceplate_data = read_data.get_forceplate_data(self.source)
         return self._forceplate_data
 
+    # FIXME: property not really needed?
     @property
     def fp_events(self):
-        if not self._fp_events:
+        if self._fp_events is None:
             try:
                 fp_info = (eclipse.eclipse_fp_keys(self.eclipse_data) if
                            cfg.trial.use_eclipse_fp_info else None)
                 self._fp_events = utils.detect_forceplate_events(self.source,
                                                                  fp_info=fp_info)
             except GaitDataError:
-                self._fp_events = None
+                logger.warning('Could not detect forceplate events')
+                self._fp_events = dict()
+                self._fp_events['R_strikes'] = []
+                self._fp_events['R_toeoffs'] = []
+                self._fp_events['L_strikes'] = []
+                self._fp_events['L_toeoffs'] = []
+                self._fp_events['valid'] = ''
         return self._fp_events
 
     def set_norm_cycle(self, cycle=None):

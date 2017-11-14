@@ -474,9 +474,15 @@ class Plotter(object):
                         lstyle = (cfg.plot.model_linestyles
                                   [cycle.context] if linestyles_context else
                                   model_linestyle)
-                        ax.plot(x, data, tcolor, linestyle=lstyle,
-                                linewidth=cfg.plot.model_linewidth,
-                                alpha=model_alpha)
+                        lines_ = ax.plot(x, data, tcolor, linestyle=lstyle,
+                                         linewidth=cfg.plot.model_linewidth,
+                                         alpha=model_alpha)
+                        # generate picker events for line artist
+                        # FIXME: also for other vars
+                        for line_ in lines_:
+                            line_.set_picker(1)
+                            line_._trialname = trial.trialname
+                            line_._cycle = cycle
                         # add toeoff marker for this cycle
                         if (cycle is not None and not is_avg_trial and
                            toeoff_markers):

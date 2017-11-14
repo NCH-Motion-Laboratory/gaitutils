@@ -99,6 +99,10 @@ def _read_xlsx(filename):
         colname = colname.replace(' (1)', 'X')
         colname = colname.replace(' (2)', 'Y')
         colname = colname.replace(' (3)', 'Z')
+        # scalar power variables (ones ending in 'Power')
+        # are written as Z component (Nexus convention)
+        if colname[-5:] == 'Power':
+            colname += 'Z'
         normaldata[colname] = (np.stack([normaldata[colname], data], axis=1)
                                if colname in normaldata else data)
     return _check_normaldata(normaldata)

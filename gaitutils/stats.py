@@ -50,7 +50,8 @@ class AvgTrial(Trial):
             logger.debug('setting norm. cycle for AvgTrial (no effect)')
 
 
-def average_trials(trials, max_dist=None, fp_cycles_only=False):
+def average_trials(trials, max_dist=None, fp_cycles_only=False,
+                   reject_zeros=True):
     """ Average model data from several trials.
 
     trials: list
@@ -86,7 +87,8 @@ def average_trials(trials, max_dist=None, fp_cycles_only=False):
             continue
         else:
             Ntot = vardata.shape[0]
-            # identify outliers
+
+            # drop outliers
             if max_dist is not None:
                 outliers = _outlier_rows(vardata, max_dist)
                 N_out = np.count_nonzero(outliers)
@@ -94,9 +96,19 @@ def average_trials(trials, max_dist=None, fp_cycles_only=False):
                     logger.debug('%s: dropping %d outlier curves' %
                                  (var, N_out))
                     vardata = vardata[~outliers, :] if N_out else vardata
-            stddata[var] = vardata.std(axis=0)
-            avgdata[var] = vardata.mean(axis=0)
+
+            # drop curves containing zero values
+            if reject_zeros:
+                rows_bad = np.where(np.any(vardata == 0, axis=1))[0]
+                if len(rows_bad) > 0:
+                    logger.debug('%s: dropping %d curves with zero output' %
+                                 (var, len(rows_bad)))
+                    vardata = np.delete(vardata, rows_bad, axis=0)
+
             n_ok = vardata.shape[0]
+            stddata[var] = vardata.std(axis=0) if n_ok > 0 else None
+            avgdata[var] = vardata.mean(axis=0) if n_ok > 0 else None
+
             logger.debug('%s: averaged %d/%d curves' % (var, n_ok, Ntot))
             N_ok[var] = n_ok
 
@@ -144,7 +156,7 @@ def _collect_model_data(trials, fp_cycles_only=False):
             try:
                 trial = Trial(trial_)
             except GaitDataError:
-                logger.warning('cannot load %s' % trial)
+                logger.warning('cannot load %s' % trial_)
 
         logger.debug('collecting data for %s' % trial.trialname)
 

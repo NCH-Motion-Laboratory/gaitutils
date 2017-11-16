@@ -40,6 +40,14 @@ def falling_zerocross(x):
     return rising_zerocross(-x)
 
 
+def _padded_shift(x, n):
+    """Shift x right by n samples (or left if negative) and zero pad so
+    that original length is kept"""
+    pads = (n, 0) if n > 0 else (0, -n)
+    x_ = np.pad(x, pads, mode='constant')
+    return x_[:-n] if n > 0 else x_[-n:]
+
+
 def best_match(v, b):
     """ Replace elements of v using their closest matches in b """
     v = np.array(v)

@@ -4,7 +4,9 @@ Interactive script for analysis of Tardieu trials.
 
 TODO:
     tmin - tmax bug (display)
+    zooming bugs - may crash with "all nan slice""
     marker texts overlap on window resize
+    try Qt embed?
 
 
 @author: Jussi (jnu@iki.fi)
@@ -124,9 +126,9 @@ class Tardieu_window(object):
         self.margin = .025  # margin at edge of plots
         self.narrow = False
         self.hspace = .4
-        self.wspace = .4
-        markers_text_start = .35  # relative to the text axis
-        markers_text_spacing = .05
+        self.wspace = .5
+        markers_text_start = .95  # relative to the text axis
+        markers_text_spacing = .15
         buttonwidth = .125
         buttonheight = .04
         buttongap = .025
@@ -171,7 +173,7 @@ class Tardieu_window(object):
         self.angd = 90 - ang0_nexus - self.angd + ang0_our
 
         self.fig = plt.figure(figsize=(16, 10))
-        self.gs = gridspec.GridSpec(len(self.emg_chs) + 3, 2,
+        self.gs = gridspec.GridSpec(2 * (len(self.emg_chs) + 3), 2,
                                     width_ratios=self.width_ratio)
 
         # plot EMG signals
@@ -186,7 +188,7 @@ class Tardieu_window(object):
 
             self.emg_rms[ch] = rms(emgdata, cfg.emg.rms_win)
             sharex = None if ind == 0 else self.data_axes[0]
-            ax = plt.subplot(self.gs[ind, 1:], sharex=sharex)
+            ax = plt.subplot(self.gs[2*ind:2*ind+2, 1:], sharex=sharex)
             ax.plot(t, emgdata*1e3, linewidth=cfg.plot.emg_linewidth)
             ax.plot(t, self.emg_rms[ch]*1e3,
                     linewidth=cfg.plot.emg_rms_linewidth, color='black')
@@ -195,18 +197,19 @@ class Tardieu_window(object):
             ax.set_title(ch)
             self._adj_fonts(ax)
             self.data_axes.append(ax)
+        ind = 2 * ind + 2
 
-        pos = len(emg_chs)
         # add angle plot
-        ax = plt.subplot(self.gs[pos, 1:], sharex=self.data_axes[0])
+        ax = plt.subplot(self.gs[ind:ind+2, 1:], sharex=self.data_axes[0])
         ax.plot(self.time, self.angd, linewidth=cfg.plot.model_linewidth)
         ax.set(ylabel='deg')
         ax.set_title('Angle')
         self._adj_fonts(ax)
         self.data_axes.append(ax)
+        ind += 2
 
         # add angular velocity plot
-        ax = plt.subplot(self.gs[pos+1, 1:], sharex=self.data_axes[0])
+        ax = plt.subplot(self.gs[ind:ind+2, 1:], sharex=self.data_axes[0])
         self.angveld = self.trial.framerate * np.diff(self.angd, axis=0)
         ax.plot(self.time[:-1], self.angveld,
                 linewidth=cfg.plot.model_linewidth)
@@ -214,9 +217,10 @@ class Tardieu_window(object):
         ax.set_title('Angular velocity')
         self._adj_fonts(ax)
         self.data_axes.append(ax)
+        ind += 2
 
         # add angular acceleration plot
-        ax = plt.subplot(self.gs[pos+2, 1:], sharex=self.data_axes[0])
+        ax = plt.subplot(self.gs[ind:ind+2, 1:], sharex=self.data_axes[0])
         self.angaccd = np.diff(self.angveld, axis=0)
         ax.plot(self.time[:-2], self.angaccd,
                 linewidth=cfg.plot.model_linewidth)
@@ -230,8 +234,10 @@ class Tardieu_window(object):
                                markers_text_spacing, self.data_axes)
 
         # add text axis spanning the left column (leave top rows for buttons)
-        self.textax = plt.subplot(self.gs[2:, 0])
+        self.textax = plt.subplot(self.gs[3:8, 0])
         self.textax.set_axis_off()
+        self.marker_textax = plt.subplot(self.gs[8:, 0])
+        self.marker_textax.set_axis_off()
 
         # refresh text field on zoom
         for ax in self.data_axes:
@@ -246,8 +252,8 @@ class Tardieu_window(object):
 
         # adjust plot layout
         self.gs.tight_layout(self.fig)
-        self.gs.update(hspace=self.hspace, wspace=self.wspace,
-                       left=self.margin, right=1-self.margin)
+        #self.gs.update(hspace=self.hspace, wspace=self.wspace,
+        #               left=self.margin, right=1-self.margin)
 
         # add buttons
         # add the clear button
@@ -378,10 +384,10 @@ class Tardieu_window(object):
         self._last_click_event = event
         self._redraw(event.inaxes)  # marker status needs to be updated
 
-    def _plot_text(self, s, ypos, color):
+    def _plot_text(self, ax, s, ypos, color):
         """Plot string s at y position ypos (relative to text frame)"""
-        self.texts.append(self.textax.text(0, ypos, s, ha='left', va='top',
-                                           transform=self.textax.transAxes,
+        self.texts.append(ax.text(0, ypos, s, ha='left', va='top',
+                                           transform=ax.transAxes,
                                            fontsize=self.text_fontsize,
                                            color=color, wrap=True))
 
@@ -405,7 +411,7 @@ class Tardieu_window(object):
         fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
         if fmin == fmax:
             s += 'Zoomed in to a single frame\nPlease zoom out for info'
-            self._plot_text(s, 1, 'k')
+            self._plot_text(self.textax, s, 1, 'k')
             return
         else:
             # analog sample indices ...
@@ -431,7 +437,7 @@ class Tardieu_window(object):
                 rmsmax = rmsdata.max()
                 rmsmaxind = np.argmax(rmsdata)/self.trial.analograte + tmin_
                 s += u'%s: %.2f mV @ %.2f s\n' % (ch, rmsmax*1e3, rmsmaxind)
-            self._plot_text(s, 1, 'k')
+            self._plot_text(self.textax, s, 1, 'k')
             # annotate markers
             for marker, anno, pos, col in self.markers.marker_pos_col():
                 frame = self._time_to_frame(marker, self.trial.framerate)
@@ -443,7 +449,7 @@ class Tardieu_window(object):
                     ms += u'dflex: %.2f° vel: %.2f°/s' % (self.angd[frame],
                                                           self.angveld[frame])
                     ms += u' acc: %.2f°/s²\n\n' % self.angaccd[frame]
-                self._plot_text(ms, pos, col)
+                self._plot_text(self.marker_textax, ms, pos, col)
         self.fig.canvas.draw()
 
 

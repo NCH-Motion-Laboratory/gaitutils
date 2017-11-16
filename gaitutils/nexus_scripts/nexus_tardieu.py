@@ -420,6 +420,11 @@ class Tardieu_window(object):
             s += u'In frames: %d - %d\n\n' % (fmin, fmax)
             # foot angle in chosen range and the maximum
             angr = self.angd[fmin:fmax]
+            # check if we zoomed to all-nan region of angle data
+            if np.all(np.isnan(angr)):
+                s += 'No valid data in region'
+                self._plot_text(self.textax, s, 1, 'k')
+                return
             angmax = np.nanmax(angr)
             angmaxind = np.nanargmax(angr)/self.trial.framerate + tmin_
             angmin = np.nanmin(angr)
@@ -428,15 +433,16 @@ class Tardieu_window(object):
             velr = self.angveld[fmin:fmax]
             velmax = np.nanmax(velr)
             velmaxind = np.nanargmax(velr)/self.trial.framerate + tmin_
+            s += u'Values for shown range:\n'
             s += u'Max. dorsiflexion: %.2f° @ %.2f s\n' % (angmax, angmaxind)
             s += u'Max. plantarflexion: %.2f° @ %.2f s\n' % (angmin, angminind)
             s += u'Max velocity: %.2f°/s @ %.2f s\n' % (velmax, velmaxind)
-            s += u'\nEMG RMS peaks:\n'
             for ch in self.emg_chs:
                 rmsdata = self.emg_rms[ch][smin:smax]
                 rmsmax = rmsdata.max()
                 rmsmaxind = np.argmax(rmsdata)/self.trial.analograte + tmin_
-                s += u'%s: %.2f mV @ %.2f s\n' % (ch, rmsmax*1e3, rmsmaxind)
+                s += u'%s max RMS: %.2f mV @ %.2f s\n' % (ch, rmsmax*1e3,
+                                                          rmsmaxind)
             self._plot_text(self.textax, s, 1, 'k')
             # annotate markers
             for marker, anno, pos, col in self.markers.marker_pos_col():

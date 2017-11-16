@@ -172,7 +172,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self.canvas.setFocus()
 
         # self.setStyleSheet("background-color: white;");
-        # canvas into last column, span all rows
+        # add canvas into last column, span all rows
         self.mainGridLayout.addWidget(self.canvas, 0,
                                       self.mainGridLayout.columnCount(),
                                       self.mainGridLayout.rowCount(), 1)

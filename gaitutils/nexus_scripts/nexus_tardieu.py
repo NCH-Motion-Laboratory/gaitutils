@@ -2,6 +2,10 @@
 """
 Interactive script for analysis of Tardieu trials.
 
+TODO:
+    tmin - tmax bug (display)
+    marker texts overlap on window resize
+
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -24,9 +28,8 @@ from gaitutils.guiutils import messagebox
 
 # increase default DPI for figure saving
 plt.rcParams['savefig.dpi'] = 200
-# TODO: eventually take from config
-matplotlib.style.use('seaborn')
 
+matplotlib.style.use(cfg.plot.mpl_style)
 
 logger = logging.getLogger(__name__)
 
@@ -110,10 +113,10 @@ class Tardieu_window(object):
         self.marker_del_button = 3  # remove marker
         self.marker_key = 'shift'  # modifier key for markers
         # take marker colors from mpl default cycle, but skip the first color
-        # (which is used for angle plots). n of colors determined max n of
+        # (which is used for angle plots). n of colors determines max n of
         # markers.
         marker_colors = ['tab:orange', 'tab:green', 'tab:red', 'tab:brown',
-                         'tab:pink', 'tab:gray', 'tab:olive']
+                         'tab:pink', 'tab:gray', 'tab:olive'][:6]
         marker_width = 1.5
         self.emg_yrange = [-.5e-3, .5e-3]
         self.width_ratio = [1, 5]
@@ -122,7 +125,7 @@ class Tardieu_window(object):
         self.narrow = False
         self.hspace = .4
         self.wspace = .4
-        markers_text_start = .5  # relative to the text axis
+        markers_text_start = .35  # relative to the text axis
         markers_text_spacing = .05
         buttonwidth = .125
         buttonheight = .04
@@ -180,6 +183,7 @@ class Tardieu_window(object):
                 messagebox('EMG channel not found: %s' % ch)
                 sys.exit()
             t = t_ / self.trial.analograte
+
             self.emg_rms[ch] = rms(emgdata, cfg.emg.rms_win)
             sharex = None if ind == 0 else self.data_axes[0]
             ax = plt.subplot(self.gs[ind, 1:], sharex=sharex)
@@ -272,9 +276,7 @@ class Tardieu_window(object):
         tmax_ = min(self.time[-1], self.tmax)
         fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
         smin, smax = self._time_to_frame([tmin_, tmax_], self.trial.analograte)
-        angr = self.angd[fmin:fmax]
-        angminind = np.nanargmin(angr)/self.trial.framerate + tmin_
-        self.markers.add(angminind, annotation='Min. dorsiflex')
+        # max. velocity
         velr = self.angveld[fmin:fmax]
         velmaxind = np.nanargmax(velr)/self.trial.framerate + tmin_
         self.markers.add(velmaxind, annotation='Max. velocity')
@@ -394,8 +396,9 @@ class Tardieu_window(object):
         s = u'Shift+left click to add a new marker\n'
         s += u'Shift+right click to remove a marker\n'
         s += u'Tab to toggle wide/narrow display\n\n'
-        s += u'Note: EMG not delay corrected!\n\n'
         s += u'Trial name: %s\n' % self.trial.trialname
+        s += u'Description: %s\n' % (self.trial.eclipse_data['DESCRIPTION'])
+        s += u'Notes: %s\n' % (self.trial.eclipse_data['NOTES'])
         s += u'EMG passband: %.1f Hz - %.1f Hz\n' % (self.trial.emg.passband)
         s += u'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)
         # frame indices corresponding to time limits
@@ -413,11 +416,14 @@ class Tardieu_window(object):
             angr = self.angd[fmin:fmax]
             angmax = np.nanmax(angr)
             angmaxind = np.nanargmax(angr)/self.trial.framerate + tmin_
+            angmin = np.nanmin(angr)
+            angminind = np.nanargmin(angr)/self.trial.framerate + tmin_
             # same for velocity
             velr = self.angveld[fmin:fmax]
             velmax = np.nanmax(velr)
             velmaxind = np.nanargmax(velr)/self.trial.framerate + tmin_
             s += u'Max. dorsiflexion: %.2f° @ %.2f s\n' % (angmax, angmaxind)
+            s += u'Max. plantarflexion: %.2f° @ %.2f s\n' % (angmin, angminind)
             s += u'Max velocity: %.2f°/s @ %.2f s\n' % (velmax, velmaxind)
             s += u'\nEMG RMS peaks:\n'
             for ch in self.emg_chs:

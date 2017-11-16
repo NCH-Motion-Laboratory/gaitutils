@@ -291,7 +291,7 @@ class Tardieu_window(object):
             if any([s in ch for s in self.emg_automark_chs]):
                 rmsdata = self.emg_rms[ch][smin:smax]
                 rmsmaxind = np.argmax(rmsdata)/self.trial.analograte + tmin_
-                self.markers.add(rmsmaxind, annotation='Max. RMS %s' % ch)
+                self.markers.add(rmsmaxind, annotation='%s max. RMS' % ch)
 
         # init status text
         self._update_status_text()
@@ -391,8 +391,23 @@ class Tardieu_window(object):
                                            fontsize=self.text_fontsize,
                                            color=color, wrap=True))
 
+    def _show_markers_info(self):
+        # annotate markers
+        for marker, anno, pos, col in self.markers.marker_pos_col():
+            frame = self._time_to_frame(marker, self.trial.framerate)
+            if frame < 0 or frame >= self.nframes:
+                ms = u'Marker outside data range'
+            else:
+                ms = u'Marker @%.3f s' % marker
+                ms += (' (%s):\n') % anno if anno else ':\n'
+                ms += u'dflex: %.2f° vel: %.2f°/s' % (self.angd[frame],
+                                                      self.angveld[frame])
+                ms += u' acc: %.2f°/s²\n\n' % self.angaccd[frame]
+            self._plot_text(self.marker_textax, ms, pos, col)
+
     def _update_status_text(self):
         """Create status text & update display"""
+
         if self.texts:
             [txt.remove() for txt in self.texts]
             self.texts = []
@@ -412,6 +427,7 @@ class Tardieu_window(object):
         if fmin == fmax:
             s += 'Zoomed in to a single frame\nPlease zoom out for info'
             self._plot_text(self.textax, s, 1, 'k')
+            self._show_markers_info()
             return
         else:
             # analog sample indices ...
@@ -424,6 +440,7 @@ class Tardieu_window(object):
             if np.all(np.isnan(angr)):
                 s += 'No valid data in region'
                 self._plot_text(self.textax, s, 1, 'k')
+                self._show_markers_info()
                 return
             angmax = np.nanmax(angr)
             angmaxind = np.nanargmax(angr)/self.trial.framerate + tmin_
@@ -444,18 +461,7 @@ class Tardieu_window(object):
                 s += u'%s max RMS: %.2f mV @ %.2f s\n' % (ch, rmsmax*1e3,
                                                           rmsmaxind)
             self._plot_text(self.textax, s, 1, 'k')
-            # annotate markers
-            for marker, anno, pos, col in self.markers.marker_pos_col():
-                frame = self._time_to_frame(marker, self.trial.framerate)
-                if frame < 0 or frame >= self.nframes:
-                    ms = u'Marker outside data range'
-                else:
-                    ms = u'Marker @%.3f s' % marker
-                    ms += (' (%s):\n') % anno if anno else ':\n'
-                    ms += u'dflex: %.2f° vel: %.2f°/s' % (self.angd[frame],
-                                                          self.angveld[frame])
-                    ms += u' acc: %.2f°/s²\n\n' % self.angaccd[frame]
-                self._plot_text(self.marker_textax, ms, pos, col)
+            self._show_markers_info()
         self.fig.canvas.draw()
 
 

@@ -23,6 +23,7 @@ from gaitutils.numutils import segment_angles, rms
 from gaitutils.guiutils import messagebox
 
 # increase default DPI for figure saving
+# TODO: into config?
 plt.rcParams['savefig.dpi'] = 200
 
 matplotlib.style.use(cfg.plot.mpl_style)
@@ -246,7 +247,7 @@ class Tardieu_window(object):
 
         # adjust plot layout
         self.gs.tight_layout(self.fig)
-        #self.gs.update(hspace=self.hspace, wspace=self.wspace,
+        # self.gs.update(hspace=self.hspace, wspace=self.wspace,
         #               left=self.margin, right=1-self.margin)
 
         # add buttons
@@ -381,9 +382,9 @@ class Tardieu_window(object):
     def _plot_text(self, ax, s, ypos, color):
         """Plot string s at y position ypos (relative to text frame)"""
         self.texts.append(ax.text(0, ypos, s, ha='left', va='top',
-                                           transform=ax.transAxes,
-                                           fontsize=self.text_fontsize,
-                                           color=color, wrap=True))
+                                  transform=ax.transAxes,
+                                  fontsize=self.text_fontsize,
+                                  color=color, wrap=True))
 
     def _show_markers_info(self):
         # annotate markers
@@ -395,7 +396,7 @@ class Tardieu_window(object):
                 ms = u'Marker @%.3f s' % marker
                 ms += (' (%s):\n') % anno if anno else ':\n'
                 ms += u'dflex: %.2f° vel: %.2f°/s' % (self.angd[frame],
-                                                      self.angveld[frame])
+                                                        self.angveld[frame])
                 ms += u' acc: %.2f°/s²\n\n' % self.angaccd[frame]
             self._plot_text(self.marker_textax, ms, pos, col)
 

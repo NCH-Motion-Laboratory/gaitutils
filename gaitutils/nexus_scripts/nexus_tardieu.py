@@ -2,12 +2,6 @@
 """
 Interactive script for analysis of Tardieu trials.
 
-TODO:
-    tmin - tmax bug (display)
-    zooming bugs - may crash with "all nan slice""
-    marker texts overlap on window resize
-    try Qt embed?
-
 
 @author: Jussi (jnu@iki.fi)
 """

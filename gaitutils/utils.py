@@ -41,7 +41,7 @@ def get_crossing_frame(source, marker, dim=1, p0=0):
     return ycross
 
 
-def markers_vel(mrkdata, markers):
+def markers_avg_vel(mrkdata, markers):
     """Compute mean (scalar) velocity for given set of markers"""
     V = mrkdata[markers[0]+'_V']
     for marker in markers[1:]:
@@ -51,7 +51,6 @@ def markers_vel(mrkdata, markers):
 
 def _foot_swing_velocity(footctrv, max_peak_velocity, min_swing_velocity):
     """Compute foot swing velocity from scalar velocity data (markers_vel)"""
-
     # find maxima of velocity: derivative crosses zero and values ok
     vd = np.gradient(footctrv)
     vdz_ind = falling_zerocross(vd)
@@ -269,7 +268,7 @@ def detect_forceplate_events(source, fp_info=None):
 
                 # toeoff velocity
                 frate = info['framerate']
-                footctrv = markers_vel(mrkdata, markers)
+                footctrv = markers_avg_vel(mrkdata, markers)
                 toeoff_vel = footctrv[toeoff_fr]
                 # FIXME: parameters should be somewhere else
                 swing_vel = _foot_swing_velocity(footctrv, 12*1000/frate,
@@ -352,12 +351,7 @@ def get_foot_velocity(source, fp_events, medians=True):
     results = dict()
     for context, markers in zip(('R', 'L'), [cfg.autoproc.right_foot_markers,
                                 cfg.autoproc.left_foot_markers]):
-        # average velocities for different markers
-        footctrV = np.zeros(mrkdata[markers[0]+'_V'].shape)
-        for marker in markers:
-            footctrV += mrkdata[marker+'_V'] / float(len(markers))
-        # scalar velocity
-        footctrv = np.sqrt(np.sum(footctrV**2, 1))
+        footctrv = markers_avg_vel(mrkdata, markers)
         strikes = fp_events[context+'_strikes']
         toeoffs = fp_events[context+'_toeoffs']
         results[context + '_strike'] = footctrv[strikes]

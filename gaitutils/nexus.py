@@ -405,6 +405,8 @@ def _list_to_str(li):
     return ','.join([str(it) for it in li])
 
 
+
+
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                     'R_strike': None, 'R_toeoff': None}, events_range=None,
                     fp_events=None, restrict_to_roi=False,
@@ -471,10 +473,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     # get foot center positions and velocities
     mrkdata = get_marker_data(vicon, cfg.autoproc.right_foot_markers +
                               cfg.autoproc.left_foot_markers)
-
     rfootctrv = utils.markers_vel(mrkdata, cfg.autoproc.right_foot_markers)
     lfootctrv = utils.markers_vel(mrkdata, cfg.autoproc.left_foot_markers)
-
     # position data: use ANK marker
     rfootctrP = mrkdata['RANK_P']
     lfootctrP = mrkdata['LANK_P']
@@ -490,20 +490,9 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         footctrP = rfootctrP if ind == 0 else lfootctrP
         # filter scalar velocity data to suppress noise and spikes
         footctrv = signal.medfilt(footctrv, PREFILTER_MEDIAN_WIDTH)
-
-        # find maxima of velocity: derivative crosses zero and values ok
-        vd = np.gradient(footctrv)
-        vdz_ind = falling_zerocross(vd)
-        inds = np.where(footctrv[vdz_ind] < MAX_PEAK_VELOCITY)[0]
-        if len(inds) == 0:
-            raise GaitDataError('Cannot find acceptable velocity peaks')
-
-        # delete spurious peaks (where min swing velocity is not attained)
-        vs = footctrv[vdz_ind[inds]]
-        not_ok = np.where(vs < vs.max() * MIN_SWING_VELOCITY)
-        vs = np.delete(vs, not_ok)
-        maxv = np.median(vs)
-        logger.debug('swing velocity %.2f' % maxv)
+        # get peak (swing) velocity
+        maxv = utils._foot_swing_velocity(footctrv, MAX_PEAK_VELOCITY,
+                                          MIN_SWING_VELOCITY)
 
         # compute thresholds
         threshold_fall_ = (vel_thresholds[this_side+'_strike'] or

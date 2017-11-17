@@ -49,6 +49,22 @@ def markers_vel(mrkdata, markers):
     return np.sqrt(np.sum(V**2, 1))
 
 
+def _foot_swing_velocity(footctrv, max_peak_velocity, min_swing_velocity):
+    """Compute foot swing velocity from scalar velocity data (markers_vel)"""
+
+    # find maxima of velocity: derivative crosses zero and values ok
+    vd = np.gradient(footctrv)
+    vdz_ind = falling_zerocross(vd)
+    inds = np.where(footctrv[vdz_ind] < max_peak_velocity)[0]
+    if len(inds) == 0:
+        raise GaitDataError('Cannot find acceptable velocity peaks')
+    # delete spurious peaks (where min swing velocity is not attained)
+    vs = footctrv[vdz_ind[inds]]
+    not_ok = np.where(vs < vs.max() * min_swing_velocity)
+    vs = np.delete(vs, not_ok)
+    return np.median(vs)
+
+
 def get_movement_direction(source, marker, dir):
     """ Return direction of movement (negative/positive)
     for given marker and movement direction """
@@ -252,11 +268,18 @@ def detect_forceplate_events(source, fp_info=None):
                     ok = True
 
                 # toeoff velocity
-                footctrV = mrkdata[markers[0]+'_V']
-                for marker in markers[1:]:
-                    footctrV += mrkdata[marker+'_V'] / len(markers)
-                footctrv = np.sqrt(np.sum(footctrV**2, 1))
-                logger.debug('toeoff velocity: %.2f' % footctrv[toeoff_fr])
+                frate = info['framerate']
+                footctrv = markers_vel(mrkdata, markers)
+                toeoff_vel = footctrv[toeoff_fr]
+                # FIXME: parameters should be somewhere else
+                swing_vel = _foot_swing_velocity(footctrv, 12*1000/frate,
+                                                 .5)
+                logger.debug('swing vel %.2f, toeoff vel %.2f' %
+                             (swing_vel, toeoff_vel))
+                if toeoff_vel < .25 * swing_vel:
+                    logger.debug('toeoff velocity too low')
+                    ok = False
+                    continue
 
                 # individual marker checks
                 for marker_ in markers:

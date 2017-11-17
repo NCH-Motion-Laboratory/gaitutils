@@ -405,8 +405,6 @@ def _list_to_str(li):
     return ','.join([str(it) for it in li])
 
 
-
-
 def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                     'R_strike': None, 'R_toeoff': None}, events_range=None,
                     fp_events=None, restrict_to_roi=False,
@@ -473,8 +471,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     # get foot center positions and velocities
     mrkdata = get_marker_data(vicon, cfg.autoproc.right_foot_markers +
                               cfg.autoproc.left_foot_markers)
-    rfootctrv = utils.markers_vel(mrkdata, cfg.autoproc.right_foot_markers)
-    lfootctrv = utils.markers_vel(mrkdata, cfg.autoproc.left_foot_markers)
+    rfootctrv = utils.markers_avg_vel(mrkdata, cfg.autoproc.right_foot_markers)
+    lfootctrv = utils.markers_avg_vel(mrkdata, cfg.autoproc.left_foot_markers)
     # position data: use ANK marker
     rfootctrP = mrkdata['RANK_P']
     lfootctrP = mrkdata['LANK_P']
@@ -499,7 +497,6 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
                            maxv * REL_THRESHOLD_FALL)
         threshold_rise_ = (vel_thresholds[this_side+'_toeoff'] or
                            maxv * REL_THRESHOLD_RISE)
-
         logger.debug('side: %s, default thresholds fall/rise: %.2f/%.2f'
                      % (this_side, maxv * REL_THRESHOLD_FALL,
                         maxv * REL_THRESHOLD_RISE))

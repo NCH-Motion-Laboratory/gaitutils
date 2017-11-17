@@ -41,6 +41,14 @@ def get_crossing_frame(source, marker, dim=1, p0=0):
     return ycross
 
 
+def markers_vel(mrkdata, markers):
+    """Compute mean (scalar) velocity for given set of markers"""
+    V = mrkdata[markers[0]+'_V']
+    for marker in markers[1:]:
+        V += mrkdata[marker+'_V'] / len(markers)
+    return np.sqrt(np.sum(V**2, 1))
+
+
 def get_movement_direction(source, marker, dir):
     """ Return direction of movement (negative/positive)
     for given marker and movement direction """
@@ -156,7 +164,6 @@ def detect_forceplate_events(source, fp_info=None):
                 raise Exception('unexpected Eclipse forceplate field')
 
         # first identify candidates for footstrike by looking at fp data
-        # test the force data
         # FIXME: filter should maybe depend on sampling freq
         forcetot = signal.medfilt(fp['Ftot'])
         forcetot = _baseline(forcetot)
@@ -176,6 +183,7 @@ def detect_forceplate_events(source, fp_info=None):
                bodymass * 9.81):
                 logger.debug('insufficient max. force on plate')
                 continue
+
         # find indices where force crosses threshold
         try:
             logger.debug('force threshold: %.2f N' % f_threshold)
@@ -185,6 +193,7 @@ def detect_forceplate_events(source, fp_info=None):
         except IndexError:
             logger.debug('cannot detect force rise/fall')
             continue
+
         # we work with 0-based frame indices (=1 less than Nexus frame index)
         strike_fr = int(np.round(friseind / info['samplesperframe']))
         toeoff_fr = int(np.round(ffallind / info['samplesperframe']))
@@ -222,11 +231,13 @@ def detect_forceplate_events(source, fp_info=None):
                 logger.debug('foot height at strike: %.2f' % strike_h)
                 logger.debug('foot height at toeoff: %.2f' % toeoff_h)
                 logger.debug('foot height, trial min: %.2f' % min_h)
+
                 # foot strike must occur below given height limit
                 if (strike_h > min_h + cfg.autoproc.strike_max_height):
                     logger.debug('strike too high')
                     ok = False
                     continue
+
                 # toeoff must occur in given height range
                 elif (toeoff_h > min_h + cfg.autoproc.toeoff_height_range[1]):
                     logger.debug('toeoff too high')
@@ -240,20 +251,30 @@ def detect_forceplate_events(source, fp_info=None):
                     logger.debug('foot height checks ok')
                     ok = True
 
+                # toeoff velocity
+                footctrV = mrkdata[markers[0]+'_V']
+                for marker in markers[1:]:
+                    footctrV += mrkdata[marker+'_V'] / len(markers)
+                footctrv = np.sqrt(np.sum(footctrV**2, 1))
+                logger.debug('toeoff velocity: %.2f' % footctrv[toeoff_fr])
+
                 # individual marker checks
                 for marker_ in markers:
                     logger.debug('checking %s' % marker_)
                     mins_s, maxes_s = mins.copy(), maxes.copy()
                     mins_t, maxes_t = mins.copy(), maxes.copy()
+
                     # add tolerance for ankle marker in sideways direction
                     if 'ANK' in marker_:
                         mins_t[orth_dir] -= cfg.autoproc.ankle_sideways_tol
                         maxes_t[orth_dir] += cfg.autoproc.ankle_sideways_tol
                         mins_s[orth_dir] -= cfg.autoproc.ankle_sideways_tol
                         maxes_s[orth_dir] += cfg.autoproc.ankle_sideways_tol
+
                     # add tol for all markers in gait dir @ toeoff
                     maxes_t[fwd_dir] += cfg.autoproc.toeoff_marker_tol
                     mins_t[fwd_dir] -= cfg.autoproc.toeoff_marker_tol
+
                     # add tol for heel marker in gait dir @ foot strike
                     if 'HEE' in marker_:
                         maxes_s[fwd_dir] += cfg.autoproc.heel_strike_tol

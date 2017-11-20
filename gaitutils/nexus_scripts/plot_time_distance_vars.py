@@ -61,7 +61,8 @@ def _plot_barchart(values, units, thickness=.5, color=None):
                     txt, ha='center', va='center')
 
     if color is None:
-        color = ['r', 'g', 'b']
+        color = ['tab:orange', 'tab:green', 'tab:red', 'tab:brown',
+                 'tab:pink', 'tab:gray', 'tab:olive']
     vars = values.keys()
     units = [units[var] for var in vars]
     gs = GridSpec(len(vars), 3, width_ratios=[1, 1/3., 1])
@@ -92,7 +93,7 @@ def _plot_barchart(values, units, thickness=.5, color=None):
         _plot_len(ax, rects, add_text=' %s' % units[ind])
 
     if len(categs) > 1:
-        plt.subplot(gs[0, 2]).legend(rects[::-1], categs[::-1], loc=1)
+        plt.figlegend(rects[::-1], categs[::-1], loc=1)
 
     plt.subplot(gs[0, 0]).set_title('Left')
     plt.subplot(gs[0, 2]).set_title('Right')

@@ -221,4 +221,3 @@ def test_event_marking():
     _events_check(events_dict)
     vicon.SaveTrial(60)  # to prevent 'Save trial?' dialog on subsequent loads
 
-

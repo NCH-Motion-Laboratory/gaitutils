@@ -2,6 +2,12 @@
 """
 Interactive script for analysis of Tardieu trials.
 
+TODO:
+    create mainwindow w/ controls class
+    do not import pyplot
+    rm mpl widgets
+   
+
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -9,12 +15,18 @@ Interactive script for analysis of Tardieu trials.
 from __future__ import print_function
 from collections import OrderedDict
 import matplotlib
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 from matplotlib.widgets import Button
 import matplotlib.gridspec as gridspec
 import logging
 import sys
 import numpy as np
+from pkg_resources import resource_filename
+from PyQt5 import QtGui, QtWidgets, uic, QtCore
+from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
+                                                FigureCanvas)
+from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
+                                                NavigationToolbar)
 
 from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
                        Trial, Plotter, layouts, utils, GaitDataError,
@@ -24,11 +36,38 @@ from gaitutils.guiutils import messagebox
 
 # increase default DPI for figure saving
 # TODO: into config?
-plt.rcParams['savefig.dpi'] = 200
+#plt.rcParams['savefig.dpi'] = 200
 
 matplotlib.style.use(cfg.plot.mpl_style)
 
 logger = logging.getLogger(__name__)
+
+
+class TardieuWindow(QtWidgets.QMainWindow):
+
+    def __init__(self, parent=None):
+        super(TardieuWindow, self).__init__(parent)
+
+        uifile = resource_filename(__name__, 'tardieu.ui')
+        uic.loadUi(uifile, self)
+
+        # FIXME: right channel
+        emg_chs = ['R'+ch for ch in cfg.tardieu.emg_chs]
+
+        self._tardieu_plot = TardieuPlot(emg_chs=emg_chs)
+        self.canvas = FigureCanvas(self._tardieu_plot.fig)
+        self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                  QtWidgets.QSizePolicy.Expanding)
+
+        # these are needed for mpl callbacks to work (?)
+        self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
+        self.canvas.setFocus()
+
+        # self.setStyleSheet("background-color: white;");
+        # add canvas into last column, span all rows
+        self.mainGridLayout.addWidget(self.canvas, 0,
+                                      self.mainGridLayout.columnCount(),
+                                      self.mainGridLayout.rowCount(), 1)
 
 
 class Markers(object):
@@ -99,8 +138,8 @@ class Markers(object):
                    cols_in_use)
 
 
-class Tardieu_window(object):
-    """ Open a matplotlib window for Tardieu analysis """
+class TardieuPlot(object):
+    """ matplotlib graphs for Tardieu analysis """
 
     def __init__(self, emg_chs=None):
 
@@ -169,10 +208,9 @@ class Tardieu_window(object):
         else:
             self.angd = -self.angd + ang0_our
 
-        self.fig = plt.figure(figsize=(16, 10))
-        self.gs = gridspec.GridSpec(2 * (len(self.emg_chs) + 3), 2,
-                                    width_ratios=self.width_ratio)
-
+        self.fig = Figure(figsize=(16, 10))
+        self.gs = gridspec.GridSpec(len(self.emg_chs) + 3, 1)
+        
         # plot EMG signals
         self.emg_rms = dict()
         for ind, ch in enumerate(emg_chs):
@@ -185,7 +223,8 @@ class Tardieu_window(object):
 
             self.emg_rms[ch] = rms(emgdata, cfg.emg.rms_win)
             sharex = None if ind == 0 else self.data_axes[0]
-            ax = plt.subplot(self.gs[2*ind:2*ind+2, 1:], sharex=sharex)
+            ax = self.fig.add_subplot(self.gs[ind, 0],
+                                      sharex=sharex)
             ax.plot(t, emgdata*1e3, linewidth=cfg.plot.emg_linewidth)
             ax.plot(t, self.emg_rms[ch]*1e3,
                     linewidth=cfg.plot.emg_rms_linewidth, color='black')
@@ -194,19 +233,22 @@ class Tardieu_window(object):
             ax.set_title(ch)
             self._adj_fonts(ax)
             self.data_axes.append(ax)
-        ind = 2 * ind + 2
+
+        ind += 1
 
         # add angle plot
-        ax = plt.subplot(self.gs[ind:ind+2, 1:], sharex=self.data_axes[0])
+        ax = self.fig.add_subplot(self.gs[ind, 0],
+                                  sharex=self.data_axes[0])
         ax.plot(self.time, self.angd, linewidth=cfg.plot.model_linewidth)
         ax.set(ylabel='deg')
         ax.set_title('Angle')
         self._adj_fonts(ax)
         self.data_axes.append(ax)
-        ind += 2
+        ind += 1
 
         # add angular velocity plot
-        ax = plt.subplot(self.gs[ind:ind+2, 1:], sharex=self.data_axes[0])
+        ax = self.fig.add_subplot(self.gs[ind, 0],
+                                  sharex=self.data_axes[0])
         self.angveld = self.trial.framerate * np.diff(self.angd, axis=0)
         ax.plot(self.time[:-1], self.angveld,
                 linewidth=cfg.plot.model_linewidth)
@@ -214,10 +256,11 @@ class Tardieu_window(object):
         ax.set_title('Angular velocity')
         self._adj_fonts(ax)
         self.data_axes.append(ax)
-        ind += 2
+        ind += 1
 
         # add angular acceleration plot
-        ax = plt.subplot(self.gs[ind:ind+2, 1:], sharex=self.data_axes[0])
+        ax = self.fig.add_subplot(self.gs[ind, 0],
+                                  sharex=self.data_axes[0])
         self.angaccd = np.diff(self.angveld, axis=0)
         ax.plot(self.time[:-2], self.angaccd,
                 linewidth=cfg.plot.model_linewidth)
@@ -231,15 +274,19 @@ class Tardieu_window(object):
                                markers_text_spacing, self.data_axes)
 
         # add text axis spanning the left column (leave top rows for buttons)
-        self.textax = plt.subplot(self.gs[3:8, 0])
+        """
+        self.textax = self.fig.add_subplot(self.gs[3:8, 0])
         self.textax.set_axis_off()
-        self.marker_textax = plt.subplot(self.gs[8:, 0])
+        self.marker_textax = self.fig.add_subplot(self.gs[8:, 0])
         self.marker_textax.set_axis_off()
+        """
 
         # refresh text field on zoom
         for ax in self.data_axes:
             ax.callbacks.connect('xlim_changed', self._redraw)
 
+        # FIXME: canvas does not exist here
+        """
         # catch mouse click to add events
         self.fig.canvas.mpl_connect('button_press_event', self._onclick)
         # catch key press
@@ -251,7 +298,10 @@ class Tardieu_window(object):
         self.gs.tight_layout(self.fig)
         # self.gs.update(hspace=self.hspace, wspace=self.wspace,
         #               left=self.margin, right=1-self.margin)
+        """
 
+        # FIXME: move buttons to Qt interface
+        """
         # add buttons
         # add the clear button
         ax = plt.axes([self.margin, 1-self.margin-buttonheight,
@@ -271,6 +321,7 @@ class Tardieu_window(object):
         self._quitbutton = Button(ax, 'Quit')
         self._quitbutton.label.set_fontsize(self.text_fontsize)
         self._quitbutton.on_clicked(self.close)
+        """
 
         self.tmin, self.tmax = self.data_axes[0].get_xlim()
 
@@ -294,9 +345,7 @@ class Tardieu_window(object):
         self._update_status_text()
         self._last_click_event = None
 
-        self._toolbar = plt.get_current_fig_manager().toolbar
-
-        plt.show()
+        # self._toolbar = plt.get_current_fig_manager().toolbar
 
     @staticmethod
     def read_starting_angle(vicon):
@@ -317,9 +366,11 @@ class Tardieu_window(object):
         """Convert time to samples (according to rate)"""
         return np.round(rate * np.array(times)).astype(int)
 
+
     def close(self, event):
         """Close window"""
-        plt.close(self.fig)
+        #plt.close(self.fig)
+    
 
     def _redraw(self, ax):
         """Update display on e.g. zoom"""
@@ -341,7 +392,8 @@ class Tardieu_window(object):
         self.gs.set_width_ratios(wratios)
         self._narrowbutton.label.set_text(btext)
         self.gs.update()
-        self.fig.canvas.draw()
+        # FIXME: canvas ref
+        #self.fig.canvas.draw()
 
     def _onpick(self, event):
         if self._toolbar.mode:
@@ -388,7 +440,7 @@ class Tardieu_window(object):
                                   fontsize=self.text_fontsize,
                                   color=color, wrap=True))
 
-    def _show_markers_info(self):
+    def _markers_info(self):
         # annotate markers
         for marker, anno, pos, col in self.markers.marker_pos_col():
             frame = self._time_to_frame(marker, self.trial.framerate)
@@ -400,7 +452,8 @@ class Tardieu_window(object):
                 ms += u'dflex: %.2f° vel: %.2f°/s' % (self.angd[frame],
                                                         self.angveld[frame])
                 ms += u' acc: %.2f°/s²\n\n' % self.angaccd[frame]
-            self._plot_text(self.marker_textax, ms, pos, col)
+            yield ms
+            # self._plot_text(self.marker_textax, ms, pos, col)
 
     def _update_status_text(self):
         """Create status text & update display"""
@@ -459,17 +512,21 @@ class Tardieu_window(object):
                 rmsmaxind = np.argmax(rmsdata)/self.trial.analograte + tmin_
                 s += u'%s max RMS: %.2f mV @ %.2f s\n' % (ch, rmsmax*1e3,
                                                           rmsmaxind)
-            self._plot_text(self.textax, s, 1, 'k')
-            self._show_markers_info()
-        self.fig.canvas.draw()
-
-
-def do_plot(side):
-    emg_chs = [side+ch for ch in cfg.tardieu.emg_chs]
-    Tardieu_window(emg_chs=emg_chs)
+            return s
+            #self._plot_text(self.textax, s, 1, 'k')
+            #self._show_markers_info()
+        # FIXME: canvas ref
+        #self.fig.canvas.draw()
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    register_gui_exception_handler(full_traceback=True)
-    do_plot('L')
+
+    # uiparser logger makes too much noise
+    logging.getLogger('PyQt5.uic').setLevel(logging.WARNING)
+
+    app = QtWidgets.QApplication(sys.argv)
+    win = TardieuWindow()
+
+    win.show()
+    sys.exit(app.exec_())

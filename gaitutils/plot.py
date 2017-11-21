@@ -38,7 +38,8 @@ def save_pdf(filename, fig):
                       'check that file is not already open.' % filename)
 
 
-def time_dist_barchart(values, thickness=.5, color=None, interactive=True):
+def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
+                       interactive=True):
     """ Multi-variable and multi-category barchart plot.
     values dict is keyed as values[condition][var][side],
     given by e.g. get_c3d_analysis() """
@@ -55,17 +56,20 @@ def time_dist_barchart(values, thickness=.5, color=None, interactive=True):
             width = rect.get_width()
             txt = '%.2f' % width
             txt += add_text if add_text else ''
-            ax.text(rect.get_width() * .75,
+            ax.text(rect.get_width() * .0,
                     rect.get_y() + rect.get_height()/2.,
-                    txt, ha='center', va='center')
+                    txt, ha='left', va='center')
 
     def _plot_oneside(var, ind, side, col):
         """ Do the bar plots for given variable for all conditions """
         ax = fig.add_subplot(gs[ind, col])
         ax.axis('off')
         vals_this = [values[cond][var][side] for cond in conds]
+        stddev_this = ([stddev[cond][var][side] for cond in conds] if
+                       stddev else None)
         ypos = np.arange(0, len(vals_this) * thickness, thickness)
-        rects = ax.barh(ypos, vals_this, thickness, align='edge', color=color)
+        rects = ax.barh(ypos, vals_this, thickness, align='edge', color=color,
+                        xerr=stddev_this)
         # FIXME: set axis scale according to var normal values
         ax.set_xlim([0, 2. * max(vals_this)])
         _plot_len(ax, rects, add_text=' %s' % units[ind])

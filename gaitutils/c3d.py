@@ -85,8 +85,9 @@ def get_analysis(c3dfile, condition='unknown'):
     return di
 
 
-def avg_analysis(an_list):
-    """ Average analysis dicts """
+def group_analysis(an_list, fun=np.mean):
+    """ Average (or stddev etc) analysis dicts by applying fun to
+    collected values """
     if not isinstance(an_list, list):
         raise ValueError('Need a list of analysis dicts')
     if not an_list:
@@ -96,19 +97,18 @@ def avg_analysis(an_list):
         return an0
     conds = an0.keys()
     vars = an0[conds[0]].keys()
-    avgs = dict()
+    res = dict()
     for cond in conds:
-        avgs[cond] = dict()
+        res[cond] = dict()
         for var in vars:
-            avgs[cond][var] = dict()
-            avgs[cond][var]['unit'] = an0[cond][var]['unit']
+            res[cond][var] = dict()
+            res[cond][var]['unit'] = an0[cond][var]['unit']
             for context in ['Right', 'Left']:
                 allvals = np.array([an[cond][var][context] for an in an_list if
                                     context in an[cond][var]])
-                avgs[cond][var][context] = (allvals.mean() if allvals.size
-                                            else np.nan)
-                # could implement also std here
-    return avgs
+                res[cond][var][context] = (fun(allvals) if allvals.size else
+                                           np.nan)
+    return res
 
 
 def get_emg_data(c3dfile):

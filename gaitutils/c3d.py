@@ -86,6 +86,24 @@ def get_analysis(c3dfile, condition=None):
     return di
 
 
+"""
+def avg_analysis(alist, condition=None):
+#    Average analysis dicts returned by get_analysis. Condition is written
+#    according to condition
+    if not isinstance(alist, list):
+        raise ValueError('Need a list of analysis dicts')
+    if condition is None:
+        condition = 'average'
+    res = dict()
+    res[condition] = dict()
+    
+
+
+    for an in alist:
+        for var
+"""
+
+
 def get_emg_data(c3dfile):
     """ Read EMG data from a c3d file. """
     acq = _get_c3dacq(c3dfile)

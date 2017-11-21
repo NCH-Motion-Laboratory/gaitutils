@@ -327,19 +327,24 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionAverage"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuPlot">
     <property name="title">
+     <string>Data</string>
+    </property>
+    <addaction name="actionAverage"/>
+    <addaction name="separator"/>
+   </widget>
+   <widget class="QMenu" name="menuPlot_2">
+    <property name="title">
      <string>Plot</string>
     </property>
-    <addaction name="actionSave_as_PDF"/>
-    <addaction name="actionNormal_data"/>
-    <addaction name="separator"/>
+    <addaction name="actionTime_distance_vars"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuPlot"/>
+   <addaction name="menuPlot_2"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionSave_as_PDF">
@@ -360,6 +365,11 @@
   <action name="actionAverage">
    <property name="text">
     <string>Average...</string>
+   </property>
+  </action>
+  <action name="actionTime_distance_vars">
+   <property name="text">
+    <string>Time-distance vars...</string>
    </property>
   </action>
  </widget>

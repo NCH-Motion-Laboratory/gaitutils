@@ -27,6 +27,17 @@ from .config import cfg
 logger = logging.getLogger(__name__)
 
 
+def save_pdf(filename, fig):
+    """ Save figure fig into pdf filename """
+    try:
+        logger.debug('writing %s' % filename)
+        with PdfPages(filename) as pdf:
+            pdf.savefig(fig)
+    except IOError:
+        raise IOError('Error writing %s, '
+                      'check that file is not already open.' % filename)
+
+
 def time_dist_barchart(values, thickness=.5, color=None, interactive=True):
     """ Multi-variable and multi-category barchart plot.
     values dict is keyed as values[condition][var][side],
@@ -85,9 +96,6 @@ def time_dist_barchart(values, thickness=.5, color=None, interactive=True):
 
     fig.add_subplot(gs[0, 0]).set_title('Left')
     fig.add_subplot(gs[0, 2]).set_title('Right')
-
-    if interactive:
-        plt.show()
 
     return fig
 
@@ -805,10 +813,6 @@ class Plotter(object):
             pdf_name = op.join(sessionpath, pdf_name)
         if op.isfile(pdf_name):
             pass  # can prevent overwriting here
-        try:
-            logger.debug('writing %s' % pdf_name)
-            with PdfPages(pdf_name) as pdf:
-                pdf.savefig(self.fig)
-        except IOError:
-            raise IOError('Error writing %s, '
-                          'check that file is not already open.' % pdf_name)
+
+        save_pdf(pdf_name, self.fig)
+

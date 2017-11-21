@@ -69,14 +69,14 @@ def _do_autoproc(enffiles, update_eclipse=True):
         for pipeline in plines:
             logger.debug('Running pipeline: %s' % pipeline)
             result = vicon.Client.RunPipeline(pipeline.encode('utf-8'), '',
-                                              cfg.autoproc.pipeline_timeout)
+                                              cfg.autoproc.nexus_timeout)
             if result.Error():
                 logger.warning('Error while trying to run Nexus pipeline: %s'
                                % pipeline)
 
     def _save_trial():
         logger.debug('Saving trial')
-        vicon.SaveTrial(cfg.autoproc.save_timeout)
+        vicon.SaveTrial(cfg.autoproc.nexus_timeout)
 
     def _context_desc(context):
         if not context:
@@ -104,7 +104,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         filepath = filepath_[:filepath_.find('.Trial')]  # rm .Trial and .enf
         filename = os.path.split(filepath)[1]
         logger.debug('\nprocessing: %s' % filename)
-        vicon.OpenTrial(filepath, cfg.autoproc.trial_open_timeout)
+        vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
         subjectname = nexus.get_metadata(vicon)['name']
         edi = eclipse.get_eclipse_keys(filepath_, return_empty=True)
         trial_type = edi['TYPE']
@@ -232,7 +232,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
     for filepath, trial in sel_trials.items():
         filename = os.path.split(filepath)[1]
         logger.debug('\nprocessing: %s' % filename)
-        vicon.OpenTrial(filepath, cfg.autoproc.trial_open_timeout)
+        vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
         enf_file = filepath + '.Trial.enf'
 
         # automark using global velocity thresholds

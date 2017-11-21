@@ -43,7 +43,7 @@ def get_crossing_frame(source, marker, dim=1, p0=0):
 
 def markers_avg_vel(mrkdata, markers):
     """Compute mean (scalar) velocity for given set of markers"""
-    V = mrkdata[markers[0]+'_V']
+    V = mrkdata[markers[0]+'_V'] / len(markers)
     for marker in markers[1:]:
         V += mrkdata[marker+'_V'] / len(markers)
     return np.sqrt(np.sum(V**2, 1))

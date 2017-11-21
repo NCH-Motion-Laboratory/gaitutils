@@ -159,13 +159,15 @@ class Tardieu_window(object):
         # this is our calculated starting angle
         ang0_our = np.median(self.angd[~np.isnan(self.angd)][:10])
         # the 'true' starting angle (in Nexus as subject param)
-        ang0_nexus = self.read_starting_angle(vicon)
-        # if it cannot be read, assume 90 deg
-        ang0_nexus = 90 if ang0_nexus is None else ang0_nexus
+        self.ang0_nexus = self.read_starting_angle(vicon)
         # normalize: plantarflexion negative, our starting angle equals
         # the starting angle given in Nexus (i.e. if ang0_nexus is 95,
         # we normalize the data to start at -5 deg)
-        self.angd = 90 - ang0_nexus - self.angd + ang0_our
+        # if starting angle is not specified in Nexus, assume 90 deg
+        if self.ang0_nexus:
+            self.angd = 90 - self.ang0_nexus - self.angd + ang0_our
+        else:
+            self.angd = -self.angd + ang0_our
 
         self.fig = plt.figure(figsize=(16, 10))
         self.gs = gridspec.GridSpec(2 * (len(self.emg_chs) + 3), 2,
@@ -415,6 +417,8 @@ class Tardieu_window(object):
         s += u'Trial name: %s\n' % self.trial.trialname
         s += u'Description: %s\n' % (self.trial.eclipse_data['DESCRIPTION'])
         s += u'Notes: %s\n' % (self.trial.eclipse_data['NOTES'])
+        s += u'Nexus angle offset: '
+        s += (u' %.2f\n' % self.ang0_nexus) if self.ang0_nexus else u'none\n'
         s += u'EMG passband: %.1f Hz - %.1f Hz\n' % (self.trial.emg.passband)
         s += u'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)
         # frame indices corresponding to time limits

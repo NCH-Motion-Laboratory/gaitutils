@@ -54,9 +54,9 @@ def _get_c3dacq(c3dfile):
     return reader.GetOutput()
 
 
-def get_c3d_analysis(c3dfile):
+def get_analysis(c3dfile, condition=None):
     """Get analysis values from c3d (e.g. gait parameters). Returns a dict
-    keyed by var and context"""
+    keyed by var and context. First key can optionally be a condition label"""
 
     def _strip_all(iterable):
         """Strip all strings in iterable of strings"""
@@ -73,12 +73,16 @@ def get_c3d_analysis(c3dfile):
 
     # build a nice output dict
     di = dict()
+    if condition:
+        di[condition] = dict()
+    di_ = di[condition] if condition else di
+
     for (var, unit, context, val) in zip(vars, units, contexts, vals):
-        if var not in di:
-            di[var] = dict()
-            di[var]['unit'] = unit
-        if context not in di[var]:
-            di[var][context] = val
+        if var not in di_:
+            di_[var] = dict()
+            di_[var]['unit'] = unit
+        if context not in di_[var]:
+            di_[var][context] = val
     return di
 
 

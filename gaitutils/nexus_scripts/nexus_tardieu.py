@@ -23,8 +23,7 @@ import sys
 import numpy as np
 from pkg_resources import resource_filename
 from PyQt5 import QtGui, QtWidgets, uic, QtCore
-from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
-                                                FigureCanvas)
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
                                                 NavigationToolbar)
 
@@ -55,9 +54,12 @@ class TardieuWindow(QtWidgets.QMainWindow):
         emg_chs = ['R'+ch for ch in cfg.tardieu.emg_chs]
 
         self._tardieu_plot = TardieuPlot(emg_chs=emg_chs)
-        self.canvas = FigureCanvas(self._tardieu_plot.fig)
+        self.canvas = FigureCanvasQTAgg(self._tardieu_plot.fig)
         self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                   QtWidgets.QSizePolicy.Expanding)
+
+        # FIXME: canvas callbacks need to be set here, or alternatively
+        # canvas ref could live in the plot class
 
         # these are needed for mpl callbacks to work (?)
         self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
@@ -163,9 +165,6 @@ class TardieuPlot(object):
         self.wspace = .5
         markers_text_start = .95  # relative to the text axis
         markers_text_spacing = .15
-        buttonwidth = .125
-        buttonheight = .04
-        buttongap = .025
         self.emg_chs = emg_chs
         self.emg_automark_chs = ['Gas', 'Sol']
         self.texts = []

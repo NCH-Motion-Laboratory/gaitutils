@@ -2,12 +2,10 @@
 """
 Created on Tue Nov 14 16:45:32 2017
 
-@author: hus20664877
+
+@author: Jussi (jnu@iki.fi)
 """
 
-#from matplotlib.gridspec import GridSpec
-#import numpy as np
-#from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 from gaitutils.plot import time_dist_barchart
 import gaitutils
@@ -17,6 +15,7 @@ an = gaitutils.c3d.get_analysis(fn, 'Normal')
 fn = 'Z:\\Userdata_Vicon_Server\\CP-projekti\\TD26\\20160824\\TD26_N1_06.c3d'
 an2 = gaitutils.c3d.get_analysis(fn, 'Not normal')
 an.update(an2)
+
 
 fig = time_dist_barchart(an, interactive=True)
 

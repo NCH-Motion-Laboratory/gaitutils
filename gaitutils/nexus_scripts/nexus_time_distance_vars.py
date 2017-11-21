@@ -21,16 +21,17 @@ logger = logging.getLogger(__name__)
 def do_plot(search=None, show=True, make_pdf=True):
 
     sessionpath = nexus.get_sessionpath()
+    sessiondir = op.split(sessionpath)[-1]
 
     tagged_trials = find_tagged(search)
     an = list()
     for trial in tagged_trials:
-        an.append(c3d.get_analysis(enf2c3d(trial), condition='jotain'))
+        an.append(c3d.get_analysis(enf2c3d(trial), condition='average'))
 
-    #an_avg = c3d.avg_analysis(an)
-
-    print an[0]
-    fig = time_dist_barchart(an[0])
+    an_avg = c3d.avg_analysis(an)
+    fig = time_dist_barchart(an_avg)
+    fig.suptitle('Average of %d trials, session %s' % (len(tagged_trials),
+                                                       sessiondir))
 
     if show:
         plt.show()

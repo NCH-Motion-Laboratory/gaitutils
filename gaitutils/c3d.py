@@ -54,7 +54,7 @@ def _get_c3dacq(c3dfile):
     return reader.GetOutput()
 
 
-def get_analysis(c3dfile, condition=None):
+def get_analysis(c3dfile, condition='unknown'):
     """Get analysis values from c3d (e.g. gait parameters). Returns a dict
     keyed by var and context. First key can optionally be a condition label"""
 
@@ -73,9 +73,8 @@ def get_analysis(c3dfile, condition=None):
 
     # build a nice output dict
     di = dict()
-    if condition:
-        di[condition] = dict()
-    di_ = di[condition] if condition else di
+    di[condition] = dict()
+    di_ = di[condition]
 
     for (var, unit, context, val) in zip(vars, units, contexts, vals):
         if var not in di_:
@@ -86,22 +85,30 @@ def get_analysis(c3dfile, condition=None):
     return di
 
 
-"""
-def avg_analysis(alist, condition=None):
-#    Average analysis dicts returned by get_analysis. Condition is written
-#    according to condition
-    if not isinstance(alist, list):
+def avg_analysis(an_list):
+    """ Average analysis dicts """
+    if not isinstance(an_list, list):
         raise ValueError('Need a list of analysis dicts')
-    if condition is None:
-        condition = 'average'
-    res = dict()
-    res[condition] = dict()
-    
-
-
-    for an in alist:
-        for var
-"""
+    if not an_list:
+        return None
+    an0 = an_list[0]
+    if len(an_list) == 1:
+        return an0
+    conds = an0.keys()
+    vars = an0[conds[0]].keys()
+    avgs = dict()
+    for cond in conds:
+        avgs[cond] = dict()
+        for var in vars:
+            avgs[cond][var] = dict()
+            avgs[cond][var]['unit'] = an0[cond][var]['unit']
+            for context in ['Right', 'Left']:
+                allvals = np.array([an[cond][var][context] for an in an_list if
+                                    context in an[cond][var]])
+                avgs[cond][var][context] = (allvals.mean() if allvals.size
+                                            else np.nan)
+                # could implement also std here
+    return avgs
 
 
 def get_emg_data(c3dfile):

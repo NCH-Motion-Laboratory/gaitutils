@@ -293,6 +293,8 @@ musclelen.read_vars = musclelen.varlabels.keys()
 musclelen.varnames = musclelen.read_vars
 musclelen.varnames_noside = musclelen.varlabels_noside.keys()
 
+musclelen.is_kinetic_var = lambda varname: False
+
 musclelen.ylabels = {}
 for var in musclelen.varnames:
     musclelen.ylabels[var] = 'Length norm.'

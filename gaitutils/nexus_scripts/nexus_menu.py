@@ -19,6 +19,7 @@ from gaitutils import nexus_emgplot
 from gaitutils import nexus_kinetics_emgplot
 from gaitutils import nexus_emg_consistency
 from gaitutils import nexus_kin_consistency
+from gaitutils import nexus_time_distance_vars
 from gaitutils import nexus_autoprocess_trial
 from gaitutils import nexus_autoprocess_session
 from gaitutils import nexus_kinallplot
@@ -288,6 +289,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   nexus_kin_consistency.do_plot)
         self._button_connect_task(self.btnKinAverage,
                                   nexus_kin_average.do_plot)
+        self._button_connect_task(self.btnTimeDist,
+                                  nexus_time_distance_vars.do_plot)
         self._button_connect_task(self.btnAutoprocTrial,
                                   nexus_autoprocess_trial.autoproc_single,
                                   thread=True)

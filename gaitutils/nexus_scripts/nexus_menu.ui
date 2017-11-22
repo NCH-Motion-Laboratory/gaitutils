@@ -17,17 +17,17 @@
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="2" column="1">
-       <widget class="QPushButton" name="btnKinEMG">
+      <item row="5" column="6">
+       <widget class="QPushButton" name="btnTrialVelocity">
         <property name="text">
-         <string>Kinetics-EMG plot</string>
+         <string>Trial velocity plot</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="7">
-       <widget class="QPushButton" name="btnAutoprocTrial">
+      <item row="1" column="6">
+       <widget class="QPushButton" name="btnEMGCons">
         <property name="text">
-         <string>Autoprocess single trial</string>
+         <string>EMG consistency</string>
         </property>
        </widget>
       </item>
@@ -43,76 +43,6 @@
          </size>
         </property>
        </spacer>
-      </item>
-      <item row="2" column="6">
-       <spacer name="horizontalSpacer_2">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="1" column="7">
-       <widget class="QPushButton" name="btnAutoprocSession">
-        <property name="text">
-         <string>Autoprocess session</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QPushButton" name="btnKinall">
-        <property name="text">
-         <string>Kinetics + kinematics</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QPushButton" name="btnEMG">
-        <property name="text">
-         <string>EMG only plot</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="5">
-       <widget class="QPushButton" name="btnEMGCons">
-        <property name="text">
-         <string>EMG consistency</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="8">
-       <spacer name="horizontalSpacer_4">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="0" column="7">
-       <widget class="QLabel" name="label_3">
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>Processing</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
       </item>
       <item row="0" column="1">
        <widget class="QLabel" name="label">
@@ -130,7 +60,21 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="5">
+      <item row="1" column="8">
+       <widget class="QPushButton" name="btnAutoprocSession">
+        <property name="text">
+         <string>Autoprocess session</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QPushButton" name="btnKinEMG">
+        <property name="text">
+         <string>Kinetics-EMG plot</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="6">
        <widget class="QLabel" name="label_2">
         <property name="font">
          <font>
@@ -146,28 +90,112 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="1">
-       <widget class="QPushButton" name="btnCustom">
+      <item row="0" column="8">
+       <widget class="QLabel" name="label_3">
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
         <property name="text">
-         <string>Custom plot</string>
+         <string>Processing</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
         </property>
        </widget>
       </item>
-      <item row="5" column="1">
+      <item row="3" column="8">
+       <widget class="QPushButton" name="btnAutoprocTrial">
+        <property name="text">
+         <string>Autoprocess single trial</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="6">
+       <widget class="QPushButton" name="btnKinCons">
+        <property name="text">
+         <string>Kinematics consistency</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QPushButton" name="btnKinall">
+        <property name="text">
+         <string>Kinetics + kinematics</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="8">
+       <widget class="QPushButton" name="btnCopyVideos">
+        <property name="text">
+         <string>Copy session videos to desktop</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="1">
        <widget class="QPushButton" name="btnTardieu">
         <property name="text">
          <string>Tardieu analysis</string>
         </property>
        </widget>
       </item>
-      <item row="5" column="3">
+      <item row="5" column="1">
+       <widget class="QPushButton" name="btnCustom">
+        <property name="text">
+         <string>Custom plot</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="6">
+       <widget class="QPushButton" name="btnKinAverage">
+        <property name="text">
+         <string>Kinematics average</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="7">
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="4" column="1">
+       <widget class="QPushButton" name="btnEMG">
+        <property name="text">
+         <string>EMG only plot</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="4">
        <widget class="QRadioButton" name="rbtnL">
         <property name="text">
          <string>L</string>
         </property>
        </widget>
       </item>
-      <item row="5" column="2">
+      <item row="0" column="9">
+       <spacer name="horizontalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="6" column="3">
        <widget class="QRadioButton" name="rbtnR">
         <property name="text">
          <string>R</string>
@@ -177,7 +205,7 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="4">
+      <item row="4" column="5">
        <spacer name="horizontalSpacer">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -193,38 +221,17 @@
         </property>
        </spacer>
       </item>
-      <item row="4" column="5">
-       <widget class="QPushButton" name="btnTrialVelocity">
+      <item row="6" column="6">
+       <widget class="QPushButton" name="btnTimeDist">
         <property name="text">
-         <string>Trial velocity plot</string>
+         <string>Time-distance vars</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="5">
-       <widget class="QPushButton" name="btnKinCons">
-        <property name="text">
-         <string>Kinematics consistency</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="5">
-       <widget class="QPushButton" name="btnKinAverage">
-        <property name="text">
-         <string>Kinematics average</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="7">
+      <item row="5" column="8">
        <widget class="QPushButton" name="btnCreatePDFs">
         <property name="text">
          <string>Create all PDF plots</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="7">
-       <widget class="QPushButton" name="btnCopyVideos">
-        <property name="text">
-         <string>Copy session videos to desktop</string>
         </property>
        </widget>
       </item>

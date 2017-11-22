@@ -823,4 +823,3 @@ class Plotter(object):
             pass  # can prevent overwriting here
 
         save_pdf(pdf_name, self.fig)
-

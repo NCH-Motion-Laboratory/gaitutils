@@ -184,7 +184,7 @@ def _collect_model_data(trials, fp_cycles_only=False):
                     # pick data only if var context matches cycle context
                     # FIXME: this may not work with all models
                     if var[0] == side:
-                        # don't collect kinetics if cycle not on forceplate
+                        # don't collect kinetics if cycle is not on forceplate
                         if ((model.is_kinetic_var(var) or fp_cycles_only) and
                            not cycle.on_forceplate):
                                 continue

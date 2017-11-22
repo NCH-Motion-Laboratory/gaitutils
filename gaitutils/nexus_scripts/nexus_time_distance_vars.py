@@ -24,25 +24,28 @@ def do_plot(search=None, show=True, make_pdf=True):
     sessionpath = nexus.get_sessionpath()
     sessiondir = op.split(sessionpath)[-1]
 
+    # FIXME: into config?
     scales = {'Cadence': (0, 200),
-              'Walking Speed': (0, 1.5)}
+              'Walking Speed': (0, 1.5),
+              'Stride Time': (0, 1.5)}
 
     tagged_trials = find_tagged(search)
     an = list()
     for trial in tagged_trials:
         an.append(c3d.get_analysis(enf2c3d(trial), condition='average'))
 
+    title = 'Time-distance parameters, '
     if len(an) > 1:
         an_avg = c3d.group_analysis(an)
         an_std = c3d.group_analysis(an, fun=np.std)
-        title = '%d trial average from ' % len(an)
+        title += '%d trial average from ' % len(an)
     else:
         an_avg = an[0]
         an_std = None
-        title = '1 trial from '
+        title += '1 trial from '
 
     fig = time_dist_barchart(an_avg, an_std, scales)
-    title += 'session %s' % sessiondir
+    title += '%s' % sessiondir
     fig.suptitle(title)
 
     if show:

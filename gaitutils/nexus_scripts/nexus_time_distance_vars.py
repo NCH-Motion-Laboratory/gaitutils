@@ -29,11 +29,18 @@ def do_plot(search=None, show=True, make_pdf=True):
     for trial in tagged_trials:
         an.append(c3d.get_analysis(enf2c3d(trial), condition='average'))
 
-    an_avg = c3d.group_analysis(an)
-    an_std = c3d.group_analysis(an, fun=np.std)
+    if len(an) > 1:
+        an_avg = c3d.group_analysis(an)
+        an_std = c3d.group_analysis(an, fun=np.std)
+        title = '%d trial average from ' % len(an)
+    else:
+        an_avg = an[0]
+        an_std = None
+        title = '1 trial from '
+
     fig = time_dist_barchart(an_avg, an_std)
-    fig.suptitle('Average of %d trials, session %s' % (len(tagged_trials),
-                                                       sessiondir))
+    title += 'session %s' % sessiondir
+    fig.suptitle(title)
 
     if show:
         plt.show()

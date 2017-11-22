@@ -41,7 +41,7 @@ def save_pdf(filename, fig):
 def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
                        interactive=True):
     """ Multi-variable and multi-category barchart plot.
-    values dict is keyed as values[condition][var][side],
+    values dict is keyed as values[condition][var][context],
     given by e.g. get_c3d_analysis() """
 
     if interactive:
@@ -60,19 +60,21 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
                     rect.get_y() + rect.get_height()/2.,
                     txt, ha='left', va='center')
 
-    def _plot_oneside(var, ind, side, col):
-        """ Do the bar plots for given variable for all conditions """
-        ax = fig.add_subplot(gs[ind, col])
-        ax.axis('off')
-        vals_this = [values[cond][var][side] for cond in conds]
-        stddev_this = ([stddev[cond][var][side] for cond in conds] if
-                       stddev else None)
-        ypos = np.arange(0, len(vals_this) * thickness, thickness)
-        rects = ax.barh(ypos, vals_this, thickness, align='edge', color=color,
-                        xerr=stddev_this)
-        # FIXME: set axis scale according to var normal values
-        ax.set_xlim([0, 2. * max(vals_this)])
-        _plot_len(ax, rects, add_text=' %s' % units[ind])
+    def _plot_oneside(vars, context, col):
+        """ Do the bar plots for given context and column """
+        for ind, var in enumerate(vars):
+            ax = fig.add_subplot(gs[ind, col])
+            ax.axis('off')
+            vals_this = [values[cond][var][context] for cond in conds]
+            stddev_this = ([stddev[cond][var][context] for cond in conds] if
+                           stddev else None)
+            ypos = np.arange(0, len(vals_this) * thickness, thickness)
+            rects = ax.barh(ypos, vals_this, thickness, align='edge',
+                            color=color, xerr=stddev_this)
+            # FIXME: set axis scale according to var normal values
+            ax.set_xlim([0, 2. * max(vals_this)])
+            _plot_len(ax, rects, add_text=' %s' % units[ind])
+        # return the last set of rects for legend
         return rects
 
     if color is None:
@@ -86,16 +88,17 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
     # 3 columns: bar, labels, bar
     gs = GridSpec(len(vars), 3, width_ratios=[1, 1/3., 1])
 
+    # variable names into the center column
     for ind, var in enumerate(vars):
-        # variable name
         textax = fig.add_subplot(gs[ind, 1])
         textax.axis('off')
         textax.text(0, .5, var, ha='center', va='center')
 
-        rects = _plot_oneside(var, ind, 'Left', 0)
-        rects = _plot_oneside(var, ind, 'Right', 2)
+    rects = _plot_oneside(vars, 'Left', 0)
+    rects = _plot_oneside(vars, 'Right', 2)
 
     if len(conds) > 1:
+        # plotting happens from down -> up, so reverse legend
         fig.legend(rects[::-1], conds[::-1], loc=1)
 
     fig.add_subplot(gs[0, 0]).set_title('Left')
@@ -508,6 +511,7 @@ class Plotter(object):
 
         is_avg_trial = isinstance(trial, AvgTrial)
 
+        # FIXME: avoid creating new axes for superpose=True?
         for i, var in enumerate(self.allvars):
             var_type = self._var_type(var)
             if var_type is None:

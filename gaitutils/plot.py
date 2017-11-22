@@ -38,11 +38,12 @@ def save_pdf(filename, fig):
                       'check that file is not already open.' % filename)
 
 
-def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
-                       interactive=True):
+def time_dist_barchart(values, stddev=None, scales=None, thickness=.5,
+                       color=None, interactive=True):
     """ Multi-variable and multi-category barchart plot.
     values dict is keyed as values[condition][var][context],
-    given by e.g. get_c3d_analysis() """
+    given by e.g. get_c3d_analysis()
+    scales is a dict of var-specific (min, max) tuples to scale the bars"""
 
     if interactive:
         import matplotlib.pyplot as plt
@@ -71,15 +72,17 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
             ypos = np.arange(0, len(vals_this) * thickness, thickness)
             rects = ax.barh(ypos, vals_this, thickness, align='edge',
                             color=color, xerr=stddev_this)
-            # FIXME: set axis scale according to var normal values
-            ax.set_xlim([0, 2. * max(vals_this)])
+            if scales and var in scales:
+                ax.set_xlim([scales[var][0], scales[var][1]])
+            else:
+                ax.set_xlim([0, 2*max(vals_this)])
             _plot_len(ax, rects, add_text=' %s' % units[ind])
         # return the last set of rects for legend
         return rects
 
     if color is None:
-        color = ['tab:orange', 'tab:green', 'tab:red', 'tab:brown',
-                 'tab:pink', 'tab:gray', 'tab:olive']
+        color = ['tab:blue', 'tab:olive', 'tab:green', 'tab:red', 'tab:brown',
+                 'tab:pink', 'tab:gray', 'tab:orange']
 
     conds = values.keys()
     vals_1 = values[conds[0]]

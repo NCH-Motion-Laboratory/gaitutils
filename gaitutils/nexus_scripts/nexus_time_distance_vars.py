@@ -24,6 +24,9 @@ def do_plot(search=None, show=True, make_pdf=True):
     sessionpath = nexus.get_sessionpath()
     sessiondir = op.split(sessionpath)[-1]
 
+    scales = {'Cadence': (0, 200),
+              'Walking Speed': (0, 1.5)}
+
     tagged_trials = find_tagged(search)
     an = list()
     for trial in tagged_trials:
@@ -38,7 +41,7 @@ def do_plot(search=None, show=True, make_pdf=True):
         an_std = None
         title = '1 trial from '
 
-    fig = time_dist_barchart(an_avg, an_std)
+    fig = time_dist_barchart(an_avg, an_std, scales)
     title += 'session %s' % sessiondir
     fig.suptitle(title)
 

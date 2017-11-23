@@ -109,6 +109,14 @@ class NiceListWidget(QtWidgets.QListWidget):
         self.takeItem(self.row(self.currentItem()))
 
 
+class TimeDistDialog(QtWidgets.QDialog):
+
+    def __init__(self, parent=None):
+        super(self.__class__, self).__init__()
+        uifile = resource_filename(__name__, 'time_dist.ui')
+        uic.loadUi(uifile, self)
+
+
 class AveragerDialog(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
@@ -126,7 +134,7 @@ class AveragerDialog(QtWidgets.QDialog):
             vicon = nexus.viconnexus()
             self._open_trial(vicon)
         except GaitDataError:
-            self.message_dialog('Vicon Nexus is not running')
+            self.message_dialog('Cannot load trial from Nexus')
 
     def _open_trial(self, source):
         tr = Trial(source)
@@ -142,6 +150,7 @@ class AveragerDialog(QtWidgets.QDialog):
         trials = [item.userdata for item in self.listTrials.items]
         fp_cycles_only = self.xpFpCyclesOnly.checkState()
         self.avg = stats.AvgTrial(trials, fp_cycles_only=fp_cycles_only)
+        # FIXME: report on averaging stats
         message_dialog('Averaging OK')
         self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
 
@@ -202,6 +211,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
         # menu actions
         self.actionQuit.triggered.connect(self.close)
         self.actionAverage.triggered.connect(self._averager_dialog)
+        self.actionTimeDist.triggered.connect(self._time_dist_dialog)
 
         # add predefined plot layouts to combobox
         self.cbLayout.addItems(sorted(cfg.options('layouts')))
@@ -224,6 +234,10 @@ class PlotterWindow(QtWidgets.QMainWindow):
     def _options_dialog(self):
         """ Show the autoprocessing options dialog """
         dlg = OptionsDialog(default_tab=1)
+        dlg.exec_()
+
+    def _time_dist_dialog(self):
+        dlg = TimeDistDialog()
         dlg.exec_()
 
     def _averager_dialog(self):
@@ -340,6 +354,9 @@ class PlotterWindow(QtWidgets.QMainWindow):
         lout = layouts.filter_layout(lout, 'legend', None)
         self.pl.layout = lout
         match_pig_kinetics = self.xbKineticsFpOnly.checkState()
+        plot_stddev = self.xbStddev.checkState()
+        # FIXME: disable combobox if this is not selected
+        plot_normaldata = self.xbNormalData.checkState()
 
         try:
             fn = self.cbNormalData.currentText()
@@ -350,11 +367,13 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
         for trial, cycs in plot_cycles.items():
             try:
+                model_stddev = trial.stddev_data if plot_stddev else None
                 self.pl.plot_trial(trial=trial, model_cycles=cycs,
                                    emg_cycles=cycs,
                                    match_pig_kinetics=match_pig_kinetics,
                                    maintitle='', superpose=True,
-                                   model_stddev=trial.stddev_data)
+                                   plot_model_normaldata=plot_normaldata,
+                                   model_stddev=model_stddev)
             except GaitDataError as e:
                 message_dialog('Error: %s' % str(e))
                 self.pl.fig.clear()  # fig may have been partially drawn

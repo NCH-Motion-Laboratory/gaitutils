@@ -121,7 +121,7 @@ class Trial(object):
         self.sessiondir = op.split(self.sessionpath)[-1]
 
         # TODO: sometimes trial .enf name seems to be different?
-        enfpath = op.join(self.sessionpath, self.trialname, '.Trial.enf')
+        enfpath = op.join(self.sessionpath, self.trialname + '.Trial.enf')
 
         if op.isfile(enfpath):
             logger.debug('reading Eclipse info from %s' % enfpath)
@@ -182,6 +182,7 @@ class Trial(object):
                            cfg.trial.use_eclipse_fp_info else None)
                 self._fp_events = utils.detect_forceplate_events(self.source,
                                                                  fp_info=fp_info)
+
             except GaitDataError:
                 logger.warning('Could not detect forceplate events')
                 self._fp_events = dict()

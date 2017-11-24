@@ -300,7 +300,7 @@ class Tardieu_window(object):
 
     @staticmethod
     def read_starting_angle(vicon):
-        subjname = nexus.getsubjectnames()
+        subjname = nexus.get_subjectnames()
         asp = vicon.GetSubjectParam(subjname, 'AnkleStartPos')
         return asp[0] if asp[1] else None
 

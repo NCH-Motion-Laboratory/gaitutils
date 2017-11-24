@@ -55,7 +55,7 @@ def do_plot(search=None, show=True, make_pdf=True):
             continue
 
         maintitle = ('EMG consistency plot, '
-                     'session %s' % pl.trial.trialdirname)
+                     'session %s' % pl.trial.sessiondir)
         plot_emg_normaldata = (trialpath == tagged_trials[-1])
         pl.plot_trial(emg_tracecolor=linecolors[i],
                       maintitle=maintitle, annotate_emg=False,

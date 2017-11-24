@@ -117,12 +117,12 @@ class Trial(object):
         for li in [self.lstrikes, self.rstrikes, self.ltoeoffs,
                    self.rtoeoffs]:
             li.sort()
-        # get description and notes from Eclipse database
-        if not self.sessionpath[-1] == '\\':
-            self.sessionpath = self.sessionpath+('\\')
-        self.trialdirname = self.sessionpath.split('\\')[-2]
+
+        self.sessiondir = op.split(self.sessionpath)[-1]
+
         # TODO: sometimes trial .enf name seems to be different?
-        enfpath = self.sessionpath + self.trialname + '.Trial.enf'
+        enfpath = op.join(self.sessionpath, self.trialname, '.Trial.enf')
+
         if op.isfile(enfpath):
             logger.debug('reading Eclipse info from %s' % enfpath)
             edata = eclipse.get_eclipse_keys(enfpath)

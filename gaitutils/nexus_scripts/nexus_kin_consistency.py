@@ -53,7 +53,7 @@ def do_plot(search=None, show=True, make_pdf=True):
         logger.debug('plotting %s' % tagged_trials[i])
         pl.open_trial(enf2c3d(tagged_trials[i]))
         maintitle = ('Kinematics/kinetics consistency plot, '
-                     'session %s' % pl.trial.trialdirname)
+                     'session %s' % pl.trial.sessiondir)
         # only plot normaldata for last trial to speed up things
         plot_model_normaldata = (trialpath == tagged_trials[-1])
         pl.plot_trial(model_tracecolor=linecolors[i], linestyles_context=True,

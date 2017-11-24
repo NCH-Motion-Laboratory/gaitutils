@@ -13,6 +13,7 @@ import sys
 import ast
 import os
 
+from gaitutils import GaitDataError
 from gaitutils import nexus
 from gaitutils import cfg
 from gaitutils import nexus_emgplot
@@ -47,6 +48,26 @@ def message_dialog(msg):
     dlg.addButton(QtWidgets.QPushButton('Ok'),
                   QtWidgets.QMessageBox.YesRole)
     dlg.exec_()
+
+
+class HetuDialog(QtWidgets.QDialog):
+
+    def __init__(self, prompt='Hello', parent=None):
+        super(self.__class__, self).__init__()
+        uifile = resource_filename(__name__, 'hetu_dialog.ui')
+        uic.loadUi(uifile, self)
+        self.prompt.setText(prompt)
+
+    def accept(self):
+        """ Update config and close dialog, if widget inputs are ok. Otherwise
+        show an error dialog """
+        # FIXME: check inputs
+        if True:
+            self.hetu = self.lnHetu.text()
+            self.fullname = self.lnFullName.text()
+            self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
+        else:
+            message_dialog("Invalid input: %s" % 'foo')
 
 
 class QtHandler(logging.Handler):
@@ -294,9 +315,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnAutoprocSession,
                                   nexus_autoprocess_session.autoproc_session,
                                   thread=True)
-        self._button_connect_task(self.btnCreatePDFs,
-                                  nexus_make_all_plots.do_plot, thread=True)
 
+        self.btnCreatePDFs.clicked.connect(self._create_pdfs)
         self.btnOptions.clicked.connect(self._options_dialog)
         self.btnQuit.clicked.connect(self.close)
 
@@ -324,6 +344,20 @@ class Gaitmenu(QtWidgets.QMainWindow):
         """ Show the autoprocessing options dialog """
         dlg = OptionsDialog()
         dlg.exec_()
+
+    def _create_pdfs(self):
+        try:
+            subj = nexus.get_subjectnames()
+        except GaitDataError as e:
+            message_dialog(str(e))
+            return
+        prompt = 'Please give additional subject information for %s' % subj
+        # first ask for extra subject info
+        # FIXME: remember these for the session
+        dlg = HetuDialog(prompt)
+        if dlg.exec_():
+            return dlg.fullname, dlg.hetu
+            self._execute(nexus_make_all_plots.do_plot, thread=True)
 
     def _log_message(self, msg):
         c = self.txtOutput.textCursor()

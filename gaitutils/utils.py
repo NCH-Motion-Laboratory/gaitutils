@@ -14,8 +14,22 @@ from .envutils import GaitDataError
 from .numutils import rising_zerocross, falling_zerocross, _baseline
 from .config import cfg
 
-
 logger = logging.getLogger(__name__)
+
+
+def check_hetu(hetu):
+    """ This parses Finnish social security numbers (hetu) """
+    
+   
+# -*- coding: latin-1 -*-
+    tunnus = raw_input("Henkilötunnuksen alkuosa: ")
+    luku = int(tunnus[:6] + tunnus[-3:])
+    jaannos = luku % 31
+    merkit = "0123456789ABCDEFHJKLMNPRSTUVWXY"
+    vika = merkit[jaannos]
+    print "Viimeinen merkki:", vika
+    tunnus = tunnus + vika
+    print "Koko henkilötunnus:", tunnus
 
 
 def get_crossing_frame(source, marker, dim=1, p0=0):

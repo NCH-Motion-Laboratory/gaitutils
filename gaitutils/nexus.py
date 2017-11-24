@@ -110,12 +110,19 @@ def viconnexus():
     return ViconNexus.ViconNexus()
 
 
-def getsubjectnames():
-    """ Workaround a Nexus 2.6 bug (?) that creates extra names with
-    weird unicode strings """
+def get_subjectnames(single_only=True):
+    """ Get subject name(s) from Nexus """
     vicon = viconnexus()
     names_ = vicon.GetSubjectNames()
-    return [name for name in names_ if u'\ufffd1' not in name]
+    if not names_:
+        raise GaitDataError('No subject defined in Nexus')
+    if single_only:
+        if len(names_) > 1:
+            raise GaitDataError('Nexus returns multiple subjects')
+    """ Workaround a Nexus 2.6 bug (?) that creates extra names with
+    weird unicode strings """
+    names_ = [name for name in names_ if u'\ufffd1' not in name]
+    return names_[0] if single_only else names_
 
 
 def check_nexus():
@@ -182,14 +189,7 @@ def get_metadata(vicon):
     """ Read trial and subject metadata """
     check_nexus()
     logger.debug('reading metadata from Vicon Nexus')
-    if not pid():
-        raise GaitDataError('Vicon Nexus does not seem to be running')
-    subjectnames = getsubjectnames()
-    if len(subjectnames) > 1:
-        raise GaitDataError('Nexus returns multiple subjects')
-    if not subjectnames:
-        raise GaitDataError('No subject defined in Nexus')
-    name = subjectnames[0]
+    name = get_subjectnames()
     Bodymass = vicon.GetSubjectParam(name, 'Bodymass')
     # for unknown reasons, above method may return tuple or float
     # depending on whether script is run from Nexus or outside
@@ -343,12 +343,10 @@ def get_marker_data(vicon, markers):
     specified markers.  """
     if not isinstance(markers, list):
         markers = [markers]
-    subjectnames = getsubjectnames()
-    if not subjectnames:
-        raise GaitDataError('No subject defined in Nexus')
+    subj = get_subjectnames()
     mdata = dict()
     for marker in markers:
-        x, y, z, _ = vicon.GetTrajectory(subjectnames[0], marker)
+        x, y, z, _ = vicon.GetTrajectory(subj, marker)
         if len(x) == 0:
             raise GaitDataError('Cannot read marker trajectory '
                                 'from Nexus: \'%s\'' % marker)
@@ -388,9 +386,9 @@ def get_fp_strike_and_toeoff(vicon):
 def get_model_data(vicon, model):
     """ Read model output variables (e.g. Plug-in Gait) """
     modeldata = dict()
-    subjectname = getsubjectnames()[0]
+    subj = get_subjectnames()
     for var in model.read_vars:
-        nums, bools = vicon.GetModelOutput(subjectname, var)
+        nums, bools = vicon.GetModelOutput(subj, var)
         if not nums:
             raise GaitDataError('Cannot read model variable %s. Make sure '
                                 'that the appropriate model has been run.'
@@ -462,11 +460,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     # tolerance between specified and actual first strike event
     STRIKE_TOL = 5
 
-    # get subject info
-    subjectnames = getsubjectnames()
-    if not subjectnames:
-        raise GaitDataError('No subject defined in Nexus')
-    subjectname = subjectnames[0]
+    subjectname = get_subjectnames()
 
     # get foot center positions and velocities
     mrkdata = get_marker_data(vicon, cfg.autoproc.right_foot_markers +

@@ -9,10 +9,12 @@ from __future__ import print_function
 from PyQt5 import QtGui, QtCore, uic, QtWidgets
 from PyQt5.QtCore import QRunnable, QThreadPool, pyqtSignal, QObject
 from pkg_resources import resource_filename
+from functools import partial
 import sys
 import ast
 import os
 
+from gaitutils.numutils import check_hetu
 from gaitutils import GaitDataError
 from gaitutils import nexus
 from gaitutils import cfg
@@ -57,17 +59,17 @@ class HetuDialog(QtWidgets.QDialog):
         uifile = resource_filename(__name__, 'hetu_dialog.ui')
         uic.loadUi(uifile, self)
         self.prompt.setText(prompt)
+        # FIXME: init input fields
 
     def accept(self):
         """ Update config and close dialog, if widget inputs are ok. Otherwise
         show an error dialog """
-        # FIXME: check inputs
-        if True:
-            self.hetu = self.lnHetu.text()
-            self.fullname = self.lnFullName.text()
+        self.hetu = self.lnHetu.text()
+        self.fullname = self.lnFullName.text()
+        if self.fullname and check_hetu(self.hetu):
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
-            message_dialog("Invalid input: %s" % 'foo')
+            message_dialog('Please enter a valid name and hetu')
 
 
 class QtHandler(logging.Handler):
@@ -351,13 +353,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
         except GaitDataError as e:
             message_dialog(str(e))
             return
-        prompt = 'Please give additional subject information for %s' % subj
+        prompt = 'Please give additional subject information for %s:' % subj
         # first ask for extra subject info
-        # FIXME: remember these for the session
+
         dlg = HetuDialog(prompt)
         if dlg.exec_():
-            return dlg.fullname, dlg.hetu
-            self._execute(nexus_make_all_plots.do_plot, thread=True)
+            # FIXME: remember these for the session
+            # self._hetu = dlg.hetu
+            # self._fullname = dlg.fullname
+            self._execute(nexus_make_all_plots.do_plot, thread=True,
+                          fullname=dlg.fullname, hetu=dlg.hetu)
 
     def _log_message(self, msg):
         c = self.txtOutput.textCursor()
@@ -396,28 +401,25 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._enable_op_buttons()
         QtWidgets.QApplication.restoreOverrideCursor()
 
-    def _execute(self, fun, thread=False):
+    def _execute(self, fun, thread=False, *args, **kwargs):
         """ Run function fun. If thread==True, run in a separate worker
         thread. """
+        fun_ = partial(fun, *args, **kwargs)
         self._disable_op_buttons()
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         if thread:
-            self._run_in_worker_thread(fun)
+            self.runner = Runner(fun_)
+            self.runner.signals.finished.connect(self._finished)
+            self.runner.signals.error.connect(lambda e: self._exception(e))
+            self.threadpool.start(self.runner)
         else:
             try:
-                fun()
+                fun_()
             except Exception as e:
                 self._exception(e)
             finally:
                 self._enable_op_buttons()
                 QtWidgets.QApplication.restoreOverrideCursor()
-
-    def _run_in_worker_thread(self, fun):
-        """ Run function in a separate thread """
-        self.runner = Runner(fun)
-        self.runner.signals.finished.connect(self._finished)
-        self.runner.signals.error.connect(lambda e: self._exception(e))
-        self.threadpool.start(self.runner)
 
 
 class RunnerSignals(QObject):

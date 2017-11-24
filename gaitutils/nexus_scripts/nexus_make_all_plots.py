@@ -30,7 +30,12 @@ logger = logging.getLogger(__name__)
 sort_field = 'NOTES'  # sort trials by the given Eclipse key
 
 
-def do_plot():
+def do_plot(fullname=None, hetu=None):
+
+    if fullname is None:
+        fullname = ''
+    if hetu is None:
+        hetu = ''
 
     # collect Figure instances for creation of multipage PDF
     figs = []
@@ -115,9 +120,11 @@ def do_plot():
     txt = 'HUS Liikelaboratorio\n'
     txt += u'Kävelyanalyysin tulokset\n'
     txt += '\n'
-    txt += 'Mittaus: %s\n' % session
-    txt += 'Raportti laadittu: %s\n' % time.strftime("%d.%m.%Y")
-    txt += 'Liikelaboratorion potilaskoodi: %s\n' % patient_code
+    txt += u'Nimi: %s\n' % fullname
+    txt += u'Henkilötunnus: %s\n' % hetu
+    txt += u'Mittaus: %s\n' % session
+    txt += u'Raportti laadittu: %s\n' % time.strftime("%d.%m.%Y")
+    txt += u'Liikelaboratorion potilaskoodi: %s\n' % patient_code
     ax.text(.5, .8, txt, ha='center', va='center', weight='bold', fontsize=14)
 
     logger.debug('creating multipage pdf %s' % pdf_all)

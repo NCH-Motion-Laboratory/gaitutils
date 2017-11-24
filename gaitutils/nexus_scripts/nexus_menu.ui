@@ -217,7 +217,7 @@
       <item row="3" column="7">
        <widget class="QPushButton" name="btnCreatePDFs">
         <property name="text">
-         <string>Create all PDF plots</string>
+         <string>Create full report...</string>
         </property>
        </widget>
       </item>

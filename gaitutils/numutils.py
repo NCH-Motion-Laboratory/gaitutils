@@ -13,6 +13,19 @@ from scipy.signal import medfilt
 from numpy.lib.stride_tricks import as_strided
 
 
+def check_hetu(hetu):
+    """ This checks Finnish social security numbers (hetu) """
+    chrs = "0123456789ABCDEFHJKLMNPRSTUVWXY"
+    if '-' in hetu:
+        hetu = hetu.replace('-', '')
+    if len(hetu) != 10:
+        return False
+    chk = chrs[int(hetu[:-1]) % 31]
+    if hetu[-1] != chk:
+        return False
+    return True
+
+
 def rolling_fun_strided(m, fun, win, axis=None):
     """ Window array along given axis and apply fun() to the windowed data.
     No padding, i.e. returned array is shorter in the axis dim by (win-1) """

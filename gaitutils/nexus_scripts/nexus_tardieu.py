@@ -4,8 +4,7 @@ Interactive script for analysis of Tardieu trials.
 
 TODO:
     create mainwindow w/ controls class
-    do not import pyplot
-    rm mpl widgets
+    rm mpl widgets, use Qt widgets
    
 
 
@@ -23,9 +22,8 @@ import sys
 import numpy as np
 from pkg_resources import resource_filename
 from PyQt5 import QtGui, QtWidgets, uic, QtCore
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
-                                                NavigationToolbar)
+from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg,
+                                                NavigationToolbar2QT)
 
 from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
                        Trial, Plotter, layouts, utils, GaitDataError,
@@ -43,6 +41,7 @@ logger = logging.getLogger(__name__)
 
 
 class TardieuWindow(QtWidgets.QMainWindow):
+    """ Tardieu analysis main window """
 
     def __init__(self, parent=None):
         super(TardieuWindow, self).__init__(parent)
@@ -61,15 +60,25 @@ class TardieuWindow(QtWidgets.QMainWindow):
         # FIXME: canvas callbacks need to be set here, or alternatively
         # canvas ref could live in the plot class
 
+
         # these are needed for mpl callbacks to work (?)
         self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.canvas.setFocus()
 
         # self.setStyleSheet("background-color: white;");
         # add canvas into last column, span all rows
-        self.mainGridLayout.addWidget(self.canvas, 0,
+        self.mainGridLayout.addWidget(self.canvas, 1,
                                       self.mainGridLayout.columnCount(),
-                                      self.mainGridLayout.rowCount(), 1)
+                                      self.mainGridLayout.rowCount()-1, 1)
+
+        # toolbar into last column, 1st row
+        self.toolbar = NavigationToolbar2QT(self.canvas, self)
+        self.mainGridLayout.addWidget(self.toolbar, 0,
+                                      self.mainGridLayout.columnCount()-1,
+                                      1, 1)
+
+        self._tardieu_plot.tight_layout()
+        self.canvas.draw()
 
 
 class Markers(object):
@@ -160,6 +169,7 @@ class TardieuPlot(object):
         self.width_ratio = [1, 5]
         self.text_fontsize = 9
         self.margin = .025  # margin at edge of plots
+        self.margin = 0
         self.narrow = False
         self.hspace = .4
         self.wspace = .5
@@ -339,12 +349,14 @@ class TardieuPlot(object):
                 rmsdata = self.emg_rms[ch][smin:smax]
                 rmsmaxind = np.argmax(rmsdata)/self.trial.analograte + tmin_
                 self.markers.add(rmsmaxind, annotation='%s max. RMS' % ch)
-
+       
         # init status text
         self._update_status_text()
         self._last_click_event = None
 
         # self._toolbar = plt.get_current_fig_manager().toolbar
+        self.fig.set_tight_layout(True)
+        
 
     @staticmethod
     def read_starting_angle(vicon):
@@ -365,11 +377,14 @@ class TardieuPlot(object):
         """Convert time to samples (according to rate)"""
         return np.round(rate * np.array(times)).astype(int)
 
-
     def close(self, event):
         """Close window"""
         #plt.close(self.fig)
-    
+
+    def tight_layout(self):
+        self.gs.tight_layout(self.fig)
+        self.gs.update(hspace=self.hspace, wspace=self.wspace,
+                       left=self.margin, right=1-self.margin)
 
     def _redraw(self, ax):
         """Update display on e.g. zoom"""

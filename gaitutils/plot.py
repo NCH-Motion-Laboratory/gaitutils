@@ -60,6 +60,7 @@ class Plotter(object):
 
         self.trial = None
         self.fig = None
+        self._footer = None
         self.legendnames = list()
         self.modelartists = list()
         self.emgartists = list()
@@ -183,6 +184,13 @@ class Plotter(object):
             else:
                 plotheightratios.append(1)
         return plotheightratios
+
+    def set_footer(self, txt):
+        """ Set footer text for figure """
+        if self._footer:
+            self._footer.remove()
+        self._footer = self.fig.text(0, 0, txt, fontsize=8, color='black',
+                                     ha='left', va='bottom')
 
     def tight_layout(self):
         """ Customized tight layout """

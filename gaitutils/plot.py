@@ -60,6 +60,7 @@ class Plotter(object):
 
         self.trial = None
         self.fig = None
+        self._footer = None
         self.legendnames = list()
         self.modelartists = list()
         self.emgartists = list()

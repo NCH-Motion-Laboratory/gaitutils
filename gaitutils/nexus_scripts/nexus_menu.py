@@ -54,12 +54,15 @@ def message_dialog(msg):
 
 class HetuDialog(QtWidgets.QDialog):
 
-    def __init__(self, prompt='Hello', parent=None):
+    def __init__(self, fullname=None, hetu=None, prompt='Hello', parent=None):
         super(self.__class__, self).__init__()
         uifile = resource_filename(__name__, 'hetu_dialog.ui')
         uic.loadUi(uifile, self)
         self.prompt.setText(prompt)
-        # FIXME: init input fields
+        if fullname is not None:
+            self.lnFullName.setText(fullname)
+        if hetu is not None:
+            self.lnHetu.setText(hetu)
 
     def accept(self):
         """ Update config and close dialog, if widget inputs are ok. Otherwise
@@ -329,6 +332,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
                widget != 'btnQuit'):
                 self.opWidgets.append(widget)
 
+        self._fullname = None
+        self._hetu = None
+
         XStream.stdout().messageWritten.connect(self._log_message)
         XStream.stderr().messageWritten.connect(self._log_message)
 
@@ -353,14 +359,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         except GaitDataError as e:
             message_dialog(str(e))
             return
-        prompt = 'Please give additional subject information for %s:' % subj
-        # first ask for extra subject info
-
-        dlg = HetuDialog(prompt)
+        prompt_ = 'Please give additional subject information for %s:' % subj
+        dlg = HetuDialog(prompt=prompt_, fullname=self._fullname,
+                         hetu=self._hetu)
         if dlg.exec_():
-            # FIXME: remember these for the session
-            # self._hetu = dlg.hetu
-            # self._fullname = dlg.fullname
+            self._hetu = dlg.hetu
+            self._fullname = dlg.fullname
             self._execute(nexus_make_all_plots.do_plot, thread=True,
                           fullname=dlg.fullname, hetu=dlg.hetu)
 

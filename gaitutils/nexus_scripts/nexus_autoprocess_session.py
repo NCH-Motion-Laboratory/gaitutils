@@ -67,15 +67,15 @@ def _do_autoproc(enffiles, update_eclipse=True):
         if type(plines) != list:
             plines = [plines]
         for pipeline in plines:
-            logger.debug('Running pipeline: %s' % pipeline)
+            logger.debug('running pipeline: %s' % pipeline)
             result = vicon.Client.RunPipeline(pipeline.encode('utf-8'), '',
                                               cfg.autoproc.nexus_timeout)
             if result.Error():
-                logger.warning('Error while trying to run Nexus pipeline: %s'
+                logger.warning('error while trying to run Nexus pipeline: %s'
                                % pipeline)
 
     def _save_trial():
-        logger.debug('Saving trial')
+        logger.debug('saving trial')
         vicon.SaveTrial(cfg.autoproc.nexus_timeout)
 
     def _context_desc(context):
@@ -111,11 +111,11 @@ def _do_autoproc(enffiles, update_eclipse=True):
         trial_desc = edi['DESCRIPTION']
         trial_notes = edi['NOTES']
         if trial_type in cfg.autoproc.type_skip:
-            logger.debug('Skipping trial type: %s' % trial_type)
+            logger.debug('skipping trial type: %s' % trial_type)
             continue
         skip = [s.upper() for s in cfg.autoproc.eclipse_skip]
         if trial_desc.upper() in skip or trial_notes.upper in skip:
-            logger.debug('Skipping based on description')
+            logger.debug('skipping based on description')
             # run preprocessing + save even for skipped trials, to mark
             # them as processed - mostly so that Eclipse export to Polygon
             # will work
@@ -248,7 +248,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
             eclipse_str = '%s,%s' % (trials[filepath].description,
                                      cfg.autoproc.enf_descriptions
                                      ['automark_failure'])
-            logger.debug('Automark failed')
+            logger.debug('automark failed')
             _save_trial()
             trials[filepath].description = eclipse_str
             continue  # next trial
@@ -280,7 +280,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
             eclipse.set_eclipse_keys(enf_file, {cfg.autoproc.eclipse_write_key:
                                      trial.description}, update_existing=True)
     else:
-        logger.debug('Not updating Eclipse entries')
+        logger.debug('not updating Eclipse data')
 
     # print stats
     n_events = len([tr for tr in trials.values() if tr.events])

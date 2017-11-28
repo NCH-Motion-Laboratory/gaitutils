@@ -30,6 +30,10 @@ logger = logging.getLogger(__name__)
 sort_field = 'NOTES'  # sort trials by the given Eclipse key
 
 
+def _add_footer(fig, txt):
+    fig.text(0, 0, txt, fontsize=8, color='black', ha='left', va='bottom')
+
+
 def do_plot(fullname=None, hetu=None):
 
     if fullname is None:
@@ -114,6 +118,7 @@ def do_plot(fullname=None, hetu=None):
     pdf_all = op.join(sessionpath, pdfname)
 
     # make header page
+    timestr = time.strftime("%d.%m.%Y")
     fig_hdr = plt.figure()
     ax = plt.subplot(111)
     plt.axis('off')
@@ -123,20 +128,26 @@ def do_plot(fullname=None, hetu=None):
     txt += u'Nimi: %s\n' % fullname
     txt += u'Henkilötunnus: %s\n' % hetu
     txt += u'Mittaus: %s\n' % session
-    txt += u'Raportti laadittu: %s\n' % time.strftime("%d.%m.%Y")
+    txt += u'Raportti laadittu: %s\n' % timestr
     txt += u'Liikelaboratorion potilaskoodi: %s\n' % patient_code
     ax.text(.5, .8, txt, ha='center', va='center', weight='bold', fontsize=14)
 
+    footer = '%s %s' % (hetu, fullname)
     logger.debug('creating multipage pdf %s' % pdf_all)
     with PdfPages(pdf_all) as pdf:
         pdf.savefig(fig_hdr)
+        _add_footer(fig_vel, footer)
         pdf.savefig(fig_vel)
+        _add_footer(fig_cons, footer)
         pdf.savefig(fig_cons)
         if fig_emg_cons is not None:
+            _add_footer(fig_emg_cons, footer)
             pdf.savefig(fig_emg_cons)
         for fig in figs_averages:
+            _add_footer(fig, footer)
             pdf.savefig(fig)
         for fig in figs:
+            _add_footer(fig, footer)
             pdf.savefig(fig)
 
     # close all created figures, otherwise they'll pop up on next show() call

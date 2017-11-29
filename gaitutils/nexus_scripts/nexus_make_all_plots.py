@@ -34,6 +34,10 @@ def _add_footer(fig, txt):
     fig.text(0, 0, txt, fontsize=8, color='black', ha='left', va='bottom')
 
 
+def _add_header(fig, txt):
+    fig.text(0, 1, txt, fontsize=8, color='black', ha='left', va='top')
+
+
 def do_plot(fullname=None, hetu=None):
 
     if fullname is None:
@@ -132,22 +136,22 @@ def do_plot(fullname=None, hetu=None):
     txt += u'Liikelaboratorion potilaskoodi: %s\n' % patient_code
     ax.text(.5, .8, txt, ha='center', va='center', weight='bold', fontsize=14)
 
-    footer = '%s %s' % (hetu, fullname)
+    header = u'Nimi: %s Henkilötunnus: %s' % (fullname, hetu)
     logger.debug('creating multipage pdf %s' % pdf_all)
     with PdfPages(pdf_all) as pdf:
         pdf.savefig(fig_hdr)
-        _add_footer(fig_vel, footer)
+        _add_header(fig_vel, header)
         pdf.savefig(fig_vel)
-        _add_footer(fig_cons, footer)
+        _add_header(fig_cons, header)
         pdf.savefig(fig_cons)
         if fig_emg_cons is not None:
-            _add_footer(fig_emg_cons, footer)
+            _add_header(fig_emg_cons, header)
             pdf.savefig(fig_emg_cons)
         for fig in figs_averages:
-            _add_footer(fig, footer)
+            _add_header(fig, header)
             pdf.savefig(fig)
         for fig in figs:
-            _add_footer(fig, footer)
+            _add_header(fig, header)
             pdf.savefig(fig)
 
     # close all created figures, otherwise they'll pop up on next show() call

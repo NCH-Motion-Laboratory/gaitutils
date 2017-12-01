@@ -22,6 +22,8 @@ from gaitutils.numutils import segment_angles, best_match
 from gaitutils import eclipse, Trial
 from gaitutils.utils import detect_forceplate_events
 from gaitutils.nexus_scripts import nexus_menu
+from utils import run_tests_if_main, nottest
+
 
 # load default cfg so that user settings will not affect testing
 cfg.load_default()
@@ -31,8 +33,7 @@ trial_enf = 'testdata/anon.Trial.enf'
 trial_enf_write = 'testdata/writetest.enf'
 
 
-
-def test_qt_menu():
+def _test_qt_menu():
     """See if Python menu + options dialog can be opened"""
     app = QtWidgets.QApplication([])  # needed for Qt stuff to function
     """ Create instance of dialog that is not shown on screen (Qt event loop
@@ -88,3 +89,5 @@ def test_enf_writer():
     assert_equal(edi['DESCRIPTION'], 'testing')
     assert_raises(IOError, eclipse.set_eclipse_keys, 'no.enf', {})
 
+
+run_tests_if_main()

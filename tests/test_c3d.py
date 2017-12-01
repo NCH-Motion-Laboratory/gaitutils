@@ -22,6 +22,7 @@ from gaitutils.numutils import segment_angles, best_match
 from gaitutils import eclipse, Trial
 from gaitutils.utils import detect_forceplate_events
 from gaitutils.nexus_scripts import nexus_menu
+from tests_common import run_tests_if_main
 
 # load default cfg so that user settings will not affect testing
 cfg.load_default()
@@ -99,6 +100,4 @@ def test_c3d_fp_detection():
     assert_in('L', valid)
 
 
-if __name__ == '__main__':
-    test_c3d_fp_detection()
-    test_c3d_metadata()
+run_tests_if_main()

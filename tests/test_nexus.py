@@ -22,6 +22,7 @@ from gaitutils import nexus, utils, models
 from gaitutils.config import cfg
 from gaitutils import Trial
 from gaitutils.utils import detect_forceplate_events
+from tests_common import run_tests_if_main, _nexus_open_trial, _trial_path
 
 cfg.load_default()  # so that user settings will not affect testing
 if not nexus.pid():
@@ -35,18 +36,6 @@ if not nexus.pid():
         raise Exception('Please start Vicon Nexus first')
 
 vicon = nexus.viconnexus()
-
-
-def _trial_path(subject, trial):
-    """Return path to subject trial file"""
-    return op.abspath(op.join('testdata', 'test_subjects', subject,
-                              'test_session', trial))
-
-
-def _nexus_open_trial(subject, trial):
-    """Open trial in Nexus"""
-    tpath = op.splitext(_trial_path(subject, trial))[0]  # strip .c3d
-    vicon.OpenTrial(tpath, 60)
 
 
 def test_nexus_reader():
@@ -222,8 +211,4 @@ def test_event_marking():
     vicon.SaveTrial(60)  # to prevent 'Save trial?' dialog on subsequent loads
 
 
-if __name__ == '__main__':
-    test_read_data_compare_nexus_and_c3d()
-    test_fp_detection()
-
-
+run_tests_if_main()

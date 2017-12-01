@@ -38,7 +38,7 @@ class Section(object):
         """ The config items for the section are provided as key/value dict,
         where values are strings. """
         self._dict = dict
-
+    
     def __getattr__(self, item):
         """ Implements attribute access, i.e. section.item. The items don't
         exist as instance variables, so referencing them will cause
@@ -62,6 +62,9 @@ class EpicParser(ConfigParser.SafeConfigParser):
     def __getitem__(self, section):
         """ Returns the parser section dictionary. """
         return self._sections[section]
+
+    def __repr__(self):
+        return 'foo'
 
     def __getattr__(self, section):
         """ Implements attribute access, i.e. parser.section or more commonly

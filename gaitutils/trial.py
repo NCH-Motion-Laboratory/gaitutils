@@ -134,7 +134,7 @@ class Trial(object):
         # analog and model data are lazily read
         self.emg = EMG(self.source)
         self._forceplate_data = None
-        self._fp_events = None
+        self.fp_events = self._get_fp_events()
         self._models_data = dict()
         self.stddev_data = None  # AvgTrial only
         # whether to normalize data
@@ -173,25 +173,21 @@ class Trial(object):
             self._forceplate_data = read_data.get_forceplate_data(self.source)
         return self._forceplate_data
 
-    # FIXME: property not really needed?
-    @property
-    def fp_events(self):
-        if self._fp_events is None:
-            try:
-                fp_info = (eclipse.eclipse_fp_keys(self.eclipse_data) if
-                           cfg.trial.use_eclipse_fp_info else None)
-                self._fp_events = utils.detect_forceplate_events(self.source,
-                                                                 fp_info=fp_info)
-
-            except GaitDataError:
-                logger.warning('Could not detect forceplate events')
-                self._fp_events = dict()
-                self._fp_events['R_strikes'] = []
-                self._fp_events['R_toeoffs'] = []
-                self._fp_events['L_strikes'] = []
-                self._fp_events['L_toeoffs'] = []
-                self._fp_events['valid'] = set()
-        return self._fp_events
+    def _get_fp_events(self):
+        """Read the forceplate events or set to empty"""
+        try:
+            fp_info = (eclipse.eclipse_fp_keys(self.eclipse_data) if
+                       cfg.trial.use_eclipse_fp_info else None)
+            return utils.detect_forceplate_events(self.source, fp_info=fp_info)
+        except GaitDataError:
+            logger.warning('Could not detect forceplate events')
+            _fp_events = dict()
+            _fp_events['R_strikes'] = []
+            _fp_events['R_toeoffs'] = []
+            _fp_events['L_strikes'] = []
+            _fp_events['L_toeoffs'] = []
+            _fp_events['valid'] = set()
+            return _fp_events
 
     def set_norm_cycle(self, cycle=None):
         """ Set normalization cycle (int for cycle index or a Gaitcycle
@@ -229,8 +225,9 @@ class Trial(object):
 
     def _scan_cycles(self):
         """ Create gait cycle instances based on strike/toeoff markers. """
-        # the trial marked events need to be matched with our detected
-        # forceplate events, but may not match exactly, so use tolerance
+        # The events marked in the trial marked events need to be matched
+        # with detected forceplate events, but may not match exactly, so use
+        # a tolerance
         STRIKE_TOL = 4
         sidestrs = {'R': 'Right', 'L': 'Left'}
         for strikes in [self.lstrikes, self.rstrikes]:

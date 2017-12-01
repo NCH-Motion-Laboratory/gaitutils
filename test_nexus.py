@@ -105,6 +105,9 @@ def test_fp_detection():
     _nexus_open_trial('girl6v', '2015_10_22_girl6v_IN06')
     valid = detect_forceplate_events(vicon)['valid']
     assert_equal(valid, set())
+    _nexus_open_trial('girl6v', '2015_10_22_girl6v_IN14')
+    valid = detect_forceplate_events(vicon)['valid']
+    assert_in('L', valid)
 
 
 def test_read_data_compare_nexus_and_c3d():

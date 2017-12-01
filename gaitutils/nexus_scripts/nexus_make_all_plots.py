@@ -60,8 +60,8 @@ def do_plot(fullname=None, hetu=None):
         pl.open_trial(c3d)
 
         side = pl.trial.fp_events['valid']
-        if side not in ['L', 'R']:
-            raise Exception('Need one kinetics cycle per trial')
+        if not side:
+            raise Exception('No kinetics for trial %s' % trial)
 
         side_str = 'right' if side == 'R' else 'left'
 

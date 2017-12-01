@@ -190,7 +190,7 @@ class Trial(object):
                 self._fp_events['R_toeoffs'] = []
                 self._fp_events['L_strikes'] = []
                 self._fp_events['L_toeoffs'] = []
-                self._fp_events['valid'] = ''
+                self._fp_events['valid'] = set()
         return self._fp_events
 
     def set_norm_cycle(self, cycle=None):

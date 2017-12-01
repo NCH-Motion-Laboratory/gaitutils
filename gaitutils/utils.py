@@ -17,7 +17,6 @@ from .config import cfg
 logger = logging.getLogger(__name__)
 
 
-
 def get_crossing_frame(source, marker, dim=1, p0=0):
     """ Return frame(s) where marker position (dimension dim) crosses p0
     (units are as returned by Nexus, usually mm).
@@ -335,8 +334,7 @@ def detect_forceplate_events(source, fp_info=None):
                 results['valid'].add(this_valid)
             results[this_valid+'_strikes'].append(strike_fr)
             results[this_valid+'_toeoffs'].append(toeoff_fr)
-    # FIXME: should return e.g. a set and fix API calls
-    results['valid'] = ''.join(sorted(results['valid']))
+
     logger.debug(results)
     return results
 
@@ -346,7 +344,8 @@ def get_foot_velocity(source, fp_events, medians=True):
     fp_events is from detect_forceplate_events()
     If medians=True, return median values. """
     from . import read_data
-    mrkdata = read_data.get_marker_data(source, cfg.autoproc.right_foot_markers +
+    mrkdata = read_data.get_marker_data(source,
+                                        cfg.autoproc.right_foot_markers +
                                         cfg.autoproc.left_foot_markers)
     results = dict()
     for context, markers in zip(('R', 'L'), [cfg.autoproc.right_foot_markers,

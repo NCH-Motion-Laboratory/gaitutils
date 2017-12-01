@@ -72,27 +72,33 @@ def test_c3d_fp_detection():
     """Test autodetection of forceplate events"""
     c3dfile = _subj_path('adult_3fp', 'astrid_080515_02.c3d')
     valid = detect_forceplate_events(c3dfile)['valid']
-    assert_equal(valid, 'LR')
+    assert_in('L', valid)
+    assert_in('R', valid)
     c3dfile = _subj_path('runner', 'JL brooks 2,8 51.c3d')
     valid = detect_forceplate_events(c3dfile)['valid']
-    assert_equal(valid, 'LR')
+    assert_in('L', valid)
+    assert_in('R', valid)
     c3dfile = _subj_path('girl6v', '2015_10_22_girl6v_IN02.c3d')
     valid = detect_forceplate_events(c3dfile)['valid']
-    assert_equal(valid, 'R')
+    assert_in('R', valid)
     # detect slight overstep (toeoff not on plate)
     c3d1 = 'testdata/test_c3ds/slight_overstep.c3d'
     valid = detect_forceplate_events(c3d1)['valid']
-    assert_equal(valid, '')
+    assert_equal(valid, set())
     # detect double contact (both feet on plate)
     c3d2 = 'testdata/test_c3ds/double_contact.c3d'
     valid = detect_forceplate_events(c3d2)['valid']
-    assert_equal(valid, '')
+    assert_equal(valid, set())
     # almost overstepped but should be flagged as ok
     c3d3 = 'testdata/test_c3ds/barely_ok.c3d'
     valid = detect_forceplate_events(c3d3)['valid']
-    assert_equal(valid, 'R')
+    assert_in('R', valid)
     # inside but on the edge
     c3d4 = 'testdata/test_c3ds/side_edge.c3d'
     valid = detect_forceplate_events(c3d4)['valid']
-    assert_equal(valid, 'L')
+    assert_in('L', valid)
 
+
+if __name__ == '__main__':
+    test_c3d_fp_detection()
+    test_c3d_metadata()

@@ -81,12 +81,14 @@ def _do_autoproc(enffiles, update_eclipse=True):
     def _context_desc(context):
         if not context:
             return cfg.autoproc.enf_descriptions['context_none']
-        if context == 'L':
+        if context == {'L'}:
             return cfg.autoproc.enf_descriptions['context_left']
-        elif context == 'R':
+        elif context == {'R'}:
             return cfg.autoproc.enf_descriptions['context_right']
-        else:
+        elif context == {'R', 'L'}:
             return cfg.autoproc.enf_descriptions['context_both']
+        else:
+            raise ValueError('Unexpected context')
 
     vicon = nexus.viconnexus()
     nexus_ver = nexus.true_ver()

@@ -20,15 +20,11 @@ def do_plot(force_side=None):
 
     sides = pl.trial.fp_events['valid'] if force_side is None else force_side
 
-    if force_side is None:  # autodetect
+    if force_side:
+        sides = [side.upper() for side in force_side]
+    else:
         if not sides:
             raise Exception('No kinetics available')
-        elif sides == 'LR':
-            sides = ['L', 'R']
-        else:
-            sides = [sides]
-    else:
-        sides = [side.upper() for side in force_side]
 
     for side in sides:
         pl.layout = (cfg.layouts.lb_kinetics_emg_r if side == 'R' else
@@ -50,7 +46,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--side', type=str, nargs='+',
-                        help='strings that must appear in trial name',
+                        help='side to plot kinetics for',
                         choices=['R', 'L', 'r', 'l'])
     args = parser.parse_args()
 

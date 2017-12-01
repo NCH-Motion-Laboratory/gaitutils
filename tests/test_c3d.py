@@ -22,17 +22,12 @@ from gaitutils.numutils import segment_angles, best_match
 from gaitutils import eclipse, Trial
 from gaitutils.utils import detect_forceplate_events
 from gaitutils.nexus_scripts import nexus_menu
-from tests_common import run_tests_if_main
+from utils import run_tests_if_main, _subj_path
+
 
 # load default cfg so that user settings will not affect testing
 cfg.load_default()
 logger = logging.getLogger(__name__)
-
-
-def _subj_path(subject, trial):
-    """Return path to subject trial file"""
-    return op.join('testdata', 'test_subjects', subject, 'test_session',
-                   trial)
 
 
 def test_c3d_metadata():

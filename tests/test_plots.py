@@ -23,7 +23,7 @@ from gaitutils import nexus, utils, models
 from gaitutils.config import cfg
 from gaitutils import Trial
 from gaitutils.utils import detect_forceplate_events
-from test_nexus import _trial_path, _nexus_open_trial, run_tests_if_main
+from utils import _trial_path, _nexus_open_trial, run_tests_if_main
 
 cfg.load_default()  # so that user settings will not affect testing
 if not nexus.pid():

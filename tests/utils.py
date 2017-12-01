@@ -27,6 +27,12 @@ from gaitutils import Trial
 from gaitutils.utils import detect_forceplate_events
 
 
+def _subj_path(subject, trial):
+    """Return path to subject trial file"""
+    return op.join('testdata', 'test_subjects', subject, 'test_session',
+                   trial)
+
+
 def _trial_path(subject, trial):
     """Return path to subject trial file"""
     return op.abspath(op.join('testdata', 'test_subjects', subject,

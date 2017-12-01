@@ -105,9 +105,6 @@ def test_fp_detection():
     _nexus_open_trial('girl6v', '2015_10_22_girl6v_IN06')
     valid = detect_forceplate_events(vicon)['valid']
     assert_equal(valid, set())
-    _nexus_open_trial('girl6v', '2015_10_22_girl6v_IN14')
-    valid = detect_forceplate_events(vicon)['valid']
-    assert_in('L', valid)
 
 
 def test_read_data_compare_nexus_and_c3d():
@@ -223,4 +220,10 @@ def test_event_marking():
                           events_range=[-1500, 1500], fp_events=fpe)
     _events_check(events_dict)
     vicon.SaveTrial(60)  # to prevent 'Save trial?' dialog on subsequent loads
+
+
+if __name__ == '__main__':
+    test_read_data_compare_nexus_and_c3d()
+    test_fp_detection()
+
 

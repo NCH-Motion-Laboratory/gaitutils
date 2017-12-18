@@ -30,6 +30,7 @@ from gaitutils import nexus_copy_trial_videos
 from gaitutils import nexus_trials_velocity
 from gaitutils import nexus_make_all_plots
 from gaitutils import nexus_kin_average
+from gaitutils import nexus_automark_trial
 
 
 try:
@@ -320,6 +321,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnAutoprocSession,
                                   nexus_autoprocess_session.autoproc_session,
                                   thread=True)
+        self._button_connect_task(self.btnAutomark,
+                                  nexus_automark_trial.automark_single)
 
         self.btnCreatePDFs.clicked.connect(self._create_pdfs)
         self.btnOptions.clicked.connect(self._options_dialog)

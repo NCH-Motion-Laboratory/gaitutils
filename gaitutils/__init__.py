@@ -33,4 +33,5 @@ from nexus_scripts import nexus_copy_trial_videos
 from nexus_scripts import nexus_trials_velocity
 from nexus_scripts import nexus_make_all_plots
 from nexus_scripts import nexus_kin_average
+from nexus_scripts import nexus_automark_trial
 

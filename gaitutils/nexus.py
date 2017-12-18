@@ -47,18 +47,24 @@ if cfg.general.nexus_path:
                       'recommended to edit .gaitutils.cfg in your '
                       'home directory and change cfg.general.nexus_path '
                       'to the latest version')
+                
     if op.isdir(cfg.general.nexus_path):
-        if not cfg.general.nexus_path + "/SDK/Python" in sys.path:
-            sys.path.append(cfg.general.nexus_path + "/SDK/Python")
-            # needed at least when running outside Nexus
-            # this should import the 32- or 64- bit version depending
-            # on the interpreter
-            bitness = platform.architecture()[0][:2]
-            if bitness not in ['32', '64']:
-                raise Exception('Unexpected architecture')
-            _sdk_path = cfg.general.nexus_path + "/SDK/Win" + bitness
-            print('Trying to import Vicon Nexus SDK from %s' % _sdk_path)
-            sys.path.append(_sdk_path)
+        sdk_path = op.join(cfg.general.nexus_path, 'SDK/Python')
+        sys.path.append(sdk_path)
+        # import either SDK/Win32 or SDK/Win64
+        # first delete existing SDK/Win32 entry that apparently gets added
+        # when running inside Nexus
+        for p in sys.path:
+            if (p.find('SDK') > -1 and p.find('Win32') > -1
+                and p.find('Nexus') > -1):
+                 sys.path.remove(p)
+        bitness = platform.architecture()[0][:2]
+        if bitness not in ['32', '64']:
+            raise Exception('Unexpected architecture')
+        print(cfg.general.nexus_path)
+        _sdk_path = op.join(cfg.general.nexus_path, 'SDK/Win' + bitness)
+        print('Trying to import Vicon Nexus SDK from %s' % _sdk_path)
+        sys.path.append(_sdk_path)
     else:
         print('The configured Vicon Nexus directory at %s does not exist'
               % cfg.general.nexus_path)

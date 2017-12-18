@@ -21,7 +21,7 @@ class AvgTrial(Trial):
     TODO: does not support legends yet """
 
     def __init__(self, c3dfiles, fp_cycles_only=False):
-        avgdata, stddata, n_ok, _ = average_trials(c3dfiles, fp_cycles_only=fp_cycles_only)
+        avgdata, stddata, n_ok, _ = average_trials(c3dfiles,fp_cycles_only=fp_cycles_only)
         # nfiles may be misleading since not all trials may contain valid data
         self.nfiles = len(c3dfiles)
         self.trialname = 'Averages from %d trials' % self.nfiles
@@ -112,6 +112,8 @@ def average_trials(trials, max_dist=None, fp_cycles_only=False,
             logger.debug('%s: averaged %d/%d curves' % (var, n_ok, Ntot))
             N_ok[var] = n_ok
 
+    if not avgdata:
+        logger.warning('nothing averaged')
     return (avgdata, stddata, N_ok, Ncyc)
 
 

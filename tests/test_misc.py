@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 trial_enf = 'testdata/anon.Trial.enf'
 trial_enf_write = 'testdata/writetest.enf'
 
-
+# FIXME: causes crash
 def _test_qt_menu():
     """See if Python menu + options dialog can be opened"""
     app = QtWidgets.QApplication([])  # needed for Qt stuff to function

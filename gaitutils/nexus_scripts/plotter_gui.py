@@ -341,12 +341,16 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self.pl.layout = lout
         match_pig_kinetics = self.xbKineticsFpOnly.checkState()
 
-        try:
-            fn = self.cbNormalData.currentText()
-            self.pl.add_normaldata(fn)
-        except (ValueError, GaitDataError):
+        if self.xbNormalData.checkState():
+            plot_model_normaldata = True
+            try:
+                fn = self.cbNormalData.currentText()
+                self.pl.add_normaldata(fn)
+            except (ValueError, GaitDataError):
                 message_dialog('Error reading normal data from %s' % fn)
                 return
+        else:
+            plot_model_normaldata = False
 
         for trial, cycs in plot_cycles.items():
             try:
@@ -354,7 +358,8 @@ class PlotterWindow(QtWidgets.QMainWindow):
                                    emg_cycles=cycs,
                                    match_pig_kinetics=match_pig_kinetics,
                                    maintitle='', superpose=True,
-                                   model_stddev=trial.stddev_data)
+                                   model_stddev=trial.stddev_data,
+                                   plot_model_normaldata=plot_model_normaldata)
             except GaitDataError as e:
                 message_dialog('Error: %s' % str(e))
                 self.pl.fig.clear()  # fig may have been partially drawn

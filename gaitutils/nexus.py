@@ -130,6 +130,10 @@ def viconnexus():
 def get_subjectnames(single_only=True):
     """ Get subject name(s) from Nexus """
     vicon = viconnexus()
+    sessionpath = get_sessionpath()
+    if not sessionpath:
+        raise GaitDataError('Cannot get Nexus session path, '
+                            'no session or maybe in Live mode?')
     names_ = vicon.GetSubjectNames()
     if not names_:
         raise GaitDataError('No subject defined in Nexus')

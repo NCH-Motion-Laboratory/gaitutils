@@ -346,6 +346,7 @@
     <addaction name="actionSave_as_PDF"/>
     <addaction name="actionNormal_data"/>
     <addaction name="separator"/>
+    <addaction name="actionTimeDist"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuPlot"/>
@@ -369,6 +370,11 @@
   <action name="actionAverage">
    <property name="text">
     <string>Average...</string>
+   </property>
+  </action>
+  <action name="actionTimeDist">
+   <property name="text">
+    <string>Time-distance plot...</string>
    </property>
   </action>
  </widget>

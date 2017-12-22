@@ -9,7 +9,7 @@ Plot gait data
 import matplotlib
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_pdf import PdfPages
-import matplotlib.gridspec as gridspec
+from matplotlib.gridspec import GridSpec
 import os.path as op
 import os
 import subprocess
@@ -25,6 +25,89 @@ from .config import cfg
 
 
 logger = logging.getLogger(__name__)
+
+
+def save_pdf(filename, fig):
+    """ Save figure fig into pdf filename """
+    try:
+        logger.debug('writing %s' % filename)
+        with PdfPages(filename) as pdf:
+            pdf.savefig(fig)
+    except IOError:
+        raise IOError('Error writing %s, '
+                      'check that file is not already open.' % filename)
+
+
+def time_dist_barchart(values, stddev=None, scales=None, thickness=.5,
+                       color=None, interactive=True):
+    """ Multi-variable and multi-category barchart plot.
+    values dict is keyed as values[condition][var][context],
+    given by e.g. get_c3d_analysis()
+    scales is a dict of var-specific (min, max) tuples to scale the bars"""
+
+    if interactive:
+        import matplotlib.pyplot as plt
+        fig = plt.figure()
+    else:
+        fig = Figure()
+
+    def _plot_len(ax, rects, add_text=None):
+        """Attach a text inside each bar displaying its length"""
+        for rect in rects:
+            width = rect.get_width()
+            txt = '%.2f' % width
+            txt += add_text if add_text else ''
+            ax.text(rect.get_width() * .0,
+                    rect.get_y() + rect.get_height()/2.,
+                    txt, ha='left', va='center')
+
+    def _plot_oneside(vars, context, col):
+        """ Do the bar plots for given context and column """
+        for ind, var in enumerate(vars):
+            ax = fig.add_subplot(gs[ind, col])
+            ax.axis('off')
+            vals_this = [values[cond][var][context] for cond in conds]
+            stddev_this = ([stddev[cond][var][context] for cond in conds] if
+                           stddev else None)
+            ypos = np.arange(0, len(vals_this) * thickness, thickness)
+            rects = ax.barh(ypos, vals_this, thickness, align='edge',
+                            color=color, xerr=stddev_this)
+            if scales and var in scales:
+                ax.set_xlim([scales[var][0], scales[var][1]])
+            else:
+                ax.set_xlim([0, 2*max(vals_this)])
+            _plot_len(ax, rects, add_text=' %s' % units[ind])
+        # return the last set of rects for legend
+        return rects
+
+    if color is None:
+        color = ['tab:blue', 'tab:olive', 'tab:green', 'tab:red', 'tab:brown',
+                 'tab:pink', 'tab:gray', 'tab:orange']
+
+    conds = values.keys()
+    vals_1 = values[conds[0]]
+    vars = vals_1.keys()
+    units = [vals_1[var]['unit'] for var in vars]
+    # 3 columns: bar, labels, bar
+    gs = GridSpec(len(vars), 3, width_ratios=[1, 1/3., 1])
+
+    # variable names into the center column
+    for ind, var in enumerate(vars):
+        textax = fig.add_subplot(gs[ind, 1])
+        textax.axis('off')
+        textax.text(0, .5, var, ha='center', va='center')
+
+    rects = _plot_oneside(vars, 'Left', 0)
+    rects = _plot_oneside(vars, 'Right', 2)
+
+    if len(conds) > 1:
+        # plotting happens from down -> up, so reverse legend
+        fig.legend(rects[::-1], conds[::-1], loc=1)
+
+    fig.add_subplot(gs[0, 0]).set_title('Left')
+    fig.add_subplot(gs[0, 2]).set_title('Right')
+
+    return fig
 
 
 class Plotter(object):
@@ -121,9 +204,9 @@ class Plotter(object):
         elif len(plotheightratios) != len(self.nrows):
             raise ValueError('n of height ratios must match n of rows')
 
-        self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
-                                          height_ratios=plotheightratios,
-                                          width_ratios=plotwidthratios)
+        self.gridspec = GridSpec(self.nrows, self.ncols,
+                                 height_ratios=plotheightratios,
+                                 width_ratios=plotwidthratios)
 
     def _create_interactive_figure(self):
         """ Create pyplot controlled figure """
@@ -439,6 +522,7 @@ class Plotter(object):
 
         is_avg_trial = isinstance(trial, AvgTrial)
 
+        # FIXME: avoid creating new axes for superpose=True?
         for i, var in enumerate(self.allvars):
             var_type = self._var_type(var)
             if var_type is None:
@@ -748,10 +832,5 @@ class Plotter(object):
             pdf_name = op.join(sessionpath, pdf_name)
         if op.isfile(pdf_name):
             pass  # can prevent overwriting here
-        try:
-            logger.debug('writing %s' % pdf_name)
-            with PdfPages(pdf_name) as pdf:
-                pdf.savefig(self.fig)
-        except IOError:
-            raise IOError('Error writing %s, '
-                          'check that file is not already open.' % pdf_name)
+
+        save_pdf(pdf_name, self.fig)

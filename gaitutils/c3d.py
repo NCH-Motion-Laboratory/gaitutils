@@ -54,9 +54,9 @@ def _get_c3dacq(c3dfile):
     return reader.GetOutput()
 
 
-def get_c3d_analysis(c3dfile):
+def get_analysis(c3dfile, condition='unknown'):
     """Get analysis values from c3d (e.g. gait parameters). Returns a dict
-    keyed by var and context"""
+    keyed by var and context. First key can optionally be a condition label"""
 
     def _strip_all(iterable):
         """Strip all strings in iterable of strings"""
@@ -73,13 +73,42 @@ def get_c3d_analysis(c3dfile):
 
     # build a nice output dict
     di = dict()
+    di[condition] = dict()
+    di_ = di[condition]
+
     for (var, unit, context, val) in zip(vars, units, contexts, vals):
-        if var not in di:
-            di[var] = dict()
-            di[var]['unit'] = unit
-        if context not in di[var]:
-            di[var][context] = val
+        if var not in di_:
+            di_[var] = dict()
+            di_[var]['unit'] = unit
+        if context not in di_[var]:
+            di_[var][context] = val
     return di
+
+
+def group_analysis(an_list, fun=np.mean):
+    """ Average (or stddev etc) analysis dicts by applying fun to
+    collected values """
+    if not isinstance(an_list, list):
+        raise ValueError('Need a list of analysis dicts')
+    if not an_list:
+        return None
+    an0 = an_list[0]
+    if len(an_list) == 1:
+        return an0
+    conds = an0.keys()
+    vars = an0[conds[0]].keys()
+    res = dict()
+    for cond in conds:
+        res[cond] = dict()
+        for var in vars:
+            res[cond][var] = dict()
+            res[cond][var]['unit'] = an0[cond][var]['unit']
+            for context in ['Right', 'Left']:
+                allvals = np.array([an[cond][var][context] for an in an_list if
+                                    context in an[cond][var]])
+                res[cond][var][context] = (fun(allvals) if allvals.size else
+                                           np.nan)
+    return res
 
 
 def get_emg_data(c3dfile):

@@ -235,14 +235,14 @@
         </property>
        </widget>
       </item>
+      <item row="5" column="5">
+       <widget class="QPushButton" name="btnTimeDist">
+        <property name="text">
+         <string>Time-distance plot</string>
+        </property>
+       </widget>
+      </item>
      </layout>
-    </item>
-    <item>
-     <widget class="QLabel" name="label_4">
-      <property name="text">
-       <string>Output</string>
-      </property>
-     </widget>
     </item>
     <item>
      <widget class="QPlainTextEdit" name="txtOutput"/>

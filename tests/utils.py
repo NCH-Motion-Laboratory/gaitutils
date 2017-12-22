@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-utils for nose2 tests
+Utils for unit tests.
 
 @author: jussi (jnu@iki.fi)
 """
@@ -9,9 +9,23 @@ utils for nose2 tests
 import inspect
 import sys
 import os.path as op
+import os
+import subprocess
 import time
 
-from gaitutils import nexus
+from gaitutils import nexus, cfg
+
+
+def start_nexus():
+    if not nexus.pid():
+        # try to start Nexus for tests...
+        exe = op.join(cfg.general.nexus_path, 'Nexus.exe')
+        # silence Nexus output
+        blackhole = file(os.devnull, 'w')
+        subprocess.Popen([exe], stdout=blackhole)
+        time.sleep(9)
+        if not nexus.pid():
+            raise Exception('Please start Vicon Nexus first')
 
 
 def _subj_path(subject, trial):

@@ -1,27 +1,19 @@
 # -*- coding: utf-8 -*-
 """
 
-c3d unit tests for gaitutils
-automatically run by 'nose2'
+c3d unit tests.
 
 @author: jussi (jnu@iki.fi)
 """
 
-import os.path as op
-import numpy as np
-import sys
 from nose.tools import (assert_set_equal, assert_in, assert_equal,
                         assert_raises, assert_true)
 from numpy.testing import assert_allclose
-from shutil import copyfile
-from PyQt5 import uic, QtGui, QtWidgets
 import logging
 
 from gaitutils.config import cfg
-from gaitutils.numutils import segment_angles, best_match
-from gaitutils import eclipse, Trial
+from gaitutils import Trial
 from gaitutils.utils import detect_forceplate_events
-from gaitutils.nexus_scripts import nexus_menu
 from utils import run_tests_if_main, _subj_path
 
 

@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-unit tests for gaitutils requiring running instance of Vicon Nexus
-automatically run by 'nose2'
+Unit tests on a running instance of Vicon Nexus.
 
 @author: jussi (jnu@iki.fi)
 """
@@ -13,28 +12,16 @@ from nose.tools import (assert_set_equal, assert_in, assert_equal,
                         assert_raises, assert_less_equal)
 from numpy.testing import (assert_allclose, assert_array_equal,
                            assert_array_almost_equal)
-import os.path as op
-import os
-import subprocess
-import time
 
 from gaitutils import nexus, utils, models
 from gaitutils.config import cfg
 from gaitutils import Trial
 from gaitutils.utils import detect_forceplate_events
-from utils import run_tests_if_main, _nexus_open_trial, _trial_path
+from utils import (run_tests_if_main, _nexus_open_trial, _trial_path,
+                   start_nexus)
 
 cfg.load_default()  # so that user settings will not affect testing
-if not nexus.pid():
-    # try to start Nexus for tests...
-    exe = op.join(cfg.general.nexus_path, 'Nexus.exe')
-    # silence Nexus output
-    blackhole = file(os.devnull, 'w')
-    subprocess.Popen([exe], stdout=blackhole)
-    time.sleep(9)
-    if not nexus.pid():
-        raise Exception('Please start Vicon Nexus first')
-
+start_nexus()
 vicon = nexus.viconnexus()
 
 

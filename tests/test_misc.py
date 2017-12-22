@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-unit tests for gaitutils
-automatically run by 'nose2'
+Misc unit tests.
 
 @author: jussi (jnu@iki.fi)
 """

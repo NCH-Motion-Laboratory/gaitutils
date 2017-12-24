@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 
 
 class TardieuWindow(QtWidgets.QMainWindow):
-    """ Tardieu analysis main window """
+    """ Tardieu analysis main Qt window. mpl canvas is embedded into this """
 
     def __init__(self, parent=None):
         super(TardieuWindow, self).__init__(parent)
@@ -56,10 +56,8 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.canvas = FigureCanvasQTAgg(self._tardieu_plot.fig)
         self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                   QtWidgets.QSizePolicy.Expanding)
-
-        # FIXME: canvas callbacks need to be set here, or alternatively
-        # canvas ref could live in the plot class
-
+        self._tardieu_plot.fig.canvas = self.canvas
+        self._tardieu_plot.connect_callbacks()        
 
         # these are needed for mpl callbacks to work (?)
         self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
@@ -73,6 +71,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
         # toolbar into last column, 1st row
         self.toolbar = NavigationToolbar2QT(self.canvas, self)
+        self._tardieu_plot._toolbar = self.toolbar
         self.mainGridLayout.addWidget(self.toolbar, 0,
                                       self.mainGridLayout.columnCount()-1,
                                       1, 1)
@@ -295,14 +294,8 @@ class TardieuPlot(object):
             ax.callbacks.connect('xlim_changed', self._redraw)
 
         # FIXME: canvas does not exist here
-        """
-        # catch mouse click to add events
-        self.fig.canvas.mpl_connect('button_press_event', self._onclick)
-        # catch key press
-        self.fig.canvas.mpl_connect('key_press_event', self._onpress)
-        # pick handler
-        self.fig.canvas.mpl_connect('pick_event', self._onpick)
 
+        """
         # adjust plot layout
         self.gs.tight_layout(self.fig)
         # self.gs.update(hspace=self.hspace, wspace=self.wspace,
@@ -356,6 +349,15 @@ class TardieuPlot(object):
 
         # self._toolbar = plt.get_current_fig_manager().toolbar
         self.fig.set_tight_layout(True)
+
+    def connect_callbacks(self):
+        """Connect callbacks. This cannot be done at init since the canvas
+        is created elsewhere and is not yet available then"""
+        self.fig.canvas.mpl_connect('button_press_event', self._onclick)
+        # catch key press
+        self.fig.canvas.mpl_connect('key_press_event', self._onpress)
+        # pick handler
+        self.fig.canvas.mpl_connect('pick_event', self._onpick)
         
 
     @staticmethod
@@ -392,6 +394,7 @@ class TardieuPlot(object):
         # (the limits are not instantly updated by sharex)
         self.tmin, self.tmax = ax.get_xlim()
         self._update_status_text()
+        self.fig.canvas.draw()
 
     def _clear_callback(self, event):
         """Clear all line markers"""
@@ -407,7 +410,7 @@ class TardieuPlot(object):
         self._narrowbutton.label.set_text(btext)
         self.gs.update()
         # FIXME: canvas ref
-        #self.fig.canvas.draw()
+        self.fig.canvas.draw()
 
     def _onpick(self, event):
         if self._toolbar.mode:
@@ -530,7 +533,6 @@ class TardieuPlot(object):
             #self._plot_text(self.textax, s, 1, 'k')
             #self._show_markers_info()
         # FIXME: canvas ref
-        #self.fig.canvas.draw()
 
 
 if __name__ == '__main__':

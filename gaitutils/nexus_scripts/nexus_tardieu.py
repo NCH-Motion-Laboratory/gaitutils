@@ -57,10 +57,11 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                   QtWidgets.QSizePolicy.Expanding)
         self._tardieu_plot.fig.canvas = self.canvas
-        # the internal matplotlib callbacks
+
+        # the canvas exists, can now connect the internal matplotlib callbacks
         self._tardieu_plot.connect_callbacks()
 
-        # WIP: convert all the below to Qt callbacks
+        # the Qt callbacks (WIP)
         self.btnClearMarkers.clicked.connect(self._tardieu_plot._clear_callback)
         self.btnQuit.clicked.connect(self.close)
         self.btnLoadData.clicked.connect(self._create_plot)
@@ -104,12 +105,13 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.canvas.draw()
 
     def _create_plot(self):
-        """Callback to load data and create the mpl plot"""
+        """Load data and create the mpl plot"""
         side = 'R' if self.rbRight.isChecked() else 'L'
         # prepend side to configured EMG channel names
         emg_chs = [side+ch for ch in cfg.tardieu.emg_chs]
-        self._tardieu_plot.load_data_and_plot(emg_chs)
-        # xlim change needs to be connected to the Qt status widget
+        self._tardieu_plot.load_data(emg_chs)
+        self._tardieu_plot.plot_data()
+        # xlim change needs to be connected to our Qt status widget
         for ax in self._tardieu_plot.data_axes:
             ax.callbacks.connect('xlim_changed', self._update_status_text)
         self.canvas.draw()
@@ -130,17 +132,22 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
 
 class Markers(object):
-    """ Manage the marker lines at given axes. The markers are created as
-    matplotlib axvline()s. """
+    """ Manage vertical marker lines at multiple axes.
+    The markers are created as matplotlib axvline()s. """
 
     def __init__(self, marker_colors, marker_width, axes):
-        self._markers = OrderedDict()  # keyed by time coordinate
+        """ Initialize.
+        marker_colors: the colors (and max. number) of markers
+        marker_width: the line width for the markers
+        axes: all axes to put the markers in """
+        self._markers = OrderedDict()  # markers are keyed by x coordinate
         self._axes = axes
         self.marker_colors = marker_colors
         self.marker_width = marker_width
         self.max_markers = len(self.marker_colors)
 
     def add_on_click(self, x):
+        """Add marker on mouse click"""
         if x not in self._markers.keys():
             if len(self._markers) == self.max_markers:
                 messagebox('You can place a maximum of %d markers' %
@@ -149,7 +156,7 @@ class Markers(object):
                 self.add(x)
 
     def add(self, x, annotation=''):
-        """ Add marker at x at given axes """
+        """Add marker at point x with optional annotation"""
         if x in self._markers.keys():
             return
         else:
@@ -166,13 +173,13 @@ class Markers(object):
                 self._markers[x][ax].set_picker(3)
 
     def delete(self, x):
-        """ Delete by location """
+        """Delete marker by location"""
         for ax in self._axes:
             self._markers[x][ax].remove()
         self._markers.pop(x)
 
     def delete_artist(self, artist, ax):
-        """ Delete by artist at axis ax """
+        """Delete marker by artist at axis ax"""
         # need to find the marker that has the corresponding artist
         for x, m in self._markers.items():
             if m[ax] == artist:
@@ -180,11 +187,12 @@ class Markers(object):
                 return
 
     def clear(self):
+        """Remove all markers"""
         for marker in self._markers:
             self.delete(marker)
 
     def marker_pos_col(self):
-        """ Return tuple of marker, annotation, position and color """
+        """Return tuple of marker, annotation, position and color"""
         annotations = [m['annotation'] for m in self._markers.values()]
         cols_in_use = [m['color'] for m in self._markers.values()]
         return zip(self._markers.keys(), annotations, cols_in_use)
@@ -194,7 +202,7 @@ class TardieuPlot(object):
     """ matplotlib graphs for Tardieu analysis """
 
     def __init__(self):
-        """Set up the figure but do not plot anything yet"""
+        """Initialize but do not plot anything yet"""
         # adjustable params
         # TODO: some could go into config
         self.marker_button = 1  # mouse button for placing markers
@@ -218,10 +226,10 @@ class TardieuPlot(object):
         self.data_axes = list()  # axes that actually contain data
         self.fig = Figure(figsize=(16, 10))
 
-
-    def load_data_and_plot(self, emg_chs):
+    def load_data(self, emg_chs):
+        """Load the Tardieu data.
+        emg_chs: list of EMG channel names to use """
         self.emg_chs = emg_chs
-        self.gs = gridspec.GridSpec(len(self.emg_chs) + 3, 1)
         try:
             vicon = nexus.viconnexus()
             self.trial = Trial(vicon)
@@ -258,9 +266,13 @@ class TardieuPlot(object):
         else:
             self.angd = -self.angd + ang0_our
 
-        # plot EMG signals
+    def plot_data(self):
+        """Plot the data."""
+        self.gs = gridspec.GridSpec(len(self.emg_chs) + 3, 1)
         self.emg_rms = dict()
-        for ind, ch in enumerate(emg_chs):
+
+        # EMG plots
+        for ind, ch in enumerate(self.emg_chs):
             try:
                 t_, emgdata = self.trial[ch]
             except KeyError:
@@ -280,10 +292,9 @@ class TardieuPlot(object):
             ax.set_title(ch)
             self._adj_fonts(ax)
             self.data_axes.append(ax)
-
         ind += 1
 
-        # add angle plot
+        # angle plot
         ax = self.fig.add_subplot(self.gs[ind, 0],
                                   sharex=self.data_axes[0])
         ax.plot(self.time, self.angd, linewidth=cfg.plot.model_linewidth)
@@ -293,7 +304,7 @@ class TardieuPlot(object):
         self.data_axes.append(ax)
         ind += 1
 
-        # add angular velocity plot
+        # angular velocity plot
         ax = self.fig.add_subplot(self.gs[ind, 0],
                                   sharex=self.data_axes[0])
         self.angveld = self.trial.framerate * np.diff(self.angd, axis=0)
@@ -305,7 +316,7 @@ class TardieuPlot(object):
         self.data_axes.append(ax)
         ind += 1
 
-        # add angular acceleration plot
+        # angular acceleration plot
         ax = self.fig.add_subplot(self.gs[ind, 0],
                                   sharex=self.data_axes[0])
         self.angaccd = np.diff(self.angveld, axis=0)
@@ -316,11 +327,11 @@ class TardieuPlot(object):
         self._adj_fonts(ax)
         self.data_axes.append(ax)
 
+        self.tmin, self.tmax = self.data_axes[0].get_xlim()
+
         # create markers
         self.markers = Markers(self.marker_colors, self.marker_width,
                                self.data_axes)
-
-        self.tmin, self.tmax = self.data_axes[0].get_xlim()
 
         # place the auto markers
         tmin_ = max(self.time[0], self.tmin)
@@ -337,18 +348,17 @@ class TardieuPlot(object):
                 rmsdata = self.emg_rms[ch][smin:smax]
                 rmsmaxind = np.argmax(rmsdata)/self.trial.analograte + tmin_
                 self.markers.add(rmsmaxind, annotation='%s max. RMS' % ch)
-                
-        # init status text
+
         self._last_click_event = None
-        self.fig.set_tight_layout(True)
-        
+
+        self.fig.set_tight_layout(True)        
         # FIXME: adjust plot layout
         # self.gs.tight_layout(self.fig)
         # self.gs.update(hspace=self.hspace, wspace=self.wspace,
         #               left=self.margin, right=1-self.margin)
 
     def connect_callbacks(self):
-        """Connect callbacks. Need to create the canvas first"""
+        """Connect internal callbacks. Needs a canvas object"""
         self.fig.canvas.mpl_connect('button_press_event', self._onclick)
         # catch key press
         self.fig.canvas.mpl_connect('key_press_event', self._onpress)
@@ -357,12 +367,14 @@ class TardieuPlot(object):
 
     @staticmethod
     def read_starting_angle(vicon):
+        """Read the Nexus defined starting angle"""
         subjname = nexus.get_subjectnames()
         asp = vicon.GetSubjectParam(subjname, 'AnkleStartPos')
         return asp[0] if asp[1] else None
 
     @staticmethod
     def _adj_fonts(ax):
+        """Adjust font sizes on an axis"""
         ax.xaxis.label.set_fontsize(cfg.plot.label_fontsize)
         ax.yaxis.label.set_fontsize(cfg.plot.label_fontsize)
         ax.title.set_fontsize(cfg.plot.title_fontsize)

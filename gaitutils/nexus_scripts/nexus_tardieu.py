@@ -155,7 +155,7 @@ class Markers(object):
 
     def add(self, x, annotation=''):
         """Add marker at point x with optional annotation"""
-        if x in self._markers.keys():
+        if x in self._markers.keys():  # marker already at this point
             return
         else:
             cols_in_use = [m['color'] for m in self._markers.values()]
@@ -226,19 +226,33 @@ class TardieuPlot(object):
     def load_data(self, emg_chs):
         """Load the Tardieu data.
         emg_chs: list of EMG channel names to use """
-        
-        self.emg_chs = emg_chs
+
         try:
             vicon = nexus.viconnexus()
             self.trial = Trial(vicon)
         except GaitDataError as e:
             messagebox(e.message)
             return
+
+        self.emg_chs = emg_chs
         self.time = self.trial.t / self.trial.framerate  # time axis in sec
         self.tmax = self.time[-1]
         self.nframes = len(self.time)
 
-        # read marker data from Nexus
+
+        # read EMG data
+        self.emgdata = dict()
+        self.emg_rms = dict()
+        for ch in self.emg_chs:
+            try:
+                t_, self.emgdata[ch] = self.trial[ch]
+                self.emg_rms[ch] = rms(self.emgdata[ch], cfg.emg.rms_win)
+            except KeyError:
+                messagebox('EMG channel not found: %s' % ch)
+                sys.exit()  # FIXME: ?
+        self.t = t_ / self.trial.analograte
+
+        # read marker data and compute segment angle
         try:
             data = read_data.get_marker_data(vicon, ['Toe', 'Ankle', 'Knee'])
         except GaitDataError as e:
@@ -267,23 +281,15 @@ class TardieuPlot(object):
     def plot_data(self):
         """Plot the data."""
         self.gs = gridspec.GridSpec(len(self.emg_chs) + 3, 1)
-        self.emg_rms = dict()
 
         # EMG plots
         for ind, ch in enumerate(self.emg_chs):
-            try:
-                t_, emgdata = self.trial[ch]
-            except KeyError:
-                messagebox('EMG channel not found: %s' % ch)
-                sys.exit()
-            t = t_ / self.trial.analograte
-
-            self.emg_rms[ch] = rms(emgdata, cfg.emg.rms_win)
             sharex = None if ind == 0 else self.data_axes[0]
             ax = self.fig.add_subplot(self.gs[ind, 0],
                                       sharex=sharex)
-            ax.plot(t, emgdata*1e3, linewidth=cfg.plot.emg_linewidth)
-            ax.plot(t, self.emg_rms[ch]*1e3,
+            ax.plot(self.t, self.emgdata[ch]*1e3,
+                    linewidth=cfg.plot.emg_linewidth)
+            ax.plot(self.t, self.emg_rms[ch]*1e3,
                     linewidth=cfg.plot.emg_rms_linewidth, color='black')
             ax.set_ylim(self.emg_yrange[0]*1e3, self.emg_yrange[1]*1e3)
             ax.set(ylabel='mV')
@@ -341,7 +347,7 @@ class TardieuPlot(object):
         velmaxind = np.nanargmax(velr)/self.trial.framerate + tmin_
         self.markers.add(velmaxind, annotation='Max. velocity')
         for ch in self.emg_chs:
-            # check if ch is tagged for automark
+            # check if channel is tagged for automark
             if any([s in ch for s in self.emg_automark_chs]):
                 rmsdata = self.emg_rms[ch][smin:smax]
                 rmsmaxind = np.argmax(rmsdata)/self.trial.analograte + tmin_

@@ -40,6 +40,17 @@ matplotlib.style.use(cfg.plot.mpl_style)
 logger = logging.getLogger(__name__)
 
 
+# FIXME: this should go into common Qt module
+def message_dialog(msg):
+    """ Show message with an 'OK' button. """
+    dlg = QtWidgets.QMessageBox()
+    dlg.setWindowTitle('Message')
+    dlg.setText(msg)
+    dlg.addButton(QtWidgets.QPushButton('Ok'),
+                  QtWidgets.QMessageBox.YesRole)
+    dlg.exec_()
+
+
 class TardieuWindow(QtWidgets.QMainWindow):
     """ Main Qt window with controls. The mpl figure containing the actual data
     is created by a separate class and embedded into this window. """
@@ -77,7 +88,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
                                       self.mainGridLayout.columnCount(),
                                       self.mainGridLayout.rowCount()-1, 1)
 
-        # create toolbar and add into last column, 1st row
+        # create toolbar and add it into last column, 1st row
         self.toolbar = NavigationToolbar2QT(self.canvas, self)
         self._tardieu_plot._toolbar = self.toolbar
         self.mainGridLayout.addWidget(self.toolbar, 0,
@@ -94,7 +105,13 @@ class TardieuWindow(QtWidgets.QMainWindow):
         side = 'R' if self.rbRight.isChecked() else 'L'
         # prepend side to configured EMG channel names
         emg_chs = [side+ch for ch in cfg.tardieu.emg_chs]
-        self._tardieu_plot.load_data(emg_chs)
+        emg_passband = [self.spEMGLow.value(), self.spEMGHigh.value()]
+        if emg_passband[0] >= emg_passband[1]:
+            message_dialog('Invalid EMG passband')
+
+        if not self._tardieu_plot.load_data(emg_chs, emg_passband):
+            return
+        # load successful
         self._tardieu_plot.plot_data()
         # xlim change needs to be connected to our Qt status widget
         for ax in self._tardieu_plot.data_axes:
@@ -211,16 +228,19 @@ class TardieuPlot(object):
         self.data_axes = list()  # axes that actually contain data
         self.fig = Figure(figsize=(16, 10))
 
-    def load_data(self, emg_chs):
+    def load_data(self, emg_chs, emg_passband):
         """Load the Tardieu data.
         emg_chs: list of EMG channel names to use """
+
+        logger.debug('Load data, EMG passband %s' % emg_passband)
 
         try:
             vicon = nexus.viconnexus()
             self.trial = Trial(vicon)
+            self.trial.emg.passband = emg_passband
         except GaitDataError as e:
             messagebox(e.message)
-            return
+            return False
 
         self.emg_chs = emg_chs
         self.time = self.trial.t / self.trial.framerate  # time axis in sec
@@ -236,7 +256,8 @@ class TardieuPlot(object):
                 self.emg_rms[ch] = rms(self.emgdata[ch], cfg.emg.rms_win)
             except KeyError:
                 messagebox('EMG channel not found: %s' % ch)
-                sys.exit()  # FIXME: ?
+                return False
+
         # FIXME: self.time?
         self.t = t_ / self.trial.analograte
 
@@ -245,7 +266,7 @@ class TardieuPlot(object):
             data = read_data.get_marker_data(vicon, ['Toe', 'Ankle', 'Knee'])
         except GaitDataError as e:
             messagebox(e.message)
-            return
+            return False
         Ptoe = data['Toe_P']
         Pank = data['Ankle_P']
         Pknee = data['Knee_P']
@@ -265,6 +286,7 @@ class TardieuPlot(object):
             self.angd = 90 - self.ang0_nexus - self.angd + ang0_our
         else:
             self.angd = -self.angd + ang0_our
+        return True
 
     def plot_data(self):
         """Plot the data."""
@@ -452,14 +474,14 @@ class TardieuPlot(object):
                 s += u'Marker @%.3f s' % marker
                 s += (' (%s):\n') % anno if anno else ':\n'
                 s += u'dflex: %.2f° vel: %.2f°/s' % (self.angd[frame],
-                                                        self.angveld[frame])
+                                                       self.angveld[frame])
                 s += u' acc: %.2f°/s²\n\n' % self.angaccd[frame]
             s += u'</font>'
             yield s
 
     @property
     def status_text(self):
-        """Create status text"""
+        """Create the status text"""
 
         if self.texts:
             [txt.remove() for txt in self.texts]

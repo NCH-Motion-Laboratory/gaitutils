@@ -60,26 +60,13 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self._tardieu_plot.connect_callbacks()
 
         # the Qt callbacks (WIP)
-        self.btnClearMarkers.clicked.connect(self._tardieu_plot._clear_callback)
+        self.btnClearMarkers.clicked.connect(self._clear_markers)
         self.btnQuit.clicked.connect(self.close)
         self.btnLoadData.clicked.connect(self._create_plot)
-        
+
         """
-        # add buttons
-        # add the clear button
-        ax = plt.axes([self.margin, 1-self.margin-buttonheight,
-                       buttonwidth, buttonheight])
-        self._clearbutton = Button(ax, 'Clear markers')
-        self._clearbutton.label.set_fontsize(self.text_fontsize)
-        self._clearbutton.on_clicked(self._clear_callback)
         # add the narrow view button
         ax = plt.axes([self.margin, 1-self.margin-2*buttonheight-buttongap,
-                       buttonwidth, buttonheight])
-        self._narrowbutton = Button(ax, 'Narrow view')
-        self._narrowbutton.label.set_fontsize(self.text_fontsize)
-        self._narrowbutton.on_clicked(self._toggle_narrow_callback)
-        # add quit button
-        ax = plt.axes([self.margin, 1-self.margin-3*buttonheight-2*buttongap,
                        buttonwidth, buttonheight])
         """
         self.lblStatus.setText('No data loaded')
@@ -125,6 +112,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
         pass
 
     def _clear_markers(self):
+        """Clear all markers"""
         self._tardieu_plot.markers.clear()
         self._update_marker_status_text()
 
@@ -145,7 +133,7 @@ class Markers(object):
         self.max_markers = len(self.marker_colors)
 
     def add_on_click(self, x):
-        """Add marker on mouse click"""
+        """Add a marker on mouse click"""
         if x not in self._markers.keys():
             if len(self._markers) == self.max_markers:
                 messagebox('You can place a maximum of %d markers' %
@@ -154,7 +142,7 @@ class Markers(object):
                 self.add(x)
 
     def add(self, x, annotation=''):
-        """Add marker at point x with optional annotation"""
+        """Add a marker at point x with optional annotation"""
         if x in self._markers.keys():  # marker already at this point
             return
         else:
@@ -239,7 +227,6 @@ class TardieuPlot(object):
         self.tmax = self.time[-1]
         self.nframes = len(self.time)
 
-
         # read EMG data
         self.emgdata = dict()
         self.emg_rms = dict()
@@ -250,6 +237,7 @@ class TardieuPlot(object):
             except KeyError:
                 messagebox('EMG channel not found: %s' % ch)
                 sys.exit()  # FIXME: ?
+        # FIXME: self.time?
         self.t = t_ / self.trial.analograte
 
         # read marker data and compute segment angle

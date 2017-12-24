@@ -3,10 +3,12 @@
 Interactive script for analysis of Tardieu trials.
 
 TODO:
-    create mainwindow w/ controls class
-    rm mpl widgets, use Qt widgets
-   
+    ui
+    connect ui widgets
+    fix tight layout
+    show data only after load (need to select side)
 
+    need to 
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -15,7 +17,6 @@ from __future__ import print_function
 from collections import OrderedDict
 import matplotlib
 from matplotlib.figure import Figure
-from matplotlib.widgets import Button
 import matplotlib.gridspec as gridspec
 import logging
 import sys
@@ -32,7 +33,8 @@ from gaitutils.numutils import segment_angles, rms
 from gaitutils.guiutils import messagebox
 
 # increase default DPI for figure saving
-# TODO: into config?
+# FIXME: config?
+# FIXME: plt not imported
 #plt.rcParams['savefig.dpi'] = 200
 
 matplotlib.style.use(cfg.plot.mpl_style)
@@ -41,7 +43,8 @@ logger = logging.getLogger(__name__)
 
 
 class TardieuWindow(QtWidgets.QMainWindow):
-    """ Tardieu analysis main Qt window. mpl canvas is embedded into this """
+    """ Main Qt window with controls. The mpl figure containing the actual data
+    is created by a separate class and embedded into this window. """
 
     def __init__(self, parent=None):
         super(TardieuWindow, self).__init__(parent)
@@ -49,19 +52,38 @@ class TardieuWindow(QtWidgets.QMainWindow):
         uifile = resource_filename(__name__, 'tardieu.ui')
         uic.loadUi(uifile, self)
 
-        # FIXME: right channel
-        emg_chs = ['R'+ch for ch in cfg.tardieu.emg_chs]
-
-        self._tardieu_plot = TardieuPlot(emg_chs=emg_chs)
+        self._tardieu_plot = TardieuPlot()
         self.canvas = FigureCanvasQTAgg(self._tardieu_plot.fig)
         self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                   QtWidgets.QSizePolicy.Expanding)
         self._tardieu_plot.fig.canvas = self.canvas
-        self._tardieu_plot.connect_callbacks()        
+        # the internal matplotlib callbacks
+        self._tardieu_plot.connect_callbacks()
 
-        # these are needed for mpl callbacks to work (?)
-        self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.canvas.setFocus()
+        # WIP: convert all the below to Qt callbacks
+        self.btnClearMarkers.clicked.connect(self._tardieu_plot._clear_callback)
+        self.btnQuit.clicked.connect(self.close)
+        self.btnLoadData.clicked.connect(self._create_plot)
+        
+        """
+        # add buttons
+        # add the clear button
+        ax = plt.axes([self.margin, 1-self.margin-buttonheight,
+                       buttonwidth, buttonheight])
+        self._clearbutton = Button(ax, 'Clear markers')
+        self._clearbutton.label.set_fontsize(self.text_fontsize)
+        self._clearbutton.on_clicked(self._clear_callback)
+        # add the narrow view button
+        ax = plt.axes([self.margin, 1-self.margin-2*buttonheight-buttongap,
+                       buttonwidth, buttonheight])
+        self._narrowbutton = Button(ax, 'Narrow view')
+        self._narrowbutton.label.set_fontsize(self.text_fontsize)
+        self._narrowbutton.on_clicked(self._toggle_narrow_callback)
+        # add quit button
+        ax = plt.axes([self.margin, 1-self.margin-3*buttonheight-2*buttongap,
+                       buttonwidth, buttonheight])
+        """
+        self.lblStatus.setText('No data loaded')
 
         # self.setStyleSheet("background-color: white;");
         # add canvas into last column, span all rows
@@ -69,33 +91,54 @@ class TardieuWindow(QtWidgets.QMainWindow):
                                       self.mainGridLayout.columnCount(),
                                       self.mainGridLayout.rowCount()-1, 1)
 
-        # toolbar into last column, 1st row
+        # create toolbar and add into last column, 1st row
         self.toolbar = NavigationToolbar2QT(self.canvas, self)
         self._tardieu_plot._toolbar = self.toolbar
         self.mainGridLayout.addWidget(self.toolbar, 0,
                                       self.mainGridLayout.columnCount()-1,
                                       1, 1)
 
-        self._tardieu_plot.tight_layout()
+        # these are needed for mpl callbacks to work (?)
+        self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
+        self.canvas.setFocus()
         self.canvas.draw()
+
+    def _create_plot(self):
+        """Callback to load data and create the mpl plot"""
+        side = 'R' if self.rbRight.isChecked() else 'L'
+        # prepend side to configured EMG channel names
+        emg_chs = [side+ch for ch in cfg.tardieu.emg_chs]
+        self._tardieu_plot.load_data_and_plot(emg_chs)
+        # xlim change needs to be connected to the Qt status widget
+        for ax in self._tardieu_plot.data_axes:
+            ax.callbacks.connect('xlim_changed', self._update_status_text)
+        self.canvas.draw()
+
+    def _update_status_text(self):
+        """Callback to update the status widget"""
+        status = self._tardieu_plot.status_text
+        self.lblStatus.setText(status)
+
+    def _update_marker_status_text(self):
+        """Callback to update the marker status widget
+        or should there be just one? """
+        pass
+
+    def _clear_markers(self):
+        self._tardieu_plot.markers.clear()
+        self._update_marker_status_text()
 
 
 class Markers(object):
-    """ Manage the marker lines at given axes """
+    """ Manage the marker lines at given axes. The markers are created as
+    matplotlib axvline()s. """
 
-    def __init__(self, marker_colors, marker_width, markers_text_start,
-                 markers_text_spacing, axes):
+    def __init__(self, marker_colors, marker_width, axes):
         self._markers = OrderedDict()  # keyed by time coordinate
         self._axes = axes
         self.marker_colors = marker_colors
         self.marker_width = marker_width
         self.max_markers = len(self.marker_colors)
-        # calculate text positions for markers
-        markers_text_end = (markers_text_start -
-                            (markers_text_spacing * self.max_markers))
-        self.markers_text_pos = np.linspace(markers_text_start,
-                                            markers_text_end,
-                                            self.max_markers)
 
     def add_on_click(self, x):
         if x not in self._markers.keys():
@@ -144,15 +187,14 @@ class Markers(object):
         """ Return tuple of marker, annotation, position and color """
         annotations = [m['annotation'] for m in self._markers.values()]
         cols_in_use = [m['color'] for m in self._markers.values()]
-        return zip(self._markers.keys(), annotations, self.markers_text_pos,
-                   cols_in_use)
+        return zip(self._markers.keys(), annotations, cols_in_use)
 
 
 class TardieuPlot(object):
     """ matplotlib graphs for Tardieu analysis """
 
-    def __init__(self, emg_chs=None):
-
+    def __init__(self):
+        """Set up the figure but do not plot anything yet"""
         # adjustable params
         # TODO: some could go into config
         self.marker_button = 1  # mouse button for placing markers
@@ -161,9 +203,9 @@ class TardieuPlot(object):
         # take marker colors from mpl default cycle, but skip the first color
         # (which is used for angle plots). n of colors determines max n of
         # markers.
-        marker_colors = ['tab:orange', 'tab:green', 'tab:red', 'tab:brown',
-                         'tab:pink', 'tab:gray', 'tab:olive'][:6]
-        marker_width = 1.5
+        self.marker_colors = ['tab:orange', 'tab:green', 'tab:red', 'tab:brown',
+                              'tab:pink', 'tab:gray', 'tab:olive'][:6]
+        self.marker_width = 1.5
         self.emg_yrange = [-.5e-3, .5e-3]
         self.width_ratio = [1, 5]
         self.text_fontsize = 9
@@ -172,14 +214,14 @@ class TardieuPlot(object):
         self.narrow = False
         self.hspace = .4
         self.wspace = .5
-        markers_text_start = .95  # relative to the text axis
-        markers_text_spacing = .15
-        self.emg_chs = emg_chs
         self.emg_automark_chs = ['Gas', 'Sol']
-        self.texts = []
         self.data_axes = list()  # axes that actually contain data
+        self.fig = Figure(figsize=(16, 10))
 
-        # read data from Nexus and initialize plot
+
+    def load_data_and_plot(self, emg_chs):
+        self.emg_chs = emg_chs
+        self.gs = gridspec.GridSpec(len(self.emg_chs) + 3, 1)
         try:
             vicon = nexus.viconnexus()
             self.trial = Trial(vicon)
@@ -216,9 +258,6 @@ class TardieuPlot(object):
         else:
             self.angd = -self.angd + ang0_our
 
-        self.fig = Figure(figsize=(16, 10))
-        self.gs = gridspec.GridSpec(len(self.emg_chs) + 3, 1)
-        
         # plot EMG signals
         self.emg_rms = dict()
         for ind, ch in enumerate(emg_chs):
@@ -278,56 +317,12 @@ class TardieuPlot(object):
         self.data_axes.append(ax)
 
         # create markers
-        self.markers = Markers(marker_colors, marker_width, markers_text_start,
-                               markers_text_spacing, self.data_axes)
-
-        # add text axis spanning the left column (leave top rows for buttons)
-        """
-        self.textax = self.fig.add_subplot(self.gs[3:8, 0])
-        self.textax.set_axis_off()
-        self.marker_textax = self.fig.add_subplot(self.gs[8:, 0])
-        self.marker_textax.set_axis_off()
-        """
-
-        # refresh text field on zoom
-        for ax in self.data_axes:
-            ax.callbacks.connect('xlim_changed', self._redraw)
-
-        # FIXME: canvas does not exist here
-
-        """
-        # adjust plot layout
-        self.gs.tight_layout(self.fig)
-        # self.gs.update(hspace=self.hspace, wspace=self.wspace,
-        #               left=self.margin, right=1-self.margin)
-        """
-
-        # FIXME: move buttons to Qt interface
-        """
-        # add buttons
-        # add the clear button
-        ax = plt.axes([self.margin, 1-self.margin-buttonheight,
-                       buttonwidth, buttonheight])
-        self._clearbutton = Button(ax, 'Clear markers')
-        self._clearbutton.label.set_fontsize(self.text_fontsize)
-        self._clearbutton.on_clicked(self._clear_callback)
-        # add the narrow view button
-        ax = plt.axes([self.margin, 1-self.margin-2*buttonheight-buttongap,
-                       buttonwidth, buttonheight])
-        self._narrowbutton = Button(ax, 'Narrow view')
-        self._narrowbutton.label.set_fontsize(self.text_fontsize)
-        self._narrowbutton.on_clicked(self._toggle_narrow_callback)
-        # add quit button
-        ax = plt.axes([self.margin, 1-self.margin-3*buttonheight-2*buttongap,
-                       buttonwidth, buttonheight])
-        self._quitbutton = Button(ax, 'Quit')
-        self._quitbutton.label.set_fontsize(self.text_fontsize)
-        self._quitbutton.on_clicked(self.close)
-        """
+        self.markers = Markers(self.marker_colors, self.marker_width,
+                               self.data_axes)
 
         self.tmin, self.tmax = self.data_axes[0].get_xlim()
 
-        # automatically place markers
+        # place the auto markers
         tmin_ = max(self.time[0], self.tmin)
         tmax_ = min(self.time[-1], self.tmax)
         fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
@@ -342,23 +337,23 @@ class TardieuPlot(object):
                 rmsdata = self.emg_rms[ch][smin:smax]
                 rmsmaxind = np.argmax(rmsdata)/self.trial.analograte + tmin_
                 self.markers.add(rmsmaxind, annotation='%s max. RMS' % ch)
-       
+                
         # init status text
-        self._update_status_text()
         self._last_click_event = None
-
-        # self._toolbar = plt.get_current_fig_manager().toolbar
         self.fig.set_tight_layout(True)
+        
+        # FIXME: adjust plot layout
+        # self.gs.tight_layout(self.fig)
+        # self.gs.update(hspace=self.hspace, wspace=self.wspace,
+        #               left=self.margin, right=1-self.margin)
 
     def connect_callbacks(self):
-        """Connect callbacks. This cannot be done at init since the canvas
-        is created elsewhere and is not yet available then"""
+        """Connect callbacks. Need to create the canvas first"""
         self.fig.canvas.mpl_connect('button_press_event', self._onclick)
         # catch key press
         self.fig.canvas.mpl_connect('key_press_event', self._onpress)
         # pick handler
         self.fig.canvas.mpl_connect('pick_event', self._onpick)
-        
 
     @staticmethod
     def read_starting_angle(vicon):
@@ -379,10 +374,6 @@ class TardieuPlot(object):
         """Convert time to samples (according to rate)"""
         return np.round(rate * np.array(times)).astype(int)
 
-    def close(self, event):
-        """Close window"""
-        #plt.close(self.fig)
-
     def tight_layout(self):
         self.gs.tight_layout(self.fig)
         self.gs.update(hspace=self.hspace, wspace=self.wspace,
@@ -395,11 +386,6 @@ class TardieuPlot(object):
         self.tmin, self.tmax = ax.get_xlim()
         self._update_status_text()
         self.fig.canvas.draw()
-
-    def _clear_callback(self, event):
-        """Clear all line markers"""
-        self.markers.clear()
-        self._update_status_text()
 
     def _toggle_narrow_callback(self, event):
         """Toggle narrow/wide display"""
@@ -450,15 +436,11 @@ class TardieuPlot(object):
         self._last_click_event = event
         self._redraw(event.inaxes)  # marker status needs to be updated
 
-    def _plot_text(self, ax, s, ypos, color):
-        """Plot string s at y position ypos (relative to text frame)"""
-        self.texts.append(ax.text(0, ypos, s, ha='left', va='top',
-                                  transform=ax.transAxes,
-                                  fontsize=self.text_fontsize,
-                                  color=color, wrap=True))
-
-    def _markers_info(self):
-        # annotate markers
+    @property
+    def marker_status_text(self):
+        # annotate markers in colored text
+        # FIXME: convert to func that returns HTML (so that colors can be set)
+        # maybe just add to status_text?
         for marker, anno, pos, col in self.markers.marker_pos_col():
             frame = self._time_to_frame(marker, self.trial.framerate)
             if frame < 0 or frame >= self.nframes:
@@ -472,8 +454,9 @@ class TardieuPlot(object):
             yield ms
             # self._plot_text(self.marker_textax, ms, pos, col)
 
-    def _update_status_text(self):
-        """Create status text & update display"""
+    @property
+    def status_text(self):
+        """Create status text"""
 
         if self.texts:
             [txt.remove() for txt in self.texts]
@@ -495,11 +478,8 @@ class TardieuPlot(object):
         fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
         if fmin == fmax:
             s += 'Zoomed in to a single frame\nPlease zoom out for info'
-            self._plot_text(self.textax, s, 1, 'k')
-            self._show_markers_info()
-            return
+            return s
         else:
-            # analog sample indices ...
             smin, smax = self._time_to_frame([tmin_, tmax_],
                                              self.trial.analograte)
             s += u'In frames: %d - %d\n\n' % (fmin, fmax)
@@ -508,9 +488,7 @@ class TardieuPlot(object):
             # check if we zoomed to all-nan region of angle data
             if np.all(np.isnan(angr)):
                 s += 'No valid data in region'
-                self._plot_text(self.textax, s, 1, 'k')
-                self._show_markers_info()
-                return
+                return s
             angmax = np.nanmax(angr)
             angmaxind = np.nanargmax(angr)/self.trial.framerate + tmin_
             angmin = np.nanmin(angr)
@@ -530,9 +508,6 @@ class TardieuPlot(object):
                 s += u'%s max RMS: %.2f mV @ %.2f s\n' % (ch, rmsmax*1e3,
                                                           rmsmaxind)
             return s
-            #self._plot_text(self.textax, s, 1, 'k')
-            #self._show_markers_info()
-        # FIXME: canvas ref
 
 
 if __name__ == '__main__':

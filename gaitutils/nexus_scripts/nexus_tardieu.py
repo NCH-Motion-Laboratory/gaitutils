@@ -4,8 +4,7 @@ Interactive script for analysis of Tardieu trials.
 matplotlib + Qt5
 
 TODO:
-    ui
-    connect ui widgets
+        
     fix tight layout
 
 @author: Jussi (jnu@iki.fi)
@@ -28,7 +27,6 @@ from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
                        Trial, Plotter, layouts, utils, GaitDataError,
                        register_gui_exception_handler)
 from gaitutils.numutils import segment_angles, rms
-from gaitutils.guiutils import messagebox
 
 # increase default DPI for figure saving
 # FIXME: config?
@@ -40,7 +38,7 @@ matplotlib.style.use(cfg.plot.mpl_style)
 logger = logging.getLogger(__name__)
 
 
-# FIXME: this should go into common Qt module
+# FIXME: this should go into common GUI module
 def message_dialog(msg):
     """ Show message with an 'OK' button. """
     dlg = QtWidgets.QMessageBox()
@@ -56,6 +54,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
     is created by a separate class and embedded into this window. """
 
     def __init__(self, parent=None):
+
         super(TardieuWindow, self).__init__(parent)
 
         uifile = resource_filename(__name__, 'tardieu.ui')
@@ -74,6 +73,8 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.btnClearMarkers.clicked.connect(self._clear_markers)
         self.btnQuit.clicked.connect(self.close)
         self.btnLoadData.clicked.connect(self._create_plot)
+        self.spEMGLow.setValue(cfg.emg.passband[0])
+        self.spEMGHigh.setValue(cfg.emg.passband[1])
 
         """
         # add the narrow view button
@@ -81,6 +82,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
                        buttonwidth, buttonheight])
         """
         self.lblStatus.setText('No data loaded')
+        self.lblMarkerStatus.setText('No markers')
 
         # self.setStyleSheet("background-color: white;");
         # add canvas into last column, span all rows
@@ -102,20 +104,22 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
     def _create_plot(self):
         """Load data and create the mpl plot"""
+        # FIXME: need to clear previous plot / reset some vars?
         side = 'R' if self.rbRight.isChecked() else 'L'
         # prepend side to configured EMG channel names
         emg_chs = [side+ch for ch in cfg.tardieu.emg_chs]
         emg_passband = [self.spEMGLow.value(), self.spEMGHigh.value()]
         if emg_passband[0] >= emg_passband[1]:
             message_dialog('Invalid EMG passband')
-
+            return
         if not self._tardieu_plot.load_data(emg_chs, emg_passband):
             return
         # load successful
         self._tardieu_plot.plot_data()
         # xlim change needs to be connected to our Qt status widget
         for ax in self._tardieu_plot.data_axes:
-            ax.callbacks.connect('xlim_changed', self._update_status_text)
+            ax.callbacks.connect('xlim_changed',
+                                 lambda ev: self._update_status_text())
         self.canvas.draw()
 
     def _update_status_text(self):
@@ -126,7 +130,8 @@ class TardieuWindow(QtWidgets.QMainWindow):
     def _update_marker_status_text(self):
         """Callback to update the marker status widget
         or should there be just one? """
-        pass
+        status = self._tardieu_plot.marker_status_text
+        self.lblMarkerStatus.setText(status)
 
     def _clear_markers(self):
         """Clear all markers"""
@@ -153,7 +158,7 @@ class Markers(object):
         """Add a marker on mouse click"""
         if x not in self._markers.keys():
             if len(self._markers) == self.max_markers:
-                messagebox('You can place a maximum of %d markers' %
+                message_dialog('You can place a maximum of %d markers' %
                            self.max_markers)
             else:
                 self.add(x)
@@ -239,7 +244,7 @@ class TardieuPlot(object):
             self.trial = Trial(vicon)
             self.trial.emg.passband = emg_passband
         except GaitDataError as e:
-            messagebox(e.message)
+            message_dialog(e.message)
             return False
 
         self.emg_chs = emg_chs
@@ -255,17 +260,18 @@ class TardieuPlot(object):
                 t_, self.emgdata[ch] = self.trial[ch]
                 self.emg_rms[ch] = rms(self.emgdata[ch], cfg.emg.rms_win)
             except KeyError:
-                messagebox('EMG channel not found: %s' % ch)
+                message_dialog('EMG channel not found: %s' % ch)
                 return False
 
         # FIXME: self.time?
         self.t = t_ / self.trial.analograte
 
         # read marker data and compute segment angle
+        # FIXME: hardcoded marker names?
         try:
             data = read_data.get_marker_data(vicon, ['Toe', 'Ankle', 'Knee'])
         except GaitDataError as e:
-            messagebox(e.message)
+            message_dialog(e.message)
             return False
         Ptoe = data['Toe_P']
         Pank = data['Ankle_P']
@@ -406,7 +412,7 @@ class TardieuPlot(object):
                        left=self.margin, right=1-self.margin)
 
     def _redraw(self, ax):
-        """Update display on e.g. zoom"""
+        """Update status text on e.g. zoom"""
         # we need to get the limits from the axis that was zoomed
         # (the limits are not instantly updated by sharex)
         self.tmin, self.tmax = ax.get_xlim()
@@ -483,9 +489,6 @@ class TardieuPlot(object):
     def status_text(self):
         """Create the status text"""
 
-        if self.texts:
-            [txt.remove() for txt in self.texts]
-            self.texts = []
         # find the limits of the data that is shown
         tmin_ = max(self.time[0], self.tmin)
         tmax_ = min(self.time[-1], self.tmax)
@@ -497,7 +500,7 @@ class TardieuPlot(object):
         s += u'Notes: %s\n' % (self.trial.eclipse_data['NOTES'])
         s += u'Nexus angle offset: '
         s += (u' %.2f\n' % self.ang0_nexus) if self.ang0_nexus else u'none\n'
-        s += u'EMG passband: %.1f Hz - %.1f Hz\n' % (self.trial.emg.passband)
+        s += u'EMG passband: %.1f Hz - %.1f Hz\n' % (self.trial.emg.passband[0], self.trial.emg.passband[1])
         s += u'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)
         # frame indices corresponding to time limits
         fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)

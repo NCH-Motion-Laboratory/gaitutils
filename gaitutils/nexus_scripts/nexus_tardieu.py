@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 Interactive script for analysis of Tardieu trials.
+matplotlib + Qt5
 
 TODO:
     ui
     connect ui widgets
     fix tight layout
-    show data only after load (need to select side)
-
-    need to 
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -191,15 +189,16 @@ class Markers(object):
         for marker in self._markers:
             self.delete(marker)
 
-    def marker_pos_col(self):
-        """Return tuple of marker, annotation, position and color"""
+    @property
+    def marker_info(self):
+        """Return tuple of marker, annotation, and color"""
         annotations = [m['annotation'] for m in self._markers.values()]
         cols_in_use = [m['color'] for m in self._markers.values()]
         return zip(self._markers.keys(), annotations, cols_in_use)
 
 
 class TardieuPlot(object):
-    """ matplotlib graphs for Tardieu analysis """
+    """ Create matplotlib graphs for Tardieu analysis """
 
     def __init__(self):
         """Initialize but do not plot anything yet"""
@@ -208,11 +207,9 @@ class TardieuPlot(object):
         self.marker_button = 1  # mouse button for placing markers
         self.marker_del_button = 3  # remove marker
         self.marker_key = 'shift'  # modifier key for markers
-        # take marker colors from mpl default cycle, but skip the first color
-        # (which is used for angle plots). n of colors determines max n of
-        # markers.
-        self.marker_colors = ['tab:orange', 'tab:green', 'tab:red', 'tab:brown',
-                              'tab:pink', 'tab:gray', 'tab:olive'][:6]
+        # FIXME: check colors
+        self.marker_colors = ['orange', 'green', 'red', 'brown',
+                              'pink', 'gray']
         self.marker_width = 1.5
         self.emg_yrange = [-.5e-3, .5e-3]
         self.width_ratio = [1, 5]
@@ -229,6 +226,7 @@ class TardieuPlot(object):
     def load_data(self, emg_chs):
         """Load the Tardieu data.
         emg_chs: list of EMG channel names to use """
+        
         self.emg_chs = emg_chs
         try:
             vicon = nexus.viconnexus()
@@ -450,21 +448,20 @@ class TardieuPlot(object):
 
     @property
     def marker_status_text(self):
-        # annotate markers in colored text
-        # FIXME: convert to func that returns HTML (so that colors can be set)
-        # maybe just add to status_text?
-        for marker, anno, pos, col in self.markers.marker_pos_col():
+        """Annotate markers in colored text"""
+        for marker, anno, col in self.markers.marker_info:
             frame = self._time_to_frame(marker, self.trial.framerate)
+            s = u"<font color='%s'>" % col
             if frame < 0 or frame >= self.nframes:
-                ms = u'Marker outside data range'
+                s += u'Marker outside data range'
             else:
-                ms = u'Marker @%.3f s' % marker
-                ms += (' (%s):\n') % anno if anno else ':\n'
-                ms += u'dflex: %.2f° vel: %.2f°/s' % (self.angd[frame],
+                s += u'Marker @%.3f s' % marker
+                s += (' (%s):\n') % anno if anno else ':\n'
+                s += u'dflex: %.2f° vel: %.2f°/s' % (self.angd[frame],
                                                         self.angveld[frame])
-                ms += u' acc: %.2f°/s²\n\n' % self.angaccd[frame]
-            yield ms
-            # self._plot_text(self.marker_textax, ms, pos, col)
+                s += u' acc: %.2f°/s²\n\n' % self.angaccd[frame]
+            s += u'</font>'
+            yield s
 
     @property
     def status_text(self):
@@ -530,6 +527,5 @@ if __name__ == '__main__':
 
     app = QtWidgets.QApplication(sys.argv)
     win = TardieuWindow()
-
     win.show()
     sys.exit(app.exec_())

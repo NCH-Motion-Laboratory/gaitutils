@@ -61,15 +61,13 @@ class TardieuWindow(QtWidgets.QMainWindow):
         uic.loadUi(uifile, self)
 
         self._tardieu_plot = TardieuPlot()
+        self._tardieu_plot._update_marker_status = self._update_marker_status
+        self._tardieu_plot._update_status = self._update_status
         self.canvas = FigureCanvasQTAgg(self._tardieu_plot.fig)
         self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                   QtWidgets.QSizePolicy.Expanding)
         self._tardieu_plot.fig.canvas = self.canvas
 
-        # the canvas exists, can now connect the internal matplotlib callbacks
-        self._tardieu_plot.connect_callbacks()
-
-        # the Qt callbacks (WIP)
         self.btnClearMarkers.clicked.connect(self._clear_markers)
         self.btnQuit.clicked.connect(self.close)
         self.btnLoadData.clicked.connect(self._create_plot)
@@ -77,9 +75,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.spEMGHigh.setValue(cfg.emg.passband[1])
 
         """
-        # add the narrow view button
-        ax = plt.axes([self.margin, 1-self.margin-2*buttonheight-buttongap,
-                       buttonwidth, buttonheight])
+        # add the narrow view button?
         """
         self.lblStatus.setText('No data loaded')
         self.lblMarkerStatus.setText('No markers')
@@ -116,18 +112,17 @@ class TardieuWindow(QtWidgets.QMainWindow):
             return
         # load successful
         self._tardieu_plot.plot_data()
-        # xlim change needs to be connected to our Qt status widget
-        for ax in self._tardieu_plot.data_axes:
-            ax.callbacks.connect('xlim_changed',
-                                 lambda ev: self._update_status_text())
         self.canvas.draw()
+        self.canvas.setFocus()
+        self._update_status()
+        self._update_marker_status()
 
-    def _update_status_text(self):
+    def _update_status(self):
         """Callback to update the status widget"""
         status = self._tardieu_plot.status_text
         self.lblStatus.setText(status)
 
-    def _update_marker_status_text(self):
+    def _update_marker_status(self):
         """Callback to update the marker status widget
         or should there be just one? """
         status = self._tardieu_plot.marker_status_text
@@ -136,7 +131,8 @@ class TardieuWindow(QtWidgets.QMainWindow):
     def _clear_markers(self):
         """Clear all markers"""
         self._tardieu_plot.markers.clear()
-        self._update_marker_status_text()
+        self.canvas.draw()
+        self._update_marker_status()
 
 
 class Markers(object):
@@ -159,7 +155,7 @@ class Markers(object):
         if x not in self._markers.keys():
             if len(self._markers) == self.max_markers:
                 message_dialog('You can place a maximum of %d markers' %
-                           self.max_markers)
+                               self.max_markers)
             else:
                 self.add(x)
 
@@ -231,6 +227,9 @@ class TardieuPlot(object):
         self.wspace = .5
         self.emg_automark_chs = ['Gas', 'Sol']
         self.data_axes = list()  # axes that actually contain data
+        # these are callbacks that should be registered by the creator
+        self._update_marker_status = None
+        self._update_status = None
         self.fig = Figure(figsize=(16, 10))
 
     def load_data(self, emg_chs, emg_passband):
@@ -320,6 +319,7 @@ class TardieuPlot(object):
         ax.plot(self.time, self.angd, linewidth=cfg.plot.model_linewidth)
         ax.set(ylabel='deg')
         ax.set_title('Angle')
+        # FIXME: loop adj_fonts on data_axes
         self._adj_fonts(ax)
         self.data_axes.append(ax)
         ind += 1
@@ -371,19 +371,23 @@ class TardieuPlot(object):
 
         self._last_click_event = None
 
-        self.fig.set_tight_layout(True)        
-        # FIXME: adjust plot layout
-        # self.gs.tight_layout(self.fig)
-        # self.gs.update(hspace=self.hspace, wspace=self.wspace,
-        #               left=self.margin, right=1-self.margin)
+        self.fig.set_tight_layout(True)
 
-    def connect_callbacks(self):
-        """Connect internal callbacks. Needs a canvas object"""
+        # connect callbacks
+        for ax in self.data_axes:
+            ax.callbacks.connect('xlim_changed',
+                                 lambda ev: self._xlim_changed())
         self.fig.canvas.mpl_connect('button_press_event', self._onclick)
         # catch key press
         self.fig.canvas.mpl_connect('key_press_event', self._onpress)
         # pick handler
         self.fig.canvas.mpl_connect('pick_event', self._onpick)
+
+
+        # FIXME: adjust plot layout
+        # self.gs.tight_layout(self.fig)
+        # self.gs.update(hspace=self.hspace, wspace=self.wspace,
+        #               left=self.margin, right=1-self.margin)
 
     @staticmethod
     def read_starting_angle(vicon):
@@ -411,13 +415,13 @@ class TardieuPlot(object):
         self.gs.update(hspace=self.hspace, wspace=self.wspace,
                        left=self.margin, right=1-self.margin)
 
-    def _redraw(self, ax):
-        """Update status text on e.g. zoom"""
+    def _xlim_changed(self, ax):
+        """Callback for x limits change, e.g. on zoom"""
         # we need to get the limits from the axis that was zoomed
-        # (the limits are not instantly updated by sharex)
+        # (the limits are not instantly propagated by sharex)
         self.tmin, self.tmax = ax.get_xlim()
-        self._update_status_text()
         self.fig.canvas.draw()
+        self._update_status_text()
 
     def _toggle_narrow_callback(self, event):
         """Toggle narrow/wide display"""
@@ -431,11 +435,12 @@ class TardieuPlot(object):
         self.fig.canvas.draw()
 
     def _onpick(self, event):
-        if self._toolbar.mode:
+        """Gets triggered on pick event, i.e. selection of existing marker"""
+        if self._toolbar.mode:  # do not respond if toolbar buttons enabled
             return
         mevent = event.mouseevent
-        # prevent handling an onpick event multiple times (e.g. if multiple
-        # markers get picked)
+        # prevent handling the same onpick event multiple times (e.g.
+        # if multiple markers get picked on a single click)
         if self._last_click_event == mevent:
             return
         if (mevent.button != self.marker_del_button or
@@ -443,7 +448,8 @@ class TardieuPlot(object):
             return
         self.markers.delete_artist(event.artist, mevent.inaxes)
         self._last_click_event = mevent
-        self._redraw(mevent.inaxes)  # marker status needs to be updated
+        self.fig.canvas.draw()
+        self._update_marker_status()
 
     def _onpress(self, event):
         """Keyboard event handler"""
@@ -451,14 +457,13 @@ class TardieuPlot(object):
             self._toggle_narrow_callback(event)
 
     def _onclick(self, event):
-        """Mouse click handler"""
-        if self._toolbar.mode:
+        """Gets triggered by a mouse click on canvas"""
+        if self._toolbar.mode:  # do not respond if toolbar buttons enabled
             return
         if event.inaxes not in self.data_axes:
             return
-        # prevent handling a click event multiple times
-        # check is also needed here since onpick and onclick may get triggered
-        # simultaneously
+        # prevent handling the same click event multiple times
+        # onpick and onclick may get triggered simultaneously
         if event == self._last_click_event:
             return
         if event.button != self.marker_button or event.key != self.marker_key:
@@ -466,24 +471,26 @@ class TardieuPlot(object):
         x = event.xdata
         self.markers.add_on_click(x)
         self._last_click_event = event
-        self._redraw(event.inaxes)  # marker status needs to be updated
+        self.fig.canvas.draw()
+        self._update_marker_status()
 
     @property
     def marker_status_text(self):
+        s = u''
         """Annotate markers in colored text"""
         for marker, anno, col in self.markers.marker_info:
             frame = self._time_to_frame(marker, self.trial.framerate)
-            s = u"<font color='%s'>" % col
+            s += u"<font color='%s'>" % col
             if frame < 0 or frame >= self.nframes:
                 s += u'Marker outside data range'
             else:
                 s += u'Marker @%.3f s' % marker
-                s += (' (%s):\n') % anno if anno else ':\n'
+                s += (' (%s):<br>') % anno if anno else ':<br>'
                 s += u'dflex: %.2f° vel: %.2f°/s' % (self.angd[frame],
                                                        self.angveld[frame])
-                s += u' acc: %.2f°/s²\n\n' % self.angaccd[frame]
+                s += u' acc: %.2f°/s²<br><br>' % self.angaccd[frame]
             s += u'</font>'
-            yield s
+        return s
 
     @property
     def status_text(self):

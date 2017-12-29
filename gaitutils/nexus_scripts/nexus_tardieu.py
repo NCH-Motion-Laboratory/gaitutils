@@ -5,7 +5,17 @@ matplotlib + Qt5
 
 TODO:
         
+    fix marker colors
+    direct c3d load?
+    figure saving on button
+    rm some buttons from toolbar?
     fix tight layout
+    real time changes to norm. angle and emg passband?
+    fix left panel width? may change according to text
+    add config options?
+    add statusbar?
+    
+    testing
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -61,6 +71,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
         uic.loadUi(uifile, self)
 
         self._tardieu_plot = TardieuPlot()
+        # set the internal callbacks to point to our methods
         self._tardieu_plot._update_marker_status = self._update_marker_status
         self._tardieu_plot._update_status = self._update_status
         self.canvas = FigureCanvasQTAgg(self._tardieu_plot.fig)
@@ -118,13 +129,12 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self._update_marker_status()
 
     def _update_status(self):
-        """Callback to update the status widget"""
+        """Update the status text"""
         status = self._tardieu_plot.status_text
         self.lblStatus.setText(status)
 
     def _update_marker_status(self):
-        """Callback to update the marker status widget
-        or should there be just one? """
+        """Update the marker status text"""
         status = self._tardieu_plot.marker_status_text
         self.lblMarkerStatus.setText(status)
 
@@ -234,7 +244,10 @@ class TardieuPlot(object):
 
     def load_data(self, emg_chs, emg_passband):
         """Load the Tardieu data.
-        emg_chs: list of EMG channel names to use """
+        emg_chs: list of EMG channel names to use
+
+        Returns True on successful data load, False otherwise
+        """
 
         logger.debug('Load data, EMG passband %s' % emg_passband)
 
@@ -375,8 +388,8 @@ class TardieuPlot(object):
 
         # connect callbacks
         for ax in self.data_axes:
-            ax.callbacks.connect('xlim_changed',
-                                 lambda ev: self._xlim_changed())
+            ax.callbacks.connect('xlim_changed', self._xlim_changed)
+
         self.fig.canvas.mpl_connect('button_press_event', self._onclick)
         # catch key press
         self.fig.canvas.mpl_connect('key_press_event', self._onpress)
@@ -421,7 +434,7 @@ class TardieuPlot(object):
         # (the limits are not instantly propagated by sharex)
         self.tmin, self.tmax = ax.get_xlim()
         self.fig.canvas.draw()
-        self._update_status_text()
+        self._update_status()
 
     def _toggle_narrow_callback(self, event):
         """Toggle narrow/wide display"""
@@ -476,8 +489,9 @@ class TardieuPlot(object):
 
     @property
     def marker_status_text(self):
+        """Return marker status text in HTML"""
         s = u''
-        """Annotate markers in colored text"""
+        # each marker gets text of its own color
         for marker, anno, col in self.markers.marker_info:
             frame = self._time_to_frame(marker, self.trial.framerate)
             s += u"<font color='%s'>" % col

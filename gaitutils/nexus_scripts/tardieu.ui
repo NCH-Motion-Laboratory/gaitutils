@@ -106,13 +106,6 @@
         </property>
        </widget>
       </item>
-      <item row="9" column="1">
-       <widget class="QLabel" name="lblMarkerStatus">
-        <property name="text">
-         <string>TextLabel</string>
-        </property>
-       </widget>
-      </item>
       <item row="6" column="1">
        <widget class="QLabel" name="label_4">
         <property name="text">
@@ -130,13 +123,6 @@
         </property>
         <property name="checked">
          <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="1">
-       <widget class="QLabel" name="lblStatus">
-        <property name="text">
-         <string>TextLabel</string>
         </property>
        </widget>
       </item>
@@ -158,6 +144,20 @@
        <widget class="QPushButton" name="btnQuit">
         <property name="text">
          <string>Quit</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="1" colspan="2">
+       <widget class="QLabel" name="lblStatus">
+        <property name="text">
+         <string>TextLabel</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="1" colspan="2">
+       <widget class="QLabel" name="lblMarkerStatus">
+        <property name="text">
+         <string>TextLabel</string>
         </property>
        </widget>
       </item>

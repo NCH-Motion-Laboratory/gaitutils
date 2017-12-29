@@ -4,11 +4,14 @@ Interactive script for analysis of Tardieu trials.
 matplotlib + Qt5
 
 TODO:
-        
+
+    focus issues?
+    reloading data causes confusion / crash
+    res. more space for left panel to start with (grows with text)        
     fix marker colors
     direct c3d load?
     figure saving on button
-    rm some buttons from toolbar?
+        -may need to create a 'report' since text needs to be saved also
     fix tight layout
     real time changes to norm. angle and emg passband?
     fix left panel width? may change according to text
@@ -59,6 +62,13 @@ def message_dialog(msg):
     dlg.exec_()
 
 
+class SimpleToolbar(NavigationToolbar2QT):
+    """ Simplified mpl navigation toolbar with some items removed """
+
+    toolitems = [t for t in NavigationToolbar2QT.toolitems if
+                 t[0] in ('Home', 'Pan', 'Zoom')]
+
+
 class TardieuWindow(QtWidgets.QMainWindow):
     """ Main Qt window with controls. The mpl figure containing the actual data
     is created by a separate class and embedded into this window. """
@@ -98,7 +108,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
                                       self.mainGridLayout.rowCount()-1, 1)
 
         # create toolbar and add it into last column, 1st row
-        self.toolbar = NavigationToolbar2QT(self.canvas, self)
+        self.toolbar = SimpleToolbar(self.canvas, self)
         self._tardieu_plot._toolbar = self.toolbar
         self.mainGridLayout.addWidget(self.toolbar, 0,
                                       self.mainGridLayout.columnCount()-1,
@@ -384,8 +394,6 @@ class TardieuPlot(object):
 
         self._last_click_event = None
 
-        self.fig.set_tight_layout(True)
-
         # connect callbacks
         for ax in self.data_axes:
             ax.callbacks.connect('xlim_changed', self._xlim_changed)
@@ -396,11 +404,7 @@ class TardieuPlot(object):
         # pick handler
         self.fig.canvas.mpl_connect('pick_event', self._onpick)
 
-
-        # FIXME: adjust plot layout
-        # self.gs.tight_layout(self.fig)
-        # self.gs.update(hspace=self.hspace, wspace=self.wspace,
-        #               left=self.margin, right=1-self.margin)
+        self.tight_layout()
 
     @staticmethod
     def read_starting_angle(vicon):
@@ -424,9 +428,13 @@ class TardieuPlot(object):
         return np.round(rate * np.array(times)).astype(int)
 
     def tight_layout(self):
-        self.gs.tight_layout(self.fig)
-        self.gs.update(hspace=self.hspace, wspace=self.wspace,
-                       left=self.margin, right=1-self.margin)
+        """ Auto set spacing between/around axes """
+        self.fig.set_tight_layout(True)
+        # not sure if works/needed
+        # self.gs.update(hspace=self.hspace, wspace=self.wspace,
+        #               left=self.margin, right=1-self.margin)
+        # probably needed
+        # self.fig.canvas.draw()
 
     def _xlim_changed(self, ax):
         """Callback for x limits change, e.g. on zoom"""

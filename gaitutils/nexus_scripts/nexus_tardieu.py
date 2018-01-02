@@ -7,17 +7,17 @@ TODO:
 
     focus issues?
     reloading data causes confusion / crash
-    res. more space for left panel to start with (grows with text)        
     fix marker colors
     direct c3d load?
     figure saving on button
         -may need to create a 'report' since text needs to be saved also
-    fix tight layout
+        -maybe ask Tobi
+    layout spacing ok?
     real time changes to norm. angle and emg passband?
     fix left panel width? may change according to text
     add config options?
     add statusbar?
-    
+
     testing
 
 @author: Jussi (jnu@iki.fi)
@@ -62,6 +62,19 @@ def message_dialog(msg):
     dlg.exec_()
 
 
+def yesno_dialog(msg):
+    """ Show message with 'Yes' and 'No buttons, return role accordingly """
+    dlg = QtWidgets.QMessageBox()
+    dlg.setWindowTitle('Message')
+    dlg.setText(msg)
+    dlg.addButton(QtWidgets.QPushButton('Yes'),
+                  QtWidgets.QMessageBox.YesRole)
+    dlg.addButton(QtWidgets.QPushButton('No'),
+                  QtWidgets.QMessageBox.NoRole)
+    dlg.exec_()
+    return dlg.buttonRole(dlg.clickedButton())
+
+
 class SimpleToolbar(NavigationToolbar2QT):
     """ Simplified mpl navigation toolbar with some items removed """
 
@@ -87,6 +100,8 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.canvas = FigureCanvasQTAgg(self._tardieu_plot.fig)
         self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                   QtWidgets.QSizePolicy.Expanding)
+        self.canvas.setParent(self)
+        self.canvas.show()
         self._tardieu_plot.fig.canvas = self.canvas
 
         self.btnClearMarkers.clicked.connect(self._clear_markers)
@@ -150,9 +165,18 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
     def _clear_markers(self):
         """Clear all markers"""
-        self._tardieu_plot.markers.clear()
-        self.canvas.draw()
-        self._update_marker_status()
+        if self._tardieu_plot.markers is not None:
+            self._tardieu_plot.markers.clear()
+            self.canvas.draw()
+            self._update_marker_status()
+
+    def closeEvent(self, event):
+        """Confirm and close application"""
+        reply = yesno_dialog('Are you sure?')
+        if reply == QtWidgets.QMessageBox.YesRole:
+            event.accept()
+        else:
+            event.ignore()
 
 
 class Markers(object):
@@ -233,6 +257,7 @@ class TardieuPlot(object):
         self.marker_button = 1  # mouse button for placing markers
         self.marker_del_button = 3  # remove marker
         self.marker_key = 'shift'  # modifier key for markers
+        self.markers = None
         # FIXME: check colors
         self.marker_colors = ['orange', 'green', 'red', 'brown',
                               'pink', 'gray']
@@ -250,7 +275,7 @@ class TardieuPlot(object):
         # these are callbacks that should be registered by the creator
         self._update_marker_status = None
         self._update_status = None
-        self.fig = Figure(figsize=(16, 10))
+        self.fig = Figure()
 
     def load_data(self, emg_chs, emg_passband):
         """Load the Tardieu data.
@@ -565,6 +590,7 @@ class TardieuPlot(object):
                 s += u'%s max RMS: %.2f mV @ %.2f s\n' % (ch, rmsmax*1e3,
                                                           rmsmaxind)
             return s
+
 
 
 if __name__ == '__main__':

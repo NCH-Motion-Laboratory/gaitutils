@@ -5,7 +5,6 @@ matplotlib + Qt5
 
 TODO:
 
-    focus issues?
     reloading data causes confusion / crash
     fix marker colors
     direct c3d load?
@@ -13,7 +12,7 @@ TODO:
         -may need to create a 'report' since text needs to be saved also
         -maybe ask Tobi
     layout spacing ok?
-    real time changes to norm. angle and emg passband?
+    real time changes to  emg passband?
     fix left panel width? may change according to text
     add config options?
     add statusbar?
@@ -75,6 +74,14 @@ def yesno_dialog(msg):
     return dlg.buttonRole(dlg.clickedButton())
 
 
+def read_starting_angle():
+    """Read the Nexus defined starting angle"""
+    subjname = nexus.get_subjectnames()
+    vicon = nexus.viconnexus()
+    asp = vicon.GetSubjectParam(subjname, 'AnkleStartPos')
+    return asp[0] if asp[1] else None
+
+
 class LoadDialog(QtWidgets.QDialog):
     """ Dialog for loading data """
 
@@ -85,7 +92,8 @@ class LoadDialog(QtWidgets.QDialog):
         uic.loadUi(uifile, self)
         self.spEMGLow.setValue(cfg.emg.passband[0])
         self.spEMGHigh.setValue(cfg.emg.passband[1])
-        # FIXME: angle from Nexus?
+        ang0_nexus = read_starting_angle()
+        self.spNormAngle.setValue(ang0_nexus if ang0_nexus else 90)
 
 
 class SimpleToolbar(NavigationToolbar2QT):
@@ -118,7 +126,14 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self._tardieu_plot.fig.canvas = self.canvas
 
         self.btnClearMarkers.clicked.connect(self._clear_markers)
+        self.btnSaveFig.clicked.connect(self._save_fig)
         self.btnQuit.clicked.connect(self.close)
+
+        # set child widgets to nofocus so canvas always has focus
+        # this is required for mpl mouse callbacks to work properly
+        # (otherwise may need to click on canvas for it to get focus)
+        for w in self.findChildren(QtWidgets.QWidget):
+            w.setFocusPolicy(QtCore.Qt.NoFocus)
 
         self.actionQuit.triggered.connect(self.close)
         self.actionOpen.triggered.connect(self._load_dialog)
@@ -141,9 +156,6 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.mainGridLayout.addWidget(self.toolbar, 0,
                                       self.mainGridLayout.columnCount()-1,
                                       1, 1)
-
-        # these are needed for mpl callbacks to work (?)
-        self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.canvas.setFocus()
         self.canvas.draw()
 
@@ -158,8 +170,10 @@ class TardieuWindow(QtWidgets.QMainWindow):
         emg_passband = [dlg.spEMGLow.value(), dlg.spEMGHigh.value()]
         if emg_passband[0] >= emg_passband[1]:
             message_dialog('Invalid EMG passband')
-        if not self._tardieu_plot.load_data(emg_chs, emg_passband):
-            message_dialog('Error loading data')
+        ang0_nexus = dlg.spNormAngle.value()
+        if not self._tardieu_plot.load_data(emg_chs, emg_passband, ang0_nexus):
+            # FIXME: maybe error dialogs should be here
+            return
         # load successful
         self._tardieu_plot.plot_data()
         self.canvas.draw()
@@ -186,6 +200,10 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self._update_status()
         self._update_marker_status()
 
+    def _save_fig(self):
+        """Save the figure and associated info"""
+        pass
+        
     def _update_status(self):
         """Update the status text"""
         status = self._tardieu_plot.status_text
@@ -310,7 +328,7 @@ class TardieuPlot(object):
         self._update_status = None
         self.fig = Figure()
 
-    def load_data(self, emg_chs, emg_passband):
+    def load_data(self, emg_chs, emg_passband, ang0_nexus):
         """Load the Tardieu data.
         emg_chs: list of EMG channel names to use
 
@@ -327,6 +345,8 @@ class TardieuPlot(object):
             message_dialog(e.message)
             return False
 
+        # the 'true' physiological starting angle (given as a param)
+        self.ang0_nexus = ang0_nexus
         self.emg_chs = emg_chs
         self.time = self.trial.t / self.trial.framerate  # time axis in sec
         self.tmax = self.time[-1]
@@ -362,16 +382,11 @@ class TardieuPlot(object):
         self.angd = segment_angles(Pall) / np.pi * 180
         # this is our calculated starting angle
         ang0_our = np.median(self.angd[~np.isnan(self.angd)][:10])
-        # the 'true' starting angle (in Nexus as subject param)
-        self.ang0_nexus = self.read_starting_angle(vicon)
         # normalize: plantarflexion negative, our starting angle equals
         # the starting angle given in Nexus (i.e. if ang0_nexus is 95,
-        # we normalize the data to start at -5 deg)
-        # if starting angle is not specified in Nexus, assume 90 deg
-        if self.ang0_nexus:
-            self.angd = 90 - self.ang0_nexus - self.angd + ang0_our
-        else:
-            self.angd = -self.angd + ang0_our
+        # we offset the data to start at -5 deg)
+        # if starting angle is not specified in Nexus, it defaults to 90 deg
+        self.angd = 90 - self.ang0_nexus - self.angd + ang0_our
         return True
 
     def plot_data(self):
@@ -463,13 +478,6 @@ class TardieuPlot(object):
         self.fig.canvas.mpl_connect('pick_event', self._onpick)
 
         self.tight_layout()
-
-    @staticmethod
-    def read_starting_angle(vicon):
-        """Read the Nexus defined starting angle"""
-        subjname = nexus.get_subjectnames()
-        asp = vicon.GetSubjectParam(subjname, 'AnkleStartPos')
-        return asp[0] if asp[1] else None
 
     @staticmethod
     def _adj_fonts(ax):
@@ -586,7 +594,7 @@ class TardieuPlot(object):
         s += u'Description: %s\n' % (self.trial.eclipse_data['DESCRIPTION'])
         s += u'Notes: %s\n' % (self.trial.eclipse_data['NOTES'])
         s += u'Nexus angle offset: '
-        s += (u' %.2f\n' % self.ang0_nexus) if self.ang0_nexus else u'none\n'
+        s += (u' %.1f°\n' % self.ang0_nexus) if self.ang0_nexus else u'none\n'
         s += u'EMG passband: %.1f Hz - %.1f Hz\n' % (self.trial.emg.passband[0], self.trial.emg.passband[1])
         s += u'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)
         # frame indices corresponding to time limits

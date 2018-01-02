@@ -65,7 +65,7 @@ def message_dialog(msg):
 def yesno_dialog(msg):
     """ Show message with 'Yes' and 'No buttons, return role accordingly """
     dlg = QtWidgets.QMessageBox()
-    dlg.setWindowTitle('Message')
+    dlg.setWindowTitle('Confirm')
     dlg.setText(msg)
     dlg.addButton(QtWidgets.QPushButton('Yes'),
                   QtWidgets.QMessageBox.YesRole)
@@ -73,6 +73,19 @@ def yesno_dialog(msg):
                   QtWidgets.QMessageBox.NoRole)
     dlg.exec_()
     return dlg.buttonRole(dlg.clickedButton())
+
+
+class LoadDialog(QtWidgets.QDialog):
+    """ Dialog for loading data """
+
+    def __init__(self, parent=None):
+
+        super(self.__class__, self).__init__()
+        uifile = resource_filename(__name__, 'tardieu_load_dialog.ui')
+        uic.loadUi(uifile, self)
+        self.spEMGLow.setValue(cfg.emg.passband[0])
+        self.spEMGHigh.setValue(cfg.emg.passband[1])
+        # FIXME: angle from Nexus?
 
 
 class SimpleToolbar(NavigationToolbar2QT):
@@ -106,9 +119,9 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
         self.btnClearMarkers.clicked.connect(self._clear_markers)
         self.btnQuit.clicked.connect(self.close)
-        self.btnLoadData.clicked.connect(self._create_plot)
-        self.spEMGLow.setValue(cfg.emg.passband[0])
-        self.spEMGHigh.setValue(cfg.emg.passband[1])
+
+        self.actionQuit.triggered.connect(self.close)
+        self.actionOpen.triggered.connect(self._load_dialog)
 
         """
         # add the narrow view button?
@@ -133,6 +146,26 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.canvas.setFocus()
         self.canvas.draw()
+
+    def _load_dialog(self):
+        """Dialog for loading from Nexus"""
+        dlg = LoadDialog()
+        if not dlg.exec_():
+            return
+        side = 'R' if dlg.rbRight.isChecked() else 'L'
+        # prepend side to configured EMG channel names
+        emg_chs = [side+ch for ch in cfg.tardieu.emg_chs]
+        emg_passband = [dlg.spEMGLow.value(), dlg.spEMGHigh.value()]
+        if emg_passband[0] >= emg_passband[1]:
+            message_dialog('Invalid EMG passband')
+        if not self._tardieu_plot.load_data(emg_chs, emg_passband):
+            message_dialog('Error loading data')
+        # load successful
+        self._tardieu_plot.plot_data()
+        self.canvas.draw()
+        self.canvas.setFocus()
+        self._update_status()
+        self._update_marker_status()
 
     def _create_plot(self):
         """Load data and create the mpl plot"""

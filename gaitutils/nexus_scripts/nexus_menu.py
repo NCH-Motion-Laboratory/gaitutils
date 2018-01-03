@@ -402,10 +402,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 self.__dict__[widget].setEnabled(True)
 
     def _tardieu(self):
-        if self.rbtnR.isChecked():
-            nexus_tardieu.do_plot('R')
-        else:
-            nexus_tardieu.do_plot('L')
+        win = nexus_tardieu.TardieuWindow()
+        win.show()
 
     def _finished(self):
         self._enable_op_buttons()

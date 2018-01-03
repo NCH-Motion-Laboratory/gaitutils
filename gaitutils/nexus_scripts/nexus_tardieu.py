@@ -5,15 +5,13 @@ matplotlib + Qt5
 
 TODO:
 
-    reloading data causes confusion / crash
-    fix marker colors
+    use qt_* dialogs from guiutils also in other guis
     direct c3d load?
     figure saving on button
         -may need to create a 'report' since text needs to be saved also
         -maybe ask Tobi
     layout spacing ok?
-    real time changes to  emg passband?
-    fix left panel width? may change according to text
+    real time changes to emg passband?
     add config options?
     add statusbar?
 
@@ -30,6 +28,7 @@ import matplotlib.gridspec as gridspec
 import logging
 import sys
 import numpy as np
+import copy
 from pkg_resources import resource_filename
 from PyQt5 import QtGui, QtWidgets, uic, QtCore
 from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg,
@@ -39,6 +38,7 @@ from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
                        Trial, Plotter, layouts, utils, GaitDataError,
                        register_gui_exception_handler)
 from gaitutils.numutils import segment_angles, rms
+from gaitutils.guiutils import qt_message_dialog, qt_yesno_dialog
 
 # increase default DPI for figure saving
 # FIXME: config?
@@ -50,36 +50,27 @@ matplotlib.style.use(cfg.plot.mpl_style)
 logger = logging.getLogger(__name__)
 
 
-# FIXME: this should go into common GUI module
-def message_dialog(msg):
-    """ Show message with an 'OK' button. """
-    dlg = QtWidgets.QMessageBox()
-    dlg.setWindowTitle('Message')
-    dlg.setText(msg)
-    dlg.addButton(QtWidgets.QPushButton('Ok'),
-                  QtWidgets.QMessageBox.YesRole)
-    dlg.exec_()
-
-
-def yesno_dialog(msg):
-    """ Show message with 'Yes' and 'No buttons, return role accordingly """
-    dlg = QtWidgets.QMessageBox()
-    dlg.setWindowTitle('Confirm')
-    dlg.setText(msg)
-    dlg.addButton(QtWidgets.QPushButton('Yes'),
-                  QtWidgets.QMessageBox.YesRole)
-    dlg.addButton(QtWidgets.QPushButton('No'),
-                  QtWidgets.QMessageBox.NoRole)
-    dlg.exec_()
-    return dlg.buttonRole(dlg.clickedButton())
-
-
 def read_starting_angle():
     """Read the Nexus defined starting angle"""
     subjname = nexus.get_subjectnames()
     vicon = nexus.viconnexus()
     asp = vicon.GetSubjectParam(subjname, 'AnkleStartPos')
     return asp[0] if asp[1] else None
+
+
+class ReportDialog(QtWidgets.QDialog):
+    """ A simple report that holds a mpl canvas with the plots and some
+    associated text """
+
+    def __init__(self, figure, parent=None):
+
+        super(self.__class__, self).__init__()
+        uifile = resource_filename(__name__, 'tardieu_report_dialog.ui')
+        uic.loadUi(uifile, self)
+        fig = copy.copy(figure)
+        self.canvas = FigureCanvasQTAgg(fig)
+        self.vertLayOut.addWidget(self.canvas)
+        self.canvas.show()
 
 
 class LoadDialog(QtWidgets.QDialog):
@@ -121,9 +112,8 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.canvas = FigureCanvasQTAgg(self._tardieu_plot.fig)
         self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                   QtWidgets.QSizePolicy.Expanding)
-        self.canvas.setParent(self)
+        self.canvas.setParent(self)  # ?
         self.canvas.show()
-        self._tardieu_plot.fig.canvas = self.canvas
 
         self.btnClearMarkers.clicked.connect(self._clear_markers)
         self.btnSaveFig.clicked.connect(self._save_fig)
@@ -169,7 +159,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
         emg_chs = [side+ch for ch in cfg.tardieu.emg_chs]
         emg_passband = [dlg.spEMGLow.value(), dlg.spEMGHigh.value()]
         if emg_passband[0] >= emg_passband[1]:
-            message_dialog('Invalid EMG passband')
+            qt_message_dialog('Invalid EMG passband')
         ang0_nexus = dlg.spNormAngle.value()
         if not self._tardieu_plot.load_data(emg_chs, emg_passband, ang0_nexus):
             # FIXME: maybe error dialogs should be here
@@ -189,7 +179,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
         emg_chs = [side+ch for ch in cfg.tardieu.emg_chs]
         emg_passband = [self.spEMGLow.value(), self.spEMGHigh.value()]
         if emg_passband[0] >= emg_passband[1]:
-            message_dialog('Invalid EMG passband')
+            qt_message_dialog('Invalid EMG passband')
             return
         if not self._tardieu_plot.load_data(emg_chs, emg_passband):
             return
@@ -202,8 +192,9 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
     def _save_fig(self):
         """Save the figure and associated info"""
-        pass
-        
+        dlg = ReportDialog(self._tardieu_plot.fig)
+        dlg.exec_()
+
     def _update_status(self):
         """Update the status text"""
         status = self._tardieu_plot.status_text
@@ -223,7 +214,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         """Confirm and close application"""
-        reply = yesno_dialog('Are you sure?')
+        reply = qt_yesno_dialog('Are you sure?')
         if reply == QtWidgets.QMessageBox.YesRole:
             event.accept()
         else:
@@ -249,8 +240,8 @@ class Markers(object):
         """Add a marker on mouse click"""
         if x not in self._markers.keys():
             if len(self._markers) == self.max_markers:
-                message_dialog('You can place a maximum of %d markers' %
-                               self.max_markers)
+                qt_message_dialog('You can place a maximum of %d markers' %
+                                  self.max_markers)
             else:
                 self.add(x)
 
@@ -342,7 +333,7 @@ class TardieuPlot(object):
             self.trial = Trial(vicon)
             self.trial.emg.passband = emg_passband
         except GaitDataError as e:
-            message_dialog(e.message)
+            qt_message_dialog(e.message)
             return False
 
         # the 'true' physiological starting angle (given as a param)
@@ -360,7 +351,7 @@ class TardieuPlot(object):
                 t_, self.emgdata[ch] = self.trial[ch]
                 self.emg_rms[ch] = rms(self.emgdata[ch], cfg.emg.rms_win)
             except KeyError:
-                message_dialog('EMG channel not found: %s' % ch)
+                qt_message_dialog('EMG channel not found: %s' % ch)
                 return False
 
         # FIXME: self.time?
@@ -371,7 +362,7 @@ class TardieuPlot(object):
         try:
             data = read_data.get_marker_data(vicon, ['Toe', 'Ankle', 'Knee'])
         except GaitDataError as e:
-            message_dialog(e.message)
+            qt_message_dialog(e.message)
             return False
         Ptoe = data['Toe_P']
         Pank = data['Ankle_P']
@@ -389,8 +380,12 @@ class TardieuPlot(object):
         self.angd = 90 - self.ang0_nexus - self.angd + ang0_our
         return True
 
-    def plot_data(self):
+    def plot_data(self, fig=None):
         """Plot the data."""
+        if fig is None:
+            fig = self.fig
+
+        self.fig.clear()
         self.gs = gridspec.GridSpec(len(self.emg_chs) + 3, 1)
 
         # EMG plots
@@ -545,7 +540,7 @@ class TardieuPlot(object):
 
     def _onclick(self, event):
         """Gets triggered by a mouse click on canvas"""
-        if self._toolbar.mode:  # do not respond if toolbar buttons enabled
+        if self._toolbar.mode:  # do not respond if toolbar buttons are enabled
             return
         if event.inaxes not in self.data_axes:
             return
@@ -631,7 +626,6 @@ class TardieuPlot(object):
                 s += u'%s max RMS: %.2f mV @ %.2f s\n' % (ch, rmsmax*1e3,
                                                           rmsmaxind)
             return s
-
 
 
 if __name__ == '__main__':

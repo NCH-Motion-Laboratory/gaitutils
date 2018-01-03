@@ -33,7 +33,8 @@ from pkg_resources import resource_filename
 from PyQt5 import QtGui, QtWidgets, uic, QtCore
 from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg,
                                                 NavigationToolbar2QT)
-
+from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
                        Trial, Plotter, layouts, utils, GaitDataError,
                        register_gui_exception_handler)
@@ -56,21 +57,6 @@ def read_starting_angle():
     vicon = nexus.viconnexus()
     asp = vicon.GetSubjectParam(subjname, 'AnkleStartPos')
     return asp[0] if asp[1] else None
-
-
-class ReportDialog(QtWidgets.QDialog):
-    """ A simple report that holds a mpl canvas with the plots and some
-    associated text """
-
-    def __init__(self, figure, parent=None):
-
-        super(self.__class__, self).__init__()
-        uifile = resource_filename(__name__, 'tardieu_report_dialog.ui')
-        uic.loadUi(uifile, self)
-        fig = copy.copy(figure)
-        self.canvas = FigureCanvasQTAgg(fig)
-        self.vertLayOut.addWidget(self.canvas)
-        self.canvas.show()
 
 
 class LoadDialog(QtWidgets.QDialog):
@@ -117,6 +103,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
         self.btnClearMarkers.clicked.connect(self._clear_markers)
         self.btnSaveFig.clicked.connect(self._save_fig)
+        self.btnSaveFig.setEnabled(False)  # DEBUG
         self.btnQuit.clicked.connect(self.close)
 
         # set child widgets to nofocus so canvas always has focus
@@ -191,9 +178,19 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self._update_marker_status()
 
     def _save_fig(self):
-        """Save the figure and associated info"""
-        dlg = ReportDialog(self._tardieu_plot.fig)
-        dlg.exec_()
+        with PdfPages('multipage_pdf.pdf') as pdf:
+            # make header page
+            #timestr = time.strftime("%d.%m.%Y")
+            fig_hdr = Figure()
+            FigureCanvas(fig_hdr)
+            ax = fig_hdr.add_subplot(111)
+            ax.set_axis_off()
+            txt = self._tardieu_plot.status_text
+            txt += self._tardieu_plot.marker_status_text
+            ax.text(.5, .8, txt, ha='center', va='center', weight='bold',
+                    fontsize=10)
+            pdf.savefig(fig_hdr)
+            pdf.savefig(self._tardieu_plot.fig)
 
     def _update_status(self):
         """Update the status text"""
@@ -381,17 +378,20 @@ class TardieuPlot(object):
         return True
 
     def plot_data(self, fig=None):
-        """Plot the data."""
+        """ Plot the data. Fig can be a matplotlib Figure instance for
+        non-interactive plots. If fig is not specified, create and manage our
+        own instance (also callbacks will be enabled) """
+
         if fig is None:
             fig = self.fig
 
-        self.fig.clear()
+        fig.clear()
         self.gs = gridspec.GridSpec(len(self.emg_chs) + 3, 1)
 
         # EMG plots
         for ind, ch in enumerate(self.emg_chs):
             sharex = None if ind == 0 else self.data_axes[0]
-            ax = self.fig.add_subplot(self.gs[ind, 0],
+            ax = fig.add_subplot(self.gs[ind, 0],
                                       sharex=sharex)
             ax.plot(self.t, self.emgdata[ch]*1e3,
                     linewidth=cfg.plot.emg_linewidth)
@@ -405,7 +405,7 @@ class TardieuPlot(object):
         ind += 1
 
         # angle plot
-        ax = self.fig.add_subplot(self.gs[ind, 0],
+        ax = fig.add_subplot(self.gs[ind, 0],
                                   sharex=self.data_axes[0])
         ax.plot(self.time, self.angd, linewidth=cfg.plot.model_linewidth)
         ax.set(ylabel='deg')
@@ -416,7 +416,7 @@ class TardieuPlot(object):
         ind += 1
 
         # angular velocity plot
-        ax = self.fig.add_subplot(self.gs[ind, 0],
+        ax = fig.add_subplot(self.gs[ind, 0],
                                   sharex=self.data_axes[0])
         self.angveld = self.trial.framerate * np.diff(self.angd, axis=0)
         ax.plot(self.time[:-1], self.angveld,
@@ -428,7 +428,7 @@ class TardieuPlot(object):
         ind += 1
 
         # angular acceleration plot
-        ax = self.fig.add_subplot(self.gs[ind, 0],
+        ax = fig.add_subplot(self.gs[ind, 0],
                                   sharex=self.data_axes[0])
         self.angaccd = np.diff(self.angveld, axis=0)
         ax.plot(self.time[:-2], self.angaccd,
@@ -462,15 +462,16 @@ class TardieuPlot(object):
 
         self._last_click_event = None
 
-        # connect callbacks
-        for ax in self.data_axes:
-            ax.callbacks.connect('xlim_changed', self._xlim_changed)
+        if fig == self.fig:
+            # connect callbacks only if we are managing the figure
+            for ax in self.data_axes:
+                ax.callbacks.connect('xlim_changed', self._xlim_changed)
 
-        self.fig.canvas.mpl_connect('button_press_event', self._onclick)
-        # catch key press
-        self.fig.canvas.mpl_connect('key_press_event', self._onpress)
-        # pick handler
-        self.fig.canvas.mpl_connect('pick_event', self._onpick)
+            fig.canvas.mpl_connect('button_press_event', self._onclick)
+            # catch key press
+            fig.canvas.mpl_connect('key_press_event', self._onpress)
+            # pick handler
+            fig.canvas.mpl_connect('pick_event', self._onpick)
 
         self.tight_layout()
 
@@ -588,7 +589,7 @@ class TardieuPlot(object):
         s += u'Trial name: %s\n' % self.trial.trialname
         s += u'Description: %s\n' % (self.trial.eclipse_data['DESCRIPTION'])
         s += u'Notes: %s\n' % (self.trial.eclipse_data['NOTES'])
-        s += u'Nexus angle offset: '
+        s += u'Angle offset: '
         s += (u' %.1f°\n' % self.ang0_nexus) if self.ang0_nexus else u'none\n'
         s += u'EMG passband: %.1f Hz - %.1f Hz\n' % (self.trial.emg.passband[0], self.trial.emg.passband[1])
         s += u'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)

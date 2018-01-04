@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1200</width>
-    <height>1000</height>
+    <height>943</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -115,6 +115,7 @@
      <string>File</string>
     </property>
     <addaction name="actionOpen"/>
+    <addaction name="actionOpenC3D"/>
     <addaction name="actionQuit"/>
    </widget>
    <addaction name="menuFile"/>
@@ -133,6 +134,11 @@
   <action name="actionAbout">
    <property name="text">
     <string>About...</string>
+   </property>
+  </action>
+  <action name="actionOpenC3D">
+   <property name="text">
+    <string>Open C3D trial...</string>
    </property>
   </action>
  </widget>

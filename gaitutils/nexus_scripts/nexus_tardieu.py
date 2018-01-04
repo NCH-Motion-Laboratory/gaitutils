@@ -113,7 +113,8 @@ class TardieuWindow(QtWidgets.QMainWindow):
             w.setFocusPolicy(QtCore.Qt.NoFocus)
 
         self.actionQuit.triggered.connect(self.close)
-        self.actionOpen.triggered.connect(self._load_dialog)
+        self.actionOpen.triggered.connect(self._load_dialog_nexus)
+        self.actionOpenC3D.triggered.connect(self._load_dialog_c3d)
 
         """
         # add the narrow view button?
@@ -136,8 +137,18 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.canvas.setFocus()
         self.canvas.draw()
 
-    def _load_dialog(self):
+    def _load_dialog_nexus(self):
         """Dialog for loading from Nexus"""
+        vicon = nexus.viconnexus()
+        self._load_dialog(vicon)
+
+    def _load_dialog_c3d(self):
+        """Dialog for loading from c3d"""
+        fout = QtWidgets.QFileDialog.getOpenFileName(self, 'Open C3D file')[0]
+        self._load_dialog(fout)
+
+    def _load_dialog(self, source):
+        """Dialog for loading data """
         dlg = LoadDialog()
         if not dlg.exec_():
             return
@@ -148,7 +159,8 @@ class TardieuWindow(QtWidgets.QMainWindow):
         if emg_passband[0] >= emg_passband[1]:
             qt_message_dialog('Invalid EMG passband')
         ang0_nexus = dlg.spNormAngle.value()
-        if not self._tardieu_plot.load_data(emg_chs, emg_passband, ang0_nexus):
+        if not self._tardieu_plot.load_data(source, emg_chs, emg_passband,
+                                            ang0_nexus):
             # FIXME: maybe error dialogs should be here
             return
         # load successful
@@ -316,7 +328,7 @@ class TardieuPlot(object):
         self._update_status = None
         self.fig = Figure()
 
-    def load_data(self, emg_chs, emg_passband, ang0_nexus):
+    def load_data(self, source, emg_chs, emg_passband, ang0_nexus):
         """Load the Tardieu data.
         emg_chs: list of EMG channel names to use
 
@@ -326,8 +338,7 @@ class TardieuPlot(object):
         logger.debug('Load data, EMG passband %s' % emg_passband)
 
         try:
-            vicon = nexus.viconnexus()
-            self.trial = Trial(vicon)
+            self.trial = Trial(source)
             self.trial.emg.passband = emg_passband
         except GaitDataError as e:
             qt_message_dialog(e.message)
@@ -357,7 +368,7 @@ class TardieuPlot(object):
         # read marker data and compute segment angle
         # FIXME: hardcoded marker names?
         try:
-            data = read_data.get_marker_data(vicon, ['Toe', 'Ankle', 'Knee'])
+            data = read_data.get_marker_data(source, ['Toe', 'Ankle', 'Knee'])
         except GaitDataError as e:
             qt_message_dialog(e.message)
             return False
@@ -392,7 +403,7 @@ class TardieuPlot(object):
         for ind, ch in enumerate(self.emg_chs):
             sharex = None if ind == 0 else self.data_axes[0]
             ax = fig.add_subplot(self.gs[ind, 0],
-                                      sharex=sharex)
+                                 sharex=sharex)
             ax.plot(self.t, self.emgdata[ch]*1e3,
                     linewidth=cfg.plot.emg_linewidth)
             ax.plot(self.t, self.emg_rms[ch]*1e3,
@@ -406,7 +417,7 @@ class TardieuPlot(object):
 
         # angle plot
         ax = fig.add_subplot(self.gs[ind, 0],
-                                  sharex=self.data_axes[0])
+                             sharex=self.data_axes[0])
         ax.plot(self.time, self.angd, linewidth=cfg.plot.model_linewidth)
         ax.set(ylabel='deg')
         ax.set_title('Angle')
@@ -417,7 +428,7 @@ class TardieuPlot(object):
 
         # angular velocity plot
         ax = fig.add_subplot(self.gs[ind, 0],
-                                  sharex=self.data_axes[0])
+                             sharex=self.data_axes[0])
         self.angveld = self.trial.framerate * np.diff(self.angd, axis=0)
         ax.plot(self.time[:-1], self.angveld,
                 linewidth=cfg.plot.model_linewidth)
@@ -429,7 +440,7 @@ class TardieuPlot(object):
 
         # angular acceleration plot
         ax = fig.add_subplot(self.gs[ind, 0],
-                                  sharex=self.data_axes[0])
+                             sharex=self.data_axes[0])
         self.angaccd = np.diff(self.angveld, axis=0)
         ax.plot(self.time[:-2], self.angaccd,
                 linewidth=cfg.plot.model_linewidth)

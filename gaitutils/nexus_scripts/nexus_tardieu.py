@@ -6,7 +6,6 @@ matplotlib + Qt5
 TODO:
 
     use qt_* dialogs from guiutils also in other guis
-    direct c3d load?
     figure saving on button
         -may need to create a 'report' since text needs to be saved also
         -maybe ask Tobi
@@ -62,7 +61,7 @@ def read_starting_angle():
 class LoadDialog(QtWidgets.QDialog):
     """ Dialog for loading data """
 
-    def __init__(self, parent=None):
+    def __init__(self):
 
         super(self.__class__, self).__init__()
         uifile = resource_filename(__name__, 'tardieu_load_dialog.ui')
@@ -144,8 +143,12 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
     def _load_dialog_c3d(self):
         """Dialog for loading from c3d"""
-        fout = QtWidgets.QFileDialog.getOpenFileName(self, 'Open C3D file')[0]
-        self._load_dialog(fout)
+        fout = QtWidgets.QFileDialog.getOpenFileName(self,
+                                                     'Open C3D file',
+                                                     '',
+                                                     u'C3D files (*.c3d)')[0]
+        if fout:
+            self._load_dialog(fout)
 
     def _load_dialog(self, source):
         """Dialog for loading data """
@@ -172,7 +175,6 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
     def _create_plot(self):
         """Load data and create the mpl plot"""
-        # FIXME: need to clear previous plot / reset some vars?
         side = 'R' if self.rbRight.isChecked() else 'L'
         # prepend side to configured EMG channel names
         emg_chs = [side+ch for ch in cfg.tardieu.emg_chs]

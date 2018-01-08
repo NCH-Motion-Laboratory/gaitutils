@@ -33,20 +33,6 @@
         </property>
        </spacer>
       </item>
-      <item row="9" column="1" colspan="2">
-       <widget class="QPushButton" name="btnQuit">
-        <property name="text">
-         <string>Quit</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1" colspan="2">
-       <widget class="QLabel" name="lblStatus">
-        <property name="text">
-         <string>TextLabel</string>
-        </property>
-       </widget>
-      </item>
       <item row="3" column="1" colspan="2">
        <widget class="QLabel" name="lblMarkerStatus">
         <property name="text">
@@ -54,17 +40,10 @@
         </property>
        </widget>
       </item>
-      <item row="8" column="1" colspan="2">
-       <widget class="QPushButton" name="btnSaveFig">
+      <item row="2" column="1" colspan="2">
+       <widget class="QLabel" name="lblStatus">
         <property name="text">
-         <string>Save plot...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="1" colspan="2">
-       <widget class="QPushButton" name="btnClearMarkers">
-        <property name="text">
-         <string>Clear all markers</string>
+         <string>TextLabel</string>
         </property>
        </widget>
       </item>
@@ -97,6 +76,27 @@
         </property>
        </spacer>
       </item>
+      <item row="7" column="1" colspan="3">
+       <widget class="QPushButton" name="btnClearMarkers">
+        <property name="text">
+         <string>Clear all markers</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="1" colspan="3">
+       <widget class="QPushButton" name="btnSaveFig">
+        <property name="text">
+         <string>Save plot...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="1" colspan="3">
+       <widget class="QPushButton" name="btnQuit">
+        <property name="text">
+         <string>Quit</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
    </layout>
@@ -118,7 +118,14 @@
     <addaction name="actionOpenC3D"/>
     <addaction name="actionQuit"/>
    </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionHelp"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpen">
@@ -139,6 +146,11 @@
   <action name="actionOpenC3D">
    <property name="text">
     <string>Open C3D trial...</string>
+   </property>
+  </action>
+  <action name="actionHelp">
+   <property name="text">
+    <string>About...</string>
    </property>
   </action>
  </widget>

@@ -9,6 +9,7 @@ TODO:
     figure saving on button
         -may need to create a 'report' since text needs to be saved also
         -maybe ask Tobi
+        -cannot render html easily -> write
     layout spacing ok?
     real time changes to emg passband?
     add config options?
@@ -72,6 +73,16 @@ class LoadDialog(QtWidgets.QDialog):
         self.spNormAngle.setValue(ang0_nexus if ang0_nexus else 90)
 
 
+class HelpDialog(QtWidgets.QDialog):
+    """ Dialog for loading data """
+
+    def __init__(self):
+
+        super(self.__class__, self).__init__()
+        uifile = resource_filename(__name__, 'tardieu_help_dialog.ui')
+        uic.loadUi(uifile, self)
+
+
 class SimpleToolbar(NavigationToolbar2QT):
     """ Simplified mpl navigation toolbar with some items removed """
 
@@ -102,7 +113,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
         self.btnClearMarkers.clicked.connect(self._clear_markers)
         self.btnSaveFig.clicked.connect(self._save_fig)
-        self.btnSaveFig.setEnabled(False)  # DEBUG
+        # self.btnSaveFig.setEnabled(False)
         self.btnQuit.clicked.connect(self.close)
 
         # set child widgets to nofocus so canvas always has focus
@@ -112,6 +123,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
             w.setFocusPolicy(QtCore.Qt.NoFocus)
 
         self.actionQuit.triggered.connect(self.close)
+        self.actionHelp.triggered.connect(self._help_dialog)
         self.actionOpen.triggered.connect(self._load_dialog_nexus)
         self.actionOpenC3D.triggered.connect(self._load_dialog_c3d)
 
@@ -136,6 +148,10 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.canvas.setFocus()
         self.canvas.draw()
 
+    def _help_dialog(self):
+        dlg = HelpDialog()
+        dlg.exec_()
+
     def _load_dialog_nexus(self):
         """Dialog for loading from Nexus"""
         vicon = nexus.viconnexus()
@@ -143,8 +159,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
     def _load_dialog_c3d(self):
         """Dialog for loading from c3d"""
-        fout = QtWidgets.QFileDialog.getOpenFileName(self,
-                                                     'Open C3D file',
+        fout = QtWidgets.QFileDialog.getOpenFileName(self, 'Open C3D file',
                                                      '',
                                                      u'C3D files (*.c3d)')[0]
         if fout:
@@ -596,10 +611,7 @@ class TardieuPlot(object):
         # find the limits of the data that is shown
         tmin_ = max(self.time[0], self.tmin)
         tmax_ = min(self.time[-1], self.tmax)
-        s = u'Shift+left click to add a new marker\n'
-        s += u'Shift+right click to remove a marker\n'
-        s += u'Tab to toggle wide/narrow display\n\n'
-        s += u'Trial name: %s\n' % self.trial.trialname
+        s = u'Trial name: %s\n' % self.trial.trialname
         s += u'Description: %s\n' % (self.trial.eclipse_data['DESCRIPTION'])
         s += u'Notes: %s\n' % (self.trial.eclipse_data['NOTES'])
         s += u'Angle offset: '

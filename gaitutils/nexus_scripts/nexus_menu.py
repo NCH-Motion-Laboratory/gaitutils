@@ -397,7 +397,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         QtWidgets.QApplication.processEvents()
 
     def _enable_op_buttons(self):
-        """ Disable all operation buttons """
+        """ Enable all operation buttons """
         for widget in self.opWidgets:
                 self.__dict__[widget].setEnabled(True)
 

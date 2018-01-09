@@ -113,7 +113,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
         self.btnClearMarkers.clicked.connect(self._clear_markers)
         self.btnSaveFig.clicked.connect(self._save_fig)
-        # self.btnSaveFig.setEnabled(False)
+        self.btnSaveFig.setEnabled(False)  # keep disabled until we have a plot
         self.btnQuit.clicked.connect(self.close)
 
         # set child widgets to nofocus so canvas always has focus
@@ -187,28 +187,12 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.canvas.setFocus()
         self._update_status()
         self._update_marker_status()
-
-    def _create_plot(self):
-        """Load data and create the mpl plot"""
-        side = 'R' if self.rbRight.isChecked() else 'L'
-        # prepend side to configured EMG channel names
-        emg_chs = [side+ch for ch in cfg.tardieu.emg_chs]
-        emg_passband = [self.spEMGLow.value(), self.spEMGHigh.value()]
-        if emg_passband[0] >= emg_passband[1]:
-            qt_message_dialog('Invalid EMG passband')
-            return
-        if not self._tardieu_plot.load_data(emg_chs, emg_passband):
-            return
-        # load successful
-        self._tardieu_plot.plot_data()
-        self.canvas.draw()
-        self.canvas.setFocus()
-        self._update_status()
-        self._update_marker_status()
+        self.btnSaveFig.setEnabled(True)
 
     def _save_fig(self):
+        """Save the plot"""
         with PdfPages('multipage_pdf.pdf') as pdf:
-            # make header page
+            # create header page
             #timestr = time.strftime("%d.%m.%Y")
             fig_hdr = Figure()
             FigureCanvas(fig_hdr)
@@ -408,7 +392,10 @@ class TardieuPlot(object):
     def plot_data(self, fig=None):
         """ Plot the data. Fig can be a matplotlib Figure instance for
         non-interactive plots. If fig is not specified, create and manage our
-        own instance (also callbacks will be enabled) """
+        own instance (also callbacks will be enabled)
+
+        -fig param probably won't be used due to difficulties in managing
+        several figs/canvases but left in for now """
 
         if fig is None:
             fig = self.fig

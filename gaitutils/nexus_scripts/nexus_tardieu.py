@@ -118,7 +118,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
         # set child widgets to nofocus so canvas always has focus
         # this is required for mpl mouse callbacks to work properly
-        # (otherwise may need to click on canvas for it to get focus)
+        # (otherwise may need to click on canvas first for it to get focus)
         for w in self.findChildren(QtWidgets.QWidget):
             w.setFocusPolicy(QtCore.Qt.NoFocus)
 
@@ -191,7 +191,14 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
     def _save_fig(self):
         """Save the plot"""
-        with PdfPages('multipage_pdf.pdf') as pdf:
+        fn_pdf = self._tardieu_plot.trial.trialname + '.pdf'
+        fout = QtWidgets.QFileDialog.getSaveFileName(self, 'Save plot',
+                                                     fn_pdf,
+                                                     u'PDF files (*pdf)')[0]
+
+        if not fout:
+            return
+        with PdfPages(fout) as pdf:
             # create header page
             #timestr = time.strftime("%d.%m.%Y")
             fig_hdr = Figure()

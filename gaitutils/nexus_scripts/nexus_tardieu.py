@@ -7,9 +7,6 @@ TODO:
 
     use qt_* dialogs from guiutils also in other guis
     figure saving on button
-        -may need to create a 'report' since text needs to be saved also
-        -maybe ask Tobi
-        -cannot render html easily -> write
     layout spacing ok?
     real time changes to emg passband?
     add config options?
@@ -148,6 +145,24 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.canvas.setFocus()
         self.canvas.draw()
 
+    def _nonresp(self):
+        """Show window as non-responsive"""
+        for w in self.findChildren(QtWidgets.QWidget):
+            wname = unicode(w.objectName())
+            if wname[:3] in ['btn', 'men']:  # catches buttons and menus
+                w.setEnabled(False)
+        # update display immediately in case thread gets blocked
+        QtWidgets.QApplication.processEvents()
+        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+
+    def _resp(self):
+        """Show window as responsive"""
+        for w in self.findChildren(QtWidgets.QWidget):
+            wname = unicode(w.objectName())
+            if wname[:3] in ['btn', 'men']:
+                w.setEnabled(True)
+        QtWidgets.QApplication.restoreOverrideCursor()
+
     def _help_dialog(self):
         dlg = HelpDialog()
         dlg.exec_()
@@ -177,23 +192,32 @@ class TardieuWindow(QtWidgets.QMainWindow):
         if emg_passband[0] >= emg_passband[1]:
             qt_message_dialog('Invalid EMG passband')
         ang0_nexus = dlg.spNormAngle.value()
+        self._nonresp()
         if not self._tardieu_plot.load_data(source, emg_chs, emg_passband,
                                             ang0_nexus):
             # FIXME: maybe error dialogs should be here
+            self._resp()
             return
         # load successful
+
         self._tardieu_plot.plot_data()
         self.canvas.draw()
         self.canvas.setFocus()
         self._update_status()
         self._update_marker_status()
-        self.btnSaveFig.setEnabled(True)
+        self._resp()  # will also enable the save button
 
     def _save_fig(self):
         """Save the plot"""
+        """
+        -difficult to annotate markers (separate page is not great)
+        -maybe create new fig and markers (return from function), no need for
+        2nd canvas?
+        -add annotations directly to pdf? (arrows, labels etc.)
+
+        """
         fn_pdf = self._tardieu_plot.trial.trialname + '.pdf'
-        fout = QtWidgets.QFileDialog.getSaveFileName(self, 'Save plot',
-                                                     fn_pdf,
+        fout = QtWidgets.QFileDialog.getSaveFileName(self, 'Save plot', fn_pdf,
                                                      u'PDF files (*pdf)')[0]
 
         if not fout:

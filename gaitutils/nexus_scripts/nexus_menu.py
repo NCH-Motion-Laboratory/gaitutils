@@ -32,6 +32,7 @@ from gaitutils import nexus_trials_velocity
 from gaitutils import nexus_make_all_plots
 from gaitutils import nexus_kin_average
 from gaitutils import nexus_automark_trial
+from gaitutils.guiutils import qt_message_dialog, qt_yesno_dialog
 
 
 try:
@@ -42,16 +43,6 @@ except ImportError:
 import logging
 
 logger = logging.getLogger(__name__)
-
-
-def message_dialog(msg):
-    """ Show message with an 'OK' button. """
-    dlg = QtWidgets.QMessageBox()
-    dlg.setWindowTitle('Message')
-    dlg.setText(msg)
-    dlg.addButton(QtWidgets.QPushButton('Ok'),
-                  QtWidgets.QMessageBox.YesRole)
-    dlg.exec_()
 
 
 class HetuDialog(QtWidgets.QDialog):
@@ -74,7 +65,7 @@ class HetuDialog(QtWidgets.QDialog):
         if self.fullname and check_hetu(self.hetu):
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
-            message_dialog('Please enter a valid name and hetu')
+            qt_message_dialog('Please enter a valid name and hetu')
 
 
 class QtHandler(logging.Handler):
@@ -174,7 +165,8 @@ class OptionsDialog(QtWidgets.QDialog):
         global cfg
         res, txt = self._check_widget_inputs()
         if not res:
-            message_dialog('Invalid input: %s\nPlease fix before saving' % txt)
+            qt_message_dialog('Invalid input: %s\nPlease fix before saving'
+                              % txt)
         else:
             fout = QtWidgets.QFileDialog.getSaveFileName(self,
                                                          'Save config file',
@@ -270,7 +262,7 @@ class OptionsDialog(QtWidgets.QDialog):
             self.update_cfg()
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
-            message_dialog("Invalid input: %s" % txt)
+            qt_message_dialog("Invalid input: %s" % txt)
 
 
 class Gaitmenu(QtWidgets.QMainWindow):
@@ -363,7 +355,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         try:
             subj = nexus.get_subjectnames()
         except GaitDataError as e:
-            message_dialog(str(e))
+            qt_message_dialog(str(e))
             return
         prompt_ = 'Please give additional subject information for %s:' % subj
         dlg = HetuDialog(prompt=prompt_, fullname=self._fullname,
@@ -382,12 +374,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.txtOutput.ensureCursorVisible()
 
     def _no_custom(self):
-        message_dialog('No custom plot defined. Please create '
-                       'nexus_scripts/nexus_customplot.py')
+        qt_message_dialog('No custom plot defined. Please create '
+                          'nexus_scripts/nexus_customplot.py')
 
     def _exception(self, e):
         logger.debug('caught exception while running task')
-        message_dialog(str(e))
+        qt_message_dialog(str(e))
 
     def _disable_op_buttons(self):
         """ Disable all operation buttons """

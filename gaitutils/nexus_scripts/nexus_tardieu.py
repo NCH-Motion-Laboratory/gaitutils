@@ -5,7 +5,6 @@ matplotlib + Qt5
 
 TODO:
 
-    use qt_* dialogs from guiutils also in other guis
     figure saving on button
     layout spacing ok?
     real time changes to emg passband?

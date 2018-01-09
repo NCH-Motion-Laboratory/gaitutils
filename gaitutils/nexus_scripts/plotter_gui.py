@@ -20,19 +20,10 @@ from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
 from gaitutils import (Plotter, Trial, nexus, layouts, cfg, GaitDataError,
                        stats, models)
 from gaitutils.nexus_scripts.nexus_menu import OptionsDialog
+from gaitutils.guiutils import qt_message_dialog
 
 
 logger = logging.getLogger(__name__)
-
-
-def message_dialog(msg):
-    """ Show message with an 'OK' button. """
-    dlg = QtWidgets.QMessageBox()
-    dlg.setWindowTitle('Message')
-    dlg.setText(msg)
-    dlg.addButton(QtWidgets.QPushButton('Ok'),
-                  QtWidgets.QMessageBox.YesRole)
-    dlg.exec_()
 
 
 def _trial_namestr(trial):
@@ -134,7 +125,7 @@ class AveragerDialog(QtWidgets.QDialog):
             vicon = nexus.viconnexus()
             self._open_trial(vicon)
         except GaitDataError:
-            self.message_dialog('Cannot load trial from Nexus')
+            qt_message_dialog('Cannot load trial from Nexus')
 
     def _open_trial(self, source):
         tr = Trial(source)
@@ -151,7 +142,7 @@ class AveragerDialog(QtWidgets.QDialog):
         fp_cycles_only = self.xpFpCyclesOnly.checkState()
         self.avg = stats.AvgTrial(trials, fp_cycles_only=fp_cycles_only)
         # FIXME: report on averaging stats
-        message_dialog('Averaging OK')
+        qt_message_dialog('Averaging OK')
         self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
 
     def load_dialog(self):
@@ -317,7 +308,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
             vicon = nexus.viconnexus()
             self._open_trial(vicon)
         except GaitDataError:
-            message_dialog('Vicon Nexus is not running')
+            qt_message_dialog('Vicon Nexus is not running')
 
     def _open_trial(self, source):
         tr = Trial(source)
@@ -339,7 +330,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
         cycles = [item.userdata for item in self.listCyclesToPlot.items]
         if not cycles:
-            message_dialog('No cycles selected for plotting')
+            qt_message_dialog('No cycles selected for plotting')
             return
 
         # gather the cycles and key by trial
@@ -362,7 +353,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
                 fn = self.cbNormalData.currentText()
                 self.pl.add_normaldata(fn)
             except (ValueError, GaitDataError):
-                message_dialog('Error reading normal data from %s' % fn)
+                qt_message_dialog('Error reading normal data from %s' % fn)
                 return
         else:
             plot_model_normaldata = False
@@ -377,7 +368,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
                                    model_stddev=model_stddev,
                                    plot_model_normaldata=plot_model_normaldata)
             except GaitDataError as e:
-                message_dialog('Error: %s' % str(e))
+                qt_message_dialog('Error: %s' % str(e))
                 self.pl.fig.clear()  # fig may have been partially drawn
                 return
 
@@ -409,8 +400,8 @@ class PlotterWindow(QtWidgets.QMainWindow):
             try:
                 self.canvas.print_figure(fname)
             except IOError:
-                message_dialog('Error writing PDF file, check that file '
-                               'is not open')
+                qt_message_dialog('Error writing PDF file, check that file '
+                                  'is not open')
             # reset title for onscreen and redraw canvas
             self.pl.set_title('')
             self.pl.fig.set_size_inches(old_size)  # needed?
@@ -430,7 +421,7 @@ if __name__ == '__main__':
         """ Custom exception handler for fatal (unhandled) exceptions:
         report to user via GUI and terminate. """
         tb_full = u''.join(traceback.format_exception(type, value, tback))
-        message_dialog('Unhandled exception: %s' % tb_full)
+        qt_message_dialog('Unhandled exception: %s' % tb_full)
         # dump traceback to file
         # try:
         #    with io.open(Config.traceback_file, 'w', encoding='utf-8') as f:

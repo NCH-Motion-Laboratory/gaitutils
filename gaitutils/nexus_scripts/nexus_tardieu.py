@@ -109,7 +109,8 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
         self.btnClearMarkers.clicked.connect(self._clear_markers)
         self.btnSaveFig.clicked.connect(self._save_fig)
-        self.btnSaveFig.setEnabled(False)  # keep disabled until we have a plot
+        # keep some controls disabled until data is loaded
+        self._set_data_controls(False)
         self.btnQuit.clicked.connect(self.close)
 
         # set child widgets to nofocus so canvas always has focus
@@ -144,11 +145,17 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.canvas.setFocus()
         self.canvas.draw()
 
+    def _set_data_controls(self, enabled):
+        """Show data controls as non-responsive"""
+        for w in [self.btnSaveFig, self.spEMGYScale, self.spEMGLow,
+                  self.spEMGHigh, self.btnClearMarkers]:
+            w.setEnabled(enabled)
+
     def _nonresp(self):
         """Show window as non-responsive"""
         for w in self.findChildren(QtWidgets.QWidget):
             wname = unicode(w.objectName())
-            if wname[:3] in ['btn', 'men']:  # catches buttons and menus
+            if wname[:2] in ['bt', 'me', 'sp']:  # catch buttons, menus, spins
                 w.setEnabled(False)
         # update display immediately in case thread gets blocked
         QtWidgets.QApplication.processEvents()
@@ -204,7 +211,8 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.canvas.setFocus()
         self._update_status()
         self._update_marker_status()
-        self._resp()  # will also enable the save button
+        self._resp()
+        self._set_data_controls(True)
 
     def _save_fig(self):
         """Save the plot"""
@@ -352,7 +360,7 @@ class TardieuPlot(object):
         self.narrow = False
         self.hspace = .4
         self.wspace = .5
-        self.emg_automark_chs = ['Gas', 'Sol']
+        self.emg_automark_chs = ['Gas', 'Sol']   # FIXME: into config?
         self.data_axes = list()  # axes that actually contain data
         # these are callbacks that should be registered by the creator
         self._update_marker_status = None

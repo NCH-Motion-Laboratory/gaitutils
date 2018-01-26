@@ -91,6 +91,9 @@
        <property name="maximum">
         <double>5000.000000000000000</double>
        </property>
+       <property name="value">
+        <double>400.000000000000000</double>
+       </property>
       </widget>
      </item>
     </layout>

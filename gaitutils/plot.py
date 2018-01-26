@@ -717,7 +717,7 @@ class Plotter(object):
                         ax.tick_params(axis='both', which='major',
                                        labelsize=cfg.plot.ticks_fontsize)
                         ax.set_xlim(min(x), max(x))
-                        ysc = cfg.plot.emg_yscale
+                        ysc = [-cfg.plot.emg_yscale, cfg.plot.emg_yscale]
                         ax.set_ylim(ysc[0]*cfg.plot.emg_multiplier,
                                     ysc[1]*cfg.plot.emg_multiplier)
 

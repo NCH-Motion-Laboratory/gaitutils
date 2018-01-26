@@ -109,6 +109,12 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
         self.btnClearMarkers.clicked.connect(self._clear_markers)
         self.btnSaveFig.clicked.connect(self._save_fig)
+
+        # FIXME: connect valuechanged()
+        self.spEMGYScale.valueChanged.connect(self._rescale_emg)
+        #self.spEMGLow.setValue(emg_passband[0])
+        #self.spEMGHigh.setValue(emg_passband[1])
+
         # keep some controls disabled until data is loaded
         self._set_data_controls(False)
         self.btnQuit.clicked.connect(self.close)
@@ -143,6 +149,12 @@ class TardieuWindow(QtWidgets.QMainWindow):
                                       self.mainGridLayout.columnCount()-1,
                                       1, 1)
         self.canvas.setFocus()
+        self.canvas.draw()
+
+    def _rescale_emg(self):
+        """Callback for EMG scale"""
+        yscale = self.spEMGYScale.value()
+        self._tardieu_plot._rescale_emg(yscale)
         self.canvas.draw()
 
     def _set_data_controls(self, enabled):
@@ -211,6 +223,11 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.canvas.setFocus()
         self._update_status()
         self._update_marker_status()
+        # set data controls to match what was loaded
+        self.spEMGYScale.setValue(cfg.plot.emg_yscale*1e3)  # mV
+        self.spEMGLow.setValue(emg_passband[0])
+        self.spEMGHigh.setValue(emg_passband[1])
+        # enable all controls
         self._resp()
         self._set_data_controls(True)
 
@@ -352,7 +369,6 @@ class TardieuPlot(object):
         self.marker_colors = ['orange', 'green', 'red', 'brown',
                               'pink', 'gray']
         self.marker_width = 1.5
-        self.emg_yrange = [-.5e-3, .5e-3]
         self.width_ratio = [1, 5]
         self.text_fontsize = 9
         self.margin = .025  # margin at edge of plots
@@ -362,6 +378,7 @@ class TardieuPlot(object):
         self.wspace = .5
         self.emg_automark_chs = ['Gas', 'Sol']   # FIXME: into config?
         self.data_axes = list()  # axes that actually contain data
+        self.emg_axes = list()
         # these are callbacks that should be registered by the creator
         self._update_marker_status = None
         self._update_status = None
@@ -451,11 +468,12 @@ class TardieuPlot(object):
                     linewidth=cfg.plot.emg_linewidth)
             ax.plot(self.t, self.emg_rms[ch]*1e3,
                     linewidth=cfg.plot.emg_rms_linewidth, color='black')
-            ax.set_ylim(self.emg_yrange[0]*1e3, self.emg_yrange[1]*1e3)
+            ax.set_ylim(cfg.plot.emg_yscale*1e3)  # mV here
             ax.set(ylabel='mV')
             ax.set_title(ch)
             self._adj_fonts(ax)
             self.data_axes.append(ax)
+            self.emg_axes.append(ax)
         ind += 1
 
         # angle plot
@@ -528,6 +546,11 @@ class TardieuPlot(object):
             fig.canvas.mpl_connect('pick_event', self._onpick)
 
         self.tight_layout()
+
+    def _rescale_emg(self, yscale):
+        """Takes new EMG yscale in mV"""
+        for ax in self.emg_axes:
+            ax.set_ylim(-yscale, yscale)
 
     @staticmethod
     def _adj_fonts(ax):

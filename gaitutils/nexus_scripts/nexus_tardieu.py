@@ -397,17 +397,18 @@ class TardieuPlot(object):
         self.t = t_ / self.trial.analograte
 
         # read marker data and compute segment angle
-        # FIXME: hardcoded marker names?
+        mnames = cfg.tardieu.marker_names
         try:
-            data = read_data.get_marker_data(source, ['Toe', 'Ankle', 'Knee'])
+            data = read_data.get_marker_data(source, mnames)
         except GaitDataError as e:
             qt_message_dialog(e.message)
             return False
-        Ptoe = data['Toe_P']
-        Pank = data['Ankle_P']
-        Pknee = data['Knee_P']
+
+        P0 = data[mnames[0]+'_P']
+        P1 = data[mnames[1]+'_P']
+        P2 = data[mnames[2]+'_P']
         # stack so that marker changes along 2nd dim for segment_angles
-        Pall = np.stack([Ptoe, Pank, Pknee], axis=1)
+        Pall = np.stack([P0, P1, P2], axis=1)
         # compute segment angles (deg)
         self.angd = segment_angles(Pall) / np.pi * 180
         # this is our calculated starting angle

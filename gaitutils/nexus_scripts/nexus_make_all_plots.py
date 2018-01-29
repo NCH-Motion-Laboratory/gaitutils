@@ -82,10 +82,10 @@ def do_plot(fullname=None, hetu=None):
             figs.append(fig)
             eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
 
-            # do not create individual pdfs
-            # pdf_name = 'Kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname,
-            #                                       side_str)
-            # pl.create_pdf(pdf_name=pdf_name)
+            # individual pdfs
+            pdf_name = 'Kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname,
+                                                   side_str)
+            pl.create_pdf(pdf_name=pdf_name)
 
             # EMG
             maintitle = pl.title_with_eclipse_info('EMG plot for')
@@ -94,25 +94,25 @@ def do_plot(fullname=None, hetu=None):
             fig = pl.plot_trial(maintitle=maintitle, show=False)
             figs.append(fig)
             eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
-            # do not create individual pdfs
-            # pdf_prefix = 'EMG_'
-            # pl.create_pdf(pdf_prefix=pdf_prefix)
+            # individual pdfs
+            pdf_prefix = 'EMG_'
+            pl.create_pdf(pdf_prefix=pdf_prefix)
 
     figs.sort(key=lambda fig: eclipse_tags[fig])
 
     # trial velocity plot
-    fig_vel = nexus_trials_velocity.do_plot(show=False, make_pdf=False)
+    fig_vel = nexus_trials_velocity.do_plot(show=False, make_pdf=True)
 
     # consistency plots
-    fig_cons = nexus_kin_consistency.do_plot(show=False, make_pdf=False)
+    fig_cons = nexus_kin_consistency.do_plot(show=False, make_pdf=True)
     if do_emg_consistency:
         fig_emg_cons = nexus_emg_consistency.do_plot(show=False,
-                                                     make_pdf=False)
+                                                     make_pdf=True)
     else:
         fig_emg_cons = None
 
     # average plots
-    figs_averages = nexus_kin_average.do_plot(show=False, make_pdf=False)
+    figs_averages = nexus_kin_average.do_plot(show=False, make_pdf=True)
 
     sessionpath = get_sessionpath()
     session = op.split(sessionpath)[-1]

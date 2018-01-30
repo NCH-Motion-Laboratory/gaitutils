@@ -47,7 +47,7 @@ matplotlib.style.use(cfg.plot.mpl_style)
 logger = logging.getLogger(__name__)
 
 
-def read_starting_angle():
+def read_nexus_starting_angle():
     """Read the Nexus defined starting angle"""
     subjname = nexus.get_subjectnames()
     vicon = nexus.viconnexus()
@@ -65,12 +65,27 @@ class LoadDialog(QtWidgets.QDialog):
         uic.loadUi(uifile, self)
         self.spEMGLow.setValue(cfg.emg.passband[0])
         self.spEMGHigh.setValue(cfg.emg.passband[1])
-        ang0_nexus = read_starting_angle()
+        try:
+            ang0_nexus = read_nexus_starting_angle()
+        except GaitDataError:
+            ang0_nexus = None
         self.spNormAngle.setValue(ang0_nexus if ang0_nexus else 90)
 
 
+class EMGFilterDialog(QtWidgets.QDialog):
+    """ Dialog for setting the EMG filter """
+
+    def __init__(self):
+
+        super(self.__class__, self).__init__()
+        uifile = resource_filename(__name__, 'tardieu_filter_dialog.ui')
+        uic.loadUi(uifile, self)
+        self.spEMGLow.setValue(cfg.emg.passband[0])
+        self.spEMGHigh.setValue(cfg.emg.passband[1])
+
+
 class HelpDialog(QtWidgets.QDialog):
-    """ Dialog for loading data """
+    """ Dialog for help"""
 
     def __init__(self):
 
@@ -105,24 +120,24 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                   QtWidgets.QSizePolicy.Expanding)
         self.canvas.setParent(self)  # ?
+        self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.canvas.show()
 
         self.btnClearMarkers.clicked.connect(self._clear_markers)
         self.btnSaveFig.clicked.connect(self._save_fig)
 
-        # FIXME: connect valuechanged()
         self.spEMGYScale.valueChanged.connect(self._rescale_emg)
-        #self.spEMGLow.setValue(emg_passband[0])
-        #self.spEMGHigh.setValue(emg_passband[1])
+        self.btnSetEMGFilter.clicked.connect(self._emg_filter_dialog)
+
+        self.lblEMGPassband.setText('%.1f Hz - %.1f Hz' %
+                                    (cfg.emg.passband[0], cfg.emg.passband[1]))
 
         # keep some controls disabled until data is loaded
         self._set_data_controls(False)
         self.btnQuit.clicked.connect(self.close)
 
-        # set child widgets to nofocus so canvas always has focus
-        # this is required for mpl mouse callbacks to work properly
-        # (otherwise may need to click on canvas first for it to get focus)
-        for w in self.findChildren(QtWidgets.QWidget):
+        # no focus on buttons - need to keep focus on canvas for mpl events
+        for w in [self.btnSaveFig, self.btnClearMarkers]:
             w.setFocusPolicy(QtCore.Qt.NoFocus)
 
         self.actionQuit.triggered.connect(self.close)
@@ -151,20 +166,28 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.canvas.setFocus()
         self.canvas.draw()
 
+    def _reset_emg_filter(self, f1, f2):
+        """Re-set the EMG filter"""
+        self.lblEMGPassband.setText('%.1f Hz - %.1f Hz' % (f1, f2))
+        self._tardieu_plot._reset_emg_filter(f1, f2)
+        self.canvas.draw()
+
     def _rescale_emg(self):
-        """Callback for EMG scale"""
+        """Callback for EMG rescaling"""
         yscale = self.spEMGYScale.value()
         self._tardieu_plot._rescale_emg(yscale)
         self.canvas.draw()
+        self.canvas.setFocus()
 
     def _set_data_controls(self, enabled):
-        """Show data controls as non-responsive"""
-        for w in [self.btnSaveFig, self.spEMGYScale, self.spEMGLow,
-                  self.spEMGHigh, self.btnClearMarkers]:
+        """Show data related controls as (non)-responsive according to
+        enabled (bool)"""
+        for w in [self.btnSaveFig, self.spEMGYScale, self.btnClearMarkers,
+                  self.btnSetEMGFilter]:
             w.setEnabled(enabled)
 
     def _nonresp(self):
-        """Show window as non-responsive"""
+        """Show whole window as non-responsive"""
         for w in self.findChildren(QtWidgets.QWidget):
             wname = unicode(w.objectName())
             if wname[:2] in ['bt', 'me', 'sp']:  # catch buttons, menus, spins
@@ -174,10 +197,10 @@ class TardieuWindow(QtWidgets.QMainWindow):
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
 
     def _resp(self):
-        """Show window as responsive"""
+        """Show whole window as responsive"""
         for w in self.findChildren(QtWidgets.QWidget):
             wname = unicode(w.objectName())
-            if wname[:3] in ['btn', 'men']:
+            if wname[:2] in ['bt', 'me', 'sp']:
                 w.setEnabled(True)
         QtWidgets.QApplication.restoreOverrideCursor()
 
@@ -187,7 +210,11 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
     def _load_dialog_nexus(self):
         """Dialog for loading from Nexus"""
-        vicon = nexus.viconnexus()
+        try:
+            vicon = nexus.viconnexus()
+        except GaitDataError as e:
+            qt_message_dialog('Error: %s' % str(e))
+            return
         self._load_dialog(vicon)
 
     def _load_dialog_c3d(self):
@@ -197,6 +224,13 @@ class TardieuWindow(QtWidgets.QMainWindow):
                                                      u'C3D files (*.c3d)')[0]
         if fout:
             self._load_dialog(fout)
+
+    def _emg_filter_dialog(self):
+        dlg = EMGFilterDialog()
+        if not dlg.exec_():
+            return
+        else:
+            self._reset_emg_filter(dlg.spEMGLow.value(), dlg.spEMGHigh.value())
 
     def _load_dialog(self, source):
         """Dialog for loading data """
@@ -210,13 +244,15 @@ class TardieuWindow(QtWidgets.QMainWindow):
         if emg_passband[0] >= emg_passband[1]:
             qt_message_dialog('Invalid EMG passband')
         ang0_nexus = dlg.spNormAngle.value()
+
         self._nonresp()
-        if not self._tardieu_plot.load_data(source, emg_chs, emg_passband,
-                                            ang0_nexus):
-            # FIXME: maybe error dialogs should be here
+        try:
+            self._tardieu_plot.load_data(source, emg_chs, emg_passband,
+                                         ang0_nexus)
+        except GaitDataError as e:
+            qt_message_dialog('Error: %s' % str(e))
+        finally:
             self._resp()
-            return
-        # load successful
 
         self._tardieu_plot.plot_data()
         self.canvas.draw()
@@ -225,8 +261,8 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self._update_marker_status()
         # set data controls to match what was loaded
         self.spEMGYScale.setValue(cfg.plot.emg_yscale*1e3)  # mV
-        self.spEMGLow.setValue(emg_passband[0])
-        self.spEMGHigh.setValue(emg_passband[1])
+        self.lblEMGPassband.setText('%.1f Hz - %.1f Hz' % (emg_passband[0],
+                                                              emg_passband[1]))
         # enable all controls
         self._resp()
         self._set_data_controls(True)
@@ -460,15 +496,19 @@ class TardieuPlot(object):
         self.gs = gridspec.GridSpec(len(self.emg_chs) + 3, 1)
 
         # EMG plots
+        # save trace objects for later modification
+        self.emg_traces, self.rms_traces = dict(), dict()
         for ind, ch in enumerate(self.emg_chs):
             sharex = None if ind == 0 else self.data_axes[0]
             ax = fig.add_subplot(self.gs[ind, 0],
                                  sharex=sharex)
-            ax.plot(self.t, self.emgdata[ch]*1e3,
-                    linewidth=cfg.plot.emg_linewidth)
-            ax.plot(self.t, self.emg_rms[ch]*1e3,
-                    linewidth=cfg.plot.emg_rms_linewidth, color='black')
-            ax.set_ylim(cfg.plot.emg_yscale*1e3)  # mV here
+            self.emg_traces[ind], = ax.plot(self.t, self.emgdata[ch]*1e3,
+                                       linewidth=cfg.plot.emg_linewidth)
+            self.rms_traces[ind], = ax.plot(self.t, self.emg_rms[ch]*1e3,
+                                       linewidth=cfg.plot.emg_rms_linewidth,
+                                       color='black')
+            ax.set_ylim([-cfg.plot.emg_yscale*1e3,
+                         cfg.plot.emg_yscale*1e3])
             ax.set(ylabel='mV')
             ax.set_title(ch)
             self._adj_fonts(ax)
@@ -541,7 +581,7 @@ class TardieuPlot(object):
 
             fig.canvas.mpl_connect('button_press_event', self._onclick)
             # catch key press
-            fig.canvas.mpl_connect('key_press_event', self._onpress)
+            # fig.canvas.mpl_connect('key_press_event', self._onpress)
             # pick handler
             fig.canvas.mpl_connect('pick_event', self._onpick)
 
@@ -551,6 +591,17 @@ class TardieuPlot(object):
         """Takes new EMG yscale in mV"""
         for ax in self.emg_axes:
             ax.set_ylim(-yscale, yscale)
+
+    def _reset_emg_filter(self, f1, f2):
+        """Takes new EMG lowpass and highpass values"""
+        logger.debug('reset EMG filter to %.2f-%.2f' % (f1, f2))
+        self.trial.emg.passband = [f1, f2]
+        for ind, ch in enumerate(self.emg_chs):
+            t_, self.emgdata[ch] = self.trial[ch]
+            self.emg_rms[ch] = rms(self.emgdata[ch], cfg.emg.rms_win)
+            #self.emg_traces[ind].set_ydata(self.emgdata[ch])
+            self.emg_traces[ind].set_ydata(np.sin(2*np.pi*5*t_))
+            self.rms_traces[ind].set_ydata(self.emg_rms[ch])
 
     @staticmethod
     def _adj_fonts(ax):
@@ -665,7 +716,6 @@ class TardieuPlot(object):
         s += u'Notes: %s\n' % (self.trial.eclipse_data['NOTES'])
         s += u'Angle offset: '
         s += (u' %.1f°\n' % self.ang0_nexus) if self.ang0_nexus else u'none\n'
-        s += u'EMG passband: %.1f Hz - %.1f Hz\n' % (self.trial.emg.passband[0], self.trial.emg.passband[1])
         s += u'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)
         # frame indices corresponding to time limits
         fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)

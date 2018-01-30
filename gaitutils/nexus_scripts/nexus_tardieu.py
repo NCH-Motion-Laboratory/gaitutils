@@ -599,9 +599,8 @@ class TardieuPlot(object):
         for ind, ch in enumerate(self.emg_chs):
             t_, self.emgdata[ch] = self.trial[ch]
             self.emg_rms[ch] = rms(self.emgdata[ch], cfg.emg.rms_win)
-            #self.emg_traces[ind].set_ydata(self.emgdata[ch])
-            self.emg_traces[ind].set_ydata(np.sin(2*np.pi*5*t_))
-            self.rms_traces[ind].set_ydata(self.emg_rms[ch])
+            self.emg_traces[ind].set_ydata(self.emgdata[ch]*1e3)
+            self.rms_traces[ind].set_ydata(self.emg_rms[ch]*1e3)
 
     @staticmethod
     def _adj_fonts(ax):

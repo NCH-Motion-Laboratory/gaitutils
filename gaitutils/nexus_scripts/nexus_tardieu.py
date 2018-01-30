@@ -58,13 +58,13 @@ def read_nexus_starting_angle():
 class LoadDialog(QtWidgets.QDialog):
     """ Dialog for loading data """
 
-    def __init__(self):
+    def __init__(self, emg_passband):
 
         super(self.__class__, self).__init__()
         uifile = resource_filename(__name__, 'tardieu_load_dialog.ui')
         uic.loadUi(uifile, self)
-        self.spEMGLow.setValue(cfg.emg.passband[0])
-        self.spEMGHigh.setValue(cfg.emg.passband[1])
+        self.spEMGLow.setValue(emg_passband[0])
+        self.spEMGHigh.setValue(emg_passband[1])
         try:
             ang0_nexus = read_nexus_starting_angle()
         except GaitDataError:
@@ -75,13 +75,13 @@ class LoadDialog(QtWidgets.QDialog):
 class EMGFilterDialog(QtWidgets.QDialog):
     """ Dialog for setting the EMG filter """
 
-    def __init__(self):
+    def __init__(self, emg_passband):
 
         super(self.__class__, self).__init__()
         uifile = resource_filename(__name__, 'tardieu_filter_dialog.ui')
         uic.loadUi(uifile, self)
-        self.spEMGLow.setValue(cfg.emg.passband[0])
-        self.spEMGHigh.setValue(cfg.emg.passband[1])
+        self.spEMGLow.setValue(emg_passband[0])
+        self.spEMGHigh.setValue(emg_passband[1])
 
 
 class HelpDialog(QtWidgets.QDialog):
@@ -129,8 +129,10 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.spEMGYScale.valueChanged.connect(self._rescale_emg)
         self.btnSetEMGFilter.clicked.connect(self._emg_filter_dialog)
 
+        self.emg_passband = cfg.emg.passband
         self.lblEMGPassband.setText('%.1f Hz - %.1f Hz' %
-                                    (cfg.emg.passband[0], cfg.emg.passband[1]))
+                                    (self.emg_passband[0],
+                                     self.emg_passband[1]))
 
         # keep some controls disabled until data is loaded
         self._set_data_controls(False)
@@ -168,6 +170,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
     def _reset_emg_filter(self, f1, f2):
         """Re-set the EMG filter"""
+        self.emg_passband = [f1, f2]
         self.lblEMGPassband.setText('%.1f Hz - %.1f Hz' % (f1, f2))
         self._tardieu_plot._reset_emg_filter(f1, f2)
         self.canvas.draw()
@@ -226,7 +229,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
             self._load_dialog(fout)
 
     def _emg_filter_dialog(self):
-        dlg = EMGFilterDialog()
+        dlg = EMGFilterDialog(self.emg_passband)
         if not dlg.exec_():
             return
         else:
@@ -234,7 +237,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
     def _load_dialog(self, source):
         """Dialog for loading data """
-        dlg = LoadDialog()
+        dlg = LoadDialog(self.emg_passband)
         if not dlg.exec_():
             return
         side = 'R' if dlg.rbRight.isChecked() else 'L'

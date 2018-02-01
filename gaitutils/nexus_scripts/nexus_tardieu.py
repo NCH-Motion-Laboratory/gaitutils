@@ -5,9 +5,9 @@ matplotlib + Qt5
 
 TODO:
 
+    
+    marker colors
     figure saving on button
-    layout spacing ok?
-    real time changes to emg passband?
     add config options?
     add statusbar?
 
@@ -58,13 +58,11 @@ def read_nexus_starting_angle():
 class LoadDialog(QtWidgets.QDialog):
     """ Dialog for loading data """
 
-    def __init__(self, emg_passband):
+    def __init__(self):
 
         super(self.__class__, self).__init__()
         uifile = resource_filename(__name__, 'tardieu_load_dialog.ui')
         uic.loadUi(uifile, self)
-        self.spEMGLow.setValue(emg_passband[0])
-        self.spEMGHigh.setValue(emg_passband[1])
         try:
             ang0_nexus = read_nexus_starting_angle()
         except GaitDataError:
@@ -98,7 +96,7 @@ class SimpleToolbar(NavigationToolbar2QT):
     """ Simplified mpl navigation toolbar with some items removed """
 
     toolitems = [t for t in NavigationToolbar2QT.toolitems if
-                 t[0] in ('Home', 'Pan', 'Zoom')]
+                 t[0] in ('Pan', 'Zoom')]
 
 
 class TardieuWindow(QtWidgets.QMainWindow):
@@ -125,6 +123,8 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
         self.btnClearMarkers.clicked.connect(self._clear_markers)
         self.btnSaveFig.clicked.connect(self._save_fig)
+        self.btnZoomFast.clicked.connect(self._xzoom_to_fast)
+        self.btnZoomReset.clicked.connect(self._xzoom_reset)
 
         self.spEMGYScale.valueChanged.connect(self._rescale_emg)
         self.btnSetEMGFilter.clicked.connect(self._emg_filter_dialog)
@@ -139,8 +139,10 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.btnQuit.clicked.connect(self.close)
 
         # no focus on buttons - need to keep focus on canvas for mpl events
-        for w in [self.btnSaveFig, self.btnClearMarkers]:
-            w.setFocusPolicy(QtCore.Qt.NoFocus)
+        for w in self.findChildren(QtWidgets.QWidget):
+            wname = unicode(w.objectName())
+            if wname[:3] in ['btn']:
+                w.setFocusPolicy(QtCore.Qt.NoFocus)
 
         self.actionQuit.triggered.connect(self.close)
         self.actionHelp.triggered.connect(self._help_dialog)
@@ -168,6 +170,14 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.canvas.setFocus()
         self.canvas.draw()
 
+    def _xzoom_to_fast(self):
+        self._tardieu_plot._xzoom_to_fast()
+        self.canvas.draw()
+
+    def _xzoom_reset(self):
+        self._tardieu_plot._xzoom_reset()
+        self.canvas.draw()
+
     def _reset_emg_filter(self, f1, f2):
         """Re-set the EMG filter"""
         self.emg_passband = [f1, f2]
@@ -186,7 +196,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
         """Show data related controls as (non)-responsive according to
         enabled (bool)"""
         for w in [self.btnSaveFig, self.spEMGYScale, self.btnClearMarkers,
-                  self.btnSetEMGFilter]:
+                  self.btnSetEMGFilter, self.btnZoomFast, self.btnZoomReset]:
             w.setEnabled(enabled)
 
     def _nonresp(self):
@@ -237,20 +247,17 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
     def _load_dialog(self, source):
         """Dialog for loading data """
-        dlg = LoadDialog(self.emg_passband)
+        dlg = LoadDialog()
         if not dlg.exec_():
             return
         side = 'R' if dlg.rbRight.isChecked() else 'L'
         # prepend side to configured EMG channel names
         emg_chs = [side+ch for ch in cfg.tardieu.emg_chs]
-        emg_passband = [dlg.spEMGLow.value(), dlg.spEMGHigh.value()]
-        if emg_passband[0] >= emg_passband[1]:
-            qt_message_dialog('Invalid EMG passband')
         ang0_nexus = dlg.spNormAngle.value()
 
         self._nonresp()
         try:
-            self._tardieu_plot.load_data(source, emg_chs, emg_passband,
+            self._tardieu_plot.load_data(source, emg_chs, self.emg_passband,
                                          ang0_nexus)
         except GaitDataError as e:
             qt_message_dialog('Error: %s' % str(e))
@@ -264,8 +271,6 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self._update_marker_status()
         # set data controls to match what was loaded
         self.spEMGYScale.setValue(cfg.plot.emg_yscale*1e3)  # mV
-        self.lblEMGPassband.setText('%.1f Hz - %.1f Hz' % (emg_passband[0],
-                                                              emg_passband[1]))
         # enable all controls
         self._resp()
         self._set_data_controls(True)
@@ -430,8 +435,6 @@ class TardieuPlot(object):
         Returns True on successful data load, False otherwise
         """
 
-        logger.debug('Load data, EMG passband %s' % emg_passband)
-
         try:
             self.trial = Trial(source)
             self.trial.emg.passband = emg_passband
@@ -458,7 +461,7 @@ class TardieuPlot(object):
                 return False
 
         # FIXME: self.time?
-        self.t = t_ / self.trial.analograte
+        self.time_analog = t_ / self.trial.analograte
 
         # read marker data and compute segment angle
         mnames = cfg.tardieu.marker_names
@@ -505,9 +508,9 @@ class TardieuPlot(object):
             sharex = None if ind == 0 else self.data_axes[0]
             ax = fig.add_subplot(self.gs[ind, 0],
                                  sharex=sharex)
-            self.emg_traces[ind], = ax.plot(self.t, self.emgdata[ch]*1e3,
+            self.emg_traces[ind], = ax.plot(self.time_analog, self.emgdata[ch]*1e3,
                                        linewidth=cfg.plot.emg_linewidth)
-            self.rms_traces[ind], = ax.plot(self.t, self.emg_rms[ch]*1e3,
+            self.rms_traces[ind], = ax.plot(self.time_analog, self.emg_rms[ch]*1e3,
                                        linewidth=cfg.plot.emg_rms_linewidth,
                                        color='black')
             ax.set_ylim([-cfg.plot.emg_yscale*1e3,
@@ -564,6 +567,7 @@ class TardieuPlot(object):
         tmax_ = min(self.time[-1], self.tmax)
         fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
         smin, smax = self._time_to_frame([tmin_, tmax_], self.trial.analograte)
+
         # max. velocity
         velr = self.angveld[fmin:fmax]
         velmaxind = np.nanargmax(velr)/self.trial.framerate + tmin_
@@ -594,6 +598,18 @@ class TardieuPlot(object):
         """Takes new EMG yscale in mV"""
         for ax in self.emg_axes:
             ax.set_ylim(-yscale, yscale)
+
+    def _xzoom(self, x1, x2):
+        for ax in self.data_axes:
+            ax.set_xlim(x1, x2)
+
+    def _xzoom_to_fast(self):
+        """Zoom x to fast movement"""
+        velmaxt = self.time[np.nanargmax(self.angveld)]
+        self._xzoom(velmaxt-.5, velmaxt+1.5)
+
+    def _xzoom_reset(self):
+        self._xzoom(self.time[0], self.time[-1])
 
     def _reset_emg_filter(self, f1, f2):
         """Takes new EMG lowpass and highpass values"""

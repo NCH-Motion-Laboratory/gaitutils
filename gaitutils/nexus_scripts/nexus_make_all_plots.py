@@ -104,10 +104,10 @@ def do_plot(fullname=None, hetu=None):
     fig_vel = nexus_trials_velocity.do_plot(show=False, make_pdf=False)
 
     # consistency plots
-    fig_cons = nexus_kin_consistency.do_plot(show=False, make_pdf=False)
+    # write these out separately for inclusion in Polygon report
+    fig_cons = nexus_kin_consistency.do_plot(show=False, make_pdf=True)
     if do_emg_consistency:
-        fig_emg_cons = nexus_emg_consistency.do_plot(show=False,
-                                                     make_pdf=False)
+        fig_emg_cons = nexus_emg_consistency.do_plot(show=False, make_pdf=True)
     else:
         fig_emg_cons = None
 

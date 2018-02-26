@@ -82,10 +82,12 @@ def do_plot(fullname=None, hetu=None):
             figs.append(fig)
             eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
 
-            # do not create individual pdfs
-            # pdf_name = 'Kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname,
-            #                                       side_str)
-            # pl.create_pdf(pdf_name=pdf_name)
+            # individual pdfs for R1/L1
+            if pl.trial.eclipse_data[sort_field].upper() in ['R1', 'L1']:
+                pdf_name = 'Kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname,
+                                                       side_str)
+                logger.debug('creating %s' % pdf_name)
+                pl.create_pdf(pdf_name=pdf_name)
 
             # EMG
             maintitle = pl.title_with_eclipse_info('EMG plot for')
@@ -94,9 +96,12 @@ def do_plot(fullname=None, hetu=None):
             fig = pl.plot_trial(maintitle=maintitle, show=False)
             figs.append(fig)
             eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
+
             # do not create individual pdfs
-            # pdf_prefix = 'EMG_'
-            # pl.create_pdf(pdf_prefix=pdf_prefix)
+            # individual pdfs for R1/L1
+            if pl.trial.eclipse_data[sort_field].upper() in ['R1', 'L1']:
+                pdf_prefix = 'EMG_'
+                pl.create_pdf(pdf_prefix=pdf_prefix)
 
     figs.sort(key=lambda fig: eclipse_tags[fig])
 

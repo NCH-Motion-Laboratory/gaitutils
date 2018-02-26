@@ -34,7 +34,8 @@ def do_plot(show=True, make_pdf=True):
     maintitle_ = '%d trial average from %s' % (atrial.nfiles, sessionpath)
 
     for side in ['R', 'L']:
-        maintitle = maintitle_ + ' (side %s)' % side
+        side_str = 'right' if side == 'R' else 'left'
+        maintitle = maintitle_ + ' (%s)' % side_str
         pl.layout = layouts.onesided_layout(layout, side)
         figs.append(pl.plot_trial(split_model_vars=False,
                                   model_stddev=atrial.stddev_data,

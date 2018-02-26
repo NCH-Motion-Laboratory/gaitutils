@@ -59,8 +59,12 @@ def do_plot(fullname=None, hetu=None):
         c3d = enf2c3d(trial)
         pl.open_trial(c3d)
 
-        side = pl.trial.fp_events['valid']
-        if not side:
+        # FIXME: this would choose R when valid for both
+        if 'R' in pl.trial.fp_events['valid']:
+            side = 'R'
+        elif 'L' in pl.trial.fp_events['valid']:
+            side = 'L'
+        else:
             raise Exception('No kinetics for trial %s' % trial)
 
         side_str = 'right' if side == 'R' else 'left'

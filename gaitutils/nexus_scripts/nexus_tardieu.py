@@ -302,6 +302,9 @@ class TardieuWindow(QtWidgets.QMainWindow):
                     fontsize=10)
             pdf.savefig(fig_hdr)
             figx = self._tardieu_plot.plot_data(interactive=False)
+            # if we are doing a non-interactive fig, need to render the markers
+            # separately
+            self._tardieu_plot.markers.plot_on_axes(figx.get_axes())
             FigureCanvas(figx)
             pdf.savefig(figx)
 
@@ -390,6 +393,12 @@ class Markers(object):
         """Remove all markers"""
         for marker in self._markers:
             self.delete(marker)
+
+    def plot_on_axes(self, axes):
+        """Plot all markers on given axes"""
+        for ax in axes:
+            for x, m in self._markers.items():
+                ax.axvline(x=x, color=m['color'], linewidth=self.marker_width)
 
     @property
     def marker_info(self):
@@ -489,12 +498,7 @@ class TardieuPlot(object):
         return True
 
     def plot_data(self, interactive=True):
-        """ Plot the data. Fig can be a matplotlib Figure instance for
-        non-interactive plots. If fig is not specified, create and manage our
-        own instance (also callbacks will be enabled)
-
-        -fig param probably won't be used due to difficulties in managing
-        several figs/canvases but left in for now """
+        """ Plot the data."""
 
         fig = self.fig if interactive else Figure()
         fig.clear()
@@ -578,12 +582,10 @@ class TardieuPlot(object):
         tmax_ = min(self.time[-1], self.tmax)
         fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
         smin, smax = self._time_to_frame([tmin_, tmax_], self.trial.analograte)
-
         # max. velocity
         velr = self.angveld[fmin:fmax]
         velmaxind = np.nanargmax(velr)/self.trial.framerate + tmin_
         markers.add(velmaxind, annotation='Max. velocity')
-
         # min. acceleration
         accr = self.angaccd[fmin:fmax]
         accmaxind = np.nanargmin(accr)/self.trial.framerate + tmin_

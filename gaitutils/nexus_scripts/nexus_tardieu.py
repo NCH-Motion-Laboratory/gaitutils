@@ -302,6 +302,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
                     fontsize=10)
             pdf.savefig(fig_hdr)
             figx = self._tardieu_plot.plot_data(interactive=False)
+            FigureCanvas(figx)
             pdf.savefig(figx)
 
     def _update_status(self):
@@ -509,14 +510,18 @@ class TardieuPlot(object):
             sharex = None if ind == 0 else self.data_axes[0]
             ax = fig.add_subplot(gs[ind, 0],
                                  sharex=sharex)
+            emgtr_, = ax.plot(self.time_analog, self.emgdata[ch]*1e3,
+                              linewidth=cfg.plot.emg_linewidth)
+            rmstr_, = ax.plot(self.time_analog, self.emg_rms[ch]*1e3,
+                              linewidth=cfg.plot.emg_rms_linewidth,
+                              color='black')
+
             if interactive:
-                self.emg_traces[ind], = ax.plot(self.time_analog, self.emgdata[ch]*1e3,
-                                           linewidth=cfg.plot.emg_linewidth)
-                self.rms_traces[ind], = ax.plot(self.time_analog, self.emg_rms[ch]*1e3,
-                                           linewidth=cfg.plot.emg_rms_linewidth,
-                                           color='black')
+                self.emg_traces[ind] = emgtr_
+                self.rms_traces[ind] = rmstr_
                 self.data_axes.append(ax)
                 self.emg_axes.append(ax)
+
             ax.set_ylim([-cfg.plot.emg_yscale*1e3,
                          cfg.plot.emg_yscale*1e3])
             ax.set(ylabel='mV')

@@ -5,7 +5,6 @@ matplotlib + Qt5
 
 TODO:
 
-    
     marker colors
     figure saving on button
     add config options?
@@ -302,7 +301,8 @@ class TardieuWindow(QtWidgets.QMainWindow):
             ax.text(.5, .8, txt, ha='center', va='center', weight='bold',
                     fontsize=10)
             pdf.savefig(fig_hdr)
-            pdf.savefig(self._tardieu_plot.fig)
+            figx = self._tardieu_plot.plot_data(interactive=False)
+            pdf.savefig(figx)
 
     def _update_status(self):
         """Update the status text"""
@@ -487,7 +487,7 @@ class TardieuPlot(object):
         self.angd = 90 - self.ang0_nexus - self.angd + ang0_our
         return True
 
-    def plot_data(self, fig=None):
+    def plot_data(self, interactive=True):
         """ Plot the data. Fig can be a matplotlib Figure instance for
         non-interactive plots. If fig is not specified, create and manage our
         own instance (also callbacks will be enabled)
@@ -495,46 +495,49 @@ class TardieuPlot(object):
         -fig param probably won't be used due to difficulties in managing
         several figs/canvases but left in for now """
 
-        if fig is None:
-            fig = self.fig
-
+        fig = self.fig if interactive else Figure()
         fig.clear()
-        self.gs = gridspec.GridSpec(len(self.emg_chs) + 3, 1)
+
+        gs = gridspec.GridSpec(len(self.emg_chs) + 3, 1)
 
         # EMG plots
         # save trace objects for later modification
-        self.emg_traces, self.rms_traces = dict(), dict()
+        if interactive:
+            self.emg_traces, self.rms_traces = dict(), dict()
+
         for ind, ch in enumerate(self.emg_chs):
             sharex = None if ind == 0 else self.data_axes[0]
-            ax = fig.add_subplot(self.gs[ind, 0],
+            ax = fig.add_subplot(gs[ind, 0],
                                  sharex=sharex)
-            self.emg_traces[ind], = ax.plot(self.time_analog, self.emgdata[ch]*1e3,
-                                       linewidth=cfg.plot.emg_linewidth)
-            self.rms_traces[ind], = ax.plot(self.time_analog, self.emg_rms[ch]*1e3,
-                                       linewidth=cfg.plot.emg_rms_linewidth,
-                                       color='black')
+            if interactive:
+                self.emg_traces[ind], = ax.plot(self.time_analog, self.emgdata[ch]*1e3,
+                                           linewidth=cfg.plot.emg_linewidth)
+                self.rms_traces[ind], = ax.plot(self.time_analog, self.emg_rms[ch]*1e3,
+                                           linewidth=cfg.plot.emg_rms_linewidth,
+                                           color='black')
+                self.data_axes.append(ax)
+                self.emg_axes.append(ax)
             ax.set_ylim([-cfg.plot.emg_yscale*1e3,
                          cfg.plot.emg_yscale*1e3])
             ax.set(ylabel='mV')
             ax.set_title(ch)
             self._adj_fonts(ax)
-            self.data_axes.append(ax)
-            self.emg_axes.append(ax)
         ind += 1
 
         # angle plot
-        ax = fig.add_subplot(self.gs[ind, 0],
+        ax = fig.add_subplot(gs[ind, 0],
                              sharex=self.data_axes[0])
         ax.plot(self.time, self.angd, linewidth=cfg.plot.model_linewidth)
         ax.set(ylabel='deg')
         ax.set_title('Angle')
         # FIXME: loop adj_fonts on data_axes
         self._adj_fonts(ax)
-        self.data_axes.append(ax)
+        if interactive:
+            self.data_axes.append(ax)
         ind += 1
 
         # angular velocity plot
-        ax = fig.add_subplot(self.gs[ind, 0],
+        ax = fig.add_subplot(gs[ind, 0],
                              sharex=self.data_axes[0])
         self.angveld = self.trial.framerate * np.diff(self.angd, axis=0)
         ax.plot(self.time[:-1], self.angveld,
@@ -542,11 +545,12 @@ class TardieuPlot(object):
         ax.set(ylabel='deg/s')
         ax.set_title('Angular velocity')
         self._adj_fonts(ax)
-        self.data_axes.append(ax)
+        if interactive:
+            self.data_axes.append(ax)
         ind += 1
 
         # angular acceleration plot
-        ax = fig.add_subplot(self.gs[ind, 0],
+        ax = fig.add_subplot(gs[ind, 0],
                              sharex=self.data_axes[0])
         self.angaccd = np.diff(self.angveld, axis=0)
         ax.plot(self.time[:-2], self.angaccd,
@@ -554,13 +558,15 @@ class TardieuPlot(object):
         ax.set(xlabel='Time (s)', ylabel=u'deg/s²')
         ax.set_title('Angular acceleration')
         self._adj_fonts(ax)
-        self.data_axes.append(ax)
+        if interactive:
+            self.data_axes.append(ax)
 
-        self.tmin, self.tmax = self.data_axes[0].get_xlim()
+        if interactive:
+            self.tmin, self.tmax = self.data_axes[0].get_xlim()
 
         # create markers
-        self.markers = Markers(self.marker_colors, self.marker_width,
-                               self.data_axes)
+        markers = Markers(self.marker_colors, self.marker_width,
+                          self.data_axes)
 
         # place the auto markers
         tmin_ = max(self.time[0], self.tmin)
@@ -571,28 +577,35 @@ class TardieuPlot(object):
         # max. velocity
         velr = self.angveld[fmin:fmax]
         velmaxind = np.nanargmax(velr)/self.trial.framerate + tmin_
-        self.markers.add(velmaxind, annotation='Max. velocity')
+        markers.add(velmaxind, annotation='Max. velocity')
+
+        # min. acceleration
+        accr = self.angaccd[fmin:fmax]
+        accmaxind = np.nanargmin(accr)/self.trial.framerate + tmin_
+        markers.add(accmaxind, annotation='Min. acceleration')
+
         for ch in self.emg_chs:
             # check if channel is tagged for automark
             if any([s in ch for s in self.emg_automark_chs]):
                 rmsdata = self.emg_rms[ch][smin:smax]
                 rmsmaxind = np.argmax(rmsdata)/self.trial.analograte + tmin_
-                self.markers.add(rmsmaxind, annotation='%s max. RMS' % ch)
+                markers.add(rmsmaxind, annotation='%s max. RMS' % ch)
 
-        self._last_click_event = None
-
-        if fig == self.fig:
-            # connect callbacks only if we are managing the figure
+        if interactive:
+            # connect callbacks
             for ax in self.data_axes:
                 ax.callbacks.connect('xlim_changed', self._xlim_changed)
-
             fig.canvas.mpl_connect('button_press_event', self._onclick)
             # catch key press
             # fig.canvas.mpl_connect('key_press_event', self._onpress)
             # pick handler
             fig.canvas.mpl_connect('pick_event', self._onpick)
+            #
+            self._last_click_event = None
+            self.markers = markers
 
-        self.tight_layout()
+        fig.set_tight_layout(True)
+        return fig
 
     def _rescale_emg(self, yscale):
         """Takes new EMG yscale in mV"""

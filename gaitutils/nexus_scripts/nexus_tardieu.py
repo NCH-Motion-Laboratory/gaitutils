@@ -275,18 +275,14 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self._set_data_controls(True)
 
     def _save_fig(self):
-        """Save the plot"""
-        """
-        -difficult to annotate markers (separate page is not great)
-        -maybe create new fig and markers (return from function), no need for
-        2nd canvas?
-        -add annotations directly to pdf? (arrows, labels etc.)
-
+        """Save the plot
+        TODO:
+            add figlegend w/marker colors and annotations
+            add separate page with zoomed plot (around fast movement)
         """
         fn_pdf = self._tardieu_plot.trial.trialname + '.pdf'
         fout = QtWidgets.QFileDialog.getSaveFileName(self, 'Save plot', fn_pdf,
                                                      u'PDF files (*pdf)')[0]
-
         if not fout:
             return
         with PdfPages(fout) as pdf:
@@ -302,8 +298,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
                     fontsize=10)
             pdf.savefig(fig_hdr)
             figx = self._tardieu_plot.plot_data(interactive=False)
-            # if we are doing a non-interactive fig, need to render the markers
-            # separately
+            # render markers separately
             self._tardieu_plot.markers.plot_on_axes(figx.get_axes())
             FigureCanvas(figx)
             pdf.savefig(figx)
@@ -360,7 +355,7 @@ class Markers(object):
 
     def add(self, x, annotation=''):
         """Add a marker at point x with optional annotation"""
-        if x in self._markers.keys():  # marker already at this point
+        if x in self._markers.keys():  # marker already exists here
             return
         else:
             cols_in_use = [m['color'] for m in self._markers.values()]
@@ -395,7 +390,7 @@ class Markers(object):
             self.delete(marker)
 
     def plot_on_axes(self, axes):
-        """Plot all markers on given axes"""
+        """Plot all markers on given axes (iterable)"""
         for ax in axes:
             for x, m in self._markers.items():
                 ax.axvline(x=x, color=m['color'], linewidth=self.marker_width)
@@ -498,7 +493,8 @@ class TardieuPlot(object):
         return True
 
     def plot_data(self, interactive=True):
-        """ Plot the data."""
+        """ Plot the data. Can plot either on the main (interactive) display
+        or a new mpl figure (will be returned)"""
 
         fig = self.fig if interactive else Figure()
         fig.clear()
@@ -506,8 +502,7 @@ class TardieuPlot(object):
         gs = gridspec.GridSpec(len(self.emg_chs) + 3, 1)
 
         # EMG plots
-        # save trace objects for later modification
-        if interactive:
+        if interactive:  # save trace objects for later modification
             self.emg_traces, self.rms_traces = dict(), dict()
 
         for ind, ch in enumerate(self.emg_chs):
@@ -534,8 +529,7 @@ class TardieuPlot(object):
         ind += 1
 
         # angle plot
-        ax = fig.add_subplot(gs[ind, 0],
-                             sharex=self.data_axes[0])
+        ax = fig.add_subplot(gs[ind, 0], sharex=self.data_axes[0])
         ax.plot(self.time, self.angd, linewidth=cfg.plot.model_linewidth)
         ax.set(ylabel='deg')
         ax.set_title('Angle')
@@ -572,33 +566,33 @@ class TardieuPlot(object):
 
         if interactive:
             self.tmin, self.tmax = self.data_axes[0].get_xlim()
+            # create markers
+            markers = Markers(self.marker_colors, self.marker_width,
+                              self.data_axes)
 
-        # create markers
-        markers = Markers(self.marker_colors, self.marker_width,
-                          self.data_axes)
+            # place the auto markers
+            tmin_ = max(self.time[0], self.tmin)
+            tmax_ = min(self.time[-1], self.tmax)
+            fmin, fmax = self._time_to_frame([tmin_, tmax_],
+                                             self.trial.framerate)
+            smin, smax = self._time_to_frame([tmin_, tmax_],
+                                             self.trial.analograte)
+            # max. velocity
+            velr = self.angveld[fmin:fmax]
+            velmaxind = np.nanargmax(velr)/self.trial.framerate + tmin_
+            markers.add(velmaxind, annotation='Max. velocity')
+            # min. acceleration
+            accr = self.angaccd[fmin:fmax]
+            accmaxind = np.nanargmin(accr)/self.trial.framerate + tmin_
+            markers.add(accmaxind, annotation='Min. acceleration')
 
-        # place the auto markers
-        tmin_ = max(self.time[0], self.tmin)
-        tmax_ = min(self.time[-1], self.tmax)
-        fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
-        smin, smax = self._time_to_frame([tmin_, tmax_], self.trial.analograte)
-        # max. velocity
-        velr = self.angveld[fmin:fmax]
-        velmaxind = np.nanargmax(velr)/self.trial.framerate + tmin_
-        markers.add(velmaxind, annotation='Max. velocity')
-        # min. acceleration
-        accr = self.angaccd[fmin:fmax]
-        accmaxind = np.nanargmin(accr)/self.trial.framerate + tmin_
-        markers.add(accmaxind, annotation='Min. acceleration')
+            for ch in self.emg_chs:
+                # check if channel is tagged for automark
+                if any([s in ch for s in self.emg_automark_chs]):
+                    rmsdata = self.emg_rms[ch][smin:smax]
+                    rmsmaxind = np.argmax(rmsdata)/self.trial.analograte + tmin_
+                    markers.add(rmsmaxind, annotation='%s max. RMS' % ch)
 
-        for ch in self.emg_chs:
-            # check if channel is tagged for automark
-            if any([s in ch for s in self.emg_automark_chs]):
-                rmsdata = self.emg_rms[ch][smin:smax]
-                rmsmaxind = np.argmax(rmsdata)/self.trial.analograte + tmin_
-                markers.add(rmsmaxind, annotation='%s max. RMS' % ch)
-
-        if interactive:
             # connect callbacks
             for ax in self.data_axes:
                 ax.callbacks.connect('xlim_changed', self._xlim_changed)

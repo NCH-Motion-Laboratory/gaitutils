@@ -279,6 +279,8 @@ class TardieuWindow(QtWidgets.QMainWindow):
         TODO:
             add figlegend w/marker colors and annotations
             add separate page with zoomed plot (around fast movement)
+            fix line thickness on printed plot
+            crash on permission denied
         """
         fn_pdf = self._tardieu_plot.trial.trialname + '.pdf'
         fout = QtWidgets.QFileDialog.getSaveFileName(self, 'Save plot', fn_pdf,
@@ -298,10 +300,24 @@ class TardieuWindow(QtWidgets.QMainWindow):
                     fontsize=10)
             pdf.savefig(fig_hdr)
             figx = self._tardieu_plot.plot_data(interactive=False)
+            newcanvas = FigureCanvas(figx)
             # render markers separately
-            self._tardieu_plot.markers.plot_on_axes(figx.get_axes())
-            FigureCanvas(figx)
+            axes = figx.get_axes()
+            self._tardieu_plot.markers.plot_on_axes(axes)
             pdf.savefig(figx)
+            # zoomed version
+            fast_rng = self._tardieu_plot._get_fast_movement()
+            for ax in axes:
+                #ax.set_xlim(fast_rng[0], fast_rng[1])
+                logger.debug(ax)
+            for ax in self._tardieu_plot.data_axes:
+                logger.debug(ax)
+            logger.debug(self.canvas.figure)
+            logger.debug(newcanvas.figure)            
+                
+                
+            pdf.savefig(figx)                
+
 
     def _update_status(self):
         """Update the status text"""
@@ -613,14 +629,19 @@ class TardieuPlot(object):
         for ax in self.emg_axes:
             ax.set_ylim(-yscale, yscale)
 
+    def _get_fast_movement(self):
+        """Get x range around fast movement"""
+        velmaxt = self.time[np.nanargmax(self.angveld)]
+        return velmaxt-.5, velmaxt+1.5
+
     def _xzoom(self, x1, x2):
         for ax in self.data_axes:
             ax.set_xlim(x1, x2)
 
     def _xzoom_to_fast(self):
         """Zoom x to fast movement"""
-        velmaxt = self.time[np.nanargmax(self.angveld)]
-        self._xzoom(velmaxt-.5, velmaxt+1.5)
+        rng = self._get_fast_movement()
+        self._xzoom(rng[0], rng[1])
 
     def _xzoom_reset(self):
         self._xzoom(self.time[0], self.time[-1])

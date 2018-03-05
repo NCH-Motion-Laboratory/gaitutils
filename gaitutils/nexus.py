@@ -587,9 +587,6 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
             dist_ok = np.logical_and(dist_ok, strike_pos != 0)
             strikes = strikes[dist_ok]
 
-        if len(strikes) == 0:
-            raise GaitDataError('No valid foot strikes detected')
-
         # correct for force plate autodetected events
         if fp_events:
             # strikes
@@ -614,6 +611,9 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
 
             toeoffs = np.extract(np.logical_and(roi[0] <= toeoffs+1,
                                                 toeoffs+1 <= roi[1]), toeoffs)
+
+        if len(strikes) == 0:
+            raise GaitDataError('No valid foot strikes detected')
 
         # delete toeoffs that are not between strike events
         not_ok = np.where(np.logical_or(toeoffs <= min(strikes),

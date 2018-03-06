@@ -232,7 +232,8 @@ class Plotter(object):
                    show=True,
                    superpose=False,
                    maintitle=None,
-                   maintitleprefix=None):
+                   maintitleprefix=None,
+                   ylim_to_zero=True):
 
         """ Create plot of variables. Parameters:
 
@@ -319,6 +320,8 @@ class Plotter(object):
                 Whether to show the plot after plotting is finished. Use
                 show=False if overlaying multiple trials and call show()
                 after finished. If interactive=False, this has no effect.
+        ylim_to_zero : bool
+                Set ylimits to include zero line (y=0) when autoscaling.
         """
 
         if trial is None and self.trial is None:
@@ -455,10 +458,12 @@ class Plotter(object):
                     logger.debug('cycle %d-%d' % (cycle.start, cycle.end))
                     if cycle is not None:  # plot normalized data
                         trial.set_norm_cycle(cycle)
-                    if split_model_vars and var[0].upper() not in ['L', 'R']:
-                        varname = cycle.context + var
-                    else:
-                        varname = var
+
+                    if split_model_vars:
+                        if cycle.context + var in model.varnames:
+                            varname = cycle.context + var
+                        else:
+                            varname = var
 
                     # check for kinetics variable
                     kin_ok = True
@@ -467,11 +472,14 @@ class Plotter(object):
                             if model.is_kinetic_var(var):
                                 kin_ok = cycle.on_forceplate
 
-                    # do the actual plotting if necessary
+                    # whether to plot or not
                     x_, data = trial[varname]
+                    # FIXME: varname[0] == cycle.context may not apply to
+                    # all model vars
                     if (data is not None and kin_ok and
                         (varname[0] == cycle.context or not
                          auto_match_model_cycle or cycle is None)):
+
                         logger.debug('plotting data for %s' % varname)
                         x = (x_ / trial.framerate if cycle is None and
                              x_axis_is_time else x_)
@@ -538,7 +546,12 @@ class Plotter(object):
                             subplot_title = prev_title + ' / ' + subplot_title
                         ax.set_title(subplot_title)
                         ax.title.set_fontsize(cfg.plot.title_fontsize)
+
+                        ylim = ax.get_ylim()  # restore y lims if needed
                         ax.axhline(0, color='black', linewidth=.5)  # zero line
+                        if not ylim_to_zero:
+                            ax.set_ylim(ylim[0], ylim[1])
+
                         ax.locator_params(axis='y', nbins=6)  # less tick marks
                         ax.tick_params(axis='both', which='major',
                                        labelsize=cfg.plot.ticks_fontsize)

@@ -19,14 +19,11 @@ def do_plot():
     pdf_prefix = 'MuscleLen_'
     maintitle = pl.title_with_eclipse_info('Muscle length plot for')
 
-    pl.layout = cfg.layouts.musclelen_r
-    pl.plot_trial(maintitle=maintitle, split_model_vars=False, show=False)
-
-    pl.layout = cfg.layouts.musclelen_l
-    pl.plot_trial(maintitle=maintitle, split_model_vars=False,
-                  superpose=True)
+    pl.layout = cfg.layouts.musclelen
+    pl.plot_trial(maintitle=maintitle, ylim_to_zero=False)
 
     pl.create_pdf(pdf_prefix=pdf_prefix)
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

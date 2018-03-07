@@ -2,8 +2,8 @@
 """
 Created on Thu Sep 03 14:54:34 2015
 
-Kin* consistency plot from Nexus. Automatically picks trials based on Eclipse
-description and defined search strings.
+Muscle len consistency plot from Nexus. Automatically picks trials based on
+Eclipse description and defined search strings.
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -45,26 +45,26 @@ def do_plot(search=None, show=True, make_pdf=True):
 
     pl = Plotter()
     pl.open_trial(enf2c3d(tagged_trials[0]))
-    pl.layout = cfg.layouts.musclelen
+    pl.layout = cfg.layouts.overlay_musclelen
 
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
 
     for i, trialpath in enumerate(tagged_trials):
         logger.debug('plotting %s' % tagged_trials[i])
         pl.open_trial(enf2c3d(tagged_trials[i]))
-        maintitle = ('Kinematics/kinetics consistency plot, '
+        maintitle = ('Muscle length consistency plot, '
                      'session %s' % pl.trial.sessiondir)
         # only plot normaldata for last trial to speed up things
         plot_model_normaldata = (trialpath == tagged_trials[-1])
         pl.plot_trial(model_tracecolor=linecolors[i], linestyles_context=True,
-                      toeoff_markers=False,
+                      toeoff_markers=False, ylim_to_zero=False,
                       maintitle=maintitle, superpose=True, show=False,
-                      plot_model_normaldata=plot_model_normaldata)
+                      plot_model_normaldata=plot_model_normaldata, sharex=False)
     if show:
         pl.show()
 
     if make_pdf:
-        pl.create_pdf('kin_consistency.pdf')
+        pl.create_pdf('musclelen_consistency.pdf')
 
     return pl.fig
 

@@ -22,9 +22,11 @@ from .plot import Plotter
 from .trial import Trial
 
 from nexus_scripts import nexus_emgplot
+from nexus_scripts import nexus_musclelen_plot
 from nexus_scripts import nexus_kinetics_emgplot
 from nexus_scripts import nexus_emg_consistency
 from nexus_scripts import nexus_kin_consistency
+from nexus_scripts import nexus_musclelen_consistency
 from nexus_scripts import nexus_autoprocess_trial
 from nexus_scripts import nexus_autoprocess_session
 from nexus_scripts import nexus_kinallplot

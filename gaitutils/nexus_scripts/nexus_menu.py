@@ -19,9 +19,11 @@ from gaitutils import GaitDataError
 from gaitutils import nexus
 from gaitutils import cfg
 from gaitutils import nexus_emgplot
+from gaitutils import nexus_musclelen_plot
 from gaitutils import nexus_kinetics_emgplot
 from gaitutils import nexus_emg_consistency
 from gaitutils import nexus_kin_consistency
+from gaitutils import nexus_musclelen_consistency
 from gaitutils import nexus_autoprocess_trial
 from gaitutils import nexus_autoprocess_session
 from gaitutils import nexus_kinallplot
@@ -299,6 +301,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnCopyVideos,
                                   nexus_copy_trial_videos.do_copy, thread=True)
         self._button_connect_task(self.btnEMG, nexus_emgplot.do_plot)
+        self._button_connect_task(self.btnMuscleLen,
+                                  nexus_musclelen_plot.do_plot)
         self._button_connect_task(self.btnKinEMG,
                                   nexus_kinetics_emgplot.do_plot)
         self._button_connect_task(self.btnKinall, nexus_kinallplot.do_plot)
@@ -313,6 +317,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   nexus_emg_consistency.do_plot)
         self._button_connect_task(self.btnKinCons,
                                   nexus_kin_consistency.do_plot)
+        self._button_connect_task(self.btnMuscleLenCons,
+                                  nexus_musclelen_consistency.do_plot)
         self._button_connect_task(self.btnKinAverage,
                                   nexus_kin_average.do_plot)
         self._button_connect_task(self.btnAutoprocTrial,

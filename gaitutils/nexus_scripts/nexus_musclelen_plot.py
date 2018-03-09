@@ -9,12 +9,14 @@ Muscle length plot from Nexus.
 
 import logging
 
-from gaitutils import Plotter, layouts, nexus, register_gui_exception_handler
+from gaitutils import Plotter, register_gui_exception_handler, normaldata
 from gaitutils.config import cfg
 
 
-def do_plot():
+def do_plot(age=None):
     pl = Plotter()
+    if age is not None:
+        pl.add_normaldata(normaldata.normaldata_age(age))
     pl.open_nexus_trial()
     pdf_prefix = 'MuscleLen_'
     maintitle = pl.title_with_eclipse_info('Muscle length plot for')

@@ -13,6 +13,7 @@ import logging
 
 from .numutils import isfloat
 from .models import models_all
+from .config import cfg
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,16 @@ def read_normaldata(filename):
         return _read_xlsx(filename)
     else:
         raise ValueError('Only .gcd or .xlsx file formats are supported')
+
+
+def normaldata_age(age):
+    """ Return age specific normal data file """
+    for age_range, filename in cfg.general.normaldata_age.items():
+        if age_range[0] <= age <= age_range[1]:
+            logger.debug('found normaldata file %s for age %d' %
+                         (filename, age))
+            return filename
+    return None  # no matches
 
 
 def _check_normaldata(ndata):

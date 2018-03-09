@@ -72,6 +72,12 @@ class HetuDialog(QtWidgets.QDialog):
         show an error dialog """
         self.hetu = self.lnHetu.text()
         self.fullname = self.lnFullName.text()
+        # get all the report page selections
+        self.pages = dict()
+        for w in self.findChildren(QtWidgets.QWidget):
+            wname = w.objectName()
+            if wname[:2] == 'cb':
+                self.pages[wname[2:]] = w.checkState()
         if self.fullname and check_hetu(self.hetu):
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
@@ -363,6 +369,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         dlg.exec_()
 
     def _create_pdfs(self):
+        """Creates the full report"""
         try:
             subj = nexus.get_subjectnames()
         except GaitDataError as e:
@@ -375,7 +382,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._hetu = dlg.hetu
             self._fullname = dlg.fullname
             self._execute(nexus_make_all_plots.do_plot, thread=True,
-                          fullname=dlg.fullname, hetu=dlg.hetu)
+                          fullname=dlg.fullname, hetu=dlg.hetu,
+                          pages=dlg.pages)
 
     def _log_message(self, msg):
         c = self.txtOutput.textCursor()

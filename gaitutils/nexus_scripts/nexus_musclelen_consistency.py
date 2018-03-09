@@ -39,12 +39,14 @@ def find_tagged(search=None):
     return tagged_trials
 
 
-def do_plot(search=None, show=True, make_pdf=True):
+def do_plot(search=None, age=None, show=True, make_pdf=True):
 
     tagged_trials = find_tagged(search=search)
 
     pl = Plotter()
     pl.open_trial(enf2c3d(tagged_trials[0]))
+    if age is not None:
+    pl.add_normaldata(normaldata.normaldata_age(age))
     pl.layout = cfg.layouts.overlay_musclelen
 
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
@@ -59,7 +61,8 @@ def do_plot(search=None, show=True, make_pdf=True):
         pl.plot_trial(model_tracecolor=linecolors[i], linestyles_context=True,
                       toeoff_markers=False, ylim_to_zero=False,
                       maintitle=maintitle, superpose=True, show=False,
-                      plot_model_normaldata=plot_model_normaldata, sharex=False)
+                      plot_model_normaldata=plot_model_normaldata,
+                      sharex=False)
     if show:
         pl.show()
 

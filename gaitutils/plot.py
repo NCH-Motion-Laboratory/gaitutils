@@ -547,7 +547,9 @@ class Plotter(object):
                         ax.set_title(subplot_title)
                         ax.title.set_fontsize(cfg.plot.title_fontsize)
 
-                        ylim = ax.get_ylim()  # restore y lims if needed
+                        # FIXME: axhline ruins the y scale
+                        ax.autoscale()
+                        ylim = ax.get_ylim()
                         ax.axhline(0, color='black', linewidth=.5)  # zero line
                         if not ylim_to_zero:
                             ax.set_ylim(ylim[0], ylim[1])

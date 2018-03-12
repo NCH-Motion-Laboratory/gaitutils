@@ -45,10 +45,12 @@ def do_plot(search=None, age=None, show=True, make_pdf=True):
 
     pl = Plotter()
     pl.open_trial(enf2c3d(tagged_trials[0]))
-    # DEBUG
-    pl.add_normaldata("Z:/PXD_files/muscle_length_7_12.xlsx")
+
     if age is not None:
-        pl.add_normaldata(normaldata.normaldata_age(age))
+        ndata = normaldata.normaldata_age(age)
+        if ndata:
+            pl.add_normaldata(ndata)
+
     pl.layout = cfg.layouts.overlay_musclelen
 
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']

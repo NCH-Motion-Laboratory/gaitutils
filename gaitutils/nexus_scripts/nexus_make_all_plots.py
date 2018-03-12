@@ -23,6 +23,7 @@ from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
 from gaitutils.nexus import enf2c3d, get_sessionpath, get_trialname
 import nexus_kin_consistency
 import nexus_emg_consistency
+import nexus_musclelen_consistency
 import nexus_kin_average
 import nexus_trials_velocity
 from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
@@ -51,9 +52,12 @@ def do_plot(fullname=None, hetu=None, pages=None):
         age = numutils.age_from_hetu(hetu)
     if pages is None:
         pages = defaultdict(lambda: True)
+    else:
+        if not any(pages.values()):
+            raise Exception('No pages to print')
 
     # collect Figure instances for creation of multipage PDF
-    figs = []
+    trial_figs = []
     eclipse_tags = dict()
 
     tagged_trials = find_tagged()
@@ -77,6 +81,7 @@ def do_plot(fullname=None, hetu=None, pages=None):
         side_str = 'right' if side == 'R' else 'left'
 
         # try to figure out whether we have any valid EMG signals
+        # FIXME: refactor into EMG class
         emg_active = any([pl.trial.emg.status_ok(ch) for ch in
                           cfg.emg.channel_labels])
 
@@ -84,7 +89,7 @@ def do_plot(fullname=None, hetu=None, pages=None):
 
             if pages['EMGCons']:
                 do_emg_consistency = True
-            
+
             if pages['KinEMGMarked']:
                 # kinetics-EMG
                 pl.layout = (cfg.layouts.lb_kinetics_emg_r if side == 'R' else
@@ -93,7 +98,7 @@ def do_plot(fullname=None, hetu=None, pages=None):
                 maintitle = 'Kinetics-EMG (%s) for %s' % (side_str,
                                                           pl.title_with_eclipse_info())
                 fig = pl.plot_trial(maintitle=maintitle, show=False)
-                figs.append(fig)
+                trial_figs.append(fig)
                 eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
 
                 # save individual pdfs for R1/L1
@@ -109,7 +114,7 @@ def do_plot(fullname=None, hetu=None, pages=None):
                 layout = cfg.layouts.std_emg
                 pl.layout = layouts.rm_dead_channels(c3d, pl.trial.emg, layout)
                 fig = pl.plot_trial(maintitle=maintitle, show=False)
-                figs.append(fig)
+                trial_figs.append(fig)
                 eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
 
                 # save individual pdfs for R1/L1
@@ -117,16 +122,27 @@ def do_plot(fullname=None, hetu=None, pages=None):
                     pdf_prefix = 'EMG_'
                     pl.create_pdf(pdf_prefix=pdf_prefix)
 
-    figs.sort(key=lambda fig: eclipse_tags[fig])
+    trial_figs.sort(key=lambda fig: eclipse_tags[fig])
 
     # trial velocity plot
     if pages['TrialVelocity']:
         fig_vel = nexus_trials_velocity.do_plot(show=False, make_pdf=False)
+    else:
+        fig_vel = None
 
     # consistency plots
     # write these out separately for inclusion in Polygon report
     if pages['KinCons']:
-        fig_cons = nexus_kin_consistency.do_plot(show=False, make_pdf=True)
+        fig_kin_cons = nexus_kin_consistency.do_plot(show=False, make_pdf=True)
+    else:
+        fig_kin_cons = None
+
+    if pages['MuscleLenCons']:
+        fig_musclelen_cons = nexus_musclelen_consistency.do_plot(show=False,
+                                                                 age=age,
+                                                                 make_pdf=True)
+    else:
+        fig_musclelen_cons = None
 
     if do_emg_consistency:
         fig_emg_cons = nexus_emg_consistency.do_plot(show=False, make_pdf=True)
@@ -136,6 +152,8 @@ def do_plot(fullname=None, hetu=None, pages=None):
     # average plots
     if pages['KinAverage']:
         figs_averages = nexus_kin_average.do_plot(show=False, make_pdf=False)
+    else:
+        figs_averages = list()
 
     sessionpath = get_sessionpath()
     session = op.split(sessionpath)[-1]
@@ -160,22 +178,26 @@ def do_plot(fullname=None, hetu=None, pages=None):
     ax.text(.5, .8, txt, ha='center', va='center', weight='bold', fontsize=14)
 
     header = u'Nimi: %s Henkilötunnus: %s' % (fullname, hetu)
+
     logger.debug('creating multipage pdf %s' % pdf_all)
     with PdfPages(pdf_all) as pdf:
         pdf.savefig(fig_hdr)
         if fig_vel is not None:
             _add_header(fig_vel, header)
             pdf.savefig(fig_vel)
-        if fig_cons is not None:
-            _add_header(fig_cons, header)
-            pdf.savefig(fig_cons)
+        if fig_kin_cons is not None:
+            _add_header(fig_kin_cons, header)
+            pdf.savefig(fig_kin_cons)
+        if fig_musclelen_cons is not None:
+            _add_header(fig_musclelen_cons, header)
+            pdf.savefig(fig_musclelen_cons)
         if fig_emg_cons is not None:
             _add_header(fig_emg_cons, header)
             pdf.savefig(fig_emg_cons)
         for fig in figs_averages:
             _add_header(fig, header)
             pdf.savefig(fig)
-        for fig in figs:
+        for fig in trial_figs:
             _add_header(fig, header)
             pdf.savefig(fig)
 

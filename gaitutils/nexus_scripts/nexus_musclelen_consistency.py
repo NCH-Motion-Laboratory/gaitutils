@@ -11,7 +11,7 @@ Eclipse description and defined search strings.
 import logging
 import argparse
 
-from gaitutils import Plotter, cfg, register_gui_exception_handler
+from gaitutils import Plotter, cfg, register_gui_exception_handler, normaldata
 from gaitutils.nexus import enf2c3d, find_trials
 
 logger = logging.getLogger(__name__)
@@ -45,8 +45,10 @@ def do_plot(search=None, age=None, show=True, make_pdf=True):
 
     pl = Plotter()
     pl.open_trial(enf2c3d(tagged_trials[0]))
+    # DEBUG
+    pl.add_normaldata("Z:/PXD_files/muscle_length_7_12.xlsx")
     if age is not None:
-    pl.add_normaldata(normaldata.normaldata_age(age))
+        pl.add_normaldata(normaldata.normaldata_age(age))
     pl.layout = cfg.layouts.overlay_musclelen
 
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
@@ -59,7 +61,7 @@ def do_plot(search=None, age=None, show=True, make_pdf=True):
         # only plot normaldata for last trial to speed up things
         plot_model_normaldata = (trialpath == tagged_trials[-1])
         pl.plot_trial(model_tracecolor=linecolors[i], linestyles_context=True,
-                      toeoff_markers=False, ylim_to_zero=False,
+                      toeoff_markers=False, add_zeroline=False,
                       maintitle=maintitle, superpose=True, show=False,
                       plot_model_normaldata=plot_model_normaldata,
                       sharex=False)

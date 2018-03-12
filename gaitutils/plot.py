@@ -233,7 +233,7 @@ class Plotter(object):
                    superpose=False,
                    maintitle=None,
                    maintitleprefix=None,
-                   ylim_to_zero=True):
+                   add_zeroline=True):
 
         """ Create plot of variables. Parameters:
 
@@ -320,8 +320,8 @@ class Plotter(object):
                 Whether to show the plot after plotting is finished. Use
                 show=False if overlaying multiple trials and call show()
                 after finished. If interactive=False, this has no effect.
-        ylim_to_zero : bool
-                Set ylimits to include zero line (y=0) when autoscaling.
+        add_zeroline : bool
+                Add line on y=0
         """
 
         if trial is None and self.trial is None:
@@ -547,12 +547,6 @@ class Plotter(object):
                         ax.set_title(subplot_title)
                         ax.title.set_fontsize(cfg.plot.title_fontsize)
 
-                        # FIXME: axhline ruins the y scale
-                        ax.autoscale()
-                        ylim = ax.get_ylim()
-                        ax.axhline(0, color='black', linewidth=.5)  # zero line
-                        if not ylim_to_zero:
-                            ax.set_ylim(ylim[0], ylim[1])
 
                         ax.locator_params(axis='y', nbins=6)  # less tick marks
                         ax.tick_params(axis='both', which='major',
@@ -587,6 +581,9 @@ class Plotter(object):
                                                 model_normals_alpha)
                                 # tighten x limits
                                 ax.set_xlim(normalx[0], normalx[-1])
+
+                        if add_zeroline:
+                            ax.axhline(0, color='black', linewidth=.5)
 
             elif var_type == 'emg':
                 # set title first, since we may end up not plotting the emg at

@@ -459,11 +459,11 @@ class Plotter(object):
                     if cycle is not None:  # plot normalized data
                         trial.set_norm_cycle(cycle)
 
-                    if split_model_vars:
-                        if cycle.context + var in model.varnames:
-                            varname = cycle.context + var
-                        else:
-                            varname = var
+                    if (split_model_vars and cycle.context + var
+                       in model.varnames):
+                        varname = cycle.context + var
+                    else:
+                        varname = var
 
                     # check for kinetics variable
                     kin_ok = True

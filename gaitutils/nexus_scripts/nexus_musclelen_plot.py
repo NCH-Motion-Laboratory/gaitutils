@@ -22,7 +22,7 @@ def do_plot(age=None):
     maintitle = pl.title_with_eclipse_info('Muscle length plot for')
 
     pl.layout = cfg.layouts.musclelen
-    pl.plot_trial(maintitle=maintitle, ylim_to_zero=False)
+    pl.plot_trial(maintitle=maintitle, add_zeroline=False)
 
     pl.create_pdf(pdf_prefix=pdf_prefix)
 

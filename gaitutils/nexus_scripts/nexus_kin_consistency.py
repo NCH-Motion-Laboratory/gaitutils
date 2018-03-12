@@ -45,7 +45,7 @@ def do_plot(search=None, show=True, make_pdf=True):
 
     pl = Plotter()
     pl.open_trial(enf2c3d(tagged_trials[0]))
-    pl.layout = cfg.layouts.musclelen
+    pl.layout = cfg.layouts.overlay_lb_kin
 
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
 

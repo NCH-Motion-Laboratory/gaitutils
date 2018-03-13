@@ -30,7 +30,7 @@ from gaitutils import nexus_kinallplot
 from gaitutils import nexus_tardieu
 from gaitutils import nexus_copy_trial_videos
 from gaitutils import nexus_trials_velocity
-from gaitutils import nexus_make_all_plots
+from gaitutils import nexus_make_pdf_report
 from gaitutils import nexus_kin_average
 from gaitutils import nexus_automark_trial
 
@@ -381,7 +381,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if dlg.exec_():
             self._hetu = dlg.hetu
             self._fullname = dlg.fullname
-            self._execute(nexus_make_all_plots.do_plot, thread=True,
+            self._execute(nexus_make_pdf_report.do_plot, thread=True,
                           fullname=dlg.fullname, hetu=dlg.hetu,
                           pages=dlg.pages)
 

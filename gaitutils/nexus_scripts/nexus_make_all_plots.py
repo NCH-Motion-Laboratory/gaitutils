@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Sep 03 14:54:34 2015
 
-Script to create / update all plots for the tagged trials.
-
-This is specific to the Helsinki gait lab.
-
+Script to create the full pdf gait report.
+Note: specific to the Helsinki gait lab.
 
 
 @author: Jussi (jnu@iki.fi)
@@ -32,6 +29,7 @@ from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
 logger = logging.getLogger(__name__)
 
 sort_field = 'NOTES'  # sort trials by the given Eclipse key
+page_size = (11.69, 8.27)  # report page size
 
 
 def _add_footer(fig, txt):
@@ -40,6 +38,16 @@ def _add_footer(fig, txt):
 
 def _add_header(fig, txt):
     fig.text(0, 1, txt, fontsize=8, color='black', ha='left', va='top')
+
+
+def _savefig(pdf, fig, header=None, footer=None):
+    """add header/footer into page and save as A4"""
+    if header is not None:
+        _add_header(fig, header)
+    if footer is not None:
+        _add_footer(fig, footer)
+    fig.set_size_inches(page_size[0], page_size[1])
+    pdf.savefig(fig)
 
 
 def do_plot(fullname=None, hetu=None, pages=None):
@@ -54,12 +62,11 @@ def do_plot(fullname=None, hetu=None, pages=None):
         if not any(pages.values()):
             raise Exception('No pages to print')
 
-    # collect Figure instances for creation of multipage PDF
     trial_figs = []
     eclipse_tags = dict()
+    do_emg_consistency = False
 
     tagged_trials = find_tagged()
-
     # use creation date of 1st tagged trial as session timestamp
     session_t = datetime.datetime.fromtimestamp(op.getctime(tagged_trials[0]))
     logger.debug('session timestamp: %s', session_t)
@@ -69,7 +76,34 @@ def do_plot(fullname=None, hetu=None, pages=None):
     else:
         age = numutils.age_from_hetu(hetu, session_t)
 
-    do_emg_consistency = False
+    sessionpath = get_sessionpath()
+    session = op.split(sessionpath)[-1]
+    session_root = op.split(sessionpath)[0]
+    patient_code = op.split(session_root)[1]
+    pdfname = session + '.pdf'
+    pdf_all = op.join(sessionpath, pdfname)
+
+    # make header page
+    timestr = time.strftime('%d.%m.%Y')
+    fig_hdr = plt.figure()
+    ax = plt.subplot(111)
+    plt.axis('off')
+    title_txt = 'HUS Liikelaboratorio\n'
+    title_txt += u'Kävelyanalyysin tulokset\n'
+    title_txt += '\n'
+    title_txt += u'Nimi: %s\n' % fullname
+    title_txt += u'Henkilötunnus: %s\n' % hetu
+    title_txt += u'Mittaus: %s\n' % session
+    title_txt += u'Mittauksen pvm: %s\n' % session_t.strftime('%d.%m.%Y')
+    title_txt += u'Raportin pvm: %s\n' % timestr
+    title_txt += u'Liikelaboratorion potilaskoodi: %s\n' % patient_code
+    ax.text(.5, .8, title_txt, ha='center', va='center', weight='bold',
+            fontsize=14)
+
+    header = u'Nimi: %s Henkilötunnus: %s' % (fullname, hetu)
+    musclelen_ndata = normaldata.normaldata_age(age)
+    footer_musclelen = (u' Normaalidata: %s' % musclelen_ndata if
+                        musclelen_ndata else u'')
 
     pl = Plotter()
 
@@ -163,56 +197,21 @@ def do_plot(fullname=None, hetu=None, pages=None):
     else:
         figs_averages = list()
 
-    sessionpath = get_sessionpath()
-    session = op.split(sessionpath)[-1]
-    session_root = op.split(sessionpath)[0]
-    patient_code = op.split(session_root)[1]
-    pdfname = session + '.pdf'
-    pdf_all = op.join(sessionpath, pdfname)
-
-    # make header page
-    timestr = time.strftime('%d.%m.%Y')
-    fig_hdr = plt.figure()
-    ax = plt.subplot(111)
-    plt.axis('off')
-    txt = 'HUS Liikelaboratorio\n'
-    txt += u'Kävelyanalyysin tulokset\n'
-    txt += '\n'
-    txt += u'Nimi: %s\n' % fullname
-    txt += u'Henkilötunnus: %s\n' % hetu
-    txt += u'Mittaus: %s\n' % session
-    txt += u'Mittauksen pvm: %s\n' % session_t.strftime('%d.%m.%Y')
-    txt += u'Raportin pvm: %s\n' % timestr
-    txt += u'Liikelaboratorion potilaskoodi: %s\n' % patient_code
-    ax.text(.5, .8, txt, ha='center', va='center', weight='bold', fontsize=14)
-
-    header = u'Nimi: %s Henkilötunnus: %s' % (fullname, hetu)
-    musclelen_ndata = normaldata.normaldata_age(age)
-    footer_musclelen = (u' Normaalidata: %s' % musclelen_ndata if
-                        musclelen_ndata else u'')
-
     logger.debug('creating multipage pdf %s' % pdf_all)
     with PdfPages(pdf_all) as pdf:
-        pdf.savefig(fig_hdr)
+        _savefig(pdf, fig_hdr)
         if fig_vel is not None:
-            _add_header(fig_vel, header)
-            pdf.savefig(fig_vel)
+            _savefig(pdf, fig_vel, header)
         if fig_kin_cons is not None:
-            _add_header(fig_kin_cons, header)
-            pdf.savefig(fig_kin_cons)
+            _savefig(pdf, fig_kin_cons, header)
         if fig_musclelen_cons is not None:
-            _add_header(fig_musclelen_cons, header)
-            _add_footer(fig_musclelen_cons, footer_musclelen)
-            pdf.savefig(fig_musclelen_cons)
+            _savefig(pdf, fig_musclelen_cons, header, footer_musclelen)
         if fig_emg_cons is not None:
-            _add_header(fig_emg_cons, header)
-            pdf.savefig(fig_emg_cons)
+            _savefig(pdf, fig_emg_cons, header)
         for fig in figs_averages:
-            _add_header(fig, header)
-            pdf.savefig(fig)
+            _savefig(pdf, fig, header)
         for fig in trial_figs:
-            _add_header(fig, header)
-            pdf.savefig(fig)
+            _savefig(pdf, fig, header)
 
     # close all created figures, otherwise they'll pop up on next show() call
     plt.close('all')

@@ -34,7 +34,8 @@ def is_c3dfile(obj):
 
 def _get_c3d_metadata_field(acq, field, subfield):
     """Get c3d metadata FIELD:SUBFIELD. Returns btk.btkMetaDataInfo
-    proxy object that needs to be cast to the correct Python type"""
+    proxy object that needs to be cast to the correct Python type
+    FIXME: crashes on non existent FIELD/SUBFIELD"""
     meta = acq.GetMetaData()
 
     def _get_child(field, child):

@@ -30,13 +30,15 @@ def check_hetu(hetu):
     return True
 
 
-def age_from_hetu(hetu):
-    """ Return current age from hetu. """
+def age_from_hetu(hetu, d1=None):
+    """ Return age at date d1 (datetime.date object) from hetu. If d1 is None,
+    it is taken from current system time. """
     if not check_hetu(hetu):
         raise ValueError('Invalid hetu')
+    if d1 is None:
+        d1 = datetime.date.today()
     day, month, yr = int(hetu[:2]), int(hetu[2:4]), int(hetu[4:6])
     yr += {'+': 1800, '-': 1900, 'A': 2000}[hetu[6]]
-    d1 = datetime.date.today()
     d0 = datetime.date(yr, month, day)
     return d1.year - d0.year - ((d1.month, d1.day) < (d0.month, d0.day))
 

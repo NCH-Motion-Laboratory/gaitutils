@@ -12,6 +12,7 @@ This is specific to the Helsinki gait lab.
 """
 
 import time
+import datetime
 import logging
 import os.path as op
 import matplotlib.pyplot as plt
@@ -47,9 +48,6 @@ def do_plot(fullname=None, hetu=None, pages=None):
         fullname = ''
     if hetu is None:
         hetu = ''
-        age = None
-    else:
-        age = numutils.age_from_hetu(hetu)
     if pages is None:
         pages = defaultdict(lambda: True)
     else:
@@ -61,6 +59,16 @@ def do_plot(fullname=None, hetu=None, pages=None):
     eclipse_tags = dict()
 
     tagged_trials = find_tagged()
+
+    # use creation date of 1st tagged trial as session timestamp
+    session_t = datetime.datetime.fromtimestamp(op.getctime(tagged_trials[0]))
+    logger.debug('session timestamp: %s', session_t)
+    # compute subject age at time of session
+    if hetu is None:
+        age = None
+    else:
+        age = numutils.age_from_hetu(hetu, session_t)
+
     do_emg_consistency = False
 
     pl = Plotter()

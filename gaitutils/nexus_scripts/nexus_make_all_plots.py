@@ -171,7 +171,7 @@ def do_plot(fullname=None, hetu=None, pages=None):
     pdf_all = op.join(sessionpath, pdfname)
 
     # make header page
-    timestr = time.strftime("%d.%m.%Y")
+    timestr = time.strftime('%d.%m.%Y')
     fig_hdr = plt.figure()
     ax = plt.subplot(111)
     plt.axis('off')
@@ -181,7 +181,8 @@ def do_plot(fullname=None, hetu=None, pages=None):
     txt += u'Nimi: %s\n' % fullname
     txt += u'Henkilötunnus: %s\n' % hetu
     txt += u'Mittaus: %s\n' % session
-    txt += u'Raportti laadittu: %s\n' % timestr
+    txt += u'Mittauksen pvm: %s\n' % session_t.strftime('%d.%m.%Y')
+    txt += u'Raportin pvm: %s\n' % timestr
     txt += u'Liikelaboratorion potilaskoodi: %s\n' % patient_code
     ax.text(.5, .8, txt, ha='center', va='center', weight='bold', fontsize=14)
 

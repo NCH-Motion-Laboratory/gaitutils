@@ -20,7 +20,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from collections import defaultdict
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
-                       numutils)
+                       numutils, normaldata)
 from gaitutils.nexus import enf2c3d, get_sessionpath, get_trialname
 import nexus_kin_consistency
 import nexus_emg_consistency
@@ -186,6 +186,9 @@ def do_plot(fullname=None, hetu=None, pages=None):
     ax.text(.5, .8, txt, ha='center', va='center', weight='bold', fontsize=14)
 
     header = u'Nimi: %s Henkilötunnus: %s' % (fullname, hetu)
+    musclelen_ndata = normaldata.normaldata_age(age)
+    footer_musclelen = (u' Normaalidata: %s' % musclelen_ndata if
+                        musclelen_ndata else u'')
 
     logger.debug('creating multipage pdf %s' % pdf_all)
     with PdfPages(pdf_all) as pdf:
@@ -198,6 +201,7 @@ def do_plot(fullname=None, hetu=None, pages=None):
             pdf.savefig(fig_kin_cons)
         if fig_musclelen_cons is not None:
             _add_header(fig_musclelen_cons, header)
+            _add_footer(fig_musclelen_cons, footer_musclelen)
             pdf.savefig(fig_musclelen_cons)
         if fig_emg_cons is not None:
             _add_header(fig_emg_cons, header)

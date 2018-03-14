@@ -11,7 +11,7 @@ import os.path as op
 import matplotlib.pyplot as plt
 import numpy as np
 
-from gaitutils import c3d, nexus, register_gui_exception_handler
+from gaitutils import c3d, nexus, register_gui_exception_handler, trial
 from gaitutils.eclipse import get_eclipse_keys
 from gaitutils.nexus import enf2c3d
 from gaitutils.plot import time_dist_barchart, save_pdf
@@ -26,20 +26,28 @@ def do_plot(search=None, show=True, make_pdf=True):
     sessiondir = op.split(sessionpath)[-1]
 
     tagged_trials = find_tagged(search)
-    an = list()
+    ans = list()
     for enffile in tagged_trials:
         c3dfile = enf2c3d(enffile)
-        an.append(c3d.get_analysis(c3dfile, condition='average'))
+        an = c3d.get_analysis(c3dfile, condition='average')
+        # compute and inject the step width
+        # XXX: this uses first cycle only
+        sw = trial._step_width(c3dfile)
+        an['average']['Step Width'] = dict()
+        an['average']['Step Width']['Right'] = sw['R'][0]
+        an['average']['Step Width']['Left'] = sw['L'][0]
+        an['average']['Step Width']['unit'] = 'mm'
+        ans.append(an)
 
-    if len(an) > 1:  # average of multiple trials
-        an_avg = c3d.group_analysis(an)
-        an_std = c3d.group_analysis(an, fun=np.std)
+    if len(ans) > 1:  # average of multiple trials
+        an_avg = c3d.group_analysis(ans)
+        an_std = c3d.group_analysis(ans, fun=np.std)
         fig = time_dist_barchart(an_avg, an_std)
         fig.suptitle('Time-distance variables, session %s'
                      ' (average of %d trials)' % (sessiondir,
                                                   len(tagged_trials)))
     else:  # single trial
-        fig = time_dist_barchart(an[0])
+        fig = time_dist_barchart(ans[0])
         edi = get_eclipse_keys(enffile)
         notes = edi['NOTES']
         fn_ = op.split(c3dfile)[-1]

@@ -277,12 +277,13 @@ class Trial(object):
                                 trial=self, index=k+1, name=name)
 
 
-def _step_width(trial):
+def _step_width(source):
     """ Compute step width over trial cycles. See:
     https://www.vicon.com/faqs/software/how-does-nexus-plug-in-gait-and-polygon-calculate-gait-cycle-parameters-spatial-and-temporal
     Returns context keyed dict of lists.
     XXX: look at z coord diff btw ipsi / contralateral sides at foot strike?
     """
+    trial = Trial(source)
     sw = dict()
     mkr = 'HEE'  # marker name without context
     mdata = trial.marker_data

@@ -43,7 +43,7 @@ def do_plot(search=None, show=True, make_pdf=True):
         edi = get_eclipse_keys(enffile)
         notes = edi['NOTES']
         fn_ = op.split(c3dfile)[-1]
-        fig.suptitle('%s (%s)' % (fn_, notes))
+        fig.suptitle('Time-distance variables, %s (%s)' % (fn_, notes))
 
     if show:
         plt.show()

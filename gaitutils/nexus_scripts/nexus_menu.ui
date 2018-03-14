@@ -246,6 +246,13 @@
         </property>
        </spacer>
       </item>
+      <item row="6" column="6">
+       <widget class="QPushButton" name="btnTimeDistAverage">
+        <property name="text">
+         <string>Time-distance average</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>

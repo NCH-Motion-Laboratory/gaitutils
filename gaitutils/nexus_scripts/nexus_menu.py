@@ -33,6 +33,7 @@ from gaitutils import nexus_trials_velocity
 from gaitutils import nexus_make_pdf_report
 from gaitutils import nexus_kin_average
 from gaitutils import nexus_automark_trial
+from gaitutils import nexus_time_distance_vars
 
 
 try:
@@ -327,6 +328,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   nexus_musclelen_consistency.do_plot)
         self._button_connect_task(self.btnKinAverage,
                                   nexus_kin_average.do_plot)
+        self._button_connect_task(self.btnTimeDistAverage,
+                                  nexus_time_distance_vars.do_plot)
         self._button_connect_task(self.btnAutoprocTrial,
                                   nexus_autoprocess_trial.autoproc_single,
                                   thread=True)

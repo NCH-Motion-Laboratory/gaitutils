@@ -3,6 +3,8 @@
 
 c3d reader functions
 
+FIXME: all methods should not open new acq objects?
+
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -33,17 +35,22 @@ def is_c3dfile(obj):
 
 
 def _get_c3d_metadata_field(acq, field, subfield):
-    """Get c3d metadata FIELD:SUBFIELD. Returns btk.btkMetaDataInfo
-    proxy object that needs to be cast to the correct Python type
+    """Get c3d metadata FIELD:SUBFIELD as Python type.
+    Always returns a list - pick [0] if scalar
     FIXME: crash on nonexistent field
-    
     """
     meta = acq.GetMetaData()
 
     def _get_child(field, child):
         return field.FindChild(child).value()
 
-    return _get_child(_get_child(meta, field), subfield).GetInfo()
+    info = _get_child(_get_child(meta, field), subfield).GetInfo()
+    if info.GetFormatAsString() == 'Char':
+        return [s.strip() for s in info.ToString()]
+    elif info.GetFormatAsString() == 'Real':
+        return [x for x in info.ToDouble()]
+    else:
+        raise ValueError('Unhandled btk meta info type')
 
 
 def _get_c3dacq(c3dfile):
@@ -61,18 +68,11 @@ def get_analysis(c3dfile, condition='unknown'):
     """Get analysis values from c3d (e.g. gait parameters). Returns a dict
     keyed by var and context. First key can optionally be a condition label"""
 
-    def _strip_all(iterable):
-        """Strip all strings in iterable of strings"""
-        return (it.strip() for it in iterable)
-
     acq = _get_c3dacq(c3dfile)
-    vars = _strip_all(_get_c3d_metadata_field(acq, 'ANALYSIS',
-                                              'NAMES').ToString())
-    units = _strip_all(_get_c3d_metadata_field(acq, 'ANALYSIS',
-                                               'UNITS').ToString())
-    contexts = _strip_all(_get_c3d_metadata_field(acq, 'ANALYSIS',
-                                                  'CONTEXTS').ToString())
-    vals = _get_c3d_metadata_field(acq, 'ANALYSIS', 'VALUES').ToDouble()
+    vars = _get_c3d_metadata_field(acq, 'ANALYSIS', 'NAMES')
+    units = _get_c3d_metadata_field(acq, 'ANALYSIS', 'UNITS')
+    contexts = _get_c3d_metadata_field(acq, 'ANALYSIS', 'CONTEXTS')
+    vals = _get_c3d_metadata_field(acq, 'ANALYSIS', 'VALUES')
 
     # build a nice output dict
     di = dict()
@@ -173,6 +173,11 @@ def get_metadata(c3dfile):
     for plate in btk.Iterate(fpe.GetOutput()):
         n_forceplates += 1
 
+    # get markers
+    markers = _get_c3d_metadata_field(acq, 'POINT', 'LABELS')
+    # not sure what the '*xx' markers are, but delete them for now
+    markers = [m for m in markers if m[0] != '*']
+
     #  get events
     rstrikes, lstrikes, rtoeoffs, ltoeoffs = [], [], [], []
     for i in btk.Iterate(acq.GetEvents()):
@@ -192,20 +197,19 @@ def get_metadata(c3dfile):
                 raise GaitDataError("Unknown context on foot strike event")
 
     # get subject info
-    name = _get_c3d_metadata_field(acq,
-                                   'SUBJECTS', 'NAMES').ToString()[0].strip()
-    bodymass = _get_c3d_metadata_field(acq,
-                                       'PROCESSING', 'Bodymass').ToDouble()[0]
+    name = _get_c3d_metadata_field(acq, 'SUBJECTS', 'NAMES')[0]
+    bodymass = _get_c3d_metadata_field(acq, 'PROCESSING', 'Bodymass')[0]
 
     # sort events (may be in wrong temporal order, at least in c3d files)
     for li in [lstrikes, rstrikes, ltoeoffs, rtoeoffs]:
         li.sort()
+
     return {'trialname': trialname, 'sessionpath': sessionpath,
             'offset': offset, 'framerate': framerate, 'analograte': analograte,
             'name': name, 'bodymass': bodymass, 'lstrikes': lstrikes,
             'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs,
             'length': length, 'samplesperframe': samplesperframe,
-            'n_forceplates': n_forceplates}
+            'n_forceplates': n_forceplates, 'markers': markers}
 
 
 def get_model_data(c3dfile, model):

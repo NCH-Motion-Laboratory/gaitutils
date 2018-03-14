@@ -211,10 +211,10 @@ def get_metadata(vicon):
     check_nexus()
     logger.debug('reading metadata from Vicon Nexus')
     name = get_subjectnames()
-    Bodymass = vicon.GetSubjectParam(name, 'Bodymass')
+    bodymass = vicon.GetSubjectParam(name, 'Bodymass')
     # for unknown reasons, above method may return tuple or float
     # depending on whether script is run from Nexus or outside
-    if type(Bodymass) == tuple:
+    if type(bodymass) == tuple:
         bodymass = vicon.GetSubjectParam(name, 'Bodymass')[0]
     else:  # hopefully float
         bodymass = vicon.GetSubjectParam(name, 'Bodymass')
@@ -226,7 +226,8 @@ def get_metadata(vicon):
     trialname = trialname_[1]
     if not trialname:
         raise GaitDataError('No trial loaded in Nexus')
-    # Get events - GetEvents() indices seem to often be 1 frame less than on
+    markers = vicon.GetMarkerNames(name)
+    # get events - GetEvents() indices seem to often be 1 frame less than on
     # Nexus display - only happens with ROI?
     lstrikes = vicon.GetEvents(name, "Left", "Foot Strike")[0]
     rstrikes = vicon.GetEvents(name, "Right", "Foot Strike")[0]
@@ -247,8 +248,8 @@ def get_metadata(vicon):
         devid = devids[0]
         _, _, analograte, _, _, _ = vicon.GetDeviceDetails(devid)
     samplesperframe = analograte / framerate
-    logger.debug('offset @ %d, %d frames, framerate %d Hz, %d samples per frame' %
-                 (offset, length, framerate, samplesperframe))
+    logger.debug('offset @ %d, %d frames, framerate %d Hz, %d samples per '
+                 'frame' % (offset, length, framerate, samplesperframe))
     # get n of forceplates
     fp_devids = [id for id in devids if
                  vicon.GetDeviceDetails(id)[1].lower() == 'forceplate']
@@ -256,12 +257,13 @@ def get_metadata(vicon):
     # sort events (may be in wrong temporal order, at least in c3d files)
     for li in [lstrikes, rstrikes, ltoeoffs, rtoeoffs]:
         li.sort()
+
     return {'trialname': trialname, 'sessionpath': sessionpath,
             'offset': offset, 'framerate': framerate, 'analograte': analograte,
             'name': name, 'bodymass': bodymass, 'lstrikes': lstrikes,
             'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs,
             'length': length, 'samplesperframe': samplesperframe,
-            'n_forceplates': len(fp_devids)}
+            'n_forceplates': len(fp_devids), 'markers': markers}
 
 
 def get_emg_data(vicon):

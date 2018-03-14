@@ -93,8 +93,7 @@ class Trial(object):
     -gait cycles
     -analog data (EMG, forceplate, etc.)
     -model output variables (Plug-in Gait, muscle length, etc.)
-    TODO:
-    -lazy reads should check whether underlying trial has changed
+    FIXME: lazy reads should check whether underlying trial has changed
     (at least for Nexus)
     """
 
@@ -131,9 +130,10 @@ class Trial(object):
         else:
             logger.debug('no .enf file found')
             self.eclipse_data = defaultdict(lambda: '', {})
-        # analog and model data are lazily read
+        # data are lazily read
         self.emg = EMG(self.source)
         self._forceplate_data = None
+        self._marker_data = None
         self.fp_events = self._get_fp_events()
         self._models_data = dict()
         self.stddev_data = None  # AvgTrial only
@@ -152,7 +152,9 @@ class Trial(object):
 
     def __getitem__(self, item):
         """ Get model variable or EMG channel by indexing, normalized
-        according to normalization cycle. Does not check for duplicate names.
+        according to normalization cycle.
+        FIXME: risk of duplicate names is getting too high, need to change to
+        dedicated getters or include variable type in name (e.g. EMG:LHam)
         """
         try:
             t = self.t
@@ -172,6 +174,13 @@ class Trial(object):
         if not self._forceplate_data:
             self._forceplate_data = read_data.get_forceplate_data(self.source)
         return self._forceplate_data
+
+    @property
+    def marker_data(self):
+        if not self._marker_data:
+            self._marker_data = read_data.get_marker_data(self.source,
+                                                          self.markers)
+        return self._marker_data
 
     def _get_fp_events(self):
         """Read the forceplate events or set to empty"""

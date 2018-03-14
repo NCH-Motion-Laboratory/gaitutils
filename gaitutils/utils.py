@@ -17,6 +17,53 @@ from .config import cfg
 logger = logging.getLogger(__name__)
 
 
+def compute_time_dist(trial):
+    """ Compute time-distance variables from data. At present computes only
+    step width (which is presently unimplemented in Nexus). SEE:
+    https://www.vicon.com/faqs/software/how-does-nexus-plug-in-gait-and-polygon-calculate-gait-cycle-parameters-spatial-and-temporal
+
+All distance and speed measurements use a reference marker on each foot, by default the LTOE/RTOE markers,
+but this can be changed in the preferences. The marker's position is evaluated in 3D at the time of the events.
+
+Four 3D points are defined:
+
+IP1 is the ipsilateral marker's position at the first ipsilateral foot contact.
+
+IP2 is the ipsilateral marker's position at the second ipsilateral foot contact.
+
+CP is the contralateral marker's position at the contralateral foot contact.
+
+CPP is CP projected onto the IP1 to IP2 vector.
+
+Stride length: is the distance from IP1 to IP2.
+
+Step length: is the distance from CPP to IP2.
+
+Step width: is the distance from CP to CPP.
+
+    -need trial object to have strike events etc. ?
+
+    -maybe into stats.py
+
+    -get heel marker pos at foot strike (IP1)
+    -need successive ipsi/contralateral strikes (IP2/CP)
+    -I=IP2-IP1
+    -C=CP-IP1
+    CPP = C proj to I
+    SW = || CPP - C ||
+    """
+    mkr = 'HEE'  # marker name without context
+    mdata = trial.marker_data
+    for context, strikes in zip(['L', 'R'], [self.lstrikes, self.rstrikes]):
+        nstrikes = len(strikes)
+        if nstrikes < 2:
+            continue
+        mname = context + mkr + '_P'
+        ip1 = mdata[mname][strike]
+        
+                
+
+
 def get_crossing_frame(source, marker, dim=1, p0=0):
     """ Return frame(s) where marker position (dimension dim) crosses p0
     (units are as returned by Nexus, usually mm).

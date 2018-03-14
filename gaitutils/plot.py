@@ -86,7 +86,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
     vars = vals_1.keys()
     units = [vals_1[var]['unit'] for var in vars]
     # 3 columns: bar, labels, bar
-    gs = GridSpec(len(vars), 3, width_ratios=[1, 1/3., 1])
+    gs = gridspec.GridSpec(len(vars), 3, width_ratios=[1, 1/3., 1])
 
     # variable names into the center column
     for ind, var in enumerate(vars):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Plot time-distance vars as average of tagged trials
+Plot time-distance vars from single trial or as average of tagged trials
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -35,8 +35,9 @@ def do_plot(search=None, show=True, make_pdf=True):
         an_avg = c3d.group_analysis(an)
         an_std = c3d.group_analysis(an, fun=np.std)
         fig = time_dist_barchart(an_avg, an_std)
-        fig.suptitle('Average of %d trials, session %s' % (len(tagged_trials),
-                                                           sessiondir))
+        fig.suptitle('Time-distance variables, session %s'
+                     ' (average of %d trials)' % (sessiondir,
+                                                  len(tagged_trials)))
     else:  # single trial
         fig = time_dist_barchart(an[0])
         edi = get_eclipse_keys(enffile)
@@ -49,6 +50,8 @@ def do_plot(search=None, show=True, make_pdf=True):
 
     if make_pdf:
         save_pdf(op.join(sessionpath, 'time_dist.pdf'), fig)
+
+    return fig
 
 
 if __name__ == '__main__':

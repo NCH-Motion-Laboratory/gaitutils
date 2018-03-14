@@ -34,6 +34,7 @@ setup(name='gaitutils',
                'gaitutils/nexus_scripts/nexus_trials_velocity.py',
                'gaitutils/nexus_scripts/nexus_make_pdf_report.py',
                'gaitutils/nexus_scripts/nexus_kin_average.py',
+               'gaitutils/nexus_scripts/nexus_time_distance_vars.py',
                'gaitutils/nexus_scripts/plotter_gui.py'],
       include_package_data=True,
       )

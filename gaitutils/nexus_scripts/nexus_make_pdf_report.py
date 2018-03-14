@@ -24,6 +24,7 @@ import nexus_emg_consistency
 import nexus_musclelen_consistency
 import nexus_kin_average
 import nexus_trials_velocity
+import nexus_time_distance_vars
 from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
 
 logger = logging.getLogger(__name__)
@@ -42,6 +43,8 @@ def _add_header(fig, txt):
 
 def _savefig(pdf, fig, header=None, footer=None):
     """add header/footer into page and save as A4"""
+    if fig is None:
+        return
     if header is not None:
         _add_header(fig, header)
     if footer is not None:
@@ -172,6 +175,13 @@ def do_plot(fullname=None, hetu=None, pages=None):
     else:
         fig_vel = None
 
+    # time-distance average
+    if pages['TimeDistAverage']:
+        fig_timedist_avg = nexus_time_distance_vars.do_plot(show=False,
+                                                            make_pdf=False)
+    else:
+        fig_timedist_avg = None
+
     # consistency plots
     # write these out separately for inclusion in Polygon report
     if pages['KinCons']:
@@ -193,22 +203,19 @@ def do_plot(fullname=None, hetu=None, pages=None):
 
     # average plots
     if pages['KinAverage']:
-        figs_averages = nexus_kin_average.do_plot(show=False, make_pdf=False)
+        figs_kin_avg = nexus_kin_average.do_plot(show=False, make_pdf=False)
     else:
-        figs_averages = list()
+        figs_kin_avg = list()
 
     logger.debug('creating multipage pdf %s' % pdf_all)
     with PdfPages(pdf_all) as pdf:
         _savefig(pdf, fig_hdr)
-        if fig_vel is not None:
-            _savefig(pdf, fig_vel, header)
-        if fig_kin_cons is not None:
-            _savefig(pdf, fig_kin_cons, header)
-        if fig_musclelen_cons is not None:
-            _savefig(pdf, fig_musclelen_cons, header, footer_musclelen)
-        if fig_emg_cons is not None:
-            _savefig(pdf, fig_emg_cons, header)
-        for fig in figs_averages:
+        _savefig(pdf, fig_vel, header)
+        _savefig(pdf, fig_timedist_avg, header)
+        _savefig(pdf, fig_kin_cons, header)
+        _savefig(pdf, fig_musclelen_cons, header, footer_musclelen)
+        _savefig(pdf, fig_emg_cons, header)
+        for fig in figs_kin_avg:
             _savefig(pdf, fig, header)
         for fig in trial_figs:
             _savefig(pdf, fig, header)

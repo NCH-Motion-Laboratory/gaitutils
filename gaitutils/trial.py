@@ -36,15 +36,14 @@ def nexus_trial():
 
 class Gaitcycle(object):
     """" Holds information about one gait cycle """
-    def __init__(self, start, end, offset, toeoff, context,
+    def __init__(self, start, end, toeoff, context,
                  on_forceplate, smp_per_frame, trial=None, name=None,
                  index=None):
-        self.offset = offset
         self.len = end - start
         # convert frame indices to 0-based
-        self.start = start - offset
-        self.end = end - offset
-        self.toeoff = toeoff - offset
+        self.start = start
+        self.end = end
+        self.toeoff = toeoff
         # which foot begins and ends the cycle
         self.context = context
         # whether cycle begins with forceplate strike
@@ -67,7 +66,6 @@ class Gaitcycle(object):
 
     def __repr__(self):
         s = '<Gaitcycle |'
-        s += ' offset: %d,' % self.offset
         s += ' start: %d,' % self.start
         s += ' end: %d,' % self.end
         s += ' context: %s,' % self.context
@@ -112,13 +110,14 @@ class Trial(object):
         # read metadata into instance attributes
         meta = read_data.get_metadata(source)
         self.__dict__.update(meta)
-        # events may be in wrong temporal order, at least in c3d files
-        for li in [self.lstrikes, self.rstrikes, self.ltoeoffs,
-                   self.rtoeoffs]:
-            li.sort()
+
+        # sort events and make them 0-based so that indexing matches frame data
+        self.lstrikes = [e - self.offset for e in sorted(self.lstrikes)]
+        self.rstrikes = [e - self.offset for e in sorted(self.rstrikes)]
+        self.ltoeoffs = [e - self.offset for e in sorted(self.ltoeoffs)]
+        self.rtoeoffs = [e - self.offset for e in sorted(self.rtoeoffs)]
 
         self.sessiondir = op.split(self.sessionpath)[-1]
-
         # TODO: sometimes trial .enf name seems to be different?
         enfpath = op.join(self.sessionpath, self.trialname + '.Trial.enf')
 
@@ -256,12 +255,11 @@ class Trial(object):
                 if fp_strikes.size == 0:
                     on_forceplate = False
                 else:
-                    # offset is needed since events are not 0-offset here
-                    diffs = np.abs(fp_strikes - start + self.offset)
+                    diffs = np.abs(fp_strikes - start)
                     on_forceplate = min(diffs) <= STRIKE_TOL
                     logger.debug('side %s: cycle start: %d, '
                                  'detected fp events: %s'
-                                 % (context, start - self.offset, fp_strikes))
+                                 % (context, start, fp_strikes))
                 end = strikes[k+1]
                 toeoff = [x for x in toeoffs if x > start and x < end]
                 if len(toeoff) == 0:
@@ -274,6 +272,6 @@ class Trial(object):
                     toeoff = toeoff[0]
                 fp_str = '(on forceplate)' if on_forceplate else ''
                 name = '%s %d %s' % (sidestrs[context], (k+1), fp_str)
-                yield Gaitcycle(start, end, self.offset, toeoff, context,
+                yield Gaitcycle(start, end, toeoff, context,
                                 on_forceplate, self.samplesperframe,
                                 trial=self, index=k+1, name=name)

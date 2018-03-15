@@ -285,7 +285,7 @@ def _step_width(source):
     """
     trial = Trial(source)
     sw = dict()
-    mkr = 'HEE'  # marker name without context
+    mkr = 'TOE'  # marker name without context
     mdata = trial.marker_data
     for context, strikes in zip(['L', 'R'], [trial.lstrikes, trial.rstrikes]):
         sw[context] = list()

@@ -31,11 +31,11 @@ def do_plot(search=None, show=True, make_pdf=True):
         c3dfile = enf2c3d(enffile)
         an = c3d.get_analysis(c3dfile, condition='average')
         # compute and inject the step width
-        # XXX: this uses first cycle only
         sw = trial._step_width(c3dfile)
         an['average']['Step Width'] = dict()
-        an['average']['Step Width']['Right'] = sw['R'][0]
-        an['average']['Step Width']['Left'] = sw['L'][0]
+        # uses avg of all cycles from trial
+        an['average']['Step Width']['Right'] = np.array(sw['R']).mean()
+        an['average']['Step Width']['Left'] = np.array(sw['L']).mean()
         an['average']['Step Width']['unit'] = 'mm'
         ans.append(an)
 

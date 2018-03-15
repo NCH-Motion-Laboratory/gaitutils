@@ -280,44 +280,45 @@ class TardieuWindow(QtWidgets.QMainWindow):
             add figlegend w/marker colors and annotations
             add separate page with zoomed plot (around fast movement)
             fix line thickness on printed plot
-            crash on permission denied
         """
         fn_pdf = self._tardieu_plot.trial.trialname + '.pdf'
-        fout = QtWidgets.QFileDialog.getSaveFileName(self, 'Save plot', fn_pdf,
-                                                     u'PDF files (*pdf)')[0]
-        if not fout:
+        fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save plot',
+                                                      fn_pdf,
+                                                      u'PDF files (*pdf)')[0]
+        if not fname:
             return
-        with PdfPages(fout) as pdf:
-            # create header page
-            #timestr = time.strftime("%d.%m.%Y")
-            fig_hdr = Figure()
-            FigureCanvas(fig_hdr)
-            ax = fig_hdr.add_subplot(111)
-            ax.set_axis_off()
-            txt = self._tardieu_plot.status_text
-            txt += self._tardieu_plot.marker_status_text
-            ax.text(.5, .8, txt, ha='center', va='center', weight='bold',
-                    fontsize=10)
-            pdf.savefig(fig_hdr)
-            figx = self._tardieu_plot.plot_data(interactive=False)
-            newcanvas = FigureCanvas(figx)
-            # render markers separately
-            axes = figx.get_axes()
-            self._tardieu_plot.markers.plot_on_axes(axes)
-            pdf.savefig(figx)
-            # zoomed version
-            fast_rng = self._tardieu_plot._get_fast_movement()
-            for ax in axes:
-                #ax.set_xlim(fast_rng[0], fast_rng[1])
-                logger.debug(ax)
-            for ax in self._tardieu_plot.data_axes:
-                logger.debug(ax)
-            logger.debug(self.canvas.figure)
-            logger.debug(newcanvas.figure)            
-                
-                
-            pdf.savefig(figx)                
-
+        try:
+            with PdfPages(fname) as pdf:
+                # create header page
+                #timestr = time.strftime("%d.%m.%Y")
+                fig_hdr = Figure()
+                FigureCanvas(fig_hdr)
+                ax = fig_hdr.add_subplot(111)
+                ax.set_axis_off()
+                txt = self._tardieu_plot.status_text
+                txt += self._tardieu_plot.marker_status_text
+                ax.text(.5, .8, txt, ha='center', va='center', weight='bold',
+                        fontsize=10)
+                pdf.savefig(fig_hdr)
+                figx = self._tardieu_plot.plot_data(interactive=False)
+                newcanvas = FigureCanvas(figx)
+                # render markers separately
+                axes = figx.get_axes()
+                self._tardieu_plot.markers.plot_on_axes(axes)
+                pdf.savefig(figx)
+                # zoomed version
+                fast_rng = self._tardieu_plot._get_fast_movement()
+                for ax in axes:
+                    #ax.set_xlim(fast_rng[0], fast_rng[1])
+                    logger.debug(ax)
+                for ax in self._tardieu_plot.data_axes:
+                    logger.debug(ax)
+                logger.debug(self.canvas.figure)
+                logger.debug(newcanvas.figure)
+                pdf.savefig(figx)
+        except IOError:
+            raise IOError('Error writing %s, '
+                          'check that file is not already open.' % fname)
 
     def _update_status(self):
         """Update the status text"""

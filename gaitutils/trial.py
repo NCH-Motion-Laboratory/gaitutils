@@ -281,7 +281,7 @@ def _step_width(source):
     """ Compute step width over trial cycles. See:
     https://www.vicon.com/faqs/software/how-does-nexus-plug-in-gait-and-polygon-calculate-gait-cycle-parameters-spatial-and-temporal
     Returns context keyed dict of lists.
-    XXX: look at z coord diff btw ipsi / contralateral sides at foot strike?
+    FIXME: marker name into params?
     """
     trial = Trial(source)
     sw = dict()
@@ -303,9 +303,10 @@ def _step_width(source):
             pos_this = mdata[mname+'_P'][strike]
             pos_next = mdata[mname+'_P'][strikes[j+1]]
             strikes_next_co = [k for k in strikes_co if k > strike]
-            if len(strikes_next_co) == 0:  # no following contralateral strike
+            if len(strikes_next_co) == 0:  # no subsequent contralateral strike
                 break
             pos_next_co = mdata[mname_co+'_P'][strikes_next_co[0]]
+            # vector distance between 'step lines' (see url above)
             V1 = pos_next - pos_this
             V1 = V1 / np.linalg.norm(V1)
             VC = pos_next_co - pos_this

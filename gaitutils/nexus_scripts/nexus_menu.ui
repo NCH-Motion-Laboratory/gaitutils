@@ -233,7 +233,14 @@
         </property>
        </widget>
       </item>
-      <item row="6" column="5">
+      <item row="6" column="6">
+       <widget class="QPushButton" name="btnTimeDistAverage">
+        <property name="text">
+         <string>Time-distance average</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3" colspan="3">
        <spacer name="horizontalSpacer_5">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -245,13 +252,6 @@
          </size>
         </property>
        </spacer>
-      </item>
-      <item row="6" column="6">
-       <widget class="QPushButton" name="btnTimeDistAverage">
-        <property name="text">
-         <string>Time-distance average</string>
-        </property>
-       </widget>
       </item>
      </layout>
     </item>

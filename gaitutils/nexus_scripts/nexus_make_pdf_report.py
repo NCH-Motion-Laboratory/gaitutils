@@ -126,7 +126,6 @@ def do_plot(fullname=None, hetu=None, pages=None):
         side_str = 'right' if side == 'R' else 'left'
 
         # try to figure out whether we have any valid EMG signals
-        # FIXME: refactor into EMG class
         emg_active = any([pl.trial.emg.status_ok(ch) for ch in
                           cfg.emg.channel_labels])
 

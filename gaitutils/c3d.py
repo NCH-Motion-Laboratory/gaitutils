@@ -3,8 +3,6 @@
 
 c3d reader functions
 
-FIXME: all methods should not open new acq objects?
-
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -36,13 +34,14 @@ def is_c3dfile(obj):
 
 def _get_c3d_metadata_field(acq, field, subfield):
     """Get c3d metadata FIELD:SUBFIELD as Python type.
-    Always returns a list - pick [0] if scalar
-    FIXME: crash on nonexistent field
-    """
+    Always returns a list - pick [0] if scalar """
     meta = acq.GetMetaData()
 
     def _get_child(field, child):
-        return field.FindChild(child).value()
+        try:
+            return field.GetChild(child)
+        except RuntimeError:
+            raise ValueError('Invalid c3d metadata field: %s' % child)
 
     info = _get_child(_get_child(meta, field), subfield).GetInfo()
     if info.GetFormatAsString() == 'Char':

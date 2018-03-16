@@ -98,6 +98,8 @@ class EMG(object):
         if passband is None:
             return y
         passbandn = 2 * np.array(passband) / self.sfrate
+        if max(passbandn) > 1:
+            raise ValueError('Lowpass frequency is above Nyquist frequency')
         if passbandn[0] > 0:  # bandpass
             b, a = signal.butter(self.buttord, passbandn, 'bandpass')
         else:  # lowpass

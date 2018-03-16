@@ -5,8 +5,12 @@ matplotlib + Qt5
 
 TODO:
 
-    marker colors
-    figure saving on button
+    filter behaves weirdly when hp is set at 0 Hz
+    filter crash weirdly when lp is set at 1000 Hz
+
+    minor:
+    EMG scale box is not updated when scaling w/ toolbar tool
+    
     add config options?
     add statusbar?
 
@@ -117,7 +121,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.canvas.show()
 
         self.btnClearMarkers.clicked.connect(self._clear_markers)
-        self.btnSaveFig.clicked.connect(self._save_fig)
+        self.btnSaveFig.clicked.connect(self._save_plot)
         self.btnZoomFast.clicked.connect(self._xzoom_to_fast)
         self.btnZoomReset.clicked.connect(self._xzoom_reset)
 
@@ -270,13 +274,8 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self._resp()
         self._set_data_controls(True)
 
-    def _save_fig(self):
-        """Save the plot
-        TODO:
-            add figlegend w/marker colors and annotations
-            add separate page with zoomed plot (around fast movement)
-            fix line thickness on printed plot
-        """
+    def _save_plot(self):
+        """Save a pdf report"""
         fn_pdf = self._tardieu_plot.trial.trialname + '.pdf'
         fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save plot',
                                                       fn_pdf,
@@ -297,7 +296,8 @@ class TardieuWindow(QtWidgets.QMainWindow):
                         fontsize=12)
                 fig_hdr.set_size_inches(page_size[0], page_size[1])
                 pdf.savefig(fig_hdr)
-                figx, data_axes, legend_ax = self._tardieu_plot.plot_data(interactive=False)
+                figx, data_axes, legend_ax = self._tardieu_plot.plot_data(interactive=False,
+                                                                          emg_yscale=self.spEMGYScale.value())
                 FigureCanvas(figx)
                 figx.set_size_inches(page_size[0], page_size[1])
                 # full view
@@ -310,9 +310,9 @@ class TardieuWindow(QtWidgets.QMainWindow):
                     ax.set_xlim(fast_rng[0], fast_rng[1])
                 pdf.savefig(figx)
         except IOError:
-            # FIXME: crash
-            raise IOError('Error writing %s, '
-                          'check that file is not already open.' % fname)
+            qt_message_dialog('Error writing %s, '
+                              'check that file is not already open.' % fname)
+            return
 
     def _update_status(self):
         """Update the status text"""
@@ -515,13 +515,15 @@ class TardieuPlot(object):
         self.angd = 90 - self.ang0_nexus - self.angd + ang0_our
         return True
 
-    def plot_data(self, interactive=True):
+    def plot_data(self, interactive=True, emg_yscale=None):
         """ Plot the data. Can plot either on the main (interactive) display
         or a new mpl Figure() (which will be returned)"""
 
         fig = self.fig if interactive else Figure()
         fig.clear()
         data_axes = list()
+        if interactive:  # save trace objects for later modification by GUI
+            self.emg_traces, self.rms_traces = dict(), dict()
 
         nrows = len(self.emg_chs) + 3
         # add one row for legend if not in interactive mode
@@ -536,10 +538,7 @@ class TardieuPlot(object):
             legend_ax = None
 
         # EMG plots
-        if interactive:  # save trace objects for later modification
-            self.emg_traces, self.rms_traces = dict(), dict()
-
-        ind = 0  # if interactive else 1
+        ind = 0
         for ch in self.emg_chs:
             sharex = None if ind == 0 or not interactive else data_axes[0]
             ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
@@ -554,8 +553,9 @@ class TardieuPlot(object):
                 self.rms_traces[ind] = rmstr_
                 self.emg_axes.append(ax)
 
-            ax.set_ylim([-cfg.plot.emg_yscale*1e3,
-                         cfg.plot.emg_yscale*1e3])
+            ysc = (cfg.plot.emg_yscale if emg_yscale is None
+                   else emg_yscale/1.e3)
+            ax.set_ylim([-ysc*1e3, ysc*1e3])
             ax.set(ylabel='mV')
             ax.set_title(ch)
             ind += 1
@@ -807,7 +807,7 @@ class TardieuPlot(object):
             velr = self.angveld[fmin:fmax]
             velmax = np.nanmax(velr)
             velmaxind = np.nanargmax(velr)/self.trial.framerate + tmin_
-            s += u'Values for shown range:\n'
+            s += u'Values for range shown:\n'
             s += u'Max. dorsiflexion: %.2f° @ %.2f s\n' % (angmax, angmaxind)
             s += u'Max. plantarflexion: %.2f° @ %.2f s\n' % (angmin, angminind)
             s += u'Max velocity: %.2f°/s @ %.2f s\n' % (velmax, velmaxind)

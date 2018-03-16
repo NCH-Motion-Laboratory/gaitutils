@@ -36,10 +36,6 @@ from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
 from gaitutils.numutils import segment_angles, rms
 from gaitutils.guiutils import qt_message_dialog, qt_yesno_dialog
 
-# increase default DPI for figure saving
-# FIXME: config?
-# FIXME: plt not imported
-#plt.rcParams['savefig.dpi'] = 200
 
 matplotlib.style.use(cfg.plot.mpl_style)
 
@@ -297,23 +293,21 @@ class TardieuWindow(QtWidgets.QMainWindow):
                 ax = fig_hdr.add_subplot(111)
                 ax.set_axis_off()
                 txt = self._tardieu_plot.status_text
-                txt += self._tardieu_plot.marker_status_text
                 ax.text(.5, .8, txt, ha='center', va='center', weight='bold',
-                        fontsize=cfg.plot.label_fontsize)
+                        fontsize=12)
                 fig_hdr.set_size_inches(page_size[0], page_size[1])
                 pdf.savefig(fig_hdr)
                 figx, data_axes, legend_ax = self._tardieu_plot.plot_data(interactive=False)
                 FigureCanvas(figx)
-                # need to render markers separately
-                self._tardieu_plot.markers.plot_on_axes(data_axes)
                 figx.set_size_inches(page_size[0], page_size[1])
+                # full view
+                self._tardieu_plot.markers.plot_on_axes(data_axes)
                 self._tardieu_plot.markers.legend(legend_ax)
                 pdf.savefig(figx)
                 # create zoomed version
                 fast_rng = self._tardieu_plot._get_fast_movement()
                 for ax in data_axes:
                     ax.set_xlim(fast_rng[0], fast_rng[1])
-                self._tardieu_plot.markers.legend(legend_ax)
                 pdf.savefig(figx)
         except IOError:
             # FIXME: crash
@@ -412,16 +406,17 @@ class Markers(object):
             for x, m in self._markers.items():
                 ax.axvline(x=x, color=m['color'], linewidth=self.marker_width)
 
-    def legend(self, ax):
+    def legend(self, ax, ncol=2):
         """Create legend"""
         artists = list()
         legtxts = list()
         for mkr, anno, col in self.marker_info:
-            artists.append(matplotlib.lines.Line2D((0, 1), (0, 0), linewidth=1,
+            artists.append(matplotlib.lines.Line2D((0, 1), (0, 0),
+                                                   linewidth=self.marker_width,
                                                    color=col))
             legtxts.append(u'%.3f s: %s' % (mkr, anno))
-        ax.legend(artists, legtxts, loc='upper left', ncol=1,
-                  prop={'size': 10})
+        ax.legend(artists, legtxts, loc='upper left', ncol=ncol,
+                  prop={'size': cfg.plot.label_fontsize})
 
     @property
     def marker_info(self):
@@ -528,14 +523,16 @@ class TardieuPlot(object):
         fig.clear()
         data_axes = list()
 
-        # add one row for legend if not in interactive mode
         nrows = len(self.emg_chs) + 3
-        nrows += 1 if not interactive else 0
-        gs = gridspec.GridSpec(nrows, 1)
+        # add one row for legend if not in interactive mode
         if not interactive:
+            hr = [1] * nrows + [.5]
+            nrows += 1
+            gs = gridspec.GridSpec(nrows, 1, height_ratios=hr)
             legend_ax = fig.add_subplot(gs[-1, 0])
             legend_ax.set_axis_off()
         else:
+            gs = gridspec.GridSpec(nrows, 1)
             legend_ax = None
 
         # EMG plots

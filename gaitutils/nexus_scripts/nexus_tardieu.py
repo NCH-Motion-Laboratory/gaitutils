@@ -274,22 +274,6 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self._resp()
         self._set_data_controls(True)
 
-    def _markers_legend(self, ax):
-        artists = list()
-        legtxts = list()
-        legtitle = [u'Markers:']
-        for mkr, anno, col in self._tardieu_plot.markers.marker_info:
-            artists.append(matplotlib.lines.Line2D((0, 1), (0, 0),
-                                                   linewidth=2,
-                                                   color=col))
-            legtxts.append(anno)
-        nothing = [matplotlib.patches.Rectangle((0, 0), 1, 1, fc="w",
-                                                fill=False,
-                                                edgecolor='none',
-                                                linewidth=0)]
-        ax.legend(nothing+artists, legtitle+legtxts, loc='upper center',
-                   ncol=2, prop={'size': 12})
-
     def _save_fig(self):
         """Save the plot
         TODO:
@@ -315,26 +299,24 @@ class TardieuWindow(QtWidgets.QMainWindow):
                 txt = self._tardieu_plot.status_text
                 txt += self._tardieu_plot.marker_status_text
                 ax.text(.5, .8, txt, ha='center', va='center', weight='bold',
-                        fontsize=10)
+                        fontsize=cfg.plot.label_fontsize)
                 fig_hdr.set_size_inches(page_size[0], page_size[1])
                 pdf.savefig(fig_hdr)
-                figx = self._tardieu_plot.plot_data(interactive=False)
-                newcanvas = FigureCanvas(figx)
+                figx, data_axes, legend_ax = self._tardieu_plot.plot_data(interactive=False)
+                FigureCanvas(figx)
                 # need to render markers separately
-                axes_ = figx.get_axes()
-                axes_[0].set_axis_off()
-                axes = axes_[1:]
-                self._tardieu_plot.markers.plot_on_axes(axes)
+                self._tardieu_plot.markers.plot_on_axes(data_axes)
                 figx.set_size_inches(page_size[0], page_size[1])
-                self._markers_legend(axes_[0])
+                self._tardieu_plot.markers.legend(legend_ax)
                 pdf.savefig(figx)
                 # create zoomed version
                 fast_rng = self._tardieu_plot._get_fast_movement()
-                for ax in axes:
+                for ax in data_axes:
                     ax.set_xlim(fast_rng[0], fast_rng[1])
-                self._markers_legend(axes_[0])
+                self._tardieu_plot.markers.legend(legend_ax)
                 pdf.savefig(figx)
         except IOError:
+            # FIXME: crash
             raise IOError('Error writing %s, '
                           'check that file is not already open.' % fname)
 
@@ -429,6 +411,17 @@ class Markers(object):
         for ax in axes:
             for x, m in self._markers.items():
                 ax.axvline(x=x, color=m['color'], linewidth=self.marker_width)
+
+    def legend(self, ax):
+        """Create legend"""
+        artists = list()
+        legtxts = list()
+        for mkr, anno, col in self.marker_info:
+            artists.append(matplotlib.lines.Line2D((0, 1), (0, 0), linewidth=1,
+                                                   color=col))
+            legtxts.append(u'%.3f s: %s' % (mkr, anno))
+        ax.legend(artists, legtxts, loc='upper left', ncol=1,
+                  prop={'size': 10})
 
     @property
     def marker_info(self):
@@ -533,15 +526,17 @@ class TardieuPlot(object):
 
         fig = self.fig if interactive else Figure()
         fig.clear()
+        data_axes = list()
 
         # add one row for legend if not in interactive mode
         nrows = len(self.emg_chs) + 3
         nrows += 1 if not interactive else 0
         gs = gridspec.GridSpec(nrows, 1)
         if not interactive:
-            ax_legend = fig.add_subplot(gs[-1, 0])
+            legend_ax = fig.add_subplot(gs[-1, 0])
+            legend_ax.set_axis_off()
         else:
-            ax_legend = None
+            legend_ax = None
 
         # EMG plots
         if interactive:  # save trace objects for later modification
@@ -549,65 +544,60 @@ class TardieuPlot(object):
 
         ind = 0  # if interactive else 1
         for ch in self.emg_chs:
-            sharex = None if ind == 0 or not interactive else self.data_axes[0]
+            sharex = None if ind == 0 or not interactive else data_axes[0]
             ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
             emgtr_, = ax.plot(self.time_analog, self.emgdata[ch]*1e3,
                               linewidth=cfg.plot.emg_linewidth)
             rmstr_, = ax.plot(self.time_analog, self.emg_rms[ch]*1e3,
                               linewidth=cfg.plot.emg_rms_linewidth,
                               color='black')
-
+            data_axes.append(ax)
             if interactive:
                 self.emg_traces[ind] = emgtr_
                 self.rms_traces[ind] = rmstr_
-                self.data_axes.append(ax)
                 self.emg_axes.append(ax)
 
             ax.set_ylim([-cfg.plot.emg_yscale*1e3,
                          cfg.plot.emg_yscale*1e3])
             ax.set(ylabel='mV')
             ax.set_title(ch)
-            self._adj_fonts(ax)
             ind += 1
 
         # angle plot
-        sharex = None if ind == 0 or not interactive else self.data_axes[0]
+        sharex = None if ind == 0 or not interactive else data_axes[0]
         ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
         ax.plot(self.time, self.angd, linewidth=cfg.plot.model_linewidth)
         ax.set(ylabel='deg')
         ax.set_title('Angle')
-        # FIXME: loop adj_fonts on data_axes
-        self._adj_fonts(ax)
-        if interactive:
-            self.data_axes.append(ax)
+        data_axes.append(ax)
         ind += 1
 
         # angular velocity plot
-        sharex = None if ind == 0 or not interactive else self.data_axes[0]
+        sharex = None if ind == 0 or not interactive else data_axes[0]
         ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
         self.angveld = self.trial.framerate * np.diff(self.angd, axis=0)
         ax.plot(self.time[:-1], self.angveld,
                 linewidth=cfg.plot.model_linewidth)
         ax.set(ylabel='deg/s')
         ax.set_title('Angular velocity')
-        self._adj_fonts(ax)
-        if interactive:
-            self.data_axes.append(ax)
+        data_axes.append(ax)
         ind += 1
 
         # angular acceleration plot
-        sharex = None if ind == 0 or not interactive else self.data_axes[0]
+        sharex = None if ind == 0 or not interactive else data_axes[0]
         ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
         self.angaccd = np.diff(self.angveld, axis=0)
         ax.plot(self.time[:-2], self.angaccd,
                 linewidth=cfg.plot.model_linewidth)
         ax.set(xlabel='Time (s)', ylabel=u'deg/s²')
         ax.set_title('Angular acceleration')
-        self._adj_fonts(ax)
-        if interactive:
-            self.data_axes.append(ax)
+        data_axes.append(ax)
+
+        for ax in data_axes:
+            self._adj_fonts(ax)
 
         if interactive:
+            self.data_axes = data_axes
             self.tmin, self.tmax = self.data_axes[0].get_xlim()
             # create markers
             markers = Markers(self.marker_colors, self.marker_width,
@@ -649,7 +639,7 @@ class TardieuPlot(object):
             self.markers = markers
 
         fig.set_tight_layout(True)
-        return fig, ax_legend
+        return fig, data_axes, legend_ax
 
     def _rescale_emg(self, yscale):
         """Takes new EMG yscale in mV"""

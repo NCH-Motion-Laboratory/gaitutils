@@ -439,7 +439,7 @@ class TardieuPlot(object):
         self.markers = None
         # FIXME: check colors
         self.marker_colors = ['orange', 'green', 'red', 'brown',
-                              'pink', 'gray']
+                              'gray', 'purple']
         self.marker_width = 1.5
         self.width_ratio = [1, 5]
         self.text_fontsize = 9

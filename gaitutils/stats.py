@@ -21,7 +21,8 @@ class AvgTrial(Trial):
     TODO: does not support legends yet """
 
     def __init__(self, c3dfiles, fp_cycles_only=False):
-        avgdata, stddata, n_ok, _ = average_trials(c3dfiles,fp_cycles_only=fp_cycles_only)
+        avgdata, stddata, n_ok, _ = average_trials(c3dfiles,
+                                                   fp_cycles_only=fp_cycles_only)
         # nfiles may be misleading since not all trials may contain valid data
         self.nfiles = len(c3dfiles)
         self.trialname = 'Averages from %d trials' % self.nfiles
@@ -33,9 +34,9 @@ class AvgTrial(Trial):
         self.t = np.arange(101)  # 0..100%
         # fake 2 gait cycles, L/R
         self.cycles = list()
-        self.cycles.append(Gaitcycle(0, 101, 1, 60, 'R', True, 1000,
+        self.cycles.append(Gaitcycle(0, 101, 60, 'R', True, 1000,
                                      name='Right average', trial=self))
-        self.cycles.append(Gaitcycle(0, 101, 1, 60, 'L', True, 1000,
+        self.cycles.append(Gaitcycle(0, 101, 60, 'L', True, 1000,
                                      name='Left average', trial=self))
         self.ncycles = 2
         self.sessionpath = None

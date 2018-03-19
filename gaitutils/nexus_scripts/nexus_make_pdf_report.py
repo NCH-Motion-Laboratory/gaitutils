@@ -74,7 +74,7 @@ def do_plot(fullname=None, hetu=None, pages=None):
     session_t = datetime.datetime.fromtimestamp(op.getctime(tagged_trials[0]))
     logger.debug('session timestamp: %s', session_t)
     # compute subject age at time of session
-    if hetu is None:
+    if not hetu:
         age = None
     else:
         age = numutils.age_from_hetu(hetu, session_t)

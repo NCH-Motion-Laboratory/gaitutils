@@ -96,6 +96,7 @@ def do_plot(fullname=None, hetu=None, pages=None):
     title_txt += '\n'
     title_txt += u'Nimi: %s\n' % fullname
     title_txt += u'Henkilötunnus: %s\n' % hetu
+    title_txt += u'Ikä mittaushetkellä: %d vuotta\n' % age
     title_txt += u'Mittaus: %s\n' % session
     title_txt += u'Mittauksen pvm: %s\n' % session_t.strftime('%d.%m.%Y')
     title_txt += u'Raportin pvm: %s\n' % timestr

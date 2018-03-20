@@ -34,6 +34,7 @@ from nexus_scripts import nexus_tardieu
 from nexus_scripts import nexus_copy_trial_videos
 from nexus_scripts import nexus_trials_velocity
 from nexus_scripts import nexus_make_pdf_report
+from nexus_scripts import nexus_make_comparison_report
 from nexus_scripts import nexus_kin_average
 from nexus_scripts import nexus_automark_trial
 from nexus_scripts import nexus_time_distance_vars

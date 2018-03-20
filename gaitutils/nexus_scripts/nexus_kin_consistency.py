@@ -17,8 +17,8 @@ from gaitutils.nexus import enf2c3d, find_trials
 logger = logging.getLogger(__name__)
 
 
-def find_tagged(search=None):
-    """ Find tagged Eclipse trials """
+def find_tagged(search=None, sessionpath=None):
+    """Find tagged Eclipse trials from given sessionpath (or Nexus session)"""
 
     MAX_TRIALS = 8
 
@@ -26,7 +26,7 @@ def find_tagged(search=None):
         search = cfg.plot.eclipse_tags
 
     eclkeys = ['DESCRIPTION', 'NOTES']
-    tagged_trials = list(find_trials(eclkeys, search))
+    tagged_trials = list(find_trials(eclkeys, search, sessionpath=sessionpath))
 
     if not tagged_trials:
         raise Exception('Did not find any trials matching the Eclipse search '

@@ -166,9 +166,10 @@ def get_trialname():
     return trialname_[1]
 
 
-def get_session_enfs():
-    """ Return list of .enf files for the session """
-    sessionpath = get_sessionpath()
+def get_session_enfs(sessionpath=None):
+    """Return list of .enf files for the Nexus session (or specified path)"""
+    if sessionpath is None:
+        sessionpath = get_sessionpath()
     if not sessionpath:
         raise GaitDataError('Cannot get Nexus session path, '
                             'no session or maybe in Live mode?')
@@ -187,11 +188,12 @@ def enf2c3d(fname):
     return fname.replace(enfstr, '.c3d')
 
 
-def find_trials(eclipse_keys, strings):
-    """ Yield .enf files for trials in current Nexus session directory whose
-    Eclipse fields (list) contain any of strings (list). Case insensitive. """
+def find_trials(eclipse_keys, strings, sessionpath=None):
+    """ Yield .enf files for trials in current Nexus session directory
+    (or given session path) whose Eclipse fields (list) contain any of
+    strings (list). Case insensitive. """
     strings = [st.upper() for st in strings]
-    enffiles = get_session_enfs()
+    enffiles = get_session_enfs(sessionpath)
     if enffiles is None:
         return
     for enf in enffiles:

@@ -31,6 +31,7 @@ from gaitutils import nexus_tardieu
 from gaitutils import nexus_copy_trial_videos
 from gaitutils import nexus_trials_velocity
 from gaitutils import nexus_make_pdf_report
+from gaitutils import nexus_make_comparison_report
 from gaitutils import nexus_kin_average
 from gaitutils import nexus_automark_trial
 from gaitutils import nexus_time_distance_vars
@@ -85,6 +86,19 @@ class HetuDialog(QtWidgets.QDialog):
             message_dialog('Please enter a valid name and hetu')
 
 
+class ComparisonDialog(QtWidgets.QDialog):
+    """ Display a dialog for the comparison report """
+
+    def __init__(self):
+        super(self.__class__, self).__init__()
+        # load user interface made with designer
+        uifile = resource_filename(__name__, 'comparison_dialog.ui')
+        uic.loadUi(uifile, self)
+
+    def accept(self):
+        pass
+
+
 class QtHandler(logging.Handler):
 
     def __init__(self):
@@ -124,6 +138,8 @@ class XStream(QtCore.QObject):
             XStream._stderr = XStream()
             sys.stderr = XStream._stderr  # ... and stderr
         return XStream._stderr
+
+
 
 
 class OptionsDialog(QtWidgets.QDialog):
@@ -340,6 +356,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   nexus_automark_trial.automark_single)
 
         self.btnCreatePDFs.clicked.connect(self._create_pdfs)
+        self.btnCreateComparison.clicked.connect(self._create_comparison)
         self.btnOptions.clicked.connect(self._options_dialog)
         self.btnQuit.clicked.connect(self.close)
 
@@ -370,6 +387,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
         """ Show the autoprocessing options dialog """
         dlg = OptionsDialog()
         dlg.exec_()
+
+    def _create_comparison(self):
+        dlg = ComparisonDialog()
+        if dlg.exec_():
+            self._sessions = dlg.sessions
+            self._execute(nexus_make_comparison_report.do_plot,
+                          sessions=dlg.sessions)
 
     def _create_pdfs(self):
         """Creates the full report"""

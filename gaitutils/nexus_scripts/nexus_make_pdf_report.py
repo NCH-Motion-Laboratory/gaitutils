@@ -60,12 +60,14 @@ def do_plot(fullname=None, hetu=None, pages=None):
     if hetu is None:
         hetu = ''
     if pages is None:
+        # if no pages specified, do everything
         pages = defaultdict(lambda: True)
     else:
         if not any(pages.values()):
             raise Exception('No pages to print')
 
-    trial_figs = []
+    tagged_figs = []
+    repr_figs = []
     eclipse_tags = dict()
     do_emg_consistency = False
 
@@ -74,10 +76,7 @@ def do_plot(fullname=None, hetu=None, pages=None):
     session_t = datetime.datetime.fromtimestamp(op.getctime(tagged_trials[0]))
     logger.debug('session timestamp: %s', session_t)
     # compute subject age at time of session
-    if not hetu:
-        age = None
-    else:
-        age = numutils.age_from_hetu(hetu, session_t)
+    age = numutils.age_from_hetu(hetu, session_t) if hetu else None
 
     sessionpath = get_sessionpath()
     session = op.split(sessionpath)[-1]
@@ -95,8 +94,9 @@ def do_plot(fullname=None, hetu=None, pages=None):
     title_txt += u'Kävelyanalyysin tulokset\n'
     title_txt += '\n'
     title_txt += u'Nimi: %s\n' % fullname
-    title_txt += u'Henkilötunnus: %s\n' % hetu
-    title_txt += u'Ikä mittaushetkellä: %d vuotta\n' % age
+    title_txt += u'Henkilötunnus: %s\n' % (hetu if hetu else 'ei tiedossa')
+    title_txt += u'Ikä mittaushetkellä: %d vuotta\n' % (age if age
+                                                          else 'ei tiedossa')
     title_txt += u'Mittaus: %s\n' % session
     title_txt += u'Mittauksen pvm: %s\n' % session_t.strftime('%d.%m.%Y')
     title_txt += u'Raportin pvm: %s\n' % timestr
@@ -115,6 +115,8 @@ def do_plot(fullname=None, hetu=None, pages=None):
 
         c3d = enf2c3d(trial)
         pl.open_trial(c3d)
+        representative = (pl.trial.eclipse_data[sort_field].upper()
+                          in ['R1', 'L1'])
 
         # FIXME: this would choose R when valid for both
         if 'R' in pl.trial.fp_events['valid']:
@@ -125,6 +127,13 @@ def do_plot(fullname=None, hetu=None, pages=None):
             raise Exception('No kinetics for trial %s' % trial)
 
         side_str = 'right' if side == 'R' else 'left'
+
+        # representative single trial plots
+        if representative:
+            if pages['TimeDistRepresentative']:
+                fig = nexus_time_distance_vars._plot_trials(c3d, show=False,
+                                                            make_pdf=True)
+                repr_figs.append(fig)
 
         # try to figure out whether we have any valid EMG signals
         emg_active = any([pl.trial.emg.status_ok(ch) for ch in
@@ -143,11 +152,11 @@ def do_plot(fullname=None, hetu=None, pages=None):
                 maintitle = 'Kinetics-EMG (%s) for %s' % (side_str,
                                                           pl.title_with_eclipse_info())
                 fig = pl.plot_trial(maintitle=maintitle, show=False)
-                trial_figs.append(fig)
+                tagged_figs.append(fig)
                 eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
 
-                # save individual pdfs for R1/L1
-                if pl.trial.eclipse_data[sort_field].upper() in ['R1', 'L1']:
+                # save individual pdfs
+                if representative:
                     pdf_name = 'Kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname,
                                                            side_str)
                     logger.debug('creating %s' % pdf_name)
@@ -159,15 +168,15 @@ def do_plot(fullname=None, hetu=None, pages=None):
                 layout = cfg.layouts.std_emg
                 pl.layout = layouts.rm_dead_channels(c3d, pl.trial.emg, layout)
                 fig = pl.plot_trial(maintitle=maintitle, show=False)
-                trial_figs.append(fig)
+                tagged_figs.append(fig)
                 eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
 
-                # save individual pdfs for R1/L1
-                if pl.trial.eclipse_data[sort_field].upper() in ['R1', 'L1']:
+                # save individual pdfs
+                if representative:
                     pdf_prefix = 'EMG_'
                     pl.create_pdf(pdf_prefix=pdf_prefix)
 
-    trial_figs.sort(key=lambda fig: eclipse_tags[fig])
+    tagged_figs.sort(key=lambda fig: eclipse_tags[fig])
 
     # trial velocity plot
     if pages['TrialVelocity']:
@@ -217,7 +226,9 @@ def do_plot(fullname=None, hetu=None, pages=None):
         _savefig(pdf, fig_emg_cons, header)
         for fig in figs_kin_avg:
             _savefig(pdf, fig, header)
-        for fig in trial_figs:
+        for fig in repr_figs:
+            _savefig(pdf, fig, header)
+        for fig in tagged_figs:
             _savefig(pdf, fig, header)
 
     # close all created figures, otherwise they'll pop up on next show() call

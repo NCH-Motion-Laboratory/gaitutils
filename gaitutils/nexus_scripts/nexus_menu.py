@@ -94,9 +94,32 @@ class ComparisonDialog(QtWidgets.QDialog):
         # load user interface made with designer
         uifile = resource_filename(__name__, 'comparison_dialog.ui')
         uic.loadUi(uifile, self)
+        self.btnBrowseSession.clicked.connect(self.add_session)
+        self.btnClear.clicked.connect(self.clear_sessions)
+        self.MAX_SESSIONS = 2
+        self.sessions = list()
+
+    def add_session(self):
+        dir = QtWidgets.QFileDialog.getExistingDirectory(self,
+                                                          'Select session')
+        if dir and dir not in self.sessions:
+            self.sessions.append(dir)
+            self.update_session_list()
+            
+
+    def clear_sessions(self):
+        self.sessions = list()  # sorry no clear()
+        self.update_session_list()
+
+    def update_session_list(self):
+        self.lblSessions.setText(u'\n'.join(self.sessions))
 
     def accept(self):
-        pass
+        if len(self.sessions) <= self.MAX_SESSIONS:
+            self.done(QtWidgets.QDialog.Accepted)
+        else:
+            message_dialog('Specify maximum of %d sessions' %
+                           self.MAX_SESSIONS)
 
 
 class QtHandler(logging.Handler):

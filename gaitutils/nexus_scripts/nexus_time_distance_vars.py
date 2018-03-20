@@ -42,8 +42,7 @@ def do_plot(search=None, show=True, make_pdf=True):
     if len(ans) > 1:  # average of multiple trials
         an_avg = c3d.group_analysis(ans)
         an_std = c3d.group_analysis(ans, fun=np.std)
-        an_std = None  # disable for now (looks weird)        
-        fig = time_dist_barchart(an_avg, an_std)
+        fig = time_dist_barchart(an_avg, an_std, stddev_bars=False)
         fig.suptitle('Time-distance variables, session %s'
                      ' (average of %d trials)' % (sessiondir,
                                                   len(tagged_trials)))

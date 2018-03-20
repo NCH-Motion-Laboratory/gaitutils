@@ -39,7 +39,7 @@ def save_pdf(filename, fig):
 
 
 def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
-                       interactive=True):
+                       interactive=True, stddev_bars=True):
     """ Multi-variable and multi-category barchart plot.
     values dict is keyed as values[condition][var][context],
     given by e.g. get_c3d_analysis() """
@@ -50,14 +50,10 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
     else:
         fig = Figure()
 
-    def _plot_len(ax, rects, add_text=None):
-        """Attach a text inside each bar displaying its length"""
-        for rect in rects:
-            width = rect.get_width()
-            txt = '%.2f' % width
-            txt += add_text if add_text else ''
-            ax.text(rect.get_width() * .0,
-                    rect.get_y() + rect.get_height()/2.,
+    def _plot_label(ax, rects, texts):
+        """Plot a label inside each rect"""
+        for rect, txt in zip(rects, texts):
+            ax.text(rect.get_width() * .0, rect.get_y() + rect.get_height()/2.,
                     txt, ha='left', va='center')
 
     def _plot_oneside(vars, context, col):
@@ -65,15 +61,23 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
         for ind, var in enumerate(vars):
             ax = fig.add_subplot(gs[ind, col])
             ax.axis('off')
+            # may have several bars (conditions) per variable
             vals_this = [values[cond][var][context] for cond in conds]
-            stddev_this = ([stddev[cond][var][context] for cond in conds] if
-                           stddev else None)
+            stddevs_this = ([stddev[cond][var][context] for cond in conds] if
+                            stddev else None)
             ypos = np.arange(0, len(vals_this) * thickness, thickness)
+            xerr = stddevs_this if stddev_bars else None
             rects = ax.barh(ypos, vals_this, thickness, align='edge',
-                            color=color, xerr=stddev_this)
+                            color=color, xerr=xerr)
             # FIXME: set axis scale according to var normal values
-            ax.set_xlim([0, 2. * max(vals_this)])
-            _plot_len(ax, rects, add_text=' %s' % units[ind])
+            ax.set_xlim([0, 1.5 * max(vals_this)])
+            if stddev:
+                texts = [u'%.2f ± %.2f %s' % (val, std, unit) for val, std,
+                         unit in zip(vals_this, stddevs_this, [units[ind]])]
+            else:
+                texts = [u'%.2f %s' % (val, unit) for val, unit in
+                         zip(vals_this, [units[ind]])]
+            _plot_label(ax, rects, texts)
         # return the last set of rects for legend
         return rects
 
@@ -85,6 +89,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
     vals_1 = values[conds[0]]
     vars = vals_1.keys()
     units = [vals_1[var]['unit'] for var in vars]
+
     # 3 columns: bar, labels, bar
     gs = gridspec.GridSpec(len(vars), 3, width_ratios=[1, 1/3., 1])
 

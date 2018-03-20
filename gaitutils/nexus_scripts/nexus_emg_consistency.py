@@ -13,26 +13,24 @@ import argparse
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, EMG,
                        GaitDataError)
-from gaitutils.nexus import enf2c3d
-from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
+from gaitutils.nexus import find_tagged
 
 logger = logging.getLogger(__name__)
 
 
-def do_plot(search=None, show=True, make_pdf=True):
+def do_plot(tags=None, show=True, make_pdf=True):
 
-    tagged_trials = find_tagged(search)
+    tagged_trials = find_tagged(tags)
 
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
 
     pl = Plotter()
-    pl.open_trial(enf2c3d(tagged_trials[0]))
     layout = cfg.layouts.overlay_std_emg
 
     # from layout, drop rows that do not have good data in any of the trials
     chs_ok = None
-    for i, enf in enumerate(tagged_trials):
-        emg = EMG(enf2c3d(enf))
+    for i, c3d in enumerate(tagged_trials):
+        emg = EMG(c3d)
         chs_prev_ok = chs_ok if i > 0 else None
         # plot channels w/ status ok, or anything that is not a
         # configured EMG channel
@@ -47,23 +45,25 @@ def do_plot(search=None, show=True, make_pdf=True):
     pl.layout = layout
 
     for i, trialpath in enumerate(tagged_trials):
-        pl.open_trial(enf2c3d(tagged_trials[i]))
+        pl.open_trial(tagged_trials[i])
 
         emg_active = any([pl.trial.emg.status_ok(ch) for ch in
                           cfg.emg.channel_labels])
         if not emg_active:
             continue
 
-        maintitle = ('EMG consistency plot, '
-                     'session %s' % pl.trial.sessiondir)
         plot_emg_normaldata = (trialpath == tagged_trials[-1])
         pl.plot_trial(emg_tracecolor=linecolors[i],
-                      maintitle=maintitle, annotate_emg=False,
+                      maintitle='', annotate_emg=False,
                       superpose=True, show=False,
                       plot_emg_normaldata=plot_emg_normaldata)
 
     if not pl.fig:
         raise GaitDataError('None of the marked trials have valid EMG data')
+
+    maintitle = ('EMG consistency plot, '
+                 'session %s' % pl.trial.sessiondir)
+    pl.set_title(maintitle)
 
     if show:
         pl.show()
@@ -77,10 +77,10 @@ def do_plot(search=None, show=True, make_pdf=True):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--search', metavar='p', type=str, nargs='+',
+    parser.add_argument('--tags', metavar='p', type=str, nargs='+',
                         help='strings that must appear in trial '
                         'description or notes')
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG)
     register_gui_exception_handler()
-    do_plot(search=args.search)
+    do_plot(tags=args.tags)

@@ -40,9 +40,12 @@ def save_pdf(filename, fig):
 
 def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
                        interactive=True, stddev_bars=True):
-    """ Multi-variable and multi-category barchart plot.
+    """ Multi-variable and multi-condition barchart plot.
     values dict is keyed as values[condition][var][context],
-    given by e.g. get_c3d_analysis() """
+    given by e.g. get_c3d_analysis()
+    stddev can be None or a dict keyed as stddev[condition][var][context].
+    If no stddev for a given condition, set stddev[condition] = None
+    """
 
     if interactive:
         import matplotlib.pyplot as plt
@@ -63,20 +66,21 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
             ax.axis('off')
             # may have several bars (conditions) per variable
             vals_this = [values[cond][var][context] for cond in conds]
-            stddevs_this = ([stddev[cond][var][context] for cond in conds] if
-                            stddev else None)
+            stddevs_this = ([stddev[cond][var][context] if stddev[cond]
+                             else None for cond in conds])
+            units_this = len(conds)*[units[ind]]
             ypos = np.arange(0, len(vals_this) * thickness, thickness)
             xerr = stddevs_this if stddev_bars else None
             rects = ax.barh(ypos, vals_this, thickness, align='edge',
                             color=color, xerr=xerr)
             # FIXME: set axis scale according to var normal values
             ax.set_xlim([0, 1.5 * max(vals_this)])
-            if stddev:
-                texts = [u'%.2f ± %.2f %s' % (val, std, unit) for val, std,
-                         unit in zip(vals_this, stddevs_this, [units[ind]])]
-            else:
-                texts = [u'%.2f %s' % (val, unit) for val, unit in
-                         zip(vals_this, [units[ind]])]
+            texts = list()
+            for val, std, unit in zip(vals_this, stddevs_this, units_this):
+                if std:
+                    texts += [u'%.2f ± %.2f %s' % (val, std, unit)]
+                else:
+                    texts += [u'%.2f %s' % (val, unit)]
             _plot_label(ax, rects, texts)
         # return the last set of rects for legend
         return rects
@@ -104,7 +108,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
 
     if len(conds) > 1:
         # plotting happens from down -> up, so reverse legend
-        fig.legend(rects[::-1], conds[::-1], loc=1)
+        fig.legend(rects[::-1], conds[::-1], loc=4)
 
     fig.add_subplot(gs[0, 0]).set_title('Left')
     fig.add_subplot(gs[0, 2]).set_title('Right')
@@ -318,7 +322,8 @@ class Plotter(object):
                    superpose=False,
                    maintitle=None,
                    maintitleprefix=None,
-                   add_zeroline=True):
+                   add_zeroline=True,
+                   legend_maxlen=10):
 
         """ Create plot of variables. Parameters:
 
@@ -407,6 +412,7 @@ class Plotter(object):
                 after finished. If interactive=False, this has no effect.
         add_zeroline : bool
                 Add line on y=0
+
         """
 
         if trial is None and self.trial is None:
@@ -457,10 +463,9 @@ class Plotter(object):
                            top='off', labelbottom='off', right='off',
                            left='off', labelleft='off')
 
-        def _shorten_name(name):
+        def _shorten_name(name, max_len=10):
             """ Shorten overlong names for legend etc. """
-            MAX_LEN = 10
-            return name if len(name) <= MAX_LEN else '..'+name[-MAX_LEN+2:]
+            return name if len(name) <= max_len else '..'+name[-max_len+2:]
 
         def _get_cycles(cycles):
             """ Get specified cycles from the gait trial """
@@ -754,7 +759,7 @@ class Plotter(object):
             elif var_type in ('model_legend', 'emg_legend'):
                 ax.set_axis_off()
                 self.legendnames.append('%s   %s   %s' % (
-                                        _shorten_name(trial.trialname),
+                                        _shorten_name(trial.trialname, legend_maxlen),
                                         trial.eclipse_data['DESCRIPTION'],
                                         trial.eclipse_data['NOTES']))
                 if var_type == 'model_legend':
@@ -775,9 +780,10 @@ class Plotter(object):
                                                         fill=False,
                                                         edgecolor='none',
                                                         linewidth=0)]
-                ax.legend(nothing+artists,
-                          legtitle+self.legendnames, loc='upper center',
-                          ncol=2,
+                # FIXME: just a hack
+                ncol = 1 if len(self.legendnames) < 5 else 2
+                ax.legend(nothing+artists, legtitle+self.legendnames,
+                          loc='upper left', ncol=ncol,
                           prop={'size': cfg.plot.legend_fontsize})
 
             plotaxes.append(ax)

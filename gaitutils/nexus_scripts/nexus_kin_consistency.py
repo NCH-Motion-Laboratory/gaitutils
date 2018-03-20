@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Sep 03 14:54:34 2015
 
-Kin* consistency plot from Nexus. Automatically picks trials based on Eclipse
+Kin* consistency plots. Automatically picks trials based on Eclipse
 description and defined search strings.
 
 @author: Jussi (jnu@iki.fi)
@@ -10,61 +9,54 @@ description and defined search strings.
 
 import logging
 import argparse
+import os.path as op
 
-from gaitutils import Plotter, cfg, register_gui_exception_handler
-from gaitutils.nexus import enf2c3d, find_trials
+from gaitutils import (Plotter, cfg, register_gui_exception_handler,
+                       GaitDataError)
+from gaitutils.nexus import find_tagged, get_sessionpath
 
 logger = logging.getLogger(__name__)
 
 
-def find_tagged(search=None):
-    """ Find tagged Eclipse trials """
+def do_plot(sessions=None, tags=None, show=True, make_pdf=True):
+    """ Find trials according to tags in each session and superpose all.
+    By default, plots tagged trials in the current Nexus session. """
 
-    MAX_TRIALS = 8
+    if sessions is None:
+        sessions = [get_sessionpath()]
 
-    if search is None:
-        search = cfg.plot.eclipse_tags
-
-    eclkeys = ['DESCRIPTION', 'NOTES']
-    tagged_trials = list(find_trials(eclkeys, search))
-
-    if not tagged_trials:
-        raise Exception('Did not find any trials matching the Eclipse search '
-                        'strings %s in the current session directory'
-                        % str(search))
-
-    if len(tagged_trials) > MAX_TRIALS:
-        raise Exception('Too many tagged trials found!')
-
-    return tagged_trials
-
-
-def do_plot(search=None, show=True, make_pdf=True):
-
-    tagged_trials = find_tagged(search=search)
+    if tags is None:
+        tags = cfg.plot.eclipse_tags
 
     pl = Plotter()
-    pl.open_trial(enf2c3d(tagged_trials[0]))
     pl.layout = cfg.layouts.overlay_lb_kin
-
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
+    linecolors.reverse()  # reverse for pop()
 
-    for i, trialpath in enumerate(tagged_trials):
-        logger.debug('plotting %s' % tagged_trials[i])
-        pl.open_trial(enf2c3d(tagged_trials[i]))
-        maintitle = ('Kinematics/kinetics consistency plot, '
-                     'session %s' % pl.trial.sessiondir)
-        # only plot normaldata for last trial to speed up things
-        plot_model_normaldata = (trialpath == tagged_trials[-1])
-        pl.plot_trial(model_tracecolor=linecolors[i], linestyles_context=True,
-                      toeoff_markers=False,
-                      maintitle=maintitle, superpose=True, show=False,
-                      plot_model_normaldata=plot_model_normaldata)
+    for session in sessions:
+        c3ds = find_tagged(tags=tags, sessionpath=session)
+        if not c3ds:
+            raise GaitDataError('No trials found for session %s' % session)
+        for c3d in c3ds:
+            pl.open_trial(c3d)
+            # only plot normaldata for last trial to speed up things
+            plot_model_normaldata = (c3d == c3ds[-1] and
+                                     session == sessions[-1])
+            pl.plot_trial(model_tracecolor=linecolors.pop(),
+                          linestyles_context=True,
+                          toeoff_markers=False, legend_maxlen=30,
+                          maintitle='', superpose=True, show=False,
+                          plot_model_normaldata=plot_model_normaldata)
+    maintitle = 'Kinematics comparison '
+    maintitle += ' vs. '.join([op.split(s)[-1] for s in sessions])
+    pl.set_title(maintitle)
+
     if show:
         pl.show()
 
-    if make_pdf:
-        pl.create_pdf('kin_consistency.pdf')
+    # to recreate old behavior...
+    if make_pdf and len(sessions) == 1:
+        pl.create_pdf(pdf_name=op.join(sessions[0], 'kin_consistency.pdf'))
 
     return pl.fig
 
@@ -72,10 +64,10 @@ def do_plot(search=None, show=True, make_pdf=True):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--search', metavar='p', type=str, nargs='+',
+    parser.add_argument('--tags', metavar='p', type=str, nargs='+',
                         help='strings that must appear in trial '
                         'description or notes')
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG)
     register_gui_exception_handler()
-    do_plot(search=args.search)
+    do_plot(sessions=[get_sessionpath()], tags=args.tags)

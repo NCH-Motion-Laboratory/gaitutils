@@ -18,14 +18,14 @@ from collections import defaultdict
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
                        numutils, normaldata)
-from gaitutils.nexus import enf2c3d, get_sessionpath, get_trialname
+from gaitutils.nexus import get_sessionpath, find_tagged
 import nexus_kin_consistency
 import nexus_emg_consistency
 import nexus_musclelen_consistency
 import nexus_kin_average
 import nexus_trials_velocity
 import nexus_time_distance_vars
-from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
+
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ def _savefig(pdf, fig, header=None, footer=None):
     pdf.savefig(fig)
 
 
-def do_plot(fullname=None, hetu=None, pages=None):
+def do_plot(fullname=None, hetu=None, pages=None, description=None):
 
     if fullname is None:
         fullname = ''
@@ -95,11 +95,11 @@ def do_plot(fullname=None, hetu=None, pages=None):
     title_txt += '\n'
     title_txt += u'Nimi: %s\n' % fullname
     title_txt += u'Henkilötunnus: %s\n' % (hetu if hetu else 'ei tiedossa')
-    title_txt += u'Ikä mittaushetkellä: %d vuotta\n' % (age if age
-                                                          else 'ei tiedossa')
+    title_txt += u'Ikä mittaushetkellä: %s\n' % ('%d vuotta' % age if age
+                                                   else 'ei tiedossa')
     title_txt += u'Mittaus: %s\n' % session
+    title_txt += u'Kuvaus: %s\n' % (description if description else '')
     title_txt += u'Mittauksen pvm: %s\n' % session_t.strftime('%d.%m.%Y')
-    title_txt += u'Raportin pvm: %s\n' % timestr
     title_txt += u'Liikelaboratorion potilaskoodi: %s\n' % patient_code
     ax.text(.5, .8, title_txt, ha='center', va='center', weight='bold',
             fontsize=14)
@@ -111,9 +111,8 @@ def do_plot(fullname=None, hetu=None, pages=None):
 
     pl = Plotter()
 
-    for trial in tagged_trials:
+    for c3d in tagged_trials:
 
-        c3d = enf2c3d(trial)
         pl.open_trial(c3d)
         representative = (pl.trial.eclipse_data[sort_field].upper()
                           in ['R1', 'L1'])
@@ -124,15 +123,15 @@ def do_plot(fullname=None, hetu=None, pages=None):
         elif 'L' in pl.trial.fp_events['valid']:
             side = 'L'
         else:
-            raise Exception('No kinetics for trial %s' % trial)
+            raise Exception('No kinetics for %s' % c3d)
 
         side_str = 'right' if side == 'R' else 'left'
 
         # representative single trial plots
         if representative:
             if pages['TimeDistRepresentative']:
-                fig = nexus_time_distance_vars._plot_trials(c3d, show=False,
-                                                            make_pdf=True)
+                fig = nexus_time_distance_vars.do_single_trial_plot(c3d,
+                                                                    show=False)
                 repr_figs.append(fig)
 
         # try to figure out whether we have any valid EMG signals
@@ -186,8 +185,7 @@ def do_plot(fullname=None, hetu=None, pages=None):
 
     # time-distance average
     if pages['TimeDistAverage']:
-        fig_timedist_avg = nexus_time_distance_vars.do_plot(show=False,
-                                                            make_pdf=False)
+        fig_timedist_avg = nexus_time_distance_vars.do_session_average_plot(show=False, make_pdf=False)
     else:
         fig_timedist_avg = None
 

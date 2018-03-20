@@ -31,6 +31,7 @@ from gaitutils import nexus_tardieu
 from gaitutils import nexus_copy_trial_videos
 from gaitutils import nexus_trials_velocity
 from gaitutils import nexus_make_pdf_report
+from gaitutils import nexus_make_comparison_report
 from gaitutils import nexus_kin_average
 from gaitutils import nexus_automark_trial
 from gaitutils import nexus_time_distance_vars
@@ -73,6 +74,7 @@ class HetuDialog(QtWidgets.QDialog):
         show an error dialog """
         self.hetu = self.lnHetu.text()
         self.fullname = self.lnFullName.text()
+        self.description = self.lnDescription.text()
         # get all the report page selections
         self.pages = dict()
         for w in self.findChildren(QtWidgets.QWidget):
@@ -83,6 +85,45 @@ class HetuDialog(QtWidgets.QDialog):
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
             message_dialog('Please enter a valid name and hetu')
+
+
+class ComparisonDialog(QtWidgets.QDialog):
+    """ Display a dialog for the comparison report """
+
+    def __init__(self):
+        super(self.__class__, self).__init__()
+        # load user interface made with designer
+        uifile = resource_filename(__name__, 'comparison_dialog.ui')
+        uic.loadUi(uifile, self)
+        self.btnBrowseSession.clicked.connect(self.add_session)
+        self.btnAddNexusSession.clicked.connect(lambda: self.add_session(from_nexus=True))
+        self.btnClear.clicked.connect(self.clear_sessions)
+        self.MAX_SESSIONS = 2
+        self.sessions = list()
+
+    def add_session(self, from_nexus=False):
+        if len(self.sessions) == self.MAX_SESSIONS:
+            message_dialog('You can specify maximum of %d sessions' %
+                           self.MAX_SESSIONS)
+            return
+        if from_nexus:
+            dir = nexus.get_sessionpath()
+        else:
+            dir = QtWidgets.QFileDialog.getExistingDirectory(self,
+                                                             'Select session')
+        if dir and dir not in self.sessions:
+            self.sessions.append(dir)
+            self.update_session_list()
+
+    def clear_sessions(self):
+        self.sessions = list()  # sorry no clear()
+        self.update_session_list()
+
+    def update_session_list(self):
+        self.lblSessions.setText(u'\n'.join(self.sessions))
+
+    def accept(self):
+        self.done(QtWidgets.QDialog.Accepted)
 
 
 class QtHandler(logging.Handler):
@@ -314,10 +355,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   nexus_kinetics_emgplot.do_plot)
         self._button_connect_task(self.btnKinall, nexus_kinallplot.do_plot)
         self._button_connect_task(self.btnTardieu, self._tardieu)
+
         if have_custom:
             self._button_connect_task(self.btnCustom, nexus_customplot.do_plot)
         else:
             self.btnCustom.clicked.connect(self._no_custom)
+
         self._button_connect_task(self.btnTrialVelocity,
                                   nexus_trials_velocity.do_plot)
         self._button_connect_task(self.btnEMGCons,
@@ -329,7 +372,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnKinAverage,
                                   nexus_kin_average.do_plot)
         self._button_connect_task(self.btnTimeDistAverage,
-                                  nexus_time_distance_vars.do_plot)
+                                  nexus_time_distance_vars.
+                                  do_session_average_plot)
         self._button_connect_task(self.btnAutoprocTrial,
                                   nexus_autoprocess_trial.autoproc_single,
                                   thread=True)
@@ -340,6 +384,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   nexus_automark_trial.automark_single)
 
         self.btnCreatePDFs.clicked.connect(self._create_pdfs)
+        self.btnCreateComparison.clicked.connect(self._create_comparison)
         self.btnOptions.clicked.connect(self._options_dialog)
         self.btnQuit.clicked.connect(self.close)
 
@@ -371,6 +416,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
         dlg = OptionsDialog()
         dlg.exec_()
 
+    def _create_comparison(self):
+        dlg = ComparisonDialog()
+        if dlg.exec_():
+            self._sessions = dlg.sessions
+            self._execute(nexus_make_comparison_report.do_plot,
+                          sessions=dlg.sessions)
+
     def _create_pdfs(self):
         """Creates the full report"""
         try:
@@ -386,7 +438,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._fullname = dlg.fullname
             self._execute(nexus_make_pdf_report.do_plot, thread=True,
                           fullname=dlg.fullname, hetu=dlg.hetu,
-                          pages=dlg.pages)
+                          description=dlg.description, pages=dlg.pages)
 
     def _log_message(self, msg):
         c = self.txtOutput.textCursor()

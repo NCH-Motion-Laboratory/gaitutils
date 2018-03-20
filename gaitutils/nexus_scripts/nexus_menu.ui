@@ -17,13 +17,6 @@
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="2" column="1">
-       <widget class="QPushButton" name="btnKinEMG">
-        <property name="text">
-         <string>Kinetics-EMG plot</string>
-        </property>
-       </widget>
-      </item>
       <item row="2" column="8">
        <widget class="QPushButton" name="btnAutoprocTrial">
         <property name="text">
@@ -35,6 +28,13 @@
        <widget class="QPushButton" name="btnMuscleLen">
         <property name="text">
          <string>Muscle length plot</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QPushButton" name="btnKinEMG">
+        <property name="text">
+         <string>Kinetics-EMG plot</string>
         </property>
        </widget>
       </item>
@@ -205,13 +205,6 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="8">
-       <widget class="QPushButton" name="btnCopyVideos">
-        <property name="text">
-         <string>Copy session videos to desktop</string>
-        </property>
-       </widget>
-      </item>
       <item row="4" column="8">
        <widget class="QPushButton" name="btnCreatePDFs">
         <property name="text">
@@ -258,6 +251,20 @@
          </size>
         </property>
        </spacer>
+      </item>
+      <item row="5" column="8">
+       <widget class="QPushButton" name="btnCreateComparison">
+        <property name="text">
+         <string>Create comparison report...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="8">
+       <widget class="QPushButton" name="btnCopyVideos">
+        <property name="text">
+         <string>Copy session videos to desktop</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>

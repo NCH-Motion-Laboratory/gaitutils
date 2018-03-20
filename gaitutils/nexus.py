@@ -166,17 +166,26 @@ def get_trialname():
     return trialname_[1]
 
 
-def get_session_enfs():
-    """ Return list of .enf files for the session """
-    sessionpath = get_sessionpath()
+def get_session_enfs(sessionpath=None):
+    """Return list of .enf files for the Nexus session (or specified path)"""
+
+    if sessionpath is None:
+        sessionpath = get_sessionpath()
     if not sessionpath:
         raise GaitDataError('Cannot get Nexus session path, '
                             'no session or maybe in Live mode?')
+
     enfglob = op.join(sessionpath, '*Trial*.enf')
     enffiles = glob.glob(enfglob) if sessionpath else None
     logger.debug('found %d .enf files for session %s' %
                  (len(enffiles) if enffiles else 0, sessionpath))
+
     return enffiles
+
+
+def c3d2enf(fname):
+    """ Converts name of trial .c3d file to corresponding .enf """
+    return fname.replace('.c3d', '.Trial.enf')
 
 
 def enf2c3d(fname):
@@ -187,13 +196,31 @@ def enf2c3d(fname):
     return fname.replace(enfstr, '.c3d')
 
 
-def find_trials(eclipse_keys, strings):
-    """ Yield .enf files for trials in current Nexus session directory whose
-    Eclipse fields (list) contain any of strings (list). Case insensitive. """
+def find_tagged(tags=None, eclipse_keys=None, sessionpath=None):
+    """ Find tagged trials in Nexus session path (or given path).
+    Returns a list of .enf files. """
+
+    if eclipse_keys is None:
+        eclipse_keys = ['DESCRIPTION', 'NOTES']
+
+    if tags is None:
+        tags = cfg.plot.eclipse_tags
+
+    tagged_enfs = list(find_enfs(eclipse_keys, tags, sessionpath=sessionpath))
+    return [enf2c3d(fn) for fn in tagged_enfs]
+
+
+def find_enfs(eclipse_keys, strings, sessionpath=None):
+    """ Yield .enf files for trials in current Nexus session directory
+    (or given session path) whose Eclipse fields (list) contain any of
+    strings (list). Case insensitive. """
+
     strings = [st.upper() for st in strings]
-    enffiles = get_session_enfs()
+    enffiles = get_session_enfs(sessionpath)
+
     if enffiles is None:
         return
+
     for enf in enffiles:
         ecldi = get_eclipse_keys(enf).items()
         eclvals = [val.upper() for key, val in ecldi if key in eclipse_keys]

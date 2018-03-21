@@ -27,46 +27,40 @@ def do_plot(search=None, show=True, make_pdf=True):
     return _plot_trials(trials, show=show, make_pdf=make_pdf)
 
 
-def _plot_trials(trials, show=True, make_pdf=True):
-    """Plot given trials (.c3d files)"""
+def _plot_trials(trials, cond_labels, show=True, make_pdf=True, pdf_path=None):
+    """Plot given trials (.c3d files).
+    trials: list of lists, where inner lists represent conditions
+    and list elements represent trials.
+    If multiple trials per condition, they will be averaged.
+    Conditions is a matching list of condition labels.
+    """
 
-    if not isinstance(trials, list):
-        trials = [trials]
+    # loop thru conditions and average if needed
+    res_avg_all = dict()
+    res_std_all = dict()
+    for cond_files, cond_label in zip(trials, cond_labels):
+        ans = list()
+        for c3dfile in cond_files:
+            an = c3d.get_analysis(c3dfile, condition=cond_label)
+            ans.append(an)
+        if len(ans) > 1:  # do average
+            res_avg = c3d.group_analysis(ans)
+            res_std = c3d.group_analysis(ans, fun=np.std)
+        else:
+            res_avg = ans[0]
+            res_std = dict()
+            res_std[cond_label] = None
+        res_avg_all.update(res_avg)
+        res_std_all.update(res_std)
 
-    sessionpath = nexus.get_sessionpath()
-    sessiondir = op.split(sessionpath)[-1]
-    ans = list()
-
-    for c3dfile in trials:
-        an = c3d.get_analysis(c3dfile, condition='average')
-        # compute and inject the step width
-        tr = trial.Trial(c3dfile)
-        sw = trial._step_width(tr)
-        an['average']['Step Width'] = dict()
-        # uses avg of all cycles from trial
-        an['average']['Step Width']['Right'] = np.array(sw['R']).mean()
-        an['average']['Step Width']['Left'] = np.array(sw['L']).mean()
-        an['average']['Step Width']['unit'] = 'mm'
-        ans.append(an)
-
-    if len(ans) > 1:  # average of multiple trials
-        an_avg = c3d.group_analysis(ans)
-        an_std = c3d.group_analysis(ans, fun=np.std)
-        fig = time_dist_barchart(an_avg, an_std, stddev_bars=False)
-        fig.suptitle('Time-distance variables, session %s'
-                     ' (average of %d trials)' % (sessiondir, len(trials)))
-    else:  # single trial
-        fig = time_dist_barchart(ans[0])
-        edi = tr.eclipse_data
-        notes = edi['NOTES']
-        fn_ = op.split(c3dfile)[-1]
-        fig.suptitle('Time-distance variables, %s (%s)' % (fn_, notes))
+    fig = time_dist_barchart(res_avg_all, res_std_all, stddev_bars=False)
 
     if show:
         plt.show()
 
     if make_pdf:
-        save_pdf(op.join(sessionpath, 'time_dist.pdf'), fig)
+        pass
+        #save_pdf(op.join(pdf_path, 'time_dist.pdf'), fig)
 
     return fig
 

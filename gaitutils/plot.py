@@ -42,7 +42,10 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
                        interactive=True, stddev_bars=True):
     """ Multi-variable and multi-condition barchart plot.
     values dict is keyed as values[condition][var][context],
-    given by e.g. get_c3d_analysis() """
+    given by e.g. get_c3d_analysis()
+    stddev can be None or a dict keyed as stddev[condition][var][context].
+    If no stddev for a given condition, set stddev[condition] = None
+    """
 
     if interactive:
         import matplotlib.pyplot as plt
@@ -62,23 +65,22 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
             ax = fig.add_subplot(gs[ind, col])
             ax.axis('off')
             # may have several bars (conditions) per variable
-            nconds = len(conds)
             vals_this = [values[cond][var][context] for cond in conds]
-            stddevs_this = ([stddev[cond][var][context] for cond in conds] if
-                            stddev else None)
+            stddevs_this = ([stddev[cond][var][context] if stddev[cond]
+                             else None for cond in conds])
+            units_this = len(conds)*[units[ind]]
             ypos = np.arange(0, len(vals_this) * thickness, thickness)
             xerr = stddevs_this if stddev_bars else None
             rects = ax.barh(ypos, vals_this, thickness, align='edge',
                             color=color, xerr=xerr)
             # FIXME: set axis scale according to var normal values
             ax.set_xlim([0, 1.5 * max(vals_this)])
-            if stddev:
-                texts = [u'%.2f ± %.2f %s' % (val, std, unit) for val, std,
-                         unit in zip(vals_this, stddevs_this,
-                                     nconds*[units[ind]])]
-            else:
-                texts = [u'%.2f %s' % (val, unit) for val, unit in
-                         zip(vals_this, nconds*[units[ind]])]
+            texts = list()
+            for val, std, unit in zip(vals_this, stddevs_this, units_this):
+                if std:
+                    texts += [u'%.2f ± %.2f %s' % (val, std, unit)]
+                else:
+                    texts += [u'%.2f %s' % (val, unit)]
             _plot_label(ax, rects, texts)
         # return the last set of rects for legend
         return rects

@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def do_session_average_plot(search=None, show=True, make_pdf=True):
-    """Find tagged trials and plot"""
+    """Find tagged trials from current session dir and plot average"""
 
     sessionpath = nexus.get_sessionpath()
     enffiles = find_tagged(search)
@@ -39,14 +39,17 @@ def do_session_average_plot(search=None, show=True, make_pdf=True):
     return fig
 
 
-def do_single_trial_plot(c3dfile, show=True, make_pdf=True):
-    """Find tagged trials and plot"""
+def do_single_trial_plot(c3dfile, show=True, make_pdf=True, pdf_name=None):
+    """Plot a single trial"""
 
     fig = _plot_trials(c3dfile)
 
     if make_pdf:
+        
+        sessionpath = nexus.get_sessionpath()        
         pdf_name = op.join(sessionpath, 'time_distance_average.pdf')
-        with PdfPages(pdf_name) as pdf:
+    
+    with PdfPages(pdf_name) as pdf:
             pdf.savefig(fig)
 
     if show:
@@ -55,8 +58,21 @@ def do_single_trial_plot(c3dfile, show=True, make_pdf=True):
     return fig
 
 
-def do_comparison_plot():
-    pass
+def do_comparison_plot(sessions, search=None, show=True):
+    """Time-dist comparison of multiple sessions. Tagged trials from each
+    session will be picked."""
+    trials = list()
+    for session in sessions:
+        enffiles = find_tagged(search, sessionpath=session)
+        trials.append([enf2c3d(fn) for fn in enffiles])
+
+    cond_labels = sessions
+    fig = _plot_trials(trials, cond_labels)
+
+    if show:
+        plt.show()
+
+    return fig
 
 
 def _plot_trials(trials, cond_labels):

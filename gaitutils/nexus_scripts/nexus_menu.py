@@ -100,12 +100,15 @@ class ComparisonDialog(QtWidgets.QDialog):
         self.sessions = list()
 
     def add_session(self):
+        if len(self.sessions) == self.MAX_SESSIONS:
+            message_dialog('You can specify maximum of %d sessions' %
+                           self.MAX_SESSIONS)
+            return
         dir = QtWidgets.QFileDialog.getExistingDirectory(self,
                                                           'Select session')
         if dir and dir not in self.sessions:
             self.sessions.append(dir)
             self.update_session_list()
-            
 
     def clear_sessions(self):
         self.sessions = list()  # sorry no clear()
@@ -115,11 +118,7 @@ class ComparisonDialog(QtWidgets.QDialog):
         self.lblSessions.setText(u'\n'.join(self.sessions))
 
     def accept(self):
-        if len(self.sessions) <= self.MAX_SESSIONS:
-            self.done(QtWidgets.QDialog.Accepted)
-        else:
-            message_dialog('Specify maximum of %d sessions' %
-                           self.MAX_SESSIONS)
+        self.done(QtWidgets.QDialog.Accepted)
 
 
 class QtHandler(logging.Handler):

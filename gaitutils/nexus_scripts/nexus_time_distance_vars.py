@@ -9,6 +9,7 @@ import logging
 import argparse
 import os.path as op
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 
 from gaitutils import c3d, nexus, register_gui_exception_handler, trial
@@ -19,15 +20,45 @@ from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
 logger = logging.getLogger(__name__)
 
 
-def do_plot(search=None, show=True, make_pdf=True):
+def do_session_average_plot(search=None, show=True, make_pdf=True):
     """Find tagged trials and plot"""
 
+    sessionpath = nexus.get_sessionpath()
     enffiles = find_tagged(search)
     trials = [enf2c3d(fn) for fn in enffiles]
-    return _plot_trials(trials, show=show, make_pdf=make_pdf)
+    fig = _plot_trials(trials)
+
+    if make_pdf:
+        pdf_name = op.join(sessionpath, 'time_distance_average.pdf')
+        with PdfPages(pdf_name) as pdf:
+            pdf.savefig(fig)
+
+    if show:
+        plt.show()
+
+    return fig
 
 
-def _plot_trials(trials, cond_labels, show=True, make_pdf=True, pdf_path=None):
+def do_single_trial_plot(c3dfile, show=True, make_pdf=True):
+    """Find tagged trials and plot"""
+
+    sessionpath = nexus.get_sessionpath()
+    enffiles = find_tagged(search)
+    trials = [enf2c3d(fn) for fn in enffiles]
+    fig = _plot_trials(trials)
+
+    if make_pdf:
+        pdf_name = op.join(sessionpath, 'time_distance_average.pdf')
+        with PdfPages(pdf_name) as pdf:
+            pdf.savefig(fig)
+
+    if show:
+        plt.show()
+
+    return fig
+
+
+def _plot_trials(trials, cond_labels):
     """Plot given trials (.c3d files).
     trials: list of lists, where inner lists represent conditions
     and list elements represent trials.
@@ -53,16 +84,7 @@ def _plot_trials(trials, cond_labels, show=True, make_pdf=True, pdf_path=None):
         res_avg_all.update(res_avg)
         res_std_all.update(res_std)
 
-    fig = time_dist_barchart(res_avg_all, res_std_all, stddev_bars=False)
-
-    if show:
-        plt.show()
-
-    if make_pdf:
-        pass
-        #save_pdf(op.join(pdf_path, 'time_dist.pdf'), fig)
-
-    return fig
+    return time_dist_barchart(res_avg_all, res_std_all, stddev_bars=False)
 
 
 if __name__ == '__main__':
@@ -74,4 +96,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG)
     register_gui_exception_handler()
-    do_plot(search=args.search)
+    do_session_average_plot(search=args.search)

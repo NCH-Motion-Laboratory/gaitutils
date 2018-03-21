@@ -65,8 +65,7 @@ def _get_c3dacq(c3dfile):
 
 def get_analysis(c3dfile, condition='unknown'):
     """Get analysis values from c3d (e.g. gait parameters). Returns a dict
-    keyed by var and context. First key can optionally be a condition label"""
-
+    keyed by var and context. First key can optionally be a condition label."""
     acq = _get_c3dacq(c3dfile)
     vars = _get_c3d_metadata_field(acq, 'ANALYSIS', 'NAMES')
     units = _get_c3d_metadata_field(acq, 'ANALYSIS', 'UNITS')
@@ -89,7 +88,8 @@ def get_analysis(c3dfile, condition='unknown'):
 
 def group_analysis(an_list, fun=np.mean):
     """ Average (or stddev etc) analysis dicts by applying fun to
-    collected values """
+    collected values. The condition label needs to be the same for all dicts.
+    Returns single dict with the same condition. """
     if not isinstance(an_list, list):
         raise ValueError('Need a list of analysis dicts')
     if not an_list:

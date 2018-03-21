@@ -42,10 +42,7 @@ def do_session_average_plot(search=None, show=True, make_pdf=True):
 def do_single_trial_plot(c3dfile, show=True, make_pdf=True):
     """Find tagged trials and plot"""
 
-    sessionpath = nexus.get_sessionpath()
-    enffiles = find_tagged(search)
-    trials = [enf2c3d(fn) for fn in enffiles]
-    fig = _plot_trials(trials)
+    fig = _plot_trials(c3dfile)
 
     if make_pdf:
         pdf_name = op.join(sessionpath, 'time_distance_average.pdf')
@@ -58,15 +55,17 @@ def do_single_trial_plot(c3dfile, show=True, make_pdf=True):
     return fig
 
 
+def do_comparison_plot():
+    pass
+
+
 def _plot_trials(trials, cond_labels):
-    """Plot given trials (.c3d files).
+    """Make a time-distance variable barchart from given trials (.c3d files).
     trials: list of lists, where inner lists represent conditions
     and list elements represent trials.
-    If multiple trials per condition, they will be averaged.
     Conditions is a matching list of condition labels.
+    If there are multiple trials per condition, they will be averaged.
     """
-
-    # loop thru conditions and average if needed
     res_avg_all = dict()
     res_std_all = dict()
     for cond_files, cond_label in zip(trials, cond_labels):
@@ -74,10 +73,10 @@ def _plot_trials(trials, cond_labels):
         for c3dfile in cond_files:
             an = c3d.get_analysis(c3dfile, condition=cond_label)
             ans.append(an)
-        if len(ans) > 1:  # do average
+        if len(ans) > 1:  # do average for this condition
             res_avg = c3d.group_analysis(ans)
             res_std = c3d.group_analysis(ans, fun=np.std)
-        else:
+        else:  # do single-trial plot for this condition
             res_avg = ans[0]
             res_std = dict()
             res_std[cond_label] = None

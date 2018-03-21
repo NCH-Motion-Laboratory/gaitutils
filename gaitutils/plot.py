@@ -40,7 +40,7 @@ def save_pdf(filename, fig):
 
 def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
                        interactive=True, stddev_bars=True):
-    """ Multi-variable and multi-category barchart plot.
+    """ Multi-variable and multi-condition barchart plot.
     values dict is keyed as values[condition][var][context],
     given by e.g. get_c3d_analysis() """
 
@@ -62,6 +62,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
             ax = fig.add_subplot(gs[ind, col])
             ax.axis('off')
             # may have several bars (conditions) per variable
+            nconds = len(conds)
             vals_this = [values[cond][var][context] for cond in conds]
             stddevs_this = ([stddev[cond][var][context] for cond in conds] if
                             stddev else None)
@@ -73,10 +74,11 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
             ax.set_xlim([0, 1.5 * max(vals_this)])
             if stddev:
                 texts = [u'%.2f ± %.2f %s' % (val, std, unit) for val, std,
-                         unit in zip(vals_this, stddevs_this, [units[ind]])]
+                         unit in zip(vals_this, stddevs_this,
+                                     nconds*[units[ind]])]
             else:
                 texts = [u'%.2f %s' % (val, unit) for val, unit in
-                         zip(vals_this, [units[ind]])]
+                         zip(vals_this, nconds*[units[ind]])]
             _plot_label(ax, rects, texts)
         # return the last set of rects for legend
         return rects

@@ -16,9 +16,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def trial_median_velocity(source):
-    """ Compute median velocity over whole trial by differentiation of marker
-    data """
+def _trial_median_velocity(source):
+    """ Compute median velocity (walking speed) over whole trial by
+    differentiation of marker data """
     MIN_VEL = .1
     try:
         frate = read_data.get_metadata(source)['framerate']
@@ -45,15 +45,15 @@ def do_plot(show=True, make_pdf=True):
                         'session directory')
     c3ds = [nexus.enf2c3d(enf) for enf in enfs_]
     labels = [op.splitext(op.split(file)[1])[0] for file in c3ds]
-    vels = np.array([trial_median_velocity(trial) for trial in c3ds])
+    vels = np.array([_trial_median_velocity(trial) for trial in c3ds])
     vavg = np.nanmean(vels)
 
     fig = plt.figure()
     plt.stem(vels)
     plt.xticks(range(len(vels)), labels, rotation='vertical')
-    plt.ylabel('Velocity (m/s)')
+    plt.ylabel('Speed (m/s)')
     plt.tick_params(axis='both', which='major', labelsize=8)
-    plt.title('Gait velocity for dynamic trials (average %.2f m/s)' % vavg)
+    plt.title('Walking speed for dynamic trials (average %.2f m/s)' % vavg)
     plt.tight_layout()
 
     if make_pdf:
@@ -65,6 +65,7 @@ def do_plot(show=True, make_pdf=True):
         plt.show()
 
     return fig
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

@@ -82,6 +82,7 @@ def do_multitrial_plot(c3dfiles, show=True, make_pdf=True):
 def do_comparison_plot(sessions, tags, show=True):
     """Time-dist comparison of multiple sessions. Tagged trials from each
     session will be picked."""
+
     trials = list()
     for session in sessions:
         c3ds = find_tagged(tags, sessionpath=session)

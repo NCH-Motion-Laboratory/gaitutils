@@ -25,7 +25,6 @@ def do_plot(tags=None, show=True, make_pdf=True):
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
 
     pl = Plotter()
-    pl.open_trial(tagged_trials[0])
     layout = cfg.layouts.overlay_std_emg
 
     # from layout, drop rows that do not have good data in any of the trials
@@ -53,16 +52,18 @@ def do_plot(tags=None, show=True, make_pdf=True):
         if not emg_active:
             continue
 
-        maintitle = ('EMG consistency plot, '
-                     'session %s' % pl.trial.sessiondir)
         plot_emg_normaldata = (trialpath == tagged_trials[-1])
         pl.plot_trial(emg_tracecolor=linecolors[i],
-                      maintitle=maintitle, annotate_emg=False,
+                      maintitle='', annotate_emg=False,
                       superpose=True, show=False,
                       plot_emg_normaldata=plot_emg_normaldata)
 
     if not pl.fig:
         raise GaitDataError('None of the marked trials have valid EMG data')
+
+    maintitle = ('EMG consistency plot, '
+                 'session %s' % pl.trial.sessiondir)
+    pl.set_title(maintitle)
 
     if show:
         pl.show()

@@ -11,57 +11,66 @@ description and defined search strings.
 import logging
 import argparse
 
-from gaitutils import Plotter, cfg, register_gui_exception_handler
+from gaitutils import Plotter, cfg, register_gui_exception_handler, GaitDataError
 from gaitutils.nexus import find_tagged
 
 logger = logging.getLogger(__name__)
 
-"""
-def do_comparison_plot(sessions):
-   
+
+def do_comparison_plot(sessions, tags, show=True):
 
     pl = Plotter()
-    pl.open_trial(tagged_trials[0])
     pl.layout = cfg.layouts.overlay_lb_kin
-
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
 
-    for i, trialpath in enumerate(tagged_trials):
-        logger.debug('plotting %s' % tagged_trials[i])
-        pl.open_trial(tagged_trials[i])
-        maintitle = ('Kinematics/kinetics consistency plot, '
-                     'session %s' % pl.trial.sessiondir)
-        # only plot normaldata for last trial to speed up things
-        plot_model_normaldata = (trialpath == tagged_trials[-1])
-        pl.plot_trial(model_tracecolor=linecolors[i], linestyles_context=True,
-                      toeoff_markers=False,
-                      maintitle=maintitle, superpose=True, show=False,
-                      plot_model_normaldata=plot_model_normaldata)
-    """
+    for session, linecolor in zip(sessions, linecolors):
+        c3ds = find_tagged(tags=tags, sessionpath=session)
+        if not c3ds:
+            raise GaitDataError('No trials found for session %s' % session)
+        for c3d in c3ds:
+            pl.open_trial(c3d)
+            plot_model_normaldata = (c3d == c3ds[-1] and
+                                     session == sessions[-1])
+            pl.plot_trial(model_tracecolor=linecolor,
+                          linestyles_context=True,
+                          toeoff_markers=False,
+                          maintitle='', superpose=True, show=False,
+                          plot_model_normaldata=plot_model_normaldata)
+
+    if show:
+        pl.show()
+
+    #if make_pdf:
+        #pass
+        #pl.create_pdf('kin_consistency.pdf')
+
+    return pl.fig
+
 
 
 def do_plot(tags=None, show=True, make_pdf=True):
     """ One session consistency plot """
 
-    tagged_trials = find_tagged(tags=tags)
+    c3ds = find_tagged(tags=tags)
 
     pl = Plotter()
-    pl.open_trial(tagged_trials[0])
     pl.layout = cfg.layouts.overlay_lb_kin
-
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
 
-    for i, trialpath in enumerate(tagged_trials):
-        logger.debug('plotting %s' % tagged_trials[i])
-        pl.open_trial(tagged_trials[i])
-        maintitle = ('Kinematics/kinetics consistency plot, '
-                     'session %s' % pl.trial.sessiondir)
+    for i, c3d in enumerate(c3ds):
+        logger.debug('plotting %s' % c3ds[i])
+        pl.open_trial(c3ds[i])
         # only plot normaldata for last trial to speed up things
-        plot_model_normaldata = (trialpath == tagged_trials[-1])
+        plot_model_normaldata = (c3d == c3ds[-1])
         pl.plot_trial(model_tracecolor=linecolors[i], linestyles_context=True,
-                      toeoff_markers=False,
-                      maintitle=maintitle, superpose=True, show=False,
+                      toeoff_markers=False, maintitle='',
+                      superpose=True, show=False,
                       plot_model_normaldata=plot_model_normaldata)
+
+    maintitle = ('Kinematics/kinetics consistency plot, '
+                 'session %s' % pl.trial.sessiondir)
+    pl.set_title(maintitle)
+
     if show:
         pl.show()
 

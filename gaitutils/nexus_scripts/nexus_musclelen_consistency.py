@@ -22,7 +22,6 @@ def do_plot(tags=None, age=None, show=True, make_pdf=True):
     tagged_trials = find_tagged(tags=tags)
 
     pl = Plotter()
-    pl.open_trial(tagged_trials[0])
 
     if age is not None:
         ndata = normaldata.normaldata_age(age)
@@ -36,15 +35,18 @@ def do_plot(tags=None, age=None, show=True, make_pdf=True):
     for i, trialpath in enumerate(tagged_trials):
         logger.debug('plotting %s' % tagged_trials[i])
         pl.open_trial(tagged_trials[i])
-        maintitle = ('Muscle length consistency plot, '
-                     'session %s' % pl.trial.sessiondir)
         # only plot normaldata for last trial to speed up things
         plot_model_normaldata = (trialpath == tagged_trials[-1])
         pl.plot_trial(model_tracecolor=linecolors[i], linestyles_context=True,
                       toeoff_markers=False, add_zeroline=False,
-                      maintitle=maintitle, superpose=True, show=False,
+                      maintitle='', superpose=True, show=False,
                       plot_model_normaldata=plot_model_normaldata,
                       sharex=False)
+
+    maintitle = ('Muscle length consistency plot, '
+                 'session %s' % pl.trial.sessiondir)
+    pl.set_title(maintitle)
+
     if show:
         pl.show()
 

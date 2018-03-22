@@ -131,8 +131,8 @@ def do_plot(fullname=None, hetu=None, pages=None):
         # representative single trial plots
         if representative:
             if pages['TimeDistRepresentative']:
-                fig = nexus_time_distance_vars._plot_trials(c3d, show=False,
-                                                            make_pdf=True)
+                fig = nexus_time_distance_vars.do_single_trial_plot(c3d,
+                                                                    show=False)
                 repr_figs.append(fig)
 
         # try to figure out whether we have any valid EMG signals
@@ -186,8 +186,7 @@ def do_plot(fullname=None, hetu=None, pages=None):
 
     # time-distance average
     if pages['TimeDistAverage']:
-        fig_timedist_avg = nexus_time_distance_vars.do_plot(show=False,
-                                                            make_pdf=False)
+        fig_timedist_avg = nexus_time_distance_vars.do_session_average_plot(show=False, make_pdf=False)
     else:
         fig_timedist_avg = None
 

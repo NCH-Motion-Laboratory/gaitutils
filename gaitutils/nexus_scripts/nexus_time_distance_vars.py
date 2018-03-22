@@ -23,12 +23,12 @@ logger = logging.getLogger(__name__)
 def do_session_average_plot(search=None, show=True, make_pdf=True):
     """Find tagged trials from current session dir and plot average"""
 
-    sessionpath = nexus.get_sessionpath()
     enffiles = find_tagged(search)
     trials = [enf2c3d(fn) for fn in enffiles]
     fig = _plot_trials(trials)
 
     if make_pdf:
+        sessionpath = nexus.get_sessionpath()
         pdf_name = op.join(sessionpath, 'time_distance_average.pdf')
         with PdfPages(pdf_name) as pdf:
             pdf.savefig(fig)
@@ -39,18 +39,17 @@ def do_session_average_plot(search=None, show=True, make_pdf=True):
     return fig
 
 
-def do_single_trial_plot(c3dfile, show=True, make_pdf=True, pdf_name=None):
-    """Plot a single trial"""
+def do_single_trial_plot(c3dfile, show=True, make_pdf=True):
+    """Plot a single trial time-distance. PDF goes into Nexus session dir"""
 
     fig = _plot_trials(c3dfile)
 
     if make_pdf:
-        
-        sessionpath = nexus.get_sessionpath()        
-        pdf_name = op.join(sessionpath, 'time_distance_average.pdf')
-    
-    with PdfPages(pdf_name) as pdf:
-            pdf.savefig(fig)
+        fn = op.split(c3dfile)[1]
+        pdf_name = op.join(nexus.get_sessionpath(),
+                           '%s_time_distance.pdf' % fn)
+        with PdfPages(pdf_name) as pdf:
+                pdf.savefig(fig)
 
     if show:
         plt.show()

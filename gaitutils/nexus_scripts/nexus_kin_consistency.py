@@ -10,8 +10,10 @@ description and defined search strings.
 
 import logging
 import argparse
+import os.path as op
 
-from gaitutils import Plotter, cfg, register_gui_exception_handler, GaitDataError
+from gaitutils import (Plotter, cfg, register_gui_exception_handler,
+                       GaitDataError)
 from gaitutils.nexus import find_tagged
 
 logger = logging.getLogger(__name__)
@@ -29,23 +31,22 @@ def do_comparison_plot(sessions, tags, show=True):
             raise GaitDataError('No trials found for session %s' % session)
         for c3d in c3ds:
             pl.open_trial(c3d)
+            # only plot normaldata for last trial to speed up things
             plot_model_normaldata = (c3d == c3ds[-1] and
                                      session == sessions[-1])
             pl.plot_trial(model_tracecolor=linecolor,
                           linestyles_context=True,
-                          toeoff_markers=False,
+                          toeoff_markers=False, legend_maxlen=30,
                           maintitle='', superpose=True, show=False,
                           plot_model_normaldata=plot_model_normaldata)
+    maintitle = 'Kinematics comparison '
+    maintitle += ' vs. '.join([op.split(s)[-1] for s in sessions])
+    pl.set_title(maintitle)
 
     if show:
         pl.show()
 
-    #if make_pdf:
-        #pass
-        #pl.create_pdf('kin_consistency.pdf')
-
     return pl.fig
-
 
 
 def do_plot(tags=None, show=True, make_pdf=True):

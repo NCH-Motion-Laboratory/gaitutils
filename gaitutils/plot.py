@@ -322,7 +322,8 @@ class Plotter(object):
                    superpose=False,
                    maintitle=None,
                    maintitleprefix=None,
-                   add_zeroline=True):
+                   add_zeroline=True,
+                   legend_maxlen=10):
 
         """ Create plot of variables. Parameters:
 
@@ -411,6 +412,7 @@ class Plotter(object):
                 after finished. If interactive=False, this has no effect.
         add_zeroline : bool
                 Add line on y=0
+
         """
 
         if trial is None and self.trial is None:
@@ -461,10 +463,9 @@ class Plotter(object):
                            top='off', labelbottom='off', right='off',
                            left='off', labelleft='off')
 
-        def _shorten_name(name):
+        def _shorten_name(name, max_len=10):
             """ Shorten overlong names for legend etc. """
-            MAX_LEN = 10
-            return name if len(name) <= MAX_LEN else '..'+name[-MAX_LEN+2:]
+            return name if len(name) <= max_len else '..'+name[-max_len+2:]
 
         def _get_cycles(cycles):
             """ Get specified cycles from the gait trial """
@@ -758,7 +759,7 @@ class Plotter(object):
             elif var_type in ('model_legend', 'emg_legend'):
                 ax.set_axis_off()
                 self.legendnames.append('%s   %s   %s' % (
-                                        _shorten_name(trial.trialname),
+                                        _shorten_name(trial.trialname, legend_maxlen),
                                         trial.eclipse_data['DESCRIPTION'],
                                         trial.eclipse_data['NOTES']))
                 if var_type == 'model_legend':
@@ -779,9 +780,10 @@ class Plotter(object):
                                                         fill=False,
                                                         edgecolor='none',
                                                         linewidth=0)]
-                ax.legend(nothing+artists,
-                          legtitle+self.legendnames, loc='upper center',
-                          ncol=2,
+                # FIXME: just a hack
+                ncol = 1 if len(self.legendnames) < 5 else 2
+                ax.legend(nothing+artists, legtitle+self.legendnames,
+                          loc='upper left', ncol=ncol,
                           prop={'size': cfg.plot.legend_fontsize})
 
             plotaxes.append(ax)

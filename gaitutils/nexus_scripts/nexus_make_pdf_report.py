@@ -95,8 +95,8 @@ def do_plot(fullname=None, hetu=None, pages=None):
     title_txt += '\n'
     title_txt += u'Nimi: %s\n' % fullname
     title_txt += u'Henkilötunnus: %s\n' % (hetu if hetu else 'ei tiedossa')
-    title_txt += u'Ikä mittaushetkellä: %d vuotta\n' % (age if age
-                                                          else 'ei tiedossa')
+    title_txt += u'Ikä mittaushetkellä: %s\n' % ('%d vuotta' % age if age
+                                                   else 'ei tiedossa')
     title_txt += u'Mittaus: %s\n' % session
     title_txt += u'Mittauksen pvm: %s\n' % session_t.strftime('%d.%m.%Y')
     title_txt += u'Raportin pvm: %s\n' % timestr
@@ -112,7 +112,6 @@ def do_plot(fullname=None, hetu=None, pages=None):
     pl = Plotter()
 
     for trial in tagged_trials:
-
         c3d = enf2c3d(trial)
         pl.open_trial(c3d)
         representative = (pl.trial.eclipse_data[sort_field].upper()

@@ -25,10 +25,13 @@ def do_session_average_plot(search=None, show=True, make_pdf=True):
 
     enffiles = find_tagged(search)
     trials = [enf2c3d(fn) for fn in enffiles]
-    fig = _plot_trials(trials)
+    sessionpath = nexus.get_sessionpath()
+    fig = _plot_trials([trials])
+    session = op.split(sessionpath)[-1]
+    fig.suptitle('Time-distance average, session %s' % session)
 
     if make_pdf:
-        sessionpath = nexus.get_sessionpath()
+
         pdf_name = op.join(sessionpath, 'time_distance_average.pdf')
         with PdfPages(pdf_name) as pdf:
             pdf.savefig(fig)
@@ -42,12 +45,33 @@ def do_session_average_plot(search=None, show=True, make_pdf=True):
 def do_single_trial_plot(c3dfile, show=True, make_pdf=True):
     """Plot a single trial time-distance. PDF goes into Nexus session dir"""
 
-    fig = _plot_trials(c3dfile)
+    fig = _plot_trials([[c3dfile]])
+    fn = op.split(c3dfile)[1]
+    fig.suptitle('Time-distance variables, %s' % fn)
 
     if make_pdf:
         fn = op.split(c3dfile)[1]
         pdf_name = op.join(nexus.get_sessionpath(),
                            '%s_time_distance.pdf' % fn)
+        with PdfPages(pdf_name) as pdf:
+                pdf.savefig(fig)
+
+    if show:
+        plt.show()
+
+    return fig
+
+
+def do_multitrial_plot(c3dfiles, show=True, make_pdf=True):
+    """Plot multiple trial comparison time-distance.
+    PDF goes into Nexus session dir"""
+
+    cond_labels = [op.split(c3d)[-1] for c3d in c3dfiles]
+    fig = _plot_trials([[c3d] for c3d in c3dfiles], cond_labels)
+
+    if make_pdf:
+        pdf_name = op.join(nexus.get_sessionpath(),
+                           '%representative_time_distance.pdf')
         with PdfPages(pdf_name) as pdf:
                 pdf.savefig(fig)
 
@@ -74,13 +98,15 @@ def do_comparison_plot(sessions, search=None, show=True):
     return fig
 
 
-def _plot_trials(trials, cond_labels):
+def _plot_trials(trials, cond_labels=None):
     """Make a time-distance variable barchart from given trials (.c3d files).
     trials: list of lists, where inner lists represent conditions
     and list elements represent trials.
     Conditions is a matching list of condition labels.
     If there are multiple trials per condition, they will be averaged.
     """
+    if cond_labels is None:
+        cond_labels = ['Condition %d' % k for k in range(len(trials))]
     res_avg_all = dict()
     res_std_all = dict()
     for cond_files, cond_label in zip(trials, cond_labels):

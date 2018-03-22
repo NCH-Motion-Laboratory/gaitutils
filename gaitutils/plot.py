@@ -108,7 +108,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
 
     if len(conds) > 1:
         # plotting happens from down -> up, so reverse legend
-        fig.legend(rects[::-1], conds[::-1], loc=1)
+        fig.legend(rects[::-1], conds[::-1], loc=4)
 
     fig.add_subplot(gs[0, 0]).set_title('Left')
     fig.add_subplot(gs[0, 2]).set_title('Right')

@@ -19,9 +19,9 @@ from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
 logger = logging.getLogger(__name__)
 
 
-def do_plot(search=None, show=True, make_pdf=True):
+def do_plot(tags=None, show=True, make_pdf=True):
 
-    tagged_trials = find_tagged(search)
+    tagged_trials = find_tagged(tags)
 
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
 
@@ -77,10 +77,10 @@ def do_plot(search=None, show=True, make_pdf=True):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--search', metavar='p', type=str, nargs='+',
+    parser.add_argument('--tags', metavar='p', type=str, nargs='+',
                         help='strings that must appear in trial '
                         'description or notes')
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG)
     register_gui_exception_handler()
-    do_plot(search=args.search)
+    do_plot(tags=args.tags)

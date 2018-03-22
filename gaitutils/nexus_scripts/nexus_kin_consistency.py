@@ -17,21 +17,21 @@ from gaitutils.nexus import enf2c3d, find_trials
 logger = logging.getLogger(__name__)
 
 
-def find_tagged(search=None, sessionpath=None):
+def find_tagged(tags=None, sessionpath=None):
     """Find tagged Eclipse trials from given sessionpath (or Nexus session)"""
 
     MAX_TRIALS = 8
 
-    if search is None:
-        search = cfg.plot.eclipse_tags
+    if tags is None:
+        tags = cfg.plot.eclipse_tags
 
     eclkeys = ['DESCRIPTION', 'NOTES']
-    tagged_trials = list(find_trials(eclkeys, search, sessionpath=sessionpath))
+    tagged_trials = list(find_trials(eclkeys, tags, sessionpath=sessionpath))
 
     if not tagged_trials:
         raise Exception('Did not find any trials matching the Eclipse search '
                         'strings %s in the current session directory'
-                        % str(search))
+                        % str(tags))
 
     if len(tagged_trials) > MAX_TRIALS:
         raise Exception('Too many tagged trials found!')
@@ -61,10 +61,10 @@ def do_comparison_plot(sessions):
                       plot_model_normaldata=plot_model_normaldata)
     
 
-def do_plot(search=None, show=True, make_pdf=True):
+def do_plot(tags=None, show=True, make_pdf=True):
     """ One session consistency plot """
 
-    tagged_trials = find_tagged(search=search)
+    tagged_trials = find_tagged(tags=tags)
 
     pl = Plotter()
     pl.open_trial(enf2c3d(tagged_trials[0]))
@@ -95,10 +95,10 @@ def do_plot(search=None, show=True, make_pdf=True):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--search', metavar='p', type=str, nargs='+',
+    parser.add_argument('--tags', metavar='p', type=str, nargs='+',
                         help='strings that must appear in trial '
                         'description or notes')
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG)
     register_gui_exception_handler()
-    do_plot(search=args.search)
+    do_plot(tags=args.tags)

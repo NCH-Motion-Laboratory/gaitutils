@@ -20,10 +20,10 @@ from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
 logger = logging.getLogger(__name__)
 
 
-def do_session_average_plot(search=None, show=True, make_pdf=True):
+def do_session_average_plot(tags=None, show=True, make_pdf=True):
     """Find tagged trials from current session dir and plot average"""
 
-    enffiles = find_tagged(search)
+    enffiles = find_tagged(tags)
     trials = [enf2c3d(fn) for fn in enffiles]
     sessionpath = nexus.get_sessionpath()
     fig = _plot_trials([trials])
@@ -81,12 +81,12 @@ def do_multitrial_plot(c3dfiles, show=True, make_pdf=True):
     return fig
 
 
-def do_comparison_plot(sessions, tags, search=None, show=True):
+def do_comparison_plot(sessions, tags, show=True):
     """Time-dist comparison of multiple sessions. Tagged trials from each
     session will be picked."""
     trials = list()
     for session in sessions:
-        enffiles = find_tagged(search, sessionpath=session)
+        enffiles = find_tagged(tags, sessionpath=session)
         trials.append([enf2c3d(fn) for fn in enffiles])
 
     cond_labels = [op.split(session)[-1] for session in sessions]
@@ -130,10 +130,10 @@ def _plot_trials(trials, cond_labels=None):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--search', metavar='p', type=str, nargs='+',
+    parser.add_argument('--tags', metavar='p', type=str, nargs='+',
                         help='strings that must appear in trial '
                         'description or notes')
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG)
     register_gui_exception_handler()
-    do_session_average_plot(search=args.search)
+    do_session_average_plot(tags=args.tags)

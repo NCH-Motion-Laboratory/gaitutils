@@ -33,9 +33,9 @@ def do_copy():
     if not op.isdir(dest_dir):
         os.mkdir(dest_dir)
 
-    search = ['R1', 'L1']
+    tags = ['R1', 'L1']
     eclkeys = ['DESCRIPTION', 'NOTES']
-    enf_files = nexus.find_trials(eclkeys, search)
+    enf_files = nexus.find_trials(eclkeys, tags)
 
     # concatenate video iterators for all .enf files
     vidfiles = []

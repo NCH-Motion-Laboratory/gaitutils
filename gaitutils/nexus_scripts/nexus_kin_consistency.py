@@ -39,7 +39,30 @@ def find_tagged(search=None, sessionpath=None):
     return tagged_trials
 
 
+def do_comparison_plot(sessions):
+    """ Comparison of multiple sessions """
+
+    pl = Plotter()
+    pl.open_trial(enf2c3d(tagged_trials[0]))
+    pl.layout = cfg.layouts.overlay_lb_kin
+
+    linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
+
+    for i, trialpath in enumerate(tagged_trials):
+        logger.debug('plotting %s' % tagged_trials[i])
+        pl.open_trial(enf2c3d(tagged_trials[i]))
+        maintitle = ('Kinematics/kinetics consistency plot, '
+                     'session %s' % pl.trial.sessiondir)
+        # only plot normaldata for last trial to speed up things
+        plot_model_normaldata = (trialpath == tagged_trials[-1])
+        pl.plot_trial(model_tracecolor=linecolors[i], linestyles_context=True,
+                      toeoff_markers=False,
+                      maintitle=maintitle, superpose=True, show=False,
+                      plot_model_normaldata=plot_model_normaldata)
+    
+
 def do_plot(search=None, show=True, make_pdf=True):
+    """ One session consistency plot """
 
     tagged_trials = find_tagged(search=search)
 

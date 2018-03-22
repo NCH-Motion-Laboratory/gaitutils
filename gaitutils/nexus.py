@@ -188,6 +188,26 @@ def enf2c3d(fname):
     return fname.replace(enfstr, '.c3d')
 
 
+def find_tagged(tags=None, sessionpath=None):
+    """ Find tagged trials in Nexus session path (or given path) """
+    MAX_TRIALS = 8
+    eclkeys = ['DESCRIPTION', 'NOTES']
+
+    if tags is None:
+        tags = cfg.plot.eclipse_tags
+
+    tagged_trials = list(find_trials(eclkeys, tags, sessionpath=sessionpath))
+
+    if not tagged_trials:
+        raise Exception('Did not find any trials matching the Eclipse search '
+                        'strings %s in the current session directory'
+                        % str(tags))
+    if len(tagged_trials) > MAX_TRIALS:
+        raise Exception('Too many tagged trials found!')
+
+    return tagged_trials
+
+
 def find_trials(eclipse_keys, strings, sessionpath=None):
     """ Yield .enf files for trials in current Nexus session directory
     (or given session path) whose Eclipse fields (list) contain any of

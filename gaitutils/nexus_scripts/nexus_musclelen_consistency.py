@@ -12,31 +12,9 @@ import logging
 import argparse
 
 from gaitutils import Plotter, cfg, register_gui_exception_handler, normaldata
-from gaitutils.nexus import enf2c3d, find_trials
+from gaitutils.nexus import enf2c3d, find_tagged
 
 logger = logging.getLogger(__name__)
-
-
-def find_tagged(tags=None):
-    """ Find tagged Eclipse trials """
-
-    MAX_TRIALS = 8
-
-    if tags is None:
-        tags = cfg.plot.eclipse_tags
-
-    eclkeys = ['DESCRIPTION', 'NOTES']
-    tagged_trials = list(find_trials(eclkeys, tags))
-
-    if not tagged_trials:
-        raise Exception('Did not find any trials matching the Eclipse tags '
-                        '%s in the current session directory'
-                        % str(tags))
-
-    if len(tagged_trials) > MAX_TRIALS:
-        raise Exception('Too many tagged trials found!')
-
-    return tagged_trials
 
 
 def do_plot(tags=None, age=None, show=True, make_pdf=True):

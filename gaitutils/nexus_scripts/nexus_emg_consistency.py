@@ -13,8 +13,7 @@ import argparse
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, EMG,
                        GaitDataError)
-from gaitutils.nexus import enf2c3d
-from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
+from gaitutils.nexus import enf2c3d, find_tagged
 
 logger = logging.getLogger(__name__)
 

@@ -18,14 +18,14 @@ from collections import defaultdict
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
                        numutils, normaldata)
-from gaitutils.nexus import enf2c3d, get_sessionpath, get_trialname
+from gaitutils.nexus import enf2c3d, get_sessionpath, find_tagged
 import nexus_kin_consistency
 import nexus_emg_consistency
 import nexus_musclelen_consistency
 import nexus_kin_average
 import nexus_trials_velocity
 import nexus_time_distance_vars
-from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
+
 
 logger = logging.getLogger(__name__)
 

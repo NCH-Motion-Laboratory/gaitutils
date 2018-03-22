@@ -112,6 +112,7 @@ def do_plot(fullname=None, hetu=None, pages=None):
     pl = Plotter()
 
     for trial in tagged_trials:
+
         c3d = enf2c3d(trial)
         pl.open_trial(c3d)
         representative = (pl.trial.eclipse_data[sort_field].upper()

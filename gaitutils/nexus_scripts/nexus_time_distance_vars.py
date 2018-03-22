@@ -89,7 +89,7 @@ def do_comparison_plot(sessions, search=None, show=True):
         enffiles = find_tagged(search, sessionpath=session)
         trials.append([enf2c3d(fn) for fn in enffiles])
 
-    cond_labels = sessions
+    cond_labels = [op.split(session)[-1] for session in sessions]
     fig = _plot_trials(trials, cond_labels)
 
     if show:

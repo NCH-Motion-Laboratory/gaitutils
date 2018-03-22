@@ -367,7 +367,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnKinAverage,
                                   nexus_kin_average.do_plot)
         self._button_connect_task(self.btnTimeDistAverage,
-                                  nexus_time_distance_vars.do_plot)
+                                  nexus_time_distance_vars.do_session_average_plot)
         self._button_connect_task(self.btnAutoprocTrial,
                                   nexus_autoprocess_trial.autoproc_single,
                                   thread=True)

@@ -13,7 +13,7 @@ import argparse
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, EMG,
                        GaitDataError)
-from gaitutils.nexus import enf2c3d, find_tagged
+from gaitutils.nexus import find_tagged
 
 logger = logging.getLogger(__name__)
 
@@ -25,13 +25,13 @@ def do_plot(tags=None, show=True, make_pdf=True):
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
 
     pl = Plotter()
-    pl.open_trial(enf2c3d(tagged_trials[0]))
+    pl.open_trial(tagged_trials[0])
     layout = cfg.layouts.overlay_std_emg
 
     # from layout, drop rows that do not have good data in any of the trials
     chs_ok = None
-    for i, enf in enumerate(tagged_trials):
-        emg = EMG(enf2c3d(enf))
+    for i, c3d in enumerate(tagged_trials):
+        emg = EMG(c3d)
         chs_prev_ok = chs_ok if i > 0 else None
         # plot channels w/ status ok, or anything that is not a
         # configured EMG channel
@@ -46,7 +46,7 @@ def do_plot(tags=None, show=True, make_pdf=True):
     pl.layout = layout
 
     for i, trialpath in enumerate(tagged_trials):
-        pl.open_trial(enf2c3d(tagged_trials[i]))
+        pl.open_trial(tagged_trials[i])
 
         emg_active = any([pl.trial.emg.status_ok(ch) for ch in
                           cfg.emg.channel_labels])

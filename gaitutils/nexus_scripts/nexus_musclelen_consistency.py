@@ -12,7 +12,7 @@ import logging
 import argparse
 
 from gaitutils import Plotter, cfg, register_gui_exception_handler, normaldata
-from gaitutils.nexus import enf2c3d, find_tagged
+from gaitutils.nexus import find_tagged
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ def do_plot(tags=None, age=None, show=True, make_pdf=True):
     tagged_trials = find_tagged(tags=tags)
 
     pl = Plotter()
-    pl.open_trial(enf2c3d(tagged_trials[0]))
+    pl.open_trial(tagged_trials[0])
 
     if age is not None:
         ndata = normaldata.normaldata_age(age)
@@ -35,7 +35,7 @@ def do_plot(tags=None, age=None, show=True, make_pdf=True):
 
     for i, trialpath in enumerate(tagged_trials):
         logger.debug('plotting %s' % tagged_trials[i])
-        pl.open_trial(enf2c3d(tagged_trials[i]))
+        pl.open_trial(tagged_trials[i])
         maintitle = ('Muscle length consistency plot, '
                      'session %s' % pl.trial.sessiondir)
         # only plot normaldata for last trial to speed up things

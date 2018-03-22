@@ -18,7 +18,7 @@ from collections import defaultdict
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
                        numutils, normaldata)
-from gaitutils.nexus import enf2c3d, get_sessionpath, find_tagged
+from gaitutils.nexus import get_sessionpath, find_tagged
 import nexus_kin_consistency
 import nexus_emg_consistency
 import nexus_musclelen_consistency
@@ -111,9 +111,8 @@ def do_plot(fullname=None, hetu=None, pages=None):
 
     pl = Plotter()
 
-    for trial in tagged_trials:
+    for c3d in tagged_trials:
 
-        c3d = enf2c3d(trial)
         pl.open_trial(c3d)
         representative = (pl.trial.eclipse_data[sort_field].upper()
                           in ['R1', 'L1'])
@@ -124,7 +123,7 @@ def do_plot(fullname=None, hetu=None, pages=None):
         elif 'L' in pl.trial.fp_events['valid']:
             side = 'L'
         else:
-            raise Exception('No kinetics for trial %s' % trial)
+            raise Exception('No kinetics for %s' % c3d)
 
         side_str = 'right' if side == 'R' else 'left'
 

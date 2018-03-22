@@ -13,7 +13,6 @@ from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 
 from gaitutils import c3d, nexus, register_gui_exception_handler, trial
-from gaitutils.nexus import enf2c3d
 from gaitutils.plot import time_dist_barchart, save_pdf
 from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
 
@@ -23,8 +22,7 @@ logger = logging.getLogger(__name__)
 def do_session_average_plot(tags=None, show=True, make_pdf=True):
     """Find tagged trials from current session dir and plot average"""
 
-    enffiles = find_tagged(tags)
-    trials = [enf2c3d(fn) for fn in enffiles]
+    trials = find_tagged(tags)
     sessionpath = nexus.get_sessionpath()
     fig = _plot_trials([trials])
     session = op.split(sessionpath)[-1]
@@ -86,8 +84,8 @@ def do_comparison_plot(sessions, tags, show=True):
     session will be picked."""
     trials = list()
     for session in sessions:
-        enffiles = find_tagged(tags, sessionpath=session)
-        trials.append([enf2c3d(fn) for fn in enffiles])
+        c3ds = find_tagged(tags, sessionpath=session)
+        trials.append(c3ds)
 
     cond_labels = [op.split(session)[-1] for session in sessions]
     fig = _plot_trials(trials, cond_labels)

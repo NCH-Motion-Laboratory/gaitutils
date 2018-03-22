@@ -9,7 +9,7 @@ Average cycles over the session trials.
 import logging
 
 import gaitutils
-from gaitutils import (cfg, nexus, layouts, eclipse, GaitDataError,
+from gaitutils import (cfg, nexus, layouts, GaitDataError,
                        register_gui_exception_handler)
 
 
@@ -19,12 +19,12 @@ def do_plot(show=True, make_pdf=True):
 
     sessionpath = nexus.get_sessionpath()
 
-    files = [nexus.enf2c3d(enf) for enf in nexus.get_session_enfs() if
-             eclipse.get_eclipse_keys(enf)['TYPE'] == 'Dynamic']
-    if not files:
+    c3ds = nexus.find_tagged(eclipse_keys=['TYPE'], tags=['DYNAMIC'])
+
+    if not c3ds:
         raise GaitDataError('No dynamic trials found for current session')
 
-    atrial = gaitutils.stats.AvgTrial(files)
+    atrial = gaitutils.stats.AvgTrial(c3ds)
 
     pl = gaitutils.Plotter()
     pl.trial = atrial

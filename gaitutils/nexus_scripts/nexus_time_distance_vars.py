@@ -12,9 +12,9 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 
-from gaitutils import c3d, nexus, register_gui_exception_handler, trial
+from gaitutils import c3d, nexus, register_gui_exception_handler
 from gaitutils.plot import time_dist_barchart, save_pdf
-from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
+from gaitutils.nexus import find_tagged
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,6 @@ def do_session_average_plot(tags=None, show=True, make_pdf=True):
     fig.suptitle('Time-distance average, session %s' % session)
 
     if make_pdf:
-
         pdf_name = op.join(sessionpath, 'time_distance_average.pdf')
         with PdfPages(pdf_name) as pdf:
             pdf.savefig(fig)

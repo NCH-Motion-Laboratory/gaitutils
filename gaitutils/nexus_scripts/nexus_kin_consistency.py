@@ -13,19 +13,18 @@ import os.path as op
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler,
                        GaitDataError)
-from gaitutils.nexus import find_tagged
+from gaitutils.nexus import find_tagged, get_sessionpath
 
 logger = logging.getLogger(__name__)
 
 
-def do_session_comparison_plot(sessions, tags, show=True):
-    """ Find trials according to tags in each session and superpose all
-    FIXME: this also works for one session?? (colors?) """
+def do_plot(sessions, tags, show=True, make_pdf=True):
+    """ Find trials according to tags in each session and superpose all """
 
     pl = Plotter()
     pl.layout = cfg.layouts.overlay_lb_kin
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
-    linecolors.reverse()  # FIXME
+    linecolors.reverse()  # FIXME: for pop()
 
     for session in sessions:
         c3ds = find_tagged(tags=tags, sessionpath=session)
@@ -48,36 +47,9 @@ def do_session_comparison_plot(sessions, tags, show=True):
     if show:
         pl.show()
 
-    return pl.fig
-
-
-def do_plot(tags=None, show=True, make_pdf=True):
-
-    c3ds = find_tagged(tags=tags)
-
-    pl = Plotter()
-    pl.layout = cfg.layouts.overlay_lb_kin
-    linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
-
-    for i, c3d in enumerate(c3ds):
-        logger.debug('plotting %s' % c3ds[i])
-        pl.open_trial(c3ds[i])
-        # only plot normaldata for last trial to speed up things
-        plot_model_normaldata = (c3d == c3ds[-1])
-        pl.plot_trial(model_tracecolor=linecolors[i], linestyles_context=True,
-                      toeoff_markers=False, maintitle='',
-                      superpose=True, show=False,
-                      plot_model_normaldata=plot_model_normaldata)
-
-    maintitle = ('Kinematics/kinetics consistency plot, '
-                 'session %s' % pl.trial.sessiondir)
-    pl.set_title(maintitle)
-
-    if show:
-        pl.show()
-
     if make_pdf:
-        pl.create_pdf('kin_consistency.pdf')
+        pass
+        #pl.create_pdf(pdf_name=')
 
     return pl.fig
 
@@ -91,4 +63,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG)
     register_gui_exception_handler()
-    do_plot(tags=args.tags)
+    do_plot(sessions=[get_sessionpath()], tags=args.tags)

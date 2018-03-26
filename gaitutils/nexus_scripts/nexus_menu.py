@@ -74,6 +74,7 @@ class HetuDialog(QtWidgets.QDialog):
         show an error dialog """
         self.hetu = self.lnHetu.text()
         self.fullname = self.lnFullName.text()
+        self.description = self.lnDescription.text()
         # get all the report page selections
         self.pages = dict()
         for w in self.findChildren(QtWidgets.QWidget):
@@ -160,8 +161,6 @@ class XStream(QtCore.QObject):
             XStream._stderr = XStream()
             sys.stderr = XStream._stderr  # ... and stderr
         return XStream._stderr
-
-
 
 
 class OptionsDialog(QtWidgets.QDialog):
@@ -352,10 +351,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   nexus_kinetics_emgplot.do_plot)
         self._button_connect_task(self.btnKinall, nexus_kinallplot.do_plot)
         self._button_connect_task(self.btnTardieu, self._tardieu)
+
         if have_custom:
             self._button_connect_task(self.btnCustom, nexus_customplot.do_plot)
         else:
             self.btnCustom.clicked.connect(self._no_custom)
+
         self._button_connect_task(self.btnTrialVelocity,
                                   nexus_trials_velocity.do_plot)
         self._button_connect_task(self.btnEMGCons,
@@ -367,7 +368,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnKinAverage,
                                   nexus_kin_average.do_plot)
         self._button_connect_task(self.btnTimeDistAverage,
-                                  nexus_time_distance_vars.do_session_average_plot)
+                                  nexus_time_distance_vars.
+                                  do_session_average_plot)
         self._button_connect_task(self.btnAutoprocTrial,
                                   nexus_autoprocess_trial.autoproc_single,
                                   thread=True)
@@ -432,7 +434,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._fullname = dlg.fullname
             self._execute(nexus_make_pdf_report.do_plot, thread=True,
                           fullname=dlg.fullname, hetu=dlg.hetu,
-                          pages=dlg.pages)
+                          description=dlg.description, pages=dlg.pages)
 
     def _log_message(self, msg):
         c = self.txtOutput.textCursor()

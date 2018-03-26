@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-Kin* consistency plot from Nexus. Automatically picks trials based on Eclipse
+Kin* consistency plots. Automatically picks trials based on Eclipse
 description and defined search strings.
 
 @author: Jussi (jnu@iki.fi)
@@ -18,13 +18,20 @@ from gaitutils.nexus import find_tagged, get_sessionpath
 logger = logging.getLogger(__name__)
 
 
-def do_plot(sessions, tags, show=True, make_pdf=True):
-    """ Find trials according to tags in each session and superpose all """
+def do_plot(sessions=None, tags=None, show=True, make_pdf=True):
+    """ Find trials according to tags in each session and superpose all.
+    By default, plots tagged trials in the current Nexus session. """
+
+    if sessions is None:
+        sessions = [get_sessionpath()]
+
+    if tags is None:
+        tags = cfg.plot.eclipse_tags
 
     pl = Plotter()
     pl.layout = cfg.layouts.overlay_lb_kin
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
-    linecolors.reverse()  # FIXME: for pop()
+    linecolors.reverse()  # reverse for pop()
 
     for session in sessions:
         c3ds = find_tagged(tags=tags, sessionpath=session)
@@ -47,9 +54,9 @@ def do_plot(sessions, tags, show=True, make_pdf=True):
     if show:
         pl.show()
 
-    if make_pdf:
-        pass
-        #pl.create_pdf(pdf_name=')
+    # to recreate old behavior...
+    if make_pdf and len(sessions) == 1:
+        pl.create_pdf(pdf_name=op.join(sessions[0], 'kin_consistency.pdf'))
 
     return pl.fig
 

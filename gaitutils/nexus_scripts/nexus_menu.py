@@ -98,7 +98,7 @@ class ComparisonDialog(QtWidgets.QDialog):
         self.btnBrowseSession.clicked.connect(self.add_session)
         self.btnAddNexusSession.clicked.connect(lambda: self.add_session(from_nexus=True))
         self.btnClear.clicked.connect(self.clear_sessions)
-        self.MAX_SESSIONS = 2
+        self.MAX_SESSIONS = 2  # FIXME: why only 2
         self.sessions = list()
 
     def add_session(self, from_nexus=False):
@@ -123,8 +123,8 @@ class ComparisonDialog(QtWidgets.QDialog):
         self.lblSessions.setText(u'\n'.join(self.sessions))
 
     def accept(self):
-        if not self.sessions:
-            message_dialog('No sessions selected')
+        if len(self.sessions) < 2:
+            message_dialog('Please select at least 2 sessions to compare')
         else:
             self.done(QtWidgets.QDialog.Accepted)
 

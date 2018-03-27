@@ -116,14 +116,17 @@ class ComparisonDialog(QtWidgets.QDialog):
             self.update_session_list()
 
     def clear_sessions(self):
-        self.sessions = list()  # sorry no clear()
+        self.sessions = list()  # sorry no .clear()
         self.update_session_list()
 
     def update_session_list(self):
         self.lblSessions.setText(u'\n'.join(self.sessions))
 
     def accept(self):
-        self.done(QtWidgets.QDialog.Accepted)
+        if not self.sessions:
+            message_dialog('No sessions selected')
+        else:
+            self.done(QtWidgets.QDialog.Accepted)
 
 
 class QtHandler(logging.Handler):

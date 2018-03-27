@@ -219,8 +219,8 @@ def get_model_data(c3dfile, model):
             vals = acq.GetPoint(var).GetValues()
             modeldata[var] = np.transpose(np.squeeze(vals))
         except RuntimeError:
-            raise GaitDataError('Cannot find model variable %s in c3d file' %
-                                var)
+            raise GaitDataError('Cannot find model variable %s in %s' %
+                                (var, c3dfile))
         # c3d stores scalars as last dim of 3-d array
         if model.read_strategy == 'last':
             modeldata[var] = modeldata[var][2, :]

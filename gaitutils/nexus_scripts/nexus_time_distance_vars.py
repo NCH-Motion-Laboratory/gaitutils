@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 
-from gaitutils import c3d, nexus, register_gui_exception_handler
+from gaitutils import c3d, nexus, register_gui_exception_handler, GaitDataError
 from gaitutils.plot import time_dist_barchart, save_pdf
 from gaitutils.nexus import find_tagged
 
@@ -85,6 +85,8 @@ def do_comparison_plot(sessions, tags, show=True):
     trials = list()
     for session in sessions:
         c3ds = find_tagged(tags, sessionpath=session)
+        if not c3ds:
+            raise ValueError('No tagged trials found in session %s' % session)
         trials.append(c3ds)
 
     cond_labels = [op.split(session)[-1] for session in sessions]

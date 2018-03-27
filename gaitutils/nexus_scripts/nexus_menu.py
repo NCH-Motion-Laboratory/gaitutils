@@ -96,17 +96,21 @@ class ComparisonDialog(QtWidgets.QDialog):
         uifile = resource_filename(__name__, 'comparison_dialog.ui')
         uic.loadUi(uifile, self)
         self.btnBrowseSession.clicked.connect(self.add_session)
+        self.btnAddNexusSession.clicked.connect(lambda: self.add_session(from_nexus=True))
         self.btnClear.clicked.connect(self.clear_sessions)
         self.MAX_SESSIONS = 2
         self.sessions = list()
 
-    def add_session(self):
+    def add_session(self, from_nexus=False):
         if len(self.sessions) == self.MAX_SESSIONS:
             message_dialog('You can specify maximum of %d sessions' %
                            self.MAX_SESSIONS)
             return
-        dir = QtWidgets.QFileDialog.getExistingDirectory(self,
-                                                          'Select session')
+        if from_nexus:
+            dir = nexus.get_sessionpath()
+        else:
+            dir = QtWidgets.QFileDialog.getExistingDirectory(self,
+                                                             'Select session')
         if dir and dir not in self.sessions:
             self.sessions.append(dir)
             self.update_session_list()

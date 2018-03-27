@@ -218,6 +218,9 @@ def detect_forceplate_events(source, fp_info=None):
 
             # check shift of center of pressure during roi in fwd dir
             cop_roi = fp['CoP'][friseind:ffallind, fwd_dir]
+            if len(cop_roi) == 0:
+                logger.warning('no CoP for given range')
+                continue
             cop_shift = cop_roi.max() - cop_roi.min()
             total_shift = np.sqrt(np.sum(cop_shift**2))
             logger.debug('CoP total shift %.2f mm' % total_shift)

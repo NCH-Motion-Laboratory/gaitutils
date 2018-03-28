@@ -198,24 +198,25 @@ def enf2c3d(fname):
 
 def find_tagged(tags=None, eclipse_keys=None, sessionpath=None):
     """ Find tagged trials in Nexus session path (or given path).
-    Returns a list of .enf files. """
+    Returns a list of .c3d files. """
 
+    # FIXME: into config?
     if eclipse_keys is None:
         eclipse_keys = ['DESCRIPTION', 'NOTES']
 
     if tags is None:
         tags = cfg.plot.eclipse_tags
 
-    tagged_enfs = list(find_enfs(eclipse_keys, tags, sessionpath=sessionpath))
+    tagged_enfs = list(_find_enfs(tags, eclipse_keys, sessionpath))
     return [enf2c3d(fn) for fn in tagged_enfs]
 
 
-def find_enfs(eclipse_keys, strings, sessionpath=None):
+def _find_enfs(tags, eclipse_keys, sessionpath=None):
     """ Yield .enf files for trials in current Nexus session directory
     (or given session path) whose Eclipse fields (list) contain any of
     strings (list). Case insensitive. """
 
-    strings = [st.upper() for st in strings]
+    tags = [t.upper() for t in tags]
     enffiles = get_session_enfs(sessionpath)
 
     if enffiles is None:
@@ -224,7 +225,7 @@ def find_enfs(eclipse_keys, strings, sessionpath=None):
     for enf in enffiles:
         ecldi = get_eclipse_keys(enf).items()
         eclvals = [val.upper() for key, val in ecldi if key in eclipse_keys]
-        if any([s in val for s in strings for val in eclvals]):
+        if any([s in val for s in tags for val in eclvals]):
             yield enf
 
 

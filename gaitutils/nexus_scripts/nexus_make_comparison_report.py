@@ -81,7 +81,9 @@ def do_plot(sessions, pdfpath=None, pages=None):
     fig_timedist_cmp = (nexus_time_distance_vars.
                         do_comparison_plot(sessions, tags=repr_tags,
                                            show=False))
+
     fig_kin_cmp = nexus_kin_consistency.do_plot(sessions, tags=repr_tags,
+                                                session_styles=True,
                                                 show=False)
 
     if pdfpath is None:

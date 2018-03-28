@@ -269,6 +269,8 @@ def detect_forceplate_events(source, fp_info=None):
                     ok = True
 
                 # toeoff velocity
+                # FIXME: gently decreasing forceplate contact often leads to
+                # early toeoff detection -> velocity too low
                 frate = info['framerate']
                 footctrv = markers_avg_vel(mrkdata, markers)
                 toeoff_vel = footctrv[toeoff_fr]

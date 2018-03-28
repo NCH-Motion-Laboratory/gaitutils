@@ -32,6 +32,33 @@ def get_analysis(c3dfile, condition='unknown'):
     return di
 
 
+def group_analysis(an_list, fun=np.mean):
+    """ Average (or stddev etc) analysis dicts by applying fun to
+    collected values. The condition label needs to be the same for all dicts.
+    Returns single dict with the same condition. """
+    if not isinstance(an_list, list):
+        raise ValueError('Need a list of analysis dicts')
+    if not an_list:
+        return None
+    an0 = an_list[0]
+    if len(an_list) == 1:
+        return an0
+    conds = an0.keys()
+    vars = an0[conds[0]].keys()
+    res = dict()
+    for cond in conds:
+        res[cond] = dict()
+        for var in vars:
+            res[cond][var] = dict()
+            res[cond][var]['unit'] = an0[cond][var]['unit']
+            for context in ['Right', 'Left']:
+                allvals = np.array([an[cond][var][context] for an in an_list if
+                                    context in an[cond][var]])
+                res[cond][var][context] = (fun(allvals) if allvals.size else
+                                           np.nan)
+    return res
+
+
 def _step_width(source):
     """ Compute step width over trial cycles. See:
     https://www.vicon.com/faqs/software/how-does-nexus-plug-in-gait-and-polygon-calculate-gait-cycle-parameters-spatial-and-temporal

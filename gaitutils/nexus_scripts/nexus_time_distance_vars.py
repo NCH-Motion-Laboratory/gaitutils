@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 
-from gaitutils import c3d, nexus, register_gui_exception_handler, GaitDataError
+from gaitutils import nexus, register_gui_exception_handler, analysis
 from gaitutils.plot import time_dist_barchart, save_pdf
 from gaitutils.nexus import find_tagged
 
@@ -112,11 +112,11 @@ def _plot_trials(trials, cond_labels=None):
     for cond_files, cond_label in zip(trials, cond_labels):
         ans = list()
         for c3dfile in cond_files:
-            an = c3d.get_analysis(c3dfile, condition=cond_label)
+            an = analysis.get_analysis(c3dfile, condition=cond_label)
             ans.append(an)
         if len(ans) > 1:  # do average for this condition
-            res_avg = c3d.group_analysis(ans)
-            res_std = c3d.group_analysis(ans, fun=np.std)
+            res_avg = analysis.group_analysis(ans)
+            res_std = analysis.group_analysis(ans, fun=np.std)
         else:  # do single-trial plot for this condition
             res_avg = ans[0]
             res_std = dict()

@@ -78,11 +78,20 @@ def get_analysis(c3dfile, condition='unknown'):
     di_ = di[condition]
 
     for (var, unit, context, val) in zip(vars, units, contexts, vals):
+
         if var not in di_:
             di_[var] = dict()
             di_[var]['unit'] = unit
         if context not in di_[var]:
             di_[var][context] = val
+
+    for var in di_:
+        for context in ['Left', 'Right']:
+            if context not in di_[var]:
+                logger.warning('%s has missing value: %s / %s' %
+                               (c3dfile, var, context))
+                di_[var][context] = None
+
     return di
 
 

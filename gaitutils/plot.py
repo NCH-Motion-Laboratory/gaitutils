@@ -66,6 +66,8 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
             ax.axis('off')
             # may have several bars (conditions) per variable
             vals_this = [values[cond][var][context] for cond in conds]
+            # None -> 0 for barh so that missing values are plotted as nothing
+            vals_this = [v if v is not None else 0 for v in vals_this]
             stddevs_this = ([stddev[cond][var][context] if stddev[cond]
                              else None for cond in conds])
             units_this = len(conds)*[units[ind]]
@@ -77,7 +79,9 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
             ax.set_xlim([0, 1.5 * max(vals_this)])
             texts = list()
             for val, std, unit in zip(vals_this, stddevs_this, units_this):
-                if std:
+                if val == 0:
+                    texts += ['']
+                elif std:
                     texts += [u'%.2f ± %.2f %s' % (val, std, unit)]
                 else:
                     texts += [u'%.2f %s' % (val, unit)]

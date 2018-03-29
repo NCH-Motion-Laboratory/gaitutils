@@ -131,7 +131,7 @@
       <item row="2" column="1">
        <widget class="QPushButton" name="btnZoomReset">
         <property name="text">
-         <string>Reset zoom</string>
+         <string>Reset x axis zoom</string>
         </property>
        </widget>
       </item>

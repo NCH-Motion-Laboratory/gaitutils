@@ -7,8 +7,33 @@ Misc functions for Gaitplotter (OS dialogs etc)
 @author: Jussi (jnu@iki.fi)
 """
 
+from PyQt5 import QtWidgets
 import ctypes
 import sys
+
+
+# FIXME: this should go into common GUI module
+def qt_message_dialog(msg):
+    """ Show message with an 'OK' button. """
+    dlg = QtWidgets.QMessageBox()
+    dlg.setWindowTitle('Message')
+    dlg.setText(msg)
+    dlg.addButton(QtWidgets.QPushButton('Ok'),
+                  QtWidgets.QMessageBox.YesRole)
+    dlg.exec_()
+
+
+def qt_yesno_dialog(msg):
+    """ Show message with 'Yes' and 'No buttons, return role accordingly """
+    dlg = QtWidgets.QMessageBox()
+    dlg.setWindowTitle('Confirm')
+    dlg.setText(msg)
+    dlg.addButton(QtWidgets.QPushButton('Yes'),
+                  QtWidgets.QMessageBox.YesRole)
+    dlg.addButton(QtWidgets.QPushButton('No'),
+                  QtWidgets.QMessageBox.NoRole)
+    dlg.exec_()
+    return dlg.buttonRole(dlg.clickedButton())
 
 
 def error_exit(message):

@@ -1,6 +1,18 @@
 # -*- coding: utf-8 -*-
 """
 Interactive script for analysis of Tardieu trials.
+matplotlib + Qt5
+
+TODO:
+
+    filter behaves weirdly when hp is set at 0 Hz
+    filter crash when lp is set at 1000 Hz
+    no narrow view
+
+    minor:
+    params to config
+    EMG scale box is not updated when scaling w/ toolbar tool
+    add statusbar?
 
 
 @author: Jussi (jnu@iki.fi)
@@ -9,56 +21,351 @@ Interactive script for analysis of Tardieu trials.
 from __future__ import print_function
 from collections import OrderedDict
 import matplotlib
-import matplotlib.pyplot as plt
-from matplotlib.widgets import Button
+from matplotlib.figure import Figure
 import matplotlib.gridspec as gridspec
 import logging
 import sys
 import numpy as np
-
+import copy
+from pkg_resources import resource_filename
+from PyQt5 import QtGui, QtWidgets, uic, QtCore
+from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg,
+                                                NavigationToolbar2QT)
+from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
                        Trial, Plotter, layouts, utils, GaitDataError,
                        register_gui_exception_handler)
 from gaitutils.numutils import segment_angles, rms
-from gaitutils.guiutils import messagebox
+from gaitutils.guiutils import qt_message_dialog, qt_yesno_dialog
 
-# increase default DPI for figure saving
-# TODO: into config?
-plt.rcParams['savefig.dpi'] = 200
 
 matplotlib.style.use(cfg.plot.mpl_style)
 
 logger = logging.getLogger(__name__)
 
 
-class Markers(object):
-    """ Manage the marker lines at given axes """
+def read_nexus_starting_angle():
+    """Read the Nexus defined starting angle"""
+    subjname = nexus.get_subjectnames()
+    vicon = nexus.viconnexus()
+    asp = vicon.GetSubjectParam(subjname, 'AnkleStartPos')
+    return asp[0] if asp[1] else None
 
-    def __init__(self, marker_colors, marker_width, markers_text_start,
-                 markers_text_spacing, axes):
-        self._markers = OrderedDict()  # keyed by time coordinate
+
+class LoadDialog(QtWidgets.QDialog):
+    """ Dialog for loading data """
+
+    def __init__(self):
+
+        super(self.__class__, self).__init__()
+        uifile = resource_filename(__name__, 'tardieu_load_dialog.ui')
+        uic.loadUi(uifile, self)
+        try:
+            ang0_nexus = read_nexus_starting_angle()
+        except GaitDataError:
+            ang0_nexus = None
+        self.spNormAngle.setValue(ang0_nexus if ang0_nexus else 90)
+
+
+class EMGFilterDialog(QtWidgets.QDialog):
+    """ Dialog for setting the EMG filter """
+
+    def __init__(self, emg_passband):
+
+        super(self.__class__, self).__init__()
+        uifile = resource_filename(__name__, 'tardieu_filter_dialog.ui')
+        uic.loadUi(uifile, self)
+        self.spEMGLow.setValue(emg_passband[0])
+        self.spEMGHigh.setValue(emg_passband[1])
+
+
+class HelpDialog(QtWidgets.QDialog):
+    """ Dialog for help"""
+
+    def __init__(self):
+
+        super(self.__class__, self).__init__()
+        uifile = resource_filename(__name__, 'tardieu_help_dialog.ui')
+        uic.loadUi(uifile, self)
+
+
+class SimpleToolbar(NavigationToolbar2QT):
+    """ Simplified mpl navigation toolbar with some items removed """
+
+    toolitems = [t for t in NavigationToolbar2QT.toolitems if
+                 t[0] in ('Pan', 'Zoom')]
+
+
+class TardieuWindow(QtWidgets.QMainWindow):
+    """ Main Qt window with controls. The mpl figure containing the actual data
+    is created by a separate class and embedded into this window. """
+
+    def __init__(self, parent=None):
+
+        super(TardieuWindow, self).__init__(parent)
+
+        uifile = resource_filename(__name__, 'tardieu.ui')
+        uic.loadUi(uifile, self)
+
+        self._tardieu_plot = TardieuPlot()
+        # set the internal callbacks to point to our methods
+        self._tardieu_plot._update_marker_status = self._update_marker_status
+        self._tardieu_plot._update_status = self._update_status
+        self.canvas = FigureCanvasQTAgg(self._tardieu_plot.fig)
+        self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                  QtWidgets.QSizePolicy.Expanding)
+        self.canvas.setParent(self)  # ?
+        self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
+        self.canvas.show()
+
+        self.btnClearMarkers.clicked.connect(self._clear_markers)
+        self.btnSaveFig.clicked.connect(self._save_plot)
+        self.btnZoomFast.clicked.connect(self._xzoom_to_fast)
+        self.btnZoomReset.clicked.connect(self._xzoom_reset)
+
+        self.spEMGYScale.valueChanged.connect(self._rescale_emg)
+        self.btnSetEMGFilter.clicked.connect(self._emg_filter_dialog)
+
+        self.emg_passband = cfg.emg.passband
+        self.lblEMGPassband.setText('%.1f Hz - %.1f Hz' %
+                                    (self.emg_passband[0],
+                                     self.emg_passband[1]))
+
+        # keep some controls disabled until data is loaded
+        self._set_data_controls(False)
+        self.btnQuit.clicked.connect(self.close)
+
+        # no focus on buttons - need to keep focus on canvas for mpl events
+        for w in self.findChildren(QtWidgets.QWidget):
+            wname = unicode(w.objectName())
+            if wname[:3] in ['btn']:
+                w.setFocusPolicy(QtCore.Qt.NoFocus)
+
+        self.actionQuit.triggered.connect(self.close)
+        self.actionHelp.triggered.connect(self._help_dialog)
+        self.actionOpen.triggered.connect(self._load_dialog_nexus)
+        self.actionOpenC3D.triggered.connect(self._load_dialog_c3d)
+
+        """
+        # add the narrow view button?
+        """
+        self.lblStatus.setText('No data loaded')
+        self.lblMarkerStatus.setText('No markers')
+
+        # self.setStyleSheet("background-color: white;");
+        # add canvas into last column, span all rows
+        self.mainGridLayout.addWidget(self.canvas, 1,
+                                      self.mainGridLayout.columnCount(),
+                                      self.mainGridLayout.rowCount()-1, 1)
+
+        # create toolbar and add it into last column, 1st row
+        self.toolbar = SimpleToolbar(self.canvas, self)
+        self._tardieu_plot._toolbar = self.toolbar
+        self.mainGridLayout.addWidget(self.toolbar, 0,
+                                      self.mainGridLayout.columnCount()-1,
+                                      1, 1)
+        self.canvas.setFocus()
+        self.canvas.draw()
+
+    def _xzoom_to_fast(self):
+        self._tardieu_plot._xzoom_to_fast()
+        self.canvas.draw()
+
+    def _xzoom_reset(self):
+        self._tardieu_plot._xzoom_reset()
+        self.canvas.draw()
+
+    def _reset_emg_filter(self, f1, f2):
+        """Re-set the EMG filter"""
+        self.emg_passband = [f1, f2]
+        self.lblEMGPassband.setText('%.1f Hz - %.1f Hz' % (f1, f2))
+        self._tardieu_plot._reset_emg_filter(f1, f2)
+        self.canvas.draw()
+
+    def _rescale_emg(self):
+        """Callback for EMG rescaling"""
+        yscale = self.spEMGYScale.value()
+        self._tardieu_plot._rescale_emg(yscale)
+        self.canvas.draw()
+        self.canvas.setFocus()
+
+    def _set_data_controls(self, enabled):
+        """Show data related controls as (non)-responsive according to
+        enabled (bool)"""
+        for w in [self.btnSaveFig, self.spEMGYScale, self.btnClearMarkers,
+                  self.btnSetEMGFilter, self.btnZoomFast, self.btnZoomReset]:
+            w.setEnabled(enabled)
+
+    def _nonresp(self):
+        """Show whole window as non-responsive"""
+        for w in self.findChildren(QtWidgets.QWidget):
+            wname = unicode(w.objectName())
+            if wname[:2] in ['bt', 'me', 'sp']:  # catch buttons, menus, spins
+                w.setEnabled(False)
+        # update display immediately in case thread gets blocked
+        QtWidgets.QApplication.processEvents()
+        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+
+    def _resp(self):
+        """Show whole window as responsive"""
+        for w in self.findChildren(QtWidgets.QWidget):
+            wname = unicode(w.objectName())
+            if wname[:2] in ['bt', 'me', 'sp']:
+                w.setEnabled(True)
+        QtWidgets.QApplication.restoreOverrideCursor()
+
+    def _help_dialog(self):
+        dlg = HelpDialog()
+        dlg.exec_()
+
+    def _load_dialog_nexus(self):
+        """Dialog for loading from Nexus"""
+        try:
+            vicon = nexus.viconnexus()
+        except GaitDataError as e:
+            qt_message_dialog('Error: %s' % str(e))
+            return
+        self._load_dialog(vicon)
+
+    def _load_dialog_c3d(self):
+        """Dialog for loading from c3d"""
+        fout = QtWidgets.QFileDialog.getOpenFileName(self, 'Open C3D file',
+                                                     '',
+                                                     u'C3D files (*.c3d)')[0]
+        if fout:
+            self._load_dialog(fout)
+
+    def _emg_filter_dialog(self):
+        dlg = EMGFilterDialog(self.emg_passband)
+        if not dlg.exec_():
+            return
+        else:
+            self._reset_emg_filter(dlg.spEMGLow.value(), dlg.spEMGHigh.value())
+
+    def _load_dialog(self, source):
+        """Dialog for loading data """
+        dlg = LoadDialog()
+        if not dlg.exec_():
+            return
+        side = 'R' if dlg.rbRight.isChecked() else 'L'
+        # prepend side to configured EMG channel names
+        emg_chs = [side+ch for ch in cfg.tardieu.emg_chs]
+        ang0_nexus = dlg.spNormAngle.value()
+
+        self._nonresp()
+        try:
+            self._tardieu_plot.load_data(source, emg_chs, self.emg_passband,
+                                         ang0_nexus)
+        except GaitDataError as e:
+            qt_message_dialog('Error: %s' % str(e))
+        finally:
+            self._resp()
+
+        self._tardieu_plot.plot_data()
+        self.canvas.draw()
+        self.canvas.setFocus()
+        self._update_status()
+        self._update_marker_status()
+        # set data controls to match what was loaded
+        self.spEMGYScale.setValue(cfg.plot.emg_yscale*1e3)  # mV
+        # enable all controls
+        self._resp()
+        self._set_data_controls(True)
+
+    def _save_plot(self):
+        """Save a pdf report"""
+        fn_pdf = self._tardieu_plot.trial.trialname + '.pdf'
+        fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save plot',
+                                                      fn_pdf,
+                                                      u'PDF files (*pdf)')[0]
+        if not fname:
+            return
+        try:
+            with PdfPages(fname) as pdf:
+                page_size = (11.69, 8.27)
+                # create header page
+                #timestr = time.strftime("%d.%m.%Y")
+                fig_hdr = Figure()
+                FigureCanvas(fig_hdr)
+                ax = fig_hdr.add_subplot(111)
+                ax.set_axis_off()
+                txt = self._tardieu_plot.status_text
+                ax.text(.5, .8, txt, ha='center', va='center', weight='bold',
+                        fontsize=12)
+                fig_hdr.set_size_inches(page_size[0], page_size[1])
+                pdf.savefig(fig_hdr)
+                figx, data_axes, legend_ax = self._tardieu_plot.plot_data(interactive=False,
+                                                                          emg_yscale=self.spEMGYScale.value())
+                FigureCanvas(figx)
+                figx.set_size_inches(page_size[0], page_size[1])
+                # full view
+                self._tardieu_plot.markers.plot_on_axes(data_axes)
+                self._tardieu_plot.markers.legend(legend_ax)
+                pdf.savefig(figx)
+                # create zoomed version
+                fast_rng = self._tardieu_plot._get_fast_movement()
+                for ax in data_axes:
+                    ax.set_xlim(fast_rng[0], fast_rng[1])
+                pdf.savefig(figx)
+        except IOError:
+            qt_message_dialog('Error writing %s, '
+                              'check that file is not already open.' % fname)
+            return
+
+    def _update_status(self):
+        """Update the status text"""
+        status = self._tardieu_plot.status_text
+        self.lblStatus.setText(status)
+
+    def _update_marker_status(self):
+        """Update the marker status text"""
+        status = self._tardieu_plot.marker_status_text
+        self.lblMarkerStatus.setText(status)
+
+    def _clear_markers(self):
+        """Clear all markers"""
+        if self._tardieu_plot.markers is not None:
+            self._tardieu_plot.markers.clear()
+            self.canvas.draw()
+            self._update_marker_status()
+
+    def closeEvent(self, event):
+        """Confirm and close application"""
+        reply = qt_yesno_dialog('Are you sure?')
+        if reply == QtWidgets.QMessageBox.YesRole:
+            event.accept()
+        else:
+            event.ignore()
+
+
+class Markers(object):
+    """ Manage vertical marker lines at multiple axes.
+    The markers are created as matplotlib axvline()s. """
+
+    def __init__(self, marker_colors, marker_width, axes):
+        """ Initialize.
+        marker_colors: the colors (and max. number) of markers
+        marker_width: the line width for the markers
+        axes: all axes to put the markers in """
+        self._markers = OrderedDict()  # markers are keyed by x coordinate
         self._axes = axes
         self.marker_colors = marker_colors
         self.marker_width = marker_width
         self.max_markers = len(self.marker_colors)
-        # calculate text positions for markers
-        markers_text_end = (markers_text_start -
-                            (markers_text_spacing * self.max_markers))
-        self.markers_text_pos = np.linspace(markers_text_start,
-                                            markers_text_end,
-                                            self.max_markers)
 
     def add_on_click(self, x):
+        """Add a marker on mouse click"""
         if x not in self._markers.keys():
             if len(self._markers) == self.max_markers:
-                messagebox('You can place a maximum of %d markers' %
-                           self.max_markers)
+                qt_message_dialog('You can place a maximum of %d markers' %
+                                  self.max_markers)
             else:
                 self.add(x)
 
     def add(self, x, annotation=''):
-        """ Add marker at x at given axes """
-        if x in self._markers.keys():
+        """Add a marker at point x with optional annotation"""
+        if x in self._markers.keys():  # marker already exists here
             return
         else:
             cols_in_use = [m['color'] for m in self._markers.values()]
@@ -74,13 +381,13 @@ class Markers(object):
                 self._markers[x][ax].set_picker(3)
 
     def delete(self, x):
-        """ Delete by location """
+        """Delete marker by location"""
         for ax in self._axes:
             self._markers[x][ax].remove()
         self._markers.pop(x)
 
     def delete_artist(self, artist, ax):
-        """ Delete by artist at axis ax """
+        """Delete marker by artist at axis ax"""
         # need to find the marker that has the corresponding artist
         for x, m in self._markers.items():
             if m[ax] == artist:
@@ -88,224 +395,283 @@ class Markers(object):
                 return
 
     def clear(self):
+        """Remove all markers"""
         for marker in self._markers:
             self.delete(marker)
 
-    def marker_pos_col(self):
-        """ Return tuple of marker, annotation, position and color """
+    def plot_on_axes(self, axes):
+        """Plot all markers on given axes (iterable)"""
+        for ax in axes:
+            for x, m in self._markers.items():
+                ax.axvline(x=x, color=m['color'], linewidth=self.marker_width)
+
+    def legend(self, ax, ncol=2):
+        """Create legend"""
+        artists = list()
+        legtxts = list()
+        for mkr, anno, col in self.marker_info:
+            artists.append(matplotlib.lines.Line2D((0, 1), (0, 0),
+                                                   linewidth=self.marker_width,
+                                                   color=col))
+            legtxts.append(u'%.3f s: %s' % (mkr, anno))
+        ax.legend(artists, legtxts, loc='upper left', ncol=ncol,
+                  prop={'size': cfg.plot.label_fontsize})
+
+    @property
+    def marker_info(self):
+        """Return tuple of marker, annotation, and color"""
         annotations = [m['annotation'] for m in self._markers.values()]
         cols_in_use = [m['color'] for m in self._markers.values()]
-        return zip(self._markers.keys(), annotations, self.markers_text_pos,
-                   cols_in_use)
+        return zip(self._markers.keys(), annotations, cols_in_use)
 
 
-class Tardieu_window(object):
-    """ Open a matplotlib window for Tardieu analysis """
+class TardieuPlot(object):
+    """ Create matplotlib graphs for Tardieu analysis """
 
-    def __init__(self, emg_chs=None):
-
+    def __init__(self):
+        """Initialize but do not plot anything yet"""
         # adjustable params
         # TODO: some could go into config
         self.marker_button = 1  # mouse button for placing markers
         self.marker_del_button = 3  # remove marker
         self.marker_key = 'shift'  # modifier key for markers
-        # take marker colors from mpl default cycle, but skip the first color
-        # (which is used for angle plots). n of colors determines max n of
-        # markers.
-        marker_colors = ['tab:orange', 'tab:green', 'tab:red', 'tab:brown',
-                         'tab:pink', 'tab:gray', 'tab:olive'][:6]
-        marker_width = 1.5
-        self.emg_yrange = [-.5e-3, .5e-3]
+        self.markers = None
+        # FIXME: check colors
+        self.marker_colors = ['orange', 'green', 'red', 'brown',
+                              'gray', 'purple']
+        self.marker_width = 1.5
         self.width_ratio = [1, 5]
         self.text_fontsize = 9
         self.margin = .025  # margin at edge of plots
+        self.margin = 0
         self.narrow = False
         self.hspace = .4
         self.wspace = .5
-        markers_text_start = .95  # relative to the text axis
-        markers_text_spacing = .15
-        buttonwidth = .125
-        buttonheight = .04
-        buttongap = .025
-        self.emg_chs = emg_chs
-        self.emg_automark_chs = ['Gas', 'Sol']
-        self.texts = []
+        self.emg_automark_chs = ['Gas', 'Sol']   # FIXME: into config?
         self.data_axes = list()  # axes that actually contain data
+        self.emg_axes = list()
+        # these are callbacks that should be registered by the creator
+        self._update_marker_status = None
+        self._update_status = None
+        self.fig = Figure()
 
-        # read data from Nexus and initialize plot
+    def load_data(self, source, emg_chs, emg_passband, ang0_nexus):
+        """Load the Tardieu data.
+        emg_chs: list of EMG channel names to use
+
+        Returns True on successful data load, False otherwise
+        """
+
         try:
-            vicon = nexus.viconnexus()
-            self.trial = Trial(vicon)
+            self.trial = Trial(source)
+            self.trial.emg.passband = emg_passband
         except GaitDataError as e:
-            messagebox(e.message)
-            return
+            qt_message_dialog(e.message)
+            return False
+
+        # the 'true' physiological starting angle (given as a param)
+        self.ang0_nexus = ang0_nexus
+        self.emg_chs = emg_chs
         self.time = self.trial.t / self.trial.framerate  # time axis in sec
         self.tmax = self.time[-1]
         self.nframes = len(self.time)
 
-        # read marker data from Nexus
+        # read EMG data
+        self.emgdata = dict()
+        self.emg_rms = dict()
+        for ch in self.emg_chs:
+            try:
+                t_, self.emgdata[ch] = self.trial[ch]
+                self.emg_rms[ch] = rms(self.emgdata[ch], cfg.emg.rms_win)
+            except KeyError:
+                qt_message_dialog('EMG channel not found: %s' % ch)
+                return False
+
+        # FIXME: self.time?
+        self.time_analog = t_ / self.trial.analograte
+
+        # read marker data and compute segment angle
+        mnames = cfg.tardieu.marker_names
         try:
-            data = read_data.get_marker_data(vicon, ['Toe', 'Ankle', 'Knee'])
+            data = read_data.get_marker_data(source, mnames)
         except GaitDataError as e:
-            messagebox(e.message)
-            return
-        Ptoe = data['Toe_P']
-        Pank = data['Ankle_P']
-        Pknee = data['Knee_P']
+            qt_message_dialog(e.message)
+            return False
+
+        P0 = data[mnames[0]+'_P']
+        P1 = data[mnames[1]+'_P']
+        P2 = data[mnames[2]+'_P']
         # stack so that marker changes along 2nd dim for segment_angles
-        Pall = np.stack([Ptoe, Pank, Pknee], axis=1)
+        Pall = np.stack([P0, P1, P2], axis=1)
         # compute segment angles (deg)
         self.angd = segment_angles(Pall) / np.pi * 180
         # this is our calculated starting angle
         ang0_our = np.median(self.angd[~np.isnan(self.angd)][:10])
-        # the 'true' starting angle (in Nexus as subject param)
-        self.ang0_nexus = self.read_starting_angle(vicon)
         # normalize: plantarflexion negative, our starting angle equals
         # the starting angle given in Nexus (i.e. if ang0_nexus is 95,
-        # we normalize the data to start at -5 deg)
-        # if starting angle is not specified in Nexus, assume 90 deg
-        if self.ang0_nexus:
-            self.angd = 90 - self.ang0_nexus - self.angd + ang0_our
+        # we offset the data to start at -5 deg)
+        # if starting angle is not specified in Nexus, it defaults to 90 deg
+        self.angd = 90 - self.ang0_nexus - self.angd + ang0_our
+        return True
+
+    def plot_data(self, interactive=True, emg_yscale=None):
+        """ Plot the data. Can plot either on the main (interactive) display
+        or a new mpl Figure() (which will be returned)"""
+
+        fig = self.fig if interactive else Figure()
+        fig.clear()
+        data_axes = list()
+        if interactive:  # save trace objects for later modification by GUI
+            self.emg_traces, self.rms_traces = dict(), dict()
+
+        nrows = len(self.emg_chs) + 3
+        # add one row for legend if not in interactive mode
+        if not interactive:
+            hr = [1] * nrows + [.5]
+            nrows += 1
+            gs = gridspec.GridSpec(nrows, 1, height_ratios=hr)
+            legend_ax = fig.add_subplot(gs[-1, 0])
+            legend_ax.set_axis_off()
         else:
-            self.angd = -self.angd + ang0_our
+            gs = gridspec.GridSpec(nrows, 1)
+            legend_ax = None
 
-        self.fig = plt.figure(figsize=(16, 10))
-        self.gs = gridspec.GridSpec(2 * (len(self.emg_chs) + 3), 2,
-                                    width_ratios=self.width_ratio)
+        # EMG plots
+        ind = 0
+        for ch in self.emg_chs:
+            sharex = None if ind == 0 or not interactive else data_axes[0]
+            ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
+            emgtr_, = ax.plot(self.time_analog, self.emgdata[ch]*1e3,
+                              linewidth=cfg.plot.emg_linewidth)
+            rmstr_, = ax.plot(self.time_analog, self.emg_rms[ch]*1e3,
+                              linewidth=cfg.plot.emg_rms_linewidth,
+                              color='black')
+            data_axes.append(ax)
+            if interactive:
+                self.emg_traces[ind] = emgtr_
+                self.rms_traces[ind] = rmstr_
+                self.emg_axes.append(ax)
 
-        # plot EMG signals
-        self.emg_rms = dict()
-        for ind, ch in enumerate(emg_chs):
-            try:
-                t_, emgdata = self.trial[ch]
-            except KeyError:
-                messagebox('EMG channel not found: %s' % ch)
-                sys.exit()
-            t = t_ / self.trial.analograte
-
-            self.emg_rms[ch] = rms(emgdata, cfg.emg.rms_win)
-            sharex = None if ind == 0 else self.data_axes[0]
-            ax = plt.subplot(self.gs[2*ind:2*ind+2, 1:], sharex=sharex)
-            ax.plot(t, emgdata*1e3, linewidth=cfg.plot.emg_linewidth)
-            ax.plot(t, self.emg_rms[ch]*1e3,
-                    linewidth=cfg.plot.emg_rms_linewidth, color='black')
-            ax.set_ylim(self.emg_yrange[0]*1e3, self.emg_yrange[1]*1e3)
+            ysc = (cfg.plot.emg_yscale if emg_yscale is None
+                   else emg_yscale/1.e3)
+            ax.set_ylim([-ysc*1e3, ysc*1e3])
             ax.set(ylabel='mV')
             ax.set_title(ch)
-            self._adj_fonts(ax)
-            self.data_axes.append(ax)
-        ind = 2 * ind + 2
+            ind += 1
 
-        # add angle plot
-        ax = plt.subplot(self.gs[ind:ind+2, 1:], sharex=self.data_axes[0])
+        # angle plot
+        sharex = None if ind == 0 or not interactive else data_axes[0]
+        ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
         ax.plot(self.time, self.angd, linewidth=cfg.plot.model_linewidth)
         ax.set(ylabel='deg')
         ax.set_title('Angle')
-        self._adj_fonts(ax)
-        self.data_axes.append(ax)
-        ind += 2
+        data_axes.append(ax)
+        ind += 1
 
-        # add angular velocity plot
-        ax = plt.subplot(self.gs[ind:ind+2, 1:], sharex=self.data_axes[0])
+        # angular velocity plot
+        sharex = None if ind == 0 or not interactive else data_axes[0]
+        ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
         self.angveld = self.trial.framerate * np.diff(self.angd, axis=0)
         ax.plot(self.time[:-1], self.angveld,
                 linewidth=cfg.plot.model_linewidth)
         ax.set(ylabel='deg/s')
         ax.set_title('Angular velocity')
-        self._adj_fonts(ax)
-        self.data_axes.append(ax)
-        ind += 2
+        data_axes.append(ax)
+        ind += 1
 
-        # add angular acceleration plot
-        ax = plt.subplot(self.gs[ind:ind+2, 1:], sharex=self.data_axes[0])
+        # angular acceleration plot
+        sharex = None if ind == 0 or not interactive else data_axes[0]
+        ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
         self.angaccd = np.diff(self.angveld, axis=0)
         ax.plot(self.time[:-2], self.angaccd,
                 linewidth=cfg.plot.model_linewidth)
         ax.set(xlabel='Time (s)', ylabel=u'deg/s²')
         ax.set_title('Angular acceleration')
-        self._adj_fonts(ax)
-        self.data_axes.append(ax)
+        data_axes.append(ax)
 
-        # create markers
-        self.markers = Markers(marker_colors, marker_width, markers_text_start,
-                               markers_text_spacing, self.data_axes)
+        for ax in data_axes:
+            self._adj_fonts(ax)
 
-        # add text axis spanning the left column (leave top rows for buttons)
-        self.textax = plt.subplot(self.gs[3:8, 0])
-        self.textax.set_axis_off()
-        self.marker_textax = plt.subplot(self.gs[8:, 0])
-        self.marker_textax.set_axis_off()
+        if interactive:
+            self.data_axes = data_axes
+            self.tmin, self.tmax = self.data_axes[0].get_xlim()
+            # create markers
+            markers = Markers(self.marker_colors, self.marker_width,
+                              self.data_axes)
 
-        # refresh text field on zoom
+            # place the auto markers
+            tmin_ = max(self.time[0], self.tmin)
+            tmax_ = min(self.time[-1], self.tmax)
+            fmin, fmax = self._time_to_frame([tmin_, tmax_],
+                                             self.trial.framerate)
+            smin, smax = self._time_to_frame([tmin_, tmax_],
+                                             self.trial.analograte)
+            # max. velocity
+            velr = self.angveld[fmin:fmax]
+            velmaxind = np.nanargmax(velr)/self.trial.framerate + tmin_
+            markers.add(velmaxind, annotation='Max. velocity')
+            # min. acceleration
+            accr = self.angaccd[fmin:fmax]
+            accmaxind = np.nanargmin(accr)/self.trial.framerate + tmin_
+            markers.add(accmaxind, annotation='Min. acceleration')
+
+            for ch in self.emg_chs:
+                # check if channel is tagged for automark
+                if any([s in ch for s in self.emg_automark_chs]):
+                    rmsdata = self.emg_rms[ch][smin:smax]
+                    rmsmaxind = np.argmax(rmsdata)/self.trial.analograte + tmin_
+                    markers.add(rmsmaxind, annotation='%s max. RMS' % ch)
+
+            # connect callbacks
+            for ax in self.data_axes:
+                ax.callbacks.connect('xlim_changed', self._xlim_changed)
+            fig.canvas.mpl_connect('button_press_event', self._onclick)
+            # catch key press
+            # fig.canvas.mpl_connect('key_press_event', self._onpress)
+            # pick handler
+            fig.canvas.mpl_connect('pick_event', self._onpick)
+            #
+            self._last_click_event = None
+            self.markers = markers
+
+        fig.set_tight_layout(True)
+        return fig, data_axes, legend_ax
+
+    def _rescale_emg(self, yscale):
+        """Takes new EMG yscale in mV"""
+        for ax in self.emg_axes:
+            ax.set_ylim(-yscale, yscale)
+
+    def _get_fast_movement(self):
+        """Get x range around fast movement"""
+        velmaxt = self.time[np.nanargmax(self.angveld)]
+        return velmaxt-.5, velmaxt+1.5
+
+    def _xzoom(self, x1, x2):
         for ax in self.data_axes:
-            ax.callbacks.connect('xlim_changed', self._redraw)
+            ax.set_xlim(x1, x2)
 
-        # catch mouse click to add events
-        self.fig.canvas.mpl_connect('button_press_event', self._onclick)
-        # catch key press
-        self.fig.canvas.mpl_connect('key_press_event', self._onpress)
-        # pick handler
-        self.fig.canvas.mpl_connect('pick_event', self._onpick)
+    def _xzoom_to_fast(self):
+        """Zoom x to fast movement"""
+        rng = self._get_fast_movement()
+        self._xzoom(rng[0], rng[1])
 
-        # adjust plot layout
-        self.gs.tight_layout(self.fig)
-        # self.gs.update(hspace=self.hspace, wspace=self.wspace,
-        #               left=self.margin, right=1-self.margin)
+    def _xzoom_reset(self):
+        self._xzoom(self.time[0], self.time[-1])
 
-        # add buttons
-        # add the clear button
-        ax = plt.axes([self.margin, 1-self.margin-buttonheight,
-                       buttonwidth, buttonheight])
-        self._clearbutton = Button(ax, 'Clear markers')
-        self._clearbutton.label.set_fontsize(self.text_fontsize)
-        self._clearbutton.on_clicked(self._clear_callback)
-        # add the narrow view button
-        ax = plt.axes([self.margin, 1-self.margin-2*buttonheight-buttongap,
-                       buttonwidth, buttonheight])
-        self._narrowbutton = Button(ax, 'Narrow view')
-        self._narrowbutton.label.set_fontsize(self.text_fontsize)
-        self._narrowbutton.on_clicked(self._toggle_narrow_callback)
-        # add quit button
-        ax = plt.axes([self.margin, 1-self.margin-3*buttonheight-2*buttongap,
-                       buttonwidth, buttonheight])
-        self._quitbutton = Button(ax, 'Quit')
-        self._quitbutton.label.set_fontsize(self.text_fontsize)
-        self._quitbutton.on_clicked(self.close)
-
-        self.tmin, self.tmax = self.data_axes[0].get_xlim()
-
-        # automatically place markers
-        tmin_ = max(self.time[0], self.tmin)
-        tmax_ = min(self.time[-1], self.tmax)
-        fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
-        smin, smax = self._time_to_frame([tmin_, tmax_], self.trial.analograte)
-        # max. velocity
-        velr = self.angveld[fmin:fmax]
-        velmaxind = np.nanargmax(velr)/self.trial.framerate + tmin_
-        self.markers.add(velmaxind, annotation='Max. velocity')
-        for ch in self.emg_chs:
-            # check if ch is tagged for automark
-            if any([s in ch for s in self.emg_automark_chs]):
-                rmsdata = self.emg_rms[ch][smin:smax]
-                rmsmaxind = np.argmax(rmsdata)/self.trial.analograte + tmin_
-                self.markers.add(rmsmaxind, annotation='%s max. RMS' % ch)
-
-        # init status text
-        self._update_status_text()
-        self._last_click_event = None
-
-        self._toolbar = plt.get_current_fig_manager().toolbar
-
-        plt.show()
-
-    @staticmethod
-    def read_starting_angle(vicon):
-        subjname = nexus.get_subjectnames()
-        asp = vicon.GetSubjectParam(subjname, 'AnkleStartPos')
-        return asp[0] if asp[1] else None
+    def _reset_emg_filter(self, f1, f2):
+        """Takes new EMG lowpass and highpass values"""
+        logger.debug('reset EMG filter to %.2f-%.2f' % (f1, f2))
+        self.trial.emg.passband = [f1, f2]
+        for ind, ch in enumerate(self.emg_chs):
+            t_, self.emgdata[ch] = self.trial[ch]
+            self.emg_rms[ch] = rms(self.emgdata[ch], cfg.emg.rms_win)
+            self.emg_traces[ind].set_ydata(self.emgdata[ch]*1e3)
+            self.rms_traces[ind].set_ydata(self.emg_rms[ch]*1e3)
 
     @staticmethod
     def _adj_fonts(ax):
+        """Adjust font sizes on an axis"""
         ax.xaxis.label.set_fontsize(cfg.plot.label_fontsize)
         ax.yaxis.label.set_fontsize(cfg.plot.label_fontsize)
         ax.title.set_fontsize(cfg.plot.title_fontsize)
@@ -317,21 +683,22 @@ class Tardieu_window(object):
         """Convert time to samples (according to rate)"""
         return np.round(rate * np.array(times)).astype(int)
 
-    def close(self, event):
-        """Close window"""
-        plt.close(self.fig)
+    def tight_layout(self):
+        """ Auto set spacing between/around axes """
+        self.fig.set_tight_layout(True)
+        # not sure if works/needed
+        # self.gs.update(hspace=self.hspace, wspace=self.wspace,
+        #               left=self.margin, right=1-self.margin)
+        # probably needed
+        # self.fig.canvas.draw()
 
-    def _redraw(self, ax):
-        """Update display on e.g. zoom"""
+    def _xlim_changed(self, ax):
+        """Callback for x limits change, e.g. on zoom"""
         # we need to get the limits from the axis that was zoomed
-        # (the limits are not instantly updated by sharex)
+        # (the limits are not instantly propagated by sharex)
         self.tmin, self.tmax = ax.get_xlim()
-        self._update_status_text()
-
-    def _clear_callback(self, event):
-        """Clear all line markers"""
-        self.markers.clear()
-        self._update_status_text()
+        self.fig.canvas.draw()
+        self._update_status()
 
     def _toggle_narrow_callback(self, event):
         """Toggle narrow/wide display"""
@@ -341,14 +708,16 @@ class Tardieu_window(object):
         self.gs.set_width_ratios(wratios)
         self._narrowbutton.label.set_text(btext)
         self.gs.update()
+        # FIXME: canvas ref
         self.fig.canvas.draw()
 
     def _onpick(self, event):
-        if self._toolbar.mode:
+        """Gets triggered on pick event, i.e. selection of existing marker"""
+        if self._toolbar.mode:  # do not respond if toolbar buttons enabled
             return
         mevent = event.mouseevent
-        # prevent handling an onpick event multiple times (e.g. if multiple
-        # markers get picked)
+        # prevent handling the same onpick event multiple times (e.g.
+        # if multiple markers get picked on a single click)
         if self._last_click_event == mevent:
             return
         if (mevent.button != self.marker_del_button or
@@ -356,7 +725,8 @@ class Tardieu_window(object):
             return
         self.markers.delete_artist(event.artist, mevent.inaxes)
         self._last_click_event = mevent
-        self._redraw(mevent.inaxes)  # marker status needs to be updated
+        self.fig.canvas.draw()
+        self._update_marker_status()
 
     def _onpress(self, event):
         """Keyboard event handler"""
@@ -364,14 +734,13 @@ class Tardieu_window(object):
             self._toggle_narrow_callback(event)
 
     def _onclick(self, event):
-        """Mouse click handler"""
-        if self._toolbar.mode:
+        """Gets triggered by a mouse click on canvas"""
+        if self._toolbar.mode:  # do not respond if toolbar buttons are enabled
             return
         if event.inaxes not in self.data_axes:
             return
-        # prevent handling a click event multiple times
-        # check is also needed here since onpick and onclick may get triggered
-        # simultaneously
+        # prevent handling the same click event multiple times
+        # onpick and onclick may get triggered simultaneously
         if event == self._last_click_event:
             return
         if event.button != self.marker_button or event.key != self.marker_key:
@@ -379,57 +748,47 @@ class Tardieu_window(object):
         x = event.xdata
         self.markers.add_on_click(x)
         self._last_click_event = event
-        self._redraw(event.inaxes)  # marker status needs to be updated
+        self.fig.canvas.draw()
+        self._update_marker_status()
 
-    def _plot_text(self, ax, s, ypos, color):
-        """Plot string s at y position ypos (relative to text frame)"""
-        self.texts.append(ax.text(0, ypos, s, ha='left', va='top',
-                                  transform=ax.transAxes,
-                                  fontsize=self.text_fontsize,
-                                  color=color, wrap=True))
-
-    def _show_markers_info(self):
-        # annotate markers
-        for marker, anno, pos, col in self.markers.marker_pos_col():
+    @property
+    def marker_status_text(self):
+        """Return marker status text in HTML"""
+        s = u''
+        # each marker gets text of its own color
+        for marker, anno, col in self.markers.marker_info:
             frame = self._time_to_frame(marker, self.trial.framerate)
+            s += u"<font color='%s'>" % col
             if frame < 0 or frame >= self.nframes:
-                ms = u'Marker outside data range'
+                s += u'Marker outside data range'
             else:
-                ms = u'Marker @%.3f s' % marker
-                ms += (' (%s):\n') % anno if anno else ':\n'
-                ms += u'dflex: %.2f° vel: %.2f°/s' % (self.angd[frame],
-                                                        self.angveld[frame])
-                ms += u' acc: %.2f°/s²\n\n' % self.angaccd[frame]
-            self._plot_text(self.marker_textax, ms, pos, col)
+                s += u'Marker @%.3f s' % marker
+                s += (' (%s):<br>') % anno if anno else ':<br>'
+                s += u'dflex: %.2f° vel: %.2f°/s' % (self.angd[frame],
+                                                       self.angveld[frame])
+                s += u' acc: %.2f°/s²<br><br>' % self.angaccd[frame]
+            s += u'</font>'
+        return s
 
-    def _update_status_text(self):
-        """Create status text & update display"""
+    @property
+    def status_text(self):
+        """Create the status text"""
 
-        if self.texts:
-            [txt.remove() for txt in self.texts]
-            self.texts = []
         # find the limits of the data that is shown
         tmin_ = max(self.time[0], self.tmin)
         tmax_ = min(self.time[-1], self.tmax)
-        s = u'Shift+left click to add a new marker\n'
-        s += u'Shift+right click to remove a marker\n'
-        s += u'Tab to toggle wide/narrow display\n\n'
-        s += u'Trial name: %s\n' % self.trial.trialname
+        s = u'Trial name: %s\n' % self.trial.trialname
         s += u'Description: %s\n' % (self.trial.eclipse_data['DESCRIPTION'])
         s += u'Notes: %s\n' % (self.trial.eclipse_data['NOTES'])
-        s += u'Nexus angle offset: '
-        s += (u' %.2f\n' % self.ang0_nexus) if self.ang0_nexus else u'none\n'
-        s += u'EMG passband: %.1f Hz - %.1f Hz\n' % (self.trial.emg.passband)
+        s += u'Angle offset: '
+        s += (u' %.1f°\n' % self.ang0_nexus) if self.ang0_nexus else u'none\n'
         s += u'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)
         # frame indices corresponding to time limits
         fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
         if fmin == fmax:
             s += 'Zoomed in to a single frame\nPlease zoom out for info'
-            self._plot_text(self.textax, s, 1, 'k')
-            self._show_markers_info()
-            return
+            return s
         else:
-            # analog sample indices ...
             smin, smax = self._time_to_frame([tmin_, tmax_],
                                              self.trial.analograte)
             s += u'In frames: %d - %d\n\n' % (fmin, fmax)
@@ -438,9 +797,7 @@ class Tardieu_window(object):
             # check if we zoomed to all-nan region of angle data
             if np.all(np.isnan(angr)):
                 s += 'No valid data in region'
-                self._plot_text(self.textax, s, 1, 'k')
-                self._show_markers_info()
-                return
+                return s
             angmax = np.nanmax(angr)
             angmaxind = np.nanargmax(angr)/self.trial.framerate + tmin_
             angmin = np.nanmin(angr)
@@ -449,7 +806,7 @@ class Tardieu_window(object):
             velr = self.angveld[fmin:fmax]
             velmax = np.nanmax(velr)
             velmaxind = np.nanargmax(velr)/self.trial.framerate + tmin_
-            s += u'Values for shown range:\n'
+            s += u'Values for range shown:\n'
             s += u'Max. dorsiflexion: %.2f° @ %.2f s\n' % (angmax, angmaxind)
             s += u'Max. plantarflexion: %.2f° @ %.2f s\n' % (angmin, angminind)
             s += u'Max velocity: %.2f°/s @ %.2f s\n' % (velmax, velmaxind)
@@ -459,17 +816,16 @@ class Tardieu_window(object):
                 rmsmaxind = np.argmax(rmsdata)/self.trial.analograte + tmin_
                 s += u'%s max RMS: %.2f mV @ %.2f s\n' % (ch, rmsmax*1e3,
                                                           rmsmaxind)
-            self._plot_text(self.textax, s, 1, 'k')
-            self._show_markers_info()
-        self.fig.canvas.draw()
-
-
-def do_plot(side):
-    emg_chs = [side+ch for ch in cfg.tardieu.emg_chs]
-    Tardieu_window(emg_chs=emg_chs)
+            return s
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    register_gui_exception_handler(full_traceback=True)
-    do_plot('L')
+
+    # uiparser logger makes too much noise
+    logging.getLogger('PyQt5.uic').setLevel(logging.WARNING)
+
+    app = QtWidgets.QApplication(sys.argv)
+    win = TardieuWindow()
+    win.show()
+    sys.exit(app.exec_())

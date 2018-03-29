@@ -659,11 +659,11 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
         side_str = 'Right' if this_side == 'R' else 'Left'
         if mark:
             for fr in strikes:
-                vicon.CreateAnEvent(subjectname, side_str,
-                                    'Foot Strike', int(fr+1), 0)
+                vicon.CreateAnEvent(subjectname, side_str, 'Foot Strike',
+                                    int(fr+1), 0)
             for fr in toeoffs:
-                vicon.CreateAnEvent(subjectname, side_str,
-                                    'Foot Off', int(fr+1), 0)
+                vicon.CreateAnEvent(subjectname, side_str, 'Foot Off',
+                                    int(fr+1), 0)
         strikes_all[this_side] = strikes
         toeoffs_all[this_side] = toeoffs
 

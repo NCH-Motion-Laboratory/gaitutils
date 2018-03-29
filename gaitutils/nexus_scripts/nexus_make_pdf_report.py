@@ -72,6 +72,8 @@ def do_plot(fullname=None, hetu=None, pages=None, description=None):
     do_emg_consistency = False
 
     tagged_trials = find_tagged()
+    if not tagged_trials:
+        raise ValueError('No marked trials found in session directory')
     # use creation date of 1st tagged trial as session timestamp
     session_t = datetime.datetime.fromtimestamp(op.getctime(tagged_trials[0]))
     logger.debug('session timestamp: %s', session_t)
@@ -123,7 +125,11 @@ def do_plot(fullname=None, hetu=None, pages=None, description=None):
         elif 'L' in pl.trial.fp_events['valid']:
             side = 'L'
         else:
-            raise Exception('No kinetics for %s' % c3d)
+            # raise Exception('No kinetics for %s' % c3d)
+            # in some cases, kinetics are not available, but we do not want
+            # to die on it
+            logger.warning('No kinetics for %s' % c3d)
+            side = 'R'
 
         side_str = 'right' if side == 'R' else 'left'
 

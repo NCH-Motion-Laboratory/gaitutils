@@ -88,7 +88,7 @@ def do_plot(fullname=None, hetu=None, pages=None, description=None):
     pdf_all = op.join(sessionpath, pdfname)
 
     # make header page
-    timestr = time.strftime('%d.%m.%Y')
+    # timestr = time.strftime('%d.%m.%Y')  # current time, not currently used
     fig_hdr = plt.figure()
     ax = plt.subplot(111)
     plt.axis('off')
@@ -100,7 +100,8 @@ def do_plot(fullname=None, hetu=None, pages=None, description=None):
     title_txt += u'Ikä mittaushetkellä: %s\n' % ('%d vuotta' % age if age
                                                    else 'ei tiedossa')
     title_txt += u'Mittaus: %s\n' % session
-    title_txt += u'Kuvaus: %s\n' % (description if description else '')
+    if description:
+        title_txt += u'Kuvaus: %s\n' % description
     title_txt += u'Mittauksen pvm: %s\n' % session_t.strftime('%d.%m.%Y')
     title_txt += u'Liikelaboratorion potilaskoodi: %s\n' % patient_code
     ax.text(.5, .8, title_txt, ha='center', va='center', weight='bold',

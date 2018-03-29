@@ -162,7 +162,7 @@ def do_plot(fullname=None, hetu=None, pages=None, description=None):
 
                 # save individual pdfs
                 if representative:
-                    pdf_name = 'Kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname,
+                    pdf_name = 'kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname,
                                                            side_str)
                     logger.debug('creating %s' % pdf_name)
                     pl.create_pdf(pdf_name=pdf_name)

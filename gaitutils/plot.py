@@ -285,7 +285,7 @@ class Plotter(object):
         """ Customized tight layout """
         if self.gridspec is None:
             return
-        logger.debug('Setting tight layout')
+        logger.debug('setting tight layout')
         self.gridspec.tight_layout(self.fig)
         # space for main title
         top = (self.figh - cfg.plot.titlespace) / self.figh

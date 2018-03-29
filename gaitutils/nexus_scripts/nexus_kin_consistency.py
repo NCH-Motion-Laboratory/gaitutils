@@ -63,8 +63,13 @@ def do_plot(sessions=None, tags=None, show=True, make_pdf=True,
                           maintitle='', superpose=True, show=False,
                           plot_model_normaldata=plot_model_normaldata)
 
-    maintitle = 'Kinematics comparison '
-    maintitle += ' vs. '.join([op.split(s)[-1] for s in sessions])
+    # auto set title
+    if len(sessions) > 1:
+        maintitle = 'Kinematics comparison '
+        maintitle += ' vs. '.join([op.split(s)[-1] for s in sessions])
+    else:
+        maintitle = ('Kinematics consistency plot, session %s' %
+                     op.split(sessions[0])[-1])
     pl.set_title(maintitle)
 
     if show:

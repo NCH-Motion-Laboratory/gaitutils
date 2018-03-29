@@ -48,8 +48,9 @@ def do_single_trial_plot(c3dfile, show=True, make_pdf=True):
 
     if make_pdf:
         fn = op.split(c3dfile)[1]
+        fn_ = op.splitext(fn)[0]
         pdf_name = op.join(nexus.get_sessionpath(),
-                           '%s_time_distance.pdf' % fn)
+                           'time_distance_%s.pdf' % fn_)
         with PdfPages(pdf_name) as pdf:
                 pdf.savefig(fig)
 

@@ -34,8 +34,8 @@ def do_plot(sessions=None, tags=None, show=True, make_pdf=True,
 
     pl = Plotter()
     pl.layout = cfg.layouts.overlay_lb_kin
-    # FIXME: into config
-    linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
+
+    linecolors = cfg.plot.overlay_colors
     ccolors = cycle(linecolors)
     linestyles = [':', '--', '-']
 

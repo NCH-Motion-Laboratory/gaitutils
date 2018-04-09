@@ -26,7 +26,7 @@ def do_plot(tags=None, show=True, make_pdf=True):
     if not tagged_trials:
         raise GaitDataError('No marked trials found for current session')
 
-    linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
+    linecolors = cfg.plot.overlay_colors
     ccolors = cycle(linecolors)
 
     pl = Plotter()

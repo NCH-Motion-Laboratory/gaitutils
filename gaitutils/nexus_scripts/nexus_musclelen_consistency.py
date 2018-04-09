@@ -35,7 +35,7 @@ def do_plot(tags=None, age=None, show=True, make_pdf=True):
 
     pl.layout = cfg.layouts.overlay_musclelen
 
-    linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
+    linecolors = cfg.plot.overlay_colors
     ccolors = cycle(linecolors)
 
     for i, trialpath in enumerate(tagged_trials):

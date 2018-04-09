@@ -36,6 +36,7 @@ setup(name='gaitutils',
                'gaitutils/nexus_scripts/nexus_make_comparison_report.py',
                'gaitutils/nexus_scripts/nexus_kin_average.py',
                'gaitutils/nexus_scripts/nexus_time_distance_vars.py',
-               'gaitutils/nexus_scripts/plotter_gui.py'],
+               'gaitutils/nexus_scripts/plotter_gui.py',
+               'gaitutils/nexus_scripts/nexus_crop_events_before_fp.py'],
       include_package_data=True,
       )

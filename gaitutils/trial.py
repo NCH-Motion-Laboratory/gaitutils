@@ -34,6 +34,35 @@ def nexus_trial():
     return Trial(vicon)
 
 
+def _nexus_crop_events_before_forceplate():
+    """Delete events before forceplate strike so that the first cycle starts
+    on forceplate"""
+    vicon = nexus.viconnexus()
+    tr = Trial(vicon)
+    fp_cycles = [cyc for cyc in tr.cycles if cyc.on_forceplate]
+    cycs_sorted = sorted(fp_cycles, key=lambda cyc: cyc.start)
+    if not cycs_sorted:
+        return
+    cyc1 = cycs_sorted[0]
+    context = {'L': 'Left', 'R': 'Right'}[cyc1.context]
+    context_other = 'Left' if context == 'Right' else 'Right'
+    strike_ctxt = vicon.GetEvents(tr.name, context, "Foot Strike")[0]
+    strike_ctxt = [f for f in strike_ctxt if f >= cyc1.start]
+    toeoff_ctxt = vicon.GetEvents(tr.name, context, "Foot Off")[0]
+    toeoff_ctxt = [f for f in toeoff_ctxt if f >= cyc1.start]
+    strike_other = vicon.GetEvents(tr.name, context_other, "Foot Strike")[0]
+    toeoff_other = vicon.GetEvents(tr.name, context_other, "Foot Off")[0]
+    vicon.ClearAllEvents()
+    for ev in strike_ctxt:
+        vicon.CreateAnEvent(tr.name, context, 'Foot Strike', ev, 0)
+    for ev in strike_other:
+        vicon.CreateAnEvent(tr.name, context_other, 'Foot Strike', ev, 0)
+    for ev in toeoff_ctxt:
+        vicon.CreateAnEvent(tr.name, context, 'Foot Off', ev, 0)
+    for ev in toeoff_other:
+        vicon.CreateAnEvent(tr.name, context_other, 'Foot Off', ev, 0)
+
+
 class Gaitcycle(object):
     """" Holds information about one gait cycle """
     def __init__(self, start, end, toeoff, context,
@@ -236,7 +265,7 @@ class Trial(object):
         # The events marked in the trial marked events need to be matched
         # with detected forceplate events, but may not match exactly, so use
         # a tolerance
-        STRIKE_TOL = 4
+        STRIKE_TOL = 7
         sidestrs = {'R': 'Right', 'L': 'Left'}
         for strikes in [self.lstrikes, self.rstrikes]:
             len_s = len(strikes)

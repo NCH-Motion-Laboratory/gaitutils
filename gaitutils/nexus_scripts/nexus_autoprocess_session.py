@@ -140,7 +140,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         if (trange[1] - trange[0]) < cfg.autoproc.min_trial_duration:
             fail = 'short'
         else:  # duration ok
-            # try to figure out trial center frame using 
+            # try to figure out trial center frame using
             # track markers (only one needs to be ok)
             for marker in cfg.autoproc.track_markers:
                 try:

@@ -10,6 +10,7 @@ description and defined search strings.
 
 import logging
 import argparse
+from itertools import cycle
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, EMG,
                        GaitDataError)
@@ -26,6 +27,7 @@ def do_plot(tags=None, show=True, make_pdf=True):
         raise GaitDataError('No marked trials found for current session')
 
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
+    ccolors = cycle(linecolors)
 
     pl = Plotter()
     layout = cfg.layouts.overlay_std_emg
@@ -48,6 +50,8 @@ def do_plot(tags=None, show=True, make_pdf=True):
     pl.layout = layout
 
     for i, trialpath in enumerate(tagged_trials):
+        if i > len(linecolors):
+            logger.warning('not enough colors for plot!')
         pl.open_trial(tagged_trials[i])
 
         emg_active = any([pl.trial.emg.status_ok(ch) for ch in
@@ -56,7 +60,8 @@ def do_plot(tags=None, show=True, make_pdf=True):
             continue
 
         plot_emg_normaldata = (trialpath == tagged_trials[-1])
-        pl.plot_trial(emg_tracecolor=linecolors[i],
+
+        pl.plot_trial(emg_tracecolor=ccolors.next(),
                       maintitle='', annotate_emg=False,
                       superpose=True, show=False,
                       plot_emg_normaldata=plot_emg_normaldata)

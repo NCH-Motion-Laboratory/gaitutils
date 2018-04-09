@@ -10,6 +10,7 @@ description and defined search strings.
 import logging
 import argparse
 import os.path as op
+from itertools import cycle
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler,
                        GaitDataError)
@@ -33,10 +34,12 @@ def do_plot(sessions=None, tags=None, show=True, make_pdf=True,
 
     pl = Plotter()
     pl.layout = cfg.layouts.overlay_lb_kin
+    # FIXME: into config
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
-    linecolors.reverse()  # reverse for pop()
+    ccolors = cycle(linecolors)
     linestyles = [':', '--', '-']
 
+    ind = 0
     for session in sessions:
         c3ds = find_tagged(tags=tags, sessionpath=session)
         if not c3ds:
@@ -45,11 +48,14 @@ def do_plot(sessions=None, tags=None, show=True, make_pdf=True,
         session_style = linestyles.pop()
         for c3d in c3ds:
             pl.open_trial(c3d)
+            ind += 1
+            if ind > len(linecolors):
+                logger.warning('not enough colors for plot!')
             # only plot normaldata for last trial to speed up things
             plot_model_normaldata = (c3d == c3ds[-1] and
                                      session == sessions[-1])
             # select style/color according to either session or trial
-            model_tracecolor = linecolors.pop()
+            model_tracecolor = ccolors.next()
             if session_styles:
                 model_linestyle = session_style
                 linestyles_context = False

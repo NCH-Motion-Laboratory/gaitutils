@@ -36,7 +36,8 @@ def nexus_trial():
 
 def _nexus_crop_events_before_forceplate():
     """Delete events before forceplate strike so that the first cycle starts
-    on forceplate"""
+    on forceplate
+    FIXME: why not use events from trial instance?"""
     vicon = nexus.viconnexus()
     tr = Trial(vicon)
     fp_cycles = [cyc for cyc in tr.cycles if cyc.on_forceplate]

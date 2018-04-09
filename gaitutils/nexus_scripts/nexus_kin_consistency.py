@@ -40,7 +40,8 @@ def do_plot(sessions=None, tags=None, show=True, make_pdf=True,
     for session in sessions:
         c3ds = find_tagged(tags=tags, sessionpath=session)
         if not c3ds:
-            raise GaitDataError('No trials found for session %s' % session)
+            raise GaitDataError('No marked trials found for session %s'
+                                % session)
         session_style = linestyles.pop()
         for c3d in c3ds:
             pl.open_trial(c3d)

@@ -22,6 +22,9 @@ def do_plot(tags=None, show=True, make_pdf=True):
 
     tagged_trials = find_tagged(tags)
 
+    if not tagged_trials:
+        raise GaitDataError('No marked trials found for current session')
+
     linecolors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink']
 
     pl = Plotter()

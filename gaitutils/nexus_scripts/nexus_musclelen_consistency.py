@@ -11,7 +11,8 @@ Eclipse description and defined tags.
 import logging
 import argparse
 
-from gaitutils import Plotter, cfg, register_gui_exception_handler, normaldata
+from gaitutils import (Plotter, cfg, register_gui_exception_handler,
+                       normaldata, GaitDataError)
 from gaitutils.nexus import find_tagged
 
 logger = logging.getLogger(__name__)
@@ -20,6 +21,9 @@ logger = logging.getLogger(__name__)
 def do_plot(tags=None, age=None, show=True, make_pdf=True):
 
     tagged_trials = find_tagged(tags=tags)
+
+    if not tagged_trials:
+        raise GaitDataError('No marked trials found for current session')
 
     pl = Plotter()
 

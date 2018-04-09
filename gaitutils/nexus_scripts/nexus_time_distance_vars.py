@@ -12,7 +12,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 
-from gaitutils import nexus, register_gui_exception_handler, analysis
+from gaitutils import (nexus, register_gui_exception_handler, analysis,
+                       GaitDataError)
 from gaitutils.plot import time_dist_barchart, save_pdf
 from gaitutils.nexus import find_tagged
 
@@ -23,6 +24,8 @@ def do_session_average_plot(tags=None, show=True, make_pdf=True):
     """Find tagged trials from current session dir and plot average"""
 
     trials = find_tagged(tags)
+    if not trials:
+        raise GaitDataError('No marked trials found for current Nexus session')
     sessionpath = nexus.get_sessionpath()
     fig = _plot_trials([trials])
     session = op.split(sessionpath)[-1]

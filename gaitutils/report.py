@@ -7,7 +7,6 @@ Reporting functions, WIP
 
 import logging
 import numpy as np
-import mpld3
 import jinja2
 import os.path as op
 import os

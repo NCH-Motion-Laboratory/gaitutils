@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Reporting functions
+Reporting functions, WIP
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -33,10 +33,13 @@ def convert_videos(vidfiles):
     # see subprocess.list2cmdline
     convf = list()
     for vidfile in vidfiles:
-        logger.debug('converting %s' % vidfile)
         # FIXME: check return status
-        subprocess.Popen([vidconv_bin]+vidconv_opts.split()+[vidfile])
         convfile = op.splitext(vidfile)[0] + '.ogv'
+        if not op.isfile(convfile):
+            logger.debug('converting %s' % vidfile)
+            subprocess.call([vidconv_bin]+vidconv_opts.split()+[vidfile])
+        else:
+            logger.debug('%s already exists' % vidfile)
         convf.append(convfile)
     return convf
 

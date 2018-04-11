@@ -54,16 +54,14 @@ vidfiles = pl.trial.video_files[0:]
 vids_conv = gaitutils.report.convert_videos(vidfiles)
 vids_enc = [base64.b64encode(open(f, 'rb').read()) for f in vids_conv]
 
-
-WIDTH=800
-
 gait_dropdown_choices=[{'label': 'EMG', 'value': img_emg},
                        {'label': 'Kinematics', 'value': img_kin}]
 
-# TODO
 def _videoelement(data):
+    """Create dash Video element from given base64 data"""
     return html.Video(src='data:video/ogg;base64,%s' % data, controls=True,
-                      width=WIDTH),
+                      loop=True, width='100%')
+
 
 print 'page...'
 
@@ -76,25 +74,15 @@ app.layout = html.Div([
                 html.H3('Gait data'),
 
                 dcc.Dropdown(id='dd-data',
-                        options=gait_dropdown_choices,
-                        value=img_kin,
-                    ),
+                             options=gait_dropdown_choices,
+                             value=img_kin),
 
                 html.Img(id='gaitdata', width='100%'),  #  , width='auto'),
 
         ], className='eight columns'),
 
-        html.Div([
-                html.H3('Videos'),
-                html.Video(src='data:video/ogg;base64,%s' % vids_enc[0],
-                           controls=True, width='100%'),
-                html.Video(src='data:video/ogg;base64,%s' % vids_enc[1],
-                           controls=True, width='100%'),
-                html.Video(src='data:video/ogg;base64,%s' % vids_enc[2],
-                           controls=True, width='100%'),
-                html.Button('Play all', id='play-vids'),
-
-        ], className='four columns'),
+        html.Div([html.H3('Videos')] + [_videoelement(v) for v in vids_enc],
+                  className='four columns'),
 
     ], className='row')
 

@@ -80,18 +80,18 @@ app.layout = html.Div([
                         value=img_kin,
                     ),
 
-                html.Img(id='gaitdata', width=WIDTH),
+                html.Img(id='gaitdata', width='100%'),  #  , width='auto'),
 
         ], className='six columns'),
 
         html.Div([
                 html.H3('Videos'),
                 html.Video(src='data:video/ogg;base64,%s' % vids_enc[0],
-                           controls=True, width=500),
+                           controls=True, width='100%'),
                 html.Video(src='data:video/ogg;base64,%s' % vids_enc[1],
-                           controls=True, width=500),
+                           controls=True, width='100%'),
                 html.Video(src='data:video/ogg;base64,%s' % vids_enc[2],
-                           controls=True, width=500),
+                           controls=True, width='100%'),
                 html.Button('Play all', id='play-vids'),
 
         ], className='six columns'),

@@ -82,7 +82,7 @@ app.layout = html.Div([
 
                 html.Img(id='gaitdata', width='100%'),  #  , width='auto'),
 
-        ], className='six columns'),
+        ], className='eight columns'),
 
         html.Div([
                 html.H3('Videos'),
@@ -94,7 +94,7 @@ app.layout = html.Div([
                            controls=True, width='100%'),
                 html.Button('Play all', id='play-vids'),
 
-        ], className='six columns'),
+        ], className='four columns'),
 
     ], className='row')
 

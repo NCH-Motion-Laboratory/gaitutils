@@ -11,18 +11,11 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.tools
-import matplotlib.pyplot as plt
 
-fig1 = plt.figure()
-plt.subplot(221)
-plt.plot(range(10))
+import gaitutils
 
-fig2 = plt.figure()
-plt.subplot(221)
-plt.plot(range(10, 0 ,-1))
 
-fig1p = plotly.tools.mpl_to_plotly(fig1)
-fig2p = plotly.tools.mpl_to_plotly(fig2)
+tr = gaitutils.trial.nexus_trial()
 
 app = dash.Dash()
 

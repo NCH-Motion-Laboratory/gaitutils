@@ -177,7 +177,7 @@ class Trial(object):
         self.samplesperframe = self.analograte/self.framerate
         self.cycles = list(self._scan_cycles())
         self.ncycles = len(self.cycles)
-        self.video_files = glob.glob(self.sessionpath+self.trialname+'*avi')
+        self.video_files = glob.glob(op.join(self.sessionpath, self.trialname+'*avi'))
 
     def __getitem__(self, item):
         """ Get model variable or EMG channel by indexing, normalized

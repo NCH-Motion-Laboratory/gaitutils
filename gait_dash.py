@@ -86,9 +86,12 @@ vidfiles = pl.trial.video_files[0:]
 vids_conv = gaitutils.report.convert_videos(vidfiles)
 vids_enc = [base64.b64encode(open(f, 'rb').read()) for f in vids_conv]
 
-gait_dropdown_choices=[{'label': 'EMG', 'value': img_emg},
-                       {'label': 'Kinematics', 'value': img_kin},
-                       {'label': 'Pelvic tilt', 'value': plotlyfig}]
+
+images = {'img_kin': img_kin, 'img_emg': img_emg, 'plotlyfig': plotlyfig}
+
+gait_dropdown_choices=[{'label': 'EMG', 'value': 'img_emg'},
+                       {'label': 'Kinematics', 'value': 'img_kin'},
+                       {'label': 'Pelvic tilt', 'value': 'plotlyfig'}]
 
 
 print 'page...'
@@ -101,9 +104,9 @@ app.layout = html.Div([
         html.Div([
                 html.H3('Gait data'),
 
-                dcc.Dropdown(id='dd-data',
+                dcc.Dropdown(id='dd-data', clearable=False,
                              options=gait_dropdown_choices,
-                             value=img_kin),
+                             value='img_kin'),
 
                 html.Div(id='imgdiv')
 
@@ -122,7 +125,8 @@ app.layout = html.Div([
         [Input(component_id='dd-data', component_property='value')]
     )
 def update_contents(element):
-    return element
+    print element
+    return images[element]
 
 
 app.css.append_css({

@@ -20,12 +20,13 @@ TODO next POC:
 
 NOTES:
 
-    dcc.Dropdown dicts cannot have complex objects as values
+    dcc.Dropdown dicts need to have str values
 
 @author: jussi
 """
 
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 import logging
 import dash
 import dash_core_components as dcc
@@ -34,6 +35,7 @@ from dash.dependencies import Input, Output
 import plotly.tools
 import base64
 import io
+import sys
 import plotly.plotly as py
 import plotly.graph_objs as go
 
@@ -158,11 +160,28 @@ vidfiles = trial.video_files[0:]
 vids_conv = gaitutils.report.convert_videos(vidfiles)
 vids_enc = [base64.b64encode(open(f, 'rb').read()) for f in vids_conv]
 
-gait_dropdown_choices=[{'label': 'Pelvic tilt', 'value': [['PelvisAnglesX']]},
-                       {'label': 'Ankle dorsi/plant', 'value': [['AnkleAnglesX']]},
-                       {'label': 'All kinematics', 'value': cfg.layouts.lb_kinematics},
-                       {'label': 'EMG', 'value': cfg.layouts.std_emg}
-                       ]
+
+def _make_dropdown_lists(options):
+    """This takes label/value pairs and returns two dicts. Needed since
+    dcc.Dropdown can only take str values. options_ is fed to dcc.Dropdown()
+    and mapper() is used for getting the actual values at the callback."""
+    identity = list()
+    mapper = dict()
+    for option in options:
+        identity.append({'label': option['label'], 'value': option['label']})
+        mapper[option['label']] = option['value']
+    return identity, mapper
+
+
+vars_dropdown_choices = [
+                         {'label': 'Pelvic tilt', 'value': [['PelvisAnglesX']]},
+                         {'label': 'Ankle dorsi/plant', 'value': [['AnkleAnglesX']]},
+                         {'label': 'All kinematics', 'value': cfg.layouts.lb_kinematics},
+                         {'label': 'EMG', 'value': cfg.layouts.std_emg}
+                        ]
+
+vars_options, vars_mapper = _make_dropdown_lists(vars_dropdown_choices)
+
 
 app = dash.Dash()
 
@@ -175,13 +194,13 @@ app.layout = html.Div([
                 'Select trials:',
 
                 dcc.Dropdown(id='dd-trials', clearable=True, multi=True,
-                             options=trials_dd),
+                             options=trials_dd, value=trials_dd[0]['value']),
 
                 'Select variables:',
 
                 dcc.Dropdown(id='dd-vars', clearable=False,
-                             options=gait_dropdown_choices,
-                             value='LPelvisAnglesX'),
+                             options=vars_options,
+                             value=vars_options[0]['value']),
 
                 html.Div(id='imgdiv')
 
@@ -193,7 +212,7 @@ app.layout = html.Div([
                 'Select trials:',
 
                 dcc.Dropdown(id='dd-videos', clearable=False,
-                             options=trials_dd),
+                             options=trials_dd, value=trials_dd[0]['value']),
 
                 html.Div(id='videos'),
             ], className='four columns'),
@@ -208,7 +227,11 @@ app.layout = html.Div([
         [Input(component_id='dd-trials', component_property='value'),
          Input(component_id='dd-vars', component_property='value')]
     )
-def update_contents(sel_trial_labels, sel_vars):
+def update_contents(sel_trial_labels, sel_var):
+    if not isinstance(sel_trial_labels, list):  # either single item or list
+        sel_trial_labels = [sel_trial_labels]
+    sel_vars = vars_mapper[sel_var]
+    logger.debug('got trials %s, vars %s' % (sel_trial_labels, sel_vars))
     sel_trials = [trials_di[lbl] for lbl in sel_trial_labels]
     return _plot_modelvar_plotly(sel_trials, sel_vars)
 

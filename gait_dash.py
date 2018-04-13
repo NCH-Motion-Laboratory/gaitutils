@@ -6,20 +6,17 @@ gaitutils + dash report proof of concept
 
 (choosable) gait plot + videos
 
-TODO:
+TODO next POC:
 
     session chooser ?
-    
-    smarter plotter (use gaitutils layouts)    
-    
-    do not recreate the dcc.Graph but just redef figure prop with new data
 
-    pre-base64 for video data?
+    layouts all kin + individual vars + EMG    
 
-    new video player?
-        -kb control
+    video player fixes:
         -variable speed
-        -zoom
+        
+        
+
 
 NOTES:
 
@@ -42,6 +39,7 @@ import plotly.graph_objs as go
 
 import gaitutils
 from gaitutils.nexus import find_tagged
+from gaitutils import cfg, models
 
 logger = logging.getLogger(__name__)
 
@@ -63,25 +61,82 @@ def _static_image_element(data):
     return html.Img(src='data:image/png;base64,%s' % data, width='100%')
 
 
-def _plot_modelvar_plotly(trials, modelvar):
-    """Make a plotly plot of modelvar, including given trials"""
+def _plot_modelvar_plotly(trials, layout):
+    """Make a plotly plot of modelvar, including given trials
+    TODO:
+        context, colors?
+            -EMG should use color cycles
+            -trials can use B/R for right/left
+        y and x labels, ticks
+        proper subplot titles from model
+    """
 
-    traces = list()
+    nrows = len(layout)
+    ncols = len(layout[0])
+    allvars = [item for row in layout for item in row]
 
+    fig = plotly.tools.make_subplots(rows=nrows, cols=ncols,
+                                     subplot_titles=allvars)
+    tracegroups = set()
     for trial in trials:
-        trial.set_norm_cycle(1)
-        logger.debug(modelvar)
-        t, y = trial[modelvar]
-        trace = go.Scatter(x=t, y=y)
-        traces.append(trace)
+        for context in ['L', 'R']:
+            cycle_ind = 1  # FIXME
+            cyc = trial.get_cycle(context, cycle_ind)
+            trial.set_norm_cycle(cyc)
+            for i, row in enumerate(layout):
+                for j, var in enumerate(row):
+                    # in legend, traces will be grouped according to tracegroup (which is also the label)
+                    # tracegroup = '%s / %s' % (trial.name_with_description, cycle_desc[context])  # include cycle
+                    # tracegroup = '%s' % (trial.name_with_description)  # no cycle info (group both cycles from trial)
+                    tracegroup = trial.eclipse_data['NOTES']  # short one
+                    # only show the legend for the first trace in the tracegroup, so we do not repeat legends
+                    show_legend = tracegroup not in tracegroups
 
-    figure =  {'data': traces,
-               'layout': go.Layout(
-                       xaxis={'title': '% of gait cycle'},
-                       yaxis={'title': modelvar})
-               }
+                    if models.model_from_var(var):  # plot model variable
+                        var_ = context + var
+                        t, y = trial[var_]
+                        color = 'rgb(0, 0, 200)' if context == 'R' else 'rgb(200, 0, 0)'
+                        line = {'color': color}
+                        trace = go.Scatter(x=t, y=y, name=tracegroup,
+                                           legendgroup=tracegroup,
+                                           showlegend=show_legend,
+                                           line=line)
+                        tracegroups.add(tracegroup)
+                        fig.append_trace(trace, i+1, j+1)
 
-    return dcc.Graph(figure=figure, id='testfig')
+                    elif trial.emg.is_channel(var) or var in cfg.emg.channel_labels:
+                        # EMG channel context matches cycle context
+                        if var[0] != context:
+                            continue
+                        t, y = trial[var]
+                        line = {'color': 'rgb(0, 0, 0)', 'width': .5}
+                        trace = go.Scatter(x=t, y=y, name=tracegroup,
+                                           legendgroup=tracegroup,
+                                           line=line,
+                                           showlegend=show_legend)
+                        tracegroups.add(tracegroup)
+                        fig.append_trace(trace, i+1, j+1)
+
+                    elif var is None:
+                        continue
+
+                    elif 'legend' in var:
+                        continue
+
+                    else:
+                        raise Exception('Unknown variable %s' % var)
+
+    layout = go.Layout(legend=dict(x=100, y=.5),
+                       margin=go.Margin(
+                                        l=50,
+                                        r=0,
+                                        b=0,
+                                        t=50,
+                                        pad=4
+                                    )
+                      )
+    fig['layout'].update(layout)
+    return dcc.Graph(figure=fig, id='testfig')
 
 
 session = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/problem_cases/2018_3_12_seur_RH"
@@ -93,9 +148,8 @@ trials_di = {tr.trialname: tr for tr in trials_}
 # build the dcc.Dropdown options list for the trials
 trials_dd = list()
 for tr in trials_:
-    lbl = '%s (%s, %s)' % (tr.trialname, tr.eclipse_data['DESCRIPTION'],
-                           tr.eclipse_data['NOTES'])
-    trials_dd.append({'label': lbl, 'value': tr.trialname})
+    trials_dd.append({'label': tr.name_with_description,
+                      'value': tr.trialname})
 
 trial = trials_[0]
 
@@ -104,8 +158,10 @@ vidfiles = trial.video_files[0:]
 vids_conv = gaitutils.report.convert_videos(vidfiles)
 vids_enc = [base64.b64encode(open(f, 'rb').read()) for f in vids_conv]
 
-gait_dropdown_choices=[{'label': 'Pelvic tilt', 'value': 'LPelvisAnglesX'},
-                       {'label': 'Ankle dorsi/plant', 'value': 'LAnkleAnglesX'}
+gait_dropdown_choices=[{'label': 'Pelvic tilt', 'value': [['PelvisAnglesX']]},
+                       {'label': 'Ankle dorsi/plant', 'value': [['AnkleAnglesX']]},
+                       {'label': 'All kinematics', 'value': cfg.layouts.lb_kinematics},
+                       {'label': 'EMG', 'value': cfg.layouts.std_emg}
                        ]
 
 app = dash.Dash()

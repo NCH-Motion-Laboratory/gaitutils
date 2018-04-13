@@ -63,6 +63,19 @@ def _static_image_element(data):
     return html.Img(src='data:image/png;base64,%s' % data, width='100%')
 
 
+def _make_dropdown_lists(options):
+    """This takes a list of label/value dicts (with arbitrary type values)
+    and returns list and dict. Needed since dcc.Dropdown can only take str
+    values. identity is fed to dcc.Dropdown() and mapper is used for getting
+    the actual values at the callback."""
+    identity = list()
+    mapper = dict()
+    for option in options:
+        identity.append({'label': option['label'], 'value': option['label']})
+        mapper[option['label']] = option['value']
+    return identity, mapper
+
+
 def _plot_modelvar_plotly(trials, layout):
     """Make a plotly plot of modelvar, including given trials
     TODO:
@@ -128,20 +141,15 @@ def _plot_modelvar_plotly(trials, layout):
                     else:
                         raise Exception('Unknown variable %s' % var)
 
-    layout = go.Layout(legend=dict(x=100, y=.5),
-                       margin=go.Margin(
-                                        l=50,
-                                        r=0,
-                                        b=0,
-                                        t=50,
-                                        pad=4
-                                    )
-                      )
+    margin=go.Margin(l=50, r=0, b=0, t=50, pad=4)
+
+    layout = go.Layout(legend=dict(x=100, y=.5), margin=margin)
     fig['layout'].update(layout)
     return dcc.Graph(figure=fig, id='testfig')
 
-
-session = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/problem_cases/2018_3_12_seur_RH"
+#session = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/test/Verrokki10v_OK/2015_10_12_boy10v_OK"
+#session = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/problem_cases/2018_3_12_seur_RH"
+session = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/problem_cases/2018_3_12_seur_tuet_RH"
 # get trials
 c3ds = find_tagged(sessionpath=session)
 trials_ = [gaitutils.Trial(c3d) for c3d in c3ds]
@@ -160,23 +168,11 @@ vidfiles = trial.video_files[0:]
 vids_conv = gaitutils.report.convert_videos(vidfiles)
 vids_enc = [base64.b64encode(open(f, 'rb').read()) for f in vids_conv]
 
-
-def _make_dropdown_lists(options):
-    """This takes label/value pairs and returns two dicts. Needed since
-    dcc.Dropdown can only take str values. options_ is fed to dcc.Dropdown()
-    and mapper() is used for getting the actual values at the callback."""
-    identity = list()
-    mapper = dict()
-    for option in options:
-        identity.append({'label': option['label'], 'value': option['label']})
-        mapper[option['label']] = option['value']
-    return identity, mapper
-
-
 vars_dropdown_choices = [
                          {'label': 'Pelvic tilt', 'value': [['PelvisAnglesX']]},
                          {'label': 'Ankle dorsi/plant', 'value': [['AnkleAnglesX']]},
                          {'label': 'All kinematics', 'value': cfg.layouts.lb_kinematics},
+                         {'label': 'Kinetics/EMG', 'value': cfg.layouts.lb_kinetics_emg_r},
                          {'label': 'EMG', 'value': cfg.layouts.std_emg}
                         ]
 

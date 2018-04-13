@@ -13,6 +13,7 @@ TODO next POC:
     layouts all kin + individual vars + EMG    
 
     video player fixes:
+        -preconvert to ogv before starting dash app (otherwise app hangs on conversion)
         -variable speed
         
         
@@ -27,6 +28,7 @@ NOTES:
 
 # -*- coding: utf-8 -*-
 from __future__ import print_function
+import os.path as op
 import logging
 import dash
 import dash_core_components as dcc
@@ -36,6 +38,7 @@ import plotly.tools
 import base64
 import io
 import sys
+import flask
 import plotly.plotly as py
 import plotly.graph_objs as go
 
@@ -46,16 +49,21 @@ from gaitutils import cfg, models
 logger = logging.getLogger(__name__)
 
 
-def _video_element(data):
+def _video_element_from_base64(data):
     """Create dash Video element from given base64 data"""
     return html.Video(src='data:video/ogg;base64,%s' % data, controls=True,
                       loop=True, width='100%')
 
 
+def _video_element_from_url(url):
+    """Create dash Video element from given url"""
+    return html.Video(src='%s' % url, controls=True, loop=True, width='100%')
+
+
 def _trial_videos(trial):
-    """Videos from given trial"""
+    """(converted) videos from given trial"""
     vids_conv = gaitutils.report.convert_videos(trial.video_files)
-    return [base64.b64encode(open(f, 'rb').read()) for f in vids_conv]
+    return vids_conv
 
 
 def _static_image_element(data):
@@ -238,8 +246,15 @@ def update_contents(sel_trial_labels, sel_var):
     )
 def update_videos(trial_lbl):
     trial = trials_di[trial_lbl]
-    vid_elements = [_video_element(data) for data in _trial_videos(trial)]
+    vid_urls = ['/static/%s' % op.split(fn)[1] for fn in _trial_videos(trial)]
+    vid_elements = [_video_element_from_url(url) for url in vid_urls]
     return vid_elements or 'No videos'
+
+
+# add a static route to serve session data. be careful outside firewalls
+@app.server.route('/static/<resource>')
+def serve_file(resource):
+    return flask.send_from_directory(session, resource)
 
 
 app.css.append_css({
@@ -249,4 +264,4 @@ app.css.append_css({
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    app.run_server(debug=True)
+    app.run_server(debug=True, threaded=True)

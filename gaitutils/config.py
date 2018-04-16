@@ -113,4 +113,10 @@ for sname, section in cfg_user_di.items():
                     print('WARNING: unused (deprecated?) key '
                           '%s in user config' % key)
 
+# handle some deprecated/changed types for user convenience
+if not isinstance(cfg.plot.emg_yscale, float):
+    ysc = cfg.plot.emg_yscale[1]
+    print('WARNING: emg_yscale was changed to float, using %g' % ysc)
+    cfg['plot']['emg_yscale'] = str(cfg.plot.emg_yscale[1])
+
 sys.stdout.flush()  # make sure that warnings are printed out

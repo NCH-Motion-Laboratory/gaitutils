@@ -168,6 +168,7 @@ trials_dd = list()
 for tr in trials_:
     trials_dd.append({'label': tr.name_with_description,
                       'value': tr.trialname})
+
 # and for the vars
 vars_dropdown_choices = [
                          {'label': 'Pelvic tilt', 'value': [['PelvisAnglesX']]},
@@ -185,11 +186,6 @@ app.layout = html.Div([
     html.Div([
         html.Div([
                 html.H3('Gait data'),
-
-                'Select trials:',
-
-                dcc.Dropdown(id='dd-trials', clearable=True, multi=True,
-                             options=trials_dd, value=trials_dd[0]['value']),
 
                 'Select variables:',
 
@@ -219,16 +215,11 @@ app.layout = html.Div([
 
 @app.callback(
         Output(component_id='imgdiv', component_property='children'),
-        [Input(component_id='dd-trials', component_property='value'),
-         Input(component_id='dd-vars', component_property='value')]
+        [Input(component_id='dd-vars', component_property='value')]
     )
-def update_contents(sel_trial_labels, sel_var):
-    if not isinstance(sel_trial_labels, list):  # either single item or list
-        sel_trial_labels = [sel_trial_labels]
+def update_contents(sel_var):
     sel_vars = vars_mapper[sel_var]
-    logger.debug('got trials %s, vars %s' % (sel_trial_labels, sel_vars))
-    sel_trials = [trials_di[lbl] for lbl in sel_trial_labels]
-    return _plot_modelvar_plotly(sel_trials, sel_vars)
+    return _plot_modelvar_plotly(trials_, sel_vars)
 
 
 @app.callback(

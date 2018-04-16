@@ -9,18 +9,19 @@ gaitutils + dash report proof of concept
 TODO next POC:
 
     session chooser ?
+    variable video speed?
 
-    layouts all kin + individual vars + EMG    
 
+TODO:
+    
     video player fixes:
         -preconvert to ogv before starting dash app (otherwise app hangs on conversion)
         -variable speed
-        
-        
-
 
 NOTES:
 
+    problems w/ server - see:
+    https://stackoverflow.com/questions/40247025/flask-socket-error-errno-10053-an-established-connection-was-aborted-by-the
     dcc.Dropdown dicts need to have str values
 
 @author: jussi
@@ -158,7 +159,6 @@ def _plot_modelvar_plotly(trials, layout):
 #session = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/test/Verrokki10v_OK/2015_10_12_boy10v_OK"
 #session = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/problem_cases/2018_3_12_seur_RH"
 session = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/problem_cases/2018_3_12_seur_tuet_RH"
-# get trials
 c3ds = find_tagged(sessionpath=session)
 trials_ = [gaitutils.Trial(c3d) for c3d in c3ds]
 trials_di = {tr.trialname: tr for tr in trials_}
@@ -168,14 +168,7 @@ trials_dd = list()
 for tr in trials_:
     trials_dd.append({'label': tr.name_with_description,
                       'value': tr.trialname})
-
-trial = trials_[0]
-
-# encode trial video as base64
-vidfiles = trial.video_files[0:]
-vids_conv = gaitutils.report.convert_videos(vidfiles)
-vids_enc = [base64.b64encode(open(f, 'rb').read()) for f in vids_conv]
-
+# and for the vars
 vars_dropdown_choices = [
                          {'label': 'Pelvic tilt', 'value': [['PelvisAnglesX']]},
                          {'label': 'Ankle dorsi/plant', 'value': [['AnkleAnglesX']]},
@@ -183,12 +176,10 @@ vars_dropdown_choices = [
                          {'label': 'Kinetics/EMG', 'value': cfg.layouts.lb_kinetics_emg_r},
                          {'label': 'EMG', 'value': cfg.layouts.std_emg}
                         ]
-
 vars_options, vars_mapper = _make_dropdown_lists(vars_dropdown_choices)
 
-
+# create the app
 app = dash.Dash()
-
 app.layout = html.Div([
 
     html.Div([

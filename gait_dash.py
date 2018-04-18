@@ -8,15 +8,9 @@ gaitutils + dash report proof of concept
 
 TODO next POC:
 
-    session chooser ?
+    x/y labels / ticks
+    session chooser?
     variable video speed?
-
-
-TODO:
-    
-    video player fixes:
-        -preconvert to ogv before starting dash app (otherwise app hangs on conversion)
-        -variable speed
 
 NOTES:
 
@@ -40,8 +34,10 @@ import base64
 import io
 import sys
 import flask
+import plotly
 import plotly.plotly as py
 import plotly.graph_objs as go
+from itertools import cycle
 
 import gaitutils
 from gaitutils.nexus import find_tagged
@@ -85,30 +81,44 @@ def _make_dropdown_lists(options):
     return identity, mapper
 
 
-def _plot_modelvar_plotly(trials, layout):
-    """Make a plotly plot of modelvar, including given trials
-    TODO:
-        context, colors?
-            -EMG should use color cycles
-            -trials can use B/R for right/left
-        y and x labels, ticks
-        proper subplot titles from model
-    """
+def _var_title(var):
+    """Get proper title for variable"""
+    mod = models.model_from_var(var)
+    if mod:
+        return mod.varlabels_noside[var]
+    elif var in cfg.emg.channel_labels:
+        return cfg.emg.channel_labels[var]
+    else:
+        return ''
+
+
+def _plot_trials(trials, layout):
+    """Make a plotly plot of modelvar, including given trials"""
 
     nrows = len(layout)
     ncols = len(layout[0])
+
+    if len(trials) > len(plotly.colors.DEFAULT_PLOTLY_COLORS):
+        logger.warning('Not enough colors for plot')
+
+    colors = cycle(plotly.colors.DEFAULT_PLOTLY_COLORS)
     allvars = [item for row in layout for item in row]
+    # would be nicer to set in main plotting loop
+    titles = [_var_title(var) for var in allvars]
 
     fig = plotly.tools.make_subplots(rows=nrows, cols=ncols,
-                                     subplot_titles=allvars)
+                                     subplot_titles=titles)
     tracegroups = set()
     for trial in trials:
-        for context in ['L', 'R']:
+        trial_color = colors.next()
+        for context in ['R', 'L']:
             cycle_ind = 1  # FIXME
             cyc = trial.get_cycle(context, cycle_ind)
             trial.set_norm_cycle(cyc)
             for i, row in enumerate(layout):
                 for j, var in enumerate(row):
+                    plot_ind = i * ncols + j + 1  # plotly subplot index
+                    yaxis = 'yaxis%d' % plot_ind  # name of plotly yaxis
                     # in legend, traces will be grouped according to tracegroup (which is also the label)
                     # tracegroup = '%s / %s' % (trial.name_with_description, cycle_desc[context])  # include cycle
                     # tracegroup = '%s' % (trial.name_with_description)  # no cycle info (group both cycles from trial)
@@ -116,24 +126,33 @@ def _plot_modelvar_plotly(trials, layout):
                     # only show the legend for the first trace in the tracegroup, so we do not repeat legends
                     show_legend = tracegroup not in tracegroups
 
-                    if models.model_from_var(var):  # plot model variable
-                        var_ = context + var
-                        t, y = trial[var_]
-                        color = 'rgb(0, 0, 200)' if context == 'R' else 'rgb(200, 0, 0)'
-                        line = {'color': color}
+                    mod = models.model_from_var(var)
+                    if mod:
+                        if var in mod.varnames_noside:
+                            var = context + var
+                        if mod.is_kinetic_var(var):
+                            if var[0] != context:
+                                continue
+                        t, y = trial[var]
+                        line = {'color': trial_color}
+                        if context == 'L':
+                            line['dash'] = 'dash'
                         trace = go.Scatter(x=t, y=y, name=tracegroup,
                                            legendgroup=tracegroup,
                                            showlegend=show_legend,
                                            line=line)
                         tracegroups.add(tracegroup)
                         fig.append_trace(trace, i+1, j+1)
+                        # LaTeX does not render
+                        # fig['layout'][yaxis].update(title='$\alpha$')
 
                     elif trial.emg.is_channel(var) or var in cfg.emg.channel_labels:
                         # EMG channel context matches cycle context
                         if var[0] != context:
                             continue
                         t, y = trial[var]
-                        line = {'color': 'rgb(0, 0, 0)', 'width': .5}
+                        line = {'width': 1, 'color': trial_color}
+                        y *= 1e3  # plot mV
                         trace = go.Scatter(x=t, y=y, name=tracegroup,
                                            legendgroup=tracegroup,
                                            line=line,
@@ -150,11 +169,17 @@ def _plot_modelvar_plotly(trials, layout):
                     else:
                         raise Exception('Unknown variable %s' % var)
 
-    margin=go.Margin(l=50, r=0, b=0, t=50, pad=4)
+    # put x labels on last row
+    inds_last = range((nrows-1)*ncols, nrows*ncols)
+    axes_last = ['xaxis%d' % (ind+1) for ind in inds_last]
+    for ax in axes_last:
+        fig['layout'][ax].update(title='% of gait cycle')
 
+    margin = go.Margin(l=50, r=0, b=50, t=50, pad=4)
     layout = go.Layout(legend=dict(x=100, y=.5), margin=margin)
     fig['layout'].update(layout)
     return dcc.Graph(figure=fig, id='testfig')
+
 
 #session = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/test/Verrokki10v_OK/2015_10_12_boy10v_OK"
 #session = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/problem_cases/2018_3_12_seur_RH"
@@ -171,11 +196,11 @@ for tr in trials_:
 
 # and for the vars
 vars_dropdown_choices = [
-                         {'label': 'Pelvic tilt', 'value': [['PelvisAnglesX']]},
-                         {'label': 'Ankle dorsi/plant', 'value': [['AnkleAnglesX']]},
-                         {'label': 'All kinematics', 'value': cfg.layouts.lb_kinematics},
-                         {'label': 'Kinetics/EMG', 'value': cfg.layouts.lb_kinetics_emg_r},
-                         {'label': 'EMG', 'value': cfg.layouts.std_emg}
+                         {'label': 'Pelvic tilt', 'value': _plot_trials(trials_, [['PelvisAnglesX']])},
+                         {'label': 'Ankle dorsi/plant', 'value': _plot_trials(trials_, [['AnkleAnglesX']])},
+                         {'label': 'Kinematics', 'value': _plot_trials(trials_, cfg.layouts.lb_kinematics)},
+                         {'label': 'Kinetics', 'value': _plot_trials(trials_, cfg.layouts.lb_kinetics)},
+                         {'label': 'EMG', 'value': _plot_trials(trials_, cfg.layouts.std_emg[4:])}
                         ]
 vars_options, vars_mapper = _make_dropdown_lists(vars_dropdown_choices)
 
@@ -218,8 +243,7 @@ app.layout = html.Div([
         [Input(component_id='dd-vars', component_property='value')]
     )
 def update_contents(sel_var):
-    sel_vars = vars_mapper[sel_var]
-    return _plot_modelvar_plotly(trials_, sel_vars)
+    return vars_mapper[sel_var]  # returns the chosen dcc.Graph
 
 
 @app.callback(

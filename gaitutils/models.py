@@ -20,8 +20,10 @@ models_all = []
 def model_from_var(var):
     """ Return model corresponding to specified variable.
     Returns GaitModel instance that has the specified variable. """
-    if not isinstance(var, basestring):
-        raise ValueError('Variable name must be a string')
+    if var is None:
+        return None
+    elif not isinstance(var, basestring):
+        raise ValueError('Variable name must be a string or None')
     for model in models_all:
         if var in model.varnames or var in model.varnames_noside:
             return model

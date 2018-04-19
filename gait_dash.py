@@ -8,7 +8,9 @@ gaitutils + dash report proof of concept
 
 TODO next POC:
 
-    x/y labels / ticks
+    dlg boxes also for individual kin* vars
+    force EMG y scale
+    subplot title fontsize
     session chooser?
     variable video speed?
 
@@ -85,15 +87,23 @@ def _var_title(var):
     """Get proper title for variable"""
     mod = models.model_from_var(var)
     if mod:
-        return mod.varlabels_noside[var]
+        if var in mod.varlabels_noside:
+            return mod.varlabels_noside[var]
+        elif var in mod.varlabels:
+            return mod.varlabels[var]
     elif var in cfg.emg.channel_labels:
         return cfg.emg.channel_labels[var]
     else:
         return ''
 
 
+graphind = 0
+
+
 def _plot_trials(trials, layout):
     """Make a plotly plot of modelvar, including given trials"""
+
+    label_fontsize = 12
 
     nrows = len(layout)
     ncols = len(layout[0])
@@ -143,8 +153,9 @@ def _plot_trials(trials, layout):
                                            line=line)
                         tracegroups.add(tracegroup)
                         fig.append_trace(trace, i+1, j+1)
-                        # LaTeX does not render
-                        # fig['layout'][yaxis].update(title='$\alpha$')
+                        # LaTeX does not render, so remove units from ylabel
+                        ylabel = ' '.join(mod.ylabels[var].split(' ')[k] for k in [0, -1])
+                        fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize})
 
                     elif trial.emg.is_channel(var) or var in cfg.emg.channel_labels:
                         # EMG channel context matches cycle context
@@ -173,13 +184,16 @@ def _plot_trials(trials, layout):
     inds_last = range((nrows-1)*ncols, nrows*ncols)
     axes_last = ['xaxis%d' % (ind+1) for ind in inds_last]
     for ax in axes_last:
-        fig['layout'][ax].update(title='% of gait cycle')
+        fig['layout'][ax].update(title='% of gait cycle',
+                                 titlefont={'size': label_fontsize})
 
     margin = go.Margin(l=50, r=0, b=50, t=50, pad=4)
     layout = go.Layout(legend=dict(x=100, y=.5), margin=margin)
-    fig['layout'].update(layout)
-    return dcc.Graph(figure=fig, id='testfig')
 
+    fig['layout'].update(layout)
+    global graphind
+    graphind += 1
+    return dcc.Graph(figure=fig, id='graph%d' % graphind)
 
 #session = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/test/Verrokki10v_OK/2015_10_12_boy10v_OK"
 #session = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/problem_cases/2018_3_12_seur_RH"
@@ -194,15 +208,28 @@ for tr in trials_:
     trials_dd.append({'label': tr.name_with_description,
                       'value': tr.trialname})
 
-# and for the vars
-vars_dropdown_choices = [
-                         {'label': 'Pelvic tilt', 'value': _plot_trials(trials_, [['PelvisAnglesX']])},
-                         {'label': 'Ankle dorsi/plant', 'value': _plot_trials(trials_, [['AnkleAnglesX']])},
-                         {'label': 'Kinematics', 'value': _plot_trials(trials_, cfg.layouts.lb_kinematics)},
-                         {'label': 'Kinetics', 'value': _plot_trials(trials_, cfg.layouts.lb_kinetics)},
-                         {'label': 'EMG', 'value': _plot_trials(trials_, cfg.layouts.std_emg[4:])}
-                        ]
-vars_options, vars_mapper = _make_dropdown_lists(vars_dropdown_choices)
+# template of layout names -> layouts
+_dd_opts_multi = [
+                  {'label': 'Kinematics', 'value': cfg.layouts.lb_kinematics},
+                  {'label': 'Kinetics', 'value': cfg.layouts.lb_kinetics},
+                  {'label': 'EMG', 'value': cfg.layouts.std_emg[4:]},  # FIXME: hack to show lower body EMGs only
+                  {'label': 'Kinetics-EMG left', 'value': cfg.layouts.lb_kinetics_emg_l},
+                  {'label': 'Kinetics-EMG right', 'value': cfg.layouts.lb_kinetics_emg_r},
+                 ]
+
+# pick desired single variables from model and append
+singlevars = [{'label': varlabel, 'value': [[var]]} for var, varlabel in
+              models.pig_lowerbody.varlabels_noside.items()]
+singlevars = sorted(singlevars, key=lambda it: it['label'])
+_dd_opts_multi.extend(singlevars)
+
+# precreate dcc.Graphs
+# need separate sets of graphs for upper/lower panel
+dd_opts_multi_upper = [{'label': di['label'], 'value': _plot_trials(trials_, di['value'])} for di in _dd_opts_multi]
+opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
+dd_opts_multi_lower = [{'label': di['label'], 'value': _plot_trials(trials_, di['value'])} for di in _dd_opts_multi]
+opts_multi, mapper_multi_lower = _make_dropdown_lists(dd_opts_multi_lower)
+
 
 # create the app
 app = dash.Dash()
@@ -210,25 +237,28 @@ app.layout = html.Div([
 
     html.Div([
         html.Div([
-                html.H3('Gait data'),
 
-                'Select variables:',
+                dcc.Dropdown(id='dd-vars-upper-multi', clearable=False,
+                             options=opts_multi,
+                             value=opts_multi[0]['value']),
 
-                dcc.Dropdown(id='dd-vars', clearable=False,
-                             options=vars_options,
-                             value=vars_options[0]['value']),
+                html.Div(id='div-upper'),
 
-                html.Div(id='imgdiv')
+                dcc.Dropdown(id='dd-vars-lower-multi', clearable=False,
+                             options=opts_multi,
+                             value=opts_multi[0]['value']),
+
+                html.Div(id='div-lower')
+
 
         ], className='eight columns'),
 
         html.Div([
-                html.H3('Videos'),
-
-                'Select trials:',
 
                 dcc.Dropdown(id='dd-videos', clearable=False,
                              options=trials_dd, value=trials_dd[0]['value']),
+                             
+                '<br>',
 
                 html.Div(id='videos'),
             ], className='four columns'),
@@ -239,11 +269,19 @@ app.layout = html.Div([
 
 
 @app.callback(
-        Output(component_id='imgdiv', component_property='children'),
-        [Input(component_id='dd-vars', component_property='value')]
+        Output(component_id='div-upper', component_property='children'),
+        [Input(component_id='dd-vars-upper-multi', component_property='value')]
     )
-def update_contents(sel_var):
-    return vars_mapper[sel_var]  # returns the chosen dcc.Graph
+def update_contents_upper_multi(sel_var):
+    return mapper_multi_upper[sel_var]
+
+
+@app.callback(
+        Output(component_id='div-lower', component_property='children'),
+        [Input(component_id='dd-vars-lower-multi', component_property='value')]
+    )
+def update_contents_lower_multi(sel_var):
+    return mapper_multi_lower[sel_var]
 
 
 @app.callback(

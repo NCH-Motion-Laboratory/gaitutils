@@ -8,17 +8,18 @@ gaitutils + dash report proof of concept
 
 TODO next POC:
 
-    dlg boxes also for individual kin* vars
-    force EMG y scale
     subplot title fontsize
     session chooser?
     variable video speed?
 
 NOTES:
 
-    problems w/ server - see:
+    -cannot choose dir using dcc.Upload component
+    -should not use global vars (at least not modify) see:
+    https://dash.plot.ly/sharing-data-between-callbacks
+    -problems w/ server - see:
     https://stackoverflow.com/questions/40247025/flask-socket-error-errno-10053-an-established-connection-was-aborted-by-the
-    dcc.Dropdown dicts need to have str values
+    -dcc.Dropdown dicts need to have str values
 
 @author: jussi
 """
@@ -110,8 +111,8 @@ def _plot_trials(trials, layout):
 
     if len(trials) > len(plotly.colors.DEFAULT_PLOTLY_COLORS):
         logger.warning('Not enough colors for plot')
-
     colors = cycle(plotly.colors.DEFAULT_PLOTLY_COLORS)
+
     allvars = [item for row in layout for item in row]
     # would be nicer to set in main plotting loop
     titles = [_var_title(var) for var in allvars]
@@ -170,6 +171,9 @@ def _plot_trials(trials, layout):
                                            showlegend=show_legend)
                         tracegroups.add(tracegroup)
                         fig.append_trace(trace, i+1, j+1)
+                        ylabel = 'mV'
+                        fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize},
+                                                    range=[-.5, .5])  # FIXME: cfg
 
                     elif var is None:
                         continue
@@ -188,12 +192,14 @@ def _plot_trials(trials, layout):
                                  titlefont={'size': label_fontsize})
 
     margin = go.Margin(l=50, r=0, b=50, t=50, pad=4)
-    layout = go.Layout(legend=dict(x=100, y=.5), margin=margin)
+    layout = go.Layout(legend=dict(x=100, y=.5), margin=margin,
+                       titlefont={'size': label_fontsize})
 
     fig['layout'].update(layout)
+    # ensure unique id for graph
     global graphind
     graphind += 1
-    return dcc.Graph(figure=fig, id='graph%d' % graphind)
+    return dcc.Graph(figure=fig, id='gaitgraph%d' % graphind)
 
 #session = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/test/Verrokki10v_OK/2015_10_12_boy10v_OK"
 #session = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/problem_cases/2018_3_12_seur_RH"
@@ -208,7 +214,7 @@ for tr in trials_:
     trials_dd.append({'label': tr.name_with_description,
                       'value': tr.trialname})
 
-# template of layout names -> layouts
+# template of layout names -> layouts for dropdown
 _dd_opts_multi = [
                   {'label': 'Kinematics', 'value': cfg.layouts.lb_kinematics},
                   {'label': 'Kinetics', 'value': cfg.layouts.lb_kinetics},
@@ -221,10 +227,10 @@ _dd_opts_multi = [
 singlevars = [{'label': varlabel, 'value': [[var]]} for var, varlabel in
               models.pig_lowerbody.varlabels_noside.items()]
 singlevars = sorted(singlevars, key=lambda it: it['label'])
-_dd_opts_multi.extend(singlevars)
+#_dd_opts_multi.extend(singlevars)  # DEBUG
 
 # precreate dcc.Graphs
-# need separate sets of graphs for upper/lower panel
+# need separate sets of graphs for upper/lower panel (???)
 dd_opts_multi_upper = [{'label': di['label'], 'value': _plot_trials(trials_, di['value'])} for di in _dd_opts_multi]
 opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
 dd_opts_multi_lower = [{'label': di['label'], 'value': _plot_trials(trials_, di['value'])} for di in _dd_opts_multi]
@@ -257,8 +263,6 @@ app.layout = html.Div([
 
                 dcc.Dropdown(id='dd-videos', clearable=False,
                              options=trials_dd, value=trials_dd[0]['value']),
-                             
-                '<br>',
 
                 html.Div(id='videos'),
             ], className='four columns'),
@@ -301,6 +305,7 @@ def serve_file(resource):
     return flask.send_from_directory(session, resource)
 
 
+# the 12-column external css
 app.css.append_css({
     'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'
 })

@@ -36,21 +36,37 @@ def group_analysis(an_list, fun=np.mean):
     """ Average (or stddev etc) analysis dicts by applying fun to
     collected values. The condition label needs to be the same for all dicts.
     Returns single dict with the same condition. """
+
     if not isinstance(an_list, list):
         raise ValueError('Need a list of analysis dicts')
+
     if not an_list:
         return None
-    an0 = an_list[0]
+
     if len(an_list) == 1:
-        return an0
-    conds = an0.keys()
-    vars = an0[conds[0]].keys()
+        return an_list[0]
+
+    condsets = [set(an.keys()) for an in an_list]
+    if set.difference(*condsets):  # currently we are strict
+        raise ValueError('Conditions need to match')
+    conds = set.intersection(*condsets)
+
+    for cond in conds:
+        varsets = [set(an[cond].keys()) for an in an_list for cond in conds]
+
+    vars_missing = set.difference(*varsets)
+    if vars_missing:
+        raise ValueError('Some files are missing the following variables: %s'
+                         % ' '.join(vars_missing))  # currently we are strict
+    vars = set.intersection(*varsets)
+
     res = dict()
     for cond in conds:
         res[cond] = dict()
         for var in vars:
             res[cond][var] = dict()
-            res[cond][var]['unit'] = an0[cond][var]['unit']
+            # this will fail if vars are not strictly matched between dicts
+            res[cond][var]['unit'] = an_list[0][cond][var]['unit']
             for context in ['Right', 'Left']:
                 # gather valus from analysis dicts
                 allvals = np.array([an[cond][var][context] for an in an_list if

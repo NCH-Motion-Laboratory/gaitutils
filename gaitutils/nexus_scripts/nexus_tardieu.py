@@ -9,7 +9,6 @@ TODO:
     filter crash when lp is set at 1000 Hz
     no narrow view
 
-    minor:
     params to config
     EMG scale box is not updated when scaling w/ toolbar tool
     add statusbar?
@@ -487,6 +486,16 @@ class TardieuPlot(object):
                 qt_message_dialog('EMG channel not found: %s' % ch)
                 return False
 
+        # read accmeter data
+        # FIXME: hardcoded for now
+        accdata = self.trial.source.get_analog_data(vicon,
+                                                    'Myon Accelerometers')
+        x = accdata['data']['AccX_LTibA']
+        y = accdata['data']['AccY_LTibA']
+        z = accdata['data']['AccZ_LTibA']
+        self.accdata = np.stack([x, y, z])
+        self.accdata = np.sqrt(np.sum(self.accdata**2, 0))
+
         # FIXME: self.time?
         self.time_analog = t_ / self.trial.analograte
 
@@ -558,6 +567,16 @@ class TardieuPlot(object):
             ax.set(ylabel='mV')
             ax.set_title(ch)
             ind += 1
+
+        # accmeter plot
+        sharex = None if ind == 0 or not interactive else data_axes[0]
+        ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
+        ax.plot(self.time_analog, self.accdata,
+                linewidth=cfg.plot.emg_linewidth)
+        ax.set(ylabel=u'm/s²')
+        ax.set_title('Acceleration')
+        data_axes.append(ax)
+        ind += 1
 
         # angle plot
         sharex = None if ind == 0 or not interactive else data_axes[0]

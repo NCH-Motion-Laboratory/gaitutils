@@ -192,11 +192,11 @@ class Trial(object):
                 t, data = self._normalize.normalize(data)
             return t, data
         except ValueError:
-                t = self.t_analog
-                data = self.emg[item]
-                if self._normalize:
-                    t, data = self._normalize.crop_analog(data)
-                return t, data
+            t = self.t_analog
+            data = self.emg[item]
+            if self._normalize:
+                t, data = self._normalize.crop_analog(data)
+            return t, data
 
     @property
     def forceplate_data(self):

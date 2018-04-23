@@ -488,11 +488,11 @@ class TardieuPlot(object):
 
         # read accmeter data
         # FIXME: hardcoded for now
-        accdata = self.trial.source.get_analog_data(vicon,
-                                                    'Myon Accelerometers')
-        x = accdata['data']['AccX_LTibA']
-        y = accdata['data']['AccY_LTibA']
-        z = accdata['data']['AccZ_LTibA']
+        vicon = nexus.viconnexus()
+        accdata = nexus.get_analog_data(vicon, 'Myon Accelerometers')
+        x = accdata['data']['AccX_LGlut8']
+        y = accdata['data']['AccY_LGlut8']
+        z = accdata['data']['AccZ_LGlut8']
         self.accdata = np.stack([x, y, z])
         self.accdata = np.sqrt(np.sum(self.accdata**2, 0))
 
@@ -533,7 +533,7 @@ class TardieuPlot(object):
         if interactive:  # save trace objects for later modification by GUI
             self.emg_traces, self.rms_traces = dict(), dict()
 
-        nrows = len(self.emg_chs) + 3
+        nrows = len(self.emg_chs) + 1 + 3   # emgs + acc + marker data
         # add one row for legend if not in interactive mode
         if not interactive:
             hr = [1] * nrows + [.5]
@@ -778,7 +778,8 @@ class TardieuPlot(object):
         for marker, anno, col in self.markers.marker_info:
             frame = self._time_to_frame(marker, self.trial.framerate)
             s += u"<font color='%s'>" % col
-            if frame < 0 or frame >= self.nframes:
+            # len of acc signal is nframes - 2
+            if frame < 0 or frame >= self.nframes - 2:
                 s += u'Marker outside data range'
             else:
                 s += u'Marker @%.3f s' % marker

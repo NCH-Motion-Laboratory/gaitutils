@@ -296,26 +296,31 @@ def get_metadata(vicon):
 
 def get_emg_data(vicon):
     """ Read EMG data from Nexus """
+    return get_analog_data(vicon, cfg.emg.devname)
+
+
+def get_analog_data(vicon, devname):
+    """ Read analog data from Nexus """
     ids = [id for id in vicon.GetDeviceIDs() if
-           vicon.GetDeviceDetails(id)[0].lower() == cfg.emg.devname.lower()]
+           vicon.GetDeviceDetails(id)[0].lower() == devname.lower()]
     if len(ids) > 1:
-        raise GaitDataError('Multiple matching EMG devices')
+        raise GaitDataError('Multiple matching analog devices')
     elif len(ids) == 0:
-        raise GaitDataError('No matching EMG devices')
-    emg_id = ids[0]
-    dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(emg_id)
-    # Myon should only have 1 output; if zero, EMG was not found (?)
+        raise GaitDataError('No matching analog devices')
+    dev_id = ids[0]
+    dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(dev_id)
+    # not handling multiple output ids yet
     if len(outputids) != 1:
-        raise GaitDataError('Expected single EMG output')
+        raise GaitDataError('Expected single output for device')
     outputid = outputids[0]
     # get list of channel names and IDs
-    _, _, _, _, elnames, chids = vicon.GetDeviceOutputDetails(emg_id, outputid)
+    _, _, _, _, chnames, chids = vicon.GetDeviceOutputDetails(dev_id, outputid)
     data = dict()
-    for elid in chids:
-        eldata, _, elrate = vicon.GetDeviceChannel(emg_id, outputid, elid)
-        elname = elnames[elid-1]  # chids start from 1
-        data[elname] = np.array(eldata)
-    return {'t': np.arange(len(eldata)) / drate, 'data': data}
+    for chid in chids:
+        chdata, _, chrate = vicon.GetDeviceChannel(dev_id, outputid, chid)
+        chname = chnames[chid-1]  # chids start from 1
+        data[chname] = np.array(chdata)
+    return {'t': np.arange(len(chdata)) / drate, 'data': data}
 
 
 def _get_1_forceplate_data(vicon, devid):

@@ -574,7 +574,7 @@ class TardieuPlot(object):
         ax.plot(self.time_analog, self.accdata,
                 linewidth=cfg.plot.emg_linewidth)
         ax.set(ylabel=u'm/s²')
-        ax.set_title('Acceleration')
+        ax.set_title('Accelerometer')
         data_axes.append(ax)
         ind += 1
 

@@ -68,6 +68,11 @@ def get_emg_data(source):
     return _reader_module(source).get_emg_data(source)
 
 
+def get_accelerometer_data(source):
+    """ Get accelerometer data. Returns dict with keys """
+    return _reader_module(source).get_accelerometer_data(source)
+
+
 def get_model_data(source, model):
     """ Get other variables such as model outputs """
     modeldata = _reader_module(source).get_model_data(source, model)

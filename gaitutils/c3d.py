@@ -97,19 +97,38 @@ def get_analysis(c3dfile, condition='unknown'):
 
 def get_emg_data(c3dfile):
     """ Read EMG data from a c3d file. """
+    return _get_analog_data(c3dfile, 'EMG')
+
+
+def get_accelerometer_data(c3dfile):
+    """ Read accelerometer data from a c3d file. """
+    data = _get_analog_data(c3dfile, 'Accelerometer')
+    # Remove the 'Acceleration.' prefix if inserted by Nexus, so that channel
+    # names match Nexus. This is a bit ugly (not done for EMG which uses fuzzy
+    # matching)
+    for key in data['data']:
+        if key.find('Acceleration.') == 0:
+            # replace key names
+            data['data'][key[13:]] = data['data'].pop(key)
+    return data
+
+
+def _get_analog_data(c3dfile, devname):
+    """ Read analog data from a c3d file. devname is matched against channel
+    names. """
     acq = _get_c3dacq(c3dfile)
     data = dict()
-    elnames = []
+    chnames = []
     for i in btk.Iterate(acq.GetAnalogs()):
-        if i.GetDescription().find('EMG') >= 0 and i.GetUnit() == 'V':
-            elname = i.GetLabel()
-            elnames.append(elname)
-            data[elname] = np.squeeze(i.GetValues())
-    if elnames:
-        return {'t': np.arange(len(data[elname])) / acq.GetAnalogFrequency(),
+        if i.GetDescription().find(devname) >= 0:
+            chname = i.GetLabel()
+            chnames.append(chname)
+            data[chname] = np.squeeze(i.GetValues())
+    if chnames:
+        return {'t': np.arange(len(data[chname])) / acq.GetAnalogFrequency(),
                 'data': data}
     else:
-        raise GaitDataError('No EMG channels found in data')
+        raise GaitDataError('No matching analog channels found in data')
 
 
 def get_marker_data(c3dfile, markers):
@@ -178,8 +197,16 @@ def get_metadata(c3dfile):
                 raise GaitDataError("Unknown context on foot strike event")
 
     # get subject info
-    name = _get_c3d_metadata_field(acq, 'SUBJECTS', 'NAMES')[0]
-    bodymass = _get_c3d_metadata_field(acq, 'PROCESSING', 'Bodymass')[0]
+    try:
+        name = _get_c3d_metadata_field(acq, 'SUBJECTS', 'NAMES')[0]
+    except ValueError:
+        logger.warning('Cannot get subject name')
+        name = u'Unknown'
+    try:
+        bodymass = _get_c3d_metadata_field(acq, 'PROCESSING', 'Bodymass')[0]
+    except ValueError:
+        logger.warning('Cannot get subject body mass')
+        bodymass = None
 
     # sort events (may be in wrong temporal order, at least in c3d files)
     for li in [lstrikes, rstrikes, ltoeoffs, rtoeoffs]:

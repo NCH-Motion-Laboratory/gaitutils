@@ -295,11 +295,16 @@ def get_metadata(vicon):
 
 
 def get_emg_data(vicon):
-    """ Read EMG data from Nexus """
-    return get_analog_data(vicon, cfg.emg.devname)
+    """ Read EMG data from Nexus. This uses the configured EMG device name. """
+    return _get_analog_data(vicon, cfg.emg.devname)
 
 
-def get_analog_data(vicon, devname):
+def get_accelerometer_data(vicon):
+    """ Read EMG data from Nexus. This uses the configured EMG device name. """
+    return _get_analog_data(vicon, cfg.analog.accelerometer_devname)
+
+
+def _get_analog_data(vicon, devname):
     """ Read analog data from Nexus """
     ids = [id for id in vicon.GetDeviceIDs() if
            vicon.GetDeviceDetails(id)[0].lower() == devname.lower()]

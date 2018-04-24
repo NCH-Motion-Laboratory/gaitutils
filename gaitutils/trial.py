@@ -198,6 +198,13 @@ class Trial(object):
                 t, data = self._normalize.crop_analog(data)
             return t, data
 
+    """ The following properties are WIP and do not implement gait cycle
+    normalization """
+    @property
+    def accelerometer_data(self):
+        # FIXME: caching?
+        return read_data.get_accelerometer_data(self.source)
+
     @property
     def forceplate_data(self):
         if not self._forceplate_data:

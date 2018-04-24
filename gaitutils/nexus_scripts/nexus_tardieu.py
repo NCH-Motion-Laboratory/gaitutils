@@ -258,8 +258,8 @@ class TardieuWindow(QtWidgets.QMainWindow):
                                          ang0_nexus)
         except GaitDataError as e:
             qt_message_dialog('Error: %s' % str(e))
-        finally:
             self._resp()
+            return
 
         self._tardieu_plot.plot_data()
         self.canvas.draw()
@@ -461,12 +461,8 @@ class TardieuPlot(object):
         Returns True on successful data load, False otherwise
         """
 
-        try:
-            self.trial = Trial(source)
-            self.trial.emg.passband = emg_passband
-        except GaitDataError as e:
-            qt_message_dialog(e.message)
-            return False
+        self.trial = Trial(source)
+        self.trial.emg.passband = emg_passband
 
         # the 'true' physiological starting angle (given as a param)
         self.ang0_nexus = ang0_nexus
@@ -479,29 +475,27 @@ class TardieuPlot(object):
         self.emgdata = dict()
         self.emg_rms = dict()
         for ch in self.emg_chs:
-            try:
-                t_, self.emgdata[ch] = self.trial[ch]
-                self.emg_rms[ch] = rms(self.emgdata[ch], cfg.emg.rms_win)
-            except KeyError:
-                qt_message_dialog('EMG channel not found: %s' % ch)
-                return False
+            t_, self.emgdata[ch] = self.trial[ch]
+            self.emg_rms[ch] = rms(self.emgdata[ch], cfg.emg.rms_win)
 
-        accdata_ = self.trial.accelerometer_data['data']
-        # compute vector sum over given accelerometer chs
-        accsigs = [accdata_[ch] for ch in cfg.tardieu.acc_chs]
-        acctot = np.stack(accsigs)
-        self.acctot = np.sqrt(np.sum(acctot**2, 0))
+        if cfg.tardieu.acc_chs:
+            accdata_ = self.trial.accelerometer_data['data']
+            # compute vector sum over given accelerometer chs
+            try:
+                accsigs = [accdata_[ch] for ch in cfg.tardieu.acc_chs]
+            except KeyError:
+                raise GaitDataError('No such accelerometer channel %s' % ch)
+            acctot = np.stack(accsigs)
+            self.acctot = np.sqrt(np.sum(acctot**2, 0))
+        else:
+            self.acctot = None
 
         # FIXME: self.time?
         self.time_analog = t_ / self.trial.analograte
 
         # read marker data and compute segment angle
         mnames = cfg.tardieu.marker_names
-        try:
-            data = read_data.get_marker_data(source, mnames)
-        except GaitDataError as e:
-            qt_message_dialog(e.message)
-            return False
+        data = read_data.get_marker_data(source, mnames)
 
         P0 = data[mnames[0]+'_P']
         P1 = data[mnames[1]+'_P']
@@ -529,7 +523,10 @@ class TardieuPlot(object):
         if interactive:  # save trace objects for later modification by GUI
             self.emg_traces, self.rms_traces = dict(), dict()
 
-        nrows = len(self.emg_chs) + 1 + 3   # emgs + acc + marker data
+        nrows = len(self.emg_chs) + 3   # emgs + acc + marker data
+        if self.acctot is not None:
+            nrows += 1
+
         # add one row for legend if not in interactive mode
         if not interactive:
             hr = [1] * nrows + [.5]
@@ -565,16 +562,17 @@ class TardieuPlot(object):
             ind += 1
 
         # total acceleration
-        sharex = None if ind == 0 or not interactive else data_axes[0]
-        ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
-        ax.plot(self.time_analog, self.acctot,
-                linewidth=cfg.plot.emg_linewidth)
-        # FIXME: no calibration yet so data is assumed to be in mV
-        # ax.set(ylabel=u'm/s²')
-        ax.set(ylabel=u'mV')
-        ax.set_title('Accelerometer vector sum')
-        data_axes.append(ax)
-        ind += 1
+        if self.acctot is not None:
+            sharex = None if ind == 0 or not interactive else data_axes[0]
+            ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
+            ax.plot(self.time_analog, self.acctot,
+                    linewidth=cfg.plot.emg_linewidth)
+            # FIXME: no calibration yet so data is assumed to be in mV
+            # ax.set(ylabel=u'm/s²')
+            ax.set(ylabel=u'mV')
+            ax.set_title('Accelerometer vector sum')
+            data_axes.append(ax)
+            ind += 1
 
         # angle plot
         sharex = None if ind == 0 or not interactive else data_axes[0]

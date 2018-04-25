@@ -227,7 +227,7 @@ _dd_opts_multi = [
 singlevars = [{'label': varlabel, 'value': [[var]]} for var, varlabel in
               models.pig_lowerbody.varlabels_noside.items()]
 singlevars = sorted(singlevars, key=lambda it: it['label'])
-#_dd_opts_multi.extend(singlevars)  # DEBUG
+_dd_opts_multi.extend(singlevars)
 
 # precreate dcc.Graphs
 # need separate sets of graphs for upper/lower panel (???)

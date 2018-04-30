@@ -76,7 +76,7 @@ def do_plot(fullname=None, hetu=None, pages=None, description=None):
         raise ValueError('No marked trials found in session directory')
     # use creation date of 1st tagged trial as session timestamp
     tagged1 = op.splitext(tagged_trials[0])[0] + '.x1d'
-    session_t = datetime.datetime.fromtimestamp(op.getctime(tagged1))
+    session_t = datetime.datetime.fromtimestamp(op.getmtime(tagged1))
     logger.debug('session timestamp: %s', session_t)
     # compute subject age at time of session
     age = numutils.age_from_hetu(hetu, session_t) if hetu else None

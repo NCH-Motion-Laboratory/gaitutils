@@ -303,10 +303,7 @@ def _plot_trials(trials, layout):
                        font={'size': label_fontsize})
 
     fig['layout'].update(layout)
-    # ensure unique id for graph
-    global graphind
-    graphind += 1
-    return dcc.Graph(figure=fig, id='gaitgraph%d' % graphind)
+    return fig
 
 #session = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/test/Verrokki10v_OK/2015_10_12_boy10v_OK"
 #session = "C:/Users/hus20664877/Desktop/Vicon/vicon_data/problem_cases/2018_3_12_seur_RH"
@@ -336,16 +333,23 @@ singlevars = [{'label': varlabel, 'value': [[var]]} for var, varlabel in
 singlevars = sorted(singlevars, key=lambda it: it['label'])
 _dd_opts_multi.extend(singlevars)
 
-_dd_opts_multi = _dd_opts_multi[:5]  # DEBUG
+# precreate graphs
+dd_opts_multi_upper = list()
+dd_opts_multi_lower = list()
+for k, di in enumerate(_dd_opts_multi):
+    label = di['label']
+    layout = di['value']
+    logger.debug('creating %s' % label)
+    fig_ = _plot_trials(trials_, layout)
+    # need to create dcc.Graphs with unique ids for upper/lower panel(?)
+    graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k)
+    dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
+    graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
+                            % (len(_dd_opts_multi)+k))
+    dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
 
-# precreate dcc.Graphs
-# need separate sets of graphs for upper/lower panel (???)
-# FIXME: copy precreated plots?
-dd_opts_multi_upper = [{'label': di['label'], 'value': _plot_trials(trials_, di['value'])} for di in _dd_opts_multi]
 opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
-dd_opts_multi_lower = [{'label': di['label'], 'value': _plot_trials(trials_, di['value'])} for di in _dd_opts_multi]
 opts_multi, mapper_multi_lower = _make_dropdown_lists(dd_opts_multi_lower)
-
 
 # create the app
 app = dash.Dash()

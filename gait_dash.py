@@ -138,8 +138,8 @@ for fn in cfg.general.normaldata_files:
 def _plot_trials(trials, layout):
     """Make a plotly plot of modelvar, including given trials"""
 
+    # configurabe opts (here for now)
     trial_specific_colors = False
-
     label_fontsize = 12
 
     nrows = len(layout)
@@ -155,21 +155,20 @@ def _plot_trials(trials, layout):
                                      subplot_titles=titles)
     tracegroups = set()
     model_normaldata_legend = True
-    emg_normaldata_legend = True    
+    emg_normaldata_legend = True
 
     for trial in trials:
         trial_color = colors.next()
-        is_last_trial = trial == trials[-1]
 
         for context in ['R', 'L']:
-            cycle_ind = 1  # FIXME
+            # FIXME: hardcoded to 1st cycle
+            cycle_ind = 1
             cyc = trial.get_cycle(context, cycle_ind)
             trial.set_norm_cycle(cyc)
-            
+
             for i, row in enumerate(layout):
                 for j, var in enumerate(row):
                     plot_ind = i * ncols + j + 1  # plotly subplot index
-                    is_last_plot = i == len(layout) and j == len(row)
                     xaxis = 'xaxis%d' % plot_ind  # name of plotly yaxis
                     yaxis = 'yaxis%d' % plot_ind  # name of plotly yaxis
                     # in legend, traces will be grouped according to tracegroup (which is also the label)
@@ -188,7 +187,7 @@ def _plot_trials(trials, layout):
                             if var[0] != context:
                                 continue
                         t, y = trial[var]
-                        
+
                         if trial_specific_colors:
                             line = {'color': trial_color}
                             if context == 'L':
@@ -205,8 +204,9 @@ def _plot_trials(trials, layout):
                         tracegroups.add(tracegroup)
                         fig.append_trace(trace, i+1, j+1)
 
-                        # FIXME: gets run both for L/R contexts
-                        if is_last_trial:
+                        # last trace was plotted
+                        # FIXME: is this logic also working for EMG?
+                        if trial == trials[-1] and context == 'L':
                             # plot model normal data
                             if var[0].upper() in ['L', 'R']:
                                 nvar = var[1:]
@@ -226,10 +226,11 @@ def _plot_trials(trials, layout):
                                                               showlegend=model_normaldata_legend,
                                                               line={'width': 0})
                                 fig.append_trace(ntrace, i+1, j+1)
-                                model_normaldata_legend = False
+                                model_normaldata_legend = False  # add to legend only once
 
                             # LaTeX does not render, so remove units from ylabel
-                            ylabel = ' '.join(mod.ylabels[var].split(' ')[k] for k in [0, -1])
+                            ylabel = ' '.join(mod.ylabels[var].split(' ')[k]
+                                              for k in [0, -1])
                             fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize})
                                                         
                     # plot EMG variable
@@ -252,7 +253,8 @@ def _plot_trials(trials, layout):
                         tracegroups.add(tracegroup)
                         fig.append_trace(trace, i+1, j+1)
 
-                        if is_last_trial:
+                        # last trace was plotted
+                        if trial == trials[-1]:
                             # plot EMG normal bars
                             if var in cfg.emg.channel_normaldata:
                                 emgbar_ind = cfg.emg.channel_normaldata[var]
@@ -265,7 +267,7 @@ def _plot_trials(trials, layout):
                                                                   fillcolor='rgba(255, 0, 0, 0.2)',
                                                                   line={'width': 0})
                                     fig.append_trace(ntrace, i+1, j+1)
-                                    emg_normaldata_legend = False
+                                    emg_normaldata_legend = False  # add to legend only once
                         
                             ylabel = 'mV'
                             fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize},

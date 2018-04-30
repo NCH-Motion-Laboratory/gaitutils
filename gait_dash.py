@@ -330,6 +330,7 @@ _dd_opts_multi = _dd_opts_multi[:5]  # DEBUG
 
 # precreate dcc.Graphs
 # need separate sets of graphs for upper/lower panel (???)
+# FIXME: copy precreated plots?
 dd_opts_multi_upper = [{'label': di['label'], 'value': _plot_trials(trials_, di['value'])} for di in _dd_opts_multi]
 opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
 dd_opts_multi_lower = [{'label': di['label'], 'value': _plot_trials(trials_, di['value'])} for di in _dd_opts_multi]

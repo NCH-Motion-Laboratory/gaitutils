@@ -172,7 +172,7 @@ def do_plot(fullname=None, hetu=None, pages=None, description=None):
                 # EMG
                 maintitle = pl.title_with_eclipse_info('EMG plot for')
                 layout = cfg.layouts.std_emg
-                pl.layout = layouts.rm_dead_channels(c3d, pl.trial.emg, layout)
+                pl.layout = layouts.rm_dead_channels(pl.trial.emg, layout)
                 fig = pl.plot_trial(maintitle=maintitle, show=False)
                 tagged_figs.append(fig)
                 eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])

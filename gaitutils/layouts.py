@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def rm_dead_channels(source, emg, layout):
+def rm_dead_channels(emg, layout):
     """ From EMG layout, remove rows with no valid EMG data """
     layout_ = list()
     for j, row in enumerate(layout):

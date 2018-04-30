@@ -23,6 +23,8 @@ TODO later:
     rm dead emg channels (see emg_consistency)
 
     annotate disconnected EMG
+    
+    color name conversions (from cfg)
 
 
 NOTES:
@@ -169,7 +171,7 @@ def _plot_trials(trials, layout):
             for i, row in enumerate(layout):
                 for j, var in enumerate(row):
                     plot_ind = i * ncols + j + 1  # plotly subplot index
-                    xaxis = 'xaxis%d' % plot_ind  # name of plotly yaxis
+                    xaxis = 'xaxis%d' % plot_ind  # name of plotly xaxis
                     yaxis = 'yaxis%d' % plot_ind  # name of plotly yaxis
                     # in legend, traces will be grouped according to tracegroup (which is also the label)
                     # tracegroup = '%s / %s' % (trial.name_with_description, cycle_desc[context])  # include cycle
@@ -179,32 +181,36 @@ def _plot_trials(trials, layout):
                     show_legend = tracegroup not in tracegroups
 
                     mod = models.model_from_var(var)
-
                     if mod:  # plot model variable
+                        do_plot = True
                         if var in mod.varnames_noside:
                             var = context + var
+                        # FIXME: configurable? skip kinetic for no context
+
                         if mod.is_kinetic_var(var):
                             if var[0] != context:
-                                continue
-                        t, y = trial[var]
+                                do_plot = False
 
-                        if trial_specific_colors:
-                            line = {'color': trial_color}
-                            if context == 'L':
-                                line['dash'] = 'dash'
-                        else:
-                            line = {'color':
-                                    cfg.plot.model_tracecolors[context]}
+                        if do_plot:
+                            t, y = trial[var]
 
-                        trace = go.Scatter(x=t, y=y, name=tracegroup,
-                                           legendgroup=tracegroup,
-                                           showlegend=show_legend,
-                                           line=line)
+                            if trial_specific_colors:
+                                line = {'color': trial_color}
+                                if context == 'L':
+                                    line['dash'] = 'dash'
+                            else:
+                                line = {'color':
+                                        cfg.plot.model_tracecolors[context]}
 
-                        tracegroups.add(tracegroup)
-                        fig.append_trace(trace, i+1, j+1)
+                            trace = go.Scatter(x=t, y=y, name=tracegroup,
+                                               legendgroup=tracegroup,
+                                               showlegend=show_legend,
+                                               line=line)
 
-                        # last trace was plotted
+                            tracegroups.add(tracegroup)
+                            fig.append_trace(trace, i+1, j+1)
+
+                        # last model trace was plotted
                         # FIXME: is this logic also working for EMG?
                         if trial == trials[-1] and context == 'L':
                             # plot model normal data
@@ -220,11 +226,11 @@ def _plot_trials(trials, layout):
                                 # FIXME: hardcoded color
                                 normalx = np.linspace(0, 100, ndata.shape[0])
                                 ntrace = _plotly_fill_between(normalx, ndata[:, 0],
-                                                              ndata[:, 1], fillcolor='rgba(100, 100, 100, 0.2)',
-                                                              name='Normal data',
-                                                              legendgroup='Normal data',
+                                                              ndata[:, 1], fillcolor='rgba(100, 100, 100, 0.3)',
+                                                              name='Norm.',
+                                                              legendgroup='Norm.',
                                                               showlegend=model_normaldata_legend,
-                                                              line={'width': 0})
+                                                              line=go.Line(color='transparent'))
                                 fig.append_trace(ntrace, i+1, j+1)
                                 model_normaldata_legend = False  # add to legend only once
 
@@ -235,44 +241,46 @@ def _plot_trials(trials, layout):
                                                         
                     # plot EMG variable
                     elif trial.emg.is_channel(var) or var in cfg.emg.channel_labels:
+                        do_plot = True
                         # EMG channel context matches cycle context
                         if var[0] != context:
-                            continue
+                            do_plot = False
                         t, y = trial[var]
                         if not trial.emg.status_ok(var):
-                              continue
+                            do_plot = False
                             # FIXME: maybe annotate disconnected chans
                             # _no_ticks_or_labels(ax)
                             # _axis_annotate(ax, 'disconnected')
-                        line = {'width': 1, 'color': trial_color}
-                        y *= 1e3  # plot mV
-                        trace = go.Scatter(x=t, y=y, name=tracegroup,
-                                           legendgroup=tracegroup,
-                                           showlegend=show_legend,
-                                           line=line)
-                        tracegroups.add(tracegroup)
-                        fig.append_trace(trace, i+1, j+1)
+                        if do_plot:
+                            line = {'width': 1, 'color': trial_color}
+                            y *= 1e3  # plot mV
+                            trace = go.Scatter(x=t, y=y, name=tracegroup,
+                                               legendgroup=tracegroup,
+                                               showlegend=show_legend,
+                                               line=line)
+                            tracegroups.add(tracegroup)
+                            fig.append_trace(trace, i+1, j+1)
 
                         # last trace was plotted
-                        if trial == trials[-1]:
+                        if trial == trials[-1] and context == 'L':
                             # plot EMG normal bars
                             if var in cfg.emg.channel_normaldata:
                                 emgbar_ind = cfg.emg.channel_normaldata[var]
                                 for inds in emgbar_ind:
                                     # FIXME: hardcoded color
                                     ntrace = _plotly_fill_between(inds, [-1e10]*2, [1e10]*2,  # simulate x range fill by high y values
-                                                                  name='Normal data',
-                                                                  legendgroup='Normal data',
+                                                                  name='EMG norm.',
+                                                                  legendgroup='EMG norm.',
                                                                   showlegend=emg_normaldata_legend,
-                                                                  fillcolor='rgba(255, 0, 0, 0.2)',
-                                                                  line={'width': 0})
+                                                                  fillcolor='rgba(255, 0, 0, 0.3)',
+                                                                  line=go.Line(color='transparent'))                                                                  
                                     fig.append_trace(ntrace, i+1, j+1)
                                     emg_normaldata_legend = False  # add to legend only once
                         
-                            ylabel = 'mV'
-                            fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize},
-                                                        range=[-.5, .5])  # FIXME: cfg
-                            fig['layout'][xaxis].update(range=[0, 100])
+                            emg_yrange = np.array([-cfg.plot.emg_yscale, cfg.plot.emg_yscale]) * cfg.plot.emg_multiplier
+                            fig['layout'][yaxis].update(title=cfg.plot.emg_ylabel, titlefont={'size': label_fontsize},
+                                                        range=emg_yrange)  # FIXME: cfg
+                            fig['layout'][xaxis].update(range=[0, 100])  # prevent changes due to legend clicks etc.
 
                     elif var is None:
                         continue

@@ -1,19 +1,41 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-
 gaitutils + dash report proof of concept
-
 (choosable) gait plot + videos
 
-TODO next POC:
+TODO next POC (live test):
 
-    subplot title fontsize
-    session chooser?
-    variable video speed?
+    report launcher
+        -qt session(s) selector
+        -check session validity
+        -preconv videos
+
+    comparison / single
+
+    inc normal data
+
+
+TODO later:
+
+    choosable 1/2 panels on left?
+
+    fix subplot title fontsize
+        -hardcoded to 16pt, see https://github.com/plotly/plotly.py/issues/985
+
+    annotate disconnected EMG
+
+
 
 NOTES:
 
+    -firefox html5 player:
+        can change playback speed
+        some limited kb controls
+        browsing back/forth worse than chrome
+    -IE not working at all
+    -if using default server, need recent enough werkzeug (>=0.12.2?) otherwise
+    video not seekable due to HTTP 206 not implemented
     -cannot choose dir using dcc.Upload component
     -should not use global vars (at least not modify) see:
     https://dash.plot.ly/sharing-data-between-callbacks
@@ -40,11 +62,12 @@ import flask
 import plotly
 import plotly.plotly as py
 import plotly.graph_objs as go
+import numpy as np
 from itertools import cycle
 
 import gaitutils
 from gaitutils.nexus import find_tagged
-from gaitutils import cfg, models
+from gaitutils import cfg, models, normaldata
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +123,12 @@ def _var_title(var):
 
 graphind = 0
 
+# FIXME: global
+model_normaldata = dict()
+for fn in cfg.general.normaldata_files:
+    ndata = normaldata.read_normaldata(fn)
+    model_normaldata.update(ndata)
+
 
 def _plot_trials(trials, layout):
     """Make a plotly plot of modelvar, including given trials"""
@@ -109,19 +138,20 @@ def _plot_trials(trials, layout):
     nrows = len(layout)
     ncols = len(layout[0])
 
+
+
     if len(trials) > len(plotly.colors.DEFAULT_PLOTLY_COLORS):
         logger.warning('Not enough colors for plot')
     colors = cycle(plotly.colors.DEFAULT_PLOTLY_COLORS)
 
     allvars = [item for row in layout for item in row]
-    # would be nicer to set in main plotting loop
     titles = [_var_title(var) for var in allvars]
-
     fig = plotly.tools.make_subplots(rows=nrows, cols=ncols,
                                      subplot_titles=titles)
     tracegroups = set()
     for trial in trials:
         trial_color = colors.next()
+        is_last_trial = trial == trials[-1]
         for context in ['R', 'L']:
             cycle_ind = 1  # FIXME
             cyc = trial.get_cycle(context, cycle_ind)
@@ -138,7 +168,8 @@ def _plot_trials(trials, layout):
                     show_legend = tracegroup not in tracegroups
 
                     mod = models.model_from_var(var)
-                    if mod:
+
+                    if mod:  # plot model variable
                         if var in mod.varnames_noside:
                             var = context + var
                         if mod.is_kinetic_var(var):
@@ -154,15 +185,49 @@ def _plot_trials(trials, layout):
                                            line=line)
                         tracegroups.add(tracegroup)
                         fig.append_trace(trace, i+1, j+1)
-                        # LaTeX does not render, so remove units from ylabel
-                        ylabel = ' '.join(mod.ylabels[var].split(' ')[k] for k in [0, -1])
-                        fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize})
 
+                        # FIXME: run both for L/R contexts
+                        if is_last_trial:
+                            # plot model normal data
+                            if var[0].upper() in ['L', 'R']:
+                                nvar = var[1:]
+                            if model_normaldata and nvar in model_normaldata:
+                                key = nvar
+                            else:
+                                key = None
+                            ndata = (model_normaldata[key] if key in
+                                     model_normaldata else None)
+                            if ndata is not None:
+                                # weird stuff follows, see https://plot.ly/python/line-charts/#filled-lines
+                                normalx = np.linspace(0, 100, ndata.shape[0])
+                                normalx_rev = normalx[::-1]
+                                normalx_all = np.concatenate([normalx, normalx_rev])
+                                normaly = np.concatenate([ndata[:, 1], ndata[::-1, 0]])
+                                # FIXME: hardcoded opacity etc.
+                                ntrace = go.Scatter(x=normalx_all,
+                                                    y=normaly,
+                                                    showlegend=False,
+                                                    line={'width': 0},
+                                                    fill='tozerox',
+                                                    fillcolor='rgba(100, 100, 100, 0.2)',
+                                                    opacity=.3)
+                                fig.append_trace(ntrace, i+1, j+1)
+
+                            # LaTeX does not render, so remove units from ylabel
+                            ylabel = ' '.join(mod.ylabels[var].split(' ')[k] for k in [0, -1])
+                            fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize})
+
+                    # plot EMG variable
                     elif trial.emg.is_channel(var) or var in cfg.emg.channel_labels:
                         # EMG channel context matches cycle context
                         if var[0] != context:
                             continue
                         t, y = trial[var]
+                        if not trial.emg.status_ok(var):
+                              continue
+                            # FIXME: maybe annotate disconnected chans
+                            # _no_ticks_or_labels(ax)
+                            # _axis_annotate(ax, 'disconnected')
                         line = {'width': 1, 'color': trial_color}
                         y *= 1e3  # plot mV
                         trace = go.Scatter(x=t, y=y, name=tracegroup,
@@ -193,7 +258,7 @@ def _plot_trials(trials, layout):
 
     margin = go.Margin(l=50, r=0, b=50, t=50, pad=4)
     layout = go.Layout(legend=dict(x=100, y=.5), margin=margin,
-                       titlefont={'size': label_fontsize})
+                       font={'size': label_fontsize})
 
     fig['layout'].update(layout)
     # ensure unique id for graph
@@ -218,7 +283,7 @@ for tr in trials_:
 _dd_opts_multi = [
                   {'label': 'Kinematics', 'value': cfg.layouts.lb_kinematics},
                   {'label': 'Kinetics', 'value': cfg.layouts.lb_kinetics},
-                  {'label': 'EMG', 'value': cfg.layouts.std_emg[4:]},  # FIXME: hack to show lower body EMGs only
+                  {'label': 'EMG', 'value': cfg.layouts.std_emg[2:]},  # FIXME: hack to show lower body EMGs only
                   {'label': 'Kinetics-EMG left', 'value': cfg.layouts.lb_kinetics_emg_l},
                   {'label': 'Kinetics-EMG right', 'value': cfg.layouts.lb_kinetics_emg_r},
                  ]

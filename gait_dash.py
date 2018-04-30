@@ -4,6 +4,7 @@
 gaitutils + dash report proof of concept
 (choosable) gait plot + videos
 
+
 TODO next POC (live test):
 
     report launcher
@@ -13,18 +14,15 @@ TODO next POC (live test):
 
     comparison / single
 
-    inc normal data
-
 
 TODO later:
-
-    choosable 1/2 panels on left?
 
     fix subplot title fontsize
         -hardcoded to 16pt, see https://github.com/plotly/plotly.py/issues/985
 
-    annotate disconnected EMG
+    rm dead emg channels (see emg_consistency)
 
+    annotate disconnected EMG
 
 
 NOTES:
@@ -121,24 +119,31 @@ def _var_title(var):
         return ''
 
 
-graphind = 0
+def _plotly_fill_between(x, ylow, yhigh, **kwargs):
+    """Fill area between ylow and yhigh"""
+    x_ = np.concatenate([x, x[::-1]])  # construct a closed curve
+    y_ = np.concatenate([yhigh, ylow[::-1]])
+    return go.Scatter(x=x_, y=y_, fill='toself', **kwargs)
+
+
 
 # FIXME: global
+graphind = 0
+
 model_normaldata = dict()
 for fn in cfg.general.normaldata_files:
     ndata = normaldata.read_normaldata(fn)
     model_normaldata.update(ndata)
 
-
 def _plot_trials(trials, layout):
     """Make a plotly plot of modelvar, including given trials"""
+
+    trial_specific_colors = False
 
     label_fontsize = 12
 
     nrows = len(layout)
     ncols = len(layout[0])
-
-
 
     if len(trials) > len(plotly.colors.DEFAULT_PLOTLY_COLORS):
         logger.warning('Not enough colors for plot')
@@ -149,16 +154,23 @@ def _plot_trials(trials, layout):
     fig = plotly.tools.make_subplots(rows=nrows, cols=ncols,
                                      subplot_titles=titles)
     tracegroups = set()
+    model_normaldata_legend = True
+    emg_normaldata_legend = True    
+
     for trial in trials:
         trial_color = colors.next()
         is_last_trial = trial == trials[-1]
+
         for context in ['R', 'L']:
             cycle_ind = 1  # FIXME
             cyc = trial.get_cycle(context, cycle_ind)
             trial.set_norm_cycle(cyc)
+            
             for i, row in enumerate(layout):
                 for j, var in enumerate(row):
                     plot_ind = i * ncols + j + 1  # plotly subplot index
+                    is_last_plot = i == len(layout) and j == len(row)
+                    xaxis = 'xaxis%d' % plot_ind  # name of plotly yaxis
                     yaxis = 'yaxis%d' % plot_ind  # name of plotly yaxis
                     # in legend, traces will be grouped according to tracegroup (which is also the label)
                     # tracegroup = '%s / %s' % (trial.name_with_description, cycle_desc[context])  # include cycle
@@ -176,17 +188,24 @@ def _plot_trials(trials, layout):
                             if var[0] != context:
                                 continue
                         t, y = trial[var]
-                        line = {'color': trial_color}
-                        if context == 'L':
-                            line['dash'] = 'dash'
+                        
+                        if trial_specific_colors:
+                            line = {'color': trial_color}
+                            if context == 'L':
+                                line['dash'] = 'dash'
+                        else:
+                            line = {'color':
+                                    cfg.plot.model_tracecolors[context]}
+
                         trace = go.Scatter(x=t, y=y, name=tracegroup,
                                            legendgroup=tracegroup,
                                            showlegend=show_legend,
                                            line=line)
+
                         tracegroups.add(tracegroup)
                         fig.append_trace(trace, i+1, j+1)
 
-                        # FIXME: run both for L/R contexts
+                        # FIXME: gets run both for L/R contexts
                         if is_last_trial:
                             # plot model normal data
                             if var[0].upper() in ['L', 'R']:
@@ -198,25 +217,21 @@ def _plot_trials(trials, layout):
                             ndata = (model_normaldata[key] if key in
                                      model_normaldata else None)
                             if ndata is not None:
-                                # weird stuff follows, see https://plot.ly/python/line-charts/#filled-lines
+                                # FIXME: hardcoded color
                                 normalx = np.linspace(0, 100, ndata.shape[0])
-                                normalx_rev = normalx[::-1]
-                                normalx_all = np.concatenate([normalx, normalx_rev])
-                                normaly = np.concatenate([ndata[:, 1], ndata[::-1, 0]])
-                                # FIXME: hardcoded opacity etc.
-                                ntrace = go.Scatter(x=normalx_all,
-                                                    y=normaly,
-                                                    showlegend=False,
-                                                    line={'width': 0},
-                                                    fill='tozerox',
-                                                    fillcolor='rgba(100, 100, 100, 0.2)',
-                                                    opacity=.3)
+                                ntrace = _plotly_fill_between(normalx, ndata[:, 0],
+                                                              ndata[:, 1], fillcolor='rgba(100, 100, 100, 0.2)',
+                                                              name='Normal data',
+                                                              legendgroup='Normal data',
+                                                              showlegend=model_normaldata_legend,
+                                                              line={'width': 0})
                                 fig.append_trace(ntrace, i+1, j+1)
+                                model_normaldata_legend = False
 
                             # LaTeX does not render, so remove units from ylabel
                             ylabel = ' '.join(mod.ylabels[var].split(' ')[k] for k in [0, -1])
                             fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize})
-
+                                                        
                     # plot EMG variable
                     elif trial.emg.is_channel(var) or var in cfg.emg.channel_labels:
                         # EMG channel context matches cycle context
@@ -232,24 +247,41 @@ def _plot_trials(trials, layout):
                         y *= 1e3  # plot mV
                         trace = go.Scatter(x=t, y=y, name=tracegroup,
                                            legendgroup=tracegroup,
-                                           line=line,
-                                           showlegend=show_legend)
+                                           showlegend=show_legend,
+                                           line=line)
                         tracegroups.add(tracegroup)
                         fig.append_trace(trace, i+1, j+1)
-                        ylabel = 'mV'
-                        fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize},
-                                                    range=[-.5, .5])  # FIXME: cfg
+
+                        if is_last_trial:
+                            # plot EMG normal bars
+                            if var in cfg.emg.channel_normaldata:
+                                emgbar_ind = cfg.emg.channel_normaldata[var]
+                                for inds in emgbar_ind:
+                                    # FIXME: hardcoded color
+                                    ntrace = _plotly_fill_between(inds, [-1e10]*2, [1e10]*2,  # simulate x range fill by high y values
+                                                                  name='Normal data',
+                                                                  legendgroup='Normal data',
+                                                                  showlegend=emg_normaldata_legend,
+                                                                  fillcolor='rgba(255, 0, 0, 0.2)',
+                                                                  line={'width': 0})
+                                    fig.append_trace(ntrace, i+1, j+1)
+                                    emg_normaldata_legend = False
+                        
+                            ylabel = 'mV'
+                            fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize},
+                                                        range=[-.5, .5])  # FIXME: cfg
+                            fig['layout'][xaxis].update(range=[0, 100])
 
                     elif var is None:
                         continue
 
-                    elif 'legend' in var:
+                    elif 'legend' in var:  # for the mpl plotter only
                         continue
 
                     else:
                         raise Exception('Unknown variable %s' % var)
 
-    # put x labels on last row
+    # put x labels on last row only
     inds_last = range((nrows-1)*ncols, nrows*ncols)
     axes_last = ['xaxis%d' % (ind+1) for ind in inds_last]
     for ax in axes_last:
@@ -293,6 +325,8 @@ singlevars = [{'label': varlabel, 'value': [[var]]} for var, varlabel in
               models.pig_lowerbody.varlabels_noside.items()]
 singlevars = sorted(singlevars, key=lambda it: it['label'])
 _dd_opts_multi.extend(singlevars)
+
+_dd_opts_multi = _dd_opts_multi[:5]  # DEBUG
 
 # precreate dcc.Graphs
 # need separate sets of graphs for upper/lower panel (???)
@@ -371,6 +405,7 @@ def serve_file(resource):
 
 
 # the 12-column external css
+# FIXME: local copy?
 app.css.append_css({
     'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'
 })

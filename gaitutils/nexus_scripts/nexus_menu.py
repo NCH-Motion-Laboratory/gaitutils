@@ -444,6 +444,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         self._fullname = None
         self._hetu = None
+        
+        self._dash_apps = dict()  # dash apps
 
         XStream.stdout().messageWritten.connect(self._log_message)
         XStream.stderr().messageWritten.connect(self._log_message)
@@ -473,8 +475,19 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _create_web_report(self):
         dlg = WebReportDialog()
         if dlg.exec_():
-            self._execute(report.dash_gait_report,
-                          sessions=dlg.sessions)
+            if len(dlg.sessions) == 1:
+                app = self._execute(report._single_session_app,
+                                    dlg.sessions[0], thread=True)
+            else:
+                app = None  # FIXME: multisession
+            port = 5000 + len(self._dash_apps)
+            self._execute_nowait(app.server.run, debug=False, port=port)
+            self._dash_apps[port] = app
+
+        cpath = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+        url = '127.0.0.1:%d' % port
+        import subprocess
+        subprocess.Popen([cpath, url])
 
     def _create_pdfs(self):
         """Creates the full report"""

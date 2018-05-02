@@ -267,12 +267,6 @@ def _plot_trials(trials, layout, model_normaldata):
     return fig
 
 
-def dash_gait_report(sessions):
-    """ Launches dash report according to sessions """
-    logger.debug(sessions)
-    return
-
-
 def _single_session_app(session):
     """Single session dash app"""
 

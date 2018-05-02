@@ -13,6 +13,7 @@ from functools import partial
 import sys
 import ast
 import os
+import subprocess
 
 from gaitutils.numutils import check_hetu
 from gaitutils import GaitDataError
@@ -476,18 +477,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
         dlg = WebReportDialog()
         if dlg.exec_():
             if len(dlg.sessions) == 1:
-                app = self._execute(report._single_session_app,
-                                    dlg.sessions[0], thread=True)
+                app = self._execute(report._single_session_app, False,
+                                    dlg.sessions[0])
             else:
                 app = None  # FIXME: multisession
             port = 5000 + len(self._dash_apps)
             self._execute_nowait(app.server.run, debug=False, port=port)
             self._dash_apps[port] = app
-
-        cpath = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+        logger.debug('starting web browser')
         url = '127.0.0.1:%d' % port
-        import subprocess
-        subprocess.Popen([cpath, url])
+        subprocess.Popen([cfg.general.browser_path, url])
 
     def _create_pdfs(self):
         """Creates the full report"""
@@ -541,6 +540,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._enable_op_buttons()
         QtWidgets.QApplication.restoreOverrideCursor()
 
+    def _execute_nowait(self, fun, *args, **kwargs):
+        fun_ = partial(fun, *args, **kwargs)
+        runner = Runner(fun_)
+        runner.signals.finished.connect(self._finished)
+        runner.signals.error.connect(lambda e: self._exception(e))
+        self.threadpool.start(runner)
+
     def _execute(self, fun, thread=False, *args, **kwargs):
         """ Run function fun. If thread==True, run in a separate worker
         thread. """
@@ -552,14 +558,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self.runner.signals.finished.connect(self._finished)
             self.runner.signals.error.connect(lambda e: self._exception(e))
             self.threadpool.start(self.runner)
+            retval = None
         else:
             try:
-                fun_()
+                retval = fun_()
             except Exception as e:
                 self._exception(e)
             finally:
                 self._enable_op_buttons()
                 QtWidgets.QApplication.restoreOverrideCursor()
+        return retval
 
 
 class RunnerSignals(QObject):

@@ -12,6 +12,7 @@ from pkg_resources import resource_filename
 from functools import partial
 import sys
 import ast
+import os.path as op
 import os
 import subprocess
 
@@ -51,6 +52,7 @@ logger = logging.getLogger(__name__)
 
 
 def _browse_localhost(port):
+    """Open configured browser on localhost:port"""
     url = '127.0.0.1:%d' % port
     try:
         subprocess.Popen([cfg.general.browser_path, url])
@@ -389,9 +391,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         Running the plotting functions directly from the GUI thread is also a
         bit ugly since the Qt event loop gets called twice, but this does not
         seem to do any harm.
-        _execute runs the given function and handles exceptions. Passing
-        thread=True runs it in a separate worker thread, enabling GUI updates
-        (e.g. logging dialog) which can be nice.
         """
         self._button_connect_task(self.btnCopyVideos,
                                   nexus_copy_trial_videos.do_copy, thread=True)
@@ -421,6 +420,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnTimeDistAverage,
                                   nexus_time_distance_vars.
                                   do_session_average_plot)
+        # these take a long time and do not use matplotlib, so thread them
         self._button_connect_task(self.btnAutoprocTrial,
                                   nexus_autoprocess_trial.autoproc_single,
                                   thread=True)
@@ -445,8 +445,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         self._fullname = None
         self._hetu = None
-        
-        self._dash_apps = dict()  # dash apps
+
+        # keep track of active dash apps (web reports)
+        self._dash_apps = dict()
 
         XStream.stdout().messageWritten.connect(self._log_message)
         XStream.stderr().messageWritten.connect(self._log_message)
@@ -506,15 +507,26 @@ class Gaitmenu(QtWidgets.QMainWindow):
             # FIXME: raise exceptions in report.py
             """ Cannot use thread=True here since we would not get a return
             value. However report creation should not take too long """
-            app = self._execute(report._single_session_app, dlg.sessions[0])
+            app = self._execute(report._single_session_app,
+                                session=dlg.sessions[0])
         else:
             app = None  # FIXME: multisession
         port = 5000 + len(self._dash_apps)
-        self._execute_nowait(app.server.run, debug=False, port=port)
-        self._dash_apps[port] = app
+        # thread and do not block ui
+        self._execute(app.server.run, thread=True, block_ui=False,
+                      debug=False, port=port)
+        self._dash_apps[port] = app  # FIXME: is this needed?
+        sessions_str = '/'.join([op.split(s)[-1] for s in dlg.sessions])
+        report_type = ('single session' if len(dlg.sessions) == 1
+                       else 'comparison')
+        report_name = 'localhost:%d: %s, %s' % (port, report_type,
+                                                sessions_str)
+        # add a list item that keeps track of the port
+        self.listActiveReports.add_item(report_name, data=port)
+        # double clicking on the list will open that port
+        self.listActiveReports.itemDoubleClicked.connect(lambda item: _browse_localhost(item.userdata))
         logger.debug('starting web browser')
         _browse_localhost(port)
-
 
     def _create_pdfs(self):
         """Creates the full pdf report"""
@@ -542,7 +554,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _no_custom(self):
         qt_message_dialog('No custom plot defined. Please create '
-                       'nexus_scripts/nexus_customplot.py')
+                          'nexus_scripts/nexus_customplot.py')
 
     def _exception(self, e):
         logger.debug('caught exception while running task')
@@ -552,34 +564,33 @@ class Gaitmenu(QtWidgets.QMainWindow):
         """ Disable all operation buttons """
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         for widget in self.opWidgets:
-                self.__dict__[widget].setEnabled(False)
+            self.__dict__[widget].setEnabled(False)
         # update display immediately in case thread gets blocked
         QtWidgets.QApplication.processEvents()
 
     def _enable_op_buttons(self):
         """ Enable all operation buttons """
         for widget in self.opWidgets:
-                self.__dict__[widget].setEnabled(True)
+            self.__dict__[widget].setEnabled(True)
         QtWidgets.QApplication.restoreOverrideCursor()
 
     def _tardieu(self):
         win = nexus_tardieu.TardieuWindow()
         win.show()
 
-    def _execute_nowait(self, fun, *args, **kwargs):
-        fun_ = partial(fun, *args, **kwargs)
-        runner = Runner(fun_)
-        runner.signals.error.connect(lambda e: self._exception(e))
-        self.threadpool.start(runner)
-
-    def _execute(self, fun, thread=False, block_ui=True, *args, **kwargs):
-        """ Run function fun. If thread==True, run in a separate worker
-        thread. Returns function return value if not threaded. """
-        fun_ = partial(fun, *args, **kwargs)
-        self._disable_op_buttons()
+    def _execute(self, fun, thread=False, block_ui=True, **kwargs):
+        """ Run function fun. If thread==True, run it in a separate worker
+        thread. If block_ui, disable the ui until worker thread is finished
+        (except for messages!) Returns function return value if not threaded.
+        kwargs are passed to function
+        """
+        fun_ = partial(fun, **kwargs)
+        if block_ui:
+            self._disable_op_buttons()
         if thread:
             self.runner = Runner(fun_)
-            self.runner.signals.finished.connect(self._enable_op_buttons)
+            if block_ui:
+                self.runner.signals.finished.connect(self._enable_op_buttons)
             self.runner.signals.error.connect(lambda e: self._exception(e))
             self.threadpool.start(self.runner)
             retval = None
@@ -589,7 +600,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
             except Exception as e:
                 self._exception(e)
             finally:
-                self._enable_op_buttons()
+                if block_ui:
+                    self._enable_op_buttons()
         return retval
 
 

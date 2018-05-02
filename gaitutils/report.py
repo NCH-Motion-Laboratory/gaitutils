@@ -269,8 +269,11 @@ def _plot_trials(trials, layout, model_normaldata):
     return fig
 
 
-def _single_session_app(session):
+def _single_session_app(session=None):
     """Single session dash app"""
+
+    if not session:
+        return
 
     c3ds = find_tagged(sessionpath=session)
     trials = [gaitutils.Trial(c3d) for c3d in c3ds]

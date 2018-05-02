@@ -309,7 +309,7 @@
     <item>
      <widget class="QLabel" name="label_6">
       <property name="text">
-       <string>Active reports:</string>
+       <string>Active reports (double click to view):</string>
       </property>
      </widget>
     </item>

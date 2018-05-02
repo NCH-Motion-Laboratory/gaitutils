@@ -494,20 +494,28 @@ class Gaitmenu(QtWidgets.QMainWindow):
             if not tagged:
                 message_dialog('Session %s has no marked trials' % session)
                 return
+            vidfiles = list()
             for c3dfile in tagged:
-                vidfiles = nexus.find_trial_videos(c3dfile)
-                if not report.convert_videos(vidfiles, check_only=True):
-                    logger.debug('Converting videos for %s...' % c3dfile)
-                    self._disable_op_buttons()
-                    report.convert_videos(vidfiles)
-                    self._enable_op_buttons()
+                vidfiles.extend(nexus.find_trial_videos(c3dfile))
+            if not report.convert_videos(vidfiles, check_only=True):
+                """ Block the GUI thread while converting videos. This may not
+                be OK if it takes a long time (no progress bar). OTOH
+                if converting in a worker thread, it's necessary to wait for
+                conversion to finish before launching the report creation,
+                otherwise video files may not exist in the report phase.
+                This would require using the finished signal to launch the
+                report creation """
+                logger.debug('Converting videos, please wait...')
+                self._disable_op_buttons()
+                report.convert_videos(vidfiles)
+                self._enable_op_buttons()
 
         if len(dlg.sessions) == 1:
             session = dlg.sessions
             # FIXME: raise exceptions in report.py
-            # cannot use thread=True here since we would not get a return value
-            app = self._execute(report._single_session_app, False,
-                                dlg.sessions[0])
+            """ Cannot use thread=True here since we would not get a return
+            value. However report creation should not take too long """
+            app = self._execute(report._single_session_app, dlg.sessions[0])
         else:
             app = None  # FIXME: multisession
         port = 5000 + len(self._dash_apps)

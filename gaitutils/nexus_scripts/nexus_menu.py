@@ -143,36 +143,41 @@ class WebReportDialog(QtWidgets.QDialog):
         uic.loadUi(uifile, self)
         self.btnBrowseSession.clicked.connect(self.add_session)
         self.btnAddNexusSession.clicked.connect(lambda: self.add_session(from_nexus=True))
-        self.btnClear.clicked.connect(self.clear_sessions)
+        self.btnClearAll.clicked.connect(self.listSessions.clear)
+        self.btnClearCurrent.clicked.connect(self.listSessions.rm_current_item)
         self.MAX_SESSIONS = 3
-        self.sessions = list()
 
     def add_session(self, from_nexus=False):
         if len(self.sessions) == self.MAX_SESSIONS:
             qt_message_dialog('You can specify maximum of %d sessions' %
-                           self.MAX_SESSIONS)
+                              self.MAX_SESSIONS)
             return
         if from_nexus:
             dir = nexus.get_sessionpath()
         else:
             dir = QtWidgets.QFileDialog.getExistingDirectory(self,
                                                              'Select session')
-        if dir and dir not in self.sessions:
-            self.sessions.append(dir)
-            self.update_session_list()
+        if dir:
+            if dir in self.sessions:
+                qt_message_dialog('Session already loaded')
+            else:
+                self.listSessions.add_item(dir, data=dir)
 
-    def clear_sessions(self):
-        self.sessions = list()  # sorry no .clear()
-        self.update_session_list()
-
-    def update_session_list(self):
-        self.lblSessions.setText(u'\n'.join(self.sessions))
+    @property
+    def sessions(self):
+        return [item.userdata for item in self.listSessions.items]
 
     def accept(self):
         if not self.sessions:
             qt_message_dialog('Please select at least one session')
         else:
+            for session in self.sessions:
+                tagged = nexus.find_tagged(sessionpath=session)
+                if not tagged:
+                    qt_message_dialog('Session %s has no marked trials' % session)
+                    return
             self.done(QtWidgets.QDialog.Accepted)
+
 
 
 class QtHandler(logging.Handler):
@@ -482,10 +487,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         # check sessions
         for session in dlg.sessions:
-            tagged = nexus.find_tagged()
-            if not tagged:
-                qt_message_dialog('Session %s has no marked trials' % session)
-                return
+            tagged = nexus.find_tagged(sessionpath=session)
             vidfiles = list()
             for c3dfile in tagged:
                 vidfiles.extend(nexus.find_trial_videos(c3dfile))

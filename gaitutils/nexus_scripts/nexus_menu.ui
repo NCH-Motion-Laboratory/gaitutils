@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1016</width>
-    <height>625</height>
+    <height>706</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -309,12 +309,25 @@
     <item>
      <widget class="QLabel" name="label_6">
       <property name="text">
-       <string>Active reports (double click to view):</string>
+       <string>Active web reports (double click to view in a browser):</string>
       </property>
      </widget>
     </item>
     <item>
-     <widget class="NiceListWidget" name="listActiveReports"/>
+     <widget class="NiceListWidget" name="listActiveReports">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>100</height>
+       </size>
+      </property>
+     </widget>
     </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">

@@ -17,7 +17,7 @@ import os
 import subprocess
 
 from gaitutils.numutils import check_hetu
-from gaitutils.guiutils import qt_message_dialog
+from gaitutils.guiutils import qt_message_dialog, qt_nonmodal_dialog
 from gaitutils import GaitDataError
 from gaitutils import nexus
 from gaitutils import cfg
@@ -92,7 +92,8 @@ class HetuDialog(QtWidgets.QDialog):
 
 
 class ComparisonDialog(QtWidgets.QDialog):
-    """ Display a dialog for the comparison report """
+    """ Display a dialog for the comparison report
+    FIXME: adapt web report gui """
 
     def __init__(self):
         super(self.__class__, self).__init__()
@@ -134,7 +135,7 @@ class ComparisonDialog(QtWidgets.QDialog):
 
 
 class WebReportDialog(QtWidgets.QDialog):
-    """ Display a dialog for the web report """
+    """ Display a dialog for creating the web report """
 
     def __init__(self):
         super(self.__class__, self).__init__()
@@ -157,6 +158,7 @@ class WebReportDialog(QtWidgets.QDialog):
         else:
             dir = QtWidgets.QFileDialog.getExistingDirectory(self,
                                                              'Select session')
+            dir = op.normpath(dir)
         if dir:
             if dir in self.sessions:
                 qt_message_dialog('Session already loaded')
@@ -171,13 +173,26 @@ class WebReportDialog(QtWidgets.QDialog):
         if not self.sessions:
             qt_message_dialog('Please select at least one session')
         else:
+            vidfiles = list()
             for session in self.sessions:
                 tagged = nexus.find_tagged(sessionpath=session)
                 if not tagged:
                     qt_message_dialog('Session %s has no marked trials' % session)
                     return
-            self.done(QtWidgets.QDialog.Accepted)
+                for c3dfile in tagged:
+                    vidfiles.extend(nexus.find_trial_videos(c3dfile))
+            if not report.convert_videos(vidfiles, check_only=True):
+                """ Block the GUI thread while converting videos. This may not
+                be OK if it takes a long time (no progress bar). OTOH
+                if converting in a worker thread, it's necessary to wait for
+                conversion to finish before launching the report creation,
+                otherwise video files may not exist in the report phase.
+                This would require using the finished signal to launch the
+                report creation """
+                qt_nonmodal_dialog('Wait...')
+                report.convert_videos(vidfiles)
 
+            self.done(QtWidgets.QDialog.Accepted)
 
 
 class QtHandler(logging.Handler):
@@ -486,23 +501,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if not dlg.exec_():
             return
         # check sessions
-        for session in dlg.sessions:
-            tagged = nexus.find_tagged(sessionpath=session)
-            vidfiles = list()
-            for c3dfile in tagged:
-                vidfiles.extend(nexus.find_trial_videos(c3dfile))
-            if not report.convert_videos(vidfiles, check_only=True):
-                """ Block the GUI thread while converting videos. This may not
-                be OK if it takes a long time (no progress bar). OTOH
-                if converting in a worker thread, it's necessary to wait for
-                conversion to finish before launching the report creation,
-                otherwise video files may not exist in the report phase.
-                This would require using the finished signal to launch the
-                report creation """
-                logger.debug('Converting videos, please wait...')
-                self._disable_op_buttons()
-                report.convert_videos(vidfiles)
-                self._enable_op_buttons()
 
         if len(dlg.sessions) == 1:
             session = dlg.sessions

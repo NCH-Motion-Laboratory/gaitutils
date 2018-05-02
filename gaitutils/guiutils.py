@@ -2,7 +2,7 @@
 """
 Created on Tue Jan 26 15:31:11 2016
 
-Misc functions for Gaitplotter (OS dialogs etc)
+GUI related stuff
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -81,7 +81,6 @@ class NiceListWidget(QtWidgets.QListWidget):
         self.takeItem(self.row(self.currentItem()))
 
 
-# FIXME: this should go into common GUI module
 def qt_message_dialog(msg):
     """ Show message with an 'OK' button. """
     dlg = QtWidgets.QMessageBox()
@@ -90,6 +89,16 @@ def qt_message_dialog(msg):
     dlg.addButton(QtWidgets.QPushButton('Ok'),
                   QtWidgets.QMessageBox.YesRole)
     dlg.exec_()
+
+
+def qt_nonmodal_dialog(msg):
+    """ Show message with an 'OK' button. """
+    dlg = QtWidgets.QDialog()
+    dlg.setWindowTitle('Message')
+    #dlg.setText(msg)
+    #dlg.addButton(QtWidgets.QPushButton('Ok'),
+    #              QtWidgets.QMessageBox.YesRole)
+    dlg.show()
 
 
 def qt_yesno_dialog(msg):

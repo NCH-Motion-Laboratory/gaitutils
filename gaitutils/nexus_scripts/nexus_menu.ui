@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1016</width>
-    <height>422</height>
+    <height>625</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -299,12 +299,22 @@
     <item>
      <widget class="QLabel" name="label_4">
       <property name="text">
-       <string>Output</string>
+       <string>Output:</string>
       </property>
      </widget>
     </item>
     <item>
      <widget class="QPlainTextEdit" name="txtOutput"/>
+    </item>
+    <item>
+     <widget class="QLabel" name="label_6">
+      <property name="text">
+       <string>Active reports:</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="NiceListWidget" name="listActiveReports"/>
     </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
@@ -350,6 +360,13 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>NiceListWidget</class>
+   <extends>QListWidget</extends>
+   <header>plotter_gui</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

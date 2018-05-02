@@ -20,93 +20,15 @@ from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
 from gaitutils import (Plotter, Trial, nexus, layouts, cfg, GaitDataError,
                        stats, models)
 from gaitutils.nexus_scripts.nexus_menu import OptionsDialog
-
+from gaitutils.guiutils import (NiceListWidget, NiceListWidgetItem,
+                                qt_message_dialog)
 
 logger = logging.getLogger(__name__)
-
-
-def message_dialog(msg):
-    """ Show message with an 'OK' button. """
-    dlg = QtWidgets.QMessageBox()
-    dlg.setWindowTitle('Message')
-    dlg.setText(msg)
-    dlg.addButton(QtWidgets.QPushButton('Ok'),
-                  QtWidgets.QMessageBox.YesRole)
-    dlg.exec_()
 
 
 def _trial_namestr(trial):
     return u'%s  %s  %s' % (trial.trialname, trial.eclipse_data['DESCRIPTION'],
                             trial.eclipse_data['NOTES'])
-
-
-class NiceListWidgetItem(QtWidgets.QListWidgetItem):
-    """ Make list items more pythonic - otherwise would have to do horrible and
-    bug-prone things like checkState() """
-
-    def __init__(self, *args, **kwargs):
-        # don't pass this arg to superclass __init__
-        checkable = kwargs.pop('checkable')
-        super(NiceListWidgetItem, self).__init__(*args, **kwargs)
-        if checkable:
-            self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
-
-    @property
-    def userdata(self):
-        return super(NiceListWidgetItem, self).data(QtCore.Qt.UserRole)
-
-    @userdata.setter
-    def userdata(self, _data):
-        if _data is not None:
-            super(NiceListWidgetItem, self).setData(QtCore.Qt.UserRole, _data)
-
-    @property
-    def checkstate(self):
-        return super(NiceListWidgetItem, self).checkState()
-
-    @checkstate.setter
-    def checkstate(self, checked):
-        state = QtCore.Qt.Checked if checked else QtCore.Qt.Unchecked
-        super(NiceListWidgetItem, self).setCheckState(state)
-
-
-class NiceListWidget(QtWidgets.QListWidget):
-    """ Adds some convenience to QListWidget """
-
-    def __init__(self, parent=None):
-        super(NiceListWidget, self).__init__(parent)
-
-    @property
-    def items(self):
-        """ Yield all items """
-        for i in range(self.count()):
-            yield self.item(i)
-
-    @property
-    def checked_items(self):
-        """ Yield checked items """
-        return (item for item in self.items if item.checkstate)
-
-    def check_all(self):
-        """ Check all items """
-        for item in self.items:
-            item.checkstate = True
-
-    def check_none(self):
-        """ Uncheck all items """
-        for item in self.items:
-            item.checkstate = False
-
-    def add_item(self, txt, data=None, checkable=False, checked=False):
-        """ Add checkable item with data. Select new item. """
-        item = NiceListWidgetItem(txt, self, checkable=checkable)
-        item.userdata = data
-        if checkable:
-            item.checkstate = checked
-        self.setCurrentItem(item)
-
-    def rm_current_item(self):
-        self.takeItem(self.row(self.currentItem()))
 
 
 class AveragerDialog(QtWidgets.QDialog):
@@ -126,7 +48,7 @@ class AveragerDialog(QtWidgets.QDialog):
             vicon = nexus.viconnexus()
             self._open_trial(vicon)
         except GaitDataError:
-            self.message_dialog('Vicon Nexus is not running')
+            qt_message_dialog('Vicon Nexus is not running')
 
     def _open_trial(self, source):
         tr = Trial(source)
@@ -142,7 +64,7 @@ class AveragerDialog(QtWidgets.QDialog):
         trials = [item.userdata for item in self.listTrials.items]
         fp_cycles_only = self.xpFpCyclesOnly.checkState()
         self.avg = stats.AvgTrial(trials, fp_cycles_only=fp_cycles_only)
-        message_dialog('Averaging OK')
+        qt_message_dialog('Averaging OK')
         self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
 
     def load_dialog(self):
@@ -303,7 +225,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
             vicon = nexus.viconnexus()
             self._open_trial(vicon)
         except GaitDataError:
-            message_dialog('Vicon Nexus is not running')
+            qt_message_dialog('Vicon Nexus is not running')
 
     def _open_trial(self, source):
         tr = Trial(source)
@@ -325,7 +247,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
         cycles = [item.userdata for item in self.listCyclesToPlot.items]
         if not cycles:
-            message_dialog('No cycles selected for plotting')
+            qt_message_dialog('No cycles selected for plotting')
             return
 
         # gather the cycles and key by trial
@@ -347,7 +269,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
                 fn = self.cbNormalData.currentText()
                 self.pl.add_normaldata(fn)
             except (ValueError, GaitDataError):
-                message_dialog('Error reading normal data from %s' % fn)
+                qt_message_dialog('Error reading normal data from %s' % fn)
                 return
         else:
             plot_model_normaldata = False
@@ -361,7 +283,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
                                    model_stddev=trial.stddev_data,
                                    plot_model_normaldata=plot_model_normaldata)
             except GaitDataError as e:
-                message_dialog('Error: %s' % str(e))
+                qt_message_dialog('Error: %s' % str(e))
                 self.pl.fig.clear()  # fig may have been partially drawn
                 return
 
@@ -393,7 +315,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
             try:
                 self.canvas.print_figure(fname)
             except IOError:
-                message_dialog('Error writing PDF file, check that file '
+                qt_message_dialog('Error writing PDF file, check that file '
                                'is not open')
             # reset title for onscreen and redraw canvas
             self.pl.set_title('')
@@ -414,7 +336,7 @@ if __name__ == '__main__':
         """ Custom exception handler for fatal (unhandled) exceptions:
         report to user via GUI and terminate. """
         tb_full = u''.join(traceback.format_exception(type, value, tback))
-        message_dialog('Unhandled exception: %s' % tb_full)
+        qt_message_dialog('Unhandled exception: %s' % tb_full)
         # dump traceback to file
         # try:
         #    with io.open(Config.traceback_file, 'w', encoding='utf-8') as f:

@@ -16,6 +16,7 @@ import os
 import subprocess
 
 from gaitutils.numutils import check_hetu
+from gaitutils.guiutils import qt_message_dialog
 from gaitutils import GaitDataError
 from gaitutils import nexus
 from gaitutils import cfg
@@ -49,23 +50,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def message_dialog(msg):
-    """ Show message with an 'OK' button. """
-    dlg = QtWidgets.QMessageBox()
-    dlg.setWindowTitle('Message')
-    dlg.setText(msg)
-    dlg.addButton(QtWidgets.QPushButton('Ok'),
-                  QtWidgets.QMessageBox.YesRole)
-    dlg.exec_()
-
-
 def _browse_localhost(port):
     url = '127.0.0.1:%d' % port
     try:
         subprocess.Popen([cfg.general.browser_path, url])
     except Exception:
-        message_dialog('Cannot start configured web browser: %s'
-                       % cfg.general.browser_path)
+        qt_message_dialog('Cannot start configured web browser: %s'
+                          % cfg.general.browser_path)
 
 
 class HetuDialog(QtWidgets.QDialog):
@@ -95,7 +86,7 @@ class HetuDialog(QtWidgets.QDialog):
         if self.fullname and check_hetu(self.hetu):
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
-            message_dialog('Please enter a valid name and hetu')
+            qt_message_dialog('Please enter a valid name and hetu')
 
 
 class ComparisonDialog(QtWidgets.QDialog):
@@ -114,7 +105,7 @@ class ComparisonDialog(QtWidgets.QDialog):
 
     def add_session(self, from_nexus=False):
         if len(self.sessions) == self.MAX_SESSIONS:
-            message_dialog('You can specify maximum of %d sessions' %
+            qt_message_dialog('You can specify maximum of %d sessions' %
                            self.MAX_SESSIONS)
             return
         if from_nexus:
@@ -135,7 +126,7 @@ class ComparisonDialog(QtWidgets.QDialog):
 
     def accept(self):
         if len(self.sessions) < 2:
-            message_dialog('Please select at least 2 sessions to compare')
+            qt_message_dialog('Please select at least 2 sessions to compare')
         else:
             self.done(QtWidgets.QDialog.Accepted)
 
@@ -156,7 +147,7 @@ class WebReportDialog(QtWidgets.QDialog):
 
     def add_session(self, from_nexus=False):
         if len(self.sessions) == self.MAX_SESSIONS:
-            message_dialog('You can specify maximum of %d sessions' %
+            qt_message_dialog('You can specify maximum of %d sessions' %
                            self.MAX_SESSIONS)
             return
         if from_nexus:
@@ -177,7 +168,7 @@ class WebReportDialog(QtWidgets.QDialog):
 
     def accept(self):
         if not self.sessions:
-            message_dialog('Please select at least one session')
+            qt_message_dialog('Please select at least one session')
         else:
             self.done(QtWidgets.QDialog.Accepted)
 
@@ -279,7 +270,7 @@ class OptionsDialog(QtWidgets.QDialog):
         global cfg
         res, txt = self._check_widget_inputs()
         if not res:
-            message_dialog('Invalid input: %s\nPlease fix before saving' % txt)
+            qt_message_dialog('Invalid input: %s\nPlease fix before saving' % txt)
         else:
             fout = QtWidgets.QFileDialog.getSaveFileName(self,
                                                          'Save config file',
@@ -375,7 +366,7 @@ class OptionsDialog(QtWidgets.QDialog):
             self.update_cfg()
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
-            message_dialog("Invalid input: %s" % txt)
+            qt_message_dialog("Invalid input: %s" % txt)
 
 
 class Gaitmenu(QtWidgets.QMainWindow):
@@ -492,7 +483,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         for session in dlg.sessions:
             tagged = nexus.find_tagged()
             if not tagged:
-                message_dialog('Session %s has no marked trials' % session)
+                qt_message_dialog('Session %s has no marked trials' % session)
                 return
             vidfiles = list()
             for c3dfile in tagged:
@@ -530,7 +521,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         try:
             subj = nexus.get_subjectnames()
         except GaitDataError as e:
-            message_dialog(str(e))
+            qt_message_dialog(str(e))
             return
         prompt_ = 'Please give additional subject information for %s:' % subj
         dlg = HetuDialog(prompt=prompt_, fullname=self._fullname,
@@ -550,12 +541,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.txtOutput.ensureCursorVisible()
 
     def _no_custom(self):
-        message_dialog('No custom plot defined. Please create '
+        qt_message_dialog('No custom plot defined. Please create '
                        'nexus_scripts/nexus_customplot.py')
 
     def _exception(self, e):
         logger.debug('caught exception while running task')
-        message_dialog(str(e))
+        qt_message_dialog(str(e))
 
     def _disable_op_buttons(self):
         """ Disable all operation buttons """
@@ -578,18 +569,17 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _execute_nowait(self, fun, *args, **kwargs):
         fun_ = partial(fun, *args, **kwargs)
         runner = Runner(fun_)
-        runner.signals.finished.connect(self._enable_op_buttons)
         runner.signals.error.connect(lambda e: self._exception(e))
         self.threadpool.start(runner)
 
-    def _execute(self, fun, thread=False, *args, **kwargs):
+    def _execute(self, fun, thread=False, block_ui=True, *args, **kwargs):
         """ Run function fun. If thread==True, run in a separate worker
         thread. Returns function return value if not threaded. """
         fun_ = partial(fun, *args, **kwargs)
         self._disable_op_buttons()
         if thread:
             self.runner = Runner(fun_)
-            self.runner.signals.finished.connect(self._finished)
+            self.runner.signals.finished.connect(self._enable_op_buttons)
             self.runner.signals.error.connect(lambda e: self._exception(e))
             self.threadpool.start(self.runner)
             retval = None

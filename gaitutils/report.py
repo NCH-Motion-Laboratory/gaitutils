@@ -21,6 +21,7 @@ import jinja2
 import os.path as op
 import os
 import subprocess
+import sys
 
 import gaitutils
 from gaitutils import cfg, normaldata, models
@@ -29,10 +30,17 @@ from gaitutils.nexus import find_tagged
 logger = logging.getLogger(__name__)
 
 
-def convert_videos(vidfiles):
-    """ Convert video files using command and options defined in cfg """
+def convert_videos(vidfiles, check_only=False, stdout=None):
+    """ Convert video files using command and options defined in cfg.
+    If check_only, return whether files were already converted """
+    CONV_EXT = '.ogv'  # extension for converted files
     if not isinstance(vidfiles, list):
         vidfiles = [vidfiles]
+    convfiles = {vidfile: op.splitext(vidfile)[0] + CONV_EXT for vidfile
+                 in vidfiles}
+    if check_only:
+        return all([op.isfile(fn) for fn in convfiles.values()])
+
     vidconv_bin = cfg.general.videoconv_path
     vidconv_opts = cfg.general.videoconv_opts
     if not (op.isfile(vidconv_bin) and os.access(vidconv_bin, os.X_OK)):
@@ -40,16 +48,11 @@ def convert_videos(vidfiles):
                          % vidconv_bin)
     # command needs to be constructed in a very particular way
     # see subprocess.list2cmdline
-    convf = list()
-    for vidfile in vidfiles:
-        convfile = op.splitext(vidfile)[0] + '.ogv'
+    for vidfile, convfile in convfiles.items():
         if not op.isfile(convfile):
-            logger.debug('converting %s' % vidfile)
-            subprocess.call([vidconv_bin]+vidconv_opts.split()+[vidfile])
-        else:
-            logger.debug('%s already exists' % vidfile)
-        convf.append(convfile)
-    return convf
+            subprocess.call([vidconv_bin]+vidconv_opts.split()+[vidfile],
+                            stdout=None)
+    return convfiles.values()
 
 
 def _var_title(var):

@@ -59,6 +59,15 @@ def message_dialog(msg):
     dlg.exec_()
 
 
+def _browse_localhost(port):
+    url = '127.0.0.1:%d' % port
+    try:
+        subprocess.Popen([cfg.general.browser_path, url])
+    except Exception:
+        message_dialog('Cannot start configured web browser: %s'
+                       % cfg.general.browser_path)
+
+
 class HetuDialog(QtWidgets.QDialog):
 
     def __init__(self, fullname=None, hetu=None, prompt='Hello', parent=None):
@@ -473,43 +482,40 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._execute(nexus_make_comparison_report.do_plot,
                           sessions=dlg.sessions)
 
-    def _browse_localhost(port):
-        url = '127.0.0.1:%d' % port
-        try:
-            subprocess.Popen([cfg.general.browser_path, url])
-        except Exception:
-            message_dialog('Cannot start configured web browser: %s'
-                           % cfg.general.browser_path)
-
     def _create_web_report(self):
         """Collect sessions, create the dash app, start it and launch a
         web browser on localhost on the correct port"""
         dlg = WebReportDialog()
+        if not dlg.exec_():
+            return
+        # check sessions
         for session in dlg.sessions:
-            tagged = nexus.find_tagged(session):
+            tagged = nexus.find_tagged()
             if not tagged:
                 message_dialog('Session %s has no marked trials' % session)
                 return
             for c3dfile in tagged:
-                videos = nexus.
-                
-                
-            
-            
-        if dlg.exec_():
-            if len(dlg.sessions) == 1:
-                session = dlg.sessions
-                # FIXME: check/convert videos here, check session
-                # FIXME: raise exceptions in report.py
-                app = self._execute(report._single_session_app, False,
-                                    dlg.sessions[0])
-            else:
-                app = None  # FIXME: multisession
-            port = 5000 + len(self._dash_apps)
-            self._execute_nowait(app.server.run, debug=False, port=port)
-            self._dash_apps[port] = app
+                vidfiles = nexus.find_trial_videos(c3dfile)
+                if not report.convert_videos(vidfiles, check_only=True):
+                    logger.debug('Converting videos for %s...' % c3dfile)
+                    self._disable_op_buttons()
+                    report.convert_videos(vidfiles)
+                    self._enable_op_buttons()
+
+        if len(dlg.sessions) == 1:
+            session = dlg.sessions
+            # FIXME: raise exceptions in report.py
+            # cannot use thread=True here since we would not get a return value
+            app = self._execute(report._single_session_app, False,
+                                dlg.sessions[0])
+        else:
+            app = None  # FIXME: multisession
+        port = 5000 + len(self._dash_apps)
+        self._execute_nowait(app.server.run, debug=False, port=port)
+        self._dash_apps[port] = app
         logger.debug('starting web browser')
         _browse_localhost(port)
+
 
     def _create_pdfs(self):
         """Creates the full pdf report"""
@@ -545,6 +551,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _disable_op_buttons(self):
         """ Disable all operation buttons """
+        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         for widget in self.opWidgets:
                 self.__dict__[widget].setEnabled(False)
         # update display immediately in case thread gets blocked
@@ -554,19 +561,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
         """ Enable all operation buttons """
         for widget in self.opWidgets:
                 self.__dict__[widget].setEnabled(True)
+        QtWidgets.QApplication.restoreOverrideCursor()
 
     def _tardieu(self):
         win = nexus_tardieu.TardieuWindow()
         win.show()
 
-    def _finished(self):
-        self._enable_op_buttons()
-        QtWidgets.QApplication.restoreOverrideCursor()
-
     def _execute_nowait(self, fun, *args, **kwargs):
         fun_ = partial(fun, *args, **kwargs)
         runner = Runner(fun_)
-        runner.signals.finished.connect(self._finished)
+        runner.signals.finished.connect(self._enable_op_buttons)
         runner.signals.error.connect(lambda e: self._exception(e))
         self.threadpool.start(runner)
 
@@ -575,7 +579,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         thread. Returns function return value if not threaded. """
         fun_ = partial(fun, *args, **kwargs)
         self._disable_op_buttons()
-        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         if thread:
             self.runner = Runner(fun_)
             self.runner.signals.finished.connect(self._finished)
@@ -589,7 +592,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 self._exception(e)
             finally:
                 self._enable_op_buttons()
-                QtWidgets.QApplication.restoreOverrideCursor()
         return retval
 
 

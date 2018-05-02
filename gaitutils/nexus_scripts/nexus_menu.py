@@ -18,6 +18,7 @@ from gaitutils.numutils import check_hetu
 from gaitutils import GaitDataError
 from gaitutils import nexus
 from gaitutils import cfg
+from gaitutils import report
 from gaitutils import nexus_emgplot
 from gaitutils import nexus_musclelen_plot
 from gaitutils import nexus_kinetics_emgplot
@@ -125,6 +126,48 @@ class ComparisonDialog(QtWidgets.QDialog):
     def accept(self):
         if len(self.sessions) < 2:
             message_dialog('Please select at least 2 sessions to compare')
+        else:
+            self.done(QtWidgets.QDialog.Accepted)
+
+
+class WebReportDialog(QtWidgets.QDialog):
+    """ Display a dialog for the web report """
+
+    def __init__(self):
+        super(self.__class__, self).__init__()
+        # load user interface made with designer
+        uifile = resource_filename(__name__, 'web_report.ui')
+        uic.loadUi(uifile, self)
+        self.btnBrowseSession.clicked.connect(self.add_session)
+        self.btnAddNexusSession.clicked.connect(lambda: self.add_session(from_nexus=True))
+        self.btnClear.clicked.connect(self.clear_sessions)
+        self.MAX_SESSIONS = 3
+        self.sessions = list()
+
+    def add_session(self, from_nexus=False):
+        if len(self.sessions) == self.MAX_SESSIONS:
+            message_dialog('You can specify maximum of %d sessions' %
+                           self.MAX_SESSIONS)
+            return
+        if from_nexus:
+            dir = nexus.get_sessionpath()
+        else:
+            dir = QtWidgets.QFileDialog.getExistingDirectory(self,
+                                                             'Select session')
+        if dir and dir not in self.sessions:
+            self.sessions.append(dir)
+            self.update_session_list()
+
+    def clear_sessions(self):
+        self.sessions = list()  # sorry no .clear()
+        self.update_session_list()
+
+    def update_session_list(self):
+        self.lblSessions.setText(u'\n'.join(self.sessions))
+
+    def accept(self):
+        if not self.sessions:
+            message_dialog('Please select at least one session')
         else:
             self.done(QtWidgets.QDialog.Accepted)
 
@@ -388,6 +431,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         self.btnCreatePDFs.clicked.connect(self._create_pdfs)
         self.btnCreateComparison.clicked.connect(self._create_comparison)
+        self.btnCreateWebReport.clicked.connect(self._create_web_report)
         self.btnOptions.clicked.connect(self._options_dialog)
         self.btnQuit.clicked.connect(self.close)
 
@@ -424,6 +468,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if dlg.exec_():
             self._sessions = dlg.sessions
             self._execute(nexus_make_comparison_report.do_plot,
+                          sessions=dlg.sessions)
+
+    def _create_web_report(self):
+        dlg = WebReportDialog()
+        if dlg.exec_():
+            self._execute(report.dash_gait_report,
                           sessions=dlg.sessions)
 
     def _create_pdfs(self):

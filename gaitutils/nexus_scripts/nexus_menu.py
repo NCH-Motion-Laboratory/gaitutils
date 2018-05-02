@@ -473,10 +473,34 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._execute(nexus_make_comparison_report.do_plot,
                           sessions=dlg.sessions)
 
+    def _browse_localhost(port):
+        url = '127.0.0.1:%d' % port
+        try:
+            subprocess.Popen([cfg.general.browser_path, url])
+        except Exception:
+            message_dialog('Cannot start configured web browser: %s'
+                           % cfg.general.browser_path)
+
     def _create_web_report(self):
+        """Collect sessions, create the dash app, start it and launch a
+        web browser on localhost on the correct port"""
         dlg = WebReportDialog()
+        for session in dlg.sessions:
+            tagged = nexus.find_tagged(session):
+            if not tagged:
+                message_dialog('Session %s has no marked trials' % session)
+                return
+            for c3dfile in tagged:
+                videos = nexus.
+                
+                
+            
+            
         if dlg.exec_():
             if len(dlg.sessions) == 1:
+                session = dlg.sessions
+                # FIXME: check/convert videos here, check session
+                # FIXME: raise exceptions in report.py
                 app = self._execute(report._single_session_app, False,
                                     dlg.sessions[0])
             else:
@@ -485,11 +509,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._execute_nowait(app.server.run, debug=False, port=port)
             self._dash_apps[port] = app
         logger.debug('starting web browser')
-        url = '127.0.0.1:%d' % port
-        subprocess.Popen([cfg.general.browser_path, url])
+        _browse_localhost(port)
 
     def _create_pdfs(self):
-        """Creates the full report"""
+        """Creates the full pdf report"""
         try:
             subj = nexus.get_subjectnames()
         except GaitDataError as e:
@@ -549,7 +572,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _execute(self, fun, thread=False, *args, **kwargs):
         """ Run function fun. If thread==True, run in a separate worker
-        thread. """
+        thread. Returns function return value if not threaded. """
         fun_ = partial(fun, *args, **kwargs)
         self._disable_op_buttons()
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)

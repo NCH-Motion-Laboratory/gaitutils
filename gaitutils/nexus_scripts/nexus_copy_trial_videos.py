@@ -9,7 +9,6 @@ Copy trial videos to desktop under nexus_videos
 
 import os
 import os.path as op
-import glob
 import shutil
 import logging
 
@@ -18,11 +17,6 @@ from gaitutils.guiutils import messagebox
 
 
 logger = logging.getLogger(__name__)
-
-
-def trial_videos(enffile):
-    trialbase = op.splitext(enffile)[0]
-    return glob.glob(trialbase+'*avi')
 
 
 def do_copy():
@@ -34,12 +28,12 @@ def do_copy():
         os.mkdir(dest_dir)
 
     tags = ['R1', 'L1']
-    enf_files = nexus.find_tagged(tags)
+    c3dfiles = nexus.find_tagged(tags)
 
     # concatenate video iterators for all .enf files
     vidfiles = []
-    for enf in enf_files:
-        vidfiles += trial_videos(enf)
+    for c3d in c3dfiles:
+        vidfiles += nexus.find_trial_videos(c3d)
 
     if not vidfiles:
         raise Exception('No video files found for representative trials')
@@ -49,8 +43,9 @@ def do_copy():
         logger.debug('copying %s -> %s' % (vidfile, dest_dir))
         shutil.copy2(vidfile, dest_dir)
 
-    messagebox('Copied %d video file%s into %s' % ((j+1), 's' if j > 1 else '',
+    messagebox('Copied %d video file%s into %s' % ((j+1), 's' if j > 0 else '',
                                                    dest_dir))
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

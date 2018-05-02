@@ -42,7 +42,6 @@ def convert_videos(vidfiles):
     # see subprocess.list2cmdline
     convf = list()
     for vidfile in vidfiles:
-        # FIXME: check return status
         convfile = op.splitext(vidfile)[0] + '.ogv'
         if not op.isfile(convfile):
             logger.debug('converting %s' % vidfile)

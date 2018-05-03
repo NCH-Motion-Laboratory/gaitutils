@@ -2,7 +2,7 @@
 """
 Created on Tue Jan 26 15:31:11 2016
 
-GUI related stuff
+gaitutils common GUI functionality
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -91,16 +91,6 @@ def qt_message_dialog(msg):
     dlg.exec_()
 
 
-def qt_nonmodal_dialog(msg):
-    """ Show message with an 'OK' button. """
-    dlg = QtWidgets.QDialog()
-    dlg.setWindowTitle('Message')
-    #dlg.setText(msg)
-    #dlg.addButton(QtWidgets.QPushButton('Ok'),
-    #              QtWidgets.QMessageBox.YesRole)
-    dlg.show()
-
-
 def qt_yesno_dialog(msg):
     """ Show message with 'Yes' and 'No buttons, return role accordingly """
     dlg = QtWidgets.QMessageBox()
@@ -114,9 +104,9 @@ def qt_yesno_dialog(msg):
     return dlg.buttonRole(dlg.clickedButton())
 
 
+# non-qt dialogs - Windows specific
 def error_exit(message):
     """ Custom error handler """
-    # graphical error dialog - Windows specific
     # casts to str are needed, since MessageBoxA does not like Unicode
     ctypes.windll.user32.MessageBoxA(0, str(message),
                                      "Error in Nexus Python script", 0)

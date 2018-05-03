@@ -30,28 +30,36 @@ from gaitutils.nexus import find_tagged
 logger = logging.getLogger(__name__)
 
 
-def convert_videos(vidfiles, check_only=False, stdout=None):
+def convert_videos(vidfiles, check_only=False, prog_callback=None):
     """ Convert video files using command and options defined in cfg.
-    If check_only, return whether files were already converted """
+    If check_only, return whether files were already converted.
+    During conversion, prog_callback will be called with % of task done
+    as the only argument"""
     CONV_EXT = '.ogv'  # extension for converted files
     if not isinstance(vidfiles, list):
         vidfiles = [vidfiles]
     convfiles = {vidfile: op.splitext(vidfile)[0] + CONV_EXT for vidfile
                  in vidfiles}
+    converted = [op.isfile(fn) for fn in convfiles.values()]  # already done
     if check_only:
-        return all([op.isfile(fn) for fn in convfiles.values()])
+        return all(converted)
 
     vidconv_bin = cfg.general.videoconv_path
     vidconv_opts = cfg.general.videoconv_opts
     if not (op.isfile(vidconv_bin) and os.access(vidconv_bin, os.X_OK)):
         raise ValueError('Invalid video converter executable: %s'
                          % vidconv_bin)
-    # command needs to be constructed in a very particular way
-    # see subprocess.list2cmdline
+
+    n_to_conv = len(vidfiles) - converted.count(True)
+    k = 0
     for vidfile, convfile in convfiles.items():
         if not op.isfile(convfile):
+            if prog_callback is not None:
+                prog_callback(100*k/n_to_conv)
+            # XXX could parallelize with non-blocking Popen() calls?
             subprocess.call([vidconv_bin]+vidconv_opts.split()+[vidfile],
                             stdout=None)
+            k += 1
     return convfiles.values()
 
 

@@ -173,26 +173,10 @@ class WebReportDialog(QtWidgets.QDialog):
         if not self.sessions:
             qt_message_dialog('Please select at least one session')
         else:
-            vidfiles = list()
-            for session in self.sessions:
-                tagged = nexus.find_tagged(sessionpath=session)
-                if not tagged:
-                    qt_message_dialog('Session %s has no marked trials' % session)
-                    return
-                for c3dfile in tagged:
-                    vidfiles.extend(nexus.find_trial_videos(c3dfile))
-            if not report.convert_videos(vidfiles, check_only=True):
-                """ Block the GUI thread while converting videos. This may not
-                be OK if it takes a long time (no progress bar). OTOH
-                if converting in a worker thread, it's necessary to wait for
-                conversion to finish before launching the report creation,
-                otherwise video files may not exist in the report phase.
-                This would require using the finished signal to launch the
-                report creation """
-                qt_nonmodal_dialog('Wait...')
-                report.convert_videos(vidfiles)
-
             self.done(QtWidgets.QDialog.Accepted)
+
+
+
 
 
 class QtHandler(logging.Handler):
@@ -494,25 +478,52 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._execute(nexus_make_comparison_report.do_plot,
                           sessions=dlg.sessions)
 
+    @staticmethod
+    def update_progbar(progbar, k):
+        progbar.setValue(k)
+        QtWidgets.QApplication.processEvents()
+
     def _create_web_report(self):
         """Collect sessions, create the dash app, start it and launch a
         web browser on localhost on the correct port"""
         dlg = WebReportDialog()
         if not dlg.exec_():
             return
-        # check sessions
+        sessions = dlg.sessions
+        vidfiles = list()
 
-        if len(dlg.sessions) == 1:
-            session = dlg.sessions
-            # FIXME: raise exceptions in report.py
-            """ Cannot use thread=True here since we would not get a return
-            value. However report creation should not take too long """
-            app = self._execute(report._single_session_app,
-                                session=dlg.sessions[0])
+        # check for tagged trials and collect video files for conversion
+        for session in sessions:
+            tagged = nexus.find_tagged(sessionpath=session)
+            if not tagged:
+                qt_message_dialog('Session %s has no marked trials' % session)
+                return
+            for c3dfile in tagged:
+                vidfiles.extend(nexus.find_trial_videos(c3dfile))
+
+        # do the video conversion if needed
+        prog = QtWidgets.QProgressDialog()
+        prog.setWindowTitle('Converting videos, please wait...')
+        prog.setCancelButton(None)
+        prog.setMinimum(0)
+        prog.setMaximum(100)
+        prog.setGeometry(500, 300, 500, 100)
+        prog.show()
+        QtWidgets.QApplication.processEvents()
+        report.convert_videos(vidfiles, prog_callback=lambda k: self.update_progbar(prog, k))
+        prog.hide()
+
+        # create report
+        if len(sessions) == 1:
+            self._disable_op_buttons()
+            # FIXME: try/catch
+            app = report._single_session_app(session=sessions[0])
+            self._enable_op_buttons()
         else:
-            app = None  # FIXME: multisession
+            app = None  # FIXME: multisession app
+
+        # start server, thread and do not block ui
         port = 5000 + len(self._dash_apps)
-        # thread and do not block ui
         self._execute(app.server.run, thread=True, block_ui=False,
                       debug=False, port=port)
         self._dash_apps[port] = app  # FIXME: is this needed?
@@ -523,7 +534,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                                 sessions_str)
         # add a list item that keeps track of the port
         self.listActiveReports.add_item(report_name, data=port)
-        # double clicking on the list will open that port
+        # double clicking on the list item will browse to corresponding port
         self.listActiveReports.itemDoubleClicked.connect(lambda item: _browse_localhost(item.userdata))
         logger.debug('starting web browser')
         _browse_localhost(port)

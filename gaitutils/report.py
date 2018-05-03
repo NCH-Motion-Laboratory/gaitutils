@@ -21,7 +21,6 @@ import jinja2
 import os.path as op
 import os
 import subprocess
-import sys
 
 import gaitutils
 from gaitutils import cfg, normaldata, models
@@ -196,8 +195,10 @@ def _plot_trials(trials, layout, model_normaldata):
                             if ndata is not None:
                                 # FIXME: hardcoded color
                                 normalx = np.linspace(0, 100, ndata.shape[0])
-                                ntrace = _plotly_fill_between(normalx, ndata[:, 0],
-                                                              ndata[:, 1], fillcolor='rgba(100, 100, 100, 0.3)',
+                                ntrace = _plotly_fill_between(normalx,
+                                                              ndata[:, 0],
+                                                              ndata[:, 1],
+                                                              fillcolor='rgba(100, 100, 100, 0.3)',
                                                               name='Norm.',
                                                               legendgroup='Norm.',
                                                               showlegend=model_normaldata_legend,
@@ -205,13 +206,14 @@ def _plot_trials(trials, layout, model_normaldata):
                                 fig.append_trace(ntrace, i+1, j+1)
                                 model_normaldata_legend = False  # add to legend only once
 
-                            # LaTeX does not render, so remove units from ylabel
+                            # LaTeX does not render, so rm units from ylabel
                             ylabel = ' '.join(mod.ylabels[var].split(' ')[k]
                                               for k in [0, -1])
                             fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize})
-                                                        
+
                     # plot EMG variable
-                    elif trial.emg.is_channel(var) or var in cfg.emg.channel_labels:
+                    elif (trial.emg.is_channel(var) or var in
+                          cfg.emg.channel_labels):
                         do_plot = True
                         # EMG channel context matches cycle context
                         if var[0] != context:
@@ -251,7 +253,8 @@ def _plot_trials(trials, layout, model_normaldata):
                             emg_yrange = np.array([-cfg.plot.emg_yscale, cfg.plot.emg_yscale]) * cfg.plot.emg_multiplier
                             fig['layout'][yaxis].update(title=cfg.plot.emg_ylabel, titlefont={'size': label_fontsize},
                                                         range=emg_yrange)  # FIXME: cfg
-                            fig['layout'][xaxis].update(range=[0, 100])  # prevent changes due to legend clicks etc.
+                            # prevent changes due to legend clicks etc.
+                            fig['layout'][xaxis].update(range=[0, 100])
 
                     elif var is None:
                         continue
@@ -306,17 +309,17 @@ def _single_session_app(session=None):
                       {'label': 'Kinetics-EMG left', 'value': cfg.layouts.lb_kinetics_emg_l},
                       {'label': 'Kinetics-EMG right', 'value': cfg.layouts.lb_kinetics_emg_r},
                      ]
-    
+
     # pick desired single variables from model and append
     singlevars = [{'label': varlabel, 'value': [[var]]} for var, varlabel in
                   models.pig_lowerbody.varlabels_noside.items()]
     singlevars = sorted(singlevars, key=lambda it: it['label'])
     _dd_opts_multi.extend(singlevars)
-    
+
     # precreate graphs
     dd_opts_multi_upper = list()
     dd_opts_multi_lower = list()
-    
+
     for k, di in enumerate(_dd_opts_multi):
         label = di['label']
         layout = di['value']
@@ -328,61 +331,61 @@ def _single_session_app(session=None):
         graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
                                 % (len(_dd_opts_multi)+k))
         dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
-    
+
     opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
     opts_multi, mapper_multi_lower = _make_dropdown_lists(dd_opts_multi_lower)
-    
+
     # create the app
     app = dash.Dash()
     app.layout = html.Div([
-    
+
         html.Div([
             html.Div([
-    
+
                     dcc.Dropdown(id='dd-vars-upper-multi', clearable=False,
                                  options=opts_multi,
                                  value=opts_multi[0]['value']),
-    
+
                     html.Div(id='div-upper'),
-    
+
                     dcc.Dropdown(id='dd-vars-lower-multi', clearable=False,
                                  options=opts_multi,
                                  value=opts_multi[0]['value']),
-    
+
                     html.Div(id='div-lower')
-    
-    
-            ], className='eight columns'),
-    
+
+        ], className='eight columns'),
+
             html.Div([
-    
+
                     dcc.Dropdown(id='dd-videos', clearable=False,
-                                 options=trials_dd, value=trials_dd[0]['value']),
-    
+                                 options=trials_dd,
+                                 value=trials_dd[0]['value']),
+
                     html.Div(id='videos'),
+
                 ], className='four columns'),
-    
+
         ], className='row')
-    
+
     ])
-    
-    
+
     @app.callback(
             Output(component_id='div-upper', component_property='children'),
-            [Input(component_id='dd-vars-upper-multi', component_property='value')]
+            [Input(component_id='dd-vars-upper-multi',
+                   component_property='value')]
         )
     def update_contents_upper_multi(sel_var):
         return mapper_multi_upper[sel_var]
-    
-    
+
     @app.callback(
             Output(component_id='div-lower', component_property='children'),
-            [Input(component_id='dd-vars-lower-multi', component_property='value')]
+            [Input(component_id='dd-vars-lower-multi',
+                   component_property='value')]
         )
     def update_contents_lower_multi(sel_var):
         return mapper_multi_lower[sel_var]
-    
-    
+
     @app.callback(
             Output(component_id='videos', component_property='children'),
             [Input(component_id='dd-videos', component_property='value')]
@@ -393,14 +396,12 @@ def _single_session_app(session=None):
                     _trial_videos(trial)]
         vid_elements = [_video_element_from_url(url) for url in vid_urls]
         return vid_elements or 'No videos'
-    
-    
+
     # add a static route to serve session data. be careful outside firewalls
     @app.server.route('/static/<resource>')
     def serve_file(resource):
         return flask.send_from_directory(session, resource)
-    
-    
+
     # the 12-column external css
     # FIXME: local copy?
     app.css.append_css({
@@ -408,14 +409,6 @@ def _single_session_app(session=None):
     })
 
     return app
-
-
-
-
-
-
-
-
 
 
 def render_template(tpl_filename, context):

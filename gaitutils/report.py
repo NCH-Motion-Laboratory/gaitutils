@@ -29,8 +29,17 @@ from gaitutils.nexus import find_tagged
 logger = logging.getLogger(__name__)
 
 
+def render_template(tpl_filename, context):
+    """ Render template with given context """
+    templateLoader = jinja2.FileSystemLoader(searchpath=cfg.general.
+                                             template_path)
+    templateEnv = jinja2.Environment(loader=templateLoader)
+    template = templateEnv.get_template(tpl_filename)
+    return template.render(context, trim_blocks=True)
+
+
 def convert_videos(vidfiles, check_only=False, prog_callback=None):
-    """ Convert video files using command and options defined in cfg.
+    """Convert video files using command and options defined in cfg.
     If check_only, return whether files were already converted.
     During conversion, prog_callback will be called with % of task done
     as the only argument"""
@@ -108,7 +117,7 @@ def _plotly_fill_between(x, ylow, yhigh, **kwargs):
 
 
 def _plot_trials(trials, layout, model_normaldata):
-    """Make a plotly plot of modelvar, including given trials"""
+    """Make a plotly plot of layout, including given trials."""
 
     # configurabe opts (here for now)
     trial_specific_colors = False
@@ -354,7 +363,7 @@ def _single_session_app(session=None):
 
                     html.Div(id='div-lower')
 
-        ], className='eight columns'),
+                    ], className='eight columns'),
 
             html.Div([
 
@@ -364,11 +373,10 @@ def _single_session_app(session=None):
 
                     html.Div(id='videos'),
 
-                ], className='four columns'),
+                    ], className='four columns'),
 
-        ], className='row')
-
-    ])
+                     ], className='row')
+                   ])
 
     @app.callback(
             Output(component_id='div-upper', component_property='children'),
@@ -410,11 +418,3 @@ def _single_session_app(session=None):
 
     return app
 
-
-def render_template(tpl_filename, context):
-    """ Render template with given context """
-    templateLoader = jinja2.FileSystemLoader(searchpath=cfg.general.
-                                             template_path)
-    templateEnv = jinja2.Environment(loader=templateLoader)
-    template = templateEnv.get_template(tpl_filename)
-    return template.render(context, trim_blocks=True)

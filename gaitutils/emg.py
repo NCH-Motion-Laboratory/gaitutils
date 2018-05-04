@@ -108,7 +108,7 @@ class EMG(object):
 
     def read(self):
         meta = read_data.get_metadata(self.source)
-        logger.debug('Reading EMG from %s' % meta['trialname'])
+        logger.debug('reading EMG from %s' % meta['trialname'])
         self.sfrate = meta['analograte']
         emgdi = read_data.get_emg_data(self.source)
         self.data = emgdi['data']

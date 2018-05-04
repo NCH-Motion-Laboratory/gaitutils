@@ -171,10 +171,10 @@ class Plotter(object):
         if filename in self._normaldata_files:
             ndata = self._normaldata_files[filename]
         else:
-            logger.debug('Reading new normal data from %s' % filename)
+            logger.debug('reading new normal data from %s' % filename)
             ndata = normaldata.read_normaldata(filename)
             self._normaldata_files[filename] = ndata
-        logger.debug('Updating normal data from %s' % filename)
+        logger.debug('updating normal data from %s' % filename)
         self._normaldata.update(ndata)
 
     @property
@@ -574,7 +574,7 @@ class Plotter(object):
                         (varname[0] == cycle.context or not
                          auto_match_model_cycle or cycle is None)):
 
-                        logger.debug('plotting data for %s' % varname)
+                        # logger.debug('plotting data for %s' % varname)
                         x = (x_ / trial.framerate if cycle is None and
                              x_axis_is_time else x_)
                         # FIXME: cycle may not have context?
@@ -601,7 +601,7 @@ class Plotter(object):
                         # tighten x limits
                         ax.set_xlim(x[0], x[-1])
                     else:
-                        logger.debug('not plotting data for %s' % varname)
+                        # logger.debug('not plotting data for %s' % varname)
                         if data is None:
                             logger.debug('(no data)')
 

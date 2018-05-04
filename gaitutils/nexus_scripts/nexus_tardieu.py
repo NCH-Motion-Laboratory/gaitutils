@@ -5,6 +5,9 @@ matplotlib + Qt5
 
 TODO:
 
+    accmeter chs should be selectable from gui (if used)
+    add accmeter ch label
+    buttons become active if first data load fails
     filter behaves weirdly when hp is set at 0 Hz
     filter crash when lp is set at 1000 Hz
     no narrow view

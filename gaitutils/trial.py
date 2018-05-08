@@ -182,15 +182,19 @@ class Trial(object):
                                              self.trialname+'*avi'))
 
     def get_video_by_id(self, camera_id):
-        return [vid for vid in self.video_files if camera_id in vid]
+        """Get trial video correspoding to given camera id (str)"""
+        vids = [vid for vid in self.video_files if camera_id in vid]
+        if len(vids) > 1:
+            raise ValueError('Multiple video files match id %s' % camera_id)
+        return vids[0]
 
     @property
     def eclipse_tags(self):
         """Return Eclipse tags for this trial"""
         tags = list()
         for tag in cfg.plot.eclipse_tags:
-            if tag in (self.eclipse_data['DESCRIPTION'] or tag in
-                       self.eclipse_data['NOTES']):
+            if (tag in self.eclipse_data['DESCRIPTION'] or tag in
+                self.eclipse_data['NOTES']):
                 tags.append(tag)
         return tags
 

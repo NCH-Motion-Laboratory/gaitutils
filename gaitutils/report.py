@@ -151,10 +151,11 @@ def _plot_trials(trials, layout, model_normaldata):
                     plot_ind = i * ncols + j + 1  # plotly subplot index
                     xaxis = 'xaxis%d' % plot_ind  # name of plotly xaxis
                     yaxis = 'yaxis%d' % plot_ind  # name of plotly yaxis
+                    # FIXME: this should be a param
                     # in legend, traces will be grouped according to tracegroup (which is also the label)
                     # tracegroup = '%s / %s' % (trial.name_with_description, cycle_desc[context])  # include cycle
-                    # tracegroup = '%s' % (trial.name_with_description)  # no cycle info (group both cycles from trial)
-                    tracegroup = trial.eclipse_data['NOTES']  # Eclipse NOTES field only
+                    tracegroup = '%s' % (trial.name_with_description)  # no cycle info (group both cycles from trial)
+                    # tracegroup = trial.eclipse_data['NOTES']  # Eclipse NOTES field only
                     # only show the legend for the first trace in the tracegroup, so we do not repeat legends
                     show_legend = tracegroup not in tracegroups
 
@@ -303,6 +304,8 @@ def _single_session_app(session=None):
         ndata = normaldata.read_normaldata(fn)
         model_normaldata.update(ndata)
 
+
+
     # build the dcc.Dropdown options list for the trials
     trials_dd = list()
     for tr in trials:
@@ -424,40 +427,44 @@ def _multisession_app(sessions=None, tags=None):
     if not sessions:
         return
 
-    if len(sessions) < 2:
-        raise ValueError('Need a list of at least two sessions')
+    if len(sessions) < 2 or len(sessions) > 3:
+        raise ValueError('Need a list of two to three sessions')
 
+    # Eclipse tags for representative trials
     if tags is None:
         tags = ['R1', 'L1']
 
     cams = list()
     trials = list()
     # specify camera id and tag, get n video files in return
-    
-    trial_videos = dict()
 
     for session in sessions:
         c3ds = find_tagged(sessionpath=session, tags=tags)
-
-        for c3d in c3ds:
-            # we convert cams to set later, so need to insert immutable type
-            cams.append(get_camera_ids(c3d))
-
         trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
         trials.extend(trials_this)
 
-    #if len(set(cams)) > 1:
-    #    raise ValueError('Camera ids do not match between sessions or files')
+        for c3d in c3ds:
+            cams.append(get_camera_ids(c3d))
+
     cameras = cams[0]
+    if cams.count(cameras) != len(cams):
+        raise ValueError('Camera ids do not match between sessions or files')
 
-    trials_di = {tr.trialname: tr for tr in trials}
-
+    # load normal data for gait models
     model_normaldata = dict()
     for fn in cfg.general.normaldata_files:
         ndata = normaldata.read_normaldata(fn)
         model_normaldata.update(ndata)
 
-    # build the dcc.Dropdown options list for the trials
+    # build dcc.Dropdown options list for the cameras and tags
+    opts_cameras = list()
+    for c in cameras:
+        opts_cameras.append({'label': c, 'value': c})
+    opts_tags = list()
+    for t in tags:
+        opts_tags.append({'label': t, 'value': t})
+
+    # build dcc.Dropdown options list for the trials
     trials_dd = list()
     for tr in trials:
         trials_dd.append({'label': tr.name_with_description,
@@ -521,12 +528,12 @@ def _multisession_app(sessions=None, tags=None):
             html.Div([
 
                     dcc.Dropdown(id='dd-camera', clearable=False,
-                                 options=cameras,
-                                 value=cameras[0]),
+                                 options=opts_cameras,
+                                 value=opts_cameras[0]),
 
                     dcc.Dropdown(id='dd-video-tag', clearable=False,
-                                 options=tags,
-                                 value=tags[0]),
+                                 options=opts_tags,
+                                 value=opts_tags[0]),
 
                     html.Div(id='videos'),
 
@@ -553,22 +560,26 @@ def _multisession_app(sessions=None, tags=None):
 
     @app.callback(
             Output(component_id='videos', component_property='children'),
-            [Input(component_id='dd-cameras', component_property='value'),
+            [Input(component_id='dd-camera', component_property='value'),
              Input(component_id='dd-video-tag', component_property='value')]
         )
     def update_videos(camera, tag):
         """Pick videos according to camera and tag selection"""
-
-        trial = trials_di[trial_lbl]
+        tagged = [tr for tr in trials if tag in tr.eclipse_tags]
+        vids = [tr.get_video_by_id(camera) for tr in tagged]
         vid_urls = ['/static/%s' % op.split(fn)[1] for fn in
-                    convert_videos(trial)]
+                    convert_videos(vids)]
         vid_elements = [_video_element_from_url(url) for url in vid_urls]
         return vid_elements or 'No videos'
 
     # add a static route to serve session data. be careful outside firewalls
     @app.server.route('/static/<resource>')
     def serve_file(resource):
-        return flask.send_from_directory(session, resource)
+        for session in sessions:
+            filepath = op.join(session, resource)
+            if op.isfile(filepath):
+                return flask.send_from_directory(session, resource)
+        return None
 
     # the 12-column external css
     # FIXME: local copy?

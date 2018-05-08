@@ -176,9 +176,6 @@ class WebReportDialog(QtWidgets.QDialog):
             self.done(QtWidgets.QDialog.Accepted)
 
 
-
-
-
 class QtHandler(logging.Handler):
 
     def __init__(self):
@@ -494,9 +491,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         # check for tagged trials and collect video files for conversion
         for session in sessions:
-            tagged = nexus.find_tagged(sessionpath=session)
-            if not tagged:
-                qt_message_dialog('Session %s has no marked trials' % session)
+            tags = ['R1', 'L1']
+            tagged = nexus.find_tagged(sessionpath=session, tags=tags)
+            if len(tagged) != 2:
+                qt_message_dialog('Cannot find representative trials for session %s' % session)
                 return
             for c3dfile in tagged:
                 vidfiles.extend(nexus.find_trial_videos(c3dfile))
@@ -520,7 +518,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             app = report._single_session_app(session=sessions[0])
         elif len(sessions) <= 3:
             app = report._multisession_app(sessions=sessions)
-        else:  # should be handled by the session dialog
+        else:  # this should be handled already by the session dialog
             raise ValueError('Too many sessions')
         self._enable_op_buttons()
 

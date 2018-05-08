@@ -187,14 +187,17 @@ def find_trial_videos(fname):
     return glob.glob(trialbase+'*avi')
 
 
-def camera_id(fname):
+def _camera_id(fname):
     """ Returns camera id for a video file """
-    return op.split(fname)[-1].split('.')[-3]
+    fn_split = op.split(fname)[-1].split('.')
+    if len(fn_split) < 3:
+        raise ValueError('Unexpected video file name %s' % fname)
+    return fn_split[-3]
 
 
 def get_camera_ids(fname):
-    """ Get camera ids (strings) for a trial file """
-    return [camera_id(vidfile) for vidfile in find_trial_videos(fname)]
+    """ Get camera ids (strings) for a video file """
+    return [_camera_id(vidfile) for vidfile in find_trial_videos(fname)]
 
 
 def c3d2enf(fname):

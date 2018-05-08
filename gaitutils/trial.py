@@ -177,8 +177,22 @@ class Trial(object):
         self.samplesperframe = self.analograte/self.framerate
         self.cycles = list(self._scan_cycles())
         self.ncycles = len(self.cycles)
+        # FIXME: use nexus method
         self.video_files = glob.glob(op.join(self.sessionpath,
                                              self.trialname+'*avi'))
+
+    def get_video_by_id(self, camera_id):
+        return [vid for vid in self.video_files if camera_id in vid]
+
+    @property
+    def eclipse_tags(self):
+        """Return Eclipse tags for this trial"""
+        tags = list()
+        for tag in cfg.plot.eclipse_tags:
+            if tag in (self.eclipse_data['DESCRIPTION'] or tag in
+                       self.eclipse_data['NOTES']):
+                tags.append(tag)
+        return tags
 
     @property
     def name_with_description(self):

@@ -17,7 +17,7 @@ import os
 import subprocess
 
 from gaitutils.numutils import check_hetu
-from gaitutils.guiutils import qt_message_dialog, qt_nonmodal_dialog
+from gaitutils.guiutils import qt_message_dialog
 from gaitutils import GaitDataError
 from gaitutils import nexus
 from gaitutils import cfg
@@ -514,13 +514,15 @@ class Gaitmenu(QtWidgets.QMainWindow):
         prog.hide()
 
         # create report
+        self._disable_op_buttons()
         if len(sessions) == 1:
-            self._disable_op_buttons()
             # FIXME: try/catch
             app = report._single_session_app(session=sessions[0])
-            self._enable_op_buttons()
-        else:
-            app = None  # FIXME: multisession app
+        elif len(sessions) <= 3:
+            app = report._multisession_app(sessions=sessions)
+        else:  # should be handled by the session dialog
+            raise ValueError('Too many sessions')
+        self._enable_op_buttons()
 
         # start server, thread and do not block ui
         port = 5000 + len(self._dash_apps)

@@ -24,7 +24,7 @@ import subprocess
 
 import gaitutils
 from gaitutils import cfg, normaldata, models
-from gaitutils.nexus import find_tagged
+from gaitutils.nexus import find_tagged, get_camera_ids
 
 logger = logging.getLogger(__name__)
 
@@ -90,12 +90,6 @@ def _video_element_from_url(url):
     return html.Video(src='%s' % url, controls=True, loop=True, width='100%')
 
 
-def _trial_videos(trial):
-    """(converted) videos from given trial"""
-    vids_conv = gaitutils.report.convert_videos(trial.video_files)
-    return vids_conv
-
-
 def _make_dropdown_lists(options):
     """This takes a list of label/value dicts (with arbitrary type values)
     and returns list and dict. Needed since dcc.Dropdown can only take str
@@ -117,7 +111,12 @@ def _plotly_fill_between(x, ylow, yhigh, **kwargs):
 
 
 def _plot_trials(trials, layout, model_normaldata):
-    """Make a plotly plot of layout, including given trials."""
+    """Make a plotly plot of layout, including given trials.
+
+    trials: list of gaitutils.Trial instances
+    layout: list of lists defining plot layout (see plot.py)
+
+    """
 
     # configurabe opts (here for now)
     trial_specific_colors = False
@@ -155,7 +154,7 @@ def _plot_trials(trials, layout, model_normaldata):
                     # in legend, traces will be grouped according to tracegroup (which is also the label)
                     # tracegroup = '%s / %s' % (trial.name_with_description, cycle_desc[context])  # include cycle
                     # tracegroup = '%s' % (trial.name_with_description)  # no cycle info (group both cycles from trial)
-                    tracegroup = trial.eclipse_data['NOTES']  # short one
+                    tracegroup = trial.eclipse_data['NOTES']  # Eclipse NOTES field only
                     # only show the legend for the first trace in the tracegroup, so we do not repeat legends
                     show_legend = tracegroup not in tracegroups
 
@@ -418,3 +417,163 @@ def _single_session_app(session=None):
 
     return app
 
+
+def _multisession_app(sessions=None, tags=None):
+    """Multisession dash app"""
+
+    if not sessions:
+        return
+
+    if len(sessions) < 2:
+        raise ValueError('Need a list of at least two sessions')
+
+    if tags is None:
+        tags = ['R1', 'L1']
+
+    cams = list()
+    trials = list()
+    # specify camera id and tag, get n video files in return
+    
+    trial_videos = dict()
+
+    for session in sessions:
+        c3ds = find_tagged(sessionpath=session, tags=tags)
+
+        for c3d in c3ds:
+            # we convert cams to set later, so need to insert immutable type
+            cams.append(get_camera_ids(c3d))
+
+        trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
+        trials.extend(trials_this)
+
+    #if len(set(cams)) > 1:
+    #    raise ValueError('Camera ids do not match between sessions or files')
+    cameras = cams[0]
+
+    trials_di = {tr.trialname: tr for tr in trials}
+
+    model_normaldata = dict()
+    for fn in cfg.general.normaldata_files:
+        ndata = normaldata.read_normaldata(fn)
+        model_normaldata.update(ndata)
+
+    # build the dcc.Dropdown options list for the trials
+    trials_dd = list()
+    for tr in trials:
+        trials_dd.append({'label': tr.name_with_description,
+                          'value': tr.trialname})
+
+    # template of layout names -> layouts for dropdown
+    _dd_opts_multi = [
+                      {'label': 'Kinematics', 'value': cfg.layouts.lb_kinematics},
+                      {'label': 'Kinetics', 'value': cfg.layouts.lb_kinetics},
+                      {'label': 'EMG', 'value': cfg.layouts.std_emg[2:]},  # FIXME: hack to show lower body EMGs only
+                      {'label': 'Kinetics-EMG left', 'value': cfg.layouts.lb_kinetics_emg_l},
+                      {'label': 'Kinetics-EMG right', 'value': cfg.layouts.lb_kinetics_emg_r},
+                     ]
+
+    # pick desired single variables from model and append
+    singlevars = [{'label': varlabel, 'value': [[var]]} for var, varlabel in
+                  models.pig_lowerbody.varlabels_noside.items()]
+    singlevars = sorted(singlevars, key=lambda it: it['label'])
+    _dd_opts_multi.extend(singlevars)
+
+    # precreate graphs
+    dd_opts_multi_upper = list()
+    dd_opts_multi_lower = list()
+
+    for k, di in enumerate(_dd_opts_multi):
+        label = di['label']
+        layout = di['value']
+        logger.debug('creating %s' % label)
+        fig_ = _plot_trials(trials, layout, model_normaldata)
+        # need to create dcc.Graphs with unique ids for upper/lower panel(?)
+        graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k)
+        dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
+        graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
+                                % (len(_dd_opts_multi)+k))
+        dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
+
+    opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
+    opts_multi, mapper_multi_lower = _make_dropdown_lists(dd_opts_multi_lower)
+
+    # create the app
+    app = dash.Dash()
+    app.layout = html.Div([
+
+        html.Div([
+            html.Div([
+
+                    dcc.Dropdown(id='dd-vars-upper-multi', clearable=False,
+                                 options=opts_multi,
+                                 value=opts_multi[0]['value']),
+
+                    html.Div(id='div-upper'),
+
+                    dcc.Dropdown(id='dd-vars-lower-multi', clearable=False,
+                                 options=opts_multi,
+                                 value=opts_multi[0]['value']),
+
+                    html.Div(id='div-lower')
+
+                    ], className='eight columns'),
+
+            html.Div([
+
+                    dcc.Dropdown(id='dd-camera', clearable=False,
+                                 options=cameras,
+                                 value=cameras[0]),
+
+                    dcc.Dropdown(id='dd-video-tag', clearable=False,
+                                 options=tags,
+                                 value=tags[0]),
+
+                    html.Div(id='videos'),
+
+                    ], className='four columns'),
+
+                     ], className='row')
+                   ])
+
+    @app.callback(
+            Output(component_id='div-upper', component_property='children'),
+            [Input(component_id='dd-vars-upper-multi',
+                   component_property='value')]
+        )
+    def update_contents_upper_multi(sel_var):
+        return mapper_multi_upper[sel_var]
+
+    @app.callback(
+            Output(component_id='div-lower', component_property='children'),
+            [Input(component_id='dd-vars-lower-multi',
+                   component_property='value')]
+        )
+    def update_contents_lower_multi(sel_var):
+        return mapper_multi_lower[sel_var]
+
+    @app.callback(
+            Output(component_id='videos', component_property='children'),
+            [Input(component_id='dd-cameras', component_property='value'),
+             Input(component_id='dd-video-tag', component_property='value')]
+        )
+    def update_videos(camera, tag):
+        """Pick videos according to camera and tag selection"""
+
+        trial = trials_di[trial_lbl]
+        vid_urls = ['/static/%s' % op.split(fn)[1] for fn in
+                    convert_videos(trial)]
+        vid_elements = [_video_element_from_url(url) for url in vid_urls]
+        return vid_elements or 'No videos'
+
+    # add a static route to serve session data. be careful outside firewalls
+    @app.server.route('/static/<resource>')
+    def serve_file(resource):
+        return flask.send_from_directory(session, resource)
+
+    # the 12-column external css
+    # FIXME: local copy?
+    app.css.append_css({
+        'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'
+    })
+
+    return app

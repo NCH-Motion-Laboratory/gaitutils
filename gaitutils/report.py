@@ -289,6 +289,27 @@ def _plot_trials(trials, layout, model_normaldata):
     return fig
 
 
+def _layout_dropdown_opts():
+    # template of layout names -> layouts for dropdown
+    opts = [
+            {'label': 'Kinematics', 'value': cfg.layouts.lb_kinematics},
+            {'label': 'Kinetics', 'value': cfg.layouts.lb_kinetics},
+            {'label': 'EMG', 'value':
+                cfg.layouts.std_emg[2:]},  # FIXME: hack to show lower body EMGs only
+            {'label': 'Kinetics-EMG left', 'value':
+                cfg.layouts.lb_kinetics_emg_l},
+            {'label': 'Kinetics-EMG right', 'value':
+                cfg.layouts.lb_kinetics_emg_r},
+           ]
+
+    # pick desired single variables from model and append
+    singlevars = [{'label': varlabel, 'value': [[var]]} for var, varlabel in
+                  models.pig_lowerbody.varlabels_noside.items()]
+    singlevars = sorted(singlevars, key=lambda it: it['label'])
+    opts.extend(singlevars)
+    return opts
+
+
 def _single_session_app(session=None):
     """Single session dash app"""
 
@@ -304,28 +325,13 @@ def _single_session_app(session=None):
         ndata = normaldata.read_normaldata(fn)
         model_normaldata.update(ndata)
 
-
-
     # build the dcc.Dropdown options list for the trials
     trials_dd = list()
     for tr in trials:
         trials_dd.append({'label': tr.name_with_description,
                           'value': tr.trialname})
 
-    # template of layout names -> layouts for dropdown
-    _dd_opts_multi = [
-                      {'label': 'Kinematics', 'value': cfg.layouts.lb_kinematics},
-                      {'label': 'Kinetics', 'value': cfg.layouts.lb_kinetics},
-                      {'label': 'EMG', 'value': cfg.layouts.std_emg[2:]},  # FIXME: hack to show lower body EMGs only
-                      {'label': 'Kinetics-EMG left', 'value': cfg.layouts.lb_kinetics_emg_l},
-                      {'label': 'Kinetics-EMG right', 'value': cfg.layouts.lb_kinetics_emg_r},
-                     ]
-
-    # pick desired single variables from model and append
-    singlevars = [{'label': varlabel, 'value': [[var]]} for var, varlabel in
-                  models.pig_lowerbody.varlabels_noside.items()]
-    singlevars = sorted(singlevars, key=lambda it: it['label'])
-    _dd_opts_multi.extend(singlevars)
+    _dd_opts_multi = _layout_dropdown_opts()
 
     # precreate graphs
     dd_opts_multi_upper = list()
@@ -459,7 +465,9 @@ def _multisession_app(sessions=None, tags=None):
     # build dcc.Dropdown options list for the cameras and tags
     opts_cameras = list()
     for c in cameras:
-        opts_cameras.append({'label': c, 'value': c})
+        label = (cfg.general.camera_labels[c] if c in
+                 cfg.general.camera_labels else c)
+        opts_cameras.append({'label': label, 'value': c})
     opts_tags = list()
     for t in tags:
         opts_tags.append({'label': t, 'value': t})
@@ -470,20 +478,7 @@ def _multisession_app(sessions=None, tags=None):
         trials_dd.append({'label': tr.name_with_description,
                           'value': tr.trialname})
 
-    # template of layout names -> layouts for dropdown
-    _dd_opts_multi = [
-                      {'label': 'Kinematics', 'value': cfg.layouts.lb_kinematics},
-                      {'label': 'Kinetics', 'value': cfg.layouts.lb_kinetics},
-                      {'label': 'EMG', 'value': cfg.layouts.std_emg[2:]},  # FIXME: hack to show lower body EMGs only
-                      {'label': 'Kinetics-EMG left', 'value': cfg.layouts.lb_kinetics_emg_l},
-                      {'label': 'Kinetics-EMG right', 'value': cfg.layouts.lb_kinetics_emg_r},
-                     ]
-
-    # pick desired single variables from model and append
-    singlevars = [{'label': varlabel, 'value': [[var]]} for var, varlabel in
-                  models.pig_lowerbody.varlabels_noside.items()]
-    singlevars = sorted(singlevars, key=lambda it: it['label'])
-    _dd_opts_multi.extend(singlevars)
+    _dd_opts_multi = _layout_dropdown_opts()
 
     # precreate graphs
     dd_opts_multi_upper = list()

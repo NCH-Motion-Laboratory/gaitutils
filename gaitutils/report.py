@@ -87,7 +87,7 @@ def _var_title(var):
 
 def _video_element_from_url(url):
     """Create dash Video element from given url"""
-    return html.Video(src='%s' % url, controls=True, loop=True, width='100%')
+    return html.Video(src=url, controls=True, loop=True, width='100%')
 
 
 def _make_dropdown_lists(options):

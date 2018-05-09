@@ -177,13 +177,14 @@ class Trial(object):
         self.samplesperframe = self.analograte/self.framerate
         self.cycles = list(self._scan_cycles())
         self.ncycles = len(self.cycles)
-        # FIXME: use nexus method
-        self.video_files = glob.glob(op.join(self.sessionpath,
-                                             self.trialname+'*avi'))
 
-    def get_video_by_id(self, camera_id):
+    def video_files(self, ext='avi'):
+        """Return video files associated with trial"""
+        return glob.glob(op.join(self.sessionpath, self.trialname+'*%s' % ext))
+
+    def get_video_by_id(self, ext='avi', camera_id):
         """Get trial video correspoding to given camera id (str)"""
-        vids = [vid for vid in self.video_files if camera_id in vid]
+        vids = [vid for vid in self.video_files(ext=ext) if camera_id in vid]
         if len(vids) > 1:
             raise ValueError('Multiple video files match id %s' % camera_id)
         return vids[0]

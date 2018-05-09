@@ -411,9 +411,9 @@ def _single_session_app(session=None, tags=None):
             [Input(component_id='dd-videos', component_property='value')]
         )
     def update_videos(trial_lbl):
-        trial = trials_di[trial_lbl]
+        tr = trials_di[trial_lbl]
         vid_urls = ['/static/%s' % op.split(fn)[1] for fn in
-                    _trial_videos(trial)]
+                    tr.video_files(ext='ogv')]
         vid_elements = [_video_element_from_url(url) for url in vid_urls]
         return vid_elements or 'No videos'
 
@@ -564,9 +564,8 @@ def _multisession_app(sessions=None, tags=None):
     def update_videos(camera_id, tag):
         """Pick videos according to camera and tag selection"""
         tagged = [tr for tr in trials if tag == tr.eclipse_tag]
-        vids = [tr.get_video_by_id(camera_id) for tr in tagged]
-        vid_urls = ['/static/%s' % op.split(fn)[1] for fn in
-                    convert_videos(vids)]
+        vids = [tr.get_video_by_id(camera_id, ext='ogv') for tr in tagged]
+        vid_urls = ['/static/%s' % op.split(fn)[1] for fn in vids]
         vid_elements = [_video_element_from_url(url) for url in vid_urls]
         return vid_elements or 'No videos'
 

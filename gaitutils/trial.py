@@ -186,7 +186,7 @@ class Trial(object):
         vids = [vid for vid in self.video_files(ext=ext) if camera_id in vid]
         if len(vids) > 1:
             raise ValueError('Multiple video files match id %s' % camera_id)
-        return vids[0]
+        return vids[0] if vids else None
 
     @property
     def eclipse_tag(self):

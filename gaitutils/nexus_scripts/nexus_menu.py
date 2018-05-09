@@ -509,6 +509,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         prog.show()
         QtWidgets.QApplication.processEvents()
         report.convert_videos(vidfiles, prog_callback=lambda k: self.update_progbar(prog, k))
+        # FIXME: sometimes it seems that videos are not complete at this point?!
         prog.hide()
 
         # create report

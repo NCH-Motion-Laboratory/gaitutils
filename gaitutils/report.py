@@ -110,7 +110,7 @@ def _plotly_fill_between(x, ylow, yhigh, **kwargs):
     return go.Scatter(x=x_, y=y_, fill='toself', **kwargs)
 
 
-def _plot_trials(trials, layout, model_normaldata):
+def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only'):
     """Make a plotly plot of layout, including given trials.
 
     trials: list of gaitutils.Trial instances
@@ -151,11 +151,20 @@ def _plot_trials(trials, layout, model_normaldata):
                     plot_ind = i * ncols + j + 1  # plotly subplot index
                     xaxis = 'xaxis%d' % plot_ind  # name of plotly xaxis
                     yaxis = 'yaxis%d' % plot_ind  # name of plotly yaxis
-                    # FIXME: this should be a param
+
                     # in legend, traces will be grouped according to tracegroup (which is also the label)
-                    # tracegroup = '%s / %s' % (trial.name_with_description, cycle_desc[context])  # include cycle
-                    tracegroup = '%s' % (trial.name_with_description)  # no cycle info (group both cycles from trial)
-                    # tracegroup = trial.eclipse_data['NOTES']  # Eclipse NOTES field only
+                    if legend_type == 'name_with_tag':
+                        tracegroup = '%s / %s' % (trial.trialname,
+                                                  trial.eclipse_tag)
+                    elif legend_type == 'tag_only':
+                        tracegroup = trial.eclipse_tag
+                    elif legend_type == 'full':  # inc cycle 
+                        raise Exception('not implemented yet')
+                        #tracegroup = '%s / %s' % (trial.name_with_description,
+                        #                          cycle_desc[context])
+                    else:
+                        raise ValueError('Invalid legend type')
+
                     # only show the legend for the first trace in the tracegroup, so we do not repeat legends
                     show_legend = tracegroup not in tracegroups
 
@@ -345,7 +354,9 @@ def _single_session_app(session=None, tags=None):
         label = di['label']
         layout = di['value']
         logger.debug('creating %s' % label)
-        fig_ = _plot_trials(trials, layout, model_normaldata)
+        # include only tag in legend, since all data are all from same trial
+        fig_ = _plot_trials(trials, layout, model_normaldata,
+                            legend_type='tag_only')
         # need to create dcc.Graphs with unique ids for upper/lower panel(?)
         graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k)
         dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
@@ -449,7 +460,7 @@ def _multisession_app(sessions=None, tags=None):
         c3ds = find_tagged(sessionpath=session, tags=tags)
         if len(c3ds) != len(tags):
             raise ValueError('Expected %d tagged trials for session %s'
-                             % len(tags))
+                             % (len(tags), session))
         trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
         trials.extend(trials_this)
 
@@ -491,7 +502,8 @@ def _multisession_app(sessions=None, tags=None):
         label = di['label']
         layout = di['value']
         logger.debug('creating %s' % label)
-        fig_ = _plot_trials(trials, layout, model_normaldata)
+        fig_ = _plot_trials(trials, layout, model_normaldata,
+                            legend_type='name_with_tag')
         # need to create dcc.Graphs with unique ids for upper/lower panel(?)
         graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k)
         dd_opts_multi_upper.append({'label': label, 'value': graph_upper})

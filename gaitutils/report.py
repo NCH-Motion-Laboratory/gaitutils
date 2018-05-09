@@ -310,13 +310,18 @@ def _layout_dropdown_opts():
     return opts
 
 
-def _single_session_app(session=None):
+def _single_session_app(session=None, tags=None):
     """Single session dash app"""
 
     if not session:
         return
 
-    c3ds = find_tagged(sessionpath=session)
+    if tags is None:
+        tags = cfg.plot.eclipse_repr_tags
+
+    c3ds = find_tagged(sessionpath=session, tags=tags)
+    if not c3ds:
+        raise ValueError('No tagged trials for session %s' % session)
     trials = [gaitutils.Trial(c3d) for c3d in c3ds]
     trials_di = {tr.trialname: tr for tr in trials}
 
@@ -331,9 +336,10 @@ def _single_session_app(session=None):
         trials_dd.append({'label': tr.name_with_description,
                           'value': tr.trialname})
 
-    _dd_opts_multi = _layout_dropdown_opts()
+
 
     # precreate graphs
+    _dd_opts_multi = _layout_dropdown_opts()
     dd_opts_multi_upper = list()
     dd_opts_multi_lower = list()
 
@@ -436,16 +442,16 @@ def _multisession_app(sessions=None, tags=None):
     if len(sessions) < 2 or len(sessions) > 3:
         raise ValueError('Need a list of two to three sessions')
 
-    # Eclipse tags for representative trials
     if tags is None:
-        tags = ['R1', 'L1']
+        tags = cfg.plot.eclipse_repr_tags
 
     cams = list()
     trials = list()
-    # specify camera id and tag, get n video files in return
-
     for session in sessions:
         c3ds = find_tagged(sessionpath=session, tags=tags)
+        if len(c3ds) != len(tags):
+            raise ValueError('Expected %d tagged trials for session %s'
+                             % len(tags))
         trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
         trials.extend(trials_this)
 
@@ -470,7 +476,7 @@ def _multisession_app(sessions=None, tags=None):
         opts_cameras.append({'label': label, 'value': c})
     opts_tags = list()
     for t in tags:
-        opts_tags.append({'label': t, 'value': t})
+        opts_tags.append({'label': '%s trials' % t, 'value': t})
 
     # build dcc.Dropdown options list for the trials
     trials_dd = list()
@@ -478,9 +484,8 @@ def _multisession_app(sessions=None, tags=None):
         trials_dd.append({'label': tr.name_with_description,
                           'value': tr.trialname})
 
-    _dd_opts_multi = _layout_dropdown_opts()
-
     # precreate graphs
+    _dd_opts_multi = _layout_dropdown_opts()
     dd_opts_multi_upper = list()
     dd_opts_multi_lower = list()
 
@@ -524,11 +529,11 @@ def _multisession_app(sessions=None, tags=None):
 
                     dcc.Dropdown(id='dd-camera', clearable=False,
                                  options=opts_cameras,
-                                 value=opts_cameras[0]),
+                                 value=opts_cameras[0]['value']),
 
                     dcc.Dropdown(id='dd-video-tag', clearable=False,
                                  options=opts_tags,
-                                 value=opts_tags[0]),
+                                 value=opts_tags[0]['value']),
 
                     html.Div(id='videos'),
 
@@ -558,10 +563,10 @@ def _multisession_app(sessions=None, tags=None):
             [Input(component_id='dd-camera', component_property='value'),
              Input(component_id='dd-video-tag', component_property='value')]
         )
-    def update_videos(camera, tag):
+    def update_videos(camera_id, tag):
         """Pick videos according to camera and tag selection"""
         tagged = [tr for tr in trials if tag in tr.eclipse_tags]
-        vids = [tr.get_video_by_id(camera) for tr in tagged]
+        vids = [tr.get_video_by_id(camera_id) for tr in tagged]
         vid_urls = ['/static/%s' % op.split(fn)[1] for fn in
                     convert_videos(vids)]
         vid_elements = [_video_element_from_url(url) for url in vid_urls]

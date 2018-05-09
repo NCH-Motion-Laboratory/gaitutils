@@ -12,7 +12,7 @@ import os.path as op
 import shutil
 import logging
 
-from gaitutils import nexus
+from gaitutils import nexus, cfg
 from gaitutils.guiutils import messagebox
 
 
@@ -27,8 +27,7 @@ def do_copy():
     if not op.isdir(dest_dir):
         os.mkdir(dest_dir)
 
-    tags = ['R1', 'L1']
-    c3dfiles = nexus.find_tagged(tags)
+    c3dfiles = nexus.find_tagged(cfg.plot.eclipse_repr_tags)
 
     # concatenate video iterators for all .enf files
     vidfiles = []

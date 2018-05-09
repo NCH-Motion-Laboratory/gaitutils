@@ -491,7 +491,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         # check for tagged trials and collect video files for conversion
         for session in sessions:
-            tags = ['R1', 'L1']
+            tags = cfg.plot.eclipse_repr_tags
             tagged = nexus.find_tagged(sessionpath=session, tags=tags)
             if len(tagged) != 2:
                 qt_message_dialog('Cannot find representative trials for session %s' % session)

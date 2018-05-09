@@ -336,8 +336,6 @@ def _single_session_app(session=None, tags=None):
         trials_dd.append({'label': tr.name_with_description,
                           'value': tr.trialname})
 
-
-
     # precreate graphs
     _dd_opts_multi = _layout_dropdown_opts()
     dd_opts_multi_upper = list()
@@ -565,7 +563,7 @@ def _multisession_app(sessions=None, tags=None):
         )
     def update_videos(camera_id, tag):
         """Pick videos according to camera and tag selection"""
-        tagged = [tr for tr in trials if tag in tr.eclipse_tags]
+        tagged = [tr for tr in trials if tag == tr.eclipse_tag]
         vids = [tr.get_video_by_id(camera_id) for tr in tagged]
         vid_urls = ['/static/%s' % op.split(fn)[1] for fn in
                     convert_videos(vids)]

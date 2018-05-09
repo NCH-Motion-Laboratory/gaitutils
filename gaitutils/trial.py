@@ -189,14 +189,13 @@ class Trial(object):
         return vids[0]
 
     @property
-    def eclipse_tags(self):
-        """Return Eclipse tags for this trial"""
-        tags = list()
+    def eclipse_tag(self):
+        """Return (first) Eclipse tag for this trial"""
         for tag in cfg.plot.eclipse_tags:
             if (tag in self.eclipse_data['DESCRIPTION'] or tag in
-                self.eclipse_data['NOTES']):
-                tags.append(tag)
-        return tags
+               self.eclipse_data['NOTES']):
+                return tag
+        return None
 
     @property
     def name_with_description(self):

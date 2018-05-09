@@ -30,8 +30,7 @@ logger = logging.getLogger(__name__)
 
 def nexus_trial():
     """ Return Trial instance reading from Nexus """
-    vicon = nexus.viconnexus()
-    return Trial(vicon)
+    return Trial(nexus.viconnexus())
 
 
 def _nexus_crop_events_before_forceplate():
@@ -182,7 +181,7 @@ class Trial(object):
         """Return video files associated with trial"""
         return glob.glob(op.join(self.sessionpath, self.trialname+'*%s' % ext))
 
-    def get_video_by_id(self, ext='avi', camera_id):
+    def get_video_by_id(self, camera_id, ext='avi'):
         """Get trial video correspoding to given camera id (str)"""
         vids = [vid for vid in self.video_files(ext=ext) if camera_id in vid]
         if len(vids) > 1:

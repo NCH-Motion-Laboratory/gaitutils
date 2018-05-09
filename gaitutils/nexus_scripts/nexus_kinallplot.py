@@ -20,7 +20,7 @@ def do_plot():
     maintitleprefix = 'Kinetics/kinematics plot for '
 
     if cfg.plot.show_videos:
-        for vidfile in pl.trial.video_files:
+        for vidfile in pl.trial.video_files():
             pl.external_play_video(vidfile)
 
     pl.plot_trial(maintitleprefix=maintitleprefix, show=False)

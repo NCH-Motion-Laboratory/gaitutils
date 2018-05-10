@@ -110,16 +110,18 @@ def _plotly_fill_between(x, ylow, yhigh, **kwargs):
     return go.Scatter(x=x_, y=y_, fill='toself', **kwargs)
 
 
-def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only'):
+def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
+                 trial_linestyles=None):
     """Make a plotly plot of layout, including given trials.
 
     trials: list of gaitutils.Trial instances
     layout: list of lists defining plot layout (see plot.py)
-
+    legend_type: 'tag_only' for Eclipse tag, 'name_with_tag' or 'full'
+    trial_linestyles: None for all identical, 'trial' for trial specific
+                      style, 'session' for session specific style
     """
 
     # configurabe opts (here for now)
-    trial_specific_colors = False
     label_fontsize = 12
 
     nrows = len(layout)
@@ -136,6 +138,9 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only'):
     tracegroups = set()
     model_normaldata_legend = True
     emg_normaldata_legend = True
+
+    session_linestyles = dict()
+    dash_styles = cycle(['solid', 'dash', 'dot', 'dashdot'])
 
     for trial in trials:
         trial_color = colors.next()
@@ -182,13 +187,25 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only'):
                         if do_plot:
                             t, y = trial[var]
 
-                            if trial_specific_colors:
+                            if trial_linestyles == 'trial':
+                                # trial specific color, left side dashed
                                 line = {'color': trial_color}
                                 if context == 'L':
                                     line['dash'] = 'dash'
-                            else:
+                            elif trial_linestyles is None:
+                                # identical color for all trials
                                 line = {'color':
                                         cfg.plot.model_tracecolors[context]}
+                            elif trial_linestyles == 'session':
+                                # session specific line style
+                                line = {'color':
+                                        cfg.plot.model_tracecolors[context]}
+                                if trial.sessiondir in session_linestyles:
+                                    dash_style = session_linestyles[trial.sessiondir]
+                                else:
+                                    dash_style = dash_styles.next()
+                                    session_linestyles[trial.sessiondir] = dash_style
+                                line['dash'] = dash_style
 
                             trace = go.Scatter(x=t, y=y, name=tracegroup,
                                                legendgroup=tracegroup,
@@ -503,7 +520,8 @@ def _multisession_app(sessions=None, tags=None):
         layout = di['value']
         logger.debug('creating %s' % label)
         fig_ = _plot_trials(trials, layout, model_normaldata,
-                            legend_type='name_with_tag')
+                            legend_type='name_with_tag',
+                            trial_linestyles='session')
         # need to create dcc.Graphs with unique ids for upper/lower panel(?)
         graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k)
         dd_opts_multi_upper.append({'label': label, 'value': graph_upper})

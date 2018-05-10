@@ -476,8 +476,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
                           sessions=dlg.sessions)
 
     @staticmethod
-    def update_progbar(progbar, k):
+    def update_progbar(progbar, k, fn):
         progbar.setValue(k)
+        progbar.setLabelText('Converting %s' % fn)
         QtWidgets.QApplication.processEvents()
 
     def _create_web_report(self):
@@ -500,6 +501,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 vidfiles.extend(nexus.find_trial_videos(c3dfile))
 
         # do the video conversion if needed
+        self._disable_op_buttons()
         prog = QtWidgets.QProgressDialog()
         prog.setWindowTitle('Converting videos, please wait...')
         prog.setCancelButton(None)
@@ -508,19 +510,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         prog.setGeometry(500, 300, 500, 100)
         prog.show()
         QtWidgets.QApplication.processEvents()
-        report.convert_videos(vidfiles, prog_callback=lambda k: self.update_progbar(prog, k))
+        report.convert_videos(vidfiles, prog_callback=lambda k, fn: self.update_progbar(prog, k, fn))
+        prog.setLabelText('Creating report...')
+        QtWidgets.QApplication.processEvents()
+        app = report.dash_report(sessions=sessions)
         # FIXME: sometimes it seems that videos are not complete at this point?!
         prog.hide()
-
-        # create report
-        self._disable_op_buttons()
-        if len(sessions) == 1:
-            # FIXME: try/catch
-            app = report._single_session_app(session=sessions[0])
-        elif len(sessions) <= 3:
-            app = report._multisession_app(sessions=sessions)
-        else:  # this should be handled already by the session dialog
-            raise ValueError('Too many sessions')
         self._enable_op_buttons()
 
         # start server, thread and do not block ui

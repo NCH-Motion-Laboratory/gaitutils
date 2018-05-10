@@ -42,7 +42,7 @@ def convert_videos(vidfiles, check_only=False, prog_callback=None):
     """Convert video files using command and options defined in cfg.
     If check_only, return whether files were already converted.
     During conversion, prog_callback will be called with % of task done
-    as the only argument"""
+    and name of current video file"""
     CONV_EXT = '.ogv'  # extension for converted files
     if not isinstance(vidfiles, list):
         vidfiles = [vidfiles]
@@ -63,7 +63,7 @@ def convert_videos(vidfiles, check_only=False, prog_callback=None):
     for vidfile, convfile in convfiles.items():
         if not op.isfile(convfile):
             if prog_callback is not None:
-                prog_callback(100*k/n_to_conv)
+                prog_callback(100*k/n_to_conv, vidfile)
             # XXX could parallelize with non-blocking Popen() calls?
             subprocess.call([vidconv_bin]+vidconv_opts.split()+[vidfile],
                             stdout=None)
@@ -336,146 +336,28 @@ def _layout_dropdown_opts():
     return opts
 
 
-def _single_session_app(session=None, tags=None):
-    """Single session dash app"""
-
-    if not session:
-        return
-
-    if tags is None:
-        tags = cfg.plot.eclipse_repr_tags
-
-    c3ds = find_tagged(sessionpath=session, tags=tags)
-    if not c3ds:
-        raise ValueError('No tagged trials for session %s' % session)
-    trials = [gaitutils.Trial(c3d) for c3d in c3ds]
-    trials_di = {tr.trialname: tr for tr in trials}
-
-    model_normaldata = dict()
-    for fn in cfg.general.normaldata_files:
-        ndata = normaldata.read_normaldata(fn)
-        model_normaldata.update(ndata)
-
-    # build the dcc.Dropdown options list for the trials
-    trials_dd = list()
-    for tr in trials:
-        trials_dd.append({'label': tr.name_with_description,
-                          'value': tr.trialname})
-
-    # precreate graphs
-    _dd_opts_multi = _layout_dropdown_opts()
-    dd_opts_multi_upper = list()
-    dd_opts_multi_lower = list()
-
-    for k, di in enumerate(_dd_opts_multi):
-        label = di['label']
-        layout = di['value']
-        logger.debug('creating %s' % label)
-        # include only tag in legend, since all data are all from same trial
-        fig_ = _plot_trials(trials, layout, model_normaldata,
-                            legend_type='tag_only')
-        # need to create dcc.Graphs with unique ids for upper/lower panel(?)
-        graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k)
-        dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
-        graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
-                                % (len(_dd_opts_multi)+k))
-        dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
-
-    opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
-    opts_multi, mapper_multi_lower = _make_dropdown_lists(dd_opts_multi_lower)
-
-    # create the app
-    app = dash.Dash()
-    app.layout = html.Div([
-
-        html.Div([
-            html.Div([
-
-                    dcc.Dropdown(id='dd-vars-upper-multi', clearable=False,
-                                 options=opts_multi,
-                                 value=opts_multi[0]['value']),
-
-                    html.Div(id='div-upper'),
-
-                    dcc.Dropdown(id='dd-vars-lower-multi', clearable=False,
-                                 options=opts_multi,
-                                 value=opts_multi[0]['value']),
-
-                    html.Div(id='div-lower')
-
-                    ], className='eight columns'),
-
-            html.Div([
-
-                    dcc.Dropdown(id='dd-videos', clearable=False,
-                                 options=trials_dd,
-                                 value=trials_dd[0]['value']),
-
-                    html.Div(id='videos'),
-
-                    ], className='four columns'),
-
-                     ], className='row')
-                   ])
-
-    @app.callback(
-            Output(component_id='div-upper', component_property='children'),
-            [Input(component_id='dd-vars-upper-multi',
-                   component_property='value')]
-        )
-    def update_contents_upper_multi(sel_var):
-        return mapper_multi_upper[sel_var]
-
-    @app.callback(
-            Output(component_id='div-lower', component_property='children'),
-            [Input(component_id='dd-vars-lower-multi',
-                   component_property='value')]
-        )
-    def update_contents_lower_multi(sel_var):
-        return mapper_multi_lower[sel_var]
-
-    @app.callback(
-            Output(component_id='videos', component_property='children'),
-            [Input(component_id='dd-videos', component_property='value')]
-        )
-    def update_videos(trial_lbl):
-        tr = trials_di[trial_lbl]
-        vid_urls = ['/static/%s' % op.split(fn)[1] for fn in
-                    tr.video_files(ext='ogv')]
-        vid_elements = [_video_element_from_url(url) for url in vid_urls]
-        return vid_elements or 'No videos'
-
-    # add a static route to serve session data. be careful outside firewalls
-    @app.server.route('/static/<resource>')
-    def serve_file(resource):
-        return flask.send_from_directory(session, resource)
-
-    # the 12-column external css
-    # FIXME: local copy?
-    app.css.append_css({
-        'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'
-    })
-
-    return app
-
-
-def _multisession_app(sessions=None, tags=None):
+def dash_report(sessions=None, tags=None):
     """Multisession dash app"""
 
     if not sessions:
         return
 
-    if len(sessions) < 2 or len(sessions) > 3:
-        raise ValueError('Need a list of two to three sessions')
+    if len(sessions) < 1 or len(sessions) > 3:
+        raise ValueError('Need a list of one to three sessions')
+
+    is_comparison = len(sessions) > 1
 
     if tags is None:
-        tags = cfg.plot.eclipse_repr_tags
+        # if doing a comparison, pick representative trials only
+        tags = (cfg.plot.eclipse_repr_tags if is_comparison else
+                cfg.plot.eclipse_tags)
 
     cams = list()
     trials = list()
     for session in sessions:
         c3ds = find_tagged(sessionpath=session, tags=tags)
-        if len(c3ds) != len(tags):
+            # for comparison, require that correct number of trials is found
+        if is_comparison and len(c3ds) != len(tags):
             raise ValueError('Expected %d tagged trials for session %s'
                              % (len(tags), session))
         trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
@@ -502,7 +384,7 @@ def _multisession_app(sessions=None, tags=None):
         opts_cameras.append({'label': label, 'value': c})
     opts_tags = list()
     for t in tags:
-        opts_tags.append({'label': '%s trials' % t, 'value': t})
+        opts_tags.append({'label': '%s' % t, 'value': t})
 
     # build dcc.Dropdown options list for the trials
     trials_dd = list()
@@ -518,10 +400,14 @@ def _multisession_app(sessions=None, tags=None):
     for k, di in enumerate(_dd_opts_multi):
         label = di['label']
         layout = di['value']
-        logger.debug('creating %s' % label)
+        logger.debug('creating plot for %s' % label)
+        # for comparison report, include session info in plot legends and
+        # use session specific line style
+        trial_linestyles = 'session' if is_comparison else 'trial'
+        legend_type = 'name_with_tag' if is_comparison else 'tag_only'
         fig_ = _plot_trials(trials, layout, model_normaldata,
-                            legend_type='name_with_tag',
-                            trial_linestyles='session')
+                            legend_type=legend_type,
+                            trial_linestyles=trial_linestyles)
         # need to create dcc.Graphs with unique ids for upper/lower panel(?)
         graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k)
         dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
@@ -593,6 +479,7 @@ def _multisession_app(sessions=None, tags=None):
         )
     def update_videos(camera_id, tag):
         """Pick videos according to camera and tag selection"""
+        # FIXME: show all videos for single session report?
         tagged = [tr for tr in trials if tag == tr.eclipse_tag]
         vids = [tr.get_video_by_id(camera_id, ext='ogv') for tr in tagged]
         vid_urls = ['/static/%s' % op.split(fn)[1] for fn in vids]

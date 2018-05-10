@@ -72,6 +72,9 @@ class EMG(object):
         compared to broadband signal. Cause is typically disconnected/badly
         connected electrodes.
         TODO: should use multiple-zero IIR notch filter """
+        # FIXME: check for too little signal energy
+        #if y.std() < 1e-10:
+         #   return False
         # max. relative interference at 50 Hz harmonics
         emg_max_interference = 20  # maximum relative interference level (dB)
         # bandwidth of broadband signal. should be less than dist between

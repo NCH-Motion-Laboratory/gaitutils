@@ -16,6 +16,7 @@ import plotly
 import plotly.graph_objs as go
 import numpy as np
 from itertools import cycle
+from collections import OrderedDict
 import logging
 import jinja2
 import os.path as op
@@ -23,7 +24,7 @@ import os
 import subprocess
 
 import gaitutils
-from gaitutils import cfg, normaldata, models
+from gaitutils import cfg, normaldata, models, layouts
 from gaitutils.nexus import find_tagged, get_camera_ids
 
 logger = logging.getLogger(__name__)
@@ -246,7 +247,7 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                     elif (trial.emg.is_channel(var) or var in
                           cfg.emg.channel_labels):
                         do_plot = True
-                        # EMG channel context matches cycle context
+                        # plot only if EMG channel context matches cycle ctxt
                         if var[0] != context:
                             do_plot = False
                         t, y = trial[var]
@@ -311,24 +312,23 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
     return fig
 
 
-def _layout_dropdown_opts():
-    # template of layout names -> layouts for dropdown
-    opts = [
-            {'label': 'Kinematics', 'value': cfg.layouts.lb_kinematics},
-            {'label': 'Kinetics', 'value': cfg.layouts.lb_kinetics},
-            {'label': 'EMG', 'value':
-                cfg.layouts.std_emg[2:]},  # FIXME: hack to show lower body EMGs only
-            {'label': 'Kinetics-EMG left', 'value':
-                cfg.layouts.lb_kinetics_emg_l},
-            {'label': 'Kinetics-EMG right', 'value':
-                cfg.layouts.lb_kinetics_emg_r},
-           ]
+def _make_layouts_dropdown():
+    """Layouts for dropdown menus. Use OrderedDict to keep order of items
+    in menu"""
+    opts = OrderedDict([
+            ('Kinematics', cfg.layouts.lb_kinematics),
+            ('Kinetics', cfg.layouts.lb_kinetics),
+            ('EMG', cfg.layouts.std_emg),  # FIXME: use dead chs routine from emg consistency plot
+            ('Kinetics-EMG left', cfg.layouts.lb_kinetics_emg_l),
+            ('Kinetics-EMG right', cfg.layouts.lb_kinetics_emg_r),
+            ])
 
     # pick desired single variables from model and append
-    singlevars = [{'label': varlabel, 'value': [[var]]} for var, varlabel in
-                  models.pig_lowerbody.varlabels_noside.items()]
-    singlevars = sorted(singlevars, key=lambda it: it['label'])
-    opts.extend(singlevars)
+    pig_singlevars = sorted(models.pig_lowerbody.varlabels_noside.items(),
+                            key=lambda item: item[1])
+    singlevars = OrderedDict([(varlabel, [[var]]) for var, varlabel in
+                              pig_singlevars])
+    opts.update(singlevars)
     return opts
 
 
@@ -389,13 +389,11 @@ def dash_report(sessions=None, tags=None):
                           'value': tr.trialname})
 
     # precreate graphs
-    _dd_opts_multi = _layout_dropdown_opts()
+    _layouts = _make_layouts_dropdown()
     dd_opts_multi_upper = list()
     dd_opts_multi_lower = list()
 
-    for k, di in enumerate(_dd_opts_multi):
-        label = di['label']
-        layout = di['value']
+    for k, (label, layout) in enumerate(_layouts.items()):
         logger.debug('creating plot for %s' % label)
         # for comparison report, include session info in plot legends and
         # use session specific line style
@@ -408,7 +406,7 @@ def dash_report(sessions=None, tags=None):
         graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k)
         dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
         graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
-                                % (len(_dd_opts_multi)+k))
+                                % (len(_layouts)+k))
         dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
 
     opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)

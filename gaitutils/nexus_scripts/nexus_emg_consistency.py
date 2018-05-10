@@ -15,6 +15,7 @@ from itertools import cycle
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, EMG,
                        GaitDataError)
 from gaitutils.nexus import find_tagged
+from gaitutils.layouts import rm_dead_channels_multitrial
 
 logger = logging.getLogger(__name__)
 
@@ -31,23 +32,8 @@ def do_plot(tags=None, show=True, make_pdf=True):
 
     pl = Plotter()
     layout = cfg.layouts.overlay_std_emg
-
-    # from layout, drop rows that do not have good data in any of the trials
-    chs_ok = None
-    for i, c3d in enumerate(tagged_trials):
-        emg = EMG(c3d)
-        chs_prev_ok = chs_ok if i > 0 else None
-        # plot channels w/ status ok, or anything that is not a
-        # configured EMG channel
-        chs_ok = [ch not in cfg.emg.channel_labels or emg.status_ok(ch) for
-                  row in layout for ch in row]
-        if i > 0:
-            chs_ok = chs_ok or chs_prev_ok
-    rowlen = len(layout[0])
-    lout = zip(*[iter(chs_ok)]*rowlen)  # grouper recipe from itertools
-    rows_ok = [any(row) for row in lout]
-    layout = [row for i, row in enumerate(layout) if rows_ok[i]]
-    pl.layout = layout
+    emgs = [EMG(tr) for tr in tagged_trials]
+    pl.layout = rm_dead_channels_multitrial(emgs, layout)
 
     for i, trialpath in enumerate(tagged_trials):
         if i > len(linecolors):

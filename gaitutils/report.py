@@ -27,6 +27,7 @@ import gaitutils
 from gaitutils import cfg, normaldata, models, layouts
 from gaitutils.nexus import find_tagged, get_camera_ids
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -315,20 +316,6 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
 def _make_layouts_dropdown():
     """Layouts for dropdown menus. Use OrderedDict to keep order of items
     in menu"""
-    opts = OrderedDict([
-            ('Kinematics', cfg.layouts.lb_kinematics),
-            ('Kinetics', cfg.layouts.lb_kinetics),
-            ('EMG', cfg.layouts.std_emg),  # FIXME: use dead chs routine from emg consistency plot
-            ('Kinetics-EMG left', cfg.layouts.lb_kinetics_emg_l),
-            ('Kinetics-EMG right', cfg.layouts.lb_kinetics_emg_r),
-            ])
-
-    # pick desired single variables from model and append
-    pig_singlevars = sorted(models.pig_lowerbody.varlabels_noside.items(),
-                            key=lambda item: item[1])
-    singlevars = OrderedDict([(varlabel, [[var]]) for var, varlabel in
-                              pig_singlevars])
-    opts.update(singlevars)
     return opts
 
 
@@ -387,9 +374,24 @@ def dash_report(sessions=None, tags=None):
     for tr in trials:
         trials_dd.append({'label': tr.name_with_description,
                           'value': tr.trialname})
-
     # precreate graphs
-    _layouts = _make_layouts_dropdown()
+    emgs = [tr.emg for tr in trials]
+    emg_layout = layouts.rm_dead_channels_multitrial(emgs, cfg.layouts.std_emg)
+    _layouts = OrderedDict([
+            ('Kinematics', cfg.layouts.lb_kinematics),
+            ('Kinetics', cfg.layouts.lb_kinetics),
+            ('EMG', emg_layout),
+            ('Kinetics-EMG left', cfg.layouts.lb_kinetics_emg_l),
+            ('Kinetics-EMG right', cfg.layouts.lb_kinetics_emg_r),
+            ])
+
+    # pick desired single variables from model and append
+    pig_singlevars = sorted(models.pig_lowerbody.varlabels_noside.items(),
+                            key=lambda item: item[1])
+    singlevars = OrderedDict([(varlabel, [[var]]) for var, varlabel in
+                              pig_singlevars])
+    _layouts.update(singlevars)
+
     dd_opts_multi_upper = list()
     dd_opts_multi_lower = list()
 

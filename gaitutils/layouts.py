@@ -7,6 +7,7 @@ Handling layouts.
 
 import logging
 
+from gaitutils import cfg
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,25 @@ def rm_dead_channels(emg, layout):
     if not layout_:
         logger.warning('removed all - no valid EMG channels')
     return layout_
+
+
+def rm_dead_channels_multitrial(emgs, layout):
+    """From layout, drop rows that do not have good data in any of the
+    EMGs. Takes a list of EMG() instances """
+    chs_ok = None
+    for i, emg in enumerate(emgs):
+        chs_prev_ok = chs_ok if i > 0 else None
+        # accept channels w/ status ok, or anything that is NOT a
+        # preconfigured EMG channel
+        chs_ok = [ch not in cfg.emg.channel_labels or emg.status_ok(ch) for
+                  row in layout for ch in row]
+        if i > 0:
+            chs_ok = chs_ok or chs_prev_ok
+    rowlen = len(layout[0])
+    lout = zip(*[iter(chs_ok)]*rowlen)  # grouper recipe from itertools
+    rows_ok = [any(row) for row in lout]
+    layout = [row for i, row in enumerate(layout) if rows_ok[i]]
+    return layout
 
 
 def onesided_layout(layout, side):

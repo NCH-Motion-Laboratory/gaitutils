@@ -71,25 +71,6 @@ def convert_videos(vidfiles, check_only=False, prog_callback=None):
     return convfiles.values()
 
 
-def _var_title(var):
-    """Get proper title for variable"""
-    mod = models.model_from_var(var)
-    if mod:
-        if var in mod.varlabels_noside:
-            return mod.varlabels_noside[var]
-        elif var in mod.varlabels:
-            return mod.varlabels[var]
-    elif var in cfg.emg.channel_labels:
-        return cfg.emg.channel_labels[var]
-    else:
-        return ''
-
-
-def _video_element_from_url(url):
-    """Create dash Video element from given url"""
-    return html.Video(src=url, controls=True, loop=True, width='100%')
-
-
 def _make_dropdown_lists(options):
     """This takes a list of label/value dicts (with arbitrary type values)
     and returns list and dict. Needed since dcc.Dropdown can only take str
@@ -110,12 +91,27 @@ def _plotly_fill_between(x, ylow, yhigh, **kwargs):
     return go.Scatter(x=x_, y=y_, fill='toself', **kwargs)
 
 
+def _var_title(var):
+    """Get proper title for variable"""
+    mod = models.model_from_var(var)
+    if mod:
+        if var in mod.varlabels_noside:
+            return mod.varlabels_noside[var]
+        elif var in mod.varlabels:
+            return mod.varlabels[var]
+    elif var in cfg.emg.channel_labels:
+        return cfg.emg.channel_labels[var]
+    else:
+        return ''
+
+
 def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                  trial_linestyles=None):
     """Make a plotly plot of layout, including given trials.
 
     trials: list of gaitutils.Trial instances
     layout: list of lists defining plot layout (see plot.py)
+    model_normaldata: dict of normal data for model variables
     legend_type: 'tag_only' for Eclipse tag, 'name_with_tag' or 'full'
     trial_linestyles: None for all identical, 'trial' for trial specific
                       style, 'session' for session specific style
@@ -294,7 +290,7 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                     elif var is None:
                         continue
 
-                    elif 'legend' in var:  # for the mpl plotter only
+                    elif 'legend' in var:  # 'legend' is for the mpl plotter only
                         continue
 
                     else:
@@ -356,7 +352,7 @@ def dash_report(sessions=None, tags=None):
     trials = list()
     for session in sessions:
         c3ds = find_tagged(sessionpath=session, tags=tags)
-            # for comparison, require that correct number of trials is found
+        # for comparison, require that correct number of trials is found
         if is_comparison and len(c3ds) != len(tags):
             raise ValueError('Expected %d tagged trials for session %s'
                              % (len(tags), session))
@@ -483,7 +479,8 @@ def dash_report(sessions=None, tags=None):
         tagged = [tr for tr in trials if tag == tr.eclipse_tag]
         vids = [tr.get_video_by_id(camera_id, ext='ogv') for tr in tagged]
         vid_urls = ['/static/%s' % op.split(fn)[1] for fn in vids]
-        vid_elements = [_video_element_from_url(url) for url in vid_urls]
+        vid_elements = [html.Video(src=url, controls=True, loop=True,
+                                   width='100%') for url in vid_urls]
         return vid_elements or 'No videos'
 
     # add a static route to serve session data. be careful outside firewalls

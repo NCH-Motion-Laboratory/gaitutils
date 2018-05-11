@@ -214,6 +214,7 @@ def enf2c3d(fname):
 
 
 def find_tagged(tags=None, eclipse_keys=None, sessionpath=None):
+
     """ Find tagged trials in Nexus session path (or given path).
     Returns a list of .c3d files. """
 

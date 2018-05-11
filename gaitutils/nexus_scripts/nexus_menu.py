@@ -528,7 +528,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # do the video conversion if needed
         self._disable_op_buttons()
         prog = QtWidgets.QProgressDialog()
-        prog.setWindowTitle('Converting videos, please wait...')
+        prog.setWindowTitle('Please wait...')
         prog.setCancelButton(None)
         prog.setMinimum(0)
         prog.setMaximum(100)

@@ -342,6 +342,7 @@ def dash_report(sessions=None, tags=None):
                              % (len(tags), session))
         trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
         trials.extend(trials_this)
+    trials = sorted(trials, key=lambda tr: tr.eclipse_tag)
 
     # load normal data for gait models
     model_normaldata = dict()
@@ -354,8 +355,9 @@ def dash_report(sessions=None, tags=None):
     for label in set(gaitutils.cfg.general.camera_labels.values()):
         opts_cameras.append({'label': label, 'value': label})
     opts_tags = list()
-    for t in tags:
-        opts_tags.append({'label': '%s' % t, 'value': t})
+    # FIXME: figure out which tags actually are loaded. make unique and sorted
+    for tag in tags:
+        opts_tags.append({'label': '%s' % tag, 'value': tag})
 
     # build dcc.Dropdown options list for the trials
     trials_dd = list()

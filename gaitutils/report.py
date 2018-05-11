@@ -312,10 +312,6 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
     return fig
 
 
-
-
-
-
 def dash_report(sessions=None, tags=None):
     """Multisession dash app"""
 
@@ -326,6 +322,11 @@ def dash_report(sessions=None, tags=None):
         raise ValueError('Need a list of one to three sessions')
 
     is_comparison = len(sessions) > 1
+
+    sessions_str = ' / '.join([op.split(s)[-1] for s in sessions])
+    report_type = ('Single session report:' if len(sessions) == 1
+                   else 'Comparison report:')
+    report_name = '%s %s' % (report_type, sessions_str)
 
     if tags is None:
         # if doing a comparison, pick representative trials only
@@ -408,6 +409,8 @@ def dash_report(sessions=None, tags=None):
         html.Div([
             html.Div([
 
+                    html.H6(report_name),
+
                     dcc.Dropdown(id='dd-vars-upper-multi', clearable=False,
                                  options=opts_multi,
                                  value=opts_multi[0]['value']),
@@ -455,12 +458,16 @@ def dash_report(sessions=None, tags=None):
     def update_contents_lower_multi(sel_var):
         return mapper_multi_lower[sel_var]
 
+    def _no_video_div():
+        return html.Div(['No video found', html.Video(src='')])
+
     def _video_div(title, url):
         """Create a video div with title"""
-        vid_el = (html.Video(src=url, controls=True, loop=True, width='100%')
-                  if url else html.H3('No video'))
-        desc_el = html.H3(title)
-        return html.Div([desc_el, vid_el])
+        if not url:
+            return _no_video_div()
+        vid_el = html.Video(src=url, controls=True, loop=True, preload=True,
+                            width='100%', title=title)
+        return html.Div([title, vid_el])
 
     @app.callback(
             Output(component_id='videos', component_property='children'),
@@ -476,7 +483,7 @@ def dash_report(sessions=None, tags=None):
                     fn in vid_files]
         vid_elements = [_video_div(tr.name_with_description, url) for tr, url
                         in zip(tagged, vid_urls)]
-        return vid_elements
+        return vid_elements or _no_video_div()
 
     # add a static route to serve session data. be careful outside firewalls
     @app.server.route('/static/<resource>')

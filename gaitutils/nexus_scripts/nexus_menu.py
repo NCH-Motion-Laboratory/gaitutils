@@ -487,7 +487,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 event.ignore()
         else:
             event.accept()
-            
 
     def _options_dialog(self):
         """ Show the autoprocessing options dialog """

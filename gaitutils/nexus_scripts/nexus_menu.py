@@ -463,6 +463,32 @@ class Gaitmenu(QtWidgets.QMainWindow):
         thread. """
         button.clicked.connect(lambda ev: self._execute(fun, thread=thread))
 
+    def confirm_dialog(self, msg):
+        """ Show yes/no dialog. """
+        dlg = QtWidgets.QMessageBox()
+        dlg.setText(msg)
+        dlg.setWindowTitle('Confirm')
+        dlg.addButton(QtWidgets.QPushButton('Yes'),
+                      QtWidgets.QMessageBox.YesRole)
+        dlg.addButton(QtWidgets.QPushButton('No'),
+                      QtWidgets.QMessageBox.NoRole)
+        dlg.exec_()
+        return dlg.buttonRole(dlg.clickedButton())
+
+    def closeEvent(self, event):
+        """ Confirm and close application. """
+        if self._dash_apps:
+            reply = self.confirm_dialog('There are active web reports which '
+                                        'will be terminated. Are you sure you '
+                                        'want to quit?')
+            if reply == QtWidgets.QMessageBox.YesRole:
+                event.accept()
+            else:
+                event.ignore()
+        else:
+            event.accept()
+            
+
     def _options_dialog(self):
         """ Show the autoprocessing options dialog """
         dlg = OptionsDialog()

@@ -455,21 +455,28 @@ def dash_report(sessions=None, tags=None):
     def update_contents_lower_multi(sel_var):
         return mapper_multi_lower[sel_var]
 
+    def _video_div(title, url):
+        """Create a video div with title"""
+        vid_el = (html.Video(src=url, controls=True, loop=True, width='100%')
+                  if url else html.H3('No video'))
+        desc_el = html.H3(title)
+        return html.Div([desc_el, vid_el])
+
     @app.callback(
             Output(component_id='videos', component_property='children'),
             [Input(component_id='dd-camera', component_property='value'),
              Input(component_id='dd-video-tag', component_property='value')]
         )
     def update_videos(camera_label, tag):
-        """Pick videos according to camera and tag selection"""
-        # FIXME: show all videos for single session report?
+        """Create a list of video divs according to camera and tag selection"""
         tagged = [tr for tr in trials if tag == tr.eclipse_tag]
-        vids = [tr.get_video_by_label(camera_label, ext='ogv') for tr in
-                tagged]
-        vid_urls = ['/static/%s' % op.split(fn)[1] for fn in vids]
-        vid_elements = [html.Video(src=url, controls=True, loop=True,
-                                   width='100%') for url in vid_urls]
-        return vid_elements or 'No videos'
+        vid_files = [tr.get_video_by_label(camera_label, ext='ogv') for tr in
+                     tagged]
+        vid_urls = ['/static/%s' % op.split(fn)[1] if fn else None for
+                    fn in vid_files]
+        vid_elements = [_video_div(tr.name_with_description, url) for tr, url
+                        in zip(tagged, vid_urls)]
+        return vid_elements
 
     # add a static route to serve session data. be careful outside firewalls
     @app.server.route('/static/<resource>')

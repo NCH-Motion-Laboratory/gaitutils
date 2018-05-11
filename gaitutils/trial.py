@@ -181,21 +181,19 @@ class Trial(object):
         """Return video files associated with trial"""
         return glob.glob(op.join(self.sessionpath, self.trialname+'*%s' % ext))
 
-    def get_video_by_id(self, camera_id, ext='avi'):
+    def _get_videos_by_id(self, camera_id, ext='avi'):
         """Get trial video correspoding to given camera id (str)"""
-        vids = [vid for vid in self.video_files(ext=ext) if camera_id in vid]
-        if len(vids) > 1:
-            raise ValueError('Multiple video files match id %s' % camera_id)
-        return vids[0] if vids else None
+        return [vid for vid in self.video_files(ext=ext) if camera_id in vid]
 
     def get_video_by_label(self, camera_label, ext='avi'):
         """Get trial video correspoding to given camera id (str)"""
-        label_ids = [id for id, label in cfg.general.camera_labels.items() if
-                     camera_label == label]
-        vids = [vid for vid in self.video_files(ext=ext) for camera_id in
-                label_ids if camera_id in vid]
+        ids = [id for id, label in cfg.general.camera_labels.items() if
+               camera_label == label]
+        vids = [vid for id in ids for vid in
+                self._get_videos_by_id(id, ext=ext)]
         if len(vids) > 1:
-            raise ValueError('Multiple video files match id %s' % camera_id)
+            raise ValueError('Multiple video files match label %s'
+                             % camera_label)
         return vids[0] if vids else None
 
     @property

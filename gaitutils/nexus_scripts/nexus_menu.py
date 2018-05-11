@@ -513,15 +513,15 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if not dlg.exec_():
             return
         sessions = dlg.sessions
-        vidfiles = list()
 
-        # check for tagged trials and collect video files for conversion
+        # for comparison between sessions, get representative trials only
+        tags = (cfg.plot.eclipse_repr_tags if len(sessions) > 1 else
+                cfg.plot.eclipse_tags)
+
+        # collect all video files for conversion
+        vidfiles = list()
         for session in sessions:
-            tags = cfg.plot.eclipse_repr_tags
             tagged = nexus.find_tagged(sessionpath=session, tags=tags)
-            if len(tagged) != 2:
-                qt_message_dialog('Cannot find representative trials for session %s' % session)
-                return
             for c3dfile in tagged:
                 vidfiles.extend(nexus.find_trial_videos(c3dfile))
 
@@ -535,10 +535,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
         prog.setGeometry(500, 300, 500, 100)
         prog.show()
         QtWidgets.QApplication.processEvents()
-        report.convert_videos(vidfiles, prog_callback=lambda k, fn: self.update_progbar(prog, k, fn))
+        report.convert_videos(vidfiles, prog_callback=lambda k,
+                              fn: self.update_progbar(prog, k, fn))
         prog.setLabelText('Creating report...')
         QtWidgets.QApplication.processEvents()
-        app = report.dash_report(sessions=sessions)
+        app = report.dash_report(sessions=sessions, tags=tags)
         # FIXME: sometimes it seems that videos are not complete at this point?!
         prog.hide()
         self._enable_op_buttons()

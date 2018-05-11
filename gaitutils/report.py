@@ -465,7 +465,7 @@ def dash_report(sessions=None, tags=None):
         """Create a video div with title"""
         if not url:
             return _no_video_div()
-        vid_el = html.Video(src=url, controls=True, loop=True, preload=True,
+        vid_el = html.Video(src=url, controls=True, loop=True, preload='auto',
                             width='100%', title=title)
         return html.Div([title, vid_el])
 

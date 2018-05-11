@@ -108,14 +108,14 @@ def _var_title(var):
 
 
 def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
-                 trial_linestyles=None):
+                 trial_linestyles='same'):
     """Make a plotly plot of layout, including given trials.
 
     trials: list of gaitutils.Trial instances
     layout: list of lists defining plot layout (see plot.py)
     model_normaldata: dict of normal data for model variables
     legend_type: 'tag_only' for Eclipse tag, 'name_with_tag' or 'full'
-    trial_linestyles: None for all identical, 'trial' for trial specific
+    trial_linestyles: 'same' for all identical, 'trial' for trial specific
                       style, 'session' for session specific style
     """
 
@@ -190,7 +190,7 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                                 line = {'color': trial_color}
                                 if context == 'L':
                                     line['dash'] = 'dash'
-                            elif trial_linestyles is None:
+                            elif trial_linestyles == 'same':
                                 # identical color for all trials
                                 line = {'color':
                                         cfg.plot.model_tracecolors[context]}
@@ -399,7 +399,7 @@ def dash_report(sessions=None, tags=None):
         logger.debug('creating plot for %s' % label)
         # for comparison report, include session info in plot legends and
         # use session specific line style
-        trial_linestyles = 'session' if is_comparison else 'trial'
+        trial_linestyles = 'session' if is_comparison else 'same'
         legend_type = 'name_with_tag' if is_comparison else 'tag_only'
         fig_ = _plot_trials(trials, layout, model_normaldata,
                             legend_type=legend_type,

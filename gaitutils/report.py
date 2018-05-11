@@ -174,13 +174,12 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                     mod = models.model_from_var(var)
                     if mod:  # plot model variable
                         do_plot = True
+                        
                         if var in mod.varnames_noside:
                             var = context + var
-                        # FIXME: configurable? skip kinetic for no context
 
-                        if mod.is_kinetic_var(var):
-                            if var[0] != context:
-                                do_plot = False
+                        if mod.is_kinetic_var(var) and not cyc.on_forceplate:
+                            do_plot = False
 
                         if do_plot:
                             t, y = trial[var]

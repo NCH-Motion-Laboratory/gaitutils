@@ -312,10 +312,8 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
     return fig
 
 
-def _make_layouts_dropdown():
-    """Layouts for dropdown menus. Use OrderedDict to keep order of items
-    in menu"""
-    return opts
+
+
 
 
 def dash_report(sessions=None, tags=None):
@@ -334,7 +332,6 @@ def dash_report(sessions=None, tags=None):
         tags = (cfg.plot.eclipse_repr_tags if is_comparison else
                 cfg.plot.eclipse_tags)
 
-    cams = list()
     trials = list()
     for session in sessions:
         c3ds = find_tagged(sessionpath=session, tags=tags)
@@ -345,13 +342,6 @@ def dash_report(sessions=None, tags=None):
         trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
         trials.extend(trials_this)
 
-        for c3d in c3ds:
-            cams.append(get_camera_ids(c3d))
-
-    cameras = cams[0]
-    if cams.count(cameras) != len(cams):
-        raise ValueError('Camera ids do not match between sessions or files')
-
     # load normal data for gait models
     model_normaldata = dict()
     for fn in cfg.general.normaldata_files:
@@ -360,10 +350,8 @@ def dash_report(sessions=None, tags=None):
 
     # build dcc.Dropdown options list for the cameras and tags
     opts_cameras = list()
-    for c in cameras:
-        label = (cfg.general.camera_labels[c] if c in
-                 cfg.general.camera_labels else c)
-        opts_cameras.append({'label': label, 'value': c})
+    for label in set(gaitutils.cfg.general.camera_labels.values()):
+        opts_cameras.append({'label': label, 'value': label})
     opts_tags = list()
     for t in tags:
         opts_tags.append({'label': '%s' % t, 'value': t})
@@ -472,11 +460,12 @@ def dash_report(sessions=None, tags=None):
             [Input(component_id='dd-camera', component_property='value'),
              Input(component_id='dd-video-tag', component_property='value')]
         )
-    def update_videos(camera_id, tag):
+    def update_videos(camera_label, tag):
         """Pick videos according to camera and tag selection"""
         # FIXME: show all videos for single session report?
         tagged = [tr for tr in trials if tag == tr.eclipse_tag]
-        vids = [tr.get_video_by_id(camera_id, ext='ogv') for tr in tagged]
+        vids = [tr.get_video_by_label(camera_label, ext='ogv') for tr in
+                tagged]
         vid_urls = ['/static/%s' % op.split(fn)[1] for fn in vids]
         vid_elements = [html.Video(src=url, controls=True, loop=True,
                                    width='100%') for url in vid_urls]

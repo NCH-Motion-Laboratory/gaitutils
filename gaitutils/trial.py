@@ -188,6 +188,16 @@ class Trial(object):
             raise ValueError('Multiple video files match id %s' % camera_id)
         return vids[0] if vids else None
 
+    def get_video_by_label(self, camera_label, ext='avi'):
+        """Get trial video correspoding to given camera id (str)"""
+        label_ids = [id for id, label in cfg.general.camera_labels.items() if
+                     camera_label == label]
+        vids = [vid for vid in self.video_files(ext=ext) for camera_id in
+                label_ids if camera_id in vid]
+        if len(vids) > 1:
+            raise ValueError('Multiple video files match id %s' % camera_id)
+        return vids[0] if vids else None
+
     @property
     def eclipse_tag(self):
         """Return (first) Eclipse tag for this trial"""

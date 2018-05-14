@@ -273,7 +273,9 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                                 emgbar_ind = cfg.emg.channel_normaldata[var]
                                 for inds in emgbar_ind:
                                     # FIXME: hardcoded color
-                                    ntrace = _plotly_fill_between(inds, [-1e10]*2, [1e10]*2,  # simulate x range fill by high y values
+                                    # NOTE: using big values (>~1e3) for the normal bar height triggers a plotly bug
+                                    # and screws up the normal bars (https://github.com/plotly/plotly.py/issues/1008)
+                                    ntrace = _plotly_fill_between(inds, [-1e1]*2, [1e1]*2,  # simulate x range fill by high y values
                                                                   name='EMG norm.',
                                                                   legendgroup='EMG norm.',
                                                                   showlegend=emg_normaldata_legend,

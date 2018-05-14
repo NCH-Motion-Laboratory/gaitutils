@@ -244,10 +244,13 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                                 fig.append_trace(ntrace, i+1, j+1)
                                 model_normaldata_legend = False  # add to legend only once
 
+                            # rm x tick labels, plot too crowded
+                            fig['layout'][xaxis].update(showticklabels=False)
                             # LaTeX does not render, so rm units from ylabel
                             ylabel = ' '.join(mod.ylabels[var].split(' ')[k]
                                               for k in [0, -1])
                             fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize})
+
 
                     # plot EMG variable
                     elif (trial.emg.is_channel(var) or var in
@@ -295,6 +298,8 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                                                         range=emg_yrange)  # FIXME: cfg
                             # prevent changes due to legend clicks etc.
                             fig['layout'][xaxis].update(range=[0, 100])
+                            # rm x tick labels, plot too crowded
+                            fig['layout'][xaxis].update(showticklabels=False)
 
                     elif var is None:
                         continue
@@ -305,12 +310,13 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                     else:
                         raise Exception('Unknown variable %s' % var)
 
-    # put x labels on last row only
+    # put x labels on last row only, re-enable tick labels for last row
     inds_last = range((nrows-1)*ncols, nrows*ncols)
     axes_last = ['xaxis%d' % (ind+1) for ind in inds_last]
     for ax in axes_last:
         fig['layout'][ax].update(title='% of gait cycle',
-                                 titlefont={'size': label_fontsize})
+                                 titlefont={'size': label_fontsize},
+                                 showticklabels=True)
 
     margin = go.Margin(l=50, r=0, b=50, t=50, pad=4)
     layout = go.Layout(legend=dict(x=100, y=.5), margin=margin,

@@ -432,12 +432,8 @@ def dash_report(sessions=None, tags=None):
 
     # create the app
     app = dash.Dash()
-    app.layout = html.Div([
 
-        html.Div([
-            html.Div([
-
-                    html.H6(report_name),
+    double_left_panel = html.Div([
 
                     dcc.Dropdown(id='dd-vars-upper-multi', clearable=False,
                                  options=opts_multi,
@@ -450,6 +446,30 @@ def dash_report(sessions=None, tags=None):
                                  value=opts_multi[0]['value']),
 
                     html.Div(id='div-lower')
+
+                                ])
+
+    single_left_panel = html.Div([
+
+                    dcc.Dropdown(id='dd-vars-upper-multi', clearable=False,
+                                 options=opts_multi,
+                                 value=opts_multi[0]['value']),
+
+                    html.Div(id='div-upper')
+                    ])
+
+    app.layout = html.Div([
+
+        html.Div([
+            html.Div([
+
+                    html.H6(report_name),
+
+                    dcc.Checklist(id='double-left',
+                                  options=[{'label': 'Two panels',
+                                            'value': 'double'}], values=['double']),
+
+                    html.Div(double_left_panel, id='div-left-main')
 
                     ], className='eight columns'),
 
@@ -469,6 +489,13 @@ def dash_report(sessions=None, tags=None):
 
                      ], className='row')
                    ])
+
+    @app.callback(
+            Output(component_id='div-left-main', component_property='children'),
+            [Input(component_id='double-left', component_property='values')]
+        )
+    def update_panel_layout(double_panels):
+        return double_left_panel if 'double' in double_panels else single_left_panel
 
     @app.callback(
             Output(component_id='div-upper', component_property='children'),

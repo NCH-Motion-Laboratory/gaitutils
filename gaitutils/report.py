@@ -25,7 +25,7 @@ import subprocess
 import ctypes
 
 import gaitutils
-from gaitutils import cfg, normaldata, models, layouts
+from gaitutils import cfg, normaldata, models, layouts, GaitDataError
 from gaitutils.nexus import find_tagged
 
 
@@ -87,7 +87,10 @@ def _make_dropdown_lists(options):
     identity = list()
     mapper = dict()
     for option in options:
-        identity.append({'label': option['label'], 'value': option['label']})
+        di = {'label': option['label'], 'value': option['label']}
+        if 'disabled' in option and option['disabled']:
+            di['disabled'] = True
+        identity.append(di)
         mapper[option['label']] = option['value']
     return identity, mapper
 
@@ -385,6 +388,7 @@ def dash_report(sessions=None, tags=None):
             ('Kinematics', cfg.layouts.lb_kinematics),
             ('Kinetics', cfg.layouts.lb_kinetics),
             ('EMG', emg_layout),
+            ('Muscle length', cfg.layouts.musclelen),
             ('Kinetics-EMG left', cfg.layouts.lb_kinetics_emg_l),
             ('Kinetics-EMG right', cfg.layouts.lb_kinetics_emg_r),
             ])
@@ -405,9 +409,17 @@ def dash_report(sessions=None, tags=None):
         # use session specific line style
         trial_linestyles = 'session' if is_comparison else 'same'
         legend_type = 'name_with_tag' if is_comparison else 'tag_only'
-        fig_ = _plot_trials(trials, layout, model_normaldata,
-                            legend_type=legend_type,
-                            trial_linestyles=trial_linestyles)
+        try:
+            fig_ = _plot_trials(trials, layout, model_normaldata,
+                                legend_type=legend_type,
+                                trial_linestyles=trial_linestyles)
+        except GaitDataError:
+            logger.warning('Failed to create plot for %s' % label)
+            dd_opts_multi_upper.append({'label': label, 'value': label,
+                                        'disabled': True})            
+            dd_opts_multi_lower.append({'label': label, 'value': label,
+                                        'disabled': True})            
+            continue
         # need to create dcc.Graphs with unique ids for upper/lower panel(?)
         graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k)
         dd_opts_multi_upper.append({'label': label, 'value': graph_upper})

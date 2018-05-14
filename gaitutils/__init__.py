@@ -15,13 +15,13 @@ from . import guiutils
 from . import utils
 from . import stats
 from . import analysis
-from . import report
 from .emg import EMG
 from .envutils import register_gui_exception_handler, GaitDataError
 from .numutils import rising_zerocross, falling_zerocross
 from .guiutils import messagebox
 from .plot import Plotter
 from .trial import Trial
+from . import report
 
 from nexus_scripts import nexus_emgplot
 from nexus_scripts import nexus_musclelen_plot

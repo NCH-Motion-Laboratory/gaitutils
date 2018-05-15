@@ -421,10 +421,11 @@ def dash_report(sessions=None, tags=None):
                                         'disabled': True})            
             continue
         # need to create dcc.Graphs with unique ids for upper/lower panel(?)
-        graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k)
+        # these need to always take 100% of their parent div height
+        graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k, style={'height': '100%'})
         dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
         graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
-                                % (len(_layouts)+k))
+                                % (len(_layouts)+k), style={'height': '100%'})
         dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
 
     opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
@@ -439,15 +440,15 @@ def dash_report(sessions=None, tags=None):
                                  options=opts_multi,
                                  value=opts_multi[0]['value']),
 
-                    html.Div(id='div-upper'),
+                    html.Div(id='div-upper', style={'height': '50%'}),
 
                     dcc.Dropdown(id='dd-vars-lower-multi', clearable=False,
                                  options=opts_multi,
                                  value=opts_multi[0]['value']),
 
-                    html.Div(id='div-lower')
+                    html.Div(id='div-lower', style={'height': '50%'})
 
-                                ])
+                                ], style={'height': '80vh'})
 
     single_left_panel = html.Div([
 
@@ -455,8 +456,8 @@ def dash_report(sessions=None, tags=None):
                                  options=opts_multi,
                                  value=opts_multi[0]['value']),
 
-                    html.Div(id='div-upper')
-                    ])
+                    html.Div(id='div-upper', style={'height': '100%'})
+                    ], style={'height': '80vh'})
 
     app.layout = html.Div([
 

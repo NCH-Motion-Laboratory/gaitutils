@@ -9,7 +9,7 @@ Reporting functions, WIP
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import plotly.tools
 import flask
 import plotly
@@ -431,14 +431,16 @@ def dash_report(sessions=None, tags=None):
     opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
     opts_multi, mapper_multi_lower = _make_dropdown_lists(dd_opts_multi_lower)
 
-    def make_left_panel(split=True):
+    def make_left_panel(split=True, upper_value='Kinematics',
+                        lower_value='Kinematics'):
         """Make the left graph panels. If split, make two stacked panels"""
 
         # the upper graph & dropdown
         items = [
                     dcc.Dropdown(id='dd-vars-upper-multi', clearable=False,
                                  options=opts_multi,
-                                 value=opts_multi[0]['value']),
+                                 value=upper_value),
+                                 # value=opts_multi[0]['value']),
 
                     html.Div(id='div-upper', style={'height': '50%'}
                              if split else {'height': '100%'})
@@ -450,7 +452,8 @@ def dash_report(sessions=None, tags=None):
                             dcc.Dropdown(id='dd-vars-lower-multi',
                                          clearable=False,
                                          options=opts_multi,
-                                         value=opts_multi[0]['value']),
+                                         value=lower_value),
+                                         # value=opts_multi[0]['value']),
 
                             html.Div(id='div-lower', style={'height': '50%'})
                         ])
@@ -493,13 +496,16 @@ def dash_report(sessions=None, tags=None):
                      ], className='row')
                    ])
 
+    # we do not look at the state of the lower graph panel, since it may not
+    # exist
     @app.callback(
             Output(component_id='div-left-main', component_property='children'),
-            [Input(component_id='split-left', component_property='values')]
+            [Input(component_id='split-left', component_property='values')],
+            [State(component_id='dd-vars-upper-multi', component_property='value')]
         )
-    def update_panel_layout(split_panels):
+    def update_panel_layout(split_panels, upper_value):
         split = 'split' in split_panels
-        return make_left_panel(split)
+        return make_left_panel(split, upper_value=upper_value)
 
     @app.callback(
             Output(component_id='div-upper', component_property='children'),

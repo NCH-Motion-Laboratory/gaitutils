@@ -431,9 +431,6 @@ def dash_report(sessions=None, tags=None):
     opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
     opts_multi, mapper_multi_lower = _make_dropdown_lists(dd_opts_multi_lower)
 
-    # create the app
-    app = dash.Dash()
-
     def make_left_panel(split=True):
         """Make the left graph panels. If split, make two stacked panels"""
 
@@ -459,6 +456,9 @@ def dash_report(sessions=None, tags=None):
                         ])
 
         return html.Div(items, style={'height': '80vh'})
+
+    # create the app
+    app = dash.Dash()
 
     app.layout = html.Div([
 

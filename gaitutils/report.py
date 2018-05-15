@@ -495,10 +495,11 @@ def dash_report(sessions=None, tags=None):
 
     @app.callback(
             Output(component_id='div-left-main', component_property='children'),
-            [Input(component_id='double-left', component_property='values')]
+            [Input(component_id='split-left', component_property='values')]
         )
     def update_panel_layout(split_panels):
-        return make_left_panel() if 'split' in split_panels else make_left_panel(split=False)
+        split = 'split' in split_panels
+        return make_left_panel(split)
 
     @app.callback(
             Output(component_id='div-upper', component_property='children'),

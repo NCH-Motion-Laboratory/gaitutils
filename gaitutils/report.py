@@ -434,13 +434,20 @@ def dash_report(sessions=None, tags=None):
     # create the app
     app = dash.Dash()
 
-    double_left_panel = html.Div([
 
+    def make_left_panel(split=True): 
+        # the upper graph        
+        items = [
                     dcc.Dropdown(id='dd-vars-upper-multi', clearable=False,
                                  options=opts_multi,
                                  value=opts_multi[0]['value']),
 
-                    html.Div(id='div-upper', style={'height': '50%'}),
+                    html.Div(id='div-upper', style={'height': '50%'} if split else {'height': '100%'})
+                ]
+
+        if split:
+            # the lower graph
+            items.extend([
 
                     dcc.Dropdown(id='dd-vars-lower-multi', clearable=False,
                                  options=opts_multi,
@@ -448,16 +455,10 @@ def dash_report(sessions=None, tags=None):
 
                     html.Div(id='div-lower', style={'height': '50%'})
 
-                                ], style={'height': '80vh'})
+                        ])
 
-    single_left_panel = html.Div([
+        return html.Div(items, style={'height': '80vh'})
 
-                    dcc.Dropdown(id='dd-vars-upper-multi', clearable=False,
-                                 options=opts_multi,
-                                 value=opts_multi[0]['value']),
-
-                    html.Div(id='div-upper', style={'height': '100%'})
-                    ], style={'height': '80vh'})
 
     app.layout = html.Div([
 
@@ -470,7 +471,7 @@ def dash_report(sessions=None, tags=None):
                                   options=[{'label': 'Two panels',
                                             'value': 'double'}], values=['double']),
 
-                    html.Div(double_left_panel, id='div-left-main')
+                    html.Div(make_left_panel(split=True), id='div-left-main')
 
                     ], className='eight columns'),
 
@@ -496,7 +497,7 @@ def dash_report(sessions=None, tags=None):
             [Input(component_id='double-left', component_property='values')]
         )
     def update_panel_layout(double_panels):
-        return double_left_panel if 'double' in double_panels else single_left_panel
+        return make_left_panel() if 'double' in double_panels else make_left_panel(split=False)
 
     @app.callback(
             Output(component_id='div-upper', component_property='children'),

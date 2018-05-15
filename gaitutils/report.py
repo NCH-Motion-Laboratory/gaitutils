@@ -434,31 +434,31 @@ def dash_report(sessions=None, tags=None):
     # create the app
     app = dash.Dash()
 
+    def make_left_panel(split=True):
+        """Make the left graph panels. If split, make two stacked panels"""
 
-    def make_left_panel(split=True): 
-        # the upper graph        
+        # the upper graph & dropdown
         items = [
                     dcc.Dropdown(id='dd-vars-upper-multi', clearable=False,
                                  options=opts_multi,
                                  value=opts_multi[0]['value']),
 
-                    html.Div(id='div-upper', style={'height': '50%'} if split else {'height': '100%'})
+                    html.Div(id='div-upper', style={'height': '50%'}
+                             if split else {'height': '100%'})
                 ]
 
         if split:
-            # the lower graph
+            # add the lower one
             items.extend([
+                            dcc.Dropdown(id='dd-vars-lower-multi',
+                                         clearable=False,
+                                         options=opts_multi,
+                                         value=opts_multi[0]['value']),
 
-                    dcc.Dropdown(id='dd-vars-lower-multi', clearable=False,
-                                 options=opts_multi,
-                                 value=opts_multi[0]['value']),
-
-                    html.Div(id='div-lower', style={'height': '50%'})
-
+                            html.Div(id='div-lower', style={'height': '50%'})
                         ])
 
         return html.Div(items, style={'height': '80vh'})
-
 
     app.layout = html.Div([
 
@@ -467,10 +467,11 @@ def dash_report(sessions=None, tags=None):
 
                     html.H6(report_name),
 
-                    dcc.Checklist(id='double-left',
+                    dcc.Checklist(id='split-left',
                                   options=[{'label': 'Two panels',
-                                            'value': 'double'}], values=['double']),
+                                            'value': 'split'}], values=['split']),
 
+                    # initialize with split panels
                     html.Div(make_left_panel(split=True), id='div-left-main')
 
                     ], className='eight columns'),
@@ -496,8 +497,8 @@ def dash_report(sessions=None, tags=None):
             Output(component_id='div-left-main', component_property='children'),
             [Input(component_id='double-left', component_property='values')]
         )
-    def update_panel_layout(double_panels):
-        return make_left_panel() if 'double' in double_panels else make_left_panel(split=False)
+    def update_panel_layout(split_panels):
+        return make_left_panel() if 'split' in split_panels else make_left_panel(split=False)
 
     @app.callback(
             Output(component_id='div-upper', component_property='children'),

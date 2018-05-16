@@ -131,6 +131,7 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
     # configurabe opts (here for now)
     label_fontsize = 12
 
+
     nrows = len(layout)
     ncols = len(layout[0])
 
@@ -321,12 +322,21 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                                  titlefont={'size': label_fontsize},
                                  showticklabels=True)
 
-    margin = go.Margin(l=50, r=0, b=50, t=50, pad=4)
+    margin = go.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
     layout = go.Layout(legend=dict(x=100, y=.5), margin=margin,
                        font={'size': label_fontsize})
 
     fig['layout'].update(layout)
     return fig
+
+
+def _time_dist_plot(c3ds):
+    fig = gaitutils.nexus_time_distance_vars.do_multitrial_plot(c3ds, show=False, make_pdf=False)
+    import io    
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png')
+    buf.seek(0)
+    return buf
 
 
 def dash_report(sessions=None, tags=None):
@@ -351,6 +361,7 @@ def dash_report(sessions=None, tags=None):
                 cfg.plot.eclipse_tags)
 
     trials = list()
+    c3ds_all = list()
     for session in sessions:
         c3ds = find_tagged(sessionpath=session, tags=tags)
         # for comparison, require that correct number of trials is found
@@ -358,6 +369,7 @@ def dash_report(sessions=None, tags=None):
             raise ValueError('Expected %d tagged trials for session %s'
                              % (len(tags), session))
         trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
+        c3ds_all.extend(c3ds)
         trials.extend(trials_this)
     trials = sorted(trials, key=lambda tr: tr.eclipse_tag)
 
@@ -410,23 +422,43 @@ def dash_report(sessions=None, tags=None):
         trial_linestyles = 'session' if is_comparison else 'same'
         legend_type = 'name_with_tag' if is_comparison else 'tag_only'
         try:
-            fig_ = _plot_trials(trials, layout, model_normaldata,
-                                legend_type=legend_type,
-                                trial_linestyles=trial_linestyles)
+
+            # special layout
+            if isinstance(layout, basestring):
+                if layout == 'time_distance':
+                    buf = _time_dist_plot()
+                    import base64
+                    base64.encode
+                    encod
+                    html.Img(src='data:image/png;base64,{}'.format(encoded_image))                    
+                    
+                elif layout == 'patient_info':
+                    pass
+                else:
+                    raise ValueError('Invalid plot type')
+
+            # regular gaitutils layout
+            else:
+                fig_ = _plot_trials(trials, layout, model_normaldata,
+                                    legend_type=legend_type,
+                                    trial_linestyles=trial_linestyles)
+                graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
+                                        style={'height': '100%'})
+                graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
+                                        % (len(_layouts)+k),
+                                        style={'height': '100%'})
+
+            dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
+            dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
+
         except GaitDataError:
             logger.warning('Failed to create plot for %s' % label)
+            # insert the menu options but make them disabled
             dd_opts_multi_upper.append({'label': label, 'value': label,
-                                        'disabled': True})            
+                                        'disabled': True})
             dd_opts_multi_lower.append({'label': label, 'value': label,
-                                        'disabled': True})            
+                                        'disabled': True})
             continue
-        # need to create dcc.Graphs with unique ids for upper/lower panel(?)
-        # these need to always take 100% of their parent div height
-        graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k, style={'height': '100%'})
-        dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
-        graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
-                                % (len(_layouts)+k), style={'height': '100%'})
-        dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
 
     opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
     opts_multi, mapper_multi_lower = _make_dropdown_lists(dd_opts_multi_lower)
@@ -496,8 +528,6 @@ def dash_report(sessions=None, tags=None):
                      ], className='row')
                    ])
 
-    # we do not look at the state of the lower graph panel, since it may not
-    # exist
     @app.callback(
             Output(component_id='div-left-main', component_property='children'),
             [Input(component_id='split-left', component_property='values')],

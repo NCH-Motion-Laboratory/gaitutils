@@ -631,6 +631,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             try:
                 retval = fun_()
             except Exception as e:
+                retval = None
                 self._exception(e)
             finally:
                 if block_ui:

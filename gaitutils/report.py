@@ -23,6 +23,8 @@ import os.path as op
 import os
 import subprocess
 import ctypes
+import base64
+import io
 
 import gaitutils
 from gaitutils import cfg, normaldata, models, layouts, GaitDataError
@@ -330,11 +332,11 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
     return fig
 
 
-def _time_dist_plot(c3ds):
-    fig = gaitutils.nexus_time_distance_vars.do_multitrial_plot(c3ds, show=False, make_pdf=False)
-    import io    
+def _time_dist_plot(c3ds, sessions):
+    cond_labels = [op.split(session)[-1] for session in sessions]
+    fig = gaitutils.nexus_time_distance_vars._plot_trials(c3ds, cond_labels)
     buf = io.BytesIO()
-    fig.savefig(buf, format='png')
+    fig.savefig(buf, format='svg')
     buf.seek(0)
     return buf
 
@@ -364,12 +366,12 @@ def dash_report(sessions=None, tags=None):
     c3ds_all = list()
     for session in sessions:
         c3ds = find_tagged(sessionpath=session, tags=tags)
+        c3ds_all.append(c3ds)
         # for comparison, require that correct number of trials is found
         if is_comparison and len(c3ds) != len(tags):
             raise ValueError('Expected %d tagged trials for session %s'
                              % (len(tags), session))
         trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
-        c3ds_all.extend(c3ds)
         trials.extend(trials_this)
     trials = sorted(trials, key=lambda tr: tr.eclipse_tag)
 
@@ -399,6 +401,7 @@ def dash_report(sessions=None, tags=None):
     _layouts = OrderedDict([
             ('Kinematics', cfg.layouts.lb_kinematics),
             ('Kinetics', cfg.layouts.lb_kinetics),
+            ('Time-distance variables', 'time_dist'),
             ('EMG', emg_layout),
             ('Muscle length', cfg.layouts.musclelen),
             ('Kinetics-EMG left', cfg.layouts.lb_kinetics_emg_l),
@@ -425,12 +428,13 @@ def dash_report(sessions=None, tags=None):
 
             # special layout
             if isinstance(layout, basestring):
-                if layout == 'time_distance':
-                    buf = _time_dist_plot()
-                    import base64
-                    base64.encode
-                    encod
-                    html.Img(src='data:image/png;base64,{}'.format(encoded_image))                    
+                if layout == 'time_dist':
+                    buf = _time_dist_plot(c3ds_all, sessions)
+                    encoded_image = base64.b64encode(buf.read())
+                    graph_upper = html.Img(src='data:image/svg;base64,{}'.format(encoded_image), id='gaitgraph%d' % k,
+                                        style={'height': '100%'})
+                    graph_upper = html.Img(src='data:image/svg;base64,{}'.format(encoded_image), id='gaitgraph%d' % (len(_layouts)+k),
+                                        style={'height': '100%'})
                     
                 elif layout == 'patient_info':
                     pass

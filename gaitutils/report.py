@@ -431,9 +431,9 @@ def dash_report(sessions=None, tags=None):
                 if layout == 'time_dist':
                     buf = _time_dist_plot(c3ds_all, sessions)
                     encoded_image = base64.b64encode(buf.read())
-                    graph_upper = html.Img(src='data:image/svg;base64,{}'.format(encoded_image), id='gaitgraph%d' % k,
+                    graph_upper = html.Img(src='data:image/svg+xml;base64,{}'.format(encoded_image), id='gaitgraph%d' % k,
                                         style={'height': '100%'})
-                    graph_upper = html.Img(src='data:image/svg;base64,{}'.format(encoded_image), id='gaitgraph%d' % (len(_layouts)+k),
+                    graph_lower = html.Img(src='data:image/svg+xml;base64,{}'.format(encoded_image), id='gaitgraph%d' % (len(_layouts)+k),
                                         style={'height': '100%'})
                     
                 elif layout == 'patient_info':

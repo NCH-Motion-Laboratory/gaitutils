@@ -2,17 +2,85 @@
 """
 Created on Tue Jan 26 15:31:11 2016
 
-Misc functions for Gaitplotter (OS dialogs etc)
+gaitutils common GUI functionality
 
 @author: Jussi (jnu@iki.fi)
 """
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 import ctypes
 import sys
 
 
-# FIXME: this should go into common GUI module
+class NiceListWidgetItem(QtWidgets.QListWidgetItem):
+    """ Make list items more pythonic - otherwise would have to do horrible and
+    bug-prone things like checkState() """
+
+    def __init__(self, *args, **kwargs):
+        # don't pass this arg to superclass __init__
+        checkable = kwargs.pop('checkable')
+        super(NiceListWidgetItem, self).__init__(*args, **kwargs)
+        if checkable:
+            self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
+
+    @property
+    def userdata(self):
+        return super(NiceListWidgetItem, self).data(QtCore.Qt.UserRole)
+
+    @userdata.setter
+    def userdata(self, _data):
+        if _data is not None:
+            super(NiceListWidgetItem, self).setData(QtCore.Qt.UserRole, _data)
+
+    @property
+    def checkstate(self):
+        return super(NiceListWidgetItem, self).checkState()
+
+    @checkstate.setter
+    def checkstate(self, checked):
+        state = QtCore.Qt.Checked if checked else QtCore.Qt.Unchecked
+        super(NiceListWidgetItem, self).setCheckState(state)
+
+
+class NiceListWidget(QtWidgets.QListWidget):
+    """ Adds some convenience to QListWidget """
+
+    def __init__(self, parent=None):
+        super(NiceListWidget, self).__init__(parent)
+
+    @property
+    def items(self):
+        """ Yield all items """
+        for i in range(self.count()):
+            yield self.item(i)
+
+    @property
+    def checked_items(self):
+        """ Yield checked items """
+        return (item for item in self.items if item.checkstate)
+
+    def check_all(self):
+        """ Check all items """
+        for item in self.items:
+            item.checkstate = True
+
+    def check_none(self):
+        """ Uncheck all items """
+        for item in self.items:
+            item.checkstate = False
+
+    def add_item(self, txt, data=None, checkable=False, checked=False):
+        """ Add checkable item with data. Select new item. """
+        item = NiceListWidgetItem(txt, self, checkable=checkable)
+        item.userdata = data
+        if checkable:
+            item.checkstate = checked
+        self.setCurrentItem(item)
+
+    def rm_current_item(self):
+        self.takeItem(self.row(self.currentItem()))
+
+
 def qt_message_dialog(msg):
     """ Show message with an 'OK' button. """
     dlg = QtWidgets.QMessageBox()
@@ -36,9 +104,9 @@ def qt_yesno_dialog(msg):
     return dlg.buttonRole(dlg.clickedButton())
 
 
+# non-qt dialogs - Windows specific
 def error_exit(message):
     """ Custom error handler """
-    # graphical error dialog - Windows specific
     # casts to str are needed, since MessageBoxA does not like Unicode
     ctypes.windll.user32.MessageBoxA(0, str(message),
                                      "Error in Nexus Python script", 0)

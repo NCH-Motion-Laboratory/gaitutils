@@ -12,12 +12,16 @@ from pkg_resources import resource_filename
 from functools import partial
 import sys
 import ast
+import os.path as op
 import os
+import subprocess
 
 from gaitutils.numutils import check_hetu
+from gaitutils.guiutils import qt_message_dialog
 from gaitutils import GaitDataError
 from gaitutils import nexus
 from gaitutils import cfg
+from gaitutils import report
 from gaitutils import nexus_emgplot
 from gaitutils import nexus_musclelen_plot
 from gaitutils import nexus_kinetics_emgplot
@@ -47,14 +51,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def message_dialog(msg):
-    """ Show message with an 'OK' button. """
-    dlg = QtWidgets.QMessageBox()
-    dlg.setWindowTitle('Message')
-    dlg.setText(msg)
-    dlg.addButton(QtWidgets.QPushButton('Ok'),
-                  QtWidgets.QMessageBox.YesRole)
-    dlg.exec_()
+def _browse_localhost(port):
+    """Open configured browser on localhost:port"""
+    url = '127.0.0.1:%d' % port
+    try:
+        subprocess.Popen([cfg.general.browser_path, url])
+    except Exception:
+        qt_message_dialog('Cannot start configured web browser: %s'
+                          % cfg.general.browser_path)
 
 
 class HetuDialog(QtWidgets.QDialog):
@@ -84,11 +88,12 @@ class HetuDialog(QtWidgets.QDialog):
         if self.fullname and check_hetu(self.hetu):
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
-            message_dialog('Please enter a valid name and hetu')
+            qt_message_dialog('Please enter a valid name and hetu')
 
 
 class ComparisonDialog(QtWidgets.QDialog):
-    """ Display a dialog for the comparison report """
+    """ Display a dialog for the comparison report
+    FIXME: adapt web report gui """
 
     def __init__(self):
         super(self.__class__, self).__init__()
@@ -103,7 +108,7 @@ class ComparisonDialog(QtWidgets.QDialog):
 
     def add_session(self, from_nexus=False):
         if len(self.sessions) == self.MAX_SESSIONS:
-            message_dialog('You can specify maximum of %d sessions' %
+            qt_message_dialog('You can specify maximum of %d sessions' %
                            self.MAX_SESSIONS)
             return
         if from_nexus:
@@ -124,7 +129,49 @@ class ComparisonDialog(QtWidgets.QDialog):
 
     def accept(self):
         if len(self.sessions) < 2:
-            message_dialog('Please select at least 2 sessions to compare')
+            qt_message_dialog('Please select at least 2 sessions to compare')
+        else:
+            self.done(QtWidgets.QDialog.Accepted)
+
+
+class WebReportDialog(QtWidgets.QDialog):
+    """ Display a dialog for creating the web report """
+
+    def __init__(self):
+        super(self.__class__, self).__init__()
+        # load user interface made with designer
+        uifile = resource_filename(__name__, 'web_report.ui')
+        uic.loadUi(uifile, self)
+        self.btnBrowseSession.clicked.connect(self.add_session)
+        self.btnAddNexusSession.clicked.connect(lambda: self.add_session(from_nexus=True))
+        self.btnClearAll.clicked.connect(self.listSessions.clear)
+        self.btnClearCurrent.clicked.connect(self.listSessions.rm_current_item)
+        self.MAX_SESSIONS = 3
+
+    def add_session(self, from_nexus=False):
+        if len(self.sessions) == self.MAX_SESSIONS:
+            qt_message_dialog('You can specify maximum of %d sessions' %
+                              self.MAX_SESSIONS)
+            return
+        if from_nexus:
+            dir = nexus.get_sessionpath()
+        else:
+            dir = QtWidgets.QFileDialog.getExistingDirectory(self,
+                                                             'Select session')
+            dir = op.normpath(dir)
+        if dir:
+            if dir in self.sessions:
+                qt_message_dialog('Session already loaded')
+            else:
+                self.listSessions.add_item(dir, data=dir)
+
+    @property
+    def sessions(self):
+        return [item.userdata for item in self.listSessions.items]
+
+    def accept(self):
+        if not self.sessions:
+            qt_message_dialog('Please select at least one session')
         else:
             self.done(QtWidgets.QDialog.Accepted)
 
@@ -226,7 +273,7 @@ class OptionsDialog(QtWidgets.QDialog):
         global cfg
         res, txt = self._check_widget_inputs()
         if not res:
-            message_dialog('Invalid input: %s\nPlease fix before saving' % txt)
+            qt_message_dialog('Invalid input: %s\nPlease fix before saving' % txt)
         else:
             fout = QtWidgets.QFileDialog.getSaveFileName(self,
                                                          'Save config file',
@@ -322,7 +369,7 @@ class OptionsDialog(QtWidgets.QDialog):
             self.update_cfg()
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
-            message_dialog("Invalid input: %s" % txt)
+            qt_message_dialog("Invalid input: %s" % txt)
 
 
 class Gaitmenu(QtWidgets.QMainWindow):
@@ -345,9 +392,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         Running the plotting functions directly from the GUI thread is also a
         bit ugly since the Qt event loop gets called twice, but this does not
         seem to do any harm.
-        _execute runs the given function and handles exceptions. Passing
-        thread=True runs it in a separate worker thread, enabling GUI updates
-        (e.g. logging dialog) which can be nice.
         """
         self._button_connect_task(self.btnCopyVideos,
                                   nexus_copy_trial_videos.do_copy, thread=True)
@@ -377,6 +421,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnTimeDistAverage,
                                   nexus_time_distance_vars.
                                   do_session_average_plot)
+        # these take a long time and do not use matplotlib, so thread them
         self._button_connect_task(self.btnAutoprocTrial,
                                   nexus_autoprocess_trial.autoproc_single,
                                   thread=True)
@@ -388,6 +433,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         self.btnCreatePDFs.clicked.connect(self._create_pdfs)
         self.btnCreateComparison.clicked.connect(self._create_comparison)
+        self.btnCreateWebReport.clicked.connect(self._create_web_report)
         self.btnOptions.clicked.connect(self._options_dialog)
         self.btnQuit.clicked.connect(self.close)
 
@@ -400,6 +446,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         self._fullname = None
         self._hetu = None
+
+        # keep track of active dash apps (web reports)
+        self._dash_apps = dict()
 
         XStream.stdout().messageWritten.connect(self._log_message)
         XStream.stderr().messageWritten.connect(self._log_message)
@@ -414,6 +463,31 @@ class Gaitmenu(QtWidgets.QMainWindow):
         thread. """
         button.clicked.connect(lambda ev: self._execute(fun, thread=thread))
 
+    def confirm_dialog(self, msg):
+        """ Show yes/no dialog. """
+        dlg = QtWidgets.QMessageBox()
+        dlg.setText(msg)
+        dlg.setWindowTitle('Confirm')
+        dlg.addButton(QtWidgets.QPushButton('Yes'),
+                      QtWidgets.QMessageBox.YesRole)
+        dlg.addButton(QtWidgets.QPushButton('No'),
+                      QtWidgets.QMessageBox.NoRole)
+        dlg.exec_()
+        return dlg.buttonRole(dlg.clickedButton())
+
+    def closeEvent(self, event):
+        """ Confirm and close application. """
+        if self._dash_apps:
+            reply = self.confirm_dialog('There are active web reports which '
+                                        'will be terminated. Are you sure you '
+                                        'want to quit?')
+            if reply == QtWidgets.QMessageBox.YesRole:
+                event.accept()
+            else:
+                event.ignore()
+        else:
+            event.accept()
+
     def _options_dialog(self):
         """ Show the autoprocessing options dialog """
         dlg = OptionsDialog()
@@ -426,12 +500,73 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._execute(nexus_make_comparison_report.do_plot,
                           sessions=dlg.sessions)
 
+    @staticmethod
+    def update_progbar(progbar, k, fn):
+        progbar.setValue(k)
+        progbar.setLabelText('Converting %s' % fn)
+        QtWidgets.QApplication.processEvents()
+
+    def _create_web_report(self):
+        """Collect sessions, create the dash app, start it and launch a
+        web browser on localhost on the correct port"""
+        dlg = WebReportDialog()
+        if not dlg.exec_():
+            return
+        sessions = dlg.sessions
+
+        # for comparison between sessions, get representative trials only
+        tags = (cfg.plot.eclipse_repr_tags if len(sessions) > 1 else
+                cfg.plot.eclipse_tags)
+
+        # collect all video files for conversion
+        vidfiles = list()
+        for session in sessions:
+            tagged = nexus.find_tagged(sessionpath=session, tags=tags)
+            for c3dfile in tagged:
+                vidfiles.extend(nexus.find_trial_videos(c3dfile))
+
+        # do the video conversion if needed
+        self._disable_op_buttons()
+        prog = QtWidgets.QProgressDialog()
+        prog.setWindowTitle('Please wait...')
+        prog.setCancelButton(None)
+        prog.setMinimum(0)
+        prog.setMaximum(100)
+        prog.setGeometry(500, 300, 500, 100)
+        prog.show()
+        QtWidgets.QApplication.processEvents()
+        report.convert_videos(vidfiles, prog_callback=lambda k,
+                              fn: self.update_progbar(prog, k, fn))
+        prog.setLabelText('Creating report...')
+        QtWidgets.QApplication.processEvents()
+        app = report.dash_report(sessions=sessions, tags=tags)
+        # FIXME: sometimes it seems that videos are not complete at this point?!
+        prog.hide()
+        self._enable_op_buttons()
+
+        # start server, thread and do not block ui
+        port = 5000 + len(self._dash_apps)
+        self._execute(app.server.run, thread=True, block_ui=False,
+                      debug=False, port=port)
+        self._dash_apps[port] = app  # FIXME: is this needed?
+        sessions_str = '/'.join([op.split(s)[-1] for s in dlg.sessions])
+        report_type = ('single session' if len(dlg.sessions) == 1
+                       else 'comparison')
+        report_name = 'localhost:%d: %s, %s' % (port, report_type,
+                                                sessions_str)
+        # add a list item that keeps track of the port
+        self.listActiveReports.add_item(report_name, data=port)
+        # double clicking on the list item will browse to corresponding port
+        self.listActiveReports.itemDoubleClicked.connect(lambda item: _browse_localhost(item.userdata))
+        logger.debug('starting web browser')
+        _browse_localhost(port)
+
     def _create_pdfs(self):
-        """Creates the full report"""
+        """Creates the full pdf report"""
         try:
             subj = nexus.get_subjectnames()
         except GaitDataError as e:
-            message_dialog(str(e))
+            qt_message_dialog(str(e))
             return
         prompt_ = 'Please give additional subject information for %s:' % subj
         dlg = HetuDialog(prompt=prompt_, fullname=self._fullname,
@@ -451,52 +586,56 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.txtOutput.ensureCursorVisible()
 
     def _no_custom(self):
-        message_dialog('No custom plot defined. Please create '
-                       'nexus_scripts/nexus_customplot.py')
+        qt_message_dialog('No custom plot defined. Please create '
+                          'nexus_scripts/nexus_customplot.py')
 
     def _exception(self, e):
         logger.debug('caught exception while running task')
-        message_dialog(str(e))
+        qt_message_dialog(str(e))
 
     def _disable_op_buttons(self):
         """ Disable all operation buttons """
+        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         for widget in self.opWidgets:
-                self.__dict__[widget].setEnabled(False)
+            self.__dict__[widget].setEnabled(False)
         # update display immediately in case thread gets blocked
         QtWidgets.QApplication.processEvents()
 
     def _enable_op_buttons(self):
         """ Enable all operation buttons """
         for widget in self.opWidgets:
-                self.__dict__[widget].setEnabled(True)
+            self.__dict__[widget].setEnabled(True)
+        QtWidgets.QApplication.restoreOverrideCursor()
 
     def _tardieu(self):
         win = nexus_tardieu.TardieuWindow()
         win.show()
 
-    def _finished(self):
-        self._enable_op_buttons()
-        QtWidgets.QApplication.restoreOverrideCursor()
-
-    def _execute(self, fun, thread=False, *args, **kwargs):
-        """ Run function fun. If thread==True, run in a separate worker
-        thread. """
-        fun_ = partial(fun, *args, **kwargs)
-        self._disable_op_buttons()
-        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+    def _execute(self, fun, thread=False, block_ui=True, **kwargs):
+        """ Run function fun. If thread==True, run it in a separate worker
+        thread. If block_ui, disable the ui until worker thread is finished
+        (except for messages!) Returns function return value if not threaded.
+        kwargs are passed to function
+        """
+        fun_ = partial(fun, **kwargs)
+        if block_ui:
+            self._disable_op_buttons()
         if thread:
             self.runner = Runner(fun_)
-            self.runner.signals.finished.connect(self._finished)
+            if block_ui:
+                self.runner.signals.finished.connect(self._enable_op_buttons)
             self.runner.signals.error.connect(lambda e: self._exception(e))
             self.threadpool.start(self.runner)
+            retval = None
         else:
             try:
-                fun_()
+                retval = fun_()
             except Exception as e:
                 self._exception(e)
             finally:
-                self._enable_op_buttons()
-                QtWidgets.QApplication.restoreOverrideCursor()
+                if block_ui:
+                    self._enable_op_buttons()
+        return retval
 
 
 class RunnerSignals(QObject):

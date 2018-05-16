@@ -154,9 +154,7 @@ def check_nexus():
 def get_sessionpath():
     """ Get path to current session """
     vicon = viconnexus()
-    trialname_ = vicon.GetTrialName()
-    # split the trailing '\\' from the session path
-    return op.split(trialname_[0])[0]
+    return op.normpath(vicon.GetTrialName()[0])
 
 
 def get_trialname():
@@ -183,6 +181,25 @@ def get_session_enfs(sessionpath=None):
     return enffiles
 
 
+def find_trial_videos(fname):
+    """ Finds Nexus video files for trial file (e.g. x1d or c3d) """
+    trialbase = op.splitext(fname)[0]
+    return glob.glob(trialbase+'*avi')
+
+
+def _camera_id(fname):
+    """ Returns camera id for a video file """
+    fn_split = op.split(fname)[-1].split('.')
+    if len(fn_split) < 3:
+        raise ValueError('Unexpected video file name %s' % fname)
+    return fn_split[-3]
+
+
+def get_camera_ids(fname):
+    """ Get camera ids (strings) for a video file """
+    return [_camera_id(vidfile) for vidfile in find_trial_videos(fname)]
+
+
 def c3d2enf(fname):
     """ Converts name of trial .c3d file to corresponding .enf """
     return fname.replace('.c3d', '.Trial.enf')
@@ -197,6 +214,7 @@ def enf2c3d(fname):
 
 
 def find_tagged(tags=None, eclipse_keys=None, sessionpath=None):
+
     """ Find tagged trials in Nexus session path (or given path).
     Returns a list of .c3d files. """
 
@@ -249,11 +267,10 @@ def get_metadata(vicon):
     if bodymass <= 0:
         logger.warn('invalid or unspecified body mass: %.2f', bodymass)
         bodymass = None
-    trialname_ = vicon.GetTrialName()
-    sessionpath = trialname_[0]
-    trialname = trialname_[1]
+    trialname = get_trialname()
     if not trialname:
         raise GaitDataError('No trial loaded in Nexus')
+    sessionpath = get_sessionpath()
     markers = vicon.GetMarkerNames(name)
     # get events - GetEvents() indices seem to often be 1 frame less than on
     # Nexus display - only happens with ROI?

@@ -30,8 +30,7 @@ logger = logging.getLogger(__name__)
 
 def nexus_trial():
     """ Return Trial instance reading from Nexus """
-    vicon = nexus.viconnexus()
-    return Trial(vicon)
+    return Trial(nexus.viconnexus())
 
 
 def _nexus_crop_events_before_forceplate():
@@ -177,7 +176,41 @@ class Trial(object):
         self.samplesperframe = self.analograte/self.framerate
         self.cycles = list(self._scan_cycles())
         self.ncycles = len(self.cycles)
-        self.video_files = glob.glob(self.sessionpath+self.trialname+'*avi')
+
+    def video_files(self, ext='avi'):
+        """Return video files associated with trial"""
+        return glob.glob(op.join(self.sessionpath, self.trialname+'*%s' % ext))
+
+    def _get_videos_by_id(self, camera_id, ext='avi'):
+        """Get trial video correspoding to given camera id (str)"""
+        return [vid for vid in self.video_files(ext=ext) if camera_id in vid]
+
+    def get_video_by_label(self, camera_label, ext='avi'):
+        """Get trial video correspoding to given camera id (str)"""
+        ids = [id for id, label in cfg.general.camera_labels.items() if
+               camera_label == label]
+        vids = [vid for id in ids for vid in
+                self._get_videos_by_id(id, ext=ext)]
+        if len(vids) > 1:
+            raise ValueError('Multiple video files match label %s'
+                             % camera_label)
+        return vids[0] if vids else None
+
+    @property
+    def eclipse_tag(self):
+        """Return (first) Eclipse tag for this trial"""
+        for tag in cfg.plot.eclipse_tags:
+            if (tag in self.eclipse_data['DESCRIPTION'] or tag in
+               self.eclipse_data['NOTES']):
+                return tag
+        return None
+
+    @property
+    def name_with_description(self):
+        """Return trial name with Eclipse info"""
+        return '%s (%s, %s)' % (self.trialname,
+                                self.eclipse_data['DESCRIPTION'],
+                                self.eclipse_data['NOTES'])
 
     def __getitem__(self, item):
         """ Get model variable or EMG channel by indexing, normalized

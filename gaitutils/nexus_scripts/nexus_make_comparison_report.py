@@ -31,7 +31,7 @@ from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
 logger = logging.getLogger(__name__)
 
 sort_field = 'NOTES'  # sort trials by the given Eclipse key
-repr_tags = ['R1', 'L1']  # Eclipse tags for representative trials
+repr_tags = cfg.plot.eclipse_repr_tags
 page_size = (11.69, 8.27)  # report page size
 
 

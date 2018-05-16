@@ -20,8 +20,10 @@ models_all = []
 def model_from_var(var):
     """ Return model corresponding to specified variable.
     Returns GaitModel instance that has the specified variable. """
-    if not isinstance(var, basestring):
-        raise ValueError('Variable name must be a string')
+    if var is None:
+        return None
+    elif not isinstance(var, basestring):
+        raise ValueError('Variable name must be a string or None')
     for model in models_all:
         if var in model.varnames or var in model.varnames_noside:
             return model
@@ -209,22 +211,22 @@ spacer = (2*(1*' ',))
 pig_lowerbody.ylabels = _dict_with_side({
                          'AnkleAnglesX': 'Pla%s($^\\circ$)%sDor' % spacer,
                          'AnkleAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
-                         'AnkleMomentX': 'I dors%sNm/kg%sI plan' % spacer,
+                         'AnkleMomentX': 'Idors%sNm/kg%sIplan' % spacer,
                          'AnklePowerZ': 'Abs%sW/kg%sGen' % spacer,
                          'FootProgressAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
                          'HipAnglesX': 'Ext%s($^\\circ$)%sFlex' % spacer,
                          'HipAnglesY': 'Abd%s($^\\circ$)%sAdd' % spacer,
                          'HipAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
-                         'HipMomentX': 'I flex%sNm/kg%sI ext' % spacer,
-                         'HipMomentY': 'I add%sNm/kg%sI abd' % spacer,
-                         'HipMomentZ': 'I flex%sNm/kg%sI ext' % spacer,
+                         'HipMomentX': 'Iflex%sNm/kg%sIext' % spacer,
+                         'HipMomentY': 'Iadd%sNm/kg%sIabd' % spacer,
+                         'HipMomentZ': 'Iflex%sNm/kg%sIext' % spacer,
                          'HipPowerZ': 'Abs%sW/kg%sGen' % spacer,
                          'KneeAnglesX': 'Ext%s($^\\circ$)%sFlex' % spacer,
                          'KneeAnglesY': 'Val%s($^\\circ$)%sVar' % spacer,
                          'KneeAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
-                         'KneeMomentX': 'I flex%sNm/kg%sI ext' % spacer,
-                         'KneeMomentY': 'I var%sNm/kg%sI valg' % spacer,
-                         'KneeMomentZ': 'I flex%sNm/kg%sI ext' % spacer,
+                         'KneeMomentX': 'Iflex%sNm/kg%sIext' % spacer,
+                         'KneeMomentY': 'Ivar%sNm/kg%sIvalg' % spacer,
+                         'KneeMomentZ': 'Iflex%sNm/kg%sIext' % spacer,
                          'KneePowerZ': 'Abs%sW/kg%sGen' % spacer,
                          'PelvisAnglesX': 'Pst%s($^\\circ$)%sAnt' % spacer,
                          'PelvisAnglesY': 'Dwn%s($^\\circ$)%sUp' % spacer,

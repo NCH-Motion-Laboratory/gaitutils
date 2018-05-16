@@ -21,6 +21,7 @@ from .numutils import rising_zerocross, falling_zerocross
 from .guiutils import messagebox
 from .plot import Plotter
 from .trial import Trial
+from . import report
 
 from nexus_scripts import nexus_emgplot
 from nexus_scripts import nexus_musclelen_plot

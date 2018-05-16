@@ -56,8 +56,10 @@ def group_analysis(an_list, fun=np.mean):
 
     vars_missing = set.difference(*varsets)
     if vars_missing:
-        raise ValueError('Some files are missing the following variables: %s'
-                         % ' '.join(vars_missing))  # currently we are strict
+        logger.warning('Some files are missing the following variables: %s'
+                       % ' '.join(vars_missing))
+        #raise ValueError('Some files are missing the following variables: %s'
+        #                 % ' '.join(vars_missing))
     vars = set.intersection(*varsets)
 
     res = dict()

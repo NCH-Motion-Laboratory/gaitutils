@@ -345,7 +345,7 @@ def dash_report(sessions=None, tags=None):
     """Multisession dash app"""
 
     if not sessions:
-        return
+        return None
 
     if len(sessions) < 1 or len(sessions) > 3:
         raise ValueError('Need a list of one to three sessions')
@@ -374,6 +374,8 @@ def dash_report(sessions=None, tags=None):
         trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
         trials.extend(trials_this)
     trials = sorted(trials, key=lambda tr: tr.eclipse_tag)
+    if not any(c3ds_all):
+        return None
 
     # load normal data for gait models
     model_normaldata = dict()

@@ -158,7 +158,6 @@ class WebReportDialog(QtWidgets.QDialog):
         else:
             dir = QtWidgets.QFileDialog.getExistingDirectory(self,
                                                              'Select session')
-            dir = op.normpath(dir)
         if dir:
             if dir in self.sessions:
                 qt_message_dialog('Session already loaded')
@@ -543,6 +542,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # FIXME: sometimes it seems that videos are not complete at this point?!
         prog.hide()
         self._enable_op_buttons()
+
+        if app is None:
+            qt_message_dialog('Could not create report, check that session is '
+                              'valid')
+            return
 
         # start server, thread and do not block ui
         port = 5000 + len(self._dash_apps)

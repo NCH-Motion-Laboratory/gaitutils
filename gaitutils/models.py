@@ -212,6 +212,7 @@ pig_lowerbody.gcd_normaldata_map = {
             'PelvicRotation': 'PelvisAnglesZ',
             'PelvicTilt': 'PelvisAnglesX'}
 
+# add some space for the labels between units and directions
 spacer = (2*(1*' ',))
 pig_lowerbody.ylabels = _dict_with_side({
                          'AnkleAnglesX': 'Pla%s($^\\circ$)%sDor' % spacer,
@@ -219,7 +220,8 @@ pig_lowerbody.ylabels = _dict_with_side({
                          'AnkleAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
                          'AnkleMomentX': 'Idors%sNm/kg%sIplan' % spacer,
                          'AnkleMomentY': 'Iadd%sNm/kg%sIabd' % spacer,
-                         'AnkleMomentZ': 'Nm/kg',  # not sure about this
+                         # FIXME: not sure about directions of rotation:
+                         'AnkleMomentZ': '%sNm/kg%s' % spacer,
                          'AnklePowerZ': 'Abs%sW/kg%sGen' % spacer,
                          'FootProgressAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
                          'HipAnglesX': 'Ext%s($^\\circ$)%sFlex' % spacer,

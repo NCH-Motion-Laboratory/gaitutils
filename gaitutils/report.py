@@ -401,6 +401,7 @@ def dash_report(sessions=None, tags=None):
     emgs = [tr.emg for tr in trials]
     emg_layout = layouts.rm_dead_channels_multitrial(emgs, cfg.layouts.std_emg)
     _layouts = OrderedDict([
+            ('Kinematics', cfg.layouts.lb_kinematics),
             ('Kinematics + kinetics', cfg.layouts.lb_kin_web),
             ('Kinetics', cfg.layouts.lb_kinetics_web),
             ('Time-distance variables', 'time_dist'),
@@ -510,7 +511,7 @@ def dash_report(sessions=None, tags=None):
 
                     dcc.Checklist(id='split-left',
                                   options=[{'label': 'Two panels',
-                                            'value': 'split'}], values=['split']),
+                                            'value': 'split'}], values=[]),
 
                     # initialize with split panels
                     html.Div(make_left_panel(split=True), id='div-left-main')

@@ -74,7 +74,7 @@ if nexus_path:
         else:
             print('%s already in sys.path' % _win_sdk_path)
 
-        print('Trying to import Vicon Nexus SDK from %s' % _win_sdk_path)
+        print('importing Vicon Nexus SDK from %s' % _win_sdk_path)
 
     else:
         print('The configured Vicon Nexus directory at %s does not exist'

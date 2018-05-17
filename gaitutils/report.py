@@ -404,11 +404,11 @@ def dash_report(sessions=None, tags=None):
             ('Kinematics', cfg.layouts.lb_kinematics),
             ('Kinematics + kinetics', cfg.layouts.lb_kin_web),
             ('Kinetics', cfg.layouts.lb_kinetics_web),
-            ('Time-distance variables', 'time_dist'),
             ('EMG', emg_layout),
-            ('Muscle length', cfg.layouts.musclelen),
             ('Kinetics-EMG left', cfg.layouts.lb_kinetics_emg_l),
             ('Kinetics-EMG right', cfg.layouts.lb_kinetics_emg_r),
+            ('Muscle length', cfg.layouts.musclelen),
+            ('Time-distance variables', 'time_dist'),
             ])
 
     # pick desired single variables from model and append

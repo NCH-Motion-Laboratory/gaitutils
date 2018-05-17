@@ -27,7 +27,7 @@ def rm_dead_channels(emg, layout):
 
 def rm_dead_channels_multitrial(emgs, layout):
     """From layout, drop rows that do not have good data in any of the
-    EMGs. Takes a list of EMG() instances """
+    EMG() instances given """
     chs_ok = None
     for i, emg in enumerate(emgs):
         chs_prev_ok = chs_ok if i > 0 else None

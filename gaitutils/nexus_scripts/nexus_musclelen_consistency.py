@@ -46,10 +46,9 @@ def do_plot(tags=None, age=None, show=True, make_pdf=True):
         # only plot normaldata for last trial to speed up things
         plot_model_normaldata = (trialpath == tagged_trials[-1])
         pl.plot_trial(model_tracecolor=ccolors.next(), linestyles_context=True,
-                      toeoff_markers=False, add_zeroline=False,
-                      maintitle='', superpose=True, show=False,
-                      plot_model_normaldata=plot_model_normaldata,
-                      sharex=False)
+                      toeoff_markers=False, add_zeroline=False, show=False,
+                      maintitle='', superpose=True, sharex=False,
+                      plot_model_normaldata=plot_model_normaldata)
 
     maintitle = ('Muscle length consistency plot, '
                  'session %s' % pl.trial.sessiondir)

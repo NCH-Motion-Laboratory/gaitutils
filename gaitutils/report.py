@@ -344,7 +344,11 @@ def _time_dist_plot(c3ds, sessions):
 def dash_report(sessions=None, tags=None):
     """Multisession dash app"""
 
+    # relative width of left panel (1-12)
+    LEFT_WIDTH = 7
+
     if not sessions:
+
         return None
 
     if len(sessions) < 1 or len(sessions) > 3:
@@ -479,7 +483,6 @@ def dash_report(sessions=None, tags=None):
                     dcc.Dropdown(id='dd-vars-upper-multi', clearable=False,
                                  options=opts_multi,
                                  value=upper_value),
-                                 # value=opts_multi[0]['value']),
 
                     html.Div(id='div-upper', style={'height': '50%'}
                              if split else {'height': '100%'})
@@ -492,7 +495,6 @@ def dash_report(sessions=None, tags=None):
                                          clearable=False,
                                          options=opts_multi,
                                          value=lower_value),
-                                         # value=opts_multi[0]['value']),
 
                             html.Div(id='div-lower', style={'height': '50%'})
                         ])
@@ -501,6 +503,12 @@ def dash_report(sessions=None, tags=None):
 
     # create the app
     app = dash.Dash()
+
+    num2words = {1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five',
+                 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten',
+                 11: 'eleven', 12: 'twelve'}
+    classname_left = '%s columns' % num2words[LEFT_WIDTH]
+    classname_right = '%s columns' % num2words[12-LEFT_WIDTH]
 
     app.layout = html.Div([
 
@@ -516,9 +524,10 @@ def dash_report(sessions=None, tags=None):
                     # initialize with split panels
                     html.Div(make_left_panel(split=True), id='div-left-main')
 
-                    ], className='eight columns'),
+                    ], className=classname_left),
 
             html.Div([
+                    
 
                     dcc.Dropdown(id='dd-camera', clearable=False,
                                  options=opts_cameras,
@@ -530,7 +539,7 @@ def dash_report(sessions=None, tags=None):
 
                     html.Div(id='videos'),
 
-                    ], className='four columns'),
+                    ], className=classname_right),
 
                      ], className='row')
                    ])
@@ -568,7 +577,7 @@ def dash_report(sessions=None, tags=None):
         if not url:
             return _no_video_div()
         vid_el = html.Video(src=url, controls=True, loop=True, preload='auto',
-                            width='100%', title=title)
+                            title=title, style={'width': '100%'})
         return html.Div([title, vid_el])
 
     @app.callback(

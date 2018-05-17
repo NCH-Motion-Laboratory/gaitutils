@@ -401,8 +401,8 @@ def dash_report(sessions=None, tags=None):
     emgs = [tr.emg for tr in trials]
     emg_layout = layouts.rm_dead_channels_multitrial(emgs, cfg.layouts.std_emg)
     _layouts = OrderedDict([
-            ('Kinematics', cfg.layouts.lb_kinematics),
-            ('Kinetics', cfg.layouts.lb_kinetics),
+            ('Kinematics + kinetics', cfg.layouts.lb_kin_web),
+            ('Kinetics', cfg.layouts.lb_kinetics_web),
             ('Time-distance variables', 'time_dist'),
             ('EMG', emg_layout),
             ('Muscle length', cfg.layouts.musclelen),

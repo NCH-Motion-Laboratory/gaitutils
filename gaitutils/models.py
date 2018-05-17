@@ -155,8 +155,11 @@ pig_lowerbody.read_vars = _list_with_side(['HipMoment',
 
 pig_lowerbody.varlabels_noside = {
                              'AnkleAnglesX': 'Ankle dorsi/plant',
+                             'AnkleAnglesY': 'Ankle adduction',
                              'AnkleAnglesZ': 'Ankle rotation',
                              'AnkleMomentX': 'Ankle dors/plan moment',
+                             'AnkleMomentY': 'Ankle ab/add moment',
+                             'AnkleMomentZ': 'Ankle rotation moment',
                              'AnklePowerZ': 'Ankle power',
                              'FootProgressAnglesZ': 'Foot progress angles',
                              'HipAnglesX': 'Hip flexion',
@@ -187,8 +190,10 @@ pig_lowerbody.gcd_normaldata_map = {
             'AnklePower': 'AnklePowerZ',
             'DorsiPlanFlex': 'AnkleAnglesX',
             'DorsiPlanFlexMoment': 'AnkleMomentX',
+            'FootAbAdductMoment': 'AnkleMomentY',
             'FootProgression': 'FootProgressAnglesZ',
             'FootRotation': 'AnkleAnglesZ',
+            'FootRotationMoment': 'AnkleMomentZ',
             'HipAbAdduct': 'HipAnglesY',
             'HipAbAdductMoment': 'HipMomentY',
             'HipFlexExt': 'HipAnglesX',
@@ -210,8 +215,11 @@ pig_lowerbody.gcd_normaldata_map = {
 spacer = (2*(1*' ',))
 pig_lowerbody.ylabels = _dict_with_side({
                          'AnkleAnglesX': 'Pla%s($^\\circ$)%sDor' % spacer,
+                         'AnkleAnglesY': 'Abd%s($^\\circ$)%sAdd' % spacer,
                          'AnkleAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
                          'AnkleMomentX': 'Idors%sNm/kg%sIplan' % spacer,
+                         'AnkleMomentY': 'Iadd%sNm/kg%sIabd' % spacer,
+                         'AnkleMomentZ': 'Nm/kg',  # not sure about this
                          'AnklePowerZ': 'Abs%sW/kg%sGen' % spacer,
                          'FootProgressAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
                          'HipAnglesX': 'Ext%s($^\\circ$)%sFlex' % spacer,

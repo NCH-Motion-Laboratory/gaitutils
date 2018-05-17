@@ -536,7 +536,7 @@ def dash_report(sessions=None, tags=None):
                                  options=opts_tags,
                                  value=opts_tags[0]['value']),
 
-                    html.Div(id='videos', style={'max-height': '80%', 'max-width': '100%'}),
+                    html.Div(id='videos'),
 
                     ], className=classname_right),
 
@@ -575,8 +575,9 @@ def dash_report(sessions=None, tags=None):
         if not url:
             return _no_video_div()
         vid_el = html.Video(src=url, controls=True, loop=True, preload='auto',
-                            title=title, style={'max-height': '25vh'})
-        return html.Div([title, vid_el])
+                            title=title, style={'max-height': '29vh'})
+        #return html.Div([title, vid_el])
+        return html.Div([vid_el])
 
     @app.callback(
             Output(component_id='videos', component_property='children'),

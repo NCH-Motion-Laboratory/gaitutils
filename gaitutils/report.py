@@ -522,7 +522,7 @@ def dash_report(sessions=None, tags=None):
 
                     dcc.Dropdown(id='dd-camera', clearable=False,
                                  options=opts_cameras,
-                                 value=opts_cameras[0]['value']),
+                                 value='Front camera'),
 
                     dcc.Dropdown(id='dd-video-tag', clearable=False,
                                  options=opts_tags,

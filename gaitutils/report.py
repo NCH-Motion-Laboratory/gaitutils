@@ -588,7 +588,7 @@ def dash_report(sessions=None, tags=None):
             return 'No video found for %s' % title
         vid_el = html.Video(src=url, controls=True, loop=True, preload='auto',
                             title=title, style={'max-height': max_height})
-        #return html.Div([title, vid_el])
+        #return html.Div([title, vid_el])  # titles above videos
         return vid_el
 
     @app.callback(

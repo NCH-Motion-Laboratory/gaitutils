@@ -134,6 +134,8 @@ class ComparisonDialog(QtWidgets.QDialog):
             self.done(QtWidgets.QDialog.Accepted)
 
 
+
+
 class WebReportDialog(QtWidgets.QDialog):
     """ Display a dialog for creating the web report """
 
@@ -156,13 +158,29 @@ class WebReportDialog(QtWidgets.QDialog):
         if from_nexus:
             dir = nexus.get_sessionpath()
         else:
-            dir = QtWidgets.QFileDialog.getExistingDirectory(self,
-                                                             'Select session')
-        if dir:
-            if dir in self.sessions:
-                qt_message_dialog('Session already loaded')
+            # non-native dlg - workaround to select multiple sessions (dirs)
+            file_dialog = QtWidgets.QFileDialog()
+            file_dialog.setFileMode(QtWidgets.QFileDialog.DirectoryOnly)
+            file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog,
+                                  True)
+            file_view = file_dialog.findChild(QtWidgets.QListView, 'listView')
+            if file_view:
+                file_view.setSelectionMode(QtWidgets.QAbstractItemView.
+                                           MultiSelection)
+            f_tree_view = file_dialog.findChild(QtWidgets.QTreeView)
+            if f_tree_view:
+                f_tree_view.setSelectionMode(QtWidgets.QAbstractItemView.
+                                             MultiSelection)
+            if file_dialog.exec_():
+                dirs = file_dialog.selectedFiles()
             else:
-                self.listSessions.add_item(dir, data=dir)
+                return
+        if dirs:
+            for dir in dirs:
+                if dir in self.sessions:
+                    qt_message_dialog('Session %s already loaded')
+                else:
+                    self.listSessions.add_item(dir, data=dir)
 
     @property
     def sessions(self):

@@ -359,6 +359,12 @@ def _time_dist_plot(c3ds, sessions):
 def dash_report(sessions=None, tags=None):
     """Multisession dash app"""
 
+    # relative width of left panel (1-12)
+    # 3-session comparison uses narrower video panel
+    # LEFT_WIDTH = 8 if len(sessions) == 3 else 7
+    LEFT_WIDTH = 8
+    VIDS_TOTAL_HEIGHT = 88  # % of browser window height
+
     if not sessions:
         return None
 
@@ -366,10 +372,6 @@ def dash_report(sessions=None, tags=None):
         raise ValueError('Need a list of one to three sessions')
 
     is_comparison = len(sessions) > 1
-
-    # relative width of left panel (1-12)
-    # 3-session comparison uses narrower video panel 
-    LEFT_WIDTH = 8 if len(sessions) == 3 else 7
 
     sessions_str = ' / '.join([op.split(s)[-1] for s in sessions])
     report_type = ('Single session report:' if len(sessions) == 1
@@ -587,7 +589,8 @@ def dash_report(sessions=None, tags=None):
         if not url:
             return 'No video found for %s' % title
         vid_el = html.Video(src=url, controls=True, loop=True, preload='auto',
-                            title=title, style={'max-height': max_height})
+                            title=title, style={'max-height': max_height,
+                                                'max-width': '100%'})
         #return html.Div([title, vid_el])  # titles above videos
         return vid_el
 
@@ -598,7 +601,7 @@ def dash_report(sessions=None, tags=None):
         )
     def update_videos(camera_label, tag):
         """Create a list of video divs according to camera and tag selection"""
-        VIDS_TOTAL_HEIGHT = 88  # % of browser window height
+
         tagged = [tr for tr in trials if tag == tr.eclipse_tag]
         vid_files = [tr.get_video_by_label(camera_label, ext='ogv') for tr in
                      tagged]

@@ -134,8 +134,6 @@ class ComparisonDialog(QtWidgets.QDialog):
             self.done(QtWidgets.QDialog.Accepted)
 
 
-
-
 class WebReportDialog(QtWidgets.QDialog):
     """ Display a dialog for creating the web report """
 
@@ -156,7 +154,11 @@ class WebReportDialog(QtWidgets.QDialog):
                               self.MAX_SESSIONS)
             return
         if from_nexus:
-            dir = nexus.get_sessionpath()
+            try:
+                dir = nexus.get_sessionpath()
+            except GaitDataError as e:
+                qt_message_dialog(str(e))
+                return
         else:
             # non-native dlg - workaround to select multiple sessions (dirs)
             file_dialog = QtWidgets.QFileDialog()
@@ -178,7 +180,7 @@ class WebReportDialog(QtWidgets.QDialog):
         if dirs:
             for dir in dirs:
                 if dir in self.sessions:
-                    qt_message_dialog('Session %s already loaded')
+                    qt_message_dialog('Session %s already loaded' % dir)
                 else:
                     self.listSessions.add_item(dir, data=dir)
 

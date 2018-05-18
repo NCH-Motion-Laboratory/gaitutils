@@ -55,9 +55,11 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
 
     def _plot_label(ax, rects, texts):
         """Plot a label inside each rect"""
+        # FIXME: just a rough heuristic for font size
+        fontsize = 6 if len(rects) >= 3 else 8
         for rect, txt in zip(rects, texts):
             ax.text(rect.get_width() * .0, rect.get_y() + rect.get_height()/2.,
-                    txt, ha='left', va='center')
+                    txt, ha='left', va='center', size=fontsize)
 
     def _plot_oneside(vars, context, col):
         """ Do the bar plots for given context and column """
@@ -112,7 +114,9 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
 
     if len(conds) > 1:
         # plotting happens from down -> up, so reverse legend
-        fig.legend(rects[::-1], conds[::-1], loc=4)
+        fig.legend(rects[::-1], conds[::-1], fontsize=7,
+                   bbox_to_anchor=(.5, 0), loc="lower right",
+                   bbox_transform=fig.transFigure)
 
     fig.add_subplot(gs[0, 0]).set_title('Left')
     fig.add_subplot(gs[0, 2]).set_title('Right')

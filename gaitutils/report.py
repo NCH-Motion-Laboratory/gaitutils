@@ -352,7 +352,7 @@ def _time_dist_plot(c3ds, sessions):
     cond_labels = [op.split(session)[-1] for session in sessions]
     fig = gaitutils.nexus_time_distance_vars._plot_trials(c3ds, cond_labels)
     buf = io.BytesIO()
-    fig.savefig(buf, format='svg')
+    fig.savefig(buf, format='svg', bbox_inches='tight')
     buf.seek(0)
     return buf
 

@@ -136,6 +136,9 @@ class ComparisonDialog(QtWidgets.QDialog):
 
 def _multi_dir_chooser():
     """Workaround (non native dialog) to select multiple dirs"""
+    # native dialog
+    return [QtWidgets.QFileDialog.getExistingDirectory(None, 'Select session')]
+
     file_dialog = QtWidgets.QFileDialog()
     file_dialog.setFileMode(QtWidgets.QFileDialog.DirectoryOnly)
     file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog,

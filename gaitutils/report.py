@@ -341,7 +341,8 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
 
     margin = go.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
     layout = go.Layout(legend=dict(x=100, y=.5), margin=margin,
-                       font={'size': label_fontsize})
+                       font={'size': label_fontsize},
+                       hovermode='closest')
 
     fig['layout'].update(layout)
     return fig

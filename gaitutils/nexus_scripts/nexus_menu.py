@@ -134,6 +134,23 @@ class ComparisonDialog(QtWidgets.QDialog):
             self.done(QtWidgets.QDialog.Accepted)
 
 
+def _multi_dir_chooser():
+    """Workaround (non native dialog) to select multiple dirs"""
+    file_dialog = QtWidgets.QFileDialog()
+    file_dialog.setFileMode(QtWidgets.QFileDialog.DirectoryOnly)
+    file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog,
+                          True)
+    file_view = file_dialog.findChild(QtWidgets.QListView, 'listView')
+    if file_view:
+        file_view.setSelectionMode(QtWidgets.QAbstractItemView.
+                                   MultiSelection)
+    f_tree_view = file_dialog.findChild(QtWidgets.QTreeView)
+    if f_tree_view:
+        f_tree_view.setSelectionMode(QtWidgets.QAbstractItemView.
+                                     MultiSelection)
+    return file_dialog.selectedFiles() if file_dialog.exec_() else []
+
+
 class WebReportDialog(QtWidgets.QDialog):
     """ Display a dialog for creating the web report """
 
@@ -155,28 +172,12 @@ class WebReportDialog(QtWidgets.QDialog):
             return
         if from_nexus:
             try:
-                dir = nexus.get_sessionpath()
+                dirs = [nexus.get_sessionpath()]
             except GaitDataError as e:
                 qt_message_dialog(str(e))
                 return
         else:
-            # non-native dlg - workaround to select multiple sessions (dirs)
-            file_dialog = QtWidgets.QFileDialog()
-            file_dialog.setFileMode(QtWidgets.QFileDialog.DirectoryOnly)
-            file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog,
-                                  True)
-            file_view = file_dialog.findChild(QtWidgets.QListView, 'listView')
-            if file_view:
-                file_view.setSelectionMode(QtWidgets.QAbstractItemView.
-                                           MultiSelection)
-            f_tree_view = file_dialog.findChild(QtWidgets.QTreeView)
-            if f_tree_view:
-                f_tree_view.setSelectionMode(QtWidgets.QAbstractItemView.
-                                             MultiSelection)
-            if file_dialog.exec_():
-                dirs = file_dialog.selectedFiles()
-            else:
-                return
+            dirs = _multi_dir_chooser()
         if dirs:
             for dir in dirs:
                 if dir in self.sessions:

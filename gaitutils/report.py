@@ -24,6 +24,7 @@ import os
 import subprocess
 import ctypes
 import base64
+import datetime
 import io
 
 import gaitutils
@@ -118,6 +119,17 @@ def _var_title(var):
         return ''
 
 
+def _truncate_trialname(trialname):
+    """Remove leading date string from trial names, e.g. 2018_5_12"""
+    tn_split = trialname.split('_')
+    datetxt = '-'.join(tn_split[:3])
+    try:
+        datetime.datetime.strptime(datetxt, '%Y-%m-%d')
+        return '%s' % '_'.join(tn_split[3:])
+    except ValueError:
+        return trialname
+
+
 def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                  trial_linestyles='same'):
     """Make a plotly plot of layout, including given trials.
@@ -170,6 +182,9 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                     # in legend, traces will be grouped according to tracegroup (which is also the label)
                     if legend_type == 'name_with_tag':
                         tracegroup = '%s / %s' % (trial.trialname,
+                                                  trial.eclipse_tag)
+                    elif legend_type == 'short_name_with_tag':
+                        tracegroup = '%s / %s' % (_truncate_trialname(trial.trialname),
                                                   trial.eclipse_tag)
                     elif legend_type == 'tag_only':
                         tracegroup = trial.eclipse_tag
@@ -430,7 +445,7 @@ def dash_report(sessions=None, tags=None):
         # for comparison report, include session info in plot legends and
         # use session specific line style
         trial_linestyles = 'session' if is_comparison else 'same'
-        legend_type = 'name_with_tag' if is_comparison else 'tag_only'
+        legend_type = 'short_name_with_tag' if is_comparison else 'tag_only'
         try:
 
             # special layout
@@ -567,17 +582,14 @@ def dash_report(sessions=None, tags=None):
     def update_contents_lower_multi(sel_var):
         return mapper_multi_lower[sel_var]
 
-    def _no_video_div():
-        return html.Div(['No video found', html.Video(src='')])
-
-    def _video_div(title, url):
-        """Create a video div with title"""
+    def _video_elem(title, url, max_height):
+        """Create a video element with title"""
         if not url:
-            return _no_video_div()
+            return 'No video found for %s' % title
         vid_el = html.Video(src=url, controls=True, loop=True, preload='auto',
-                            title=title, style={'max-height': '29vh'})
+                            title=title, style={'max-height': max_height})
         #return html.Div([title, vid_el])
-        return html.Div([vid_el])
+        return vid_el
 
     @app.callback(
             Output(component_id='videos', component_property='children'),
@@ -586,14 +598,17 @@ def dash_report(sessions=None, tags=None):
         )
     def update_videos(camera_label, tag):
         """Create a list of video divs according to camera and tag selection"""
+        VIDS_TOTAL_HEIGHT = 88  # % of browser window height
         tagged = [tr for tr in trials if tag == tr.eclipse_tag]
         vid_files = [tr.get_video_by_label(camera_label, ext='ogv') for tr in
                      tagged]
         vid_urls = ['/static/%s' % op.split(fn)[1] if fn else None for
                     fn in vid_files]
-        vid_elements = [_video_div(tr.name_with_description, url) for tr, url
-                        in zip(tagged, vid_urls)]
-        return vid_elements or _no_video_div()
+        nvids = len([fn for fn in vid_files if fn])
+        max_height = str(VIDS_TOTAL_HEIGHT / nvids) + 'vh'
+        vid_elements = [_video_elem(tr.name_with_description, url, max_height)
+                        for tr, url in zip(tagged, vid_urls)]
+        return vid_elements or 'No videos found'
 
     # add a static route to serve session data. be careful outside firewalls
     @app.server.route('/static/<resource>')

@@ -143,8 +143,8 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
     """
 
     # configurabe opts (here for now)
-    label_fontsize = 12
-
+    label_fontsize = 12  # x, y labels
+    subtitle_fontsize = 12  # subplot titles
 
     nrows = len(layout)
     ncols = len(layout[0])
@@ -325,11 +325,15 @@ def _plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                     elif var is None:
                         continue
 
-                    elif 'legend' in var:  # 'legend' is for the mpl plotter only
+                    elif 'legend' in var:  # 'legend' is for mpl plotter only
                         continue
 
                     else:
                         raise Exception('Unknown variable %s' % var)
+
+    # reduce subplot title font size
+    for anno in fig['layout']['annotations']:
+        anno['font']['size'] = subtitle_fontsize
 
     # put x labels on last row only, re-enable tick labels for last row
     inds_last = range((nrows-1)*ncols, nrows*ncols)

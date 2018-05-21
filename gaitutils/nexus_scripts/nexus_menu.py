@@ -620,7 +620,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
             patient_data['session_description'] = dlg.session_description
             self._execute(nexus_make_pdf_report.do_plot, thread=True,
                           fullname=dlg.fullname, hetu=dlg.hetu,
-                          session_description=dlg.session_description, pages=dlg.pages)
+                          session_description=dlg.session_description,
+                          pages=dlg.pages)
 
             try:
                 with io.open(fname, 'w', encoding='utf-8') as f:

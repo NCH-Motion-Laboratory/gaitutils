@@ -15,6 +15,8 @@ import ast
 import os.path as op
 import os
 import subprocess
+import io
+import json
 
 from gaitutils.numutils import check_hetu
 from gaitutils.guiutils import qt_message_dialog
@@ -63,7 +65,8 @@ def _browse_localhost(port):
 
 class HetuDialog(QtWidgets.QDialog):
 
-    def __init__(self, fullname=None, hetu=None, prompt='Hello', parent=None):
+    def __init__(self, fullname=None, hetu=None, session_description=None,
+                 prompt='Hello', parent=None):
         super(self.__class__, self).__init__()
         uifile = resource_filename(__name__, 'hetu_dialog.ui')
         uic.loadUi(uifile, self)
@@ -72,13 +75,15 @@ class HetuDialog(QtWidgets.QDialog):
             self.lnFullName.setText(fullname)
         if hetu is not None:
             self.lnHetu.setText(hetu)
+        if session_description is not None:
+            self.lnDescription.setText(session_description)
 
     def accept(self):
         """ Update config and close dialog, if widget inputs are ok. Otherwise
         show an error dialog """
         self.hetu = self.lnHetu.text()
         self.fullname = self.lnFullName.text()
-        self.description = self.lnDescription.text()
+        self.session_description = self.lnDescription.text()
         # get all the report page selections
         self.pages = dict()
         for w in self.findChildren(QtWidgets.QWidget):
@@ -467,9 +472,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
                widget != 'btnQuit'):
                 self.opWidgets.append(widget)
 
-        self._fullname = None
-        self._hetu = None
-
         # keep track of active dash apps (web reports)
         self._dash_apps = dict()
 
@@ -596,15 +598,36 @@ class Gaitmenu(QtWidgets.QMainWindow):
         except GaitDataError as e:
             qt_message_dialog(str(e))
             return
+        # load patient info if previously entered
+        session = nexus.get_sessionpath()
+        fname = op.join(session, 'patient_info.json')
+        if op.isfile(fname):
+            with io.open(fname, 'r', encoding='utf-8') as f:
+                try:
+                    patient_data_loaded = json.load(f)
+                except (UnicodeDecodeError, EOFError, IOError, TypeError):
+                    qt_message_dialog('Error loading patient info file')
+        patient_data = dict(fullname=None, hetu=None, session_description=None)
+        patient_data.update(patient_data_loaded)
+
         prompt_ = 'Please give additional subject information for %s:' % subj
-        dlg = HetuDialog(prompt=prompt_, fullname=self._fullname,
-                         hetu=self._hetu)
+        dlg = HetuDialog(prompt=prompt_, fullname=patient_data['fullname'],
+                         hetu=patient_data['hetu'],
+                         session_description=patient_data['session_description'])
         if dlg.exec_():
-            self._hetu = dlg.hetu
-            self._fullname = dlg.fullname
+            patient_data['hetu'] = dlg.hetu
+            patient_data['fullname'] = dlg.fullname
+            patient_data['session_description'] = dlg.session_description
             self._execute(nexus_make_pdf_report.do_plot, thread=True,
                           fullname=dlg.fullname, hetu=dlg.hetu,
-                          description=dlg.description, pages=dlg.pages)
+                          session_description=dlg.session_description, pages=dlg.pages)
+
+            try:
+                with io.open(fname, 'w', encoding='utf-8') as f:
+                    f.write(unicode(json.dumps(patient_data,
+                                               ensure_ascii=False)))
+            except (UnicodeDecodeError, EOFError, IOError, TypeError):
+                qt_message_dialog('Error saving patient info file')
 
     def _log_message(self, msg):
         c = self.txtOutput.textCursor()

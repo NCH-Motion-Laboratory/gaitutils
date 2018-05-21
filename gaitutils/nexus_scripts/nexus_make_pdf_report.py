@@ -53,7 +53,7 @@ def _savefig(pdf, fig, header=None, footer=None):
     pdf.savefig(fig)
 
 
-def do_plot(fullname=None, hetu=None, pages=None, description=None):
+def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
 
     if fullname is None:
         fullname = ''
@@ -101,8 +101,8 @@ def do_plot(fullname=None, hetu=None, pages=None, description=None):
     title_txt += u'Ikä mittaushetkellä: %s\n' % ('%d vuotta' % age if age
                                                    else 'ei tiedossa')
     title_txt += u'Mittaus: %s\n' % session
-    if description:
-        title_txt += u'Kuvaus: %s\n' % description
+    if session_description:
+        title_txt += u'Kuvaus: %s\n' % session_description
     title_txt += u'Mittauksen pvm: %s\n' % session_t.strftime('%d.%m.%Y')
     title_txt += u'Liikelaboratorion potilaskoodi: %s\n' % patient_code
     ax.text(.5, .8, title_txt, ha='center', va='center', weight='bold',

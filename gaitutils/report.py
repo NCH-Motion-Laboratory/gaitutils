@@ -18,7 +18,6 @@ import numpy as np
 from itertools import cycle
 from collections import OrderedDict
 import logging
-import jinja2
 import os.path as op
 import os
 import subprocess
@@ -33,15 +32,6 @@ from gaitutils.nexus import find_tagged
 
 
 logger = logging.getLogger(__name__)
-
-
-def render_template(tpl_filename, context):
-    """ Render template with given context """
-    templateLoader = jinja2.FileSystemLoader(searchpath=cfg.general.
-                                             template_path)
-    templateEnv = jinja2.Environment(loader=templateLoader)
-    template = templateEnv.get_template(tpl_filename)
-    return template.render(context, trim_blocks=True)
 
 
 def convert_videos(vidfiles, check_only=False, prog_callback=None):
@@ -460,11 +450,16 @@ def dash_report(sessions=None, tags=None):
                 if layout == 'time_dist':
                     buf = _time_dist_plot(c3ds_all, sessions)
                     encoded_image = base64.b64encode(buf.read())
-                    graph_upper = html.Img(src='data:image/svg+xml;base64,{}'.format(encoded_image), id='gaitgraph%d' % k,
-                                        style={'height': '100%'})
-                    graph_lower = html.Img(src='data:image/svg+xml;base64,{}'.format(encoded_image), id='gaitgraph%d' % (len(_layouts)+k),
-                                        style={'height': '100%'})
-                    
+                    graph_upper = html.Img(src='data:image/svg+xml;base64,{}'.
+                                           format(encoded_image),
+                                           id='gaitgraph%d' % k,
+                                           style={'height': '100%'})
+                    graph_lower = html.Img(src='data:image/svg+xml;base64,{}'.
+                                           format(encoded_image),
+                                           id='gaitgraph%d'
+                                           % (len(_layouts)+k),
+                                           style={'height': '100%'})
+
                 elif layout == 'patient_info':
                     pass
                 else:
@@ -565,26 +560,24 @@ def dash_report(sessions=None, tags=None):
                      ], className='row')
 
     @app.callback(
-            Output(component_id='div-left-main', component_property='children'),
-            [Input(component_id='split-left', component_property='values')],
-            [State(component_id='dd-vars-upper-multi', component_property='value')]
+            Output('div-left-main', 'children'),
+            [Input('split-left', 'values')],
+            [State('dd-vars-upper-multi', 'value')]
         )
     def update_panel_layout(split_panels, upper_value):
         split = 'split' in split_panels
         return make_left_panel(split, upper_value=upper_value)
 
     @app.callback(
-            Output(component_id='div-upper', component_property='children'),
-            [Input(component_id='dd-vars-upper-multi',
-                   component_property='value')]
+            Output('div-upper', 'children'),
+            [Input('dd-vars-upper-multi', 'value')]
         )
     def update_contents_upper_multi(sel_var):
         return mapper_multi_upper[sel_var]
 
     @app.callback(
-            Output(component_id='div-lower', component_property='children'),
-            [Input(component_id='dd-vars-lower-multi',
-                   component_property='value')]
+            Output('div-lower', 'children'),
+            [Input('dd-vars-lower-multi', 'value')]
         )
     def update_contents_lower_multi(sel_var):
         return mapper_multi_lower[sel_var]
@@ -596,13 +589,13 @@ def dash_report(sessions=None, tags=None):
         vid_el = html.Video(src=url, controls=True, loop=True, preload='auto',
                             title=title, style={'max-height': max_height,
                                                 'max-width': '100%'})
-        #return html.Div([title, vid_el])  # titles above videos
+        # return html.Div([title, vid_el])  # titles above videos
         return vid_el
 
     @app.callback(
-            Output(component_id='videos', component_property='children'),
-            [Input(component_id='dd-camera', component_property='value'),
-             Input(component_id='dd-video-tag', component_property='value')]
+            Output('videos', 'children'),
+            [Input('dd-camera', 'value'),
+             Input('dd-video-tag', 'value')]
         )
     def update_videos(camera_label, tag):
         """Create a list of video divs according to camera and tag selection"""

@@ -63,12 +63,12 @@ def convert_videos(vidfiles, check_only=False, prog_callback=None):
     k = 0
     for vidfile, convfile in convfiles.items():
         if not op.isfile(convfile):
+            if prog_callback is not None:
+                prog_callback(100*k/n_to_conv, vidfile)
             # XXX could parallelize with non-blocking Popen() calls?
             subprocess.call([vidconv_bin]+vidconv_opts.split()+[vidfile],
                             stdout=None, creationflags=0x08000000)  # NO_WINDOW flag
             k += 1
-            if prog_callback is not None:
-                prog_callback(100*k/n_to_conv, vidfile)
     return convfiles.values()
 
 

@@ -181,10 +181,13 @@ def get_session_enfs(sessionpath=None):
     return enffiles
 
 
-def find_trial_videos(fname):
+def find_trial_videos(fname, ext='avi', camera_id=None):
     """ Finds Nexus video files for trial file (e.g. x1d or c3d) """
     trialbase = op.splitext(fname)[0]
-    return glob.glob(trialbase+'*avi')
+    vids = glob.glob(trialbase + '*' + ext)
+    if camera_id is not None:
+        vids = [vid for vid in vids if _camera_id(vid) == camera_id]
+    return vids
 
 
 def _camera_id(fname):
@@ -233,7 +236,7 @@ def _find_enfs(tags, eclipse_keys, sessionpath=None):
     """ Yield .enf files for trials in current Nexus session directory
     (or given session path) whose Eclipse fields (list) contain any of
     strings (list). Case insensitive. """
-
+    
     tags = [t.upper() for t in tags]
     enffiles = get_session_enfs(sessionpath)
 

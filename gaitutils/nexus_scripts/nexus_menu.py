@@ -550,11 +550,14 @@ class Gaitmenu(QtWidgets.QMainWindow):
             tagged = nexus.find_tagged(sessionpath=session, tags=tags)
             for c3dfile in tagged:
                 vidfiles.extend(nexus.find_trial_videos(c3dfile))
+            static_c3ds = nexus.find_tagged(['Static'], ['TYPE'], session)
+            if static_c3ds:
+                vidfiles.extend(nexus.find_trial_videos(static_c3ds[-1]))
 
-        # do the video conversion if needed
+        # do the video conversion
         self._disable_op_buttons()
         prog = QtWidgets.QProgressDialog()
-        prog.setWindowTitle('Please wait...')
+        prog.setWindowTitle('Converting videos...')
         prog.setCancelButton(None)
         prog.setMinimum(0)
         prog.setMaximum(100)
@@ -566,7 +569,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         prog.setLabelText('Creating report...')
         QtWidgets.QApplication.processEvents()
         app = report.dash_report(sessions=sessions, tags=tags)
-        # FIXME: sometimes it seems that videos are not complete at this point?!
         prog.hide()
         self._enable_op_buttons()
 
@@ -575,7 +577,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                               'valid')
             return
 
-        # start server, thread and do not block ui
+        # report ok - start server, thread and do not block ui
         port = 5000 + len(self._dash_apps)
         self._execute(app.server.run, thread=True, block_ui=False,
                       debug=False, port=port)

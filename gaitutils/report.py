@@ -63,12 +63,12 @@ def convert_videos(vidfiles, check_only=False, prog_callback=None):
     k = 0
     for vidfile, convfile in convfiles.items():
         if not op.isfile(convfile):
+            # XXX could parallelize with non-blocking Popen() calls?
+            subprocess.call([vidconv_bin]+vidconv_opts.split()+[vidfile],
+                            stdout=None, creationflags=0x08000000)  # NO_WINDOW flag
+            k += 1
             if prog_callback is not None:
                 prog_callback(100*k/n_to_conv, vidfile)
-            # XXX could parallelize with non-blocking Popen() calls?
-            subprocess.call([vidconv_bin]+vidconv_opts.split()+[vidfile], stdout=None,
-                            creationflags=0x08000000)  # NO_WINDOW flag
-            k += 1
     return convfiles.values()
 
 
@@ -359,6 +359,7 @@ def dash_report(sessions=None, tags=None):
     # LEFT_WIDTH = 8 if len(sessions) == 3 else 7
     LEFT_WIDTH = 8
     VIDS_TOTAL_HEIGHT = 88  # % of browser window height
+    camera_labels = cfg.general.camera_labels.values()
 
     if not sessions:
         return None
@@ -378,6 +379,7 @@ def dash_report(sessions=None, tags=None):
         tags = (cfg.plot.eclipse_repr_tags if is_comparison else
                 cfg.plot.eclipse_tags)
 
+    # load the trials
     trials = list()
     c3ds_all = list()
     for session in sessions:
@@ -399,14 +401,46 @@ def dash_report(sessions=None, tags=None):
         ndata = normaldata.read_normaldata(fn)
         model_normaldata.update(ndata)
 
+    # create directory of trial videos for each tag and camera selection
+    vid_urls = dict()
+    for tag in tags:
+        vid_urls[tag] = dict()
+        for camera_label in camera_labels:
+
+            tagged = [tr for tr in trials if tag == tr.eclipse_tag]
+            vid_files = [tr.get_video_by_label(camera_label, ext='ogv')
+                         for tr in tagged]
+            vid_urls[tag][camera_label] = dict()
+            vid_urls[tag][camera_label] = ['/static/%s' % op.split(fn)[1] if fn
+                                           else None for fn in vid_files]
+
+    # add videos from static trials; works a bit differently since st. trials
+    # are not loaded
+    vid_urls['Static'] = dict()
+    static_c3ds = list()
+    for session in sessions:
+        static_this = gaitutils.nexus.find_tagged(['Static'], ['TYPE'],
+                                                  session)
+        if static_this:
+            static_c3ds.append(static_this[-1])  # pick the last static trial
+
+    for camera_id, camera_label in cfg.general.camera_labels.items():
+        vid_urls['Static'][camera_label] = list()
+        for static_c3d in static_c3ds:
+            vid_files = gaitutils.nexus.find_trial_videos(static_c3d,
+                                                          'ogv', camera_id)
+            vid_urls['Static'][camera_label].extend(['/static/%s' % op.split(fn)[1] for fn in vid_files])
+
     # build dcc.Dropdown options list for the cameras and tags
     opts_cameras = list()
-    for label in set(gaitutils.cfg.general.camera_labels.values()):
+    for label in set(camera_labels):
         opts_cameras.append({'label': label, 'value': label})
     opts_tags = list()
-    # FIXME: figure out which tags actually are loaded. make unique and sorted
     for tag in tags:
-        opts_tags.append({'label': '%s' % tag, 'value': tag})
+        if any([vid_urls[tag][camera_label] for camera_label in camera_labels]):
+            opts_tags.append({'label': '%s' % tag, 'value': tag})
+    if any([vid_urls['Static'][camera_label] for camera_label in camera_labels]):
+        opts_tags.append({'label': 'Static', 'value': 'Static'})
 
     # build dcc.Dropdown options list for the trials
     trials_dd = list()
@@ -599,17 +633,12 @@ def dash_report(sessions=None, tags=None):
         )
     def update_videos(camera_label, tag):
         """Create a list of video divs according to camera and tag selection"""
-
-        tagged = [tr for tr in trials if tag == tr.eclipse_tag]
-        vid_files = [tr.get_video_by_label(camera_label, ext='ogv') for tr in
-                     tagged]
-        vid_urls = ['/static/%s' % op.split(fn)[1] if fn else None for
-                    fn in vid_files]
-        nvids = len([fn for fn in vid_files if fn])
+        vid_urls_ = vid_urls[tag][camera_label]
+        if not vid_urls_:
+            return 'No videos found'
+        nvids = len(vid_urls_)
         max_height = str(VIDS_TOTAL_HEIGHT / nvids) + 'vh'
-        vid_elements = [_video_elem(tr.name_with_description, url, max_height)
-                        for tr, url in zip(tagged, vid_urls)]
-        return vid_elements or 'No videos found'
+        return [_video_elem('video', url, max_height) for url in vid_urls_]
 
     # add a static route to serve session data. be careful outside firewalls
     @app.server.route('/static/<resource>')

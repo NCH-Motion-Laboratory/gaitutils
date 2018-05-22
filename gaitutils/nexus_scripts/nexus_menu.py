@@ -459,6 +459,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnCreateWebReport.clicked.connect(self._create_web_report)
         self.btnOptions.clicked.connect(self._options_dialog)
         self.btnQuit.clicked.connect(self.close)
+        self.listActiveReports.itemDoubleClicked.connect(lambda item: _browse_localhost(item.userdata))
 
         # collect operation widgets
         self.opWidgets = list()
@@ -585,7 +586,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # add a list item that keeps track of the port
         self.listActiveReports.add_item(report_name, data=port)
         # double clicking on the list item will browse to corresponding port
-        self.listActiveReports.itemDoubleClicked.connect(lambda item: _browse_localhost(item.userdata))
+
         logger.debug('starting web browser')
         _browse_localhost(port)
 

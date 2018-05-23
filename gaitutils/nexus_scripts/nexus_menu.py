@@ -635,15 +635,14 @@ class Gaitmenu(QtWidgets.QMainWindow):
         except GaitDataError as e:
             qt_message_dialog(str(e))
             return
-        # load patient info if previously entered
-        session = nexus.get_sessionpath()
-        # FIXME: None values will be fed into dialog - not good
-        patient_data = self._load_patient_data(session)
 
+        session = nexus.get_sessionpath()
+        patient_data = self._load_patient_data(session)
         prompt_ = 'Please give additional subject information for %s:' % subj
         dlg = HetuDialog(prompt=prompt_, fullname=patient_data['fullname'],
                          hetu=patient_data['hetu'],
-                         session_description=patient_data['session_description'])
+                         session_description=patient_data
+                         ['session_description'])
         if dlg.exec_():
             patient_data['hetu'] = dlg.hetu
             patient_data['fullname'] = dlg.fullname

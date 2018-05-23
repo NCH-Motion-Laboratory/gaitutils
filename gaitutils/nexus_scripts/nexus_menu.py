@@ -19,7 +19,7 @@ import io
 import json
 
 from gaitutils.numutils import check_hetu
-from gaitutils.guiutils import qt_message_dialog
+from gaitutils.guiutils import qt_message_dialog, qt_yesno_dialog
 from gaitutils import GaitDataError
 from gaitutils import nexus
 from gaitutils import cfg
@@ -459,7 +459,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnAutomark,
                                   nexus_automark_trial.automark_single)
 
-        self.btnCreatePDFs.clicked.connect(self._create_pdfs)
+        self.btnCreatePDFs.clicked.connect(self._create_pdf_report)
         self.btnCreateComparison.clicked.connect(self._create_comparison)
         self.btnCreateWebReport.clicked.connect(self._create_web_report)
         self.btnOptions.clicked.connect(self._options_dialog)
@@ -489,24 +489,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         thread. """
         button.clicked.connect(lambda ev: self._execute(fun, thread=thread))
 
-    def confirm_dialog(self, msg):
-        """ Show yes/no dialog. """
-        dlg = QtWidgets.QMessageBox()
-        dlg.setText(msg)
-        dlg.setWindowTitle('Confirm')
-        dlg.addButton(QtWidgets.QPushButton('Yes'),
-                      QtWidgets.QMessageBox.YesRole)
-        dlg.addButton(QtWidgets.QPushButton('No'),
-                      QtWidgets.QMessageBox.NoRole)
-        dlg.exec_()
-        return dlg.buttonRole(dlg.clickedButton())
-
     def closeEvent(self, event):
         """ Confirm and close application. """
         if self._dash_apps:
-            reply = self.confirm_dialog('There are active web reports which '
-                                        'will be terminated. Are you sure you '
-                                        'want to quit?')
+            reply = qt_yesno_dialog('There are active web reports which '
+                                    'will be terminated. Are you sure you '
+                                    'want to quit?')
             if reply == QtWidgets.QMessageBox.YesRole:
                 event.accept()
             else:
@@ -587,14 +575,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
                        else 'comparison')
         report_name = 'localhost:%d: %s, %s' % (port, report_type,
                                                 sessions_str)
-        # add a list item that keeps track of the port
-        self.listActiveReports.add_item(report_name, data=port)
         # double clicking on the list item will browse to corresponding port
-
+        self.listActiveReports.add_item(report_name, data=port)
         logger.debug('starting web browser')
         _browse_localhost(port)
 
-    def _create_pdfs(self):
+    def _create_pdf_report(self):
         """Creates the full pdf report"""
         try:
             subj = nexus.get_subjectnames()
@@ -605,12 +591,14 @@ class Gaitmenu(QtWidgets.QMainWindow):
         session = nexus.get_sessionpath()
         patient_data = dict(fullname=None, hetu=None, session_description=None)
         fname = op.join(session, 'patient_info.json')
+
         if op.isfile(fname):
             with io.open(fname, 'r', encoding='utf-8') as f:
                 try:
                     patient_data_loaded = json.load(f)
                 except (UnicodeDecodeError, EOFError, IOError, TypeError):
-                    qt_message_dialog('Error loading patient info file')
+                    qt_message_dialog('Error loading patient info file %s' %
+                                      fname)
             patient_data.update(patient_data_loaded)
 
         prompt_ = 'Please give additional subject information for %s:' % subj
@@ -625,13 +613,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
                           fullname=dlg.fullname, hetu=dlg.hetu,
                           session_description=dlg.session_description,
                           pages=dlg.pages)
-
             try:
                 with io.open(fname, 'w', encoding='utf-8') as f:
                     f.write(unicode(json.dumps(patient_data,
                                                ensure_ascii=False)))
             except (UnicodeDecodeError, EOFError, IOError, TypeError):
-                qt_message_dialog('Error saving patient info file')
+                qt_message_dialog('Error saving patient info file %s ' % fname)
 
     def _log_message(self, msg):
         c = self.txtOutput.textCursor()

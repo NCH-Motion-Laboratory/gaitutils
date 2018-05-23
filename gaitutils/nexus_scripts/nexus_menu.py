@@ -538,6 +538,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _create_web_report(self):
         """Collect sessions, create the dash app, start it and launch a
         web browser on localhost on the correct port"""
+        # this could conflict with the video conversion below
         if self._video_conv_ongoing:
             qt_message_dialog('Video conversion is running in the background. '
                               'Wait for it to finish before creating web '
@@ -600,6 +601,32 @@ class Gaitmenu(QtWidgets.QMainWindow):
         logger.debug('starting web browser')
         _browse_localhost(port)
 
+    def _load_patient_data(self, session):
+        """Return the patient info dict from the given session"""
+        # FIXME: keys should be defined elsewhere
+        patient_data = dict(fullname=None, hetu=None, session_description=None)
+        # FIXME: json filename into config
+        fname = op.join(session, 'patient_info.json')
+        if op.isfile(fname):
+            with io.open(fname, 'r', encoding='utf-8') as f:
+                try:
+                    patient_data.update(json.load(f))
+                except (UnicodeDecodeError, EOFError, IOError, TypeError):
+                    qt_message_dialog('Error loading patient info file %s' %
+                                      fname)
+        return patient_data
+
+    def _save_patient_data(self, session, patient_data):
+        """Save patient info. Existing unmodified keys will be kept."""
+        pdata = self._load_patient_data(session)
+        pdata.update(patient_data)
+        fname = op.join(session, 'patient_info.json')
+        try:
+            with io.open(fname, 'w', encoding='utf-8') as f:
+                f.write(unicode(json.dumps(pdata, ensure_ascii=False)))
+        except (UnicodeDecodeError, EOFError, IOError, TypeError):
+            qt_message_dialog('Error saving patient info file %s ' % fname)
+
     def _create_pdf_report(self):
         """Creates the full pdf report"""
         try:
@@ -609,17 +636,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         # load patient info if previously entered
         session = nexus.get_sessionpath()
-        patient_data = dict(fullname=None, hetu=None, session_description=None)
-        fname = op.join(session, 'patient_info.json')
-
-        if op.isfile(fname):
-            with io.open(fname, 'r', encoding='utf-8') as f:
-                try:
-                    patient_data_loaded = json.load(f)
-                except (UnicodeDecodeError, EOFError, IOError, TypeError):
-                    qt_message_dialog('Error loading patient info file %s' %
-                                      fname)
-            patient_data.update(patient_data_loaded)
+        patient_data = self._load_patient_data(session)
 
         prompt_ = 'Please give additional subject information for %s:' % subj
         dlg = HetuDialog(prompt=prompt_, fullname=patient_data['fullname'],
@@ -633,12 +650,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
                           fullname=dlg.fullname, hetu=dlg.hetu,
                           session_description=dlg.session_description,
                           pages=dlg.pages)
-            try:
-                with io.open(fname, 'w', encoding='utf-8') as f:
-                    f.write(unicode(json.dumps(patient_data,
-                                               ensure_ascii=False)))
-            except (UnicodeDecodeError, EOFError, IOError, TypeError):
-                qt_message_dialog('Error saving patient info file %s ' % fname)
+            # update the patient info file accordingly
+            self._save_patient_data(session, patient_data)
 
     def _log_message(self, msg):
         c = self.txtOutput.textCursor()

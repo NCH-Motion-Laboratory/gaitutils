@@ -475,8 +475,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _video_conv_finished(self):
         self._video_conv_ongoing = False
+        qt_message_dialog('Video conversion finished')
 
     def _convert_session_videos(self):
+        if self._video_conv_ongoing:
+            qt_message_dialog('Video conversion already ongoing, wait for it '
+                              'to finish')
+            return
         try:
             session = nexus.get_sessionpath()
         except GaitDataError as e:
@@ -491,7 +496,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         static_c3ds = nexus.find_tagged(['Static'], ['TYPE'], session)
         if static_c3ds:
             vidfiles.extend(nexus.find_trial_videos(static_c3ds[-1]))
-        if vidfiles:
+        # check whether files were already converted
+        if not report.convert_videos(vidfiles, check_only=True):
             self._video_conv_ongoing = True
             self._execute(report.convert_videos, thread=True, block_ui=False,
                           vidfiles=vidfiles,

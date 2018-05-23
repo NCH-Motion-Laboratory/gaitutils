@@ -104,6 +104,27 @@ def qt_yesno_dialog(msg):
     return dlg.buttonRole(dlg.clickedButton())
 
 
+def qt_dir_chooser():
+    """Selector dialog to select dir (or multiple dirs)."""
+    # native dialog - single dir only
+    return [QtWidgets.QFileDialog.getExistingDirectory(None, 'Select session')]
+    # non-native dialog - multiple dirs. a bit messy, currently not in use
+    file_dialog = QtWidgets.QFileDialog()
+    file_dialog.setFileMode(QtWidgets.QFileDialog.DirectoryOnly)
+    file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog,
+                          True)
+    file_view = file_dialog.findChild(QtWidgets.QListView, 'listView')
+    if file_view:
+        file_view.setSelectionMode(QtWidgets.QAbstractItemView.
+                                   MultiSelection)
+    f_tree_view = file_dialog.findChild(QtWidgets.QTreeView)
+    if f_tree_view:
+        f_tree_view.setSelectionMode(QtWidgets.QAbstractItemView.
+                                     MultiSelection)
+    return file_dialog.selectedFiles() if file_dialog.exec_() else []
+
+
+
 # non-qt dialogs - Windows specific
 def error_exit(message):
     """ Custom error handler """

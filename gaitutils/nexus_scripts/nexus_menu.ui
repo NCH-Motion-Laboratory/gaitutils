@@ -255,13 +255,6 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="7">
-       <widget class="QPushButton" name="btnCopyVideos">
-        <property name="text">
-         <string>Copy session videos to desktop</string>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="6">
        <spacer name="horizontalSpacer_2">
         <property name="orientation">
@@ -293,6 +286,20 @@
          </size>
         </property>
        </spacer>
+      </item>
+      <item row="5" column="7">
+       <widget class="QPushButton" name="btnCopyVideos">
+        <property name="text">
+         <string>Copy session videos to desktop</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="7">
+       <widget class="QPushButton" name="btnConvertVideos">
+        <property name="text">
+         <string>Convert videos to web format</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>

@@ -440,6 +440,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnAutomark,
                                   nexus_automark_trial.automark_single)
 
+        self.btnConvertVideos.clicked.connect(self._convert_session_videos)
         self.btnCreatePDFs.clicked.connect(self._create_pdf_report)
         self.btnCreateComparison.clicked.connect(self._create_comparison)
         self.btnCreateWebReport.clicked.connect(self._create_web_report)
@@ -453,6 +454,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
             if ((widget[:3] == 'btn' or widget[:4] == 'rbtn') and
                widget != 'btnQuit'):
                 self.opWidgets.append(widget)
+
+        self._video_conv_ongoing = False
 
         # keep track of active dash apps (web reports)
         self._dash_apps = dict()
@@ -470,10 +473,35 @@ class Gaitmenu(QtWidgets.QMainWindow):
         thread. """
         button.clicked.connect(lambda ev: self._execute(fun, thread=thread))
 
+    def _video_conv_finished(self):
+        self._video_conv_ongoing = False
+
+    def _convert_session_videos(self):
+        try:
+            session = nexus.get_sessionpath()
+        except GaitDataError as e:
+            qt_message_dialog(str(e))
+            return
+
+        tags = cfg.plot.eclipse_tags
+        tagged = nexus.find_tagged(sessionpath=session, tags=tags)
+        vidfiles = []
+        for c3dfile in tagged:
+            vidfiles.extend(nexus.find_trial_videos(c3dfile))
+        static_c3ds = nexus.find_tagged(['Static'], ['TYPE'], session)
+        if static_c3ds:
+            vidfiles.extend(nexus.find_trial_videos(static_c3ds[-1]))
+        if vidfiles:
+            self._video_conv_ongoing = True
+            self._execute(report.convert_videos, thread=True, block_ui=False,
+                          vidfiles=vidfiles,
+                          finished_callback=self._video_conv_finished)
+            qt_message_dialog('Started video conversion in the background')
+
     def closeEvent(self, event):
         """ Confirm and close application. """
-        if self._dash_apps:
-            reply = qt_yesno_dialog('There are active web reports which '
+        if self._dash_apps or self._video_conv_ongoing:
+            reply = qt_yesno_dialog('There are active processes which '
                                     'will be terminated. Are you sure you '
                                     'want to quit?')
             if reply == QtWidgets.QMessageBox.YesRole:
@@ -504,6 +532,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _create_web_report(self):
         """Collect sessions, create the dash app, start it and launch a
         web browser on localhost on the correct port"""
+        if self._video_conv_ongoing:
+            qt_message_dialog('Video conversion is running in the background. '
+                              'Wait for it to finish before creating web '
+                              'reports.')
+            return
+
         dlg = WebReportDialog()
         if not dlg.exec_():
             return

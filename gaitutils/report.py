@@ -34,11 +34,13 @@ from gaitutils.nexus import find_tagged
 logger = logging.getLogger(__name__)
 
 
-def convert_videos(vidfiles, check_only=False, prog_callback=None):
+def convert_videos(vidfiles, check_only=False, prog_callback=None,
+                   finished_callback=None):
     """Convert video files using command and options defined in cfg.
     If check_only, return whether files were already converted.
     During conversion, prog_callback will be called with % of task done
-    and name of current video file"""
+    and name of current video file. After conversion, finished_callback will
+    be called"""
     CONV_EXT = '.ogv'  # extension for converted files
     if not isinstance(vidfiles, list):
         vidfiles = [vidfiles]
@@ -66,9 +68,13 @@ def convert_videos(vidfiles, check_only=False, prog_callback=None):
             if prog_callback is not None:
                 prog_callback(100*k/n_to_conv, vidfile)
             # XXX could parallelize with non-blocking Popen() calls?
+            logger.debug('converting video %s (%d of %d files)'
+                         % (vidfile, k+1, n_to_conv))
             subprocess.call([vidconv_bin]+vidconv_opts.split()+[vidfile],
                             stdout=None, creationflags=0x08000000)  # NO_WINDOW flag
             k += 1
+    if finished_callback is not None:
+        finished_callback()
     return convfiles.values()
 
 

@@ -603,6 +603,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         # load patient info if previously entered
         session = nexus.get_sessionpath()
+        patient_data = dict(fullname=None, hetu=None, session_description=None)
         fname = op.join(session, 'patient_info.json')
         if op.isfile(fname):
             with io.open(fname, 'r', encoding='utf-8') as f:
@@ -610,8 +611,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                     patient_data_loaded = json.load(f)
                 except (UnicodeDecodeError, EOFError, IOError, TypeError):
                     qt_message_dialog('Error loading patient info file')
-        patient_data = dict(fullname=None, hetu=None, session_description=None)
-        patient_data.update(patient_data_loaded)
+            patient_data.update(patient_data_loaded)
 
         prompt_ = 'Please give additional subject information for %s:' % subj
         dlg = HetuDialog(prompt=prompt_, fullname=patient_data['fullname'],

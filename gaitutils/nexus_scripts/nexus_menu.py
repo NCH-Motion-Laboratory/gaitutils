@@ -458,9 +458,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         self._video_conv_ongoing = False
 
-        # keep track of active dash apps (web reports)
-        self._dash_apps = dict()
-
         XStream.stdout().messageWritten.connect(self._log_message)
         XStream.stderr().messageWritten.connect(self._log_message)
 
@@ -476,9 +473,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _video_conv_finished(self):
         self._video_conv_ongoing = False
-        # FIXME: crashes
-        # qt_message_dialog('Video conversion finished')
 
+        
     def _convert_session_videos(self):
         if self._video_conv_ongoing:
             qt_message_dialog('Video conversion already ongoing, wait for it '
@@ -499,7 +495,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if static_c3ds:
             vidfiles.extend(nexus.find_trial_videos(static_c3ds[-1]))
         # check whether files were already converted
-        if not report.convert_videos(vidfiles, check_only=True):
+        if report.convert_videos(vidfiles, check_only=True):
+            qt_message_dialog('It looks like the session videos have already '
+                              'been converted.')
+        else:
             self._video_conv_ongoing = True
             self._execute(report.convert_videos, thread=True, block_ui=False,
                           vidfiles=vidfiles,
@@ -508,7 +507,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         """ Confirm and close application. """
-        if self._dash_apps or self._video_conv_ongoing:
+        if self.listActiveReports.count() or self._video_conv_ongoing:
             reply = qt_yesno_dialog('There are active processes which '
                                     'will be terminated. Are you sure you '
                                     'want to quit?')
@@ -589,10 +588,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
 
         # report ok - start server, thread and do not block ui
-        port = 5000 + len(self._dash_apps)
+        port = 5000 + self.listActiveReports.count()
         self._execute(app.server.run, thread=True, block_ui=False,
                       debug=False, port=port)
-        self._dash_apps[port] = app  # FIXME: is this needed?
         sessions_str = '/'.join([op.split(s)[-1] for s in dlg.sessions])
         report_type = ('single session' if len(dlg.sessions) == 1
                        else 'comparison')

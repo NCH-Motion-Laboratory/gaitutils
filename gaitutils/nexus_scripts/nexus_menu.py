@@ -576,12 +576,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
         QtWidgets.QApplication.processEvents()
         report.convert_videos(vidfiles, prog_callback=lambda k,
                               fn: self.update_progbar(prog, k, fn))
+
+        # create the report
         prog.setLabelText('Creating report...')
         QtWidgets.QApplication.processEvents()
         app = report.dash_report(sessions=sessions, tags=tags)
         prog.hide()
         self._enable_op_buttons()
-
         if app is None:
             qt_message_dialog('Could not create report, check that session is '
                               'valid')
@@ -715,14 +716,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
 
 class RunnerSignals(QObject):
-    """ Need a separate class since QRunnable cannot emit signals """
-
+    """Need a separate class since QRunnable cannot emit signals"""
     finished = pyqtSignal()
     error = pyqtSignal(Exception)
 
 
 class Runner(QRunnable):
-
+    """Encapsulates threaded functions for QThreadPool"""
     def __init__(self, fun):
         super(Runner, self).__init__()
         self.fun = fun

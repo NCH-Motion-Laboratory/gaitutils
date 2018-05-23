@@ -107,7 +107,8 @@ class ComparisonDialog(QtWidgets.QDialog):
         uifile = resource_filename(__name__, 'comparison_dialog.ui')
         uic.loadUi(uifile, self)
         self.btnBrowseSession.clicked.connect(self.add_session)
-        self.btnAddNexusSession.clicked.connect(lambda: self.add_session(from_nexus=True))
+        self.btnAddNexusSession.clicked.connect(lambda: self.
+                                                add_session(from_nexus=True))
         self.btnClear.clicked.connect(self.clear_sessions)
         self.MAX_SESSIONS = 2  # FIXME: why only 2
         self.sessions = list()
@@ -115,7 +116,7 @@ class ComparisonDialog(QtWidgets.QDialog):
     def add_session(self, from_nexus=False):
         if len(self.sessions) == self.MAX_SESSIONS:
             qt_message_dialog('You can specify maximum of %d sessions' %
-                           self.MAX_SESSIONS)
+                              self.MAX_SESSIONS)   
             return
         if from_nexus:
             dir = nexus.get_sessionpath()
@@ -475,7 +476,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _video_conv_finished(self):
         self._video_conv_ongoing = False
-        qt_message_dialog('Video conversion finished')
+        # FIXME: crashes
+        # qt_message_dialog('Video conversion finished')
 
     def _convert_session_videos(self):
         if self._video_conv_ongoing:

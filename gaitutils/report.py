@@ -75,6 +75,7 @@ def convert_videos(vidfiles, check_only=False, prog_callback=None,
             k += 1
     if finished_callback is not None:
         finished_callback()
+    logger.debug('video conversion finished')
     return convfiles.values()
 
 

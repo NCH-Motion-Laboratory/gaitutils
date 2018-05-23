@@ -637,6 +637,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         # load patient info if previously entered
         session = nexus.get_sessionpath()
+        # FIXME: None values will be fed into dialog - not good
         patient_data = self._load_patient_data(session)
 
         prompt_ = 'Please give additional subject information for %s:' % subj

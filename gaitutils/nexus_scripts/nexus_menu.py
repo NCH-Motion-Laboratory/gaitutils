@@ -474,7 +474,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _video_conv_finished(self):
         self._video_conv_ongoing = False
 
-        
     def _convert_session_videos(self):
         if self._video_conv_ongoing:
             qt_message_dialog('Video conversion already ongoing, wait for it '

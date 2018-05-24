@@ -131,10 +131,7 @@ def viconnexus():
 def get_subjectnames(single_only=True):
     """ Get subject name(s) from Nexus """
     vicon = viconnexus()
-    sessionpath = get_sessionpath()
-    if not sessionpath:
-        raise GaitDataError('Cannot get Nexus session path, '
-                            'no session or maybe in Live mode?')
+    get_sessionpath()  # check whether we can get data
     names_ = vicon.GetSubjectNames()
     if not names_:
         raise GaitDataError('No subject defined in Nexus')
@@ -155,7 +152,11 @@ def check_nexus():
 def get_sessionpath():
     """ Get path to current session """
     vicon = viconnexus()
-    return op.normpath(vicon.GetTrialName()[0])
+    sessionpath = vicon.GetTrialName()[0]
+    if not sessionpath:
+        raise GaitDataError('Cannot get Nexus session path, '
+                            'no session or maybe in Live mode?')
+    return op.normpath(sessionpath)
 
 
 def get_trialname():
@@ -169,9 +170,6 @@ def get_session_date(sessionpath=None):
     """Return date when session was recorded (datetime.datetime object)"""
     if sessionpath is None:
         sessionpath = get_sessionpath()
-    if not sessionpath:
-        raise GaitDataError('Cannot get Nexus session path, '
-                            'no session or maybe in Live mode?')
     enfs = get_session_enfs(sessionpath)
     x1ds = [_enf2other(fn, 'x1d') for fn in enfs]
     if not x1ds:
@@ -183,9 +181,6 @@ def get_session_enfs(sessionpath=None):
     """Return list of .enf files for the Nexus session (or specified path)"""
     if sessionpath is None:
         sessionpath = get_sessionpath()
-    if not sessionpath:
-        raise GaitDataError('Cannot get Nexus session path, '
-                            'no session or maybe in Live mode?')
     enfglob = op.join(sessionpath, '*Trial*.enf')
     enffiles = glob.glob(enfglob) if sessionpath else None
     logger.debug('found %d .enf files for session %s' %

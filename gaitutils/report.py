@@ -30,8 +30,7 @@ from gaitutils.plot_plotly import plot_trials
 logger = logging.getLogger(__name__)
 
 
-def convert_videos(vidfiles, check_only=False, prog_callback=None,
-                   finished_callback=None):
+def convert_videos(vidfiles, check_only=False):
     """Convert video files using command and options defined in cfg.
     If check_only, return whether files were already converted.
     During conversion, prog_callback will be called with % of task done
@@ -56,23 +55,13 @@ def convert_videos(vidfiles, check_only=False, prog_callback=None,
     if not (op.isfile(vidconv_bin) and os.access(vidconv_bin, os.X_OK)):
         raise ValueError('Invalid video converter executable: %s'
                          % vidconv_bin)
-
-    n_to_conv = len(vidfiles) - converted.count(True)
-    k = 0
+    procs = []
     for vidfile, convfile in convfiles.items():
         if not op.isfile(convfile):
-            if prog_callback is not None:
-                prog_callback(100*k/n_to_conv, vidfile)
-            # XXX could parallelize with non-blocking Popen() calls?
-            logger.debug('converting video %s (%d of %d files)'
-                         % (vidfile, k+1, n_to_conv))
-            subprocess.call([vidconv_bin]+vidconv_opts.split()+[vidfile],
-                            stdout=None, creationflags=0x08000000)  # NO_WINDOW flag
-            k += 1
-    if finished_callback is not None:
-        finished_callback()
-    logger.debug('video conversion finished')
-    return convfiles.values()
+            p = subprocess.Popen([vidconv_bin]+vidconv_opts.split()+[vidfile],
+                                 stdout=None, creationflags=0x08000000)  # NO_WINDOW flag
+            procs.append(p)
+    return procs
 
 
 def _make_dropdown_lists(options):

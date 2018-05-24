@@ -16,6 +16,7 @@ import os.path as op
 import os
 import subprocess
 import io
+import time
 import json
 
 from gaitutils.numutils import check_hetu
@@ -445,7 +446,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
                widget != 'btnQuit'):
                 self.opWidgets.append(widget)
 
-        self._video_conv_ongoing = False
 
         XStream.stdout().messageWritten.connect(self._log_message)
         XStream.stderr().messageWritten.connect(self._log_message)
@@ -460,20 +460,40 @@ class Gaitmenu(QtWidgets.QMainWindow):
         thread. """
         button.clicked.connect(lambda ev: self._execute(fun, thread=thread))
 
-    def _video_conv_finished(self):
-        self._video_conv_ongoing = False
+    def _convert_vidfiles(self, vidfiles):
+        """Convert given list of video files to web format. Uses non-blocking
+        Popen() calls"""
+        self._disable_op_buttons()
+        prog = QtWidgets.QProgressDialog()
+        prog.setWindowTitle('Converting videos...')
+        prog.setCancelButton(None)
+        prog.setMinimum(0)
+        prog.setMaximum(100)
+        prog.setGeometry(500, 300, 500, 100)
+        prog.show()
+        QtWidgets.QApplication.processEvents()
+        procs = self._execute(report.convert_videos, thread=False,
+                              block_ui=False, vidfiles=vidfiles)
+        completed = False
+        while not completed:
+            n_complete = len([p for p in procs if p.poll() is not None])
+            prog.setLabelText('%d of %d files done' % (n_complete,
+                                                       len(procs)))
+            prog.setValue(100*n_complete/float(len(procs)))
+            QtWidgets.QApplication.processEvents()
+            time.sleep(.25)
+            completed = n_complete == len(procs)
+        prog.hide()
+        self._enable_op_buttons()
 
     def _convert_session_videos(self):
-        if self._video_conv_ongoing:
-            qt_message_dialog('Video conversion already ongoing, wait for it '
-                              'to finish')
-            return
+        """Convert current Nexus session videos to web format. Converts
+        representative and static trial videos"""
         try:
             session = nexus.get_sessionpath()
         except GaitDataError as e:
             qt_message_dialog(str(e))
             return
-
         tags = cfg.plot.eclipse_tags
         tagged = nexus.find_tagged(sessionpath=session, tags=tags)
         vidfiles = []
@@ -482,20 +502,18 @@ class Gaitmenu(QtWidgets.QMainWindow):
         static_c3ds = nexus.find_tagged(['Static'], ['TYPE'], session)
         if static_c3ds:
             vidfiles.extend(nexus.find_trial_videos(static_c3ds[-1]))
-        # check whether files were already converted
+        if not vidfiles:
+            qt_message_dialog('Cannot find any video files for session %s')
+            return
         if report.convert_videos(vidfiles, check_only=True):
             qt_message_dialog('It looks like the session videos have already '
                               'been converted.')
-        else:
-            self._video_conv_ongoing = True
-            self._execute(report.convert_videos, thread=True, block_ui=False,
-                          vidfiles=vidfiles,
-                          finished_callback=self._video_conv_finished)
-            qt_message_dialog('Started video conversion in the background')
+            return
+        self._convert_vidfiles(vidfiles)
 
     def closeEvent(self, event):
         """ Confirm and close application. """
-        if self.listActiveReports.count() or self._video_conv_ongoing:
+        if self.listActiveReports.count():
             reply = qt_yesno_dialog('There are active processes which '
                                     'will be terminated. Are you sure you '
                                     'want to quit?')
@@ -518,21 +536,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._execute(nexus_make_comparison_report.do_plot,
                           sessions=dlg.sessions)
 
-    @staticmethod
-    def update_progbar(progbar, k, fn):
-        progbar.setValue(k)
-        progbar.setLabelText('Converting %s' % fn)
-        QtWidgets.QApplication.processEvents()
-
     def _create_web_report(self):
         """Collect sessions, create the dash app, start it and launch a
         web browser on localhost on the correct port"""
         # this could conflict with the video conversion below
-        if self._video_conv_ongoing:
-            qt_message_dialog('Video conversion is running in the background. '
-                              'Wait for it to finish before creating web '
-                              'reports.')
-            return
 
         dlg = WebReportDialog()
         if not dlg.exec_():
@@ -553,25 +560,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
             if static_c3ds:
                 vidfiles.extend(nexus.find_trial_videos(static_c3ds[-1]))
 
-        # do the video conversion
-        self._disable_op_buttons()
-        prog = QtWidgets.QProgressDialog()
-        prog.setWindowTitle('Converting videos...')
-        prog.setCancelButton(None)
-        prog.setMinimum(0)
-        prog.setMaximum(100)
-        prog.setGeometry(500, 300, 500, 100)
-        prog.show()
-        QtWidgets.QApplication.processEvents()
-        report.convert_videos(vidfiles, prog_callback=lambda k,
-                              fn: self.update_progbar(prog, k, fn))
+        if not report.convert_videos(vidfiles, check_only=True):
+            self._convert_vidfiles(vidfiles)
 
-        # create the report
-        prog.setLabelText('Creating report...')
-        QtWidgets.QApplication.processEvents()
-        app = report.dash_report(sessions=sessions, tags=tags)
-        prog.hide()
-        self._enable_op_buttons()
+        logger.debug('Creating web report...')
+        app = self._execute(report.dash_report, sessions=sessions, tags=tags)
         if app is None:
             qt_message_dialog('Could not create report, check that session is '
                               'valid')

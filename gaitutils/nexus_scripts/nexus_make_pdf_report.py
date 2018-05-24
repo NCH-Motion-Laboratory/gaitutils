@@ -18,7 +18,7 @@ from collections import defaultdict
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
                        numutils, normaldata)
-from gaitutils.nexus import get_sessionpath, find_tagged
+from gaitutils.nexus import get_sessionpath, find_tagged, get_session_date
 import nexus_kin_consistency
 import nexus_emg_consistency
 import nexus_musclelen_consistency
@@ -74,11 +74,8 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
     tagged_trials = find_tagged()
     if not tagged_trials:
         raise ValueError('No marked trials found in session directory')
-    # use creation date of 1st tagged trial as session timestamp
-    tagged1 = op.splitext(tagged_trials[0])[0] + '.x1d'
-    session_t = datetime.datetime.fromtimestamp(op.getmtime(tagged1))
+    session_t = get_session_date()
     logger.debug('session timestamp: %s', session_t)
-    # compute subject age at time of session
     age = numutils.age_from_hetu(hetu, session_t) if hetu else None
 
     sessionpath = get_sessionpath()
@@ -155,8 +152,9 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
                 pl.layout = (cfg.layouts.lb_kinetics_emg_r if side == 'R' else
                              cfg.layouts.lb_kinetics_emg_l)
 
-                maintitle = 'Kinetics-EMG (%s) for %s' % (side_str,
-                                                          pl.title_with_eclipse_info())
+                maintitle = ('Kinetics-EMG '
+                             '(%s) for %s' % (side_str,
+                                              pl.title_with_eclipse_info()))
                 fig = pl.plot_trial(maintitle=maintitle, show=False)
                 tagged_figs.append(fig)
                 eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
@@ -192,7 +190,9 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
 
     # time-distance average
     if pages['TimeDistAverage']:
-        fig_timedist_avg = nexus_time_distance_vars.do_session_average_plot(show=False, make_pdf=False)
+        fig_timedist_avg = (nexus_time_distance_vars.
+                            do_session_average_plot(show=False,
+                                                    make_pdf=False))
     else:
         fig_timedist_avg = None
 

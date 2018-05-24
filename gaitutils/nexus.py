@@ -15,6 +15,7 @@ import psutil
 import glob
 import matplotlib.pyplot as plt
 import logging
+import datetime
 
 from .numutils import (rising_zerocross, best_match, falling_zerocross,
                        change_coords)
@@ -164,6 +165,20 @@ def get_trialname():
     return trialname_[1]
 
 
+def get_session_date(sessionpath=None):
+    """Return date when session was recorded (datetime.datetime object)"""
+    if sessionpath is None:
+        sessionpath = get_sessionpath()
+    if not sessionpath:
+        raise GaitDataError('Cannot get Nexus session path, '
+                            'no session or maybe in Live mode?')
+    enfs = get_session_enfs(sessionpath)
+    x1ds = [_enf2other(fn, 'x1d') for fn in enfs]
+    if not x1ds:
+        raise ValueError('No .x1d files for given session')
+    return datetime.datetime.fromtimestamp(op.getmtime(x1ds[0]))
+
+
 def get_session_enfs(sessionpath=None):
     """Return list of .enf files for the Nexus session (or specified path)"""
     if sessionpath is None:
@@ -205,12 +220,13 @@ def c3d2enf(fname):
     return fname.replace('.c3d', '.Trial.enf')
 
 
-def enf2c3d(fname):
-    """ Converts name of trial .enf file to corresponding .c3d. """
+def _enf2other(fname, ext):
+    """Converts name of trial .enf file to corresponding .c3d or other
+    file type"""
     enfstr = '.Trial.enf'
     if enfstr not in fname:
         raise ValueError('Filename is not a trial .enf')
-    return fname.replace(enfstr, '.c3d')
+    return fname.replace(enfstr, '.%s' % ext)
 
 
 def find_tagged(tags=None, eclipse_keys=None, sessionpath=None):
@@ -224,7 +240,7 @@ def find_tagged(tags=None, eclipse_keys=None, sessionpath=None):
         tags = cfg.plot.eclipse_tags
 
     tagged_enfs = list(_find_enfs(tags, eclipse_keys, sessionpath))
-    return [enf2c3d(fn) for fn in tagged_enfs]
+    return [_enf2other(fn, 'c3d') for fn in tagged_enfs]
 
 
 def _find_enfs(tags, eclipse_keys, sessionpath=None):

@@ -19,7 +19,7 @@ def _plotly_fill_between(x, ylow, yhigh, **kwargs):
     """Fill area between ylow and yhigh"""
     x_ = np.concatenate([x, x[::-1]])  # construct a closed curve
     y_ = np.concatenate([yhigh, ylow[::-1]])
-    return go.Scatter(x=x_, y=y_, fill='toself', **kwargs)
+    return go.Scatter(x=x_, y=y_, fill='toself', hoverinfo='none', **kwargs)
 
 
 def _var_title(var):

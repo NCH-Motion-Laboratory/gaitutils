@@ -21,28 +21,15 @@ import json
 from gaitutils.numutils import check_hetu
 from gaitutils.guiutils import (qt_message_dialog, qt_yesno_dialog,
                                 qt_dir_chooser)
-from gaitutils import GaitDataError
-from gaitutils import nexus
-from gaitutils import cfg
-from gaitutils import report
-from gaitutils import nexus_emgplot
-from gaitutils import nexus_musclelen_plot
-from gaitutils import nexus_kinetics_emgplot
-from gaitutils import nexus_emg_consistency
-from gaitutils import nexus_kin_consistency
-from gaitutils import nexus_musclelen_consistency
-from gaitutils import nexus_autoprocess_trial
-from gaitutils import nexus_autoprocess_session
-from gaitutils import nexus_kinallplot
-from gaitutils import nexus_tardieu
-from gaitutils import nexus_copy_trial_videos
-from gaitutils import nexus_trials_velocity
-from gaitutils import nexus_make_pdf_report
-from gaitutils import nexus_make_comparison_report
-from gaitutils import nexus_kin_average
-from gaitutils import nexus_automark_trial
-from gaitutils import nexus_time_distance_vars
-
+from gaitutils import (GaitDataError, nexus, cfg, report, nexus_emgplot,
+                       nexus_musclelen_plot, nexus_kinetics_emgplot,
+                       nexus_emg_consistency, nexus_kin_consistency,
+                       nexus_musclelen_consistency, nexus_autoprocess_trial,
+                       nexus_autoprocess_session, nexus_kinallplot,
+                       nexus_tardieu, nexus_copy_trial_videos,
+                       nexus_trials_velocity, nexus_make_pdf_report,
+                       nexus_make_comparison_report, nexus_kin_average,
+                       nexus_automark_trial, nexus_time_distance_vars)
 
 try:
     from gaitutils import nexus_customplot
@@ -150,7 +137,8 @@ class WebReportDialog(QtWidgets.QDialog):
         uifile = resource_filename(__name__, 'web_report.ui')
         uic.loadUi(uifile, self)
         self.btnBrowseSession.clicked.connect(self.add_session)
-        self.btnAddNexusSession.clicked.connect(lambda: self.add_session(from_nexus=True))
+        self.btnAddNexusSession.clicked.connect(lambda: self.
+                                                add_session(from_nexus=True))
         self.btnClearAll.clicked.connect(self.listSessions.clear)
         self.btnClearCurrent.clicked.connect(self.listSessions.rm_current_item)
         self.MAX_SESSIONS = 3
@@ -283,7 +271,8 @@ class OptionsDialog(QtWidgets.QDialog):
         global cfg
         res, txt = self._check_widget_inputs()
         if not res:
-            qt_message_dialog('Invalid input: %s\nPlease fix before saving' % txt)
+            qt_message_dialog('Invalid input: %s\nPlease fix before saving'
+                              % txt)
         else:
             fout = QtWidgets.QFileDialog.getSaveFileName(self,
                                                          'Save config file',
@@ -303,7 +292,6 @@ class OptionsDialog(QtWidgets.QDialog):
                 cfgval = getattr(getattr(cfg, section), item)
                 if str(cfgval) != str(self._getval(widget)):
                     self._setval(widget, cfgval)  # set using native type
-
                 if isinstance(widget, QtWidgets.QLineEdit):
                     widget.setCursorPosition(0)  # show beginning of line
 
@@ -447,7 +435,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnCreateWebReport.clicked.connect(self._create_web_report)
         self.btnOptions.clicked.connect(self._options_dialog)
         self.btnQuit.clicked.connect(self.close)
-        self.listActiveReports.itemDoubleClicked.connect(lambda item: _browse_localhost(item.userdata))
+        (self.listActiveReports.itemDoubleClicked.
+         connect(lambda item: _browse_localhost(item.userdata)))
 
         # collect operation widgets
         self.opWidgets = list()

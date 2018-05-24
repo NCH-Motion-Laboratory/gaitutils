@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-Plot gait data
+matplotlib based plotting functions
 
 @author: Jussi (jnu@iki.fi)
 """

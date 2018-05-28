@@ -15,13 +15,12 @@ import psutil
 import glob
 import matplotlib.pyplot as plt
 import logging
-import datetime
 
 from .numutils import (rising_zerocross, best_match, falling_zerocross,
                        change_coords)
 from . import utils
 from .envutils import GaitDataError
-from .eclipse import get_eclipse_keys
+
 from .config import cfg
 
 
@@ -166,28 +165,6 @@ def get_trialname():
     return trialname_[1]
 
 
-def get_session_date(sessionpath=None):
-    """Return date when session was recorded (datetime.datetime object)"""
-    if sessionpath is None:
-        sessionpath = get_sessionpath()
-    enfs = get_session_enfs(sessionpath)
-    x1ds = [_enf2other(fn, 'x1d') for fn in enfs]
-    if not x1ds:
-        raise ValueError('No .x1d files for given session')
-    return datetime.datetime.fromtimestamp(op.getmtime(x1ds[0]))
-
-
-def get_session_enfs(sessionpath=None):
-    """Return list of .enf files for the Nexus session (or specified path)"""
-    if sessionpath is None:
-        sessionpath = get_sessionpath()
-    enfglob = op.join(sessionpath, '*Trial*.enf')
-    enffiles = glob.glob(enfglob) if sessionpath else None
-    logger.debug('found %d .enf files for session %s' %
-                 (len(enffiles) if enffiles else 0, sessionpath))
-    return enffiles
-
-
 def find_trial_videos(fname, ext='avi', camera_id=None):
     """ Finds Nexus video files for trial file (e.g. x1d or c3d) """
     trialbase = op.splitext(fname)[0]
@@ -222,37 +199,6 @@ def _enf2other(fname, ext):
     if enfstr not in fname:
         raise ValueError('Filename is not a trial .enf')
     return fname.replace(enfstr, '.%s' % ext)
-
-
-def find_tagged(tags=None, eclipse_keys=None, sessionpath=None):
-    """ Find tagged trials in Nexus session path (or given path).
-    Returns a list of .c3d files. """
-    # FIXME: into config?
-    if eclipse_keys is None:
-        eclipse_keys = ['DESCRIPTION', 'NOTES']
-
-    if tags is None:
-        tags = cfg.plot.eclipse_tags
-
-    tagged_enfs = list(_find_enfs(tags, eclipse_keys, sessionpath))
-    return [_enf2other(fn, 'c3d') for fn in tagged_enfs]
-
-
-def _find_enfs(tags, eclipse_keys, sessionpath=None):
-    """ Yield .enf files for trials in current Nexus session directory
-    (or given session path) whose Eclipse fields (list) contain any of
-    strings (list). Case insensitive. """
-    tags = [t.upper() for t in tags]
-    enffiles = get_session_enfs(sessionpath)
-
-    if enffiles is None:
-        return
-
-    for enf in enffiles:
-        ecldi = get_eclipse_keys(enf).items()
-        eclvals = [val.upper() for key, val in ecldi if key in eclipse_keys]
-        if any([s in val for s in tags for val in eclvals]):
-            yield enf
 
 
 def is_vicon_instance(obj):

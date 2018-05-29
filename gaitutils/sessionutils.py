@@ -26,7 +26,7 @@ def default_info():
     return dict(fullname=None, hetu=None, session_description=None, notes=None)
 
 
-def load_info(self, session):
+def load_info(session):
     """Return the patient info dict from the given session"""
     fname = op.join(session, 'patient_info.json')
     if op.isfile(fname):
@@ -41,7 +41,7 @@ def load_info(self, session):
         return None
 
 
-def save_info(self, session, patient_info):
+def save_info(session, patient_info):
     """Save patient info."""
     fname = op.join(session, 'patient_info.json')
     try:

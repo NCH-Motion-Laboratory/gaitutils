@@ -15,9 +15,7 @@ import ast
 import os.path as op
 import os
 import subprocess
-import io
 import time
-import json
 
 from gaitutils.numutils import check_hetu
 from gaitutils.guiutils import (qt_message_dialog, qt_yesno_dialog,
@@ -53,20 +51,20 @@ def _browse_localhost(port):
                           % cfg.general.browser_path)
 
 
-class HetuDialog(QtWidgets.QDialog):
+class PdfReportDialog(QtWidgets.QDialog):
+    """Ask for patient/session info and report options"""
 
-    def __init__(self, fullname=None, hetu=None, session_description=None,
-                 prompt='Hello', parent=None):
+    def __init__(self, info, prompt='Hello', parent=None):
         super(self.__class__, self).__init__()
-        uifile = resource_filename(__name__, 'hetu_dialog.ui')
+        uifile = resource_filename(__name__, 'pdf_report_dialog.ui')
         uic.loadUi(uifile, self)
         self.prompt.setText(prompt)
-        if fullname is not None:
-            self.lnFullName.setText(fullname)
-        if hetu is not None:
-            self.lnHetu.setText(hetu)
-        if session_description is not None:
-            self.lnDescription.setText(session_description)
+        if info['fullname'] is not None:
+            self.lnFullName.setText(info['fullname'])
+        if info['hetu'] is not None:
+            self.lnHetu.setText(info['hetu'])
+        if info['session_description'] is not None:
+            self.lnDescription.setText(info['session_description'])
 
     def accept(self):
         """ Update config and close dialog, if widget inputs are ok. Otherwise
@@ -80,6 +78,32 @@ class HetuDialog(QtWidgets.QDialog):
             wname = w.objectName()
             if wname[:2] == 'cb':
                 self.pages[wname[2:]] = w.checkState()
+        if self.fullname and check_hetu(self.hetu):
+            self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
+        else:
+            qt_message_dialog('Please enter a valid name and hetu')
+
+
+class WebReportInfoDialog(QtWidgets.QDialog):
+    """Ask for patient info"""
+
+    def __init__(self, info, parent=None):
+        super(self.__class__, self).__init__()
+        uifile = resource_filename(__name__, 'web_report_info.ui')
+        uic.loadUi(uifile, self)
+        if info['fullname'] is not None:
+            self.lnFullName.setText(info['fullname'])
+        if info['hetu'] is not None:
+            self.lnHetu.setText(info['hetu'])
+        if info['notes'] is not None:
+            self.lnNotes.setPlainText(info['notes'])
+
+    def accept(self):
+        """ Update config and close dialog, if widget inputs are ok. Otherwise
+        show an error dialog """
+        self.hetu = self.lnHetu.text()
+        self.fullname = self.lnFullName.text()
+        self.notes = unicode(self.txtNotes.toPlainText()).strip()
         if self.fullname and check_hetu(self.hetu):
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
@@ -105,7 +129,7 @@ class ComparisonDialog(QtWidgets.QDialog):
     def add_session(self, from_nexus=False):
         if len(self.sessions) == self.MAX_SESSIONS:
             qt_message_dialog('You can specify maximum of %d sessions' %
-                              self.MAX_SESSIONS)   
+                              self.MAX_SESSIONS)
             return
         if from_nexus:
             dir = nexus.get_sessionpath()
@@ -130,13 +154,13 @@ class ComparisonDialog(QtWidgets.QDialog):
             self.done(QtWidgets.QDialog.Accepted)
 
 
-class WebReportDialog(QtWidgets.QDialog):
+class WebReportSessionsDialog(QtWidgets.QDialog):
     """ Display a dialog for creating the web report """
 
     def __init__(self):
         super(self.__class__, self).__init__()
         # load user interface made with designer
-        uifile = resource_filename(__name__, 'web_report.ui')
+        uifile = resource_filename(__name__, 'web_report_sessions.ui')
         uic.loadUi(uifile, self)
         self.btnBrowseSession.clicked.connect(self.add_session)
         self.btnAddNexusSession.clicked.connect(lambda: self.
@@ -540,12 +564,32 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _create_web_report(self):
         """Collect sessions, create the dash app, start it and launch a
         web browser on localhost on the correct port"""
-        # this could conflict with the video conversion below
 
-        dlg = WebReportDialog()
+        dlg = WebReportSessionsDialog()
         if not dlg.exec_():
             return
         sessions = dlg.sessions
+
+        # gather patient info files from the sessions
+        session_infos = {session: sessionutils.load_info(session) for session
+                         in sessions}
+        # FIXME: 'stupid' merge, should check whether fullnames match etc.
+        info = sessionutils.default_info()
+        for i in session_infos.values():
+            info.update(i)
+
+        # get new info from user
+        dlg_info = WebReportInfoDialog(info)
+        if dlg_info.exec_():
+            new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,
+                            note=dlg_info.notes)
+            info.update(new_info)
+
+        # update the notes field into each session (other session data will
+        # not be updated)
+        for session in sessions:
+            session_infos[session].update(dict(note=dlg_info.notes))
+            sessionutils.save_info(session, session_infos[session])
 
         # for comparison between sessions, get representative trials only
         tags = (cfg.plot.eclipse_repr_tags if len(sessions) > 1 else
@@ -566,7 +610,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._convert_vidfiles(vidfiles)
 
         logger.debug('Creating web report...')
-        app = self._execute(report.dash_report, sessions=sessions, tags=tags)
+        app = self._execute(report.dash_report, info=info, sessions=sessions,
+                            tags=tags)
         if app is None:
             qt_message_dialog('Could not create report, check that session is '
                               'valid')
@@ -586,32 +631,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         logger.debug('starting web browser')
         _browse_localhost(port)
 
-    def _load_patient_data(self, session):
-        """Return the patient info dict from the given session"""
-        # FIXME: keys should be defined elsewhere
-        patient_data = dict(fullname=None, hetu=None, session_description=None)
-        # FIXME: json filename into config
-        fname = op.join(session, 'patient_info.json')
-        if op.isfile(fname):
-            with io.open(fname, 'r', encoding='utf-8') as f:
-                try:
-                    patient_data.update(json.load(f))
-                except (UnicodeDecodeError, EOFError, IOError, TypeError):
-                    qt_message_dialog('Error loading patient info file %s' %
-                                      fname)
-        return patient_data
-
-    def _save_patient_data(self, session, patient_data):
-        """Save patient info. Existing unmodified keys will be kept."""
-        pdata = self._load_patient_data(session)
-        pdata.update(patient_data)
-        fname = op.join(session, 'patient_info.json')
-        try:
-            with io.open(fname, 'w', encoding='utf-8') as f:
-                f.write(unicode(json.dumps(pdata, ensure_ascii=False)))
-        except (UnicodeDecodeError, EOFError, IOError, TypeError):
-            qt_message_dialog('Error saving patient info file %s ' % fname)
-
     def _create_pdf_report(self):
         """Creates the full pdf report"""
         try:
@@ -620,23 +639,20 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog(str(e))
             return
 
+        # ask for patient info, update saved info accordingly
         session = nexus.get_sessionpath()
-        patient_data = self._load_patient_data(session)
+        info = sessionutils.load_info(session)
         prompt_ = 'Please give additional subject information for %s:' % subj
-        dlg = HetuDialog(prompt=prompt_, fullname=patient_data['fullname'],
-                         hetu=patient_data['hetu'],
-                         session_description=patient_data
-                         ['session_description'])
+        dlg = PdfReportDialog(info, prompt=prompt_)
         if dlg.exec_():
-            patient_data['hetu'] = dlg.hetu
-            patient_data['fullname'] = dlg.fullname
-            patient_data['session_description'] = dlg.session_description
+            new_info = dict(hetu=dlg.hetu, fullname=dlg.fullname,
+                            session_description=dlg.session_description)
             self._execute(nexus_make_pdf_report.do_plot, thread=True,
                           fullname=dlg.fullname, hetu=dlg.hetu,
                           session_description=dlg.session_description,
                           pages=dlg.pages)
-            # update the patient info file accordingly
-            self._save_patient_data(session, patient_data)
+            info.update(new_info)
+            sessionutils.save_info(session, info)
 
     def _log_message(self, msg):
         c = self.txtOutput.textCursor()

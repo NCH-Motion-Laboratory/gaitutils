@@ -88,7 +88,7 @@ def _time_dist_plot(c3ds, sessions):
     return buf
 
 
-def dash_report(sessions=None, tags=None):
+def dash_report(info=None, sessions=None, tags=None):
     """Multisession dash app"""
 
     # relative width of left panel (1-12)
@@ -115,6 +115,9 @@ def dash_report(sessions=None, tags=None):
         # if doing a comparison, pick representative trials only
         tags = (cfg.plot.eclipse_repr_tags if is_comparison else
                 cfg.plot.eclipse_tags)
+
+    if info is not None:
+        logger.debug(info)
 
     # load the trials
     trials = list()

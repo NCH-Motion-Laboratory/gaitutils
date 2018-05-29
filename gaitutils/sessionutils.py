@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Patient info functions
+Session related functions
 
-FIXME: refactor session related funcs into session.py ?
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -10,15 +9,21 @@ FIXME: refactor session related funcs into session.py ?
 import io
 import os.path as op
 import json
+import datetime
+import glob
+import logging
 
 from .eclipse import get_eclipse_keys
+from .envutils import GaitDataError
+from .config import cfg
+
+
+logger = logging.getLogger(__name__)
 
 
 def default_info():
-    return dict(fullname=None, hetu=None, session_description=None)
-
-    pdata = self._load_patient_data(session)
-    pdata.update(patient_data)
+    """Return info dict with placeholder values"""
+    return dict(fullname=None, hetu=None, session_description=None, notes=None)
 
 
 def load_info(self, session):
@@ -27,28 +32,36 @@ def load_info(self, session):
     if op.isfile(fname):
         with io.open(fname, 'r', encoding='utf-8') as f:
             try:
-                patient_data.update(json.load(f))
+                info = json.load(f)
             except (UnicodeDecodeError, EOFError, IOError, TypeError):
-                raise ValueError('Error loading patient info file %s' % fname)
-        return patient_data
+                raise GaitDataError('Error loading patient info file %s'
+                                    % fname)
+        return info
     else:
         return None
 
 
 def save_info(self, session, patient_info):
-    """Save patient info. Existing unmodified keys will be kept."""
+    """Save patient info."""
     fname = op.join(session, 'patient_info.json')
     try:
         with io.open(fname, 'w', encoding='utf-8') as f:
             f.write(unicode(json.dumps(patient_info, ensure_ascii=False)))
     except (UnicodeDecodeError, EOFError, IOError, TypeError):
-        raise ValueError('Error saving patient info file %s ' % fname)
+        raise GaitDataError('Error saving patient info file %s ' % fname)
 
 
-def get_session_date(sessionpath=None):
+def _enf2other(fname, ext):
+    """Converts name of trial .enf file to corresponding .c3d or other
+    file type"""
+    enfstr = '.Trial.enf'
+    if enfstr not in fname:
+        raise ValueError('Filename is not a trial .enf')
+    return fname.replace(enfstr, '.%s' % ext)
+
+
+def get_session_date(sessionpath):
     """Return date when session was recorded (datetime.datetime object)"""
-    if sessionpath is None:
-        sessionpath = get_sessionpath()
     enfs = get_session_enfs(sessionpath)
     x1ds = [_enf2other(fn, 'x1d') for fn in enfs]
     if not x1ds:
@@ -56,10 +69,8 @@ def get_session_date(sessionpath=None):
     return datetime.datetime.fromtimestamp(op.getmtime(x1ds[0]))
 
 
-def get_session_enfs(sessionpath=None):
-    """Return list of .enf files for the Nexus session (or specified path)"""
-    if sessionpath is None:
-        sessionpath = get_sessionpath()
+def get_session_enfs(sessionpath):
+    """Return list of .enf files for the session """
     enfglob = op.join(sessionpath, '*Trial*.enf')
     enffiles = glob.glob(enfglob) if sessionpath else None
     logger.debug('found %d .enf files for session %s' %
@@ -67,9 +78,8 @@ def get_session_enfs(sessionpath=None):
     return enffiles
 
 
-def find_tagged(tags=None, eclipse_keys=None, sessionpath=None):
-    """ Find tagged trials in Nexus session path (or given path).
-    Returns a list of .c3d files. """
+def find_tagged(sessionpath, tags=None, eclipse_keys=None):
+    """ Find tagged trials in given path. Returns a list of .c3d files. """
     # FIXME: into config?
     if eclipse_keys is None:
         eclipse_keys = ['DESCRIPTION', 'NOTES']
@@ -77,11 +87,11 @@ def find_tagged(tags=None, eclipse_keys=None, sessionpath=None):
     if tags is None:
         tags = cfg.plot.eclipse_tags
 
-    tagged_enfs = list(_find_enfs(tags, eclipse_keys, sessionpath))
+    tagged_enfs = list(_find_enfs(sessionpath, tags, eclipse_keys))
     return [_enf2other(fn, 'c3d') for fn in tagged_enfs]
 
 
-def _find_enfs(tags, eclipse_keys, sessionpath=None):
+def _find_enfs(sessionpath, tags, eclipse_keys):
     """ Yield .enf files for trials in current Nexus session directory
     (or given session path) whose Eclipse fields (list) contain any of
     strings (list). Case insensitive. """
@@ -96,12 +106,3 @@ def _find_enfs(tags, eclipse_keys, sessionpath=None):
         eclvals = [val.upper() for key, val in ecldi if key in eclipse_keys]
         if any([s in val for s in tags for val in eclvals]):
             yield enf
-
-
-
-
-
-
-
-
-

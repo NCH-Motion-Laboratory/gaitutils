@@ -13,8 +13,7 @@ import os.path as op
 from itertools import cycle
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler,
-                       GaitDataError)
-from gaitutils.nexus import find_tagged, get_sessionpath
+                       GaitDataError, nexus, sessionutils)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ def do_plot(sessions=None, tags=None, show=True, make_pdf=True,
     """
 
     if sessions is None:
-        sessions = [get_sessionpath()]
+        sessions = [nexus.get_sessionpath()]
 
     if tags is None:
         tags = cfg.plot.eclipse_tags
@@ -41,7 +40,7 @@ def do_plot(sessions=None, tags=None, show=True, make_pdf=True,
 
     ind = 0
     for session in sessions:
-        c3ds = find_tagged(tags=tags, sessionpath=session)
+        c3ds = sessionutils.find_tagged(session, tags=tags)
         if not c3ds:
             raise GaitDataError('No marked trials found for session %s'
                                 % session)
@@ -98,4 +97,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG)
     register_gui_exception_handler()
-    do_plot(sessions=[get_sessionpath()], tags=args.tags)
+    do_plot(sessions=[nexus.get_sessionpath()], tags=args.tags)

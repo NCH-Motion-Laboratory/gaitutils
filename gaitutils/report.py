@@ -22,8 +22,7 @@ import base64
 import io
 
 import gaitutils
-from gaitutils import cfg, normaldata, models, layouts, GaitDataError
-from gaitutils.nexus import find_tagged
+from gaitutils import cfg, normaldata, models, layouts, GaitDataError, sessionutils
 from gaitutils.plot_plotly import plot_trials
 
 
@@ -121,7 +120,7 @@ def dash_report(sessions=None, tags=None):
     trials = list()
     c3ds_all = list()
     for session in sessions:
-        c3ds = find_tagged(sessionpath=session, tags=tags)
+        c3ds = sessionutils.find_tagged(session, tags=tags)
         c3ds_all.append(c3ds)
         # for comparison, require that correct number of trials is found
         if is_comparison and len(c3ds) != len(tags):
@@ -157,8 +156,7 @@ def dash_report(sessions=None, tags=None):
     vid_urls['Static'] = dict()
     static_c3ds = list()
     for session in sessions:
-        static_this = gaitutils.nexus.find_tagged(['Static'], ['TYPE'],
-                                                  session)
+        static_this = sessionutils.find_tagged(session, ['Static'], ['TYPE'])
         if static_this:
             static_c3ds.append(static_this[-1])  # pick the last static trial
 

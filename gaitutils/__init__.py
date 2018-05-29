@@ -16,6 +16,7 @@ from . import utils
 from . import stats
 from . import analysis
 from . import plot_plotly
+from . import sessionutils
 from .emg import EMG
 from .envutils import register_gui_exception_handler, GaitDataError
 from .numutils import rising_zerocross, falling_zerocross

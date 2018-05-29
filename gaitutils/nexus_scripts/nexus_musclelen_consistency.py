@@ -13,15 +13,15 @@ import argparse
 from itertools import cycle
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler,
-                       normaldata, GaitDataError)
-from gaitutils.nexus import find_tagged
+                       normaldata, GaitDataError, sessionutils, nexus)
 
 logger = logging.getLogger(__name__)
 
 
 def do_plot(tags=None, age=None, show=True, make_pdf=True):
 
-    tagged_trials = find_tagged(tags=tags)
+    sessionpath = nexus.get_sessionpath()
+    tagged_trials = sessionutils.find_tagged(sessionpath, tags=tags)
 
     if not tagged_trials:
         raise GaitDataError('No marked trials found for current session')

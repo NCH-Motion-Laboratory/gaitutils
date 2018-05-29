@@ -30,7 +30,8 @@ from gaitutils import (GaitDataError, nexus, cfg, report, nexus_emgplot,
                        nexus_tardieu, nexus_copy_trial_videos,
                        nexus_trials_velocity, nexus_make_pdf_report,
                        nexus_make_comparison_report, nexus_kin_average,
-                       nexus_automark_trial, nexus_time_distance_vars)
+                       nexus_automark_trial, nexus_time_distance_vars,
+                       sessionutils)
 
 try:
     from gaitutils import nexus_customplot
@@ -495,11 +496,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog(str(e))
             return
         tags = cfg.plot.eclipse_tags
-        tagged = nexus.find_tagged(sessionpath=session, tags=tags)
+        tagged = sessionutils.find_tagged(session, tags=tags)
         vidfiles = []
         for c3dfile in tagged:
             vidfiles.extend(nexus.find_trial_videos(c3dfile))
-        static_c3ds = nexus.find_tagged(['Static'], ['TYPE'], session)
+        static_c3ds = sessionutils.find_tagged(session, ['Static'], ['TYPE'])
         if static_c3ds:
             vidfiles.extend(nexus.find_trial_videos(static_c3ds[-1]))
         if not vidfiles:
@@ -553,10 +554,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # collect all video files for conversion
         vidfiles = list()
         for session in sessions:
-            tagged = nexus.find_tagged(sessionpath=session, tags=tags)
+            tagged = sessionutils.find_tagged(session, tags=tags)
             for c3dfile in tagged:
                 vidfiles.extend(nexus.find_trial_videos(c3dfile))
-            static_c3ds = nexus.find_tagged(['Static'], ['TYPE'], session)
+            static_c3ds = sessionutils.find_tagged(session, ['Static'],
+                                                   ['TYPE'])
             if static_c3ds:
                 vidfiles.extend(nexus.find_trial_videos(static_c3ds[-1]))
 

@@ -13,8 +13,7 @@ import argparse
 from itertools import cycle
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, EMG,
-                       GaitDataError)
-from gaitutils.nexus import find_tagged
+                       GaitDataError, sessionutils, nexus)
 from gaitutils.layouts import rm_dead_channels_multitrial
 
 logger = logging.getLogger(__name__)
@@ -22,9 +21,10 @@ logger = logging.getLogger(__name__)
 
 def do_plot(tags=None, show=True, make_pdf=True):
 
-    tagged_trials = find_tagged(tags)
+    sessionpath = nexus.get_sessionpath()
+    c3dfiles = sessionutils.find_tagged(sessionpath)
 
-    if not tagged_trials:
+    if not c3dfiles:
         raise GaitDataError('No marked trials found for current session')
 
     linecolors = cfg.plot.overlay_colors
@@ -32,20 +32,20 @@ def do_plot(tags=None, show=True, make_pdf=True):
 
     pl = Plotter()
     layout = cfg.layouts.overlay_std_emg
-    emgs = [EMG(tr) for tr in tagged_trials]
+    emgs = [EMG(tr) for tr in c3dfiles]
     pl.layout = rm_dead_channels_multitrial(emgs, layout)
 
-    for i, trialpath in enumerate(tagged_trials):
+    for i, trialpath in enumerate(c3dfiles):
         if i > len(linecolors):
             logger.warning('not enough colors for plot!')
-        pl.open_trial(tagged_trials[i])
+        pl.open_trial(c3dfiles[i])
 
         emg_active = any([pl.trial.emg.status_ok(ch) for ch in
                           cfg.emg.channel_labels])
         if not emg_active:
             continue
 
-        plot_emg_normaldata = (trialpath == tagged_trials[-1])
+        plot_emg_normaldata = (trialpath == c3dfiles[-1])
 
         pl.plot_trial(emg_tracecolor=ccolors.next(),
                       maintitle='', annotate_emg=False,

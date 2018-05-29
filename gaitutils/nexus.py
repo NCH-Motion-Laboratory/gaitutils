@@ -192,15 +192,6 @@ def c3d2enf(fname):
     return fname.replace('.c3d', '.Trial.enf')
 
 
-def _enf2other(fname, ext):
-    """Converts name of trial .enf file to corresponding .c3d or other
-    file type"""
-    enfstr = '.Trial.enf'
-    if enfstr not in fname:
-        raise ValueError('Filename is not a trial .enf')
-    return fname.replace(enfstr, '.%s' % ext)
-
-
 def is_vicon_instance(obj):
     """ Check if obj is an instance of ViconNexus """
     return obj.__class__.__name__ == 'ViconNexus'

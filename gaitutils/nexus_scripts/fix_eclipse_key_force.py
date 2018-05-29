@@ -11,12 +11,13 @@ Be careful! Overwrites files without asking anything.
 """
 
 
-from gaitutils import nexus, eclipse
+from gaitutils import nexus, eclipse, sessiontools
 
 KEY = 'DESCRIPTION'  # Eclipse key
 NEWVAL = ''      # change into this value
 
-enffiles = nexus.get_session_enfs()
+sessionpath = nexus.get_sessionpath()
+enffiles = sessiontools.get_session_enfs(sessionpath)
 
 if not enffiles:
     raise ValueError('No enf files')

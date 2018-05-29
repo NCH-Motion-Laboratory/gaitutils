@@ -8,8 +8,6 @@ Note: specific to the Helsinki gait lab.
 @author: Jussi (jnu@iki.fi)
 """
 
-import time
-import datetime
 import logging
 import os.path as op
 import matplotlib.pyplot as plt
@@ -17,16 +15,10 @@ from matplotlib.backends.backend_pdf import PdfPages
 from collections import defaultdict
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
-                       numutils, normaldata)
-from gaitutils.nexus import get_sessionpath, get_trialname
+                       numutils, normaldata, nexus, sessionutils)
 from PyQt5 import QtWidgets
 import nexus_kin_consistency
-import nexus_emg_consistency
-import nexus_musclelen_consistency
-import nexus_kin_average
-import nexus_trials_velocity
 import nexus_time_distance_vars
-from gaitutils.nexus_scripts.nexus_kin_consistency import find_tagged
 
 logger = logging.getLogger(__name__)
 

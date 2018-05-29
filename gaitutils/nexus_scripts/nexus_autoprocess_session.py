@@ -33,7 +33,7 @@ import argparse
 import logging
 
 from gaitutils import (nexus, eclipse, utils, register_gui_exception_handler,
-                       GaitDataError)
+                       GaitDataError, sessionutils)
 from gaitutils.config import cfg
 
 
@@ -294,7 +294,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
 
 def autoproc_session(patterns=None, update_eclipse=True):
 
-    enffiles = nexus.get_session_enfs()
+    sessionpath = nexus.get_sessionpath()
+    enffiles = sessionutils.get_session_enfs(sessionpath)
 
     if patterns:
         # filter trial names according to patterns

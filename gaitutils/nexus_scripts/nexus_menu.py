@@ -59,12 +59,13 @@ class PdfReportDialog(QtWidgets.QDialog):
         uifile = resource_filename(__name__, 'pdf_report_dialog.ui')
         uic.loadUi(uifile, self)
         self.prompt.setText(prompt)
-        if info['fullname'] is not None:
-            self.lnFullName.setText(info['fullname'])
-        if info['hetu'] is not None:
-            self.lnHetu.setText(info['hetu'])
-        if info['session_description'] is not None:
-            self.lnDescription.setText(info['session_description'])
+        if info is not None:
+            if info['fullname'] is not None:
+                self.lnFullName.setText(info['fullname'])
+            if info['hetu'] is not None:
+                self.lnHetu.setText(info['hetu'])
+            if info['session_description'] is not None:
+                self.lnDescription.setText(info['session_description'])
 
     def accept(self):
         """ Update config and close dialog, if widget inputs are ok. Otherwise
@@ -91,12 +92,13 @@ class WebReportInfoDialog(QtWidgets.QDialog):
         super(self.__class__, self).__init__()
         uifile = resource_filename(__name__, 'web_report_info.ui')
         uic.loadUi(uifile, self)
-        if info['fullname'] is not None:
-            self.lnFullName.setText(info['fullname'])
-        if info['hetu'] is not None:
-            self.lnHetu.setText(info['hetu'])
-        if info['notes'] is not None:
-            self.lnNotes.setPlainText(info['notes'])
+        if info is not None:
+            if info['fullname'] is not None:
+                self.lnFullName.setText(info['fullname'])
+            if info['hetu'] is not None:
+                self.lnHetu.setText(info['hetu'])
+            if info['notes'] is not None:
+                self.txtNotes.setPlainText(info['notes'])
 
     def accept(self):
         """ Update config and close dialog, if widget inputs are ok. Otherwise
@@ -570,25 +572,19 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         sessions = dlg.sessions
 
-        # gather patient info files from the sessions
-        session_infos = {session: sessionutils.load_info(session) for session
-                         in sessions}
-        # FIXME: 'stupid' merge, should check whether fullnames match etc.
-        info = sessionutils.default_info()
-        for i in session_infos.values():
-            info.update(i)
+        session_infos, info = sessionutils._merge_session_info(sessions)
 
         # get new info from user
         dlg_info = WebReportInfoDialog(info)
         if dlg_info.exec_():
             new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,
-                            note=dlg_info.notes)
+                            notes=dlg_info.notes)
             info.update(new_info)
 
         # update the notes field into each session (other session data will
         # not be updated)
         for session in sessions:
-            session_infos[session].update(dict(note=dlg_info.notes))
+            session_infos[session].update(dict(notes=dlg_info.notes))
             sessionutils.save_info(session, session_infos[session])
 
         # for comparison between sessions, get representative trials only
@@ -641,7 +637,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         # ask for patient info, update saved info accordingly
         session = nexus.get_sessionpath()
-        info = sessionutils.load_info(session)
+        info = sessionutils.load_info(session) or sessionutils.default_info()
         prompt_ = 'Please give additional subject information for %s:' % subj
         dlg = PdfReportDialog(info, prompt=prompt_)
         if dlg.exec_():

@@ -22,7 +22,8 @@ import base64
 import io
 
 import gaitutils
-from gaitutils import cfg, normaldata, models, layouts, GaitDataError, sessionutils
+from gaitutils import (cfg, normaldata, models, layouts, GaitDataError,
+                       sessionutils, numutils)
 from gaitutils.plot_plotly import plot_trials
 
 
@@ -117,7 +118,13 @@ def dash_report(info=None, sessions=None, tags=None):
                 cfg.plot.eclipse_tags)
 
     if info is not None:
-        logger.debug(info)
+        if info['hetu'] is not None:
+            # compute subject age at session time
+            session_dates = [sessionutils.get_session_date(session) for
+                             session in sessions]
+            ages = [numutils.age_from_hetu(info['hetu'], d) for d in
+                    session_dates]
+            age = max(ages)
 
     # load the trials
     trials = list()
@@ -140,6 +147,11 @@ def dash_report(info=None, sessions=None, tags=None):
     for fn in cfg.general.normaldata_files:
         ndata = normaldata.read_normaldata(fn)
         model_normaldata.update(ndata)
+    if age:
+        age_ndata_file = normaldata.normaldata_age(age)
+        if age_ndata_file:
+            age_ndata = normaldata.read_normaldata(age_ndata_file)
+            model_normaldata.update(age_ndata)
 
     # create directory of trial videos for each tag and camera selection
     vid_urls = dict()

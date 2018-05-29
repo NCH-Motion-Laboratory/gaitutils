@@ -8,8 +8,6 @@ Note: specific to the Helsinki gait lab.
 @author: Jussi (jnu@iki.fi)
 """
 
-import time
-import datetime
 import logging
 import os.path as op
 import matplotlib.pyplot as plt
@@ -17,8 +15,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 from collections import defaultdict
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
-                       numutils, normaldata)
-from gaitutils.nexus import get_sessionpath, find_tagged, get_session_date
+                       numutils, normaldata, sessionutils, nexus)
+
 import nexus_kin_consistency
 import nexus_emg_consistency
 import nexus_musclelen_consistency
@@ -71,19 +69,19 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
     eclipse_tags = dict()
     do_emg_consistency = False
 
-    tagged_trials = find_tagged()
-    if not tagged_trials:
-        raise ValueError('No marked trials found in session directory')
-    session_t = get_session_date()
-    logger.debug('session timestamp: %s', session_t)
-    age = numutils.age_from_hetu(hetu, session_t) if hetu else None
-
-    sessionpath = get_sessionpath()
+    sessionpath = nexus.get_sessionpath()
     session = op.split(sessionpath)[-1]
     session_root = op.split(sessionpath)[0]
     patient_code = op.split(session_root)[1]
     pdfname = session + '.pdf'
     pdf_all = op.join(sessionpath, pdfname)
+
+    tagged_trials = sessionutils.find_tagged(sessionpath)
+    if not tagged_trials:
+        raise ValueError('No marked trials found in session directory')
+    session_t = sessionutils.get_session_date(sessionpath)
+    logger.debug('session timestamp: %s', session_t)
+    age = numutils.age_from_hetu(hetu, session_t) if hetu else None
 
     # make header page
     # timestr = time.strftime('%d.%m.%Y')  # current time, not currently used

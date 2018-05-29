@@ -5,7 +5,7 @@ Created on Wed Jun 21 13:48:27 2017
 @author: Jussi (jnu@iki.fi)
 """
 
-from gaitutils import (nexus, cfg, utils, read_data,
+from gaitutils import (nexus, cfg, utils, read_data, sessionutils,
                        register_gui_exception_handler, GaitDataError)
 import numpy as np
 import matplotlib.pyplot as plt
@@ -35,7 +35,9 @@ def _trial_median_velocity(source):
 
 def do_plot(show=True, make_pdf=True):
 
-    c3ds = nexus.find_tagged(eclipse_keys=['TYPE'], tags=['DYNAMIC'])
+    sessionpath = nexus.get_sessionpath()
+    c3ds = sessionutils.find_tagged(sessionpath, eclipse_keys=['TYPE'],
+                                    tags=['DYNAMIC'])
 
     if len(c3ds) == 0:
         raise Exception('Did not find any dynamic trials in current '

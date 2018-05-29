@@ -10,17 +10,15 @@ import logging
 
 import gaitutils
 from gaitutils import (cfg, nexus, layouts, GaitDataError,
-                       register_gui_exception_handler)
+                       register_gui_exception_handler, sessionutils)
 
 
 def do_plot(show=True, make_pdf=True):
 
     figs = []
-
     sessionpath = nexus.get_sessionpath()
-
-    c3ds = nexus.find_tagged(eclipse_keys=['TYPE'], tags=['DYNAMIC'])
-
+    c3ds = sessionutils.find_tagged(sessionpath, eclipse_keys=['TYPE'],
+                                    tags=['DYNAMIC'])
     if not c3ds:
         raise GaitDataError('No dynamic trials found for current session')
 

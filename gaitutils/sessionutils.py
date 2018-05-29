@@ -20,10 +20,12 @@ from .config import cfg
 
 logger = logging.getLogger(__name__)
 
+json_keys = ['fullname', 'hetu', 'session_description', 'notes']
+
 
 def default_info():
     """Return info dict with placeholder values"""
-    return dict(fullname=None, hetu=None, session_description=None, notes=None)
+    return {key: None for key in json_keys}
 
 
 def load_info(session):
@@ -33,12 +35,20 @@ def load_info(session):
         with io.open(fname, 'r', encoding='utf-8') as f:
             try:
                 info = json.load(f)
-            except (UnicodeDecodeError, EOFError, IOError, TypeError):
+                if set(info.keys()) != set(json_keys):
+                    logger.warning('Missing keys in patient info file %s'
+                                   % fname)
+                    info_ = default_info()
+                    info_.update(info)
+                    info = info_
+            except (UnicodeDecodeError, EOFError, IOError, TypeError,
+                    ValueError):
                 raise GaitDataError('Error loading patient info file %s'
                                     % fname)
-        return info
     else:
-        return None
+        info = None
+
+    return info
 
 
 def save_info(session, patient_info):
@@ -49,6 +59,27 @@ def save_info(session, patient_info):
             f.write(unicode(json.dumps(patient_info, ensure_ascii=False)))
     except (UnicodeDecodeError, EOFError, IOError, TypeError):
         raise GaitDataError('Error saving patient info file %s ' % fname)
+
+
+def _merge_session_info(sessions):
+    """Gather and merge patient info files across sessions. fullname and
+    hetu must match. Returns dict of individual session infos and the merged
+    info"""
+    session_infos = {session: (load_info(session) or default_info())
+                     for session in sessions}
+    info = dict()
+    for key in json_keys:
+        allvals = set([session_infos[session][key] for session in sessions])
+        if None in allvals:
+            allvals.remove(None)
+        if key == 'fullname' or key == 'hetu':
+            if len(allvals) > 1:  # name / hetu do not match
+                logger.warning('Name / hetu do not match across sessions')
+                return session_infos, None
+        if len(allvals) > 1:
+            logger.warning('Conflicting values for %s across sessions' % key)
+        info[key] = allvals.pop() if allvals else None
+    return session_infos, info
 
 
 def _enf2other(fname, ext):

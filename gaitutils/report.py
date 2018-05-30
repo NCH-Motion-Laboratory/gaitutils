@@ -358,7 +358,7 @@ def dash_report(sessions=None, tags=None):
     def _video_elem(title, url, max_height):
         """Create a video element with title"""
         if not url:
-            return 'No video found for %s' % title
+            return 'No video found'
         vid_el = html.Video(src=url, controls=True, loop=True, preload='auto',
                             title=title, style={'max-height': max_height,
                                                 'max-width': '100%'})

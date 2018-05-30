@@ -194,6 +194,7 @@ class Trial(object):
         if len(vids) > 1:
             logger.warning('Multiple video files match label "%s", using the '
                            'newest one' % camera_label)
+            # this relies on the yyyymmdd... timestamp in the filename
             return sorted(vids)[-1]
         return vids[0] if vids else None
 

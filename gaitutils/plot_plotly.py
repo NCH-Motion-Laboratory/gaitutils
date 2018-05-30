@@ -117,6 +117,7 @@ def plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
 
                     mod = models.model_from_var(var)
                     if mod:  # plot model variable
+
                         do_plot = True
                         
                         if var in mod.varnames_noside:
@@ -124,6 +125,31 @@ def plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
 
                         if mod.is_kinetic_var(var) and not cyc.on_forceplate:
                             do_plot = False
+
+                        # plot model normal data first so that its z order
+                        # is lowest (otherwise normaldata will mask hover)
+                        if trial == trials[0] and context == 'R':
+                            if var[0].upper() in ['L', 'R']:
+                                nvar = var[1:]
+                            if model_normaldata and nvar in model_normaldata:
+                                key = nvar
+                            else:
+                                key = None
+                            ndata = (model_normaldata[key] if key in
+                                     model_normaldata else None)
+                            if ndata is not None:
+                                # FIXME: hardcoded color
+                                normalx = np.linspace(0, 100, ndata.shape[0])
+                                ntrace = _plotly_fill_between(normalx,
+                                                              ndata[:, 0],
+                                                              ndata[:, 1],
+                                                              fillcolor='rgba(100, 100, 100, 0.3)',
+                                                              name='Norm.',
+                                                              legendgroup='Norm.',
+                                                              showlegend=model_normaldata_legend,
+                                                              line=go.Line(color='transparent'))
+                                fig.append_trace(ntrace, i+1, j+1)
+                                model_normaldata_legend = False  # add to legend only once
 
                         if do_plot:
                             t, y = trial[var]
@@ -156,31 +182,6 @@ def plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                             tracegroups.add(tracegroup)
                             fig.append_trace(trace, i+1, j+1)
 
-                        # last model trace was plotted
-                        # FIXME: is this logic also working for EMG?
-                        if trial == trials[-1] and context == 'L':
-                            # plot model normal data
-                            if var[0].upper() in ['L', 'R']:
-                                nvar = var[1:]
-                            if model_normaldata and nvar in model_normaldata:
-                                key = nvar
-                            else:
-                                key = None
-                            ndata = (model_normaldata[key] if key in
-                                     model_normaldata else None)
-                            if ndata is not None:
-                                # FIXME: hardcoded color
-                                normalx = np.linspace(0, 100, ndata.shape[0])
-                                ntrace = _plotly_fill_between(normalx,
-                                                              ndata[:, 0],
-                                                              ndata[:, 1],
-                                                              fillcolor='rgba(100, 100, 100, 0.3)',
-                                                              name='Norm.',
-                                                              legendgroup='Norm.',
-                                                              showlegend=model_normaldata_legend,
-                                                              line=go.Line(color='transparent'))
-                                fig.append_trace(ntrace, i+1, j+1)
-                                model_normaldata_legend = False  # add to legend only once
 
                             # rm x tick labels, plot too crowded
                             fig['layout'][xaxis].update(showticklabels=False)

@@ -95,7 +95,7 @@ def _read_gcd(filename):
 def _read_xlsx(filename):
     """ Read normal data exported from Polygon (xlsx format). """
     wb = openpyxl.load_workbook(filename)
-    ws = wb.get_sheet_by_name('Normal')
+    ws = wb['Normal']
     colnames = (cell.value for cell in ws.rows.next())  # first row: col names
     normaldata = dict()
     # read the columns and produce dict of numpy arrays

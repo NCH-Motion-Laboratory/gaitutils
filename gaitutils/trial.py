@@ -182,7 +182,7 @@ class Trial(object):
         return glob.glob(op.join(self.sessionpath, self.trialname+'*%s' % ext))
 
     def _get_videos_by_id(self, camera_id, ext='avi'):
-        """Get trial video correspoding to given camera id (str)"""
+        """Get trial video corresponding to given camera id (str)"""
         return [vid for vid in self.video_files(ext=ext) if camera_id in vid]
 
     def get_video_by_label(self, camera_label, ext='avi'):
@@ -192,8 +192,9 @@ class Trial(object):
         vids = [vid for id in ids for vid in
                 self._get_videos_by_id(id, ext=ext)]
         if len(vids) > 1:
-            raise ValueError('Multiple video files match label %s'
-                             % camera_label)
+            logger.warning('Multiple video files match label "%s", using the '
+                           'newest one' % camera_label)
+            return sorted(vids)[-1]
         return vids[0] if vids else None
 
     @property

@@ -553,7 +553,7 @@ class Plotter(object):
             if var_type == 'model':
                 model = models.model_from_var(var)
                 for cycle in model_cycles:
-                    logger.debug('cycle %d-%d' % (cycle.start, cycle.end))
+                    # logger.debug('cycle %d-%d' % (cycle.start, cycle.end))
                     if cycle is not None:  # plot normalized data
                         trial.set_norm_cycle(cycle)
 

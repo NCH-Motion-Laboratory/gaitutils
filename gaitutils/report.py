@@ -122,10 +122,10 @@ def dash_report(sessions=None, tags=None):
     c3ds_all = list()
     for session in sessions:
         c3ds = find_tagged(sessionpath=session, tags=tags)
-        c3ds_all.append(c3ds)
-        # for comparison, require that correct number of trials is found
         if is_comparison and not c3ds:
-            raise ValueError('No representative trials found for %s' % session)
+            raise ValueError('No representative trials %s found for %s'
+                             % (str(cfg.plot.eclipse_repr_tags), session))
+        c3ds_all.append(c3ds)
         trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
         trials.extend(trials_this)
     trials = sorted(trials, key=lambda tr: tr.eclipse_tag)
@@ -251,7 +251,7 @@ def dash_report(sessions=None, tags=None):
             dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
             dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
 
-        except GaitDataError:
+        except (ValueError, GaitDataError):
             logger.warning('Failed to create plot for %s' % label)
             # insert the menu options but make them disabled
             dd_opts_multi_upper.append({'label': label, 'value': label,

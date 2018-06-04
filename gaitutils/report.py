@@ -124,9 +124,8 @@ def dash_report(sessions=None, tags=None):
         c3ds = find_tagged(sessionpath=session, tags=tags)
         c3ds_all.append(c3ds)
         # for comparison, require that correct number of trials is found
-        if is_comparison and len(c3ds) != len(tags):
-            raise ValueError('Expected %d tagged trials for session %s'
-                             % (len(tags), session))
+        if is_comparison and not c3ds:
+            raise ValueError('No representative trials found for %s' % session)
         trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
         trials.extend(trials_this)
     trials = sorted(trials, key=lambda tr: tr.eclipse_tag)

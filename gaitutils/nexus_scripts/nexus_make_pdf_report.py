@@ -29,6 +29,8 @@ logger = logging.getLogger(__name__)
 
 sort_field = 'NOTES'  # sort trials by the given Eclipse key
 page_size = (11.69, 8.27)  # report page size
+# create some separate PDFs for inclusion in Polygon report etc.
+make_separate_pdfs = False
 
 
 def _add_footer(fig, txt):
@@ -157,8 +159,8 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
                 tagged_figs.append(fig)
                 eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
 
-                # save individual pdfs
-                if representative:
+                # save individual pdf
+                if representative and make_separate_pdfs:
                     pdf_name = 'kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname,
                                                            side_str)
                     logger.debug('creating %s' % pdf_name)
@@ -173,8 +175,8 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
                 tagged_figs.append(fig)
                 eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
 
-                # save individual pdfs
-                if representative:
+                #  save individual pdf
+                if representative and make_separate_pdfs:
                     pdf_prefix = 'EMG_'
                     pl.create_pdf(pdf_prefix=pdf_prefix)
 
@@ -195,21 +197,21 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
         fig_timedist_avg = None
 
     # consistency plots
-    # write these out separately for inclusion in Polygon report
     if pages['KinCons']:
-        fig_kin_cons = nexus_kin_consistency.do_plot(show=False, make_pdf=True)
+        fig_kin_cons = nexus_kin_consistency.do_plot(show=False,
+                                                     make_pdf=make_separate_pdfs)
     else:
         fig_kin_cons = None
 
     if pages['MuscleLenCons']:
         fig_musclelen_cons = nexus_musclelen_consistency.do_plot(show=False,
                                                                  age=age,
-                                                                 make_pdf=True)
+                                                                 make_pdf=make_separate_pdfs)
     else:
         fig_musclelen_cons = None
 
     if do_emg_consistency:
-        fig_emg_cons = nexus_emg_consistency.do_plot(show=False, make_pdf=True)
+        fig_emg_cons = nexus_emg_consistency.do_plot(show=False, make_pdf=make_separate_pdfs)
     else:
         fig_emg_cons = None
 

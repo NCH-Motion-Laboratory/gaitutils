@@ -573,19 +573,30 @@ class Gaitmenu(QtWidgets.QMainWindow):
         sessions = dlg.sessions
 
         session_infos, info = sessionutils._merge_session_info(sessions)
+        if info is None:
+            qt_message_dialog('Patient info does not match. Sessions may be '
+                              'from different patients. Continuing without '
+                              'patient info.')
+            info = sessionutils.default_info()
 
-        # get new info from user
-        dlg_info = WebReportInfoDialog(info)
-        if dlg_info.exec_():
-            new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,
-                            notes=dlg_info.notes)
-            info.update(new_info)
+        else:
+            # get updated info from user
+            dlg_info = WebReportInfoDialog(info)
+            if dlg_info.exec_():
+                new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,
+                                notes=dlg_info.notes)
+                info.update(new_info)
 
-        # update the notes field into each session (other session data will
-        # not be updated)
-        for session in sessions:
-            session_infos[session].update(dict(notes=dlg_info.notes))
-            sessionutils.save_info(session, session_infos[session])
+                # update the notes field into each session (other session data
+                # should match and will not be updated)
+                for session in sessions:
+                    update_dict = dict(notes=dlg_info.notes,
+                                       fullname=dlg_info.fullname,
+                                       hetu=dlg_info.hetu)
+                    session_infos[session].update(update_dict)
+                    sessionutils.save_info(session, session_infos[session])
+            else:
+                return
 
         # for comparison between sessions, get representative trials only
         tags = (cfg.plot.eclipse_repr_tags if len(sessions) > 1 else

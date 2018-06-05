@@ -117,6 +117,7 @@ def dash_report(info=None, sessions=None, tags=None):
         tags = (cfg.plot.eclipse_repr_tags if is_comparison else
                 cfg.plot.eclipse_tags)
 
+    age = None
     if info is not None:
         if info['hetu'] is not None:
             # compute subject age at session time

@@ -35,12 +35,19 @@ def load_info(session):
         with io.open(fname, 'r', encoding='utf-8') as f:
             try:
                 info = json.load(f)
-                if set(info.keys()) != set(json_keys):
-                    logger.warning('Missing keys in patient info file %s'
-                                   % fname)
-                    info_ = default_info()
-                    info_.update(info)
-                    info = info_
+                extra_keys = set(info.keys()) - set(json_keys)
+                if extra_keys:
+                    logger.warning('Extra keys %s in patient info file %s'
+                                   % (extra_keys, fname))
+                    for key in extra_keys:
+                        info.pop(key)
+                missing_keys = set(json_keys) - set(info.keys())
+                if missing_keys:
+                    logger.warning('Missing keys %s in patient info file %s'
+                                   % (missing_keys, fname))
+                    # supply default values for missing keys
+                    for key in missing_keys:
+                        info[key] = default_info()[key]
             except (UnicodeDecodeError, EOFError, IOError, TypeError,
                     ValueError):
                 raise GaitDataError('Error loading patient info file %s'

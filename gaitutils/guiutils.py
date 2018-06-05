@@ -124,7 +124,6 @@ def qt_dir_chooser():
     return file_dialog.selectedFiles() if file_dialog.exec_() else []
 
 
-
 # non-qt dialogs - Windows specific
 def error_exit(message):
     """ Custom error handler """

@@ -11,8 +11,12 @@ import plotly.tools
 import numpy as np
 from itertools import cycle
 import datetime
+import logging
 
 from gaitutils import models, cfg
+
+
+logger = logging.getLogger(__name__)
 
 
 def _plotly_fill_between(x, ylow, yhigh, **kwargs):

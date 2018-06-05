@@ -20,7 +20,7 @@ from .config import cfg
 
 logger = logging.getLogger(__name__)
 
-json_keys = ['fullname', 'hetu', 'session_description', 'notes']
+json_keys = ['fullname', 'hetu', 'session_description', 'report_notes']
 
 
 def default_info():

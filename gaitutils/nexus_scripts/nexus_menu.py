@@ -97,15 +97,15 @@ class WebReportInfoDialog(QtWidgets.QDialog):
                 self.lnFullName.setText(info['fullname'])
             if info['hetu'] is not None:
                 self.lnHetu.setText(info['hetu'])
-            if info['notes'] is not None:
-                self.txtNotes.setPlainText(info['notes'])
+            if info['report_notes'] is not None:
+                self.txtNotes.setPlainText(info['report_notes'])
 
     def accept(self):
         """ Update config and close dialog, if widget inputs are ok. Otherwise
         show an error dialog """
         self.hetu = self.lnHetu.text()
         self.fullname = self.lnFullName.text()
-        self.notes = unicode(self.txtNotes.toPlainText()).strip()
+        self.report_notes = unicode(self.txtNotes.toPlainText()).strip()
         if self.fullname and check_hetu(self.hetu):
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
@@ -584,13 +584,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
             dlg_info = WebReportInfoDialog(info)
             if dlg_info.exec_():
                 new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,
-                                notes=dlg_info.notes)
+                                report_notes=dlg_info.report_notes)
                 info.update(new_info)
 
-                # update the notes field into each session (other session data
-                # should match and will not be updated)
+                # update info for each session (except session specific keys)
                 for session in sessions:
-                    update_dict = dict(notes=dlg_info.notes,
+                    update_dict = dict(report_notes=dlg_info.report_notes,
                                        fullname=dlg_info.fullname,
                                        hetu=dlg_info.hetu)
                     session_infos[session].update(update_dict)

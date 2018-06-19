@@ -186,14 +186,14 @@ def plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                             tracegroups.add(tracegroup)
                             fig.append_trace(trace, i+1, j+1)
 
-
                             # rm x tick labels, plot too crowded
                             fig['layout'][xaxis].update(showticklabels=False)
                             # LaTeX does not render, so rm units from ylabel
                             ylabel = ' '.join(mod.ylabels[var].split(' ')[k]
                                               for k in [0, -1])
                             fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize})
-
+                            # less decimals on hover label
+                            fig['layout'][yaxis].update(hoverformat='.2f')
 
                     # plot EMG variable
                     elif (trial.emg.is_channel(var) or var in

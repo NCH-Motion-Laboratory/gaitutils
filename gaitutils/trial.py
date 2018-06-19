@@ -209,7 +209,8 @@ class Trial(object):
 
     @property
     def name_with_description(self):
-        """Return trial name with Eclipse info"""
+        """Return trial name with some Eclipse info"""
+        # FIXME: Eclipse keys hardcoded
         return '%s (%s, %s)' % (self.trialname,
                                 self.eclipse_data['DESCRIPTION'],
                                 self.eclipse_data['NOTES'])

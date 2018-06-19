@@ -111,7 +111,7 @@ for sname, section in cfg_user_di.items():
             for key in section:
                 if key not in cfg_tpl_di[sname]:
                     print('WARNING: unused (deprecated?) key '
-                          '%s in user config' % key)
+                          '%s.%s in user config' % (sname, key))
 
 # handle some deprecated/changed types for user convenience
 if not isinstance(cfg.plot.emg_yscale, float):

@@ -23,7 +23,7 @@ import nexus_time_distance_vars
 logger = logging.getLogger(__name__)
 
 sort_field = 'NOTES'  # sort trials by the given Eclipse key
-repr_tags = cfg.plot.eclipse_repr_tags
+repr_tags = cfg.eclipse.repr_tags
 page_size = (11.69, 8.27)  # report page size
 
 

@@ -201,9 +201,9 @@ class Trial(object):
     @property
     def eclipse_tag(self):
         """Return (first) Eclipse tag for this trial"""
-        for tag in cfg.plot.eclipse_tags:
-            if (tag in self.eclipse_data['DESCRIPTION'] or tag in
-               self.eclipse_data['NOTES']):
+        for tag in cfg.eclipse.tags:
+            if any([tag in self.eclipse_data[fld] for fld in
+                    cfg.eclipse.tag_keys]):
                 return tag
         return None
 

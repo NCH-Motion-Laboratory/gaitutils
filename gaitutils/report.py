@@ -114,8 +114,8 @@ def dash_report(info=None, sessions=None, tags=None):
 
     if tags is None:
         # if doing a comparison, pick representative trials only
-        tags = (cfg.plot.eclipse_repr_tags if is_comparison else
-                cfg.plot.eclipse_tags)
+        tags = (cfg.eclipse.repr_tags if is_comparison else
+                cfg.eclipse.tags)
 
     age = None
     if info is not None:
@@ -134,7 +134,7 @@ def dash_report(info=None, sessions=None, tags=None):
         c3ds = sessionutils.find_tagged(session, tags=tags)
         if is_comparison and not c3ds:
             raise GaitDataError('No representative trials %s found for %s'
-                                % (str(cfg.plot.eclipse_repr_tags), session))
+                                % (str(cfg.eclipse.repr_tags), session))
         c3ds_all.append(c3ds)
         trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
         trials.extend(trials_this)
@@ -155,6 +155,7 @@ def dash_report(info=None, sessions=None, tags=None):
 
     # create directory of trial videos for each tag and camera selection
     vid_urls = dict()
+    
     for tag in tags:
         vid_urls[tag] = dict()
         for camera_label in camera_labels:

@@ -115,7 +115,7 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
     for c3d in tagged_trials:
 
         pl.open_trial(c3d)
-        representative = pl.trial.eclipse_tag in cfg.plot.eclipse_repr_tags
+        representative = pl.trial.eclipse_tag in cfg.eclipse.repr_tags
 
         # FIXME: this would choose R when valid for both
         if 'R' in pl.trial.fp_events['valid']:

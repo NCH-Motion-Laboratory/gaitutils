@@ -29,7 +29,7 @@ def do_plot(sessions=None, tags=None, show=True, make_pdf=True,
         sessions = [nexus.get_sessionpath()]
 
     if tags is None:
-        tags = cfg.plot.eclipse_tags
+        tags = cfg.eclipse.tags
 
     pl = Plotter()
     pl.layout = cfg.layouts.overlay_lb_kin

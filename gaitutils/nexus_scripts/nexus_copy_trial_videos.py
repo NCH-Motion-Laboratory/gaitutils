@@ -12,7 +12,7 @@ import os.path as op
 import shutil
 import logging
 
-from gaitutils import nexus, sessionutils
+from gaitutils import nexus, sessionutils, cfg
 from gaitutils.guiutils import messagebox
 
 
@@ -28,7 +28,7 @@ def do_copy():
         os.mkdir(dest_dir)
 
     sessionpath = nexus.get_sessionpath()
-    tags = cfg.plot.eclipse_repr_tags
+    tags = cfg.eclipse.repr_tags
     c3dfiles = sessionutils.find_tagged(sessionpath, tags=tags)
 
     # concatenate video iterators for all .enf files

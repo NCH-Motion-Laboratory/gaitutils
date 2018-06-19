@@ -521,7 +521,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         except GaitDataError as e:
             qt_message_dialog(str(e))
             return
-        tags = cfg.plot.eclipse_tags
+        tags = cfg.eclipse.tags
         tagged = sessionutils.find_tagged(session, tags=tags)
         vidfiles = []
         for c3dfile in tagged:
@@ -598,8 +598,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 return
 
         # for comparison between sessions, get representative trials only
-        tags = (cfg.plot.eclipse_repr_tags if len(sessions) > 1 else
-                cfg.plot.eclipse_tags)
+        tags = (cfg.eclipse.repr_tags if len(sessions) > 1 else
+                cfg.eclipse.tags)
 
         # collect all video files for conversion
         vidfiles = list()

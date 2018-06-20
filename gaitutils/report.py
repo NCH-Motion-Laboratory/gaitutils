@@ -204,6 +204,7 @@ def dash_report(info=None, sessions=None, tags=None):
     emgs = [tr.emg for tr in trials]
     emg_layout = layouts.rm_dead_channels_multitrial(emgs, cfg.layouts.std_emg)
     _layouts = OrderedDict([
+            ('Patient info', 'patient_info'),
             ('Kinematics', cfg.layouts.lb_kinematics),
             ('Kinematics + kinetics', cfg.layouts.lb_kin_web),
             ('Kinetics', cfg.layouts.lb_kinetics_web),
@@ -248,7 +249,13 @@ def dash_report(info=None, sessions=None, tags=None):
                                            style={'height': '100%'})
 
                 elif layout == 'patient_info':
-                    pass
+                    graph_upper = dcc.Markdown("""
+# Name: %s
+# Age: %d
+""" % ('Test Patient', 10))
+
+                    graph_lower = graph_upper
+
                 else:
                     raise ValueError('Invalid plot type')
 

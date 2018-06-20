@@ -200,9 +200,9 @@ def dash_report(info=None, sessions=None, tags=None):
         trials_dd.append({'label': tr.name_with_description,
                           'value': tr.trialname})
     # precreate graphs
-    #emgs = [tr.emg for tr in trials]
-    #emg_layout = layouts.rm_dead_channels_multitrial(emgs, cfg.layouts.std_emg)
-    emg_layout = cfg.layouts.std_emg
+    # in EMG layout, keep chs that are active in any of the trials
+    emgs = [tr.emg for tr in trials]
+    emg_layout = layouts.rm_dead_channels_multitrial(emgs, cfg.layouts.std_emg)
     _layouts = OrderedDict([
             ('Kinematics', cfg.layouts.lb_kinematics),
             ('Kinematics + kinetics', cfg.layouts.lb_kin_web),

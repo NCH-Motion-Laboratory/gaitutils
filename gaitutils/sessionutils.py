@@ -118,7 +118,7 @@ def get_session_enfs(sessionpath):
 
 def find_tagged(sessionpath, tags=None, eclipse_keys=None):
     """ Find tagged trials in given path. Returns a list of .c3d files. """
-    # FIXME: into config?
+
     if eclipse_keys is None:
         eclipse_keys = cfg.eclipse.tag_keys
 

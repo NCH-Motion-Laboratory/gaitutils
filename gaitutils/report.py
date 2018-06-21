@@ -130,13 +130,13 @@ def dash_report(info=None, sessions=None, tags=None):
         age = max(ages)
 
     # create Markdown text for patient info
-    patient_info_text = '#### %s ' % (info['fullname'] if info['fullname'] else
-                                      'Name unknown')
+    patient_info_text = '##### %s ' % (info['fullname'] if info['fullname']
+                                       else 'Name unknown')
     if info['hetu']:
         patient_info_text += '(%s)' % info['hetu']
     patient_info_text += '\n'
-    if age:
-        patient_info_text += 'Age at measurement time: %d\n' % age
+    #if age:
+    #    patient_info_text += 'Age at measurement time: %d\n\n' % age
     if info['report_notes']:
         patient_info_text += info['report_notes']
 

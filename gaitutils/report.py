@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Reporting functions, WIP
+Report related functions
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -104,9 +104,6 @@ def dash_report(info=None, sessions=None, tags=None):
     VIDS_TOTAL_HEIGHT = 88  # % of browser window height
     camera_labels = cfg.general.camera_labels.values()
 
-    if not sessions:
-        return None
-
     if len(sessions) < 1 or len(sessions) > 3:
         raise ValueError('Need a list of one to three sessions')
 
@@ -117,13 +114,11 @@ def dash_report(info=None, sessions=None, tags=None):
                    else 'Comparison report:')
     report_name = '%s %s' % (report_type, sessions_str)
 
-    if tags is None:
-        # if doing a comparison, pick representative trials only
-        tags = (cfg.eclipse.repr_tags if is_comparison else
-                cfg.eclipse.tags)
+    # if doing a comparison, pick representative trials only
+    tags = tags or (cfg.eclipse.repr_tags if is_comparison else
+                    cfg.eclipse.tags)
 
-    if info is None:
-        info = sessionutils.default_info()
+    info = info or sessionutils.default_info()
 
     age = None
     if info['hetu'] is not None:
@@ -139,9 +134,9 @@ def dash_report(info=None, sessions=None, tags=None):
                                        else 'Name unknown')
     if info['hetu']:
         patient_info_text += '(%s)' % info['hetu']
-    patient_info_text += '\n'
-    #if age:
-    #    patient_info_text += 'Age at measurement time: %d\n\n' % age
+    patient_info_text += '\n\n'
+    # if age:
+    #     patient_info_text += 'Age at measurement time: %d\n\n' % age
     if info['report_notes']:
         patient_info_text += info['report_notes']
 
@@ -158,7 +153,7 @@ def dash_report(info=None, sessions=None, tags=None):
         trials.extend(trials_this)
     trials = sorted(trials, key=lambda tr: tr.eclipse_tag)
     if not any(c3ds_all):
-        return None
+        raise ValueError('No trials found')
 
     # load normal data for gait models
     model_normaldata = dict()

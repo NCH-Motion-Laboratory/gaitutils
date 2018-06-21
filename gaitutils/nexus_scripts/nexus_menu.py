@@ -633,7 +633,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # report ok - start server, thread and do not block ui
         port = 5000 + self.listActiveReports.count()
         self._execute(app.server.run, thread=True, block_ui=False,
-                      debug=False, port=port)
+                      debug=False, port=port, threaded=True)
         sessions_str = '/'.join([op.split(s)[-1] for s in dlg.sessions])
         report_type = ('single session' if len(dlg.sessions) == 1
                        else 'comparison')

@@ -529,6 +529,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
         static_c3ds = sessionutils.find_tagged(session, ['Static'], ['TYPE'])
         if static_c3ds:
             vidfiles.extend(nexus.find_trial_videos(static_c3ds[-1]))
+        video_c3ds = sessionutils.find_tagged(session,
+                                              tags=cfg.eclipse.video_tags)
+        for c3dfile in video_c3ds:
+            vidfiles.extend(nexus.find_trial_videos(c3dfile))
         if not vidfiles:
             qt_message_dialog('Cannot find any video files for session %s')
             return
@@ -599,7 +603,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # for comparison between sessions, get representative trials only
         tags = (cfg.eclipse.repr_tags if len(sessions) > 1 else
                 cfg.eclipse.tags)
-
+        
         # collect all video files for conversion
         vidfiles = list()
         for session in sessions:
@@ -610,6 +614,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                                    ['TYPE'])
             if static_c3ds:
                 vidfiles.extend(nexus.find_trial_videos(static_c3ds[-1]))
+            video_c3ds = sessionutils.find_tagged(session,
+                                                  tags=cfg.eclipse.video_tags)
+            for c3dfile in video_c3ds:
+                vidfiles.extend(nexus.find_trial_videos(c3dfile))
 
         if not report.convert_videos(vidfiles, check_only=True):
             self._convert_vidfiles(vidfiles)

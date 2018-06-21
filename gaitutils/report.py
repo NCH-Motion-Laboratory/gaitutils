@@ -179,28 +179,38 @@ def dash_report(info=None, sessions=None, tags=None):
             vid_urls[tag][camera_label] = ['/static/%s' % op.split(fn)[1] if fn
                                            else None for fn in vid_files]
 
-    # add videos from static trials; works a bit differently since st. trials
-    # are not loaded
-    vid_urls['Static'] = dict()
-    static_c3ds = list()
-    for session in sessions:
-        static_this = sessionutils.find_tagged(session, ['Static'], ['TYPE'])
-        if static_this:
-            static_c3ds.append(static_this[-1])  # pick the last static trial
+    def _extra_video_urls(eclipse_keys=None, tags=None):
+        """ video files from each session according to Eclipse key and
+        tags into vid_urls dict"""
+        urls = dict()
+        static_c3ds = list()
+        for session in sessions:
+            static_this = sessionutils.find_tagged(session, tags=tags,
+                                                   eclipse_keys=eclipse_keys)
+            if static_this:
+                static_c3ds.append(static_this[-1])  # last matching trial
+        for camera_id, camera_label in cfg.general.camera_labels.items():
+            urls[camera_label] = list()
+            for static_c3d in static_c3ds:
+                vid_files = gaitutils.nexus.find_trial_videos(static_c3d,
+                                                              'ogv', camera_id)
+                urls[camera_label].extend(['/static/%s' % op.split(fn)[1]
+                                          for fn in vid_files])
+        return urls
 
-    for camera_id, camera_label in cfg.general.camera_labels.items():
-        vid_urls['Static'][camera_label] = list()
-        for static_c3d in static_c3ds:
-            vid_files = gaitutils.nexus.find_trial_videos(static_c3d,
-                                                          'ogv', camera_id)
-            vid_urls['Static'][camera_label].extend(['/static/%s' % op.split(fn)[1] for fn in vid_files])
+    vid_urls['Static'] = _extra_video_urls(eclipse_keys=['TYPE'],
+                                           tags=['Static'])
+    for tag in cfg.eclipse.video_tags:
+        vid_urls[tag] = _extra_video_urls(tags=[tag])
+
+    logger.debug(vid_urls)
 
     # build dcc.Dropdown options list for the cameras and tags
     opts_cameras = list()
     for label in set(camera_labels):
         opts_cameras.append({'label': label, 'value': label})
     opts_tags = list()
-    for tag in tags:
+    for tag in tags + cfg.eclipse.video_tags:
         if any([vid_urls[tag][camera_label] for camera_label in camera_labels]):
             opts_tags.append({'label': '%s' % tag, 'value': tag})
     if any([vid_urls['Static'][camera_label] for camera_label in camera_labels]):

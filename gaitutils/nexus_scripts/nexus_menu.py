@@ -578,7 +578,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         session_infos, info = sessionutils._merge_session_info(sessions)
         if info is None:
-            qt_message_dialog('Patient info does not match. Sessions may be '
+            qt_message_dialog('Patient files do not match. Sessions may be '
                               'from different patients. Continuing without '
                               'patient info.')
             info = sessionutils.default_info()
@@ -590,7 +590,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                 report_notes=dlg_info.report_notes)
                 info.update(new_info)
 
-                # update info for each session (except session specific keys)
+                # update info files (except session specific keys)
                 for session in sessions:
                     update_dict = dict(report_notes=dlg_info.report_notes,
                                        fullname=dlg_info.fullname,
@@ -603,17 +603,19 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # for comparison between sessions, get representative trials only
         tags = (cfg.eclipse.repr_tags if len(sessions) > 1 else
                 cfg.eclipse.tags)
-        
+
         # collect all video files for conversion
         vidfiles = list()
         for session in sessions:
             tagged = sessionutils.find_tagged(session, tags=tags)
             for c3dfile in tagged:
                 vidfiles.extend(nexus.find_trial_videos(c3dfile))
+            # videos for static trials
             static_c3ds = sessionutils.find_tagged(session, ['Static'],
                                                    ['TYPE'])
             if static_c3ds:
                 vidfiles.extend(nexus.find_trial_videos(static_c3ds[-1]))
+            # videos for video-only trials (as specified in config)
             video_c3ds = sessionutils.find_tagged(session,
                                                   tags=cfg.eclipse.video_tags)
             for c3dfile in video_c3ds:

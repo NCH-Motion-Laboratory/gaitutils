@@ -58,8 +58,9 @@ def convert_videos(vidfiles, check_only=False):
     procs = []
     for vidfile, convfile in convfiles.items():
         if not op.isfile(convfile):
+            # supply NO_WINDOW flag to prevent opening of consoles
             p = subprocess.Popen([vidconv_bin]+vidconv_opts.split()+[vidfile],
-                                 stdout=None, creationflags=0x08000000)  # NO_WINDOW flag
+                                 stdout=None, creationflags=0x08000000)
             procs.append(p)
     return procs
 
@@ -90,7 +91,11 @@ def _time_dist_plot(c3ds, sessions):
 
 
 def dash_report(info=None, sessions=None, tags=None):
-    """Multisession dash app"""
+    """Returns dash app for web report.
+    info: patient info
+    sessions: list of session dirs
+    tags: tags for gait trials
+    """
 
     # relative width of left panel (1-12)
     # 3-session comparison uses narrower video panel
@@ -180,19 +185,20 @@ def dash_report(info=None, sessions=None, tags=None):
                                            else None for fn in vid_files]
 
     def _extra_video_urls(eclipse_keys=None, tags=None):
-        """ video files from each session according to Eclipse key and
+        """Put video files from each session according to Eclipse key and
         tags into vid_urls dict"""
         urls = dict()
-        static_c3ds = list()
+        c3ds = list()
         for session in sessions:
-            static_this = sessionutils.find_tagged(session, tags=tags,
-                                                   eclipse_keys=eclipse_keys)
-            if static_this:
-                static_c3ds.append(static_this[-1])  # last matching trial
+            c3ds_this = sessionutils.find_tagged(session, tags=tags,
+                                                 eclipse_keys=eclipse_keys)
+            if c3ds_this:
+                # only pick last matching trial from each session
+                c3ds.append(c3ds_this[-1])
         for camera_id, camera_label in cfg.general.camera_labels.items():
             urls[camera_label] = list()
-            for static_c3d in static_c3ds:
-                vid_files = gaitutils.nexus.find_trial_videos(static_c3d,
+            for c3dfile in c3ds:
+                vid_files = gaitutils.nexus.find_trial_videos(c3dfile,
                                                               'ogv', camera_id)
                 urls[camera_label].extend(['/static/%s' % op.split(fn)[1]
                                           for fn in vid_files])
@@ -203,7 +209,7 @@ def dash_report(info=None, sessions=None, tags=None):
     for tag in cfg.eclipse.video_tags:
         vid_urls[tag] = _extra_video_urls(tags=[tag])
 
-    logger.debug(vid_urls)
+    logger.debug('found following video urls: %s' % vid_urls)
 
     # build dcc.Dropdown options list for the cameras and tags
     opts_cameras = list()

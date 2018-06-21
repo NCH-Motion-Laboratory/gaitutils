@@ -473,7 +473,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
                widget != 'btnQuit'):
                 self.opWidgets.append(widget)
 
-
         XStream.stdout().messageWritten.connect(self._log_message)
         XStream.stderr().messageWritten.connect(self._log_message)
 
@@ -513,15 +512,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
         prog.hide()
         self._enable_op_buttons()
 
-    def _convert_session_videos(self):
-        """Convert current Nexus session videos to web format. Converts
-        representative and static trial videos"""
-        try:
-            session = nexus.get_sessionpath()
-        except GaitDataError as e:
-            qt_message_dialog(str(e))
-            return
-        tags = cfg.eclipse.tags
+    @staticmethod
+    def _collect_vidfiles(session, tags=None):
+        """Collect video files for session. Includes tagged trials (tags),
+        static trial and video-only trials as specified in config"""
         tagged = sessionutils.find_tagged(session, tags=tags)
         vidfiles = []
         for c3dfile in tagged:
@@ -533,6 +527,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                               tags=cfg.eclipse.video_tags)
         for c3dfile in video_c3ds:
             vidfiles.extend(nexus.find_trial_videos(c3dfile))
+        return vidfiles
+
+    def _convert_session_videos(self):
+        """Convert current Nexus session videos to web format."""
+        try:
+            session = nexus.get_sessionpath()
+        except GaitDataError as e:
+            qt_message_dialog(str(e))
+            return
+        vidfiles = self._collect_vidfiles(session)
         if not vidfiles:
             qt_message_dialog('Cannot find any video files for session %s')
             return
@@ -607,19 +611,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # collect all video files for conversion
         vidfiles = list()
         for session in sessions:
-            tagged = sessionutils.find_tagged(session, tags=tags)
-            for c3dfile in tagged:
-                vidfiles.extend(nexus.find_trial_videos(c3dfile))
-            # videos for static trials
-            static_c3ds = sessionutils.find_tagged(session, ['Static'],
-                                                   ['TYPE'])
-            if static_c3ds:
-                vidfiles.extend(nexus.find_trial_videos(static_c3ds[-1]))
-            # videos for video-only trials (as specified in config)
-            video_c3ds = sessionutils.find_tagged(session,
-                                                  tags=cfg.eclipse.video_tags)
-            for c3dfile in video_c3ds:
-                vidfiles.extend(nexus.find_trial_videos(c3dfile))
+            vidfiles_this = self._collect_vidfiles(session, tags=tags)
+            vidfiles.extend(vidfiles_this)
 
         if not report.convert_videos(vidfiles, check_only=True):
             self._convert_vidfiles(vidfiles)
@@ -632,8 +625,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
                               'valid')
             return
 
-        # report ok - start server, thread and do not block ui
         port = 5000 + self.listActiveReports.count()
+        # report ok - start server, thread and do not block ui
+        # also enable the threaded mode of the server. serving is a bit flaky
+        # in Python 2 (multiple requests cause exceptions)
         self._execute(app.server.run, thread=True, block_ui=False,
                       debug=False, port=port, threaded=True)
         sessions_str = '/'.join([op.split(s)[-1] for s in dlg.sessions])

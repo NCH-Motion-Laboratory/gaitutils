@@ -117,15 +117,28 @@ def dash_report(info=None, sessions=None, tags=None):
         tags = (cfg.eclipse.repr_tags if is_comparison else
                 cfg.eclipse.tags)
 
+    if info is None:
+        info = sessionutils.default_info()
+
     age = None
-    if info is not None:
-        if info['hetu'] is not None:
-            # compute subject age at session time
-            session_dates = [sessionutils.get_session_date(session) for
-                             session in sessions]
-            ages = [numutils.age_from_hetu(info['hetu'], d) for d in
-                    session_dates]
-            age = max(ages)
+    if info['hetu'] is not None:
+        # compute subject age at session time
+        session_dates = [sessionutils.get_session_date(session) for
+                         session in sessions]
+        ages = [numutils.age_from_hetu(info['hetu'], d) for d in
+                session_dates]
+        age = max(ages)
+
+    # create Markdown text for patient info
+    patient_info_text = '#### %s ' % (info['fullname'] if info['fullname'] else
+                                      'Name unknown')
+    if info['hetu']:
+        patient_info_text += '(%s)' % info['hetu']
+    patient_info_text += '\n'
+    if age:
+        patient_info_text += 'Age at measurement time: %d\n' % age
+    if info['report_notes']:
+        patient_info_text += info['report_notes']
 
     # load the trials
     trials = list()
@@ -147,7 +160,7 @@ def dash_report(info=None, sessions=None, tags=None):
     for fn in cfg.general.normaldata_files:
         ndata = normaldata.read_normaldata(fn)
         model_normaldata.update(ndata)
-    if age:
+    if age is not None:
         age_ndata_file = normaldata.normaldata_age(age)
         if age_ndata_file:
             age_ndata = normaldata.read_normaldata(age_ndata_file)
@@ -155,7 +168,6 @@ def dash_report(info=None, sessions=None, tags=None):
 
     # create directory of trial videos for each tag and camera selection
     vid_urls = dict()
-    
     for tag in tags:
         vid_urls[tag] = dict()
         for camera_label in camera_labels:
@@ -249,11 +261,7 @@ def dash_report(info=None, sessions=None, tags=None):
                                            style={'height': '100%'})
 
                 elif layout == 'patient_info':
-                    graph_upper = dcc.Markdown("""
-# Name: %s
-# Age: %d
-""" % ('Test Patient', 10))
-
+                    graph_upper = dcc.Markdown(patient_info_text)
                     graph_lower = graph_upper
 
                 else:

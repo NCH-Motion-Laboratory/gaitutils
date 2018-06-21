@@ -80,11 +80,13 @@ def _merge_session_info(sessions):
         if None in allvals:
             allvals.remove(None)
         if key == 'fullname' or key == 'hetu':
-            if len(allvals) > 1:  # name / hetu do not match
+            if len(allvals) > 1:
                 logger.warning('name / hetu do not match across sessions')
                 return session_infos, None
-        if key == 'notes':
-            logger.warning('report notes do not match across sessions')
+        if key == 'report_notes':
+            if len(allvals) > 1:
+                logger.warning('report notes do not match across sessions')
+        # in case of conflicts, this just picks from the last session
         info[key] = allvals.pop() if allvals else None
     return session_infos, info
 

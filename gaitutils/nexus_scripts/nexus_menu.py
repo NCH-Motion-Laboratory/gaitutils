@@ -580,7 +580,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
             info = sessionutils.default_info()
 
         else:
-            # get updated info from user
             dlg_info = WebReportInfoDialog(info)
             if dlg_info.exec_():
                 new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,

@@ -68,7 +68,11 @@ def plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
     subtitle_fontsize = 12  # subplot titles
 
     nrows = len(layout)
+    if nrows == 0:
+        raise ValueError('Empty layout')
     ncols = len(layout[0])
+    if ncols == 0:
+        raise ValueError('Empty layout')
 
     if len(trials) > len(plotly.colors.DEFAULT_PLOTLY_COLORS):
         logger.warning('Not enough colors for plot')

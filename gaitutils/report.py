@@ -226,6 +226,9 @@ def dash_report(info=None, sessions=None, tags=None):
     # in EMG layout, keep chs that are active in any of the trials
     emgs = [tr.emg for tr in trials]
     emg_layout = layouts.rm_dead_channels_multitrial(emgs, cfg.layouts.std_emg)
+    if len(emg_layout) == 0:  # no valid chs
+        emg_layout = 'disabled'
+
     _layouts = OrderedDict([
             ('Patient info', 'patient_info'),
             ('Kinematics', cfg.layouts.lb_kinematics),
@@ -275,8 +278,12 @@ def dash_report(info=None, sessions=None, tags=None):
                     graph_upper = dcc.Markdown(patient_info_text)
                     graph_lower = graph_upper
 
-                else:
-                    raise ValueError('Invalid plot type')
+                # exceptions here will be caught and menu items will be empty
+                elif layout == 'disabled':
+                    raise ValueError
+
+                else:  # unrecognized layout
+                    raise ValueError
 
             # regular gaitutils layout
             else:

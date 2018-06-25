@@ -41,7 +41,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-
 class PdfReportDialog(QtWidgets.QDialog):
     """Ask for patient/session info and report options"""
 
@@ -455,7 +454,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnOptions.clicked.connect(self._options_dialog)
         self.btnQuit.clicked.connect(self.close)
         (self.listActiveReports.itemDoubleClicked.
-         connect(lambda item: _browse_localhost(item.userdata)))
+         connect(lambda item: self._browse_localhost(item.userdata)))
 
         # collect operation widgets
         self.opWidgets = list()
@@ -471,7 +470,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         logger.debug('started threadpool with max %d threads' %
                      self.threadpool.maxThreadCount())
 
-        self._browser = None
+        self._browser_procs = list()
 
     def _button_connect_task(self, button, fun, thread=False):
         """ Helper to connect button with task function. Use lambda to consume
@@ -509,7 +508,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         """Open configured browser on localhost:port"""
         url = '127.0.0.1:%d' % port
         try:
-            self._browser = subprocess.Popen([cfg.general.browser_path, url])
+            proc = subprocess.Popen([cfg.general.browser_path, url])
+            self._browser_procs.append(proc)
+            logger.debug('new browser pid %d' % proc.pid)
         except Exception:
             qt_message_dialog('Cannot start configured web browser: %s'
                               % cfg.general.browser_path)
@@ -555,8 +556,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                     'will be terminated. Are you sure you '
                                     'want to quit?')
             if reply == QtWidgets.QMessageBox.YesRole:
-                if self._browser is not None:
-                    self._browser.kill()
+                for proc in self._browser_procs:
+                    proc.kill()
                 event.accept()
             else:
                 event.ignore()

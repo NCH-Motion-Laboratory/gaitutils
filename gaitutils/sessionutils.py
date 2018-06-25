@@ -105,7 +105,7 @@ def get_session_date(sessionpath):
     enfs = get_session_enfs(sessionpath)
     x1ds = [_enf2other(fn, 'x1d') for fn in enfs]
     if not x1ds:
-        raise ValueError('No .x1d files for given session')
+        raise ValueError('Invalid session %s' % sessionpath)
     return datetime.datetime.fromtimestamp(op.getmtime(x1ds[0]))
 
 

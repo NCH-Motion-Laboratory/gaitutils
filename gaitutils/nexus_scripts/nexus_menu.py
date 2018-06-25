@@ -41,15 +41,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def _browse_localhost(port):
-    """Open configured browser on localhost:port"""
-    url = '127.0.0.1:%d' % port
-    try:
-        subprocess.Popen([cfg.general.browser_path, url])
-    except Exception:
-        qt_message_dialog('Cannot start configured web browser: %s'
-                          % cfg.general.browser_path)
-
 
 class PdfReportDialog(QtWidgets.QDialog):
     """Ask for patient/session info and report options"""
@@ -480,6 +471,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         logger.debug('started threadpool with max %d threads' %
                      self.threadpool.maxThreadCount())
 
+        self._browser = None
+
     def _button_connect_task(self, button, fun, thread=False):
         """ Helper to connect button with task function. Use lambda to consume
         unused events argument. If thread=True, launch in a separate worker
@@ -511,6 +504,15 @@ class Gaitmenu(QtWidgets.QMainWindow):
             completed = n_complete == len(procs)
         prog.hide()
         self._enable_op_buttons()
+
+    def _browse_localhost(self, port):
+        """Open configured browser on localhost:port"""
+        url = '127.0.0.1:%d' % port
+        try:
+            self._browser = subprocess.Popen([cfg.general.browser_path, url])
+        except Exception:
+            qt_message_dialog('Cannot start configured web browser: %s'
+                              % cfg.general.browser_path)
 
     @staticmethod
     def _collect_vidfiles(session, tags=None):
@@ -553,6 +555,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                     'will be terminated. Are you sure you '
                                     'want to quit?')
             if reply == QtWidgets.QMessageBox.YesRole:
+                if self._browser is not None:
+                    self._browser.kill()
                 event.accept()
             else:
                 event.ignore()
@@ -639,7 +643,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # double clicking on the list item will browse to corresponding port
         self.listActiveReports.add_item(report_name, data=port)
         logger.debug('starting web browser')
-        _browse_localhost(port)
+        self._browse_localhost(port)
 
     def _create_pdf_report(self):
         """Creates the full pdf report"""

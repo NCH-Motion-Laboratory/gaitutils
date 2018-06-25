@@ -229,6 +229,7 @@ def dash_report(info=None, sessions=None, tags=None):
     if len(emg_layout) == 0:  # no valid chs
         emg_layout = 'disabled'
 
+    # FIXME: into config?
     _layouts = OrderedDict([
             ('Patient info', 'patient_info'),
             ('Kinematics', cfg.layouts.lb_kinematics),
@@ -278,12 +279,12 @@ def dash_report(info=None, sessions=None, tags=None):
                     graph_upper = dcc.Markdown(patient_info_text)
                     graph_lower = graph_upper
 
-                # exceptions here will be caught and menu items will be empty
+                # will be caught and menu item will be empty
                 elif layout == 'disabled':
                     raise ValueError
 
                 else:  # unrecognized layout
-                    raise ValueError
+                    raise Exception('Unrecognized layout: %s' % layout)
 
             # regular gaitutils layout
             else:

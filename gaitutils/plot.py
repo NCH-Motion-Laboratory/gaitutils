@@ -778,9 +778,11 @@ class Plotter(object):
                 if var_type == 'model_legend':
                     legtitle = ['Model traces:']
                     artists = self.modelartists
+                    # one legend entry may correspond to several linestyles
+                    # (e.g. dashed and solid for L/R) so we do not insert
+                    # linestyle into the legend
                     artists.append(matplotlib.lines.Line2D((0, 1), (0, 0),
-                                   color=model_tracecolor, linewidth=2,
-                                   linestyle=lstyle))
+                                   color=model_tracecolor, linewidth=2))
                 else:
                     legtitle = ['EMG traces:']
                     artists = self.emgartists

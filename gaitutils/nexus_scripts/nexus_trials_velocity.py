@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 def _trial_median_velocity(source):
     """ Compute median velocity (walking speed) over whole trial by
     differentiation of marker data """
-    MIN_VEL = .1
     try:
         frate = read_data.get_metadata(source)['framerate']
         dim = utils.principal_movement_direction(source, cfg.autoproc.
@@ -29,8 +28,7 @@ def _trial_median_velocity(source):
     except (GaitDataError, ValueError):
         return np.nan
     vel = np.median(np.abs(vel_[np.where(vel_)]))
-    vel_ms = vel * frate / 1000.
-    return vel_ms if vel_ms >= MIN_VEL else np.nan
+    return vel * frate / 1000.
 
 
 def do_plot(show=True, make_pdf=True):

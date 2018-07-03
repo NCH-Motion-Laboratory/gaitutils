@@ -90,7 +90,7 @@ def get_analysis(c3dfile, condition='unknown'):
             if context not in di_[var]:
                 logger.warning('%s has missing value: %s / %s' %
                                (c3dfile, var, context))
-                di_[var][context] = None
+                di_[var][context] = np.NaN
 
     return di
 

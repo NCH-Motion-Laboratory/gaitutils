@@ -68,8 +68,8 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
             ax.axis('off')
             # may have several bars (conditions) per variable
             vals_this = [values[cond][var][context] for cond in conds]
-            # None -> 0 for barh so that missing values are plotted as nothing
-            vals_this = [v if v is not None else 0 for v in vals_this]
+            if not np.count_nonzero(~np.isnan(vals_this)):
+                continue
             stddevs_this = ([stddev[cond][var][context] if stddev[cond]
                              else None for cond in conds])
             units_this = len(conds)*[units[ind]]

@@ -109,7 +109,6 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
     musclelen_ndata = normaldata.normaldata_age(age)
     footer_musclelen = (u' Normaalidata: %s' % musclelen_ndata if
                         musclelen_ndata else u'')
-    footer_kin_cons = 15*' ' + u'dashed line: left foot, solid line: right foot'
 
     pl = Plotter()
 
@@ -227,7 +226,7 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
         _savefig(pdf, fig_hdr)
         _savefig(pdf, fig_vel, header)
         _savefig(pdf, fig_timedist_avg, header)
-        _savefig(pdf, fig_kin_cons, header, footer_kin_cons)
+        _savefig(pdf, fig_kin_cons, header)
         _savefig(pdf, fig_musclelen_cons, header, footer_musclelen)
         _savefig(pdf, fig_emg_cons, header)
         for fig in figs_kin_avg:

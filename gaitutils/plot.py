@@ -9,6 +9,7 @@ matplotlib based plotting functions
 import matplotlib
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.lines import Line2D
 import matplotlib.gridspec as gridspec
 import os.path as op
 import os
@@ -466,6 +467,11 @@ class Plotter(object):
             raise ValueError('n of height ratios must match n of rows')
         plotaxes = []
 
+        def _empty_artist():
+            return matplotlib.patches.Rectangle((0, 0), 1, 1, fc="w",
+                                                fill=False, edgecolor='none',
+                                                linewidth=0)
+
         def _axis_annotate(ax, text):
             """ Annotate at center of axis """
             ax.annotate(text, xy=(.5, .5), xycoords='axes fraction',
@@ -770,36 +776,46 @@ class Plotter(object):
                                                         plot.label_fontsize)
 
             elif var_type in ('model_legend', 'emg_legend'):
+                # add current trial name to legend and update legend
                 ax.set_axis_off()
-                self.legendnames.append('%s   %s   %s' % (
-                                        _shorten_name(trial.trialname, legend_maxlen),
-                                        trial.eclipse_data['DESCRIPTION'],
-                                        trial.eclipse_data['NOTES']))
-                if var_type == 'model_legend':
-                    legtitle = ['Model traces:']
-                    artists = self.modelartists
-                    # one legend entry may correspond to several linestyles
-                    # (e.g. dashed and solid for L/R) so we do not insert
-                    # linestyle into the legend
-                    artists.append(matplotlib.lines.Line2D((0, 1), (0, 0),
-                                   color=model_tracecolor, linewidth=2))
-                else:
-                    legtitle = ['EMG traces:']
-                    artists = self.emgartists
-                    artists.append(matplotlib.lines.Line2D((0, 1), (0, 0),
-                                                           linewidth=2,
-                                                           color=
-                                                           emg_tracecolor))
+                tr_name = _shorten_name(trial.trialname, legend_maxlen)
+                leg_entry = (tr_name, trial.eclipse_data['DESCRIPTION'],
+                             trial.eclipse_data['NOTES'])
+                self.legendnames.append('%s   %s   %s' % leg_entry)
 
-                nothing = [matplotlib.patches.Rectangle((0, 0), 1, 1, fc="w",
-                                                        fill=False,
-                                                        edgecolor='none',
-                                                        linewidth=0)]
-                # FIXME: just a hack
-                ncol = 1 if len(self.legendnames) < 5 else 2
-                ax.legend(nothing+artists, legtitle+self.legendnames,
-                          loc='upper left', ncol=ncol,
-                          prop={'size': cfg.plot.legend_fontsize})
+                if var_type == 'model_legend':
+                    if linestyles_context:
+                        # indicate line styles in legend if they are used
+                        leg_ctxt_titles = ['line style for right foot',
+                                           'line style for left foot']
+                        leg_ctxt_artists = [Line2D((0, 1), (0, 0),
+                                                   color='black',
+                                                   linewidth=1,
+                                                   linestyle=cfg.plot.
+                                                   model_linestyles[ctxt])
+                                            for ctxt in ['R', 'L']]
+                    else:
+                        leg_ctxt_titles = []
+                        leg_ctxt_artists = []
+                    # FIXME: model tracecolor arg is mandatory here
+                    self.modelartists.append(Line2D((0, 1), (0, 0),
+                                                    color=model_tracecolor,
+                                                    linewidth=2))
+                    ncol = (1 if len(self.legendnames) + len(leg_ctxt_titles)
+                            < 5 else 2)
+                    ax.legend(self.modelartists + leg_ctxt_artists,
+                              self.legendnames + leg_ctxt_titles,
+                              loc='upper left', ncol=ncol,
+                              prop={'size': cfg.plot.legend_fontsize})
+
+                else:  # emg_legend
+                    self.emgartists.append(Line2D((0, 1), (0, 0),
+                                           linewidth=2,
+                                           color=emg_tracecolor))
+                    ncol = 1 if len(self.legendnames) < 5 else 2
+                    ax.legend(self.emgartists, self.legendnames,
+                              loc='upper left', ncol=ncol,
+                              prop={'size': cfg.plot.legend_fontsize})
 
             plotaxes.append(ax)
 

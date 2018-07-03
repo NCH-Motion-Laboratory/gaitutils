@@ -121,11 +121,8 @@ def get_session_enfs(sessionpath):
 def find_tagged(sessionpath, tags=None, eclipse_keys=None):
     """ Find tagged trials in given path. Returns a list of .c3d files. """
 
-    if eclipse_keys is None:
-        eclipse_keys = cfg.eclipse.tag_keys
-
-    if tags is None:
-        tags = cfg.eclipse.tags
+    eclipse_keys = eclipse_keys or cfg.eclipse.tag_keys
+    tags = tags or cfg.eclipse.tags
 
     tagged_enfs = list(_find_enfs(sessionpath, tags, eclipse_keys))
     return [_enf2other(fn, 'c3d') for fn in tagged_enfs]
@@ -136,12 +133,7 @@ def _find_enfs(sessionpath, tags, eclipse_keys):
     (or given session path) whose Eclipse fields (list) contain any of
     strings (list). Case insensitive. """
     tags = [t.upper() for t in tags]
-    enffiles = get_session_enfs(sessionpath)
-
-    if enffiles is None:
-        return
-
-    for enf in enffiles:
+    for enf in get_session_enfs(sessionpath):
         ecldi = get_eclipse_keys(enf).items()
         eclvals = [val.upper() for key, val in ecldi if key in eclipse_keys]
         if any([s in val for s in tags for val in eclvals]):

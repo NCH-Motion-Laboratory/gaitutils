@@ -152,7 +152,7 @@ def dash_report(info=None, sessions=None, tags=None):
         trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
         trials.extend(trials_this)
     trials = sorted(trials, key=lambda tr: tr.eclipse_tag)
-    if not any(c3ds_all):
+    if not c3ds_all:
         raise ValueError('No trials found')
 
     # load normal data for gait models

@@ -99,11 +99,12 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
     conds = values.keys()
     vals_1 = values[conds[0]]
     varsets = [set(values[cond].keys()) for cond in conds]
-    vars_missing = set.difference(*varsets)
-    if vars_missing:
-        logger.warning('Some conditions are missing the following variables: '
-                       '%s' % ' '.join(vars_missing))
     vars = set.intersection(*varsets)
+    not_in_all = set.union(*varsets) - vars
+    if not_in_all:
+        logger.warning('Some conditions are missing the following variables: '
+                       '%s' % ' '.join(not_in_all))
+
     units = [vals_1[var]['unit'] for var in vars]
 
     # 3 columns: bar, labels, bar

@@ -54,14 +54,11 @@ def group_analysis(an_list, fun=np.mean):
     for cond in conds:
         varsets = [set(an[cond].keys()) for an in an_list for cond in conds]
 
-    vars_missing = set.difference(*varsets)
-    if vars_missing:
-        logger.warning('Some files are missing the following variables: %s'
-                       % ' '.join(vars_missing))
-        #raise ValueError('Some files are missing the following variables: %s'
-        #                 % ' '.join(vars_missing))
     vars = set.intersection(*varsets)
-
+    not_in_all = set.union(*varsets) - vars
+    if not_in_all:
+        logger.warning('Some files are missing the following variables: %s'
+                       % ' '.join(not_in_all))
     res = dict()
     for cond in conds:
         res[cond] = dict()

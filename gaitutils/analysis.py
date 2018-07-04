@@ -73,8 +73,8 @@ def group_analysis(an_list, fun=np.mean):
                 # gather valus from analysis dicts
                 allvals = np.array([an[cond][var][context] for an in an_list if
                                     context in an[cond][var]])
-                # filter out missing values (Nones)
-                allvals = np.array([v for v in allvals if v is not None])
+                # filter out missing values (nans)
+                allvals = allvals[~np.isnan(allvals)]
                 res[cond][var][context] = (fun(allvals) if allvals.size else
                                            np.nan)
     return res

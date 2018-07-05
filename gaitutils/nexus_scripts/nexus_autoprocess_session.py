@@ -116,6 +116,10 @@ def _do_autoproc(enffiles, update_eclipse=True):
         trial_type = edi['TYPE']
         trial_desc = edi['DESCRIPTION']
         trial_notes = edi['NOTES']
+        eclipse_str = ''
+        trial = Trial()
+        trials[filepath] = trial
+        allmarkers = vicon.GetMarkerNames(subjectname)
 
         # check whether to skip trial
         if trial_type in cfg.autoproc.type_skip:
@@ -130,11 +134,6 @@ def _do_autoproc(enffiles, update_eclipse=True):
             _run_pipelines(cfg.autoproc.pre_pipelines)
             _save_trial()
             continue
-
-        eclipse_str = ''
-        trial = Trial()
-        trials[filepath] = trial
-        allmarkers = vicon.GetMarkerNames(subjectname)
 
         # reset ROI before operations
         if cfg.autoproc.reset_roi and nexus_ver >= 2.5:
@@ -157,40 +156,13 @@ def _do_autoproc(enffiles, update_eclipse=True):
             fail(trial, 'label_failure')
             continue
 
-        # try to figure out trial center frame
-        # track markers (only one needs to be ok)
-        for marker in cfg.autoproc.track_markers:
-            try:
-                mP = mkrdata[marker+'_P']
-                gait_dim = utils.principal_movement_direction(mP)
-                p0 = cfg.autoproc.walkway_ctr[gait_dim]
-                ctr = utils.get_crossing_frame(mP, dim=gait_dim, p0=p0)
-            except (GaitDataError, ValueError):
-                ctr = None
-
-            ctr = ctr[0] if ctr else None  # deal w/ multiple crossings
-
-            if ctr:
-                trials[filepath].ctr_frame = ctr
-                break
-
-            if not ctr:
-                # cannot find center frame - possibly gaps in track_markers
+        gaps_found = False
+        for marker in set(allmarkers) - set(cfg.autoproc.ignore_markers):
+            gaps = mkrdata[marker + '_gaps']
+            # check for gaps near the center frame
+            if gaps.size > 0:
                 gaps_found = True
                 break
-            else:
-                logger.debug('walkway center frame: %d' % ctr)
-                # check markers for gaps or label failures
-                for marker in (set(allmarkers) -
-                               set(cfg.autoproc.ignore_markers)):
-                    gaps = mkrdata[marker + '_gaps']
-                    # check for gaps near the center frame
-                    if gaps.size > 0:
-                        if (np.where(abs(gaps - ctr) <
-                           cfg.autoproc.gaps_min_dist)[0].size >
-                           cfg.autoproc.gaps_max):
-                            gaps_found = True
-                            break
         if gaps_found:
             fail(trial, 'gaps')
             continue
@@ -224,13 +196,14 @@ def _do_autoproc(enffiles, update_eclipse=True):
         # check gait direction (forward / backward)
         if ('dir_forward' in cfg.autoproc.enf_descriptions and 'dir_backward'
            in cfg.autoproc.enf_descriptions):
-            # check direction of gait (principal coordinate increase/decrease)
+            gait_dim = utils.principal_movement_direction(subj_pos)
+            # check principal coordinate increase/decrease in movement dir
             gait_dir = np.median(np.diff(subj_pos, axis=0), axis=0)[gait_dim]
             dir_str = 'dir_forward' if gait_dir == 1 else 'dir_backward'
             dir_desc = cfg.autoproc.enf_descriptions[dir_str]
             eclipse_str += '%s,' % dir_desc
 
-        # get movement velocity
+        # gait velocity
         median_vel = np.median(np.abs(subj_vel[np.where(subj_vel)]))
         median_vel_ms = median_vel * vicon.GetFrameRate() / 1000.
         logger.debug('median forward velocity: %.2f m/s' % median_vel_ms)

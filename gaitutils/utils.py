@@ -127,8 +127,8 @@ def detect_forceplate_events(source, fp_info=None):
     """
 
     # get subject info
-    logger.debug('detect forceplate events from %s' % source)
     from . import read_data
+    logger.debug('detect forceplate events from %s' % source)
     info = read_data.get_metadata(source)
     fpdata = read_data.get_forceplate_data(source)
 
@@ -140,10 +140,10 @@ def detect_forceplate_events(source, fp_info=None):
     results['valid'] = set()
 
     # get marker data and find "forward" direction (by max variance)
-    mrkdata = read_data.get_marker_data(source, cfg.autoproc.right_foot_markers +
-                                        cfg.autoproc.left_foot_markers)
-    pos = sum([mrkdata[name+'_P'] for name in
-               cfg.autoproc.left_foot_markers+cfg.autoproc.right_foot_markers])
+    foot_markers = (cfg.autoproc.right_foot_markers +
+                    cfg.autoproc.left_foot_markers)
+    mrkdata = read_data.get_marker_data(source, foot_markers)
+    pos = sum([mrkdata[name+'_P'] for name in foot_markers])
     fwd_dir = np.argmax(np.var(pos, axis=0))
     orth_dir = 0 if fwd_dir == 1 else 1
     logger.debug('gait forward direction seems to be %s' %
@@ -158,9 +158,7 @@ def detect_forceplate_events(source, fp_info=None):
         return footctrP[:, 2]
 
     for plate_ind, fp in enumerate(fpdata):
-
         logger.debug('analyzing plate %d' % plate_ind)
-
         # check Eclipse info if it exists
         detect = True
         plate = 'FP' + str(plate_ind+1)
@@ -345,5 +343,3 @@ def detect_forceplate_events(source, fp_info=None):
 
     logger.debug(results)
     return results
-
-

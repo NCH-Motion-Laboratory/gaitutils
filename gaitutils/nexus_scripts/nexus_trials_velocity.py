@@ -21,9 +21,10 @@ def _trial_median_velocity(source):
     differentiation of marker data """
     try:
         frate = read_data.get_metadata(source)['framerate']
-        dim = utils.principal_movement_direction(source, cfg.autoproc.
-                                                 track_markers)
         mkr = cfg.autoproc.track_markers[0]
+        mdata = read_data.get_marker_data(source, mkr)
+        pos_ = mdata[mkr+'_P']
+        dim = utils.principal_movement_direction(pos_)
         vel_ = read_data.get_marker_data(source, mkr)[mkr+'_V'][:, dim]
     except (GaitDataError, ValueError):
         return np.nan

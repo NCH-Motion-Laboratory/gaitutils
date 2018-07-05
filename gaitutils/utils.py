@@ -60,20 +60,9 @@ def _foot_swing_velocity(footctrv, max_peak_velocity, min_swing_velocity):
     return np.median(vs)
 
 
-def get_movement_direction(source, mP, dim):
-    """ Return direction of movement (negative/positive)
-    for given marker position mP (n x 3) and movement dimension
-    (0, 1, 2 for x, y, z) """
-    return np.median(np.diff(mP, axis=0), axis=0)  # median of derivative
-
-
-def principal_movement_direction(source, markers):
-    """ Return principal movement direction """
-    from . import read_data
-    mrkdata = read_data.get_marker_data(source, markers)
-    pos = sum([mrkdata[name+'_P'] for name in markers])
-    fwd_dir = np.argmax(np.var(pos, axis=0))
-    return fwd_dir
+def principal_movement_direction(mP):
+    """ Return principal movement direction (dimension of maximum variance) """
+    return np.argmax(np.var(mP, axis=0))
 
 
 def butter_filt(data, passband, sfreq, bord=5):
@@ -94,8 +83,6 @@ def butter_filt(data, passband, sfreq, bord=5):
     else:  # bandpass
         b, a = signal.butter(bord, passbandn, btype='bandpass')
     return signal.filtfilt(b, a, data)
-
-
 
 
 def get_foot_velocity(source, fp_events, medians=True):

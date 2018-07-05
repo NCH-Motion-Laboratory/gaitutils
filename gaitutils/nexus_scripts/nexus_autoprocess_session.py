@@ -162,9 +162,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         for marker in cfg.autoproc.track_markers:
             try:
                 mP = mkrdata[marker+'_P']
-                gait_dim = utils.principal_movement_direction(vicon, cfg.
-                                                              autoproc.
-                                                              track_markers)
+                gait_dim = utils.principal_movement_direction(mP)
                 p0 = cfg.autoproc.walkway_ctr[gait_dim]
                 ctr = utils.get_crossing_frame(mP, dim=gait_dim, p0=p0)
             except (GaitDataError, ValueError):
@@ -227,13 +225,12 @@ def _do_autoproc(enffiles, update_eclipse=True):
         if ('dir_forward' in cfg.autoproc.enf_descriptions and 'dir_backward'
            in cfg.autoproc.enf_descriptions):
             # check direction of gait (principal coordinate increase/decrease)
-            gait_dir = utils.get_movement_direction(vicon, subj_pos)[gait_dim]
+            gait_dir = np.median(np.diff(subj_pos, axis=0), axis=0)[gait_dim]
             dir_str = 'dir_forward' if gait_dir == 1 else 'dir_backward'
             dir_desc = cfg.autoproc.enf_descriptions[dir_str]
             eclipse_str += '%s,' % dir_desc
 
-        # hack(ish): get movement velocity
-        # FIXME: should be in utils
+        # get movement velocity
         median_vel = np.median(np.abs(subj_vel[np.where(subj_vel)]))
         median_vel_ms = median_vel * vicon.GetFrameRate() / 1000.
         logger.debug('median forward velocity: %.2f m/s' % median_vel_ms)

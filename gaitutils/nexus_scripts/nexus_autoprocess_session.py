@@ -90,9 +90,9 @@ def _do_autoproc(enffiles, update_eclipse=True):
 
     def fail(trial, reason):
         """Abort processing: mark and save trial"""
-        logger.debug('preprocessing failed: %s'
-                     % cfg.autoproc.enf_descriptions[reason])
-        trial.description = cfg.autoproc.enf_descriptions[reason]
+        fail_desc = cfg.autoproc.enf_descriptions[reason]
+        logger.debug('preprocessing failed: %s' % fail_desc)
+        trial.description = fail_desc
         _save_trial()
 
     vicon = nexus.viconnexus()
@@ -156,7 +156,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
             fail(trial, 'label_failure')
             continue
 
-        # check markers for remaining gaps; leading
+        # check markers for remaining gaps; leading/trailing gaps are ignored
         gaps_found = False
         for marker in set(allmarkers) - set(cfg.autoproc.ignore_markers):
             gaps = mkrdata[marker + '_gaps']

@@ -156,10 +156,10 @@ def _do_autoproc(enffiles, update_eclipse=True):
             fail(trial, 'label_failure')
             continue
 
+        # check markers for remaining gaps; leading
         gaps_found = False
         for marker in set(allmarkers) - set(cfg.autoproc.ignore_markers):
             gaps = mkrdata[marker + '_gaps']
-            # check for gaps near the center frame
             if gaps.size > 0:
                 gaps_found = True
                 break

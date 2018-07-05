@@ -131,7 +131,9 @@ def _get_analog_data(c3dfile, devname):
         raise GaitDataError('No matching analog channels found in data')
 
 
-def get_marker_data(c3dfile, markers):
+def get_marker_data(c3dfile, markers, trim_gaps=True):
+    """ Get marker data.
+    trim_gaps: ignore leading/trailing gaps """
     if not isinstance(markers, list):  # listify if not already a list
         markers = [markers]
     acq = _get_c3dacq(c3dfile)
@@ -146,9 +148,16 @@ def get_marker_data(c3dfile, markers):
         mkrdata[marker + '_V'] = np.gradient(mP)[0]
         mkrdata[marker + '_A'] = np.gradient(mkrdata[marker+'_V'])[0]
         # find gaps
-        allzero = np.logical_and(mP[:, 0] == 0, mP[:, 1] == 0, mP[:, 2] == 0)
-        mkrdata[marker + '_gaps'] = np.where(allzero)[0]
+        allzero = np.any(mP, axis=1).astype(int)
+        if trim_gaps:
+            nleading = allzero.argmax()
+            allzero_trim = np.trim_zeros(allzero)
+            gap_inds = np.where(allzero_trim == 0)[0] + nleading
+        else:
+            gap_inds = np.where(allzero == 0)[0]
+        mkrdata[marker + '_gaps'] = gap_inds
     return mkrdata
+
 
 
 def get_metadata(c3dfile):

@@ -361,9 +361,10 @@ def get_forceplate_data(vicon):
     return data
 
 
-def get_marker_data(vicon, markers):
+def get_marker_data(vicon, markers, trim_gaps=True):
     """ From Nexus, get position, velocity and acceleration for
-    specified markers.  """
+    specified markers.
+    trim_gaps: ignore leading and trailing gaps"""
     if not isinstance(markers, list):
         markers = [markers]
     subj = get_subjectnames()
@@ -378,8 +379,14 @@ def get_marker_data(vicon, markers):
         mkrdata[marker + '_V'] = np.gradient(mP)[0]
         mkrdata[marker + '_A'] = np.gradient(mkrdata[marker+'_V'])[0]
         # find gaps
-        allzero = np.logical_and(mP[:, 0] == 0, mP[:, 1] == 0, mP[:, 2] == 0)
-        mkrdata[marker + '_gaps'] = np.where(allzero)[0]
+        allzero = np.any(mP, axis=1).astype(int)
+        if trim_gaps:
+            nleading = allzero.argmax()
+            allzero_trim = np.trim_zeros(allzero)
+            gap_inds = np.where(allzero_trim == 0)[0] + nleading
+        else:
+            gap_inds = np.where(allzero == 0)[0]
+        mkrdata[marker + '_gaps'] = gap_inds
     return mkrdata
 
 
@@ -580,7 +587,7 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
 
         # select events for which the foot is close enough to center frame
         if events_range:
-            mP = mkrdata[cfg.autoproc.track_markers[0]]
+            mP = mkrdata[cfg.autoproc.track_markers[0] + '_P']
             fwd_dim = utils.principal_movement_direction(mP)
             strike_pos = footctrP[strikes, fwd_dim]
             dist_ok = np.logical_and(strike_pos > events_range[0],

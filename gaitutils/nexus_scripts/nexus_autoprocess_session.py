@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-
-Autoprocess all trials in current Nexus session directory.
-
-See autoproc section in config for options.
+Autoprocess all trials in current Nexus session directory. See autoproc
+section in config for options.
 
 1st pass (all trials):
 -preprocess
@@ -15,10 +13,8 @@ See autoproc section in config for options.
 -run models + save
 -write Eclipse info
 
-
 NOTES:
 -ROI operations only work for Nexus >= 2.5
-
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -182,7 +178,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
         trials[filepath].valid = valid
         trials[filepath].fpev = fpev
 
-        for context in valid:  # save velocity data
+        # save velocity data
+        for context in valid:
             nv = np.append(foot_vel[context+'_strike'], vel[context+'_strike'])
             foot_vel[context+'_strike'] = nv
             nv = np.append(foot_vel[context+'_toeoff'], vel[context+'_toeoff'])
@@ -193,17 +190,17 @@ def _do_autoproc(enffiles, update_eclipse=True):
         subj_pos = mkrdata[track_mkr+'_P']
         subj_vel = mkrdata[track_mkr+'_V']
 
-        # check gait direction (forward / backward)
+        # check principal coordinate increase/decrease in movement dir
         if ('dir_forward' in cfg.autoproc.enf_descriptions and 'dir_backward'
            in cfg.autoproc.enf_descriptions):
             gait_dim = utils.principal_movement_direction(subj_pos)
-            # check principal coordinate increase/decrease in movement dir
+
             gait_dir = np.median(np.diff(subj_pos, axis=0), axis=0)[gait_dim]
             dir_str = 'dir_forward' if gait_dir == 1 else 'dir_backward'
             dir_desc = cfg.autoproc.enf_descriptions[dir_str]
             eclipse_str += '%s,' % dir_desc
 
-        # gait velocity
+        # compute gait velocity
         median_vel = np.median(np.abs(subj_vel[np.where(subj_vel)]))
         median_vel_ms = median_vel * vicon.GetFrameRate() / 1000.
         logger.debug('median forward velocity: %.2f m/s' % median_vel_ms)

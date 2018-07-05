@@ -287,8 +287,8 @@ class Trial(object):
         if ncycle < 1:
             raise ValueError('Index of gait cycle must be >= 1')
         if len(cycles) < ncycle:
-            raise ValueError('Requested gait cycle %d does not '
-                             'exist in data' % ncycle)
+            raise ValueError('Gait cycle %s%d does not exist in %s'
+                             % (context, ncycle, self.trialname))
         else:
             return cycles[ncycle-1]
 

@@ -135,20 +135,20 @@ def get_marker_data(c3dfile, markers):
     if not isinstance(markers, list):  # listify if not already a list
         markers = [markers]
     acq = _get_c3dacq(c3dfile)
-    mdata = dict()
+    mkrdata = dict()
     for marker in markers:
         try:
             mP = np.squeeze(acq.GetPoint(marker).GetValues())
         except RuntimeError:
             raise GaitDataError('Cannot read variable %s from c3d file'
                                 % marker)
-        mdata[marker + '_P'] = mP
-        mdata[marker + '_V'] = np.gradient(mP)[0]
-        mdata[marker + '_A'] = np.gradient(mdata[marker+'_V'])[0]
+        mkrdata[marker + '_P'] = mP
+        mkrdata[marker + '_V'] = np.gradient(mP)[0]
+        mkrdata[marker + '_A'] = np.gradient(mkrdata[marker+'_V'])[0]
         # find gaps
         allzero = np.logical_and(mP[:, 0] == 0, mP[:, 1] == 0, mP[:, 2] == 0)
-        mdata[marker + '_gaps'] = np.where(allzero)[0]
-    return mdata
+        mkrdata[marker + '_gaps'] = np.where(allzero)[0]
+    return mkrdata
 
 
 def get_metadata(c3dfile):

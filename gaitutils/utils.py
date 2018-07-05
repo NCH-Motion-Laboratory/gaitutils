@@ -37,11 +37,11 @@ def get_crossing_frame(mP, dim=1, p0=0):
     return ycross
 
 
-def markers_avg_vel(mrkdata, markers):
+def markers_avg_vel(mkrdata, markers):
     """Compute mean (scalar) velocity for given set of markers"""
-    V = mrkdata[markers[0]+'_V'] / len(markers)
+    V = mkrdata[markers[0]+'_V'] / len(markers)
     for marker in markers[1:]:
-        V += mrkdata[marker+'_V'] / len(markers)
+        V += mkrdata[marker+'_V'] / len(markers)
     return np.sqrt(np.sum(V**2, 1))
 
 
@@ -90,13 +90,13 @@ def get_foot_velocity(source, fp_events, medians=True):
     fp_events is from detect_forceplate_events()
     If medians=True, return median values. """
     from . import read_data
-    mrkdata = read_data.get_marker_data(source,
+    mkrdata = read_data.get_marker_data(source,
                                         cfg.autoproc.right_foot_markers +
                                         cfg.autoproc.left_foot_markers)
     results = dict()
     for context, markers in zip(('R', 'L'), [cfg.autoproc.right_foot_markers,
                                 cfg.autoproc.left_foot_markers]):
-        footctrv = markers_avg_vel(mrkdata, markers)
+        footctrv = markers_avg_vel(mkrdata, markers)
         strikes = fp_events[context+'_strikes']
         toeoffs = fp_events[context+'_toeoffs']
         results[context + '_strike'] = footctrv[strikes]
@@ -142,19 +142,19 @@ def detect_forceplate_events(source, fp_info=None):
     # get marker data and find "forward" direction (by max variance)
     foot_markers = (cfg.autoproc.right_foot_markers +
                     cfg.autoproc.left_foot_markers)
-    mrkdata = read_data.get_marker_data(source, foot_markers)
-    pos = sum([mrkdata[name+'_P'] for name in foot_markers])
+    mkrdata = read_data.get_marker_data(source, foot_markers)
+    pos = sum([mkrdata[name+'_P'] for name in foot_markers])
     fwd_dir = np.argmax(np.var(pos, axis=0))
     orth_dir = 0 if fwd_dir == 1 else 1
     logger.debug('gait forward direction seems to be %s' %
                  {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])
 
-    def _foot_height(mrkdata, markers):
+    def _foot_height(mkrdata, markers):
         """Compute foot height (z coordinate)"""
-        data_shape = mrkdata[markers[0]+'_P'].shape
+        data_shape = mkrdata[markers[0]+'_P'].shape
         footctrP = np.zeros(data_shape)
         for marker in markers:
-            footctrP += mrkdata[marker+'_P'] / len(markers)
+            footctrP += mkrdata[marker+'_P'] / len(markers)
         return footctrP[:, 2]
 
     for plate_ind, fp in enumerate(fpdata):
@@ -242,7 +242,7 @@ def detect_forceplate_events(source, fp_info=None):
                 logger.debug('checking side %s' % side)
 
                 # check foot height at strike and toeoff
-                foot_h = _foot_height(mrkdata, markers)
+                foot_h = _foot_height(mkrdata, markers)
                 min_h = foot_h[np.nonzero(foot_h)].min()
                 toeoff_h = foot_h[toeoff_fr]
                 strike_h = foot_h[strike_fr]
@@ -273,7 +273,7 @@ def detect_forceplate_events(source, fp_info=None):
                 # FIXME: gently decreasing forceplate contact often leads to
                 # early toeoff detection -> velocity too low
                 frate = info['framerate']
-                footctrv = markers_avg_vel(mrkdata, markers)
+                footctrv = markers_avg_vel(mkrdata, markers)
                 toeoff_vel = footctrv[toeoff_fr]
                 # FIXME: parameters should be somewhere else
                 swing_vel = _foot_swing_velocity(footctrv, 12*1000/frate,
@@ -307,17 +307,17 @@ def detect_forceplate_events(source, fp_info=None):
                         maxes_s[fwd_dir] += cfg.autoproc.heel_strike_tol
                         mins_s[fwd_dir] -= cfg.autoproc.heel_strike_tol
                     marker = marker_ + '_P'
-                    ok &= (mins_s[0] < mrkdata[marker][strike_fr, 0] <
+                    ok &= (mins_s[0] < mkrdata[marker][strike_fr, 0] <
                            maxes_s[0])
-                    ok &= (mins_s[1] < mrkdata[marker][strike_fr, 1] <
+                    ok &= (mins_s[1] < mkrdata[marker][strike_fr, 1] <
                            maxes_s[1])
                     if not ok:
                         logger.debug('marker %s failed on-plate check during '
                                      'foot strike' % marker_)
                         break
-                    ok &= (mins_t[0] < mrkdata[marker][toeoff_fr, 0] <
+                    ok &= (mins_t[0] < mkrdata[marker][toeoff_fr, 0] <
                            maxes_t[0])
-                    ok &= (mins_t[1] < mrkdata[marker][toeoff_fr, 1] <
+                    ok &= (mins_t[1] < mkrdata[marker][toeoff_fr, 1] <
                            maxes_t[1])
                     if not ok:
                         logger.debug('marker %s failed on-plate check during '

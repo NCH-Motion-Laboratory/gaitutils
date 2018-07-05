@@ -88,7 +88,7 @@ def _step_width(source):
     tr = Trial(source)
     sw = dict()
     mkr = 'TOE'  # marker name without context
-    mdata = tr.marker_data
+    mkrdata = tr.marker_data
     for context, strikes in zip(['L', 'R'], [tr.lstrikes, tr.rstrikes]):
         sw[context] = list()
         nstrikes = len(strikes)
@@ -102,12 +102,12 @@ def _step_width(source):
         for j, strike in enumerate(strikes):
             if strike == strikes[-1]:  # last strike on this side
                 break
-            pos_this = mdata[mname+'_P'][strike]
-            pos_next = mdata[mname+'_P'][strikes[j+1]]
+            pos_this = mkrdata[mname+'_P'][strike]
+            pos_next = mkrdata[mname+'_P'][strikes[j+1]]
             strikes_next_co = [k for k in strikes_co if k > strike]
             if len(strikes_next_co) == 0:  # no subsequent contralateral strike
                 break
-            pos_next_co = mdata[mname_co+'_P'][strikes_next_co[0]]
+            pos_next_co = mkrdata[mname_co+'_P'][strikes_next_co[0]]
             # vector distance between 'step lines' (see url above)
             V1 = pos_next - pos_this
             V1 = V1 / np.linalg.norm(V1)

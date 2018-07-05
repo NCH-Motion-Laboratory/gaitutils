@@ -367,20 +367,20 @@ def get_marker_data(vicon, markers):
     if not isinstance(markers, list):
         markers = [markers]
     subj = get_subjectnames()
-    mdata = dict()
+    mkrdata = dict()
     for marker in markers:
         x, y, z, _ = vicon.GetTrajectory(subj, marker)
         if len(x) == 0:
             raise GaitDataError('Cannot read marker trajectory '
                                 'from Nexus: \'%s\'' % marker)
         mP = np.array([x, y, z]).transpose()
-        mdata[marker + '_P'] = mP
-        mdata[marker + '_V'] = np.gradient(mP)[0]
-        mdata[marker + '_A'] = np.gradient(mdata[marker+'_V'])[0]
+        mkrdata[marker + '_P'] = mP
+        mkrdata[marker + '_V'] = np.gradient(mP)[0]
+        mkrdata[marker + '_A'] = np.gradient(mkrdata[marker+'_V'])[0]
         # find gaps
         allzero = np.logical_and(mP[:, 0] == 0, mP[:, 1] == 0, mP[:, 2] == 0)
-        mdata[marker + '_gaps'] = np.where(allzero)[0]
-    return mdata
+        mkrdata[marker + '_gaps'] = np.where(allzero)[0]
+    return mkrdata
 
 
 def get_roi(vicon):
@@ -486,13 +486,14 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     subjectname = get_subjectnames()
 
     # get foot center positions and velocities
-    mrkdata = get_marker_data(vicon, cfg.autoproc.right_foot_markers +
-                              cfg.autoproc.left_foot_markers)
-    rfootctrv = utils.markers_avg_vel(mrkdata, cfg.autoproc.right_foot_markers)
-    lfootctrv = utils.markers_avg_vel(mrkdata, cfg.autoproc.left_foot_markers)
+    mkrdata = get_marker_data(vicon, cfg.autoproc.right_foot_markers +
+                              cfg.autoproc.left_foot_markers +
+                              cfg.autoproc.track_markers)
+    rfootctrv = utils.markers_avg_vel(mkrdata, cfg.autoproc.right_foot_markers)
+    lfootctrv = utils.markers_avg_vel(mkrdata, cfg.autoproc.left_foot_markers)
     # position data: use ANK marker
-    rfootctrP = mrkdata['RANK_P']
-    lfootctrP = mrkdata['LANK_P']
+    rfootctrP = mkrdata['RANK_P']
+    lfootctrP = mkrdata['LANK_P']
 
     strikes_all = {}
     toeoffs_all = {}
@@ -579,8 +580,8 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
 
         # select events for which the foot is close enough to center frame
         if events_range:
-            fwd_dim = utils.principal_movement_direction(vicon, cfg.autoproc.
-                                                         track_markers)
+            mP = mkrdata[cfg.autoproc.track_markers[0]]
+            fwd_dim = utils.principal_movement_direction(mP)
             strike_pos = footctrP[strikes, fwd_dim]
             dist_ok = np.logical_and(strike_pos > events_range[0],
                                      strike_pos < events_range[1])

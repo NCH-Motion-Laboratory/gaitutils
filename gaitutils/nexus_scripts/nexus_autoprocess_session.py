@@ -221,25 +221,26 @@ def _do_autoproc(enffiles, update_eclipse=True):
             foot_vel[context+'_toeoff'] = nv
         eclipse_str += ','
 
+        track_mkr = cfg.autoproc.track_markers[0]
+        mkrdata = nexus.get_marker_data(vicon, track_mkr)
+        subj_pos = mkrdata[track_mkr+'_P']
+        subj_vel = mkrdata[track_mkr+'_V']
+
         # check gait direction (forward / backward)
         if ('dir_forward' in cfg.autoproc.enf_descriptions and 'dir_backward'
            in cfg.autoproc.enf_descriptions):
             # check direction of gait (principal coordinate increase/decrease)
-            gait_dir = utils.get_movement_direction(vicon,
-                                                    cfg.autoproc.track_markers[0],
-                                                    dim)
+            gait_dir = utils.get_movement_direction(vicon, subj_pos)[dim]
             dir_str = 'dir_forward' if gait_dir == 1 else 'dir_backward'
             dir_desc = cfg.autoproc.enf_descriptions[dir_str]
             eclipse_str += '%s,' % dir_desc
 
         # hack(ish): get movement velocity
         # FIXME: should be in utils
-        mkr = cfg.autoproc.track_markers[0]
-        vel_ = nexus.get_marker_data(vicon, mkr)[mkr+'_V'][:, dim]
-        vel = np.median(np.abs(vel_[np.where(vel_)]))
-        vel_ms = vel * vicon.GetFrameRate() / 1000.
-        logger.debug('median forward velocity: %.2f m/s' % vel_ms)
-        eclipse_str += '%.2f m/s' % vel_ms
+        median_vel = np.median(np.abs(subj_vel[np.where(subj_vel)]))
+        median_vel_ms = median_vel * vicon.GetFrameRate() / 1000.
+        logger.debug('median forward velocity: %.2f m/s' % median_vel_ms)
+        eclipse_str += '%.2f m/s' % median_vel_ms
 
         _save_trial()
         # time.sleep(1)

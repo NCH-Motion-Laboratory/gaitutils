@@ -63,14 +63,11 @@ def _foot_swing_velocity(footctrv, max_peak_velocity, min_swing_velocity):
     return np.median(vs)
 
 
-def get_movement_direction(source, marker, dim):
+def get_movement_direction(source, mP, dim):
     """ Return direction of movement (negative/positive)
-    for given marker and movement dimension (e.g. 0, 1, 2 for x, y, z) """
-    from . import read_data
-    mrkdata = read_data.get_marker_data(source, marker)
-    P = mrkdata[marker+'_P']
-    ddiff = np.median(np.diff(P[:, dim]))  # median of derivative
-    return 1 if ddiff > 0 else -1
+    for given marker position mP (n x 3) and movement dimension
+    (0, 1, 2 for x, y, z) """
+    return np.median(np.diff(mP, axis=0), axis=0)  # median of derivative
 
 
 def butter_filt(data, passband, sfreq, bord=5):

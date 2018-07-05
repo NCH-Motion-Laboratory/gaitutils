@@ -17,14 +17,11 @@ from .config import cfg
 logger = logging.getLogger(__name__)
 
 
-def get_crossing_frame(source, marker, dim=1, p0=0):
+def get_crossing_frame(mP, dim=1, p0=0):
     """ Return frame(s) where marker position (dimension dim) crosses p0
     (units are as returned by Nexus, usually mm).
     Dims are x=0, y=1, z=2. """
-    from . import read_data
-    mrkdata = read_data.get_marker_data(source, marker)
-    P = mrkdata[marker + '_P']
-    y = P[:, dim]
+    y = mP[:, dim]
     nzind = np.where(y != 0)  # nonzero elements == valid data (not nice)
     y[nzind] -= p0
     zx = np.append(rising_zerocross(y), falling_zerocross(y))
@@ -70,6 +67,15 @@ def get_movement_direction(source, mP, dim):
     return np.median(np.diff(mP, axis=0), axis=0)  # median of derivative
 
 
+def principal_movement_direction(source, markers):
+    """ Return principal movement direction """
+    from . import read_data
+    mrkdata = read_data.get_marker_data(source, markers)
+    pos = sum([mrkdata[name+'_P'] for name in markers])
+    fwd_dir = np.argmax(np.var(pos, axis=0))
+    return fwd_dir
+
+
 def butter_filt(data, passband, sfreq, bord=5):
     """ Design a filter and forward-backward filter given data to
     passband, e.g. [1, 40].
@@ -90,13 +96,28 @@ def butter_filt(data, passband, sfreq, bord=5):
     return signal.filtfilt(b, a, data)
 
 
-def principal_movement_direction(source, markers):
-    """ Return principal movement direction """
+
+
+def get_foot_velocity(source, fp_events, medians=True):
+    """ Return foot velocities during forceplate strike/toeoff frames.
+    fp_events is from detect_forceplate_events()
+    If medians=True, return median values. """
     from . import read_data
-    mrkdata = read_data.get_marker_data(source, markers)
-    pos = sum([mrkdata[name+'_P'] for name in markers])
-    fwd_dir = np.argmax(np.var(pos, axis=0))
-    return fwd_dir
+    mrkdata = read_data.get_marker_data(source,
+                                        cfg.autoproc.right_foot_markers +
+                                        cfg.autoproc.left_foot_markers)
+    results = dict()
+    for context, markers in zip(('R', 'L'), [cfg.autoproc.right_foot_markers,
+                                cfg.autoproc.left_foot_markers]):
+        footctrv = markers_avg_vel(mrkdata, markers)
+        strikes = fp_events[context+'_strikes']
+        toeoffs = fp_events[context+'_toeoffs']
+        results[context + '_strike'] = footctrv[strikes]
+        results[context + '_toeoff'] = footctrv[toeoffs]
+    if medians:
+        results = {key: (np.array([np.median(x)]) if x.size > 0 else x)
+                   for key, x in results.items()}
+    return results
 
 
 def detect_forceplate_events(source, fp_info=None):
@@ -339,23 +360,3 @@ def detect_forceplate_events(source, fp_info=None):
     return results
 
 
-def get_foot_velocity(source, fp_events, medians=True):
-    """ Return foot velocities during forceplate strike/toeoff frames.
-    fp_events is from detect_forceplate_events()
-    If medians=True, return median values. """
-    from . import read_data
-    mrkdata = read_data.get_marker_data(source,
-                                        cfg.autoproc.right_foot_markers +
-                                        cfg.autoproc.left_foot_markers)
-    results = dict()
-    for context, markers in zip(('R', 'L'), [cfg.autoproc.right_foot_markers,
-                                cfg.autoproc.left_foot_markers]):
-        footctrv = markers_avg_vel(mrkdata, markers)
-        strikes = fp_events[context+'_strikes']
-        toeoffs = fp_events[context+'_toeoffs']
-        results[context + '_strike'] = footctrv[strikes]
-        results[context + '_toeoff'] = footctrv[toeoffs]
-    if medians:
-        results = {key: (np.array([np.median(x)]) if x.size > 0 else x)
-                   for key, x in results.items()}
-    return results

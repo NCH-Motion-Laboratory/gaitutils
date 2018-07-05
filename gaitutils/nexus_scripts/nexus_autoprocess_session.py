@@ -19,9 +19,6 @@ See autoproc section in config for options.
 NOTES:
 -ROI operations only work for Nexus >= 2.5
 
-FIXME:
--marker data gets loaded multiple times
-
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -31,8 +28,7 @@ import numpy as np
 import argparse
 import logging
 
-from gaitutils import (nexus, eclipse, utils, register_gui_exception_handler,
-                       GaitDataError, sessionutils)
+from gaitutils import nexus, eclipse, utils, GaitDataError, sessionutils
 from gaitutils.config import cfg
 
 
@@ -63,6 +59,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
     """
 
     def _run_pipelines(plines):
+        """Run given Nexus pipeline(s)"""
         if type(plines) != list:
             plines = [plines]
         for pipeline in plines:
@@ -74,10 +71,12 @@ def _do_autoproc(enffiles, update_eclipse=True):
                                % pipeline)
 
     def _save_trial():
+        """Save trial in Nexus"""
         logger.debug('saving trial')
         vicon.SaveTrial(cfg.autoproc.nexus_timeout)
 
     def _context_desc(context):
+        """Get description for given context"""
         if not context:
             return cfg.autoproc.enf_descriptions['context_none']
         if context == {'L'}:
@@ -89,6 +88,13 @@ def _do_autoproc(enffiles, update_eclipse=True):
         else:
             raise ValueError('Unexpected context')
 
+    def fail(trial, reason):
+        """Abort processing: mark and save trial"""
+        logger.debug('preprocessing failed: %s'
+                     % cfg.autoproc.enf_descriptions[reason])
+        trial.description = cfg.autoproc.enf_descriptions[reason]
+        _save_trial()
+
     vicon = nexus.viconnexus()
     nexus_ver = nexus.true_ver()
 
@@ -97,8 +103,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
                 'L_toeoff': np.array([]), 'R_toeoff': np.array([])}
     trials = {}
 
-    """ 1st pass - reconstruct, label, sanity check, check forceplate and gait
-    direction """
+    # 1st pass
     logger.debug('\n1st pass - processing %d trial(s)\n' % len(enffiles))
 
     for filepath_ in enffiles:
@@ -112,11 +117,11 @@ def _do_autoproc(enffiles, update_eclipse=True):
         trial_desc = edi['DESCRIPTION']
         trial_notes = edi['NOTES']
 
+        # check whether to skip trial
         if trial_type in cfg.autoproc.type_skip:
-            logger.debug('skipping trial type: %s' % trial_type)
+            logger.debug('skipping based on type: %s' % trial_type)
             continue
         skip = [s.upper() for s in cfg.autoproc.eclipse_skip]
-
         if trial_desc.upper() in skip or trial_notes.upper in skip:
             logger.debug('skipping based on description')
             # run preprocessing + save even for skipped trials, to mark
@@ -127,7 +132,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
             continue
 
         eclipse_str = ''
-        trials[filepath] = Trial()
+        trial = Trial()
+        trials[filepath] = trial
         allmarkers = vicon.GetMarkerNames(subjectname)
 
         # reset ROI before operations
@@ -136,50 +142,50 @@ def _do_autoproc(enffiles, update_eclipse=True):
             vicon.SetTrialRegionOfInterest(fstart, fend)
 
         # try to run preprocessing pipelines
-        fail = None
         _run_pipelines(cfg.autoproc.pre_pipelines)
-        # check trial validity; trial long enough, labeling and gaps ok
-        gaps_found = False
+
+        # check trial length
         trange = vicon.GetTrialRange()
-
         if (trange[1] - trange[0]) < cfg.autoproc.min_trial_duration:
-            fail = 'short'
-        else:  # duration ok
-            # try to figure out trial center frame using
-            # track markers (only one needs to be ok)
-            for marker in cfg.autoproc.track_markers:
-                try:
-                    dim = utils.principal_movement_direction(vicon, cfg.
-                                                             autoproc.
-                                                             track_markers)
-                    ctr = utils.get_crossing_frame(vicon, marker=marker,
-                                                   dim=dim,
-                                                   p0=cfg.autoproc.
-                                                   walkway_ctr[dim])
-                except (GaitDataError, ValueError):
-                    ctr = None
-                ctr = ctr[0] if ctr else None  # deal w/ multiple crossings
-                if ctr:  # ok and no gaps
-                    trials[filepath].ctr_frame = ctr
-                    break
+            fail(trial, 'short')
+            continue
 
-            if ctr is not None:
-                logger.debug('walkway center frame: %d' % ctr)
+        # check for valid marker data
+        try:
+            mkrdata = nexus.get_marker_data(vicon, allmarkers)
+        except GaitDataError:
+            fail(trial, 'label_failure')
+            continue
 
-            # cannot find center frame - possibly gaps in track_markers
+        # try to figure out trial center frame
+        # track markers (only one needs to be ok)
+        for marker in cfg.autoproc.track_markers:
+            try:
+                mP = mkrdata[marker+'_P']
+                gait_dim = utils.principal_movement_direction(vicon, cfg.
+                                                              autoproc.
+                                                              track_markers)
+                p0 = cfg.autoproc.walkway_ctr[gait_dim]
+                ctr = utils.get_crossing_frame(mP, dim=gait_dim, p0=p0)
+            except (GaitDataError, ValueError):
+                ctr = None
+
+            ctr = ctr[0] if ctr else None  # deal w/ multiple crossings
+
+            if ctr:
+                trials[filepath].ctr_frame = ctr
+                break
+
             if not ctr:
-                fail = 'gaps_or_short'
+                # cannot find center frame - possibly gaps in track_markers
                 gaps_found = True
+                break
             else:
+                logger.debug('walkway center frame: %d' % ctr)
                 # check markers for gaps or label failures
                 for marker in (set(allmarkers) -
                                set(cfg.autoproc.ignore_markers)):
-                    try:
-                        gaps = (nexus.get_marker_data(vicon, marker)
-                                [marker + '_gaps'])
-                    except GaitDataError:
-                        fail = 'label_failure'
-                        break
+                    gaps = mkrdata[marker + '_gaps']
                     # check for gaps near the center frame
                     if gaps.size > 0:
                         if (np.where(abs(gaps - ctr) <
@@ -188,19 +194,13 @@ def _do_autoproc(enffiles, update_eclipse=True):
                             gaps_found = True
                             break
         if gaps_found:
-            fail = 'gaps'
-
-        # move to next trial if preprocessing failed
-        if fail is not None:
-            logger.debug('preprocessing failed: %s'
-                         % cfg.autoproc.enf_descriptions[fail])
-            trials[filepath].description = cfg.autoproc.enf_descriptions[fail]
-            _save_trial()
+            fail(trial, 'gaps')
             continue
-        else:
-            trials[filepath].recon_ok = True
 
-        # preprocessing ok, check forceplate data
+        # preprocessing ok
+        trials[filepath].recon_ok = True
+
+        # check forceplate data
         fp_info = (eclipse.eclipse_fp_keys(edi) if
                    cfg.autoproc.use_eclipse_fp_info else None)
         fpev = utils.detect_forceplate_events(vicon, fp_info=fp_info)
@@ -213,16 +213,13 @@ def _do_autoproc(enffiles, update_eclipse=True):
         trials[filepath].fpev = fpev
 
         for context in valid:  # save velocity data
-            nv = np.append(foot_vel[context+'_strike'],
-                           vel[context+'_strike'])
+            nv = np.append(foot_vel[context+'_strike'], vel[context+'_strike'])
             foot_vel[context+'_strike'] = nv
-            nv = np.append(foot_vel[context+'_toeoff'],
-                           vel[context+'_toeoff'])
+            nv = np.append(foot_vel[context+'_toeoff'], vel[context+'_toeoff'])
             foot_vel[context+'_toeoff'] = nv
         eclipse_str += ','
 
         track_mkr = cfg.autoproc.track_markers[0]
-        mkrdata = nexus.get_marker_data(vicon, track_mkr)
         subj_pos = mkrdata[track_mkr+'_P']
         subj_vel = mkrdata[track_mkr+'_V']
 
@@ -230,7 +227,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         if ('dir_forward' in cfg.autoproc.enf_descriptions and 'dir_backward'
            in cfg.autoproc.enf_descriptions):
             # check direction of gait (principal coordinate increase/decrease)
-            gait_dir = utils.get_movement_direction(vicon, subj_pos)[dim]
+            gait_dir = utils.get_movement_direction(vicon, subj_pos)[gait_dim]
             dir_str = 'dir_forward' if gait_dir == 1 else 'dir_backward'
             dir_desc = cfg.autoproc.enf_descriptions[dir_str]
             eclipse_str += '%s,' % dir_desc
@@ -243,14 +240,14 @@ def _do_autoproc(enffiles, update_eclipse=True):
         eclipse_str += '%.2f m/s' % median_vel_ms
 
         _save_trial()
-        # time.sleep(1)
         trials[filepath].description = eclipse_str
 
+    # preprocessing done
     # compute velocity thresholds using all trials
     vel_th = {key: (np.median(x) if x.size > 0 else None) for key, x in
               foot_vel.items()}
 
-    """ 2nd pass - detect gait events, run models, crop """
+    # 2nd pass
     sel_trials = {k: v for k, v in trials.items() if v.recon_ok}
     logger.debug('\n2nd pass - processing %d trials\n' % len(sel_trials))
 

@@ -74,21 +74,20 @@ def _do_autoproc(enffiles, update_eclipse=True):
         trial['description'] = fail_desc
         _save_trial()
 
-    vicon = nexus.viconnexus()
-    nexus_ver = nexus.true_ver()
-
     # used to store stats about foot velocity
     foot_vel = {'L_strike': np.array([]), 'R_strike': np.array([]),
                 'L_toeoff': np.array([]), 'R_toeoff': np.array([])}
-    trials = {}
-
     # 1st pass
     logger.debug('\n1st pass - processing %d trial(s)\n' % len(enffiles))
+
+    vicon = nexus.viconnexus()
+    nexus_ver = nexus.true_ver()
+    trials = dict()
 
     for filepath_ in enffiles:
         filepath = filepath_[:filepath_.find('.Trial')]  # rm .Trial and .enf
         filename = os.path.split(filepath)[1]
-        logger.debug('\nloading in Nexus: %s' % filename)
+        logger.debug('loading in Nexus: %s' % filename)
         vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
         subjectname = nexus.get_metadata(vicon)['name']
         allmarkers = vicon.GetMarkerNames(subjectname)
@@ -100,6 +99,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         # check whether to skip trial
         if edi['TYPE'] in cfg.autoproc.type_skip:
             logger.debug('skipping based on type: %s' % edi['TYPE'])
+            trial['recon_ok'] = False
             continue
         skip = [s.upper() for s in cfg.autoproc.eclipse_skip]
         if edi['DESCRIPTION'].upper() in skip or edi['NOTES'].upper in skip:
@@ -109,6 +109,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
             # will work
             _run_pipelines(cfg.autoproc.pre_pipelines)
             _save_trial()
+            trial['recon_ok'] = False
             continue
 
         # reset ROI before operations
@@ -195,6 +196,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
     vel_th = {key: (np.median(x) if x.size > 0 else None) for key, x in
               foot_vel.items()}
 
+    print trials
     # 2nd pass
     sel_trials = {filepath: trial for filepath, trial in trials.items()
                   if trial['recon_ok']}
@@ -202,7 +204,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
 
     for filepath, trial in sel_trials.items():
         filename = os.path.split(filepath)[1]
-        logger.debug('\nloading in Nexus: %s' % filename)
+        logger.debug('loading in Nexus: %s' % filename)
         vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
         enf_file = filepath + '.Trial.enf'
 

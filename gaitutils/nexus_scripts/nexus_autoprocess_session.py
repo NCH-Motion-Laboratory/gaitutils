@@ -35,7 +35,6 @@ class Trial:
     """ Used as data holder """
     def __init__(self):
         self.recon_ok = False
-        self.ctr_frame = None
         self.context = None
         self.description = ''
         self.fpev = None
@@ -176,8 +175,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
         vel = utils.get_foot_velocity(mkrdata, fpev, medians=False)
         valid = fpev['valid']
         eclipse_str += _context_desc(valid)
-        trials[filepath].valid = valid
-        trials[filepath].fpev = fpev
+        trial.valid = valid
+        trial.fpev = fpev
 
         # save velocity data
         for context in valid:
@@ -208,7 +207,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         eclipse_str += '%.2f m/s' % median_vel_ms
 
         _save_trial()
-        trials[filepath].description = eclipse_str
+        trial.description = eclipse_str
 
     # all preprocessing done
     # compute velocity thresholds using all trials
@@ -236,12 +235,12 @@ def _do_autoproc(enffiles, update_eclipse=True):
                                   start_on_forceplate)
             trial.events = True
         except GaitDataError:  # cannot automark
-            eclipse_str = '%s,%s' % (trials[filepath].description,
+            eclipse_str = '%s,%s' % (trial.description,
                                      cfg.autoproc.enf_descriptions
                                      ['automark_failure'])
             logger.debug('automark failed')
             _save_trial()
-            trials[filepath].description = eclipse_str
+            trial.description = eclipse_str
             continue  # next trial
 
         # events ok
@@ -264,7 +263,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
                                  trial.description)
         _run_pipelines(cfg.autoproc.model_pipelines)
         _save_trial()
-        trials[filepath].description = eclipse_str
+        trial.description = eclipse_str
 
     # all done; update Eclipse descriptions
     if cfg.autoproc.eclipse_write_key and update_eclipse:

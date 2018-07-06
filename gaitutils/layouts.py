@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def rm_dead_channels(emg, layout):
     """ From EMG layout, remove rows with no valid EMG data """
     layout_ = list()
-    for j, row in enumerate(layout):
+    for row in layout:
         if any([emg.status_ok(ch) for ch in row]):
             layout_.append(row)
         else:

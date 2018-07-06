@@ -100,17 +100,20 @@ def _do_autoproc(enffiles, update_eclipse=True):
         if edata['TYPE'] in cfg.autoproc.type_skip:
             logger.debug('skipping based on type: %s' % edata['TYPE'])
             trial['recon_ok'] = False
+            trial['description'] = 'skipped'
             continue
         skip = [s.upper() for s in cfg.autoproc.eclipse_skip]
-        if edata['DESCRIPTION'].upper() in skip or edata['NOTES'].upper in skip:
-            logger.debug('skipping based on description')
-            # run preprocessing + save even for skipped trials, to mark
-            # them as processed - mostly so that Eclipse export to Polygon
-            # will work
-            _run_pipelines(cfg.autoproc.pre_pipelines)
-            _save_trial()
-            trial['recon_ok'] = False
-            continue
+        if (edata['DESCRIPTION'].upper() in skip or
+           edata['NOTES'].upper() in skip):
+                logger.debug('skipping based on description')
+                # run preprocessing + save even for skipped trials, to mark
+                # them as processed - mostly so that Eclipse export to Polygon
+                # will work
+                _run_pipelines(cfg.autoproc.pre_pipelines)
+                _save_trial()
+                trial['recon_ok'] = False
+                trial['description'] = 'skipped'
+                continue
 
         # reset ROI before operations
         if cfg.autoproc.reset_roi and nexus_ver >= 2.5:

@@ -37,16 +37,17 @@ def get_crossing_frame(mP, dim=1, p0=0):
     return ycross
 
 
-def markers_avg_vel(mkrdata, markers):
-    """Compute mean (scalar) velocity for given set of markers"""
-    V = mkrdata[markers[0]+'_V'] / len(markers)
-    for marker in markers[1:]:
-        V += mkrdata[marker+'_V'] / len(markers)
-    return np.sqrt(np.sum(V**2, 1))
+def avg_markerdata(mkrdata, markers, var_type='_P'):
+    """Average marker data for given markers"""
+    data_shape = mkrdata[markers[0]+var_type].shape
+    mP = np.zeros(data_shape)
+    for marker in markers:
+        mP += mkrdata[marker+var_type] / len(markers)
+    return mP
 
 
 def _foot_swing_velocity(footctrv, max_peak_velocity, min_swing_velocity):
-    """Compute foot swing velocity from scalar velocity data (markers_vel)"""
+    """Compute foot swing velocity from scalar velocity data (footctrv)"""
     # find maxima of velocity: derivative crosses zero and values ok
     vd = np.gradient(footctrv)
     vdz_ind = falling_zerocross(vd)
@@ -92,7 +93,8 @@ def get_foot_velocity(mkrdata, fp_events, medians=True):
     results = dict()
     for context, markers in zip(('R', 'L'), [cfg.autoproc.right_foot_markers,
                                 cfg.autoproc.left_foot_markers]):
-        footctrv = markers_avg_vel(mkrdata, markers)
+        footctrv_ = avg_markerdata(mkrdata, markers, var_type='_V')
+        footctrv = np.linalg.norm(footctrv_, axis=1)
         strikes = fp_events[context+'_strikes']
         toeoffs = fp_events[context+'_toeoffs']
         results[context + '_strike'] = footctrv[strikes]
@@ -122,19 +124,14 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     Returns dict with keys R_strikes, L_strikes, R_toeoffs, L_toeoffs.
     Dict values are lists of frames where valid forceplate contact occurs.
     """
-
     # get subject info
     from . import read_data
     logger.debug('detect forceplate events from %s' % source)
     info = read_data.get_metadata(source)
     fpdata = read_data.get_forceplate_data(source)
 
-    results = dict()
-    results['R_strikes'] = []
-    results['R_toeoffs'] = []
-    results['L_strikes'] = []
-    results['L_toeoffs'] = []
-    results['valid'] = set()
+    results = dict(R_strikes=[], R_toeoffs=[], L_strikes=[], L_toeoffs=[],
+                   valid=set())
 
     # get marker data and find "forward" direction (by max variance)
     foot_markers = (cfg.autoproc.right_foot_markers +
@@ -143,17 +140,10 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
         mkrdata = read_data.get_marker_data(source, foot_markers)
     pos = sum([mkrdata[name+'_P'] for name in foot_markers])
     fwd_dir = np.argmax(np.var(pos, axis=0))
+    # XXX: assumes that first two dims are x/y
     orth_dir = 0 if fwd_dir == 1 else 1
     logger.debug('gait forward direction seems to be %s' %
                  {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])
-
-    def _foot_height(mkrdata, markers):
-        """Compute foot height (z coordinate)"""
-        data_shape = mkrdata[markers[0]+'_P'].shape
-        footctrP = np.zeros(data_shape)
-        for marker in markers:
-            footctrP += mkrdata[marker+'_P'] / len(markers)
-        return footctrP[:, 2]
 
     for plate_ind, fp in enumerate(fpdata):
         logger.debug('analyzing plate %d' % plate_ind)
@@ -161,7 +151,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
         detect = True
         plate = 'FP' + str(plate_ind+1)
         if fp_info is not None and plate in fp_info:
-            # TODO: are we sure that the plate indices match Eclipse?
+            # XXX: are we sure that the plate indices match Eclipse?
             valid = fp_info[plate]
             detect = False
             logger.debug('using Eclipse forceplate info: %s' % valid)
@@ -221,7 +211,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                 logger.warning('no CoP for given range')
                 continue
             cop_shift = cop_roi.max() - cop_roi.min()
-            total_shift = np.sqrt(np.sum(cop_shift**2))
+            total_shift = np.linalg.norm(cop_shift, axis=1)
             logger.debug('CoP total shift %.2f mm' % total_shift)
             if total_shift > cfg.autoproc.cop_shift_max:
                 logger.debug('center of pressure shifts too much '
@@ -240,13 +230,21 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                 logger.debug('checking side %s' % side)
 
                 # check foot height at strike and toeoff
-                foot_h = _foot_height(mkrdata, markers)
+                foot_h = avg_markerdata(mkrdata, markers)[:, 2]
                 min_h = foot_h[np.nonzero(foot_h)].min()
                 toeoff_h = foot_h[toeoff_fr]
                 strike_h = foot_h[strike_fr]
                 logger.debug('foot height at strike: %.2f' % strike_h)
                 logger.debug('foot height at toeoff: %.2f' % toeoff_h)
                 logger.debug('foot height, trial min: %.2f' % min_h)
+
+                # toeoff tolerance
+                toeP = mkrdata[side + 'TOE_P']
+                heeP = mkrdata[side + 'HEE_P']
+                th_dist_ = np.linalg.norm(toeP-heeP, axis=1)
+                th_dist = np.median(th_dist_[np.nonzero(th_dist_)])
+                toeoff_tol = .6 * th_dist
+                logger.debug('computed toeoff tolerance: %.2f' % toeoff_tol)
 
                 # foot strike must occur below given height limit
                 if (strike_h > min_h + cfg.autoproc.strike_max_height):
@@ -271,7 +269,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                 # FIXME: gently decreasing forceplate contact often leads to
                 # early toeoff detection -> velocity too low
                 frate = info['framerate']
-                footctrv = markers_avg_vel(mkrdata, markers)
+                footctrv_ = avg_markerdata(mkrdata, markers, var_type='_V')
+                footctrv = np.linalg.norm(footctrv_, axis=1)
                 toeoff_vel = footctrv[toeoff_fr]
                 # FIXME: parameters should be somewhere else
                 swing_vel = _foot_swing_velocity(footctrv, 12*1000/frate,
@@ -299,6 +298,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                     # add tol for all markers in gait dir @ toeoff
                     maxes_t[fwd_dir] += cfg.autoproc.toeoff_marker_tol
                     mins_t[fwd_dir] -= cfg.autoproc.toeoff_marker_tol
+                    # maxes_t[fwd_dir] += toeoff_tol
+                    # mins_t[fwd_dir] -= toeoff_tol
 
                     # add tol for heel marker in gait dir @ foot strike
                     if 'HEE' in marker_:
@@ -323,9 +324,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                         break
                 if ok:
                     if this_valid:
-                        logger.debug('plate %d: valid contact on '
-                                     'both feet' % plate_ind)
-                        raise GaitDataError('valid contact on both feet')
+                        raise GaitDataError('got valid contact for both feet')
                     this_valid = side
                     logger.debug('on-plate check ok for side %s' % this_valid)
 

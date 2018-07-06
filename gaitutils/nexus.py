@@ -313,7 +313,7 @@ def _get_1_forceplate_data(vicon, devid):
     cop_w = np.array([copx, copy, copz]).transpose()
     F = np.array([fx, fy, fz]).transpose()
     M = np.array([mx, my, mz]).transpose()
-    Ftot = np.sqrt(np.sum(F**2, axis=1))
+    Ftot = np.linalg.norm(F, axis=1)
     # translation and rotation matrices -> world coords
     # suspect that Nexus wR is wrong (does not match displayed plate axes)?
     wR = np.array(nfp.WorldR).reshape(3, 3)
@@ -491,8 +491,12 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
         mkrdata = get_marker_data(vicon, cfg.autoproc.right_foot_markers +
                                   cfg.autoproc.left_foot_markers +
                                   cfg.autoproc.track_markers)
-    rfootctrv = utils.markers_avg_vel(mkrdata, cfg.autoproc.right_foot_markers)
-    lfootctrv = utils.markers_avg_vel(mkrdata, cfg.autoproc.left_foot_markers)
+    rfootctrv_ = utils.avg_markerdata(mkrdata, cfg.autoproc.right_foot_markers,
+                                      var_type='_V')
+    rfootctrv = np.linalg.norm(rfootctrv_, axis=1)
+    lfootctrv_ = utils.avg_markerdata(mkrdata, cfg.autoproc.left_foot_markers,
+                                      var_type='_V')
+    lfootctrv = np.linalg.norm(lfootctrv_, axis=1)
     # position data: use ANK marker
     rfootctrP = mkrdata['RANK_P']
     lfootctrP = mkrdata['LANK_P']

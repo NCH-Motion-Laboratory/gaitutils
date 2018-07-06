@@ -274,7 +274,7 @@ def get_forceplate_data(c3dfile):
         # origin) needed for center of pressure calculations
         dz = np.abs(plate.GetOrigin()[2])
         cop = center_of_pressure(F, M, dz)  # in plate local coords
-        Ftot = np.sqrt(np.sum(F**2, axis=1))
+        Ftot = np.linalg.norm(F, axis=1)
         # locations of +x+y, -x+y, -x-y, +x-y plate corners in world coords
         # (in that order)
         cor = plate.GetCorners()

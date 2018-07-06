@@ -27,10 +27,10 @@ def read_normaldata(filename):
     """
     if not op.isfile(filename):
         raise ValueError('No such file %s' % filename)
-    type = op.splitext(filename)[1].lower()
-    if type == '.gcd':
+    type_ = op.splitext(filename)[1].lower()
+    if type_ == '.gcd':
         return _read_gcd(filename)
-    elif type == '.xlsx':
+    elif type_ == '.xlsx':
         return _read_xlsx(filename)
     else:
         raise ValueError('Only .gcd or .xlsx file formats are supported')

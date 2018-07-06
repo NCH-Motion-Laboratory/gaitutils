@@ -332,10 +332,10 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     win = PlotterWindow()
 
-    def my_excepthook(type, value, tback):
+    def my_excepthook(type_, value, tback):
         """ Custom exception handler for fatal (unhandled) exceptions:
         report to user via GUI and terminate. """
-        tb_full = u''.join(traceback.format_exception(type, value, tback))
+        tb_full = u''.join(traceback.format_exception(type_, value, tback))
         qt_message_dialog('Unhandled exception: %s' % tb_full)
         # dump traceback to file
         # try:
@@ -345,7 +345,7 @@ if __name__ == '__main__':
         # so try to catch any exceptions...
         # except Exception:
         #    print('Cannot dump traceback!')
-        sys.__excepthook__(type, value, tback)
+        sys.__excepthook__(type_, value, tback)
         app.quit()
 
     sys.excepthook = my_excepthook

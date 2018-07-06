@@ -23,18 +23,18 @@ def register_gui_exception_handler(full_traceback=False):
     via GUI"""
     from .config import cfg
 
-    def _my_excepthook(type, value, tback):
+    def _my_excepthook(type_, value, tback):
         """ Custom exception handler for fatal (unhandled) exceptions:
         report to user via GUI and terminate. """
         # exception and message, but no traceback
         tbackstr = tback if full_traceback else ''
-        msg = ''.join(traceback.format_exception(type, value, tbackstr))
+        msg = ''.join(traceback.format_exception(type_, value, tbackstr))
         error_exit(msg)
         # just the message (e.g. ValueError: "blah" -> "blah")
         # may sometimes be confusing, since type of exception is not printed
         # error_exit(value)
         #
-        sys.__excepthook__(type, value, tback)
+        sys.__excepthook__(type_, value, tback)
         sys.exit()
 
     if cfg.general.gui_exceptions:

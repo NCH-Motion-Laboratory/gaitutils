@@ -124,12 +124,12 @@ class ComparisonDialog(QtWidgets.QDialog):
                               self.MAX_SESSIONS)
             return
         if from_nexus:
-            dir = nexus.get_sessionpath()
+            dir_ = nexus.get_sessionpath()
         else:
-            dir = QtWidgets.QFileDialog.getExistingDirectory(self,
-                                                             'Select session')
-        if dir and dir not in self.sessions:
-            self.sessions.append(dir)
+            dir_ = QtWidgets.QFileDialog.getExistingDirectory(self,
+                                                              'Select session')
+        if dir_ and dir_ not in self.sessions:
+            self.sessions.append(dir_)
             self.update_session_list()
 
     def clear_sessions(self):
@@ -175,11 +175,11 @@ class WebReportSessionsDialog(QtWidgets.QDialog):
         else:
             dirs = qt_dir_chooser()
         if dirs:
-            for dir in dirs:
-                if dir in self.sessions:
-                    qt_message_dialog('Session %s already loaded' % dir)
+            for dir_ in dirs:
+                if dir_ in self.sessions:
+                    qt_message_dialog('Session %s already loaded' % dir_)
                 else:
-                    self.listSessions.add_item(dir, data=dir)
+                    self.listSessions.add_item(dir_, data=dir_)
 
     @property
     def sessions(self):

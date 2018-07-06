@@ -42,7 +42,7 @@ def do_plot(show=True, make_pdf=True):
         raise Exception('Did not find any dynamic trials in current '
                         'session directory')
 
-    labels = [op.splitext(op.split(file)[1])[0] for file in c3ds]
+    labels = [op.splitext(op.split(f)[1])[0] for f in c3ds]
     vels = np.array([_trial_median_velocity(trial) for trial in c3ds])
     vavg = np.nanmean(vels)
 

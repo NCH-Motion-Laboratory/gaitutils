@@ -34,10 +34,10 @@ cfg_user = op.join(homedir, '.gaitutils.cfg')
 class Section(object):
     """ A config section """
 
-    def __init__(self, dict):
+    def __init__(self, di):
         """ The config items for the section are provided as key/value dict,
         where values are strings. """
-        self._dict = dict
+        self._dict = di
 
     def __getattr__(self, item):
         """ Implements attribute access, i.e. section.item. The items don't

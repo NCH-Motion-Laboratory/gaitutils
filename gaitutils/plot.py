@@ -62,9 +62,9 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
             ax.text(rect.get_width() * .0, rect.get_y() + rect.get_height()/2.,
                     txt, ha='left', va='center', size=fontsize)
 
-    def _plot_oneside(vars, context, col):
+    def _plot_oneside(vars_, context, col):
         """ Do the bar plots for given context and column """
-        for ind, var in enumerate(vars):
+        for ind, var in enumerate(vars_):
             ax = fig.add_subplot(gs[ind, col])
             ax.axis('off')
             # may have several bars (conditions) per variable
@@ -99,25 +99,25 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
     conds = values.keys()
     vals_1 = values[conds[0]]
     varsets = [set(values[cond].keys()) for cond in conds]
-    vars = set.intersection(*varsets)
-    not_in_all = set.union(*varsets) - vars
+    vars_ = set.intersection(*varsets)
+    not_in_all = set.union(*varsets) - vars_
     if not_in_all:
         logger.warning('Some conditions are missing the following variables: '
                        '%s' % ' '.join(not_in_all))
 
-    units = [vals_1[var]['unit'] for var in vars]
+    units = [vals_1[var]['unit'] for var in vars_]
 
     # 3 columns: bar, labels, bar
-    gs = gridspec.GridSpec(len(vars), 3, width_ratios=[1, 1/3., 1])
+    gs = gridspec.GridSpec(len(vars_), 3, width_ratios=[1, 1/3., 1])
 
     # variable names into the center column
-    for ind, var in enumerate(vars):
+    for ind, var in enumerate(vars_):
         textax = fig.add_subplot(gs[ind, 1])
         textax.axis('off')
         textax.text(0, .5, var, ha='center', va='center')
 
-    rects = _plot_oneside(vars, 'Left', 0)
-    rects = _plot_oneside(vars, 'Right', 2)
+    rects = _plot_oneside(vars_, 'Left', 0)
+    rects = _plot_oneside(vars_, 'Right', 2)
 
     if len(conds) > 1:
         # plotting happens from down -> up, so reverse legend

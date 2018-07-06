@@ -172,9 +172,9 @@ def running_sum(M, win, axis=None):
         M = M.flatten()
     s = np.cumsum(M, axis=axis)
     s = np.insert(s, 0, [0], axis=axis)
-    len = s.shape[0] if axis is None else s.shape[axis]
-    return (s.take(np.arange(win, len), axis=axis) -
-            s.take(np.arange(0, len-win), axis=axis))
+    len_ = s.shape[0] if axis is None else s.shape[axis]
+    return (s.take(np.arange(win, len_), axis=axis) -
+            s.take(np.arange(0, len_-win), axis=axis))
 
 
 def rms(data, win):

@@ -67,7 +67,7 @@ def get_analysis(c3dfile, condition='unknown'):
     """Get analysis values from c3d (e.g. gait parameters). Returns a dict
     keyed by var and context. First key can optionally be a condition label."""
     acq = _get_c3dacq(c3dfile)
-    vars = _get_c3d_metadata_field(acq, 'ANALYSIS', 'NAMES')
+    vars_ = _get_c3d_metadata_field(acq, 'ANALYSIS', 'NAMES')
     units = _get_c3d_metadata_field(acq, 'ANALYSIS', 'UNITS')
     contexts = _get_c3d_metadata_field(acq, 'ANALYSIS', 'CONTEXTS')
     vals = _get_c3d_metadata_field(acq, 'ANALYSIS', 'VALUES')
@@ -77,7 +77,7 @@ def get_analysis(c3dfile, condition='unknown'):
     di[condition] = dict()
     di_ = di[condition]
 
-    for (var, unit, context, val) in zip(vars, units, contexts, vals):
+    for (var, unit, context, val) in zip(vars_, units, contexts, vals):
 
         if var not in di_:
             di_[var] = dict()

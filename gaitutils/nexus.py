@@ -39,7 +39,7 @@ if nexus_path:
         nexus_glob = op.join(vicondir, 'Nexus2*')
         nexus_dirs = glob.glob(nexus_glob)
         if len(nexus_dirs) > 1:
-            nexus_vers = [op.split(dir)[1][5:] for dir in nexus_dirs]
+            nexus_vers = [op.split(dir_)[1][5:] for dir_ in nexus_dirs]
             if any([float(ver) > cfg_ver for ver in nexus_vers]):
                 print('NOTE: you may have more recent Vicon Nexus versions '
                       'installed than is specified in config. It is '
@@ -231,8 +231,8 @@ def get_metadata(vicon):
     logger.debug('offset @ %d, %d frames, framerate %d Hz, %d samples per '
                  'frame' % (offset, length, framerate, samplesperframe))
     # get n of forceplates
-    fp_devids = [id for id in devids if
-                 vicon.GetDeviceDetails(id)[1].lower() == 'forceplate']
+    fp_devids = [id_ for id_ in devids if
+                 vicon.GetDeviceDetails(id_)[1].lower() == 'forceplate']
 
     # sort events (may be in wrong temporal order, at least in c3d files)
     for li in [lstrikes, rstrikes, ltoeoffs, rtoeoffs]:
@@ -258,8 +258,8 @@ def get_accelerometer_data(vicon):
 
 def _get_analog_data(vicon, devname):
     """ Read analog data from Nexus """
-    ids = [id for id in vicon.GetDeviceIDs() if
-           vicon.GetDeviceDetails(id)[0].lower() == devname.lower()]
+    ids = [id_ for id_ in vicon.GetDeviceIDs() if
+           vicon.GetDeviceDetails(id_)[0].lower() == devname.lower()]
     if len(ids) > 1:
         raise GaitDataError('Multiple matching analog devices')
     elif len(ids) == 0:
@@ -339,8 +339,8 @@ def get_forceplate_data(vicon):
     """ Read all forceplate data from Nexus. """
     # get forceplate ids
     logger.debug('reading forceplate data from Vicon Nexus')
-    devids = [id for id in vicon.GetDeviceIDs() if
-              vicon.GetDeviceDetails(id)[1].lower() == 'forceplate']
+    devids = [id_ for id_ in vicon.GetDeviceIDs() if
+              vicon.GetDeviceDetails(id_)[1].lower() == 'forceplate']
     if len(devids) == 0:
         logger.debug('no forceplates detected')
         return None

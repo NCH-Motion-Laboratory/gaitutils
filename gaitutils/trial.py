@@ -187,10 +187,10 @@ class Trial(object):
 
     def get_video_by_label(self, camera_label, ext='avi'):
         """Get trial video correspoding to given camera id (str)"""
-        ids = [id for id, label in cfg.general.camera_labels.items() if
+        ids = [id_ for id_, label in cfg.general.camera_labels.items() if
                camera_label == label]
-        vids = [vid for id in ids for vid in
-                self._get_videos_by_id(id, ext=ext)]
+        vids = [vid for id_ in ids for vid in
+                self._get_videos_by_id(id_, ext=ext)]
         if len(vids) > 1:
             logger.warning('Multiple video files match label "%s", using the '
                            'newest one' % camera_label)

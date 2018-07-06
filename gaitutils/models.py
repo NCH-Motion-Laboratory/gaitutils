@@ -40,18 +40,18 @@ def var_with_side(var):
 
 
 # convenience methods for model creation
-def _list_with_side(vars):
+def _list_with_side(vars_):
     """ Prepend variables in vars with 'L' and 'R', creating a new list of
     variables. Many model variables share the same name, except for leading
     'L' or 'R' that indicates side. """
-    return [side+var for var in vars for side in ['L', 'R']]
+    return [side+var for var in vars_ for side in ['L', 'R']]
 
 
-def _dict_with_side(dict, append_side=False):
+def _dict_with_side(di, append_side=False):
     """ Prepend dict keys with 'R' or 'L'. If append_side,
     also append corresponding ' (R)' or ' (L)' to every dict value. """
     return {side+key: val + (' (%s)' % side if append_side else '')
-            for key, val in dict.items() for side in ['R', 'L']}
+            for key, val in di.items() for side in ['R', 'L']}
 
 
 class GaitModel(object):

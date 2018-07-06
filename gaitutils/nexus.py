@@ -386,23 +386,6 @@ def get_roi(vicon):
     return np.arange(roi[0], roi[1])
 
 
-def get_fp_strike_and_toeoff(vicon):
-    """ Return forceplate strike and toeoff frames. """
-    FP_THRESHOLD = .02  # % of maximum force
-    MEDIAN_FILTER_WIDTH = 5
-    ftot = get_forceplate_data(vicon)['Ftot']
-    # try to remove forceplate noise & spikes with median filter
-    ftot = signal.medfilt(ftot, MEDIAN_FILTER_WIDTH)
-    frel = ftot/ftot.max()
-    # in analog frames
-    # first large force increase
-    fpstrike = rising_zerocross(frel - FP_THRESHOLD)[0]
-    # last force decrease
-    fptoeoff = falling_zerocross(frel - FP_THRESHOLD)[-1]
-    return (int(np.round(fpstrike / ftot.samplesperframe)),
-            int(np.round(fptoeoff / ftot.samplesperframe)))
-
-
 def get_model_data(vicon, model):
     """ Read model output variables (e.g. Plug-in Gait) """
     modeldata = dict()
@@ -667,5 +650,5 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
     if plot:
         plt.show()
 
-    return (strikes_all['R'], strikes_all['L'],
-            toeoffs_all['R'], toeoffs_all['L'])
+    return (strikes_all['R'], strikes_all['L'], toeoffs_all['R'],
+            toeoffs_all['L'])

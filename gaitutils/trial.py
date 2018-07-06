@@ -262,13 +262,8 @@ class Trial(object):
             return utils.detect_forceplate_events(self.source, fp_info=fp_info)
         except GaitDataError:
             logger.warning('Could not detect forceplate events')
-            _fp_events = dict()
-            _fp_events['R_strikes'] = []
-            _fp_events['R_toeoffs'] = []
-            _fp_events['L_strikes'] = []
-            _fp_events['L_toeoffs'] = []
-            _fp_events['valid'] = set()
-            return _fp_events
+            return dict(R_strikes=[], R_toeoffs=[], L_strikes=[], L_toeoffs=[],
+                        valid=set())
 
     def set_norm_cycle(self, cycle=None):
         """ Set normalization cycle (int for cycle index or a Gaitcycle
@@ -348,41 +343,3 @@ class Trial(object):
                 yield Gaitcycle(start, end, toeoff, context,
                                 on_forceplate, self.samplesperframe,
                                 trial=self, index=k+1, name=name)
-
-
-def _step_width(trial):
-    """ Compute step width over trial cycles. See:
-    https://www.vicon.com/faqs/software/how-does-nexus-plug-in-gait-and-polygon-calculate-gait-cycle-parameters-spatial-and-temporal
-    Returns context keyed dict of lists.
-    FIXME: marker name into params?
-    """
-    sw = dict()
-    mkr = 'TOE'  # marker name without context
-    mkrdata = trial.marker_data
-    for context, strikes in zip(['L', 'R'], [trial.lstrikes, trial.rstrikes]):
-        sw[context] = list()
-        nstrikes = len(strikes)
-        if nstrikes < 2:
-            continue
-        # contralateral vars
-        context_co = 'L' if context == 'R' else 'R'
-        strikes_co = trial.lstrikes if context == 'R' else trial.rstrikes
-        mname = context + mkr
-        mname_co = context_co + mkr
-        for j, strike in enumerate(strikes):
-            if strike == strikes[-1]:  # last strike on this side
-                break
-            pos_this = mkrdata[mname+'_P'][strike]
-            pos_next = mkrdata[mname+'_P'][strikes[j+1]]
-            strikes_next_co = [k for k in strikes_co if k > strike]
-            if len(strikes_next_co) == 0:  # no subsequent contralateral strike
-                break
-            pos_next_co = mkrdata[mname_co+'_P'][strikes_next_co[0]]
-            # vector distance between 'step lines' (see url above)
-            V1 = pos_next - pos_this
-            V1 = V1 / np.linalg.norm(V1)
-            VC = pos_next_co - pos_this
-            VCP = V1 * np.dot(VC, V1)  # proj to ipsilateral line
-            VSW = VCP - VC
-            sw[context].append(np.linalg.norm(VSW))
-    return sw

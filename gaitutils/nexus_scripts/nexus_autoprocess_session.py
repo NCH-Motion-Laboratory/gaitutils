@@ -5,12 +5,12 @@ section in config for options.
 
 1st pass (all trials):
 -preprocess
--get fp context + strike/toeoff velocities + velocity data
--get gait direction
+-get fp context + strike/toeoff velocities etc.
 
 2nd pass:
--automark (using velocity stats)
+-automark (using velocity stats from previous step)
 -run models + save
+
 -write Eclipse info
 
 NOTES:
@@ -87,24 +87,21 @@ def _do_autoproc(enffiles, update_eclipse=True):
     for filepath_ in enffiles:
         filepath = filepath_[:filepath_.find('.Trial')]  # rm .Trial and .enf
         filename = os.path.split(filepath)[1]
-        logger.debug('\nprocessing: %s' % filename)
+        logger.debug('\nloading in Nexus: %s' % filename)
         vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
         subjectname = nexus.get_metadata(vicon)['name']
+        allmarkers = vicon.GetMarkerNames(subjectname)
         edi = eclipse.get_eclipse_keys(filepath_, return_empty=True)
-        trial_type = edi['TYPE']
-        trial_desc = edi['DESCRIPTION']
-        trial_notes = edi['NOTES']
         eclipse_str = ''
         trial = dict()
         trials[filepath] = trial
-        allmarkers = vicon.GetMarkerNames(subjectname)
 
         # check whether to skip trial
-        if trial_type in cfg.autoproc.type_skip:
-            logger.debug('skipping based on type: %s' % trial_type)
+        if edi['TYPE'] in cfg.autoproc.type_skip:
+            logger.debug('skipping based on type: %s' % edi['TYPE'])
             continue
         skip = [s.upper() for s in cfg.autoproc.eclipse_skip]
-        if trial_desc.upper() in skip or trial_notes.upper in skip:
+        if edi['DESCRIPTION'].upper() in skip or edi['NOTES'].upper in skip:
             logger.debug('skipping based on description')
             # run preprocessing + save even for skipped trials, to mark
             # them as processed - mostly so that Eclipse export to Polygon
@@ -198,12 +195,13 @@ def _do_autoproc(enffiles, update_eclipse=True):
               foot_vel.items()}
 
     # 2nd pass
-    sel_trials = {k: v for k, v in trials.items() if v.recon_ok}
+    sel_trials = {filepath: trial for filepath, trial in trials.items()
+                  if trial['recon_ok']}
     logger.debug('\n2nd pass - processing %d trials\n' % len(sel_trials))
 
     for filepath, trial in sel_trials.items():
         filename = os.path.split(filepath)[1]
-        logger.debug('\nprocessing: %s' % filename)
+        logger.debug('\nloading in Nexus: %s' % filename)
         vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
         enf_file = filepath + '.Trial.enf'
 

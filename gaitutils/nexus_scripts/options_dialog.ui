@@ -81,6 +81,19 @@
          <item row="2" column="1">
           <widget class="QLineEdit" name="cfg_track_markers"/>
          </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_21">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The listed markers will not be checked for gaps and labeling errors.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Skip labeling and gap checks for these markers</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="cfg_ignore_markers"/>
+         </item>
          <item row="4" column="0">
           <spacer name="verticalSpacer_5">
            <property name="orientation">
@@ -341,19 +354,6 @@
           <widget class="QLineEdit" name="cfg_events_range"/>
          </item>
          <item row="21" column="0">
-          <widget class="QLabel" name="label_18">
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Approximate location of the walkway center.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Location of walkway center (mm)</string>
-           </property>
-          </widget>
-         </item>
-         <item row="21" column="1">
-          <widget class="QLineEdit" name="cfg_walkway_ctr"/>
-         </item>
-         <item row="22" column="0">
           <spacer name="verticalSpacer_3">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
@@ -366,7 +366,7 @@
            </property>
           </spacer>
          </item>
-         <item row="23" column="0">
+         <item row="22" column="0">
           <widget class="QLabel" name="label_11">
            <property name="font">
             <font>
@@ -379,14 +379,14 @@
            </property>
           </widget>
          </item>
-         <item row="24" column="0">
+         <item row="23" column="0">
           <widget class="QLabel" name="label_12">
            <property name="text">
             <string>Eclipse key to update</string>
            </property>
           </widget>
          </item>
-         <item row="24" column="1">
+         <item row="23" column="1">
           <widget class="QComboBox" name="cfg_eclipse_write_key">
            <item>
             <property name="text">
@@ -405,28 +405,15 @@
            </item>
           </widget>
          </item>
-         <item row="25" column="0">
+         <item row="24" column="0">
           <widget class="QLabel" name="label_20">
            <property name="text">
             <string>Eclipse strings to write for the different conditions</string>
            </property>
           </widget>
          </item>
-         <item row="25" column="1">
+         <item row="24" column="1">
           <widget class="QLineEdit" name="cfg_enf_descriptions"/>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="label_21">
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The listed markers will not be checked for gaps and labeling errors.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Skip labeling and gap checks for these markers</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QLineEdit" name="cfg_ignore_markers"/>
          </item>
         </layout>
        </item>

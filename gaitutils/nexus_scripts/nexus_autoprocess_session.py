@@ -31,23 +31,6 @@ from gaitutils.config import cfg
 logger = logging.getLogger(__name__)
 
 
-class Trial:
-    """ Used as data holder """
-    def __init__(self):
-        self.recon_ok = False
-        self.context = None
-        self.description = ''
-        self.fpev = None
-        self.events = False
-
-    def __repr__(self):
-        s = '<Trial |'
-        s += ' recon ok,' if self.recon_ok else ' recon failed,'
-        s += self.context if self.context else ' no context'
-        s += '>'
-        return s
-
-
 def _do_autoproc(enffiles, update_eclipse=True):
     """ Do autoprocessing for all trials listed in enffiles (list of
     paths to .enf files).
@@ -87,7 +70,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         """Abort processing: mark and save trial"""
         fail_desc = cfg.autoproc.enf_descriptions[reason]
         logger.debug('preprocessing failed: %s' % fail_desc)
-        trial.description = fail_desc
+        trial['description'] = fail_desc
         _save_trial()
 
     vicon = nexus.viconnexus()
@@ -112,7 +95,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         trial_desc = edi['DESCRIPTION']
         trial_notes = edi['NOTES']
         eclipse_str = ''
-        trial = Trial()
+        trial = dict()
         trials[filepath] = trial
         allmarkers = vicon.GetMarkerNames(subjectname)
 
@@ -163,8 +146,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
             continue
 
         # preprocessing ok
-        trial.recon_ok = True
-        trial.mkrdata = mkrdata
+        trial['recon_ok'] = True
+        trial['mkrdata'] = mkrdata
 
         # check forceplate data
         fp_info = (eclipse.eclipse_fp_keys(edi) if
@@ -175,8 +158,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
         vel = utils.get_foot_velocity(mkrdata, fpev, medians=False)
         valid = fpev['valid']
         eclipse_str += _context_desc(valid)
-        trial.valid = valid
-        trial.fpev = fpev
+        trial['valid'] = valid
+        trial['fpev'] = fpev
 
         # save velocity data
         for context in valid:
@@ -207,7 +190,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         eclipse_str += '%.2f m/s' % median_vel_ms
 
         _save_trial()
-        trial.description = eclipse_str
+        trial['description'] = eclipse_str
 
     # all preprocessing done
     # compute velocity thresholds using all trials
@@ -228,19 +211,19 @@ def _do_autoproc(enffiles, update_eclipse=True):
         try:
             vicon.ClearAllEvents()
             nexus.automark_events(vicon, vel_thresholds=vel_th,
-                                  mkrdata=trial.mkrdata,
-                                  fp_events=trial.fpev, plot=False,
+                                  mkrdata=trial['mkrdata'],
+                                  fp_events=trial['fpev'], plot=False,
                                   events_range=cfg.autoproc.events_range,
                                   start_on_forceplate=cfg.autoproc.
                                   start_on_forceplate)
-            trial.events = True
+            trial['events'] = True
         except GaitDataError:  # cannot automark
-            eclipse_str = '%s,%s' % (trial.description,
+            eclipse_str = '%s,%s' % (trial['description'],
                                      cfg.autoproc.enf_descriptions
                                      ['automark_failure'])
             logger.debug('automark failed')
             _save_trial()
-            trial.description = eclipse_str
+            trial['description'] = eclipse_str
             continue  # next trial
 
         # events ok
@@ -260,17 +243,18 @@ def _do_autoproc(enffiles, update_eclipse=True):
 
         # run model pipeline and save
         eclipse_str = '%s,%s' % (cfg.autoproc.enf_descriptions['ok'],
-                                 trial.description)
+                                 trial['description'])
         _run_pipelines(cfg.autoproc.model_pipelines)
         _save_trial()
-        trial.description = eclipse_str
+        trial['description'] = eclipse_str
 
     # all done; update Eclipse descriptions
     if cfg.autoproc.eclipse_write_key and update_eclipse:
         for filepath, trial in trials.items():
             enf_file = filepath + '.Trial.enf'
             eclipse.set_eclipse_keys(enf_file, {cfg.autoproc.eclipse_write_key:
-                                     trial.description}, update_existing=True)
+                                     trial['description']},
+                                     update_existing=True)
     else:
         logger.debug('not updating Eclipse data')
 

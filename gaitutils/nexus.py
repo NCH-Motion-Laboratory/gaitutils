@@ -513,8 +513,8 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
         # filter scalar velocity data to suppress noise and spikes
         footctrv = signal.medfilt(footctrv, PREFILTER_MEDIAN_WIDTH)
         # get peak (swing) velocity
-        maxv = utils._foot_swing_velocity(footctrv, MAX_PEAK_VELOCITY,
-                                          MIN_SWING_VELOCITY)
+        maxv = utils._get_foot_swing_velocity(footctrv, MAX_PEAK_VELOCITY,
+                                              MIN_SWING_VELOCITY)
 
         # compute thresholds
         threshold_fall_ = (vel_thresholds[this_side+'_strike'] or

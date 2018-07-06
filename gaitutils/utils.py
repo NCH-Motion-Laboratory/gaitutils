@@ -71,6 +71,7 @@ def butter_filt(data, passband, sfreq, bord=5):
     return signal.filtfilt(b, a, data)
 
 
+# FIXME: rename (get_fp_foot_velocity?)
 def get_foot_velocity(mkrdata, fp_events, medians=True):
     """ Return foot velocities during forceplate strike/toeoff frames.
     fp_events is from detect_forceplate_events()
@@ -90,7 +91,7 @@ def get_foot_velocity(mkrdata, fp_events, medians=True):
     return results
 
 
-def _foot_swing_velocity(footctrv, max_peak_velocity, min_swing_velocity):
+def _get_foot_swing_velocity(footctrv, max_peak_velocity, min_swing_velocity):
     """Compute foot swing velocity from scalar velocity data (footctrv)"""
     # find maxima of velocity: derivative crosses zero and values ok
     vd = np.gradient(footctrv)
@@ -274,8 +275,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                 footctrv = np.linalg.norm(footctrv_, axis=1)
                 toeoff_vel = footctrv[toeoff_fr]
                 # FIXME: parameters should be somewhere else
-                swing_vel = _foot_swing_velocity(footctrv, 12*1000/frate,
-                                                 .5)
+                swing_vel = _get_foot_swing_velocity(footctrv, 12*1000/frate,
+                                                     .5)
                 logger.debug('swing vel %.2f, toeoff vel %.2f' %
                              (swing_vel, toeoff_vel))
                 if toeoff_vel < .25 * swing_vel:

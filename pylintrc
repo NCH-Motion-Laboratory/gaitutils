@@ -165,4 +165,13 @@ enable=import-error,
        binary-op-exception,
        bare-except,
        not-async-context-manager,
-       yield-inside-async-function
+       yield-inside-async-function,
+       abstract-method,
+       redefined-builtin,
+       undefined-variable,
+       redefined-outer-name,
+       unused-argument,
+       unused-variable,
+       function-redefined,
+       no-name-in-module
+       

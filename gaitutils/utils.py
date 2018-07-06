@@ -46,21 +46,6 @@ def avg_markerdata(mkrdata, markers, var_type='_P'):
     return mP
 
 
-def _foot_swing_velocity(footctrv, max_peak_velocity, min_swing_velocity):
-    """Compute foot swing velocity from scalar velocity data (footctrv)"""
-    # find maxima of velocity: derivative crosses zero and values ok
-    vd = np.gradient(footctrv)
-    vdz_ind = falling_zerocross(vd)
-    inds = np.where(footctrv[vdz_ind] < max_peak_velocity)[0]
-    if len(inds) == 0:
-        raise GaitDataError('Cannot find acceptable velocity peaks')
-    # delete spurious peaks (where min swing velocity is not attained)
-    vs = footctrv[vdz_ind[inds]]
-    not_ok = np.where(vs < vs.max() * min_swing_velocity)
-    vs = np.delete(vs, not_ok)
-    return np.median(vs)
-
-
 def principal_movement_direction(mP):
     """ Return principal movement direction (dimension of maximum variance) """
     return np.argmax(np.var(mP, axis=0))
@@ -103,6 +88,21 @@ def get_foot_velocity(mkrdata, fp_events, medians=True):
         results = {key: (np.array([np.median(x)]) if x.size > 0 else x)
                    for key, x in results.items()}
     return results
+
+
+def _foot_swing_velocity(footctrv, max_peak_velocity, min_swing_velocity):
+    """Compute foot swing velocity from scalar velocity data (footctrv)"""
+    # find maxima of velocity: derivative crosses zero and values ok
+    vd = np.gradient(footctrv)
+    vdz_ind = falling_zerocross(vd)
+    inds = np.where(footctrv[vdz_ind] < max_peak_velocity)[0]
+    if len(inds) == 0:
+        raise GaitDataError('Cannot find acceptable velocity peaks')
+    # delete spurious peaks (where min swing velocity is not attained)
+    vs = footctrv[vdz_ind[inds]]
+    not_ok = np.where(vs < vs.max() * min_swing_velocity)
+    vs = np.delete(vs, not_ok)
+    return np.median(vs)
 
 
 def detect_forceplate_events(source, mkrdata=None, fp_info=None):
@@ -174,6 +174,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
         fmaxind = np.where(forcetot == fmax)[0][0]  # first maximum
         logger.debug('max force: %.2f N at %.2f' % (fmax, fmaxind))
         bodymass = info['bodymass']
+
         if bodymass is None:
             f_threshold = cfg.autoproc.forceplate_contact_threshold * fmax
             logger.warning('body mass unknown, thresholding force at %.2f N',
@@ -211,7 +212,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                 logger.warning('no CoP for given range')
                 continue
             cop_shift = cop_roi.max() - cop_roi.min()
-            total_shift = np.linalg.norm(cop_shift, axis=1)
+            total_shift = np.linalg.norm(cop_shift)
             logger.debug('CoP total shift %.2f mm' % total_shift)
             if total_shift > cfg.autoproc.cop_shift_max:
                 logger.debug('center of pressure shifts too much '

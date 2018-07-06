@@ -630,7 +630,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                               'valid')
             return
 
-        port = 5000 + self.listActiveReports.count()
+        port = 50000 + self.listActiveReports.count()
         # report ok - start server, thread and do not block ui
         # also enable the threaded mode of the server. serving is a bit flaky
         # in Python 2 (multiple requests cause exceptions)

@@ -6,6 +6,8 @@ matplotlib based plotting functions
 @author: Jussi (jnu@iki.fi)
 """
 
+from __future__ import division
+
 import matplotlib
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_pdf import PdfPages

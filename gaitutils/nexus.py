@@ -6,7 +6,7 @@ Data readers & processing utils, Nexus specific
 @author: Jussi (jnu@iki.fi)
 """
 
-from __future__ import print_function
+from __future__ import print_function, division
 import sys
 import numpy as np
 from scipy import signal

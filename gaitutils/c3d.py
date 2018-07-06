@@ -7,7 +7,7 @@ c3d reader functions
 @author: Jussi (jnu@iki.fi)
 """
 
-from __future__ import print_function
+from __future__ import print_function, division
 import logging
 import numpy as np
 import os
@@ -157,7 +157,6 @@ def get_marker_data(c3dfile, markers, trim_gaps=True):
             gap_inds = np.where(allzero == 0)[0]
         mkrdata[marker + '_gaps'] = gap_inds
     return mkrdata
-
 
 
 def get_metadata(c3dfile):

@@ -157,7 +157,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         fpev = utils.detect_forceplate_events(vicon, mkrdata, fp_info=fp_info)
 
         # get foot velocity info for all events (do not reduce to median)
-        vel = utils.get_foot_velocity(mkrdata, fpev, medians=False)
+        vel = utils.get_foot_contact_velocity(mkrdata, fpev, medians=False)
         valid = fpev['valid']
         eclipse_str += _context_desc(valid)
         trial['valid'] = valid

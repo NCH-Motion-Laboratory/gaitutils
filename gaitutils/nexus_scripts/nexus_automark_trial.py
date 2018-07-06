@@ -26,7 +26,7 @@ def automark_single(plot=False):
                     cfg.autoproc.right_foot_markers)
     mkrdata = read_data.get_marker_data(vicon, foot_markers)
     fpe = utils.detect_forceplate_events(vicon, mkrdata)
-    vel = utils.get_foot_velocity(mkrdata, fpe)
+    vel = utils.get_foot_contact_velocity(mkrdata, fpe)
 
     nexus.automark_events(vicon, vel_thresholds=vel,
                           events_range=cfg.autoproc.events_range,

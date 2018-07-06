@@ -71,8 +71,7 @@ def butter_filt(data, passband, sfreq, bord=5):
     return signal.filtfilt(b, a, data)
 
 
-# FIXME: rename (get_fp_foot_velocity?)
-def get_foot_velocity(mkrdata, fp_events, medians=True):
+def get_foot_contact_velocity(mkrdata, fp_events, medians=True):
     """ Return foot velocities during forceplate strike/toeoff frames.
     fp_events is from detect_forceplate_events()
     If medians=True, return median values. """

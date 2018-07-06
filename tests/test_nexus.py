@@ -191,7 +191,7 @@ def test_event_marking():
     # using forceplate thresholds
     vicon.ClearAllEvents()
     fpe = utils.detect_forceplate_events(vicon)
-    vel = utils.get_foot_velocity(vicon, fpe)
+    vel = utils.get_foot_contact_velocity(vicon, fpe)
     nexus.automark_events(vicon, vel_thresholds=vel,
                           events_range=[-1500, 1500], fp_events=fpe)
     _events_check(events_dict)

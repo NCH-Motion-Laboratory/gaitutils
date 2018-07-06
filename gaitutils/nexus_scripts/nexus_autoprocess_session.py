@@ -261,11 +261,9 @@ def _do_autoproc(enffiles, update_eclipse=True):
         logger.debug('not updating Eclipse data')
 
     # print stats
-    n_events = len([tr for tr in trials.values() if tr.events])
     logger.debug('Complete')
     logger.debug('Trials opened: %d' % len(trials))
     logger.debug('Trials with recon ok: %d' % len(sel_trials))
-    logger.debug('Automarked: %d' % n_events)
 
 
 def autoproc_session(patterns=None, update_eclipse=True):

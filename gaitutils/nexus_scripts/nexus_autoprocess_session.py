@@ -91,18 +91,18 @@ def _do_autoproc(enffiles, update_eclipse=True):
         vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
         subjectname = nexus.get_metadata(vicon)['name']
         allmarkers = vicon.GetMarkerNames(subjectname)
-        edi = eclipse.get_eclipse_keys(filepath_, return_empty=True)
+        edata = eclipse.get_eclipse_keys(filepath_, return_empty=True)
         eclipse_str = ''
         trial = dict()
         trials[filepath] = trial
 
         # check whether to skip trial
-        if edi['TYPE'] in cfg.autoproc.type_skip:
-            logger.debug('skipping based on type: %s' % edi['TYPE'])
+        if edata['TYPE'] in cfg.autoproc.type_skip:
+            logger.debug('skipping based on type: %s' % edata['TYPE'])
             trial['recon_ok'] = False
             continue
         skip = [s.upper() for s in cfg.autoproc.eclipse_skip]
-        if edi['DESCRIPTION'].upper() in skip or edi['NOTES'].upper in skip:
+        if edata['DESCRIPTION'].upper() in skip or edata['NOTES'].upper in skip:
             logger.debug('skipping based on description')
             # run preprocessing + save even for skipped trials, to mark
             # them as processed - mostly so that Eclipse export to Polygon
@@ -149,7 +149,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         trial['mkrdata'] = mkrdata
 
         # check forceplate data
-        fp_info = (eclipse.eclipse_fp_keys(edi) if
+        fp_info = (eclipse.eclipse_fp_keys(edata) if
                    cfg.autoproc.use_eclipse_fp_info else None)
         fpev = utils.detect_forceplate_events(vicon, mkrdata, fp_info=fp_info)
 

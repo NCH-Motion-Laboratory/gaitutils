@@ -199,7 +199,6 @@ def _do_autoproc(enffiles, update_eclipse=True):
     vel_th = {key: (np.median(x) if x.size > 0 else None) for key, x in
               foot_vel.items()}
 
-    print trials
     # 2nd pass
     sel_trials = {filepath: trial for filepath, trial in trials.items()
                   if trial['recon_ok']}

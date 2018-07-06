@@ -182,16 +182,6 @@ def _camera_id(fname):
     return fn_split[-3]
 
 
-def get_camera_ids(fname):
-    """ Get camera ids (strings) for a video file """
-    return [_camera_id(vidfile) for vidfile in find_trial_videos(fname)]
-
-
-def c3d2enf(fname):
-    """ Converts name of trial .c3d file to corresponding .enf """
-    return fname.replace('.c3d', '.Trial.enf')
-
-
 def is_vicon_instance(obj):
     """ Check if obj is an instance of ViconNexus """
     return obj.__class__.__name__ == 'ViconNexus'
@@ -443,9 +433,9 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
     can be specified as arguments. Otherwise, relative thresholds will be
     calculated based on the data. Optimal results will be obtained when
     thresholds based on force plate data are available.
-    
+
     If mkrdata is None, it will be read from Nexus. Otherwise mkrdata must
-    include foot markers and the body tracking markers (see config)
+    include both foot markers and the body tracking markers (see config)
 
     vel_thresholds gives velocity thresholds for identifying events. These
     can be obtained from forceplate data (utils.check_forceplate_contact).

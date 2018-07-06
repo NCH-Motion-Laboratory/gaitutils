@@ -70,6 +70,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         """Abort processing: mark and save trial"""
         fail_desc = cfg.autoproc.enf_descriptions[reason]
         logger.debug('preprocessing failed: %s' % fail_desc)
+        trial['recon_ok'] = False
         trial['description'] = fail_desc
         _save_trial()
 
@@ -214,7 +215,6 @@ def _do_autoproc(enffiles, update_eclipse=True):
                                   events_range=cfg.autoproc.events_range,
                                   start_on_forceplate=cfg.autoproc.
                                   start_on_forceplate)
-            trial['events'] = True
         except GaitDataError:  # cannot automark
             eclipse_str = '%s,%s' % (trial['description'],
                                      cfg.autoproc.enf_descriptions

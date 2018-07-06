@@ -164,15 +164,16 @@ def _do_autoproc(enffiles, update_eclipse=True):
             continue
 
         # preprocessing ok
-        trials[filepath].recon_ok = True
+        trial.recon_ok = True
+        trial.mkrdata = mkrdata
 
         # check forceplate data
         fp_info = (eclipse.eclipse_fp_keys(edi) if
                    cfg.autoproc.use_eclipse_fp_info else None)
-        fpev = utils.detect_forceplate_events(vicon, fp_info=fp_info)
+        fpev = utils.detect_forceplate_events(vicon, mkrdata, fp_info=fp_info)
 
         # get foot velocity info for all events (do not reduce to median)
-        vel = utils.get_foot_velocity(vicon, fpev, medians=False)
+        vel = utils.get_foot_velocity(mkrdata, fpev, medians=False)
         valid = fpev['valid']
         eclipse_str += _context_desc(valid)
         trials[filepath].valid = valid
@@ -209,7 +210,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         _save_trial()
         trials[filepath].description = eclipse_str
 
-    # preprocessing done
+    # all preprocessing done
     # compute velocity thresholds using all trials
     vel_th = {key: (np.median(x) if x.size > 0 else None) for key, x in
               foot_vel.items()}
@@ -228,6 +229,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         try:
             vicon.ClearAllEvents()
             nexus.automark_events(vicon, vel_thresholds=vel_th,
+                                  mkrdata=trial.mkrdata,
                                   fp_events=trial.fpev, plot=False,
                                   events_range=cfg.autoproc.events_range,
                                   start_on_forceplate=cfg.autoproc.

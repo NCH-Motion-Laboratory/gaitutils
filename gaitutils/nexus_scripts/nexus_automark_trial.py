@@ -13,8 +13,7 @@ from __future__ import print_function
 import argparse
 import logging
 
-from gaitutils import nexus, utils
-from gaitutils.config import cfg
+from gaitutils import nexus, utils, read_data, cfg
 
 
 def automark_single(plot=False):
@@ -23,8 +22,11 @@ def automark_single(plot=False):
     vicon.ClearAllEvents()
 
     # TODO: might want to use Eclipse forceplate info also here
-    fpe = utils.detect_forceplate_events(vicon)
-    vel = utils.get_foot_velocity(vicon, fpe)
+    foot_markers = (cfg.autoproc.left_foot_markers +
+                    cfg.autoproc.right_foot_markers)
+    mkrdata = read_data.get_marker_data(vicon, foot_markers)
+    fpe = utils.detect_forceplate_events(vicon, mkrdata)
+    vel = utils.get_foot_velocity(mkrdata, fpe)
 
     nexus.automark_events(vicon, vel_thresholds=vel,
                           events_range=cfg.autoproc.events_range,

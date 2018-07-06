@@ -433,15 +433,19 @@ def _list_to_str(li):
     return ','.join([str(it) for it in li])
 
 
-def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
-                    'R_strike': None, 'R_toeoff': None}, events_range=None,
-                    fp_events=None, restrict_to_roi=False,
-                    start_on_forceplate=False, plot=False, mark=True):
+def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
+                    vel_thresholds={'L_strike': None, 'L_toeoff': None,
+                                    'R_strike': None, 'R_toeoff': None},
+                    restrict_to_roi=False, start_on_forceplate=False,
+                    plot=False, mark=True):
 
     """ Mark events based on velocity thresholding. Absolute thresholds
     can be specified as arguments. Otherwise, relative thresholds will be
     calculated based on the data. Optimal results will be obtained when
     thresholds based on force plate data are available.
+    
+    If mkrdata is None, it will be read from Nexus. Otherwise mkrdata must
+    include foot markers and the body tracking markers (see config)
 
     vel_thresholds gives velocity thresholds for identifying events. These
     can be obtained from forceplate data (utils.check_forceplate_contact).
@@ -493,9 +497,10 @@ def automark_events(vicon, vel_thresholds={'L_strike': None, 'L_toeoff': None,
     subjectname = get_subjectnames()
 
     # get foot center positions and velocities
-    mkrdata = get_marker_data(vicon, cfg.autoproc.right_foot_markers +
-                              cfg.autoproc.left_foot_markers +
-                              cfg.autoproc.track_markers)
+    if mkrdata is None:
+        mkrdata = get_marker_data(vicon, cfg.autoproc.right_foot_markers +
+                                  cfg.autoproc.left_foot_markers +
+                                  cfg.autoproc.track_markers)
     rfootctrv = utils.markers_avg_vel(mkrdata, cfg.autoproc.right_foot_markers)
     lfootctrv = utils.markers_avg_vel(mkrdata, cfg.autoproc.left_foot_markers)
     # position data: use ANK marker

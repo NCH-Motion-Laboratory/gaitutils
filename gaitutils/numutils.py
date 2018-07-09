@@ -11,7 +11,6 @@ from __future__ import division
 
 import datetime
 import numpy as np
-from scipy.linalg import norm
 from scipy.signal import medfilt
 from numpy.lib.stride_tricks import as_strided
 
@@ -156,7 +155,7 @@ def segment_angles(P):
     if len(P.shape) == 2:
         P = P[np.newaxis, ...]  # insert singleton time axis
     Pd = np.diff(P, axis=1)  # point-to-point vectors
-    vnorms = norm(Pd, axis=2)[..., np.newaxis]
+    vnorms = np.linalg.norm(Pd, axis=2)[..., np.newaxis]
     # ignore 0/0 and x/0 errors -> nan
     with np.errstate(divide='ignore', invalid='ignore'):
         Pdn = Pd / vnorms

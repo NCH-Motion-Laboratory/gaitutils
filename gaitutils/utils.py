@@ -110,10 +110,12 @@ def _get_foot_swing_velocity(footctrv, max_peak_velocity, min_swing_velocity):
 def _normalize(V):
     """Normalize rows of matrix V"""
     Vn = np.linalg.norm(V, axis=1)
-    return (V.T / Vn).T
+    # quietly return all nans for length zero vectors
+    with np.errstate(divide='ignore', invalid='ignore'):
+        return (V.T / Vn).T
 
 
-def footbox(mkrdata, context):
+def get_footbox(mkrdata, context):
     """Estimate a box in the xy plane containing the foot"""
     FOOT_LEN = 1.8  # foot length relative to HEE-ANK distance
     FOOT_WIDTH1 = 1.5  # width relative to dist from HEE-TOE line to ANK
@@ -122,26 +124,29 @@ def footbox(mkrdata, context):
     toeP = mkrdata[context+'TOE_P']
     ankP = mkrdata[context+'ANK_P']
     # heel - toe vectors
-    ht = _normalize(toeP - heeP)
+    ht_ = toeP - heeP
+    ht = _normalize(ht_)
     # estimated big toe coordinate (end of foot)
-    bigtoeP = heeP + (toeP - heeP) * FOOT_LEN
+    bigtoeP = heeP + ht_ * FOOT_LEN
     # heel - ankle vectors
     ha_ = ankP - heeP
     ha = _normalize(ha_)
-    # orthogonal to foot plane, pointing upwards
+    # vectors orthogonal to foot plane, pointing upwards
     hz = np.cross(ha, ht)
-    # lateral direction
+    # unit vectors for lateral direction HEE-TOE line to ankle marker)
     hl = np.cross(ht, hz)
-    # lateral foot width (HEE-TOE line to ankle marker)
+    # length from HEE-TOE line to ankle marker)
     lat = (hl.T * np.sum(ha_ * hl, axis=1)).T
-    # foot box corners
+    # corners defining the foot box
     c0 = heeP + FOOT_WIDTH1 * lat
     c1 = heeP - FOOT_WIDTH2 * lat
     c2 = bigtoeP - FOOT_WIDTH2 * lat
     c3 = bigtoeP + FOOT_WIDTH1 * lat
-    # minima and maxima in xy plane
-    pmin = np.minimum.reduce([c0, c1, c2, c3])
-    pmax = np.maximum.reduce([c0, c1, c2, c3])
+    # box minima and maxima in xy plane
+    # ignore nans in reduce()
+    with np.errstate(divide='ignore', invalid='ignore'):
+        pmin = np.minimum.reduce([c0, c1, c2, c3])
+        pmax = np.maximum.reduce([c0, c1, c2, c3])
     return pmin, pmax
 
 

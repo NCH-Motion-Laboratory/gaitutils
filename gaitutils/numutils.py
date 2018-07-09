@@ -183,7 +183,7 @@ def rms(data, win):
     """ Return RMS for a given data (1-d; will be flattened if not) """
     if win % 2 != 1:
         raise ValueError('Need RMS window of odd length')
-    rms = np.sqrt(running_sum(data**2, win) / win)
+    rms_ = np.sqrt(running_sum(data**2, win) / win)
     # pad ends of RMS data so that lengths are matched
     pad = np.repeat(0, (win-1)/2)
-    return np.concatenate([pad, rms, pad])
+    return np.concatenate([pad, rms_, pad])

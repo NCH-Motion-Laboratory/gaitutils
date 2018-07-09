@@ -316,7 +316,7 @@ class Plotter(object):
                    model_cycles=None,
                    emg_cycles=None,
                    plotheightratios=None,
-                   plotwidthratios=None,
+                   plotwidthratios=None,  # FIXME: not used?
                    model_tracecolor=None,
                    model_linestyle='-',
                    model_alpha=1.0,

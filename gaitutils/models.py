@@ -297,7 +297,7 @@ musclelen.varnames_noside = musclelen.varlabels_noside.keys()
 musclelen.is_kinetic_var = lambda varname: False
 
 musclelen.ylabels = {}
-for var in musclelen.varnames:
-    musclelen.ylabels[var] = 'Length norm.'
+for var_ in musclelen.varnames:
+    musclelen.ylabels[var_] = 'Length norm.'
 
 models_all.append(musclelen)

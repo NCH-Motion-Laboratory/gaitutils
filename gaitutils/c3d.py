@@ -177,9 +177,7 @@ def get_metadata(c3dfile):
     fpe = btk.btkForcePlatformsExtractor()
     fpe.SetInput(acq)
     fpe.Update()
-    n_forceplates = 0
-    for plate in btk.Iterate(fpe.GetOutput()):
-        n_forceplates += 1
+    n_forceplates = len(list(btk.Iterate(fpe.GetOutput())))
 
     # get markers
     markers = _get_c3d_metadata_field(acq, 'POINT', 'LABELS')

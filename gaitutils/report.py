@@ -6,6 +6,7 @@ Report related functions
 """
 
 
+from __future__ import division
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -424,7 +425,7 @@ def dash_report(info=None, sessions=None, tags=None):
         if not vid_urls_:
             return 'No videos found'
         nvids = len(vid_urls_)
-        max_height = str(VIDS_TOTAL_HEIGHT / nvids) + 'vh'
+        max_height = str(int(VIDS_TOTAL_HEIGHT / nvids)) + 'vh'
         return [_video_elem('video', url, max_height) for url in vid_urls_]
 
     # add a static route to serve session data. be careful outside firewalls

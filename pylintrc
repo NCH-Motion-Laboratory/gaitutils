@@ -101,7 +101,7 @@ enable=import-error,
        backtick,
        old-raise-syntax,
        metaclass-assignment,
-       next-method-called,
+       #next-method-called,  # py3 
        dict-iter-method,
        dict-view-method,
        indexing-exception,

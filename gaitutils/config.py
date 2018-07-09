@@ -102,13 +102,13 @@ else:
 # check for extra entries in user config
 no_check = ['layouts']
 cfg_user_di = cfg._sections
-for sname, section in cfg_user_di.items():
+for sname, section_ in cfg_user_di.items():
     if sname not in cfg_tpl_di:
         print('WARNING: unused (deprecated?) section %s in user config'
               % sname)
     else:
         if sname not in no_check:
-            for key in section:
+            for key in section_:
                 if key not in cfg_tpl_di[sname]:
                     print('WARNING: unused (deprecated?) key '
                           '%s.%s in user config' % (sname, key))

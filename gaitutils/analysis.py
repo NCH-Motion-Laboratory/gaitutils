@@ -110,7 +110,7 @@ def _step_width(source):
             pos_next_co = mkrdata[mname_co+'_P'][strikes_next_co[0]]
             # vector distance between 'step lines' (see url above)
             V1 = pos_next - pos_this
-            V1 = V1 / np.linalg.norm(V1)
+            V1 /= np.linalg.norm(V1)
             VC = pos_next_co - pos_this
             VCP = V1 * np.dot(VC, V1)  # proj to ipsilateral line
             VSW = VCP - VC

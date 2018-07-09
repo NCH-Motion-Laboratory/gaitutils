@@ -107,6 +107,44 @@ def _get_foot_swing_velocity(footctrv, max_peak_velocity, min_swing_velocity):
     return np.median(vs)
 
 
+def _normalize(V):
+    """Normalize rows of matrix V"""
+    Vn = np.linalg.norm(V, axis=1)
+    return (V.T / Vn).T
+
+
+def footbox(mkrdata, context):
+    """Estimate a box in the xy plane containing the foot"""
+    FOOT_LEN = 1.8  # foot length relative to HEE-ANK distance
+    FOOT_WIDTH1 = 1.5  # width relative to dist from HEE-TOE line to ANK
+    FOOT_WIDTH2 = .5  # width in the opposite dir
+    heeP = mkrdata[context+'HEE_P']
+    toeP = mkrdata[context+'TOE_P']
+    ankP = mkrdata[context+'ANK_P']
+    # heel - toe vectors
+    ht = _normalize(toeP - heeP)
+    # estimated big toe coordinate (end of foot)
+    bigtoeP = heeP + (toeP - heeP) * FOOT_LEN
+    # heel - ankle vectors
+    ha_ = ankP - heeP
+    ha = _normalize(ha_)
+    # orthogonal to foot plane, pointing upwards
+    hz = np.cross(ha, ht)
+    # lateral direction
+    hl = np.cross(ht, hz)
+    # lateral foot width (HEE-TOE line to ankle marker)
+    lat = (hl.T * np.sum(ha_ * hl, axis=1)).T
+    # foot box corners
+    c0 = heeP + FOOT_WIDTH1 * lat
+    c1 = heeP - FOOT_WIDTH2 * lat
+    c2 = bigtoeP - FOOT_WIDTH2 * lat
+    c3 = bigtoeP + FOOT_WIDTH1 * lat
+    # minima and maxima in xy plane
+    pmin = np.minimum.reduce([c0, c1, c2, c3])
+    pmax = np.maximum.reduce([c0, c1, c2, c3])
+    return pmin, pmax
+
+
 def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     """ Detect frames where valid forceplate strikes and toeoffs occur.
     Uses forceplate data and marker positions.
@@ -222,8 +260,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                 continue
 
             # plate boundaries in world coords
-            mins = fp['lowerbounds']
-            maxes = fp['upperbounds']
+            mins, maxes = fp['lowerbounds'], fp['upperbounds']
 
             # check foot & marker positions
             this_valid = None
@@ -284,6 +321,18 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                     logger.debug('toeoff velocity too low')
                     ok = False
                     continue
+
+                # foot box
+                footmins, footmaxes = footbox(mkrdata, side)
+                t_contact = int((strike_fr + toeoff_fr) / 2)
+                logger.debug('x min')
+                logger.debug(mins[0] < footmins[t_contact, 0] < maxes[0])
+                logger.debug('x max')
+                logger.debug(mins[0] < footmaxes[t_contact, 0] < maxes[0])
+                logger.debug('y min')
+                logger.debug(mins[1] < footmins[t_contact, 1] < maxes[1])
+                logger.debug('y max')
+                logger.debug(mins[1] < footmaxes[t_contact, 1] < maxes[1])
 
                 # individual marker checks
                 for marker_ in markers:

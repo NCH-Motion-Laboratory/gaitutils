@@ -44,7 +44,7 @@ class AvgTrial(Trial):
     def __getitem__(self, item):
         return self.t, self._model_data[item]
 
-    def set_norm_cycle(self, cycle):
+    def set_norm_cycle(self, cycle=None):
         if cycle is None:
             raise ValueError('AvgTrial does not support unnormalized data')
         else:
@@ -198,6 +198,7 @@ def _collect_model_data(trials, fp_cycles_only=False):
                                          np.concatenate([data_all[var],
                                                         data[None, :]]))
 
+    n = len(trials)
     logger.debug('collected %d trials, %d/%d R/L cycles, %d/%d kinetics cycles'
                  % (n, nc['R'], nc['L'], nc['Rkin'], nc['Lkin']))
 

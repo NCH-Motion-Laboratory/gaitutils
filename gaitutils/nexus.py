@@ -407,10 +407,8 @@ def _list_to_str(li):
 
 
 def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
-                    vel_thresholds={'L_strike': None, 'L_toeoff': None,
-                                    'R_strike': None, 'R_toeoff': None},
-                    restrict_to_roi=False, start_on_forceplate=False,
-                    plot=False, mark=True):
+                    vel_thresholds=None, restrict_to_roi=False,
+                    start_on_forceplate=False, plot=False, mark=True):
 
     """ Mark events based on velocity thresholding. Absolute thresholds
     can be specified as arguments. Otherwise, relative thresholds will be
@@ -444,6 +442,7 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
     Filtering is important to get reasonably smooth derivatives.
     """
 
+
     frate = vicon.GetFrameRate()
     if not frate:
         raise GaitDataError('Cannot get framerate from Nexus')
@@ -468,6 +467,9 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
     STRIKE_TOL = 5
 
     subjectname = get_subjectnames()
+
+    vel_thresholds = {'L_strike': None, 'L_toeoff': None,
+                      'R_strike': None, 'R_toeoff': None}
 
     # get foot center positions and velocities
     if mkrdata is None:

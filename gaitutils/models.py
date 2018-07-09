@@ -11,32 +11,21 @@ append to models_all.
 
 from collections import defaultdict
 
-from .envutils import GaitDataError
-
 
 models_all = []
 
 
-def model_from_var(var):
+def model_from_var(var_):
     """ Return model corresponding to specified variable.
     Returns GaitModel instance that has the specified variable. """
-    if var is None:
+    if var_ is None:
         return None
-    elif not isinstance(var, basestring):
+    elif not isinstance(var_, basestring):
         raise ValueError('Variable name must be a string or None')
     for model in models_all:
-        if var in model.varnames or var in model.varnames_noside:
+        if var_ in model.varnames or var_ in model.varnames_noside:
             return model
     return None
-
-
-def var_with_side(var):
-    for model in models_all:
-        if var in model.varnames:
-            return True
-        if var in model.varnames_noside:
-            return False
-    raise GaitDataError('Model variable not found')
 
 
 # convenience methods for model creation

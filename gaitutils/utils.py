@@ -153,7 +153,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
         detect = True
         plate = 'FP' + str(plate_ind+1)
         if fp_info is not None and plate in fp_info:
-            # XXX: are we sure that the plate indices match Eclipse?
+            # FIXME: are we sure that the plate indices match Eclipse?
             valid = fp_info[plate]
             detect = False
             logger.debug('using Eclipse forceplate info: %s' % valid)
@@ -278,6 +278,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                     continue
 
                 # individual marker checks
+                # FIXME: use footbox code
                 for marker_ in markers:
                     logger.debug('checking %s' % marker_)
                     mins_s, maxes_s = mins.copy(), maxes.copy()

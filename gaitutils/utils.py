@@ -241,14 +241,6 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                 logger.debug('foot height at toeoff: %.2f' % toeoff_h)
                 logger.debug('foot height, trial min: %.2f' % min_h)
 
-                # auto toeoff tolerance - not used yet
-                toeP = mkrdata[side + 'TOE_P']
-                heeP = mkrdata[side + 'HEE_P']
-                th_dist_ = np.linalg.norm(toeP-heeP, axis=1)
-                th_dist = np.median(th_dist_[np.nonzero(th_dist_)])
-                toeoff_tol = -.5 * th_dist
-                logger.debug('computed toeoff tolerance: %.2f' % toeoff_tol)
-
                 # foot strike must occur below given height limit
                 if (strike_h > min_h + cfg.autoproc.strike_max_height):
                     logger.debug('strike too high')

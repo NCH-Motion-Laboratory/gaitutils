@@ -155,7 +155,7 @@ def test_read_data_errors():
 
 def test_event_marking():
     """Test automarking of events"""
-    ev_tol = 3  # tolerance for event marking (frames)
+    ev_tol = 4  # tolerance for event marking (frames)
     events_dict = dict()  # ground truth with forceplate info
     events_dict['Right'] = dict()
     events_dict['Right']['Foot Strike'] = [384, 505, 616]
@@ -191,7 +191,9 @@ def test_event_marking():
     # using forceplate thresholds
     vicon.ClearAllEvents()
     fpe = utils.detect_forceplate_events(vicon)
-    vel = utils.get_foot_contact_velocity(vicon, fpe)
+    mkrdata = nexus.get_marker_data(vicon, cfg.autoproc.left_foot_markers +
+                                    cfg.autoproc.right_foot_markers)
+    vel = utils.get_foot_contact_velocity(mkrdata, fpe)
     nexus.automark_events(vicon, vel_thresholds=vel,
                           events_range=[-1500, 1500], fp_events=fpe)
     _events_check(events_dict)

@@ -156,7 +156,7 @@ def segment_angles(P):
     if len(P.shape) == 2:
         P = P[np.newaxis, ...]  # insert singleton time axis
     Pd = np.diff(P, axis=1)  # point-to-point vectors
-    vnorms = norm(Pd, axis=2)[..., np.newaxis]
+    vnorms = np.linalg.norm(Pd, axis=2)[..., np.newaxis]
     # ignore 0/0 and x/0 errors -> nan
     with np.errstate(divide='ignore', invalid='ignore'):
         Pdn = Pd / vnorms

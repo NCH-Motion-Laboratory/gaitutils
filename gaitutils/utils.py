@@ -188,12 +188,12 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     logger.debug('gait forward direction seems to be %s' %
                  {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])
 
-    for plate_ind, fp in enumerate(fpdata):
+    for plate_ind, fp in enumerate(fpdata, 1):  # start indexing from 1
         logger.debug('analyzing plate %d' % plate_ind)
         # check Eclipse info if it exists
         detect = True
         # XXX: are we sure that the plate indices match Eclipse?
-        plate = 'FP' + str(plate_ind+1)  # plate 0 -> 'FP1' etc.
+        plate = 'FP' + str(plate_ind)
         if fp_info is not None and plate in fp_info:
             ecl_valid = fp_info[plate]
             detect = False

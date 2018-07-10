@@ -116,10 +116,12 @@ def _normalize(V):
 
 
 def _get_foot_points(mkrdata, context):
-    """Estimate points in the xy plane containing the foot. Foot is modeled
+    """Estimate points in the xy plane enclosing the foot. Foot is modeled
     as a triangle"""
-    FOOT_WIDTH1 = 1  # width relative to dist from HEE-TOE line to ANK
-    FOOT_WIDTH2 = .5  # width in the opposite dir
+    # distances from HEE-TOE line to foot edge towards ANK (1)
+    # and from HEE-TOE line to foot edge away from ANK (2)
+    FOOT_WIDTH1 = 1
+    FOOT_WIDTH2 = .5
     heeP = mkrdata[context+'HEE_P']
     toeP = mkrdata[context+'TOE_P']
     ankP = mkrdata[context+'ANK_P']

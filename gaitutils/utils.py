@@ -118,6 +118,7 @@ def _normalize(V):
 def _get_foot_points(mkrdata, context):
     """Estimate points in the xy plane containing the foot. Foot is modeled
     as a triangle"""
+    # XXX: this assumes proximal TOE marker placement
     FOOT_LEN = 1.8  # foot length relative to HEE-ANK distance
     FOOT_WIDTH1 = 1.5  # width relative to dist from HEE-TOE line to ANK
     FOOT_WIDTH2 = .5  # width in the opposite dir
@@ -158,13 +159,13 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     If fp_info dict is set, no marker and COP checks will be done;
     instead the Eclipse forceplate info will be used. Eclipse info is written
     e.g. as {FP1: 'Left'} where plate indices start from 1 and the value can be
-    'Left', 'Right' or 'Invalid'. Even if Eclipse info is used, the foot strike
+    'Left', 'Right' or 'Invalid'. Even if Eclipse info is used, foot strike
     and toeoff frames must be determined from forceplate data.
 
     Conditions:
     -check max total force, must correspond to subject weight
     -center of pressure must not change too much during contact time
-    -foot markers must be inside plate edges at strike time
+    -foot must be inside plate at strike & toeoff
 
     Returns dict with keys R_strikes, L_strikes, R_toeoffs, L_toeoffs.
     Dict values are lists of frames where valid forceplate contact occurs.

@@ -115,8 +115,8 @@ def _normalize(V):
         return (V.T / Vn).T
 
 
-def get_footbox(mkrdata, context):
-    """Estimate a box in the xy plane containing the foot"""
+def _get_foot_points(mkrdata, context):
+    """Estimate points in the xy plane containing the foot"""
     FOOT_LEN = 1.8  # foot length relative to HEE-ANK distance
     FOOT_WIDTH1 = 1.5  # width relative to dist from HEE-TOE line to ANK
     FOOT_WIDTH2 = .5  # width in the opposite dir
@@ -138,15 +138,14 @@ def get_footbox(mkrdata, context):
     # length from HEE-TOE line to ankle marker)
     lat = (hl.T * np.sum(ha_ * hl, axis=1)).T
     # corners defining the foot box
-    c0 = heeP + FOOT_WIDTH1 * lat
-    c1 = heeP - FOOT_WIDTH2 * lat
-    c2 = bigtoeP - FOOT_WIDTH2 * lat
-    c3 = bigtoeP + FOOT_WIDTH1 * lat
+    c0 = heeP
+    c1 = bigtoeP - FOOT_WIDTH2 * lat
+    c2 = bigtoeP + FOOT_WIDTH1 * lat
     # box minima and maxima in xy plane
     # ignore nans in reduce()
     with np.errstate(divide='ignore', invalid='ignore'):
-        pmin = np.minimum.reduce([c0, c1, c2, c3])
-        pmax = np.maximum.reduce([c0, c1, c2, c3])
+        pmin = np.minimum.reduce([c0, c1, c2])
+        pmax = np.maximum.reduce([c0, c1, c2])
     return pmin, pmax
 
 
@@ -321,56 +320,19 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
 
                 # foot box
                 footmins, footmaxes = get_footbox(mkrdata, side)
-                # 'solid contact' frame (between strike and toeoff)
-                t_contact = int((strike_fr + toeoff_fr) / 2)
-                xmin_ok = mins[0] < footmins[t_contact, 0] < maxes[0]
-                xmax_ok = mins[0] < footmaxes[t_contact, 0] < maxes[0]
-                ymin_ok = mins[1] < footmins[t_contact, 1] < maxes[1]
-                ymax_ok = mins[1] < footmaxes[t_contact, 1] < maxes[1]
+                xmin_ok = mins[0] < footmins[strike_fr, 0] < maxes[0]
+                xmax_ok = mins[0] < footmaxes[strike_fr, 0] < maxes[0]
+                ymin_ok = mins[1] < footmins[strike_fr, 1] < maxes[1]
+                ymax_ok = mins[1] < footmaxes[strike_fr, 1] < maxes[1]
+                ok = xmin_ok and xmax_ok and ymin_ok and ymax_ok
+                logger.debug('footbox at strike: %s' % ok)
+                xmin_ok = mins[0] < footmins[toeoff_fr, 0] < maxes[0]
+                xmax_ok = mins[0] < footmaxes[toeoff_fr, 0] < maxes[0]
+                ymin_ok = mins[1] < footmins[toeoff_fr, 1] < maxes[1]
+                ymax_ok = mins[1] < footmaxes[toeoff_fr, 1] < maxes[1]
+                ok &= xmin_ok and xmax_ok and ymin_ok and ymax_ok
+                logger.debug('footbox at toeoff: %s' % ok)
 
-                logger.debug('footbox xmin: %s xmax: %s ymin: %s ymax: %s' %
-                             (xmin_ok, xmax_ok, ymin_ok, ymax_ok))
-
-                # individual marker checks
-                for marker_ in markers:
-                    logger.debug('checking %s' % marker_)
-                    mins_s, maxes_s = mins.copy(), maxes.copy()
-                    mins_t, maxes_t = mins.copy(), maxes.copy()
-
-                    # add tolerance for ankle marker in sideways direction
-                    if 'ANK' in marker_:
-                        mins_t[orth_dir] -= cfg.autoproc.ankle_sideways_tol
-                        maxes_t[orth_dir] += cfg.autoproc.ankle_sideways_tol
-                        mins_s[orth_dir] -= cfg.autoproc.ankle_sideways_tol
-                        maxes_s[orth_dir] += cfg.autoproc.ankle_sideways_tol
-
-                    # add tol for all markers in gait dir @ toeoff
-                    maxes_t[fwd_dir] += cfg.autoproc.toeoff_marker_tol
-                    mins_t[fwd_dir] -= cfg.autoproc.toeoff_marker_tol
-                    # maxes_t[fwd_dir] += toeoff_tol
-                    # mins_t[fwd_dir] -= toeoff_tol
-
-                    # add tol for heel marker in gait dir @ foot strike
-                    if 'HEE' in marker_:
-                        maxes_s[fwd_dir] += cfg.autoproc.heel_strike_tol
-                        mins_s[fwd_dir] -= cfg.autoproc.heel_strike_tol
-                    marker = marker_ + '_P'
-                    ok &= (mins_s[0] < mkrdata[marker][strike_fr, 0] <
-                           maxes_s[0])
-                    ok &= (mins_s[1] < mkrdata[marker][strike_fr, 1] <
-                           maxes_s[1])
-                    if not ok:
-                        logger.debug('marker %s failed on-plate check during '
-                                     'foot strike' % marker_)
-                        break
-                    ok &= (mins_t[0] < mkrdata[marker][toeoff_fr, 0] <
-                           maxes_t[0])
-                    ok &= (mins_t[1] < mkrdata[marker][toeoff_fr, 1] <
-                           maxes_t[1])
-                    if not ok:
-                        logger.debug('marker %s failed on-plate check during '
-                                     'toeoff ' % marker_)
-                        break
                 if ok:
                     if this_valid:
                         raise GaitDataError('got valid contact for both feet')

@@ -118,9 +118,7 @@ def _normalize(V):
 def _get_foot_points(mkrdata, context):
     """Estimate points in the xy plane containing the foot. Foot is modeled
     as a triangle"""
-    # XXX: this assumes proximal TOE marker placement
-    FOOT_LEN = 1.8  # foot length relative to HEE-ANK distance
-    FOOT_WIDTH1 = 1.5  # width relative to dist from HEE-TOE line to ANK
+    FOOT_WIDTH1 = 1  # width relative to dist from HEE-TOE line to ANK
     FOOT_WIDTH2 = .5  # width in the opposite dir
     heeP = mkrdata[context+'HEE_P']
     toeP = mkrdata[context+'TOE_P']
@@ -129,21 +127,21 @@ def _get_foot_points(mkrdata, context):
     ht_ = toeP - heeP
     ht = _normalize(ht_)
     # estimated big toe coordinate (end of foot)
-    bigtoeP = heeP + ht_ * FOOT_LEN
+    bigtoeP = heeP + ht_ * cfg.autoproc.foot_relative_len
     # heel - ankle vectors
     ha_ = ankP - heeP
     ha = _normalize(ha_)
     # vectors orthogonal to foot plane, pointing upwards
     hz = np.cross(ha, ht)
     # unit vectors for lateral direction HEE-TOE line to ankle marker)
-    hl = np.cross(ht, hz)
+    hl = _normalize(np.cross(ht, hz))
     # length from HEE-TOE line to ankle marker)
     lat = (hl.T * np.sum(ha_ * hl, axis=1)).T
-    # corners defining the foot box
+    # corners defining the foot polygon
     c0 = heeP
     c1 = bigtoeP - FOOT_WIDTH2 * lat
     c2 = bigtoeP + FOOT_WIDTH1 * lat
-    # box minima and maxima in xy plane
+    # minima and maxima in xy plane
     # ignore nans in reduce()
     with np.errstate(divide='ignore', invalid='ignore'):
         pmin = np.minimum.reduce([c0, c1, c2])
@@ -273,16 +271,28 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                 footmins, footmaxes = _get_foot_points(mkrdata, side)
                 xmin_ok = mins[0] < footmins[strike_fr, 0] < maxes[0]
                 xmax_ok = mins[0] < footmaxes[strike_fr, 0] < maxes[0]
+                logger.debug('at strike:')
+                if not (xmin_ok and xmax_ok):
+                    logger.debug('off plate in x dir')
                 ymin_ok = mins[1] < footmins[strike_fr, 1] < maxes[1]
                 ymax_ok = mins[1] < footmaxes[strike_fr, 1] < maxes[1]
+                if not (ymin_ok and ymax_ok):
+                    logger.debug('off plate in y dir')
                 ok = xmin_ok and xmax_ok and ymin_ok and ymax_ok
-                logger.debug('contact at strike: %s' % ok)
+                if ok:
+                    logger.debug('contact ok')
                 xmin_ok = mins[0] < footmins[toeoff_fr, 0] < maxes[0]
                 xmax_ok = mins[0] < footmaxes[toeoff_fr, 0] < maxes[0]
+                logger.debug('at toeoff:')
+                if not (xmin_ok and xmax_ok):
+                    logger.debug('off plate in x dir')
                 ymin_ok = mins[1] < footmins[toeoff_fr, 1] < maxes[1]
                 ymax_ok = mins[1] < footmaxes[toeoff_fr, 1] < maxes[1]
+                if not (ymin_ok and ymax_ok):
+                    logger.debug('off plate in y dir')
                 ok &= xmin_ok and xmax_ok and ymin_ok and ymax_ok
-                logger.debug('contact at toeoff: %s' % ok)
+                if ok:
+                    logger.debug('contact ok')
 
                 if ok:
                     if valid:  # already got valid contact for other foot

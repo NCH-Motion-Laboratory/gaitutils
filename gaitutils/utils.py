@@ -116,7 +116,8 @@ def _normalize(V):
 
 
 def _get_foot_points(mkrdata, context):
-    """Estimate points in the xy plane containing the foot"""
+    """Estimate points in the xy plane containing the foot. Foot is modeled
+    as a triangle"""
     FOOT_LEN = 1.8  # foot length relative to HEE-ANK distance
     FOOT_WIDTH1 = 1.5  # width relative to dist from HEE-TOE line to ANK
     FOOT_WIDTH2 = .5  # width in the opposite dir
@@ -173,7 +174,6 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     logger.debug('detect forceplate events from %s' % source)
     info = read_data.get_metadata(source)
     fpdata = read_data.get_forceplate_data(source)
-
     results = dict(R_strikes=[], R_toeoffs=[], L_strikes=[], L_toeoffs=[],
                    valid=set())
 
@@ -191,9 +191,9 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
         logger.debug('analyzing plate %d' % plate_ind)
         # check Eclipse info if it exists
         detect = True
-        plate = 'FP' + str(plate_ind+1)
+        # XXX: are we sure that the plate indices match Eclipse?
+        plate = 'FP' + str(plate_ind+1)  # plate 0 -> 'FP1' etc.
         if fp_info is not None and plate in fp_info:
-            # FIXME: are we sure that the plate indices match Eclipse?
             ecl_valid = fp_info[plate]
             detect = False
             logger.debug('using Eclipse forceplate info: %s' % ecl_valid)
@@ -261,11 +261,12 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                              '(double contact?)')
                 continue
 
-            # plate boundaries in world coords
-            mins, maxes = fp['lowerbounds'], fp['upperbounds']
-
-            # check foot & marker positions
+            # check foot positions
             valid = None
+            # plate boundaries in world coords
+            # FIXME: use plate corners and in-polygon algorithm
+            # (no need to assume coord axes aligned with plate)
+            mins, maxes = fp['lowerbounds'], fp['upperbounds']
             for side in ['R', 'L']:
                 logger.debug('checking side %s' % side)
                 footmins, footmaxes = _get_foot_points(mkrdata, side)

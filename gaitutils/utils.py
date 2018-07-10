@@ -184,8 +184,6 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
         mkrdata = read_data.get_marker_data(source, foot_markers)
     pos = sum([mkrdata[name+'_P'] for name in foot_markers])
     fwd_dir = np.argmax(np.var(pos, axis=0))
-    # XXX: assumes that first two dims are x/y
-    orth_dir = 0 if fwd_dir == 1 else 1
     logger.debug('gait forward direction seems to be %s' %
                  {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])
 
@@ -196,16 +194,16 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
         plate = 'FP' + str(plate_ind+1)
         if fp_info is not None and plate in fp_info:
             # FIXME: are we sure that the plate indices match Eclipse?
-            valid = fp_info[plate]
+            ecl_valid = fp_info[plate]
             detect = False
-            logger.debug('using Eclipse forceplate info: %s' % valid)
-            if valid == 'Right':
-                this_valid = 'R'
-            elif valid == 'Left':
-                this_valid = 'L'
-            elif valid == 'Invalid':
+            logger.debug('using Eclipse forceplate info: %s' % ecl_valid)
+            if ecl_valid == 'Right':
+                valid = 'R'
+            elif ecl_valid == 'Left':
+                valid = 'L'
+            elif ecl_valid == 'Invalid':
                 continue
-            elif valid == 'Auto':
+            elif ecl_valid == 'Auto':
                 detect = True
             else:
                 raise Exception('unexpected Eclipse forceplate field')
@@ -267,87 +265,38 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
             mins, maxes = fp['lowerbounds'], fp['upperbounds']
 
             # check foot & marker positions
-            this_valid = None
-            for side, markers in zip(['R', 'L'],
-                                     [cfg.autoproc.right_foot_markers,
-                                      cfg.autoproc.left_foot_markers]):
+            valid = None
+            for side in ['R', 'L']:
                 logger.debug('checking side %s' % side)
-
-                # check foot height at strike and toeoff
-                foot_h = avg_markerdata(mkrdata, markers)[:, 2]  # z coord
-                min_h = foot_h[np.nonzero(foot_h)].min()
-                toeoff_h = foot_h[toeoff_fr]
-                strike_h = foot_h[strike_fr]
-                logger.debug('foot height at strike: %.2f' % strike_h)
-                logger.debug('foot height at toeoff: %.2f' % toeoff_h)
-                logger.debug('foot height, trial min: %.2f' % min_h)
-
-                # foot strike must occur below given height limit
-                if (strike_h > min_h + cfg.autoproc.strike_max_height):
-                    logger.debug('strike too high')
-                    ok = False
-                    continue
-
-                # toeoff must occur in given height range
-                elif (toeoff_h > min_h + cfg.autoproc.toeoff_height_range[1]):
-                    logger.debug('toeoff too high')
-                    ok = False
-                    continue
-                elif (toeoff_h < min_h + cfg.autoproc.toeoff_height_range[0]):
-                    logger.debug('toeoff too low')
-                    ok = False
-                    continue
-                else:
-                    logger.debug('foot height checks ok')
-                    ok = True
-
-                # toeoff velocity
-                # FIXME: gently decreasing forceplate contact often leads to
-                # early toeoff detection -> velocity too low
-                frate = info['framerate']
-                footctrv_ = avg_markerdata(mkrdata, markers, var_type='_V')
-                footctrv = np.linalg.norm(footctrv_, axis=1)
-                toeoff_vel = footctrv[toeoff_fr]
-                # FIXME: parameters should be somewhere else
-                swing_vel = _get_foot_swing_velocity(footctrv, 12*1000/frate,
-                                                     .5)
-                logger.debug('swing vel %.2f, toeoff vel %.2f' %
-                             (swing_vel, toeoff_vel))
-                if toeoff_vel < .25 * swing_vel:
-                    logger.debug('toeoff velocity too low')
-                    ok = False
-                    continue
-
-                # foot box
-                footmins, footmaxes = get_footbox(mkrdata, side)
+                footmins, footmaxes = _get_foot_points(mkrdata, side)
                 xmin_ok = mins[0] < footmins[strike_fr, 0] < maxes[0]
                 xmax_ok = mins[0] < footmaxes[strike_fr, 0] < maxes[0]
                 ymin_ok = mins[1] < footmins[strike_fr, 1] < maxes[1]
                 ymax_ok = mins[1] < footmaxes[strike_fr, 1] < maxes[1]
                 ok = xmin_ok and xmax_ok and ymin_ok and ymax_ok
-                logger.debug('footbox at strike: %s' % ok)
+                logger.debug('contact at strike: %s' % ok)
                 xmin_ok = mins[0] < footmins[toeoff_fr, 0] < maxes[0]
                 xmax_ok = mins[0] < footmaxes[toeoff_fr, 0] < maxes[0]
                 ymin_ok = mins[1] < footmins[toeoff_fr, 1] < maxes[1]
                 ymax_ok = mins[1] < footmaxes[toeoff_fr, 1] < maxes[1]
                 ok &= xmin_ok and xmax_ok and ymin_ok and ymax_ok
-                logger.debug('footbox at toeoff: %s' % ok)
+                logger.debug('contact at toeoff: %s' % ok)
 
                 if ok:
-                    if this_valid:
+                    if valid:  # already got valid contact for other foot
                         raise GaitDataError('got valid contact for both feet')
-                    this_valid = side
-                    logger.debug('on-plate check ok for side %s' % this_valid)
+                    else:
+                        valid = side
+                        logger.debug('on-plate check ok for side %s' % valid)
 
-        if not this_valid:
-            logger.debug('plate %d: no valid foot strike' % plate_ind)
-        else:
+        if valid:
             logger.debug('plate %d: valid foot strike on %s at frame %d'
-                         % (plate_ind, this_valid, strike_fr))
-            if this_valid:
-                results['valid'].add(this_valid)
-            results[this_valid+'_strikes'].append(strike_fr)
-            results[this_valid+'_toeoffs'].append(toeoff_fr)
+                         % (plate_ind, valid, strike_fr))
+            results['valid'].add(valid)
+            results[valid+'_strikes'].append(strike_fr)
+            results[valid+'_toeoffs'].append(toeoff_fr)
+        else:
+            logger.debug('plate %d: no valid foot strike' % plate_ind)
 
     logger.debug(results)
     return results

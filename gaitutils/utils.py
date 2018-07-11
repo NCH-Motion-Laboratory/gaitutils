@@ -123,6 +123,7 @@ def _get_foot_points(mkrdata, context):
     FOOT_WIDTH1 = 1
     FOOT_WIDTH2 = .5
     # marker data as N x 3 matrices
+    # FIXME: swapped HEE-TOE markers will screw things up here
     heeP = mkrdata[context+'HEE_P']
     toeP = mkrdata[context+'TOE_P']
     ankP = mkrdata[context+'ANK_P']
@@ -135,7 +136,7 @@ def _get_foot_points(mkrdata, context):
     ha = _normalize(ha_)
     # estimated big toe coordinate (end of foot)
     # bigtoeP = heeP + ht_ * 1.2  # rel to HEE-TOE
-    bigtoeP = heeP + ht * (ha_len[:, np.newaxis] * 4)  # rel to HEE-ANK
+    bigtoeP = heeP + ht * np.median(ha_len) * 4  # rel to HEE-ANK
     # vectors orthogonal to foot plane, pointing upwards
     hz = np.cross(ha, ht)
     # unit vectors for lateral direction (HEE-TOE line to ankle marker)

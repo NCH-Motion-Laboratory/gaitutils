@@ -96,7 +96,8 @@ def pid():
         try:
             if proc.name() == PROCNAME:
                 return proc.pid
-        except psutil.AccessDenied:
+        # catch NoSuchProcess for procs that disappear inside loop
+        except (psutil.AccessDenied, psutil.NoSuchProcess):
             pass
     return None
 

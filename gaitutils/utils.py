@@ -112,7 +112,7 @@ def _normalize(V):
     Vn = np.linalg.norm(V, axis=1)
     # quietly return all nans for length zero vectors
     with np.errstate(divide='ignore', invalid='ignore'):
-        return (V.T / Vn).T
+        return V / Vn[:, np.newaxis]
 
 
 def _get_foot_points(mkrdata, context):
@@ -122,22 +122,25 @@ def _get_foot_points(mkrdata, context):
     # and from HEE-TOE line to foot edge away from ANK (2)
     FOOT_WIDTH1 = 1
     FOOT_WIDTH2 = .5
+    # marker data as N x 3 matrices
     heeP = mkrdata[context+'HEE_P']
     toeP = mkrdata[context+'TOE_P']
     ankP = mkrdata[context+'ANK_P']
     # heel - toe vectors
     ht_ = toeP - heeP
     ht = _normalize(ht_)
-    # estimated big toe coordinate (end of foot)
-    bigtoeP = heeP + ht_ * cfg.autoproc.foot_relative_len
     # heel - ankle vectors
     ha_ = ankP - heeP
+    ha_len = np.linalg.norm(ha_, axis=1)
     ha = _normalize(ha_)
+    # estimated big toe coordinate (end of foot)
+    # bigtoeP = heeP + ht_ * 1.2  # rel to HEE-TOE
+    bigtoeP = heeP + ht * (ha_len[:, np.newaxis] * 3.5)  # rel to HEE-ANK
     # vectors orthogonal to foot plane, pointing upwards
     hz = np.cross(ha, ht)
-    # unit vectors for lateral direction HEE-TOE line to ankle marker)
+    # unit vectors for lateral direction (HEE-TOE line to ankle marker)
     hl = _normalize(np.cross(ht, hz))
-    # length from HEE-TOE line to ankle marker)
+    # length from HEE-TOE line to ankle marker (lateral "half width")
     lat = (hl.T * np.sum(ha_ * hl, axis=1)).T
     # corners defining the foot polygon
     c0 = heeP

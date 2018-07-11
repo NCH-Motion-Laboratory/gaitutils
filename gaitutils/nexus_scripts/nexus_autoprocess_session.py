@@ -180,19 +180,20 @@ def _do_autoproc(enffiles, update_eclipse=True):
 
         track_mkr = cfg.autoproc.track_markers[0]
         subj_pos = mkrdata[track_mkr]
-        subj_vel = mkrdata[track_mkr+'_V']
 
-        # check principal coordinate increase/decrease in movement dir
+        # main direction in lab frame (1,2,3 for x,y,z)
+        gait_dim = utils.principal_movement_direction(subj_pos)
+        # +1/-1 for forward/backward (coord increase / decrease)
+        gait_dir = np.median(np.diff(subj_pos, axis=0), axis=0)[gait_dim]
+        # write Eclipse key for direction
         if ('dir_forward' in cfg.autoproc.enf_descriptions and 'dir_backward'
            in cfg.autoproc.enf_descriptions):
-            gait_dim = utils.principal_movement_direction(subj_pos)
-
-            gait_dir = np.median(np.diff(subj_pos, axis=0), axis=0)[gait_dim]
             dir_str = 'dir_forward' if gait_dir == 1 else 'dir_backward'
             dir_desc = cfg.autoproc.enf_descriptions[dir_str]
             eclipse_str += '%s,' % dir_desc
 
         # compute gait velocity
+        subj_vel = mkrdata[track_mkr+'_V'][:, gait_dim]
         median_vel = np.median(np.abs(subj_vel[np.where(subj_vel)]))
         median_vel_ms = median_vel * vicon.GetFrameRate() / 1000.
         logger.debug('median forward velocity: %.2f m/s' % median_vel_ms)

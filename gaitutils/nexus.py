@@ -356,7 +356,7 @@ def get_forceplate_data(vicon):
 def get_marker_data(vicon, markers, trim_gaps=True):
     """ From Nexus, get position, velocity and acceleration for
     specified markers.
-    trim_gaps: ignore leading and trailing gaps"""
+    trim_gaps: ignore leading and trailing gaps """
     if not isinstance(markers, list):
         markers = [markers]
     subj = get_subjectnames()
@@ -367,6 +367,7 @@ def get_marker_data(vicon, markers, trim_gaps=True):
             raise GaitDataError('Cannot read marker trajectory '
                                 'from Nexus: \'%s\'' % marker)
         mP = np.array([x, y, z]).transpose()
+        mkrdata[marker] = mP
         mkrdata[marker + '_P'] = mP
         mkrdata[marker + '_V'] = np.gradient(mP)[0]
         mkrdata[marker + '_A'] = np.gradient(mkrdata[marker+'_V'])[0]

@@ -144,6 +144,7 @@ def get_marker_data(c3dfile, markers, trim_gaps=True):
         except RuntimeError:
             raise GaitDataError('Cannot read variable %s from c3d file'
                                 % marker)
+        mkrdata[marker] = mP
         mkrdata[marker + '_P'] = mP
         mkrdata[marker + '_V'] = np.gradient(mP)[0]
         mkrdata[marker + '_A'] = np.gradient(mkrdata[marker+'_V'])[0]

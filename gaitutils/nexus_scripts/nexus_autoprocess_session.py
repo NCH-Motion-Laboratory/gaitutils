@@ -68,7 +68,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
 
     def fail(trial, reason):
         """Abort processing: mark and save trial"""
-        fail_desc = cfg.autoproc.enf_descriptions[reason]
+        fail_desc = (cfg.autoproc.enf_descriptions[reason] if reason in
+                     cfg.autoproc.enf_descriptions else reason)
         logger.debug('preprocessing failed: %s' % fail_desc)
         trial['recon_ok'] = False
         trial['description'] = fail_desc
@@ -146,6 +147,12 @@ def _do_autoproc(enffiles, update_eclipse=True):
         if gaps_found:
             fail(trial, 'gaps')
             continue
+
+        # plug-in gait labelling sanity checks
+        if utils.is_plugingait_set(mkrdata):
+            if not utils.check_plugingait_set(mkrdata):
+                fail(trial, 'label_failure')
+                continue
 
         # preprocessing ok
         trial['recon_ok'] = True

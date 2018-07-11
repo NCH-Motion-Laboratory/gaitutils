@@ -48,6 +48,40 @@ def avg_markerdata(mkrdata, markers, var_type='_P'):
     return mP
 
 
+def is_plugingait_set(mkrdata):
+    """ Check whether marker data set corresponds to Plug-in Gait (full body or
+    lower body only) """
+    mkrs = set(mkrdata.keys())
+    # required markers
+    mkrs_pig = set(['RASI', 'LASI', 'LTHI', 'LKNE', 'LTIB', 'LANK', 'LHEE',
+                    'LTOE', 'RTHI', 'RKNE', 'RTIB', 'RANK', 'RHEE', 'RTOE'])
+    # in addition, accept either RPSI/LPSI or SACR
+    pelvis_markers = set(['RPSI', 'LPSI'])
+    sacr = set(['SACR'])
+    return (mkrs_pig.issubset(mkrs) and (pelvis_markers.issubset(mkrs) or
+            sacr.issubset(mkrs)))
+
+
+def check_plugingait_set(mkrdata):
+    """ Sanity checks for Plug-in Gait marker set """
+    if not is_plugingait_set(mkrdata):
+        raise ValueError('Not a Plug-in Gait set')
+    # vector orientation checks
+    MAX_ANGLE = 90  # max angle to consider vectors 'similarly oriented'
+    for side in ['L', 'R']:
+        ht = _normalize(mkrdata[side+'TOE'] - mkrdata[side+'HEE'])
+        if side+'PSI' in mkrdata:
+            pa = _normalize(mkrdata[side+'ASI'] - mkrdata[side+'PSI'])
+        elif 'SACR' in mkrdata:
+            pa = _normalize(mkrdata[side+'ASI'] - mkrdata['SACR'])
+        angs = np.arccos(np.sum(ht * pa, axis=1)) / np.pi * 180
+        if np.nanmedian(angs) > MAX_ANGLE:
+            logger.warning('%sHEE and %sTOE markers probably flipped'
+                           % (side, side))
+            return False
+        return True
+
+
 def principal_movement_direction(mP):
     """ Return principal movement direction (dimension of maximum variance) """
     return np.argmax(np.var(mP, axis=0))

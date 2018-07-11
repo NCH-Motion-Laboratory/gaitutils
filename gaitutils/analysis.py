@@ -25,7 +25,7 @@ def get_analysis(c3dfile, condition='unknown'):
     # compute and insert step width - not done by Nexus
     sw = _step_width(c3dfile)
     di[condition]['Step Width'] = dict()
-    # uses avg of all cycles from trial
+    # XXX: uses avg of all cycles from trial
     di[condition]['Step Width']['Right'] = np.array(sw['R']).mean()
     di[condition]['Step Width']['Left'] = np.array(sw['L']).mean()
     di[condition]['Step Width']['unit'] = 'mm'
@@ -89,6 +89,7 @@ def _step_width(source):
     sw = dict()
     mkr = 'TOE'  # marker name without context
     mkrdata = tr.marker_data
+    # FIXME: why not use cycles here?
     for context, strikes in zip(['L', 'R'], [tr.lstrikes, tr.rstrikes]):
         sw[context] = list()
         nstrikes = len(strikes)

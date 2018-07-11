@@ -69,6 +69,7 @@ def check_plugingait_set(mkrdata):
     # vector orientation checks
     MAX_ANGLE = 90  # max angle to consider vectors 'similarly oriented'
     for side in ['L', 'R']:
+        # compare HEE-TOE line to pelvis orientation
         ht = _normalize(mkrdata[side+'TOE'] - mkrdata[side+'HEE'])
         if side+'PSI' in mkrdata:
             pa = _normalize(mkrdata[side+'ASI'] - mkrdata[side+'PSI'])
@@ -158,9 +159,9 @@ def _get_foot_points(mkrdata, context):
     FOOT_WIDTH2 = .5
     # marker data as N x 3 matrices
     # FIXME: swapped HEE-TOE markers will screw things up here
-    heeP = mkrdata[context+'HEE_P']
-    toeP = mkrdata[context+'TOE_P']
-    ankP = mkrdata[context+'ANK_P']
+    heeP = mkrdata[context+'HEE']
+    toeP = mkrdata[context+'TOE']
+    ankP = mkrdata[context+'ANK']
     # heel - toe vectors
     ht_ = toeP - heeP
     ht = _normalize(ht_)
@@ -221,7 +222,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                     cfg.autoproc.left_foot_markers)
     if mkrdata is None:
         mkrdata = read_data.get_marker_data(source, foot_markers)
-    pos = sum([mkrdata[name+'_P'] for name in foot_markers])
+    pos = sum([mkrdata[name] for name in foot_markers])
     fwd_dir = np.argmax(np.var(pos, axis=0))
     logger.debug('gait forward direction seems to be %s' %
                  {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])

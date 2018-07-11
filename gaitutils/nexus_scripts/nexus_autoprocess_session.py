@@ -179,7 +179,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         eclipse_str += ','
 
         track_mkr = cfg.autoproc.track_markers[0]
-        subj_pos = mkrdata[track_mkr+'_P']
+        subj_pos = mkrdata[track_mkr]
         subj_vel = mkrdata[track_mkr+'_V']
 
         # check principal coordinate increase/decrease in movement dir

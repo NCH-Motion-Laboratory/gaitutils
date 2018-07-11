@@ -486,8 +486,8 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
                                       var_type='_V')
     lfootctrv = np.linalg.norm(lfootctrv_, axis=1)
     # position data: use ANK marker
-    rfootctrP = mkrdata['RANK_P']
-    lfootctrP = mkrdata['LANK_P']
+    rfootctrP = mkrdata['RANK']
+    lfootctrP = mkrdata['LANK']
 
     strikes_all = {}
     toeoffs_all = {}
@@ -574,7 +574,7 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
 
         # select events for which the foot is close enough to center frame
         if events_range:
-            mP = mkrdata[cfg.autoproc.track_markers[0] + '_P']
+            mP = mkrdata[cfg.autoproc.track_markers[0]]
             fwd_dim = utils.principal_movement_direction(mP)
             strike_pos = footctrP[strikes, fwd_dim]
             dist_ok = np.logical_and(strike_pos > events_range[0],

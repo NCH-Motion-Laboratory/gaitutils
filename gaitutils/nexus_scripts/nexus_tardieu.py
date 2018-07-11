@@ -500,9 +500,9 @@ class TardieuPlot(object):
         mnames = cfg.tardieu.marker_names
         data = read_data.get_marker_data(source, mnames)
 
-        P0 = data[mnames[0]+'_P']
-        P1 = data[mnames[1]+'_P']
-        P2 = data[mnames[2]+'_P']
+        P0 = data[mnames[0]]
+        P1 = data[mnames[1]]
+        P2 = data[mnames[2]]
         # stack so that marker changes along 2nd dim for segment_angles
         Pall = np.stack([P0, P1, P2], axis=1)
         # compute segment angles (deg)

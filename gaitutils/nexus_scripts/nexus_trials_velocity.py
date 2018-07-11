@@ -23,7 +23,7 @@ def _trial_median_velocity(source):
         frate = read_data.get_metadata(source)['framerate']
         mkr = cfg.autoproc.track_markers[0]
         mdata = read_data.get_marker_data(source, mkr)
-        pos_ = mdata[mkr+'_P']
+        pos_ = mdata[mkr]
         dim = utils.principal_movement_direction(pos_)
         vel_ = read_data.get_marker_data(source, mkr)[mkr+'_V'][:, dim]
     except (GaitDataError, ValueError):

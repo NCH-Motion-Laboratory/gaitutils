@@ -171,7 +171,7 @@ def _get_foot_points(mkrdata, context):
     ha = _normalize(ha_)
     # estimated big toe coordinate (end of foot)
     # bigtoeP = heeP + ht_ * 1.2  # rel to HEE-TOE
-    bigtoeP = heeP + ht * np.median(ha_len) * 4  # rel to HEE-ANK
+    bigtoeP = heeP + ht * np.median(ha_len) * cfg.autoproc.foot_relative_len
     # vectors orthogonal to foot plane, pointing upwards
     hz = np.cross(ha, ht)
     # unit vectors for lateral direction (HEE-TOE line to ankle marker)

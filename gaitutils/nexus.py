@@ -332,7 +332,8 @@ def _get_1_forceplate_data(vicon, devid):
         cop_w[:, 0] = np.clip(cop_w[:, 0], lb[0], ub[0])
         cop_w[:, 1] = np.clip(cop_w[:, 1], lb[1], ub[1])
     return {'F': F, 'M': M, 'Ftot': Ftot, 'CoP': cop_w,
-            'wR': wR, 'wT': wT, 'lowerbounds': lb, 'upperbounds': ub}
+            'wR': wR, 'wT': wT, 'lowerbounds': lb, 'upperbounds': ub,
+            'cor_w': cor_w}
 
 
 def get_forceplate_data(vicon):

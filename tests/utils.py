@@ -12,6 +12,7 @@ import os.path as op
 import os
 import subprocess
 import time
+import logging
 
 from gaitutils import nexus, cfg
 
@@ -57,6 +58,7 @@ def nottest(f):
 def run_tests_if_main():
     """Run tests in a given file if it is run as a script. Adapted from
     mne-python"""
+    logging.basicConfig(level='DEBUG')
     local_vars = inspect.currentframe().f_back.f_locals
     if not local_vars.get('__name__', '') == '__main__':
         return

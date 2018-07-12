@@ -35,8 +35,8 @@ def test_nexus_plot():
     _nexus_open_trial('girl6v', trialname)
     pl = gaitutils.Plotter(interactive=False)
     pl.open_nexus_trial()
-    pl.layout = [['HipMomentX']]
-    pl.plot_trial()
+    pl.layout = [['HipAnglesX']]
+    pl.plot_trial(model_cycles='all')
 
 
 run_tests_if_main()

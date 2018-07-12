@@ -85,7 +85,7 @@ def test_fp_detection():
 
 def test_read_data_compare_nexus_and_c3d():
     """Compare data reads from Nexus and corresponding Nexus written .c3d """
-  # can only get 3 decimals of agreement between Nexus/c3d model vars (??)
+    # can only get 3 decimals of agreement between Nexus/c3d model vars (??)
     NDEC = 3
     # vars to test
     modelvars = models.pig_lowerbody.varlabels.keys()

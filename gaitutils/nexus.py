@@ -445,7 +445,6 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
     Filtering is important to get reasonably smooth derivatives.
     """
 
-
     frate = vicon.GetFrameRate()
     if not frate:
         raise GaitDataError('Cannot get framerate from Nexus')

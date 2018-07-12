@@ -179,7 +179,7 @@ def _get_foot_points(mkrdata, context):
     # length from HEE-TOE line to ankle marker (lateral "half width")
     lat = (hl.T * np.sum(ha_ * hl, axis=1)).T
     # corners defining the foot polygon
-    c0 = heeP
+    c0 = heeP + ht * cfg.autoproc.marker_diam/2
     c1 = bigtoeP - FOOT_WIDTH2 * lat
     c2 = bigtoeP + FOOT_WIDTH1 * lat
     # minima and maxima in xy plane
@@ -307,20 +307,23 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
             # FIXME: use plate corners and in-polygon algorithm
             # (no need to assume coord axes aligned with plate)
             mins, maxes = fp['lowerbounds'], fp['upperbounds']
+            # let foot settle for some tens of msec after strike
+            settle_fr = int(50/1000 * info['framerate'])
+            fr0 = strike_fr + settle_fr
             logger.debug('plate edges x: %.2f to %.2f  y: %.2f to %.2f' %
                          (mins[0], maxes[0], mins[1], maxes[1]))
             for side in ['R', 'L']:
                 logger.debug('checking contact for %s' % side)
                 footmins, footmaxes = _get_foot_points(mkrdata, side)
                 logger.debug('foot edges x: %.2f to %.2f  y: %.2f to %.2f' %
-                             (footmins[strike_fr, 0], footmaxes[strike_fr, 0],
-                              footmins[strike_fr, 1], footmaxes[strike_fr, 1]))
-                xmin_ok = mins[0] < footmins[strike_fr, 0] < maxes[0]
-                xmax_ok = mins[0] < footmaxes[strike_fr, 0] < maxes[0]
+                             (footmins[fr0, 0], footmaxes[fr0, 0],
+                              footmins[fr0, 1], footmaxes[fr0, 1]))
+                xmin_ok = mins[0] < footmins[fr0, 0] < maxes[0]
+                xmax_ok = mins[0] < footmaxes[fr0, 0] < maxes[0]
                 if not (xmin_ok and xmax_ok):
                     logger.debug('off plate in x dir')
-                ymin_ok = mins[1] < footmins[strike_fr, 1] < maxes[1]
-                ymax_ok = mins[1] < footmaxes[strike_fr, 1] < maxes[1]
+                ymin_ok = mins[1] < footmins[fr0, 1] < maxes[1]
+                ymax_ok = mins[1] < footmaxes[fr0, 1] < maxes[1]
                 if not (ymin_ok and ymax_ok):
                     logger.debug('off plate in y dir')
                 ok = xmin_ok and xmax_ok and ymin_ok and ymax_ok

@@ -72,15 +72,19 @@ def test_nexus_reader():
 
 def test_fp_detection():
     """Test autodetection of forceplate contact"""
+    BOTH_OK = set(['L', 'R'])
+    L_OK = set(['L'])
+    R_OK = set(['R'])
+    NOT_OK = set()
     _nexus_open_trial('girl6v', '2015_10_22_girl6v_IN02')
     valid = detect_forceplate_events(vicon)['valid']
-    assert_in('R', valid)
+    assert_equal(valid, R_OK)
     _nexus_open_trial('girl6v', '2015_10_22_girl6v_IN03')
     valid = detect_forceplate_events(vicon)['valid']
-    assert_in('R', valid)
+    assert_equal(valid, R_OK)
     _nexus_open_trial('girl6v', '2015_10_22_girl6v_IN06')
     valid = detect_forceplate_events(vicon)['valid']
-    assert_equal(valid, set())
+    assert_equal(valid, NOT_OK)
 
 
 def test_read_data_compare_nexus_and_c3d():

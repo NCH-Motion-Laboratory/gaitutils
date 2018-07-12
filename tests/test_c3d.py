@@ -79,10 +79,11 @@ def test_c3d_fp_detection():
     c3d2 = 'testdata/test_c3ds/double_contact.c3d'
     valid = detect_forceplate_events(c3d2)['valid']
     assert_equal(valid, NOT_OK)
-    # almost overstepped but should be flagged as ok - disabled for now
-    # c3d3 = 'testdata/test_c3ds/barely_ok.c3d'
-    # valid = detect_forceplate_events(c3d3)['valid']
-    # assert_equal(valid, R_OK)
+    # almost overstepped but should be flagged as ok
+    # too hard - disabled for now
+    #c3d3 = 'testdata/test_c3ds/barely_ok.c3d'
+    #valid = detect_forceplate_events(c3d3)['valid']
+    #assert_equal(valid, R_OK)
     # inside but on the edge
     c3d4 = 'testdata/test_c3ds/side_edge.c3d'
     valid = detect_forceplate_events(c3d4)['valid']
@@ -93,6 +94,9 @@ def test_c3d_fp_detection():
     c3d4 = 'testdata/test_c3ds/adult_almost_overstepped.c3d'
     valid = detect_forceplate_events(c3d4)['valid']
     assert_equal(valid, L_OK)
+    c3d4 = 'testdata/test_c3ds/adult_almost_understepped.c3d'
+    valid = detect_forceplate_events(c3d4)['valid']
+    assert_equal(valid, R_OK)
     c3d4 = 'testdata/test_c3ds/adult_overstep.c3d'
     valid = detect_forceplate_events(c3d4)['valid']
     assert_equal(valid, NOT_OK)

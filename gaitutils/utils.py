@@ -155,8 +155,8 @@ def _get_foot_points(mkrdata, context):
     as a triangle"""
     # distances from HEE-TOE line to foot edge towards ANK (1)
     # and from HEE-TOE line to foot edge away from ANK (2)
-    FOOT_WIDTH1 = 1
-    FOOT_WIDTH2 = .5
+    FOOT_WIDTH1 = 1.5
+    FOOT_WIDTH2 = .75
     # marker data as N x 3 matrices
     # FIXME: swapped HEE-TOE markers will screw things up here
     heeP = mkrdata[context+'HEE']
@@ -176,14 +176,16 @@ def _get_foot_points(mkrdata, context):
     hz = np.cross(ha, ht)
     # unit vectors for lateral direction (HEE-TOE line to ankle marker)
     hl = _normalize(np.cross(ht, hz))
-    # length from HEE-TOE line to ankle marker (lateral "half width")
-    lat = (hl.T * np.sum(ha_ * hl, axis=1)).T
+    # project HEE-ANK line to lateral dir
+    lat = hl * np.sum(ha_ * hl, axis=1)[:, np.newaxis]
     # corners defining the foot polygon
     c0 = heeP + ht * cfg.autoproc.marker_diam/2  # heel edge
-    c1 = bigtoeP - FOOT_WIDTH2 * lat
-    c2 = bigtoeP + FOOT_WIDTH1 * lat
+    c1 = bigtoeP + lat * FOOT_WIDTH1
+    c2 = bigtoeP - lat * FOOT_WIDTH2
     logger.debug('foot length estimate: %.1f mm' %
                  np.nanmedian(np.linalg.norm(c0 - bigtoeP, axis=1)))
+    logger.debug('foot width estimate: %.1f mm' %
+                 np.nanmedian(np.linalg.norm(c1 - c2, axis=1)))
     # minima and maxima in xy plane
     # ignore nans in reduce()
     with np.errstate(divide='ignore', invalid='ignore'):

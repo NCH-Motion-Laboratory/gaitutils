@@ -179,9 +179,11 @@ def _get_foot_points(mkrdata, context):
     # length from HEE-TOE line to ankle marker (lateral "half width")
     lat = (hl.T * np.sum(ha_ * hl, axis=1)).T
     # corners defining the foot polygon
-    c0 = heeP + ht * cfg.autoproc.marker_diam/2
+    c0 = heeP + ht * cfg.autoproc.marker_diam/2  # heel edge
     c1 = bigtoeP - FOOT_WIDTH2 * lat
     c2 = bigtoeP + FOOT_WIDTH1 * lat
+    logger.debug('foot length estimate: %.1f mm' %
+                 np.nanmedian(np.linalg.norm(c0 - bigtoeP, axis=1)))
     # minima and maxima in xy plane
     # ignore nans in reduce()
     with np.errstate(divide='ignore', invalid='ignore'):

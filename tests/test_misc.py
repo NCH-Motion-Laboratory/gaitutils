@@ -10,7 +10,7 @@ import os.path as op
 import numpy as np
 import sys
 from nose.tools import (assert_set_equal, assert_in, assert_equal,
-                        assert_raises, assert_true)
+                        assert_raises, assert_true, assert_false)
 from numpy.testing import assert_allclose
 from shutil import copyfile
 from PyQt5 import uic, QtGui, QtWidgets
@@ -19,7 +19,8 @@ import logging
 from gaitutils.config import cfg
 from gaitutils.numutils import segment_angles, best_match
 from gaitutils import eclipse, Trial
-from gaitutils.utils import detect_forceplate_events
+from gaitutils.utils import (detect_forceplate_events, is_plugingait_set,
+                             check_plugingait_set)
 from gaitutils.nexus_scripts import nexus_menu
 from utils import run_tests_if_main, nottest
 
@@ -31,6 +32,16 @@ logger = logging.getLogger(__name__)
 trial_enf = 'testdata/anon.Trial.enf'
 trial_enf_write = 'testdata/writetest.enf'
 
+
+def pig_mkrdata():
+    """ Fullbody PiG marker data (empty values) """
+    _pig = ['LFHD', 'RFHD', 'LBHD', 'RBHD', 'C7', 'T10', 'CLAV', 'STRN',
+            'RBAK', 'LSHO', 'LELB', 'LWRA', 'LWRB', 'LFIN', 'RSHO', 'RELB',
+            'RWRA', 'RWRB', 'RFIN', 'LASI', 'RASI', 'SACR', 'LTHI', 'LKNE',
+            'LTIB', 'LANK', 'LHEE', 'LTOE', 'RTHI', 'RKNE', 'RTIB', 'RANK',
+            'RHEE', 'RTOE']
+    return {mkr: None for mkr in _pig}
+
 # FIXME: causes crash
 def _test_qt_menu():
     """See if Python menu + options dialog can be opened"""
@@ -39,6 +50,41 @@ def _test_qt_menu():
     is not entered) but can be used to test various methods. """
     menu = nexus_menu.Gaitmenu()
     dlg = nexus_menu.OptionsDialog()
+
+
+def test_is_plugingait_set():
+    _pig = ['LFHD', 'RFHD', 'LBHD', 'RBHD', 'C7', 'T10', 'CLAV', 'STRN',
+            'RBAK', 'LSHO', 'LELB', 'LWRA', 'LWRB', 'LFIN', 'RSHO', 'RELB',
+            'RWRA', 'RWRB', 'RFIN', 'LASI', 'RASI', 'SACR', 'LTHI', 'LKNE',
+            'LTIB', 'LANK', 'LHEE', 'LTOE', 'RTHI', 'RKNE', 'RTIB', 'RANK',
+            'RHEE', 'RTOE']
+    pig = {mkr: None for mkr in _pig}
+    assert_true(is_plugingait_set(pig))
+    pig.pop('SACR')
+    assert_false(is_plugingait_set(pig))
+    pig['RPSI'] = None
+    pig['LPSI'] = None
+    assert_true(is_plugingait_set(pig))
+    pig.pop('RHEE')
+    assert_false(is_plugingait_set(pig))
+
+
+def test_check_plugingait_set():
+    mkrdata = pig_mkrdata()
+    # fake some marker data
+    # pelvis and feet aligned
+    mkrdata['SACR'] = np.atleast_2d([1, 0, 5])
+    mkrdata['LASI'] = np.atleast_2d([0, 1, 5])
+    mkrdata['RASI'] = np.atleast_2d([2, 1, 5])
+    mkrdata['RHEE'] = np.atleast_2d([2, 1, 0])
+    mkrdata['RTOE'] = np.atleast_2d([2, 1.5, 0])
+    mkrdata['LHEE'] = np.atleast_2d([0, 1, 0])
+    mkrdata['LTOE'] = np.atleast_2d([0, 1.5, 0])
+    assert_true(check_plugingait_set(mkrdata))
+    # flip heel and toe markers
+    mkrdata['LHEE'] = np.atleast_2d([0, 1.5, 0])
+    mkrdata['LTOE'] = np.atleast_2d([0, 1, 0])
+    assert_false(check_plugingait_set(mkrdata))
 
 
 def test_segment_angles():

@@ -150,47 +150,46 @@ def _normalize(V):
         return V / Vn[:, np.newaxis]
 
 
+def pml(V):
+    logger.debug('length %g' % np.nanmedian(np.linalg.norm(V, axis=1)))
+
+
 def _get_foot_points(mkrdata, context):
     """Estimate points in the xy plane enclosing the foot. Foot is modeled
     as a triangle"""
-    # distances from HEE-TOE line to foot edge towards ANK (1)
-    # and from HEE-TOE line to foot edge away from ANK (2)
-    FOOT_WIDTH1 = 1.5
-    FOOT_WIDTH2 = .75
     # marker data as N x 3 matrices
-    # FIXME: swapped HEE-TOE markers will screw things up here
     heeP = mkrdata[context+'HEE']
     toeP = mkrdata[context+'TOE']
     ankP = mkrdata[context+'ANK']
     # heel - toe vectors
-    ht_ = toeP - heeP
-    ht = _normalize(ht_)
+    htV = toeP - heeP
+    htVn = _normalize(htV)
     # heel - ankle vectors
-    ha_ = ankP - heeP
-    ha_len = np.linalg.norm(ha_, axis=1)
-    ha = _normalize(ha_)
-    # estimated big toe coordinate (end of foot)
-    # bigtoeP = heeP + ht_ * 1.2  # rel to HEE-TOE
-    bigtoeP = heeP + ht * np.median(ha_len) * cfg.autoproc.foot_relative_len
-    # vectors orthogonal to foot plane, pointing upwards
-    hz = np.cross(ha, ht)
-    # unit vectors for lateral direction (HEE-TOE line to ankle marker)
-    hl = _normalize(np.cross(ht, hz))
-    # project HEE-ANK line to lateral dir
-    lat = hl * np.sum(ha_ * hl, axis=1)[:, np.newaxis]
-    # corners defining the foot polygon
-    c0 = heeP + ht * cfg.autoproc.marker_diam/2  # heel edge
-    c1 = bigtoeP + lat * FOOT_WIDTH1
-    c2 = bigtoeP - lat * FOOT_WIDTH2
+    haV = ankP - heeP
+    ha_len = np.linalg.norm(haV, axis=1)
+    # estimate for end point of foot (just beyond 2nd toe):
+    # heel-toe vector * heel-ankle length * constant
+    foot_end = heeP + htVn * np.median(ha_len) * cfg.autoproc.foot_relative_len
+    # projection of HEE-ANK to HEE-TOE line
+    ha_htV = htVn * np.sum(haV*htVn, axis=1)[:, np.newaxis]
+    # lateral ANK vector (HEE-TOE line to ANK)
+    lankV = haV - ha_htV
+    # edge points are coplanar with markers but not with the foot
+    # lateral foot edge
+    lat_edge = foot_end + lankV
+    # medial foot edge
+    med_edge = foot_end - lankV
+    # heel edge (compensate for marked position)
+    heel_edge = heeP + htVn * cfg.autoproc.marker_diam/2
     logger.debug('foot length estimate: %.1f mm' %
-                 np.nanmedian(np.linalg.norm(c0 - bigtoeP, axis=1)))
+                 np.nanmedian(np.linalg.norm(heel_edge-foot_end, axis=1)))
     logger.debug('foot width estimate: %.1f mm' %
-                 np.nanmedian(np.linalg.norm(c1 - c2, axis=1)))
+                 np.nanmedian(np.linalg.norm(lat_edge-med_edge, axis=1)))
     # minima and maxima in xy plane
     # ignore nans in reduce()
     with np.errstate(divide='ignore', invalid='ignore'):
-        pmin = np.minimum.reduce([c0, c1, c2])
-        pmax = np.maximum.reduce([c0, c1, c2])
+        pmin = np.minimum.reduce([heel_edge, lat_edge, med_edge])
+        pmax = np.maximum.reduce([heel_edge, lat_edge, med_edge])
     return pmin, pmax
 
 

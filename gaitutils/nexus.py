@@ -492,11 +492,10 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
     toeoffs_all = {}
 
     # loop: same operations for left / right foot
-    for ind, footctrv in enumerate((rfootctrv, lfootctrv)):
-        this_side = 'R' if ind == 0 else 'L'
-        logger.debug('marking side %s' % this_side)
+    for context, footctrP, footctrv in zip(('R', 'L'), (rfootctrP, lfootctrP),
+                                           (rfootctrv, lfootctrv)):
+        logger.debug('marking side %s' % context)
         # foot center position
-        footctrP = rfootctrP if ind == 0 else lfootctrP
         # filter scalar velocity data to suppress noise and spikes
         footctrv = signal.medfilt(footctrv, PREFILTER_MEDIAN_WIDTH)
         # get peak (swing) velocity
@@ -504,12 +503,12 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
                                               MIN_SWING_VELOCITY)
 
         # compute thresholds
-        threshold_fall_ = (vel_thresholds[this_side+'_strike'] or
+        threshold_fall_ = (vel_thresholds[context+'_strike'] or
                            maxv * REL_THRESHOLD_FALL)
-        threshold_rise_ = (vel_thresholds[this_side+'_toeoff'] or
+        threshold_rise_ = (vel_thresholds[context+'_toeoff'] or
                            maxv * REL_THRESHOLD_RISE)
         logger.debug('side: %s, default thresholds fall/rise: %.2f/%.2f'
-                     % (this_side, maxv * REL_THRESHOLD_FALL,
+                     % (context, maxv * REL_THRESHOLD_FALL,
                         maxv * REL_THRESHOLD_RISE))
         logger.debug('using thresholds: %.2f/%.2f' % (threshold_fall_,
                                                       threshold_rise_))
@@ -586,12 +585,12 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
         # correct for force plate autodetected events
         if fp_events:
             # strikes
-            fp_strikes = fp_events[this_side+'_strikes']
+            fp_strikes = fp_events[context+'_strikes']
             fpc = best_match(strikes, fp_strikes)
             ok_ind = np.where(np.abs(fpc - strikes) < STRIKE_TOL)
             strikes[ok_ind] = fpc[ok_ind]
             # toeoffs
-            fp_toeoffs = fp_events[this_side+'_toeoffs']
+            fp_toeoffs = fp_events[context+'_toeoffs']
             fpc = best_match(toeoffs, fp_toeoffs)
             ok_ind = np.where(np.abs(fpc - toeoffs) < STRIKE_TOL)
             toeoffs[ok_ind] = fpc[ok_ind]
@@ -622,7 +621,7 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
         # create the events in Vicon Nexus
         # Nexus frame numbers are 1-based so add 1
         logger.debug('marking events in Nexus')
-        side_str = 'Right' if this_side == 'R' else 'Left'
+        side_str = 'Right' if context == 'R' else 'Left'
         if mark:
             for fr in strikes:
                 vicon.CreateAnEvent(subjectname, side_str, 'Foot Strike',
@@ -630,15 +629,16 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
             for fr in toeoffs:
                 vicon.CreateAnEvent(subjectname, side_str, 'Foot Off',
                                     int(fr+1), 0)
-        strikes_all[this_side] = strikes
-        toeoffs_all[this_side] = toeoffs
+        strikes_all[context] = strikes
+        toeoffs_all[context] = toeoffs
 
         # plot velocities w/ thresholds and marked events
         if plot:
-            if ind == 0:
+            first_call = context == 'R'
+            if first_call:
                 f, (ax1, ax2) = plt.subplots(2, 1)
-            ax = ax1 if ind == 0 else ax2
-            ax.plot(footctrv, 'g', label='foot center velocity ' + this_side)
+            ax = ax1 if first_call else ax2
+            ax.plot(footctrv, 'g', label='foot center velocity ' + context)
             # algorithm, fixed thresholds
             ax.plot(strikes, footctrv[strikes], 'kD', markersize=10,
                     label='strike')
@@ -646,10 +646,10 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
                     label='toeoff')
             ax.legend(numpoints=1, fontsize=10)
             ax.set_ylim(0, maxv+10)
-            if ind == 1:
+            if not first_call:
                 plt.xlabel('Frame')
             ax.set_ylabel('Velocity (mm/frame)')
-            ax.set_title('Left' if this_side == 'L' else 'Right')
+            ax.set_title('Left' if context == 'L' else 'Right')
 
     if plot:
         plt.show()

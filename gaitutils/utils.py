@@ -181,10 +181,9 @@ def _get_foot_points(mkrdata, context):
     med_edge = foot_end - lankV
     # heel edge (compensate for marked position)
     heel_edge = heeP + htVn * cfg.autoproc.marker_diam/2
-    logger.debug('foot length estimate: %.1f mm' %
-                 np.nanmedian(np.linalg.norm(heel_edge-foot_end, axis=1)))
-    logger.debug('foot width estimate: %.1f mm' %
-                 np.nanmedian(np.linalg.norm(lat_edge-med_edge, axis=1)))
+    logger.debug('estimated foot length: %.1f mm width %.1f mm' %
+                 (np.nanmedian(np.linalg.norm(heel_edge-foot_end, axis=1)),
+                  np.nanmedian(np.linalg.norm(lat_edge-med_edge, axis=1))))
     # minima and maxima in xy plane
     # ignore nans in reduce()
     with np.errstate(divide='ignore', invalid='ignore'):

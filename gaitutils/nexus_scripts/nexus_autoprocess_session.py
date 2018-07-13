@@ -106,7 +106,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         skip = [s.upper() for s in cfg.autoproc.eclipse_skip]
         if (edata['DESCRIPTION'].upper() in skip or
            edata['NOTES'].upper() in skip):
-                logger.debug('skipping based on description')
+                logger.debug('skipping based on description/notes')
                 # run preprocessing + save even for skipped trials, to mark
                 # them as processed - mostly so that Eclipse export to Polygon
                 # will work

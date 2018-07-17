@@ -22,7 +22,9 @@ NOTES:
 import os
 import numpy as np
 import argparse
+import time
 import logging
+
 
 from gaitutils import nexus, eclipse, utils, GaitDataError, sessionutils
 from gaitutils.config import cfg
@@ -260,11 +262,19 @@ def _do_autoproc(enffiles, update_eclipse=True):
 
     # all done; update Eclipse descriptions
     if cfg.autoproc.eclipse_write_key and update_eclipse:
+        # try to avoid a possible race condition where Nexus is still
+        # holding the .enf file open
+        time.sleep(.5)
         for filepath, trial in trials.items():
             enf_file = filepath + '.Trial.enf'
-            eclipse.set_eclipse_keys(enf_file, {cfg.autoproc.eclipse_write_key:
-                                     trial['description']},
-                                     update_existing=True)
+            try:
+                eclipse.set_eclipse_keys(enf_file,
+                                         {cfg.autoproc.eclipse_write_key:
+                                          trial['description']},
+                                         update_existing=True)
+            except IOError:
+                logger.warning('Could not write Eclipse description to %s' %
+                               enf_file)
     else:
         logger.debug('not updating Eclipse data')
 

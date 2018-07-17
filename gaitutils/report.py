@@ -60,7 +60,9 @@ def convert_videos(vidfiles, check_only=False):
     for vidfile, convfile in convfiles.items():
         if not op.isfile(convfile):
             # supply NO_WINDOW flag to prevent opening of consoles
-            p = subprocess.Popen([vidconv_bin]+vidconv_opts.split()+[vidfile],
+            cmd = [vidconv_bin]+vidconv_opts.split()+[vidfile]
+            cmd = [s.encode('iso-8859-1') for s in cmd]
+            p = subprocess.Popen(cmd,
                                  stdout=None, creationflags=0x08000000)
             procs.append(p)
     return procs

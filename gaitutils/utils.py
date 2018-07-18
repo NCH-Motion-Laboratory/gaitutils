@@ -64,11 +64,13 @@ def is_plugingait_set(mkrdata):
 
 def check_plugingait_set(mkrdata):
     """ Sanity checks for Plug-in Gait marker set """
+    is_ok = dict()
     if not is_plugingait_set(mkrdata):
         raise ValueError('Not a Plug-in Gait set')
     # vector orientation checks
     MAX_ANGLE = 90  # max angle to consider vectors 'similarly oriented'
     for side in ['L', 'R']:
+        is_ok[side] = True
         # compare HEE-TOE line to pelvis orientation
         ht = _normalize(mkrdata[side+'TOE'] - mkrdata[side+'HEE'])
         if side+'PSI' in mkrdata:
@@ -79,8 +81,8 @@ def check_plugingait_set(mkrdata):
         if np.nanmedian(angs) > MAX_ANGLE:
             logger.warning('%sHEE and %sTOE markers probably flipped'
                            % (side, side))
-            return False
-        return True
+            is_ok[side] = False
+    return is_ok['R'] and is_ok['L']
 
 
 def principal_movement_direction(mP):

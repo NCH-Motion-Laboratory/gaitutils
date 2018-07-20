@@ -95,6 +95,9 @@ def _do_autoproc(enffiles, update_eclipse=True):
         subjectname = nexus.get_metadata(vicon)['name']
         allmarkers = vicon.GetMarkerNames(subjectname)
         edata = eclipse.get_eclipse_keys(filepath_, return_empty=True)
+        logger.debug('type: %s' % edata['TYPE'])
+        logger.debug('description: %s' % edata['DESCRIPTION'])
+        logger.debug('notes: %s' % edata['NOTES'])
         eclipse_str = ''
         trial = dict()
         trials[filepath] = trial
@@ -106,8 +109,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
             trial['description'] = 'skipped'
             continue
         skip = [s.upper() for s in cfg.autoproc.eclipse_skip]
-        if (edata['DESCRIPTION'].upper() in skip or
-           edata['NOTES'].upper() in skip):
+        if (any([s in edata['DESCRIPTION'].upper() for s in skip]) or
+           any([s in edata['NOTES'].upper() for s in skip])):
                 logger.debug('skipping based on description/notes')
                 # run preprocessing + save even for skipped trials, to mark
                 # them as processed - mostly so that Eclipse export to Polygon

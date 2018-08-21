@@ -44,6 +44,9 @@ def avg_markerdata(mkrdata, markers, var_type='_P'):
     data_shape = mkrdata[markers[0]+var_type].shape
     mP = np.zeros(data_shape)
     for marker in markers:
+        if mkrdata[marker+'_gaps'].size > 0:
+            logger.debug('skipping marker with gaps: %s' % marker)
+            continue
         mP += mkrdata[marker+var_type] / len(markers)
     return mP
 
@@ -339,6 +342,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                         """Both feet are above plate at contact time. This
                         may occur in running trials. We choose the foot which
                         is closer to the floor"""
+                        # FIXME: works ok but need to consider gaps
                         left_h = avg_markerdata(mkrdata, cfg.autoproc.left_foot_markers)[fr0, 2]
                         right_h = avg_markerdata(mkrdata, cfg.autoproc.right_foot_markers)[fr0, 2]
                         valid = 'L' if left_h < right_h else 'R'

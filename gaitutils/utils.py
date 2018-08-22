@@ -40,15 +40,22 @@ def get_crossing_frame(mP, dim=1, p0=0):
 
 
 def avg_markerdata(mkrdata, markers, var_type='_P'):
-    """Average marker data for given markers"""
+    """ Average marker data for given markers. Markers with gaps are
+    ignored."""
     data_shape = mkrdata[markers[0]+var_type].shape
     mP = np.zeros(data_shape)
+    n_ok = 0
     for marker in markers:
         if mkrdata[marker+'_gaps'].size > 0:
-            logger.debug('skipping marker with gaps: %s' % marker)
+            logger.debug('averager: skipping marker %s with gaps' % marker)
             continue
-        mP += mkrdata[marker+var_type] / len(markers)
-    return mP
+        else:
+            mP += mkrdata[marker+var_type]
+            n_ok += 1
+    if n_ok == 0:
+        raise ValueError('No acceptable markers')
+    else:
+        return mP / n_ok
 
 
 def is_plugingait_set(mkrdata):

@@ -465,8 +465,8 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
     MIN_SWING_VELOCITY = .5
     # median prefilter width
     PREFILTER_MEDIAN_WIDTH = 3
-    # tolerance between specified and actual first strike event
-    STRIKE_TOL = 5
+    # tolerance for matching forceplate and vel. thresholded events
+    FP_EVENT_TOL = 10
 
     subjectname = get_subjectnames()
 
@@ -567,8 +567,8 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
                              % len(to_this))
                 toeoffs = np.delete(toeoffs, to_this[:-1])
 
-        logger.debug('all strike events: %s' % _list_to_str(strikes))
-        logger.debug('all toeoff events: %s' % _list_to_str(toeoffs))
+        logger.debug('autodetected strike events: %s' % _list_to_str(strikes))
+        logger.debug('autodetected toeoff events: %s' % _list_to_str(toeoffs))
 
         # select events for which the foot is close enough to center frame
         if events_range:
@@ -582,22 +582,40 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
             dist_ok = np.logical_and(dist_ok, strike_pos != 0)
             strikes = strikes[dist_ok]
 
-        # correct for force plate autodetected events
+        # correct foot strikes with force plate autodetected events
         if fp_events:
-            # strikes
             fp_strikes = fp_events[context+'_strikes']
+            logger.debug('forceplate strikes: %s' % fp_strikes)
+            # find best fp matches for all strikes
             fpc = best_match(strikes, fp_strikes)
-            ok_ind = np.where(np.abs(fpc - strikes) < STRIKE_TOL)
-            strikes[ok_ind] = fpc[ok_ind]
+            ok_ind = np.where(np.abs(fpc - strikes) < FP_EVENT_TOL)[0]
+            if ok_ind.size == 0:
+                logger.warning('could not match forceplate strike with an '
+                               'autodetected strike')
+            else:
+                # replace with fp detected strikes
+                strikes[ok_ind] = fpc[ok_ind]
+                logger.debug('fp corrected strikes: %s' % strikes)
             # toeoffs
             fp_toeoffs = fp_events[context+'_toeoffs']
+            logger.debug('forceplate toeoffs: %s' % fp_toeoffs)
             fpc = best_match(toeoffs, fp_toeoffs)
-            ok_ind = np.where(np.abs(fpc - toeoffs) < STRIKE_TOL)
-            toeoffs[ok_ind] = fpc[ok_ind]
-            # delete strikes before 1st forceplate contact
+            ok_ind = np.where(np.abs(fpc - toeoffs) < FP_EVENT_TOL)[0]
+            if ok_ind.size == 0:
+                logger.warning('could not match forceplate toeoff with an '
+                               'autodetected toeoff')
+            else:
+                toeoffs[ok_ind] = fpc[ok_ind]
+                logger.debug('fp corrected toeoffs: %s' % toeoffs)
+            # delete strikes before (actual) 1st forceplate contact
             if start_on_forceplate and len(fp_strikes) > 0:
-                not_ok = np.where(strikes < fp_strikes[0])
-                strikes = np.delete(strikes, not_ok)
+                # use a tolerance here to avoid deleting possible (uncorrected)
+                # strike near the fp
+                not_ok = np.where(strikes < fp_strikes[0] - FP_EVENT_TOL)[0]
+                if not_ok.size > 0:
+                    logger.debug('deleting foot strikes before forceplate: %s'
+                                 % strikes[not_ok])
+                    strikes = np.delete(strikes, not_ok)
 
         if restrict_to_roi:
             roi = vicon.GetTrialRegionOfInterest()

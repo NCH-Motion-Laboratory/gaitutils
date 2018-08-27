@@ -492,6 +492,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         QtWidgets.QApplication.processEvents()
         procs = self._execute(report.convert_videos, thread=False,
                               block_ui=False, vidfiles=vidfiles)
+        if not procs:
+            return
         completed = False
         while not completed:
             n_complete = len([p for p in procs if p.poll() is not None])

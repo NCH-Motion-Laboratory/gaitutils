@@ -335,8 +335,15 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                     logger.debug('contact ok')
 
                 if ok:
-                    if valid:  # already got valid contact for other foot
-                        raise GaitDataError('got valid contact for both feet')
+                    if valid:
+                        """Both feet are above plate at contact time. This
+                        may occur in running trials. We choose the foot which
+                        is closer to the floor"""
+                        left_h = avg_markerdata(mkrdata, cfg.autoproc.left_foot_markers)[fr0, 2]
+                        right_h = avg_markerdata(mkrdata, cfg.autoproc.right_foot_markers)[fr0, 2]
+                        valid = 'L' if left_h < right_h else 'R'
+                        logger.debug('both feet above plate at contact, '
+                                     'choosing %s' % valid)
                     else:
                         valid = side
                         logger.debug('on-plate check ok for side %s' % valid)

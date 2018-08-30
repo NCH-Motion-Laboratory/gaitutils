@@ -20,8 +20,8 @@ class AvgTrial(Trial):
     """ Trial containing cycle-averaged data, for use with plotter
     TODO: does not support legends yet """
 
-    def __init__(self, c3dfiles, fp_cycles_only=False):
-        avgdata, stddata, n_ok, _ = average_trials(c3dfiles,
+    def __init__(self, c3dfiles, fp_cycles_only=False, max_dist=None):
+        avgdata, stddata, n_ok, _ = average_trials(c3dfiles, max_dist=max_dist,
                                                    fp_cycles_only=fp_cycles_only)
         # nfiles may be misleading since not all trials may contain valid data
         self.nfiles = len(c3dfiles)

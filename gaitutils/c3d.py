@@ -251,7 +251,7 @@ def get_forceplate_data(c3dfile):
     fpe.SetInput(acq)
     fpe.Update()
     fpdata = list()
-    nplate = 1
+    nplate = 0
     for plate in btk.Iterate(fpe.GetOutput()):
         logger.debug('reading from plate %d' % nplate)
         nplate += 1

@@ -229,7 +229,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     info = read_data.get_metadata(source)
     fpdata = read_data.get_forceplate_data(source)
     results = dict(R_strikes=[], R_toeoffs=[], L_strikes=[], L_toeoffs=[],
-                   valid=set())
+                   valid=set(), R_strikes_plate=[], L_strikes_plate=[])
 
     # get marker data and find "forward" direction (by max variance)
     foot_markers = (cfg.autoproc.right_foot_markers +
@@ -241,12 +241,12 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     logger.debug('gait forward direction seems to be %s' %
                  {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])
 
-    for plate_ind, fp in enumerate(fpdata, 1):  # start indexing from 1
+    for plate_ind, fp in enumerate(fpdata):  # start indexing from 1
         logger.debug('analyzing plate %d' % plate_ind)
         # check Eclipse info if it exists
         detect = True
         # XXX: are we sure that the plate indices match Eclipse?
-        plate = 'FP' + str(plate_ind)
+        plate = 'FP' + str(plate_ind + 1)  # Eclipse starts from FP1
         if fp_info is not None and plate in fp_info:
             ecl_valid = fp_info[plate]
             detect = False
@@ -365,6 +365,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
             results['valid'].add(valid)
             results[valid+'_strikes'].append(strike_fr)
             results[valid+'_toeoffs'].append(toeoff_fr)
+            results[valid+'_strikes_plate'].append(plate_ind)
+
         else:
             logger.debug('plate %d: no valid foot strike' % plate_ind)
 

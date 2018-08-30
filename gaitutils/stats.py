@@ -34,9 +34,9 @@ class AvgTrial(Trial):
         self.t = np.arange(101)  # 0..100%
         # fake 2 gait cycles, L/R
         self.cycles = list()
-        self.cycles.append(Gaitcycle(0, 101, 60, 'R', True, 1000,
+        self.cycles.append(Gaitcycle(0, 101, 60, 'R', True, 1, 1000,
                                      name='Right average', trial=self))
-        self.cycles.append(Gaitcycle(0, 101, 60, 'L', True, 1000,
+        self.cycles.append(Gaitcycle(0, 101, 60, 'L', True, 1, 1000,
                                      name='Left average', trial=self))
         self.ncycles = 2
         self.sessionpath = None

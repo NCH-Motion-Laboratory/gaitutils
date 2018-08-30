@@ -66,8 +66,8 @@ def _nexus_crop_events_before_forceplate():
 class Gaitcycle(object):
     """" Holds information about one gait cycle """
     def __init__(self, start, end, toeoff, context,
-                 on_forceplate, smp_per_frame, trial=None, name=None,
-                 index=None):
+                 on_forceplate, plate_idx, smp_per_frame, trial=None,
+                 name=None, index=None):
         self.len = end - start
         # convert frame indices to 0-based
         self.start = start
@@ -90,6 +90,7 @@ class Gaitcycle(object):
         # normalize toe-off event to the cycle
         self.toeoffn = round(100*((self.toeoff - self.start) / self.len))
         self.trial = trial
+        self.plate_idx = plate_idx
         self.index = index
         self.name = name
 
@@ -263,7 +264,7 @@ class Trial(object):
         except GaitDataError:
             logger.warning('Could not detect forceplate events')
             return dict(R_strikes=[], R_toeoffs=[], L_strikes=[], L_toeoffs=[],
-                        valid=set())
+                        valid=set(), R_strikes_plate=[], L_strikes_plate=[])
 
     def set_norm_cycle(self, cycle=None):
         """ Set normalization cycle (int for cycle index or a Gaitcycle
@@ -322,9 +323,15 @@ class Trial(object):
                 fp_strikes = np.array(self.fp_events[context + '_strikes'])
                 if fp_strikes.size == 0:
                     on_forceplate = False
+                    plate_idx = None
                 else:
                     diffs = np.abs(fp_strikes - start)
                     on_forceplate = min(diffs) <= STRIKE_TOL
+                    if on_forceplate:
+                        strike_idx = np.argmin(diffs)
+                        plate_idx = self.fp_events[context + '_strikes_plate'][strike_idx]
+                    else:
+                        plate_idx = None
                     logger.debug('side %s: cycle start: %d, '
                                  'detected fp events: %s'
                                  % (context, start, fp_strikes))
@@ -341,5 +348,5 @@ class Trial(object):
                 fp_str = '(on forceplate)' if on_forceplate else ''
                 name = '%s %d %s' % (sidestrs[context], (k+1), fp_str)
                 yield Gaitcycle(start, end, toeoff, context,
-                                on_forceplate, self.samplesperframe,
+                                on_forceplate, plate_idx, self.samplesperframe,
                                 trial=self, index=k+1, name=name)

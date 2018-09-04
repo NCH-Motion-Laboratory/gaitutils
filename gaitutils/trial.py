@@ -338,11 +338,12 @@ class Trial(object):
                 end = strikes[k+1]
                 toeoff = [x for x in toeoffs if x > start and x < end]
                 if len(toeoff) == 0:
-                    raise GaitDataError('No toeoff for cycle starting at %d'
-                                        % start)
+                    raise GaitDataError('%s: no toeoff for cycle starting at '
+                                        '%d' % (self.trialname, start))
                 elif len(toeoff) > 1:
-                    raise GaitDataError('Multiple toeoffs for cycle starting '
-                                        'at %d' % start)
+                    raise GaitDataError('%s: multiple toeoffs for cycle '
+                                        'starting at %d' % (self.trialname,
+                                                            start))
                 else:
                     toeoff = toeoff[0]
                 fp_str = '(on forceplate)' if on_forceplate else ''

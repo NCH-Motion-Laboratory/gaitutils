@@ -29,7 +29,6 @@ def automark_single(plot=False):
     vel = utils.get_foot_contact_velocity(mkrdata, fpe)
 
     nexus.automark_events(vicon, vel_thresholds=vel,
-                          events_range=cfg.autoproc.events_range,
                           fp_events=fpe, restrict_to_roi=True, plot=plot)
 
 

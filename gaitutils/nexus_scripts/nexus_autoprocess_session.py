@@ -188,12 +188,14 @@ def _do_autoproc(enffiles, update_eclipse=True):
 
         # main direction in lab frame (1,2,3 for x,y,z)
         gait_dim = utils.principal_movement_direction(subj_pos)
+        inds_ok = np.where(np.any(subj_pos, axis=1))  # ignore gaps
+        subj_pos_ = subj_pos[inds_ok]
         # +1/-1 for forward/backward (coord increase / decrease)
-        gait_dir = np.median(np.diff(subj_pos, axis=0), axis=0)[gait_dim]
+        gait_dir = np.median(np.diff(subj_pos_, axis=0), axis=0)[gait_dim]
         # write Eclipse key for direction
         if ('dir_forward' in cfg.autoproc.enf_descriptions and 'dir_backward'
            in cfg.autoproc.enf_descriptions):
-            dir_str = 'dir_forward' if gait_dir == 1 else 'dir_backward'
+            dir_str = 'dir_forward' if gait_dir > 0 else 'dir_backward'
             dir_desc = cfg.autoproc.enf_descriptions[dir_str]
             eclipse_str += '%s,' % dir_desc
 

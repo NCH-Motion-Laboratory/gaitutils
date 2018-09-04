@@ -356,6 +356,7 @@ def get_forceplate_data(vicon):
 def get_marker_data(vicon, markers, trim_gaps=True):
     """ From Nexus, get position, velocity and acceleration for
     specified markers.
+    FIXME: what's with trim_gaps?
     trim_gaps: ignore leading and trailing gaps """
     if not isinstance(markers, list):
         markers = [markers]

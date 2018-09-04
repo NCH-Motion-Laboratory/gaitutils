@@ -541,7 +541,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
         except GaitDataError as e:
             qt_message_dialog(str(e))
             return
-        vidfiles = self._collect_vidfiles(session)
+        try:
+            vidfiles = self._collect_vidfiles(session)
+        except GaitDataError as e:
+            qt_message_dialog(str(e))
+            return
         if not vidfiles:
             qt_message_dialog('Cannot find any video files for session %s')
             return

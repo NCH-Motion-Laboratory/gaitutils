@@ -8,10 +8,12 @@ Eclipse (database) hacks.
 """
 import logging
 import io
+import configobj
 from configobj import ConfigObj
 from collections import defaultdict, OrderedDict
 
 from .numutils import isint
+from .envutils import GaitDataError
 
 logger = logging.getLogger(__name__)
 
@@ -48,10 +50,13 @@ def _enf_reader(fname_enf):
     fp = FileFilter(fname_enf)
     # do not listify comma-separated values
     # logger.debug('loading %s' % fname_enf)
-    cp = ConfigObj(fp, encoding='utf8', list_values=False,
-                   write_empty_values=True)
+    try:
+        cp = ConfigObj(fp, encoding='utf8', list_values=False,
+                       write_empty_values=True)
+    except configobj.ParseError:
+        raise GaitDataError('Cannot parse config file %s' % fname_enf)
     if 'TRIAL_INFO' not in cp.sections:
-        raise ValueError('No trial info in .enf file')
+        raise GaitDataError('No trial info in .enf file')
     return cp
 
 

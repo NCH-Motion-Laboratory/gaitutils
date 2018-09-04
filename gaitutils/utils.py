@@ -97,7 +97,8 @@ def check_plugingait_set(mkrdata):
 
 def principal_movement_direction(mP):
     """ Return principal movement direction (dimension of maximum variance) """
-    return np.argmax(np.var(mP, axis=0))
+    inds_ok = np.where(np.any(mP, axis=1))  # make sure that gaps are ignored
+    return np.argmax(np.var(mP[inds_ok], axis=0))
 
 
 def butter_filt(data, passband, sfreq, bord=5):

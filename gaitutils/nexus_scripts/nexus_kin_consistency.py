@@ -65,7 +65,7 @@ def do_plot(sessions=None, tags=None, show=True, make_pdf=True,
             pl.plot_trial(model_tracecolor=model_tracecolor,
                           model_linestyle=model_linestyle,
                           linestyles_context=linestyles_context,
-                          toeoff_markers=False, legend_maxlen=30,
+                          toeoff_markers=False, legend_maxlen=10,
                           maintitle='', superpose=True, show=False,
                           plot_model_normaldata=plot_model_normaldata)
 

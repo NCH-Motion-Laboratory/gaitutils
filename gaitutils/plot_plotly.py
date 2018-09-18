@@ -135,7 +135,8 @@ def plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                             do_plot = False
 
                         # plot model normal data first so that its z order
-                        # is lowest (otherwise normaldata will mask hover)
+                        # is lowest (otherwise normaldata will mask other
+                        # traces on hover)
                         if trial == trials[0] and context == 'R':
                             if var[0].upper() in ['L', 'R']:
                                 nvar = var[1:]
@@ -155,7 +156,7 @@ def plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                                                               name='Norm.',
                                                               legendgroup='Norm.',
                                                               showlegend=model_normaldata_legend,
-                                                              line=go.Line(color='transparent'))
+                                                              line=dict(width=0))  # no border lines
                                 fig.append_trace(ntrace, i+1, j+1)
                                 model_normaldata_legend = False  # add to legend only once
 
@@ -236,7 +237,7 @@ def plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                                                                   legendgroup='EMG norm.',
                                                                   showlegend=emg_normaldata_legend,
                                                                   fillcolor='rgba(255, 0, 0, 0.3)',
-                                                                  line=go.Line(color='transparent'))                                                                  
+                                                                  line=dict(width=0))  # no border lines                                                               
                                     fig.append_trace(ntrace, i+1, j+1)
                                     emg_normaldata_legend = False  # add to legend only once
                         
@@ -270,8 +271,7 @@ def plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                                  showticklabels=True)
 
     margin = go.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
-    layout = go.Layout(legend=dict(x=100, y=.5), margin=margin,
-                       font={'size': label_fontsize},
+    layout = go.Layout(margin=margin, font={'size': label_fontsize},
                        hovermode='closest')
 
     fig['layout'].update(layout)

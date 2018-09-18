@@ -303,8 +303,8 @@ def dash_report(info=None, sessions=None, tags=None):
             dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
             dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
 
-        except (ValueError, GaitDataError):
-            logger.warning('Failed to create plot for %s' % label)
+        except (ValueError, GaitDataError) as e:
+            logger.warning('Failed to create plot for %s: %s' % (label, e))
             # insert the menu options but make them disabled
             dd_opts_multi_upper.append({'label': label, 'value': label,
                                         'disabled': True})

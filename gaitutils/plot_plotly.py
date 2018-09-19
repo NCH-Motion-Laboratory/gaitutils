@@ -191,6 +191,23 @@ def plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                             tracegroups.add(tracegroup)
                             fig.append_trace(trace, i+1, j+1)
 
+                            # toeoff marks                            
+                            y0, y1 = fig['layout'][yaxis]['domain']
+                            xval = cyc.toeoff
+                            toeoff_line = {'type': 'line',
+                                           'xref': 'x%d' % plot_ind,
+                                           'yref': 'paper',
+                                           'x0': xval,
+                                           'y0': y0,
+                                           'x1': xval,
+                                           'y1': y1,
+                                           'line': {
+                                                   'color': 'rgb(255, 0, 0)',
+                                                   'width': 1,
+                                                   }
+                                           }
+                            fig['layout']['shapes'] += (toeoff_line, )
+
                             # rm x tick labels, plot too crowded
                             fig['layout'][xaxis].update(showticklabels=False)
                             # LaTeX does not render, so rm units from ylabel
@@ -273,6 +290,6 @@ def plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
     margin = go.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
     layout = go.Layout(margin=margin, font={'size': label_fontsize},
                        hovermode='closest')
-
+    
     fig['layout'].update(layout)
     return fig

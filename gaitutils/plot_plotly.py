@@ -188,25 +188,21 @@ def plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                                                showlegend=show_legend,
                                                line=line)
 
+                            # add toeoff markers on each curve
+                            marker = dict(color='black', symbol='triangle-up',
+                                          size=8)
+                            toeoff = int(cyc.toeoffn)
+                            toeoff_marker = go.Scatter(x=t[toeoff:toeoff+1],
+                                                       y=y[toeoff:toeoff+1],
+                                                       showlegend=False,
+                                                       hoverinfo='skip',
+                                                       mode='markers',
+                                                       marker=marker)
+
+
                             tracegroups.add(tracegroup)
                             fig.append_trace(trace, i+1, j+1)
-
-                            # toeoff marks                            
-                            y0, y1 = fig['layout'][yaxis]['domain']
-                            xval = cyc.toeoff
-                            toeoff_line = {'type': 'line',
-                                           'xref': 'x%d' % plot_ind,
-                                           'yref': 'paper',
-                                           'x0': xval,
-                                           'y0': y0,
-                                           'x1': xval,
-                                           'y1': y1,
-                                           'line': {
-                                                   'color': 'rgb(255, 0, 0)',
-                                                   'width': 1,
-                                                   }
-                                           }
-                            fig['layout']['shapes'] += (toeoff_line, )
+                            fig.append_trace(toeoff_marker, i+1, j+1)
 
                             # rm x tick labels, plot too crowded
                             fig['layout'][xaxis].update(showticklabels=False)

@@ -205,6 +205,31 @@ def _get_foot_points(mkrdata, context):
     return pmin, pmax
 
 
+def _leading_foot(mkrdata):
+    """Determine which foot is leading (ahead in the direction of gait).
+    Returns n-length list of 'R' or 'L' correspondingly (n = number of
+    frames)"""
+    if not is_plugingait_set(mkrdata):
+        raise ValueError('Not a Plug-in Gait set')
+    # det. 'rear marker' (avg of RPSI/LPSI or SACR)
+    # fwd marker = avg of RASI/LASI
+    # compute "pelvis fwd line" = rear - fwd
+    # take longer one of foot lines = rear - foot
+    if 'SACR' in mkrdata:
+        mkr_rear = mkrdata['SACR_P']
+    else:
+        mkr_rear = avg_markerdata(mkrdata, ['RPSI', 'LPSI'])
+    mkr_front = avg_markerdata(mkrdata, ['RASI', 'LASI'])
+    pVn = _normalize(mkr_front - mkr_rear)  # pelvis line
+    lfoot = avg_markerdata(mkrdata, cfg.autoproc.left_foot_markers)
+    rfoot = avg_markerdata(mkrdata, cfg.autoproc.right_foot_markers)
+    lV = lfoot - mkr_rear
+    rV = rfoot - mkr_rear
+    lproj = np.sum(lV*pVn, axis=1)
+    rproj = np.sum(rV*pVn, axis=1)
+    return ['R' if x else 'L' for x in rproj > lproj]
+        
+
 def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     """ Detect frames where valid forceplate strikes and toeoffs occur.
     Uses forceplate data and marker positions.
@@ -238,6 +263,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     if mkrdata is None:
         mkrdata = read_data.get_marker_data(source, foot_markers)
     pos = sum([mkrdata[name] for name in foot_markers])
+    # FIXME: should get rid of fwd_dir since it implies coord frame orthogonal
+    # to forceplates
     fwd_dir = np.argmax(np.var(pos, axis=0))
     logger.debug('gait forward direction seems to be %s' %
                  {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])
@@ -327,38 +354,28 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
             fr0 = strike_fr + settle_fr
             logger.debug('plate edges x: %.2f to %.2f  y: %.2f to %.2f' %
                          (mins[0], maxes[0], mins[1], maxes[1]))
-            for side in ['R', 'L']:
-                logger.debug('checking contact for %s' % side)
-                footmins, footmaxes = _get_foot_points(mkrdata, side)
-                logger.debug('foot edges x: %.2f to %.2f  y: %.2f to %.2f' %
-                             (footmins[fr0, 0], footmaxes[fr0, 0],
-                              footmins[fr0, 1], footmaxes[fr0, 1]))
-                xmin_ok = mins[0] < footmins[fr0, 0] < maxes[0]
-                xmax_ok = mins[0] < footmaxes[fr0, 0] < maxes[0]
-                if not (xmin_ok and xmax_ok):
-                    logger.debug('off plate in x dir')
-                ymin_ok = mins[1] < footmins[fr0, 1] < maxes[1]
-                ymax_ok = mins[1] < footmaxes[fr0, 1] < maxes[1]
-                if not (ymin_ok and ymax_ok):
-                    logger.debug('off plate in y dir')
-                ok = xmin_ok and xmax_ok and ymin_ok and ymax_ok
-                if ok:
-                    logger.debug('contact ok')
 
-                if ok:
-                    if valid:
-                        """Both feet are above plate at contact time. This
-                        may occur in running trials. We choose the foot which
-                        is closer to the floor"""
-                        # FIXME: works ok but need to consider gaps
-                        left_h = avg_markerdata(mkrdata, cfg.autoproc.left_foot_markers)[fr0, 2]
-                        right_h = avg_markerdata(mkrdata, cfg.autoproc.right_foot_markers)[fr0, 2]
-                        valid = 'L' if left_h < right_h else 'R'
-                        logger.debug('both feet above plate at contact, '
-                                     'choosing %s' % valid)
-                    else:
-                        valid = side
-                        logger.debug('on-plate check ok for side %s' % valid)
+            side = _leading_foot(mkrdata)[fr0]
+            logger.debug('checking contact for leading foot: %s' % side)
+            footmins, footmaxes = _get_foot_points(mkrdata, side)
+            logger.debug('foot edges x: %.2f to %.2f  y: %.2f to %.2f' %
+                         (footmins[fr0, 0], footmaxes[fr0, 0],
+                          footmins[fr0, 1], footmaxes[fr0, 1]))
+            xmin_ok = mins[0] < footmins[fr0, 0] < maxes[0]
+            xmax_ok = mins[0] < footmaxes[fr0, 0] < maxes[0]
+            if not (xmin_ok and xmax_ok):
+                logger.debug('off plate in x dir')
+            ymin_ok = mins[1] < footmins[fr0, 1] < maxes[1]
+            ymax_ok = mins[1] < footmaxes[fr0, 1] < maxes[1]
+            if not (ymin_ok and ymax_ok):
+                logger.debug('off plate in y dir')
+            ok = xmin_ok and xmax_ok and ymin_ok and ymax_ok
+            if ok:
+                logger.debug('contact ok')
+
+            if ok:
+                valid = side
+                logger.debug('on-plate check ok for side %s' % valid)
 
         if valid:
             logger.debug('plate %d: valid foot strike on %s at frame %d'

@@ -229,6 +229,23 @@ def _leading_foot(mkrdata):
             for r, l in zip(rproj, lproj)]
 
 
+def _trial_median_velocity(source):
+    """ Compute median velocity (walking speed) over whole trial by
+    differentiation of marker data """
+    from . import read_data
+    try:
+        frate = read_data.get_metadata(source)['framerate']
+        mkrdata = read_data.get_marker_data(source, cfg.autoproc.track_markers)
+        mP = avg_markerdata(mkrdata)
+        dim = principal_movement_direction(mP)
+        vel_ = avg_markerdata(mkrdata, cfg.autoproc.track_markers,
+                              type='_V')[:, dim]
+    except (GaitDataError, ValueError):
+        return np.nan
+    vel = np.median(np.abs(vel_[np.where(vel_)]))
+    return vel * frate / 1000.
+
+
 def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     """ Detect frames where valid forceplate strikes and toeoffs occur.
     Uses forceplate data and marker positions.

@@ -184,8 +184,6 @@ def _do_autoproc(enffiles, update_eclipse=True):
             foot_vel[context+'_toeoff'] = nv
         eclipse_str += ','
 
-        track_mkr = cfg.autoproc.track_markers[0]
-
         # main direction in lab frame (1,2,3 for x,y,z)
         subj_pos = utils.avg_markerdata(mkrdata, cfg.autoproc.track_markers)
         gait_dim = utils.principal_movement_direction(subj_pos)
@@ -201,12 +199,9 @@ def _do_autoproc(enffiles, update_eclipse=True):
             eclipse_str += '%s,' % dir_desc
 
         # compute gait velocity
-        # FIXME: avg over track markers
-        subj_vel = mkrdata[track_mkr+'_V'][:, gait_dim]
-        median_vel = np.median(np.abs(subj_vel[np.where(subj_vel)]))
-        median_vel_ms = median_vel * vicon.GetFrameRate() / 1000.
-        logger.debug('median forward velocity: %.2f m/s' % median_vel_ms)
-        eclipse_str += '%.2f m/s' % median_vel_ms
+        median_vel = utils._trial_median_velocity(vicon)
+        logger.debug('median forward velocity: %.2f m/s' % median_vel)
+        eclipse_str += '%.2f m/s' % median_vel
 
         _save_trial()
         trial['description'] = eclipse_str

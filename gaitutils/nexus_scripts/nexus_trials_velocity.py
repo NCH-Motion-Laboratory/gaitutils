@@ -5,8 +5,8 @@ Created on Wed Jun 21 13:48:27 2017
 @author: Jussi (jnu@iki.fi)
 """
 
-from gaitutils import (nexus, cfg, utils, read_data, sessionutils,
-                       register_gui_exception_handler, GaitDataError)
+from gaitutils import (nexus, utils, sessionutils,
+                       register_gui_exception_handler)
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
@@ -14,23 +14,6 @@ import os.path as op
 import logging
 
 logger = logging.getLogger(__name__)
-
-
-def _trial_median_velocity(source):
-    """ Compute median velocity (walking speed) over whole trial by
-    differentiation of marker data """
-    try:
-        frate = read_data.get_metadata(source)['framerate']
-        # FIXME: avg over track markers
-        mkr = cfg.autoproc.track_markers[0]
-        mdata = read_data.get_marker_data(source, mkr)
-        pos_ = mdata[mkr]
-        dim = utils.principal_movement_direction(pos_)
-        vel_ = read_data.get_marker_data(source, mkr)[mkr+'_V'][:, dim]
-    except (GaitDataError, ValueError):
-        return np.nan
-    vel = np.median(np.abs(vel_[np.where(vel_)]))
-    return vel * frate / 1000.
 
 
 def do_plot(show=True, make_pdf=True):
@@ -44,7 +27,7 @@ def do_plot(show=True, make_pdf=True):
                         'session directory')
 
     labels = [op.splitext(op.split(f)[1])[0] for f in c3ds]
-    vels = np.array([_trial_median_velocity(trial) for trial in c3ds])
+    vels = np.array([utils._trial_median_velocity(trial) for trial in c3ds])
     vavg = np.nanmean(vels)
 
     fig = plt.figure()

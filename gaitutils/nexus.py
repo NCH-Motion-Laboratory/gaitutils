@@ -579,7 +579,7 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
 
         # select events for which the foot is close enough to center frame
         if events_range:
-            mP = mkrdata[cfg.autoproc.track_markers[0]]
+            mP = utils.avg_markerdata(mkrdata, cfg.autoproc.track_markers)
             fwd_dim = utils.principal_movement_direction(mP)
             strike_pos = footctrP[strikes, fwd_dim]
             dist_ok = np.logical_and(strike_pos > events_range[0],

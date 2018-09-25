@@ -24,7 +24,9 @@ def automark_single(plot=False):
     # TODO: might want to use Eclipse forceplate info also here
     foot_markers = (cfg.autoproc.left_foot_markers +
                     cfg.autoproc.right_foot_markers)
-    mkrdata = read_data.get_marker_data(vicon, foot_markers)
+    pelvis_markers = ['RASI', 'RPSI', 'LASI', 'LPSI', 'SACR']
+    mkrdata = read_data.get_marker_data(vicon, foot_markers+pelvis_markers,
+                                        ignore_missing=True)
     fpe = utils.detect_forceplate_events(vicon, mkrdata)
     vel = utils.get_foot_contact_velocity(mkrdata, fpe)
 

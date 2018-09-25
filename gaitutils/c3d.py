@@ -131,7 +131,7 @@ def _get_analog_data(c3dfile, devname):
         raise GaitDataError('No matching analog channels found in data')
 
 
-def get_marker_data(c3dfile, markers, trim_gaps=True):
+def get_marker_data(c3dfile, markers, trim_gaps=True, ignore_missing=False):
     """ Get marker data.
     trim_gaps: ignore leading/trailing gaps """
     if not isinstance(markers, list):  # listify if not already a list
@@ -142,8 +142,11 @@ def get_marker_data(c3dfile, markers, trim_gaps=True):
         try:
             mP = np.squeeze(acq.GetPoint(marker).GetValues())
         except RuntimeError:
-            raise GaitDataError('Cannot read variable %s from c3d file'
-                                % marker)
+            if ignore_missing:
+                continue
+            else:
+                raise GaitDataError('Cannot read variable %s from c3d file'
+                                    % marker)
         mkrdata[marker] = mP
         mkrdata[marker + '_P'] = mP
         mkrdata[marker + '_V'] = np.gradient(mP)[0]

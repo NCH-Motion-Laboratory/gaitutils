@@ -208,33 +208,32 @@ def _get_foot_points(mkrdata, context):
 def _leading_foot(mkrdata):
     """Determine which foot is leading (ahead in the direction of gait).
     Returns n-length list of 'R' or 'L' correspondingly (n = number of
-    frames)"""
-    if not is_plugingait_set(mkrdata):
-        raise ValueError('Not a Plug-in Gait set')
-    # det. 'rear marker' (avg of RPSI/LPSI or SACR)
-    # fwd marker = avg of RASI/LASI
-    # compute "pelvis fwd line" = rear - fwd
-    # take longer one of foot lines = rear - foot
+    frames). Gaps are filled with None"""
+    # rear of pelvis
     if 'SACR' in mkrdata:
         mkr_rear = mkrdata['SACR_P']
     else:
         mkr_rear = avg_markerdata(mkrdata, ['RPSI', 'LPSI'])
+    # front of pelvis
     mkr_front = avg_markerdata(mkrdata, ['RASI', 'LASI'])
-    pVn = _normalize(mkr_front - mkr_rear)  # pelvis line
+    pVn = _normalize(mkr_front - mkr_rear)  # vec pelvis -> direction of gait
     lfoot = avg_markerdata(mkrdata, cfg.autoproc.left_foot_markers)
     rfoot = avg_markerdata(mkrdata, cfg.autoproc.right_foot_markers)
     lV = lfoot - mkr_rear
     rV = rfoot - mkr_rear
     lproj = np.sum(lV*pVn, axis=1)
     rproj = np.sum(rV*pVn, axis=1)
-    return ['R' if x else 'L' for x in rproj > lproj]
-        
+    # ugly but the best alternative so far
+    return [None if (np.isnan(l) or np.isnan(r)) else ('R' if r >= l else 'L')
+            for r, l in zip(rproj, lproj)]
+
 
 def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     """ Detect frames where valid forceplate strikes and toeoffs occur.
     Uses forceplate data and marker positions.
 
-    If mkrdata is None, it will be read from source.
+    If supplied, mkrdata must include foot and pelvis markers. Otherwise
+    it will be read.
     If fp_info dict is set, no marker and COP checks will be done;
     instead the Eclipse forceplate info will be used. Eclipse info is written
     e.g. as {FP1: 'Left'} where plate indices start from 1 and the value can be
@@ -260,8 +259,10 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     # get marker data and find "forward" direction (by max variance)
     foot_markers = (cfg.autoproc.right_foot_markers +
                     cfg.autoproc.left_foot_markers)
+    pelvis_markers = ['RASI', 'RPSI', 'LASI', 'LPSI', 'SACR']
     if mkrdata is None:
-        mkrdata = read_data.get_marker_data(source, foot_markers)
+        mkrdata = read_data.get_marker_data(source, foot_markers+pelvis_markers,
+                                            ignore_missing=True)
     pos = sum([mkrdata[name] for name in foot_markers])
     # FIXME: should get rid of fwd_dir since it implies coord frame orthogonal
     # to forceplates

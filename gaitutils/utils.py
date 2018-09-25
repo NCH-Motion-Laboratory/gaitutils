@@ -271,7 +271,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     logger.debug('gait forward direction seems to be %s' %
                  {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])
 
-    for plate_ind, fp in enumerate(fpdata):  # start indexing from 1
+    # our internal forceplate index is 0-based
+    for plate_ind, fp in enumerate(fpdata):
         logger.debug('analyzing plate %d' % plate_ind)
         # check Eclipse info if it exists
         detect = True

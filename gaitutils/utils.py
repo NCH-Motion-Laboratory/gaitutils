@@ -236,13 +236,12 @@ def _trial_median_velocity(source):
     try:
         frate = read_data.get_metadata(source)['framerate']
         mkrdata = read_data.get_marker_data(source, cfg.autoproc.track_markers)
-        mP = avg_markerdata(mkrdata)
-        dim = principal_movement_direction(mP)
-        vel_ = avg_markerdata(mkrdata, cfg.autoproc.track_markers,
-                              type='_V')[:, dim]
+        vel_3 = avg_markerdata(mkrdata, cfg.autoproc.track_markers,
+                               var_type='_V')
+        vel_ = np.sqrt(np.sum(vel_3**2, 1))
     except (GaitDataError, ValueError):
         return np.nan
-    vel = np.median(np.abs(vel_[np.where(vel_)]))
+    vel = np.median(vel_[np.where(vel_)])
     return vel * frate / 1000.
 
 

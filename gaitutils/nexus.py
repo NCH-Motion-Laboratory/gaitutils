@@ -188,6 +188,9 @@ def is_vicon_instance(obj):
     return obj.__class__.__name__ == 'ViconNexus'
 
 
+# FIXME: most of get_ methods below are intended to be called via read_data
+# so underscore them
+
 def get_metadata(vicon):
     """ Read trial and subject metadata """
     check_nexus()
@@ -478,9 +481,9 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
 
     # get foot center positions and velocities
     if mkrdata is None:
-        mkrdata = get_marker_data(vicon, cfg.autoproc.right_foot_markers +
-                                  cfg.autoproc.left_foot_markers +
-                                  cfg.autoproc.track_markers)
+        mkrdata = _get_marker_data(vicon, cfg.autoproc.right_foot_markers +
+                                   cfg.autoproc.left_foot_markers +
+                                   cfg.autoproc.track_markers)
     rfootctrv_ = utils.avg_markerdata(mkrdata, cfg.autoproc.right_foot_markers,
                                       var_type='_V')
     rfootctrv = np.linalg.norm(rfootctrv_, axis=1)

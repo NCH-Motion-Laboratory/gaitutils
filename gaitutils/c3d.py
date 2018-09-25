@@ -78,7 +78,6 @@ def get_analysis(c3dfile, condition='unknown'):
     di_ = di[condition]
 
     for (var, unit, context, val) in zip(vars_, units, contexts, vals):
-
         if var not in di_:
             di_[var] = dict()
             di_[var]['unit'] = unit
@@ -131,7 +130,8 @@ def _get_analog_data(c3dfile, devname):
         raise GaitDataError('No matching analog channels found in data')
 
 
-def _get_marker_data(c3dfile, markers, trim_gaps=True, ignore_missing=False):
+def _get_marker_data(c3dfile, markers, ignore_edge_gaps=True,
+                     ignore_missing=False):
     """Get position, velocity and acceleration for specified markers."""
     if not isinstance(markers, list):  # listify if not already a list
         markers = [markers]
@@ -154,7 +154,7 @@ def _get_marker_data(c3dfile, markers, trim_gaps=True, ignore_missing=False):
         mkrdata[marker + '_A'] = np.gradient(mkrdata[marker+'_V'])[0]
         # find gaps
         allzero = np.any(mP, axis=1).astype(int)
-        if trim_gaps:
+        if ignore_edge_gaps:
             nleading = allzero.argmax()
             allzero_trim = np.trim_zeros(allzero)
             gap_inds = np.where(allzero_trim == 0)[0] + nleading
@@ -165,8 +165,7 @@ def _get_marker_data(c3dfile, markers, trim_gaps=True, ignore_missing=False):
 
 
 def get_metadata(c3dfile):
-    """ Read some trial and subject metadata """
-
+    """ Read trial and subject metadata """
     trialname = os.path.basename(os.path.splitext(c3dfile)[0])
     sessionpath = os.path.dirname(c3dfile)
     acq = _get_c3dacq(c3dfile)

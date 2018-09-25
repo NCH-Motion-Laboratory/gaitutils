@@ -48,22 +48,28 @@ def get_forceplate_data(source):
     CoP:  Nx3 array, center of pressure
     analograte: sampling rate
     samplesperframe: samples per capture frame
-    TODO: return dict/list of dict for multiple forceplates
     """
     return _reader_module(source).get_forceplate_data(source)
 
 
-def get_marker_data(source, markers, trim_gaps=True, ignore_missing=False):
+def get_marker_data(source, markers, ignore_edge_gaps=True,
+                    ignore_missing=False):
     """ Get position, velocity and acceleration for a given marker(s)
     (str or list of str).
     Returns dict mkrdata keyed with marker names followed by _P, _V or _A
     (position, velocity, acceleration). Values are Nx3 matrices
     data, e.g. mkrdata['RHEE_V'] is a Nx3 matrix with velocity x, y and z
-    components. Also computes gaps, with keys as e.g. 'RHEE_gaps'. """
-    return _reader_module(source).get_marker_data(source, markers,
-                                                  trim_gaps=trim_gaps,
-                                                  ignore_missing=
-                                                  ignore_missing)
+    components. Also computes gaps, with keys as e.g. 'RHEE_gaps'.
+    markers: list of marker names
+    ignore_edge_gaps: whether leading/trailing "gaps" should be ignored
+    or marked as gaps. Nexus writes out gaps also at beginning/end of trial
+    when reconstructions are unavailable.
+    ignore_missing: whether to ignore missing markers on read or raise an
+    exception.
+    """
+    return _reader_module(source)._get_marker_data(source, markers,
+                                                   ignore_edge_gaps=ignore_edge_gaps,
+                                                   ignore_missing=ignore_missing)
 
 
 def get_emg_data(source):

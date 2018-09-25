@@ -356,7 +356,8 @@ def get_forceplate_data(vicon):
     return data
 
 
-def _get_marker_data(vicon, markers, trim_gaps=True, ignore_missing=False):
+def _get_marker_data(vicon, markers, ignore_edge_gaps=True,
+                     ignore_missing=False):
     """Get position, velocity and acceleration for specified markers."""
     if not isinstance(markers, list):
         markers = [markers]
@@ -379,7 +380,7 @@ def _get_marker_data(vicon, markers, trim_gaps=True, ignore_missing=False):
         mkrdata[marker + '_A'] = np.gradient(mkrdata[marker+'_V'])[0]
         # find gaps
         allzero = np.any(mP, axis=1).astype(int)
-        if trim_gaps:
+        if ignore_edge_gaps:
             nleading = allzero.argmax()
             allzero_trim = np.trim_zeros(allzero)
             gap_inds = np.where(allzero_trim == 0)[0] + nleading

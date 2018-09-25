@@ -163,10 +163,6 @@ def _normalize(V):
         return V / Vn[:, np.newaxis]
 
 
-def pml(V):
-    logger.debug('length %g' % np.nanmedian(np.linalg.norm(V, axis=1)))
-
-
 def _get_foot_points(mkrdata, context):
     """Estimate points in the xy plane enclosing the foot. Foot is modeled
     as a triangle"""
@@ -230,19 +226,20 @@ def _leading_foot(mkrdata):
 
 
 def _trial_median_velocity(source):
-    """ Compute median velocity (walking speed) over whole trial by
-    differentiation of marker data """
+    """Compute median velocity (walking speed) over whole trial by
+    differentiation of marker data from track markers. Up/down movement of
+    markers may slightly increase speed compared to time-distance values"""
     from . import read_data
     try:
         frate = read_data.get_metadata(source)['framerate']
         mkrdata = read_data.get_marker_data(source, cfg.autoproc.track_markers)
         vel_3 = avg_markerdata(mkrdata, cfg.autoproc.track_markers,
                                var_type='_V')
-        vel_ = np.sqrt(np.sum(vel_3**2, 1))
+        vel_ = np.sqrt(np.sum(vel_3**2, 1))  # scalar velocity
     except (GaitDataError, ValueError):
         return np.nan
-    vel = np.median(vel_[np.where(vel_)])
-    return vel * frate / 1000.
+    vel = np.median(vel_[np.where(vel_)])  # ignore zeros
+    return vel * frate / 1000.  # convert to m/s
 
 
 def detect_forceplate_events(source, mkrdata=None, fp_info=None):

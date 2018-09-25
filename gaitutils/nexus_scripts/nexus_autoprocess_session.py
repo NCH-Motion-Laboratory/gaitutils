@@ -185,9 +185,9 @@ def _do_autoproc(enffiles, update_eclipse=True):
         eclipse_str += ','
 
         track_mkr = cfg.autoproc.track_markers[0]
-        subj_pos = mkrdata[track_mkr]
 
         # main direction in lab frame (1,2,3 for x,y,z)
+        subj_pos = utils.avg_markerdata(mkrdata, cfg.autoproc.track_markers)
         gait_dim = utils.principal_movement_direction(subj_pos)
         inds_ok = np.where(np.any(subj_pos, axis=1))  # ignore gaps
         subj_pos_ = subj_pos[inds_ok]
@@ -201,6 +201,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
             eclipse_str += '%s,' % dir_desc
 
         # compute gait velocity
+        # FIXME: avg over track markers
         subj_vel = mkrdata[track_mkr+'_V'][:, gait_dim]
         median_vel = np.median(np.abs(subj_vel[np.where(subj_vel)]))
         median_vel_ms = median_vel * vicon.GetFrameRate() / 1000.

@@ -66,9 +66,9 @@ def is_plugingait_set(mkrdata):
     mkrs_pig = set(['RASI', 'LASI', 'LTHI', 'LKNE', 'LTIB', 'LANK', 'LHEE',
                     'LTOE', 'RTHI', 'RKNE', 'RTIB', 'RANK', 'RHEE', 'RTOE'])
     # in addition, accept either RPSI/LPSI or SACR
-    pelvis_markers = set(['RPSI', 'LPSI'])
+    pst_pelvis_markers = set(['RPSI', 'LPSI'])
     sacr = set(['SACR'])
-    return (mkrs_pig.issubset(mkrs) and (pelvis_markers.issubset(mkrs) or
+    return (mkrs_pig.issubset(mkrs) and (pst_pelvis_markers.issubset(mkrs) or
             sacr.issubset(mkrs)))
 
 
@@ -258,16 +258,16 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                    valid=set(), R_strikes_plate=[], L_strikes_plate=[])
 
     # get marker data and find "forward" direction (by max variance)
-    foot_markers = (cfg.autoproc.right_foot_markers +
-                    cfg.autoproc.left_foot_markers)
-    pelvis_markers = ['RASI', 'RPSI', 'LASI', 'LPSI', 'SACR']
     if mkrdata is None:
-        mkrdata = read_data.get_marker_data(source, foot_markers+pelvis_markers,
-                                            ignore_missing=True)
-    pos = sum([mkrdata[name] for name in foot_markers])
+        mkrs = (cfg.autoproc.right_foot_markers +
+                cfg.autoproc.left_foot_markers +
+                cfg.autoproc.pelvis_markers)
+        mkrdata = read_data.get_marker_data(source, mkrs, ignore_missing=True)
+
     # FIXME: should get rid of fwd_dir since it implies coord frame orthogonal
     # to forceplates
-    fwd_dir = np.argmax(np.var(pos, axis=0))
+    mP = avg_markerdata(mkrdata, cfg.autoproc.track_markers)
+    fwd_dir = principal_movement_direction(mP)
     logger.debug('gait forward direction seems to be %s' %
                  {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])
 

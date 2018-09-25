@@ -26,7 +26,8 @@ import time
 import logging
 
 
-from gaitutils import nexus, eclipse, utils, GaitDataError, sessionutils
+from gaitutils import (nexus, eclipse, utils, GaitDataError, sessionutils,
+                       read_data)
 from gaitutils.config import cfg
 
 
@@ -137,7 +138,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
 
         # check for valid marker data
         try:
-            mkrdata = nexus.get_marker_data(vicon, allmarkers)
+            mkrdata = read_data.get_marker_data(vicon, allmarkers)
         except GaitDataError:
             fail(trial, 'label_failure')
             continue

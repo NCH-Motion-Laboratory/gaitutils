@@ -353,11 +353,8 @@ def get_forceplate_data(vicon):
     return data
 
 
-def get_marker_data(vicon, markers, trim_gaps=True, ignore_missing=False):
-    """ From Nexus, get position, velocity and acceleration for
-    specified markers.
-    FIXME: what's with trim_gaps?
-    trim_gaps: ignore leading and trailing gaps """
+def _get_marker_data(vicon, markers, trim_gaps=True, ignore_missing=False):
+    """Get position, velocity and acceleration for specified markers."""
     if not isinstance(markers, list):
         markers = [markers]
     subj = get_subjectnames()
@@ -366,6 +363,8 @@ def get_marker_data(vicon, markers, trim_gaps=True, ignore_missing=False):
         x, y, z, _ = vicon.GetTrajectory(subj, marker)
         if len(x) == 0:
             if ignore_missing:
+                logger.warning('Cannot read trajectory %s from c3d file'
+                               % marker)
                 continue
             else:
                 raise GaitDataError('Cannot read marker trajectory '

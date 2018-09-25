@@ -208,7 +208,8 @@ def _get_foot_points(mkrdata, context):
 def _leading_foot(mkrdata):
     """Determine which foot is leading (ahead in the direction of gait).
     Returns n-length list of 'R' or 'L' correspondingly (n = number of
-    frames). Gaps are filled with None"""
+    frames). Gaps are indicated as None. mkrdata must include foot and
+    pelvis markers"""
     # rear of pelvis
     if 'SACR' in mkrdata:
         mkr_rear = mkrdata['SACR_P']

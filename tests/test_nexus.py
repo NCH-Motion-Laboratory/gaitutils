@@ -13,7 +13,7 @@ from nose.tools import (assert_set_equal, assert_in, assert_equal,
 from numpy.testing import (assert_allclose, assert_array_equal,
                            assert_array_almost_equal)
 
-from gaitutils import nexus, utils, models
+from gaitutils import nexus, utils, models, read_data
 from gaitutils.config import cfg
 from gaitutils import Trial
 from gaitutils.utils import detect_forceplate_events
@@ -195,8 +195,8 @@ def test_event_marking():
     # using forceplate thresholds
     vicon.ClearAllEvents()
     fpe = utils.detect_forceplate_events(vicon)
-    mkrdata = nexus.get_marker_data(vicon, cfg.autoproc.left_foot_markers +
-                                    cfg.autoproc.right_foot_markers)
+    mkrdata = read_data.get_marker_data(vicon, cfg.autoproc.left_foot_markers +
+                                        cfg.autoproc.right_foot_markers)
     vel = utils.get_foot_contact_velocity(mkrdata, fpe)
     nexus.automark_events(vicon, vel_thresholds=vel,
                           events_range=[-1500, 1500], fp_events=fpe)

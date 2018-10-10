@@ -178,7 +178,7 @@ class WebReportSessionsDialog(QtWidgets.QDialog):
             for dir_ in dirs:
                 if dir_ in self.sessions:
                     qt_message_dialog('Session %s already loaded' % dir_)
-                else:
+                elif dir_:
                     self.listSessions.add_item(dir_, data=dir_)
 
     @property

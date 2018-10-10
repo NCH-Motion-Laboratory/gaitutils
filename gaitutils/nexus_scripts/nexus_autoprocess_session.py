@@ -146,14 +146,15 @@ def _do_autoproc(enffiles, update_eclipse=True):
 
         # check markers for remaining gaps; leading/trailing gaps are ignored
         gaps_found = False
-        for marker in set(allmarkers) - set(cfg.autoproc.ignore_markers):
-            gaps = mkrdata[marker + '_gaps']
-            if gaps.size > 0:
-                gaps_found = True
-                break
-        if gaps_found:
-            fail(trial, 'gaps')
-            continue
+        if cfg.autoproc.fail_on_gaps:
+            for marker in set(allmarkers) - set(cfg.autoproc.ignore_markers):
+                gaps = mkrdata[marker + '_gaps']
+                if gaps.size > 0:
+                    gaps_found = True
+                    break
+            if gaps_found:
+                fail(trial, 'gaps')
+                continue
 
         # plug-in gait labelling sanity checks
         if utils.is_plugingait_set(mkrdata):

@@ -20,6 +20,7 @@ NOTES:
 """
 
 import os
+import os.path as op
 import numpy as np
 import argparse
 import time
@@ -290,6 +291,35 @@ def autoproc_session(patterns=None, update_eclipse=True):
 
     sessionpath = nexus.get_sessionpath()
     enffiles = sessionutils.get_session_enfs(sessionpath)
+
+    if not enffiles:
+        raise GaitDataError('No trials found (no .enf files in session)')
+
+    """ c3d files need to be deleted before processing. Otherwise Nexus will
+    load analog data from existing c3d files which are affected by previous
+    crop operations, e.g. forceplate data might be clipped """
+    logger.debug('deleting previous c3d files')
+    c3dfiles = [sessionutils._enf2other(enffile, 'c3d') for enffile in
+                enffiles]
+    for enffile, c3dfile in zip(enffiles, c3dfiles):
+        if not op.isfile(c3dfile):
+            continue
+        edata = eclipse.get_eclipse_keys(enffile, return_empty=True)
+        # do not delete static .c3d files (needed for dynamic processing)
+        if edata['TYPE'] == 'Static':
+            logger.debug('keeping static c3d file %s' % c3dfile)
+            continue
+
+        # to prevent data loss, do not delete c3d if original
+        # x1d and x2d do not exist
+        x1dfile = sessionutils._enf2other(enffile, 'x1d')
+        x2dfile = sessionutils._enf2other(enffile, 'x2d')
+        if (op.isfile(x1dfile) and op.isfile(x2dfile)):
+            logger.debug('deleting existing c3d file %s' % c3dfile)
+            os.remove(c3dfile)
+        else:
+            logger.debug('refusing to delete c3d file %s since original '
+                         'data files .(x1d and .x2d) do not exist' % c3dfile)
 
     if patterns:
         # filter trial names according to patterns

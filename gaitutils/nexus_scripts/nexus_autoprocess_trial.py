@@ -10,14 +10,15 @@ Note: does not use stats for event detection -> less accurate
 import logging
 import os.path as op
 
-from nexus_autoprocess_session import _do_autoproc
+from nexus_autoprocess_session import _do_autoproc, _delete_c3ds
 from gaitutils import nexus, register_gui_exception_handler
 
 
 def autoproc_single():
     fn = nexus.get_trialname() + '.Trial.enf'
-    enfname = op.join(nexus.get_sessionpath(), fn)
-    _do_autoproc([enfname])
+    enffiles = [op.join(nexus.get_sessionpath(), fn)]  # listify single enf
+    _delete_c3ds(enffiles)
+    _do_autoproc(enffiles)
 
 
 if __name__ == '__main__':

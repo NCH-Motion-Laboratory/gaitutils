@@ -288,14 +288,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
     logger.debug('Trials with recon ok: %d' % len(sel_trials))
 
 
-def autoproc_session(patterns=None, update_eclipse=True):
-
-    sessionpath = nexus.get_sessionpath()
-    enffiles = sessionutils.get_session_enfs(sessionpath)
-
-    if not enffiles:
-        raise GaitDataError('No trials found (no .enf files in session)')
-
+def _delete_c3ds(enffiles):
     """ c3d files need to be deleted before processing. Otherwise Nexus will
     load analog data from existing c3d files which are affected by previous
     crop operations, e.g. forceplate data might be clipped """
@@ -321,6 +314,17 @@ def autoproc_session(patterns=None, update_eclipse=True):
         else:
             logger.debug('refusing to delete c3d file %s since original '
                          'data files .(x1d and .x2d) do not exist' % c3dfile)
+
+
+def autoproc_session(patterns=None, update_eclipse=True):
+
+    sessionpath = nexus.get_sessionpath()
+    enffiles = sessionutils.get_session_enfs(sessionpath)
+
+    if not enffiles:
+        raise GaitDataError('No trials found (no .enf files in session)')
+
+    _delete_c3ds(enffiles)
 
     if patterns:
         # filter trial names according to patterns

@@ -141,6 +141,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         try:
             mkrdata = read_data.get_marker_data(vicon, allmarkers)
         except GaitDataError:
+            logger.debug('get_marker_data failed')
             fail(trial, 'label_failure')
             continue
 
@@ -159,6 +160,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         # plug-in gait labelling sanity checks
         if utils.is_plugingait_set(mkrdata):
             if not utils.check_plugingait_set(mkrdata):
+                logger.debug('marker sanity checks failed')
                 fail(trial, 'label_failure')
                 continue
 

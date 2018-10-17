@@ -70,7 +70,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
             s += '%dL' % nl
         return s or cfg.autoproc.enf_descriptions['context_none']
 
-    def fail(trial, reason):
+    def _fail(trial, reason):
         """Abort processing: mark and save trial"""
         fail_desc = (cfg.autoproc.enf_descriptions[reason] if reason in
                      cfg.autoproc.enf_descriptions else reason)
@@ -134,7 +134,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         # check trial length
         trange = vicon.GetTrialRange()
         if (trange[1] - trange[0]) < cfg.autoproc.min_trial_duration:
-            fail(trial, 'short')
+            _fail(trial, 'short')
             continue
 
         # check for valid marker data
@@ -143,7 +143,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
                                                 ignore_missing=True)
         except GaitDataError:
             logger.debug('get_marker_data failed')
-            fail(trial, 'label_failure')
+            _fail(trial, 'label_failure')
             continue
 
         # check markers for remaining gaps; leading/trailing gaps are ignored
@@ -155,18 +155,18 @@ def _do_autoproc(enffiles, update_eclipse=True):
                     gaps_found = True
                     break
             if gaps_found:
-                fail(trial, 'gaps')
+                _fail(trial, 'gaps')
                 continue
 
         # plug-in gait labelling sanity checks
-        if utils.is_plugingait_set(mkrdata):
-            if not utils.check_plugingait_set(mkrdata):
-                logger.debug('marker sanity checks failed')
-                fail(trial, 'label_failure')
-                continue
-        else:
-            # FIXME: rest of the scripts may assume PiG, so fail here?
+        if not utils.is_plugingait_set(mkrdata):
             logger.warning('marker set does not correspond to Plug-in Gait')
+            _fail(trial, 'label_failure')
+            continue
+        elif not utils.check_plugingait_set(mkrdata):
+                logger.debug('Plug-in Gait marker sanity checks failed')
+                _fail(trial, 'label_failure')
+                continue
 
         # preprocessing ok
         trial['recon_ok'] = True

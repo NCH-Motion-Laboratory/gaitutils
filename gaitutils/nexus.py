@@ -367,7 +367,7 @@ def _get_marker_data(vicon, markers, ignore_edge_gaps=True,
         x, y, z, _ = vicon.GetTrajectory(subj, marker)
         if len(x) == 0:
             if ignore_missing:
-                logger.warning('Cannot read trajectory %s from c3d file'
+                logger.warning('Cannot read trajectory %s from Nexus'
                                % marker)
                 continue
             else:

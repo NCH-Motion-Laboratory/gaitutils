@@ -139,7 +139,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
 
         # check for valid marker data
         try:
-            mkrdata = read_data.get_marker_data(vicon, allmarkers)
+            mkrdata = read_data.get_marker_data(vicon, allmarkers,
+                                                ignore_missing=True)
         except GaitDataError:
             logger.debug('get_marker_data failed')
             fail(trial, 'label_failure')
@@ -163,6 +164,9 @@ def _do_autoproc(enffiles, update_eclipse=True):
                 logger.debug('marker sanity checks failed')
                 fail(trial, 'label_failure')
                 continue
+        else:
+            # FIXME: rest of the scripts may assume PiG, so fail here?
+            logger.warning('marker set does not correspond to Plug-in Gait')
 
         # preprocessing ok
         trial['recon_ok'] = True

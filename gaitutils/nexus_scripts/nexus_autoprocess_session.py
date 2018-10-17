@@ -57,18 +57,18 @@ def _do_autoproc(enffiles, update_eclipse=True):
         logger.debug('saving trial')
         vicon.SaveTrial(cfg.autoproc.nexus_timeout)
 
-    def _context_desc(context):
-        """Get description for given context"""
-        if not context:
-            return cfg.autoproc.enf_descriptions['context_none']
-        if context == {'L'}:
-            return cfg.autoproc.enf_descriptions['context_left']
-        elif context == {'R'}:
-            return cfg.autoproc.enf_descriptions['context_right']
-        elif context == {'R', 'L'}:
-            return cfg.autoproc.enf_descriptions['context_both']
-        else:
-            raise ValueError('Unexpected context')
+    def _context_desc(fpev):
+        """Get Eclipse description string for given forceplate events dict"""
+        s = ""
+        nr = len(fpev['R_strikes'])
+        if nr:
+            s += '%dR' % nr
+        nl = len(fpev['L_strikes'])
+        if nr and nl:
+            s += '/'
+        if nl:
+            s += '%dL' % nl
+        return s or cfg.autoproc.enf_descriptions['context_none']
 
     def fail(trial, reason):
         """Abort processing: mark and save trial"""
@@ -173,8 +173,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
 
         # get foot velocity info for all events (do not reduce to median)
         vel = utils.get_foot_contact_velocity(mkrdata, fpev, medians=False)
+        eclipse_str += _context_desc(fpev)
         valid = fpev['valid']
-        eclipse_str += _context_desc(valid)
         trial['valid'] = valid
         trial['fpev'] = fpev
 

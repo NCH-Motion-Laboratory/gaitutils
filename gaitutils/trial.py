@@ -287,34 +287,30 @@ class Trial(object):
         Alternatively, dict with keys 'R' and 'L' and values as above.
         Returns list of gaitcycle instances.
         """
-        def _filter_cycles(cyclespec, context=None):
-            if context is not None:
-                our_cycles = [cycle for cycle in self.cycles
-                              if cycle.context == context.upper()]
-                cyclespec = cyclespec[context]
-            else:
-                our_cycles = self.cycles
+        def _filter_cycles(cycles, cyclespec):
             if cyclespec is None:
                 return [None]  # listify
             elif isinstance(cyclespec, int):
-                return our_cycles[cyclespec] if cyclespec < len(our_cycles) else []
+                return [cycles[cyclespec]] if cyclespec < len(cycles) else []
             elif isinstance(cyclespec, list):
-                return [our_cycles[c] for c in cyclespec if c < len(our_cycles)]
+                return [cycles[c] for c in cyclespec if c < len(cycles)]
             elif cyclespec == 'all':
-                return our_cycles
+                return cycles
             elif cyclespec == 'forceplate':
-                return [c for c in our_cycles if c.on_forceplate]
+                return [c for c in cycles if c.on_forceplate]
             else:
                 raise ValueError('Invalid argument')
-        
-        if not isinstance(cyclespec, dict):
-            return _filter_cycles(cyclespec)
-        
-        else:
-            cycles_ok = list()
+
+        if isinstance(cyclespec, dict):
+            cycs_ok = list()
             for context in cyclespec:
-                cycles_ok.append(_filter_cycles(cyclespec, context=context))
-            return cycles_ok
+                cycles_ = [c for c in self.cycles if c.context ==
+                           context.upper()]
+                cycs_ok.extend(_filter_cycles(cycles_, cyclespec[context]))
+            return cycs_ok
+        else:
+            return _filter_cycles(self.cycles, cyclespec)
+        
             
     def _get_modelvar(self, var):
         """ Return (unnormalized) model variable, load and cache data for

@@ -90,13 +90,14 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
     dash_styles = cycle(['solid', 'dash', 'dot', 'dashdot'])
     
     model_cycles_ = cfg.plot.default_model_cycles
-    # emg_cycles = cfg.plot.default_emg_cycles
+    emg_cycles_ = cfg.plot.default_emg_cycles
 
     for trial in trials:
         trial_color = colors.next()
         model_cycles = trial.get_cycles(model_cycles_)
+        emg_cycles = trial.get_cycles(emg_cycles_)
         
-        for cyc in model_cycles:
+        for cyc in model_cycles + emg_cycles:
             trial.set_norm_cycle(cyc)
             context = cyc.context
 
@@ -128,12 +129,14 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                     show_legend = tracegroup not in tracegroups
 
                     mod = models.model_from_var(var)
-                    if mod:  # plot model variable
-
-                        do_plot = True
+                    if mod:
+                        do_plot = True  # FIXME: control flow is clumsy here
                         
                         if var in mod.varnames_noside:
                             var = context + var
+                            
+                        if cyc not in model_cycles:
+                            do_plot = False
 
                         if mod.is_kinetic_var(var) and not cyc.on_forceplate:
                             do_plot = False
@@ -221,7 +224,10 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                     elif (trial.emg.is_channel(var) or var in
                           cfg.emg.channel_labels):
                         do_plot = True
+                        if cyc not in emg_cycles:
+                            do_plot = False
                         # plot only if EMG channel context matches cycle ctxt
+                        # FIXME: this assumes that EMG names begin with context
                         if var[0] != context:
                             do_plot = False
                         t, y = trial[var]

@@ -344,17 +344,14 @@ class Plotter(object):
 
         """ Create plot of variables. Parameters:
 
-        trial : Trial
+            trial : Trial
                 Trial to plot. If None, plot self.trial.
-        model_cycles : list | dict of int |  dict of list | 'all' | None
-                Gait cycles to plot. Defaults to first cycle (1) for
-                both contexts. Dict keys 'R' and 'L' specify the cycles
-                for right and left contexts. Multiple cycles can be given
-                as lists.
+        model_cycles : list | dict of int |  dict of list | 'all' | None |
+                        'forceplate'
+                Gait cycles to plot. See trial.get_cycle()
                 If None, plot unnormalized data. If 'all', plot all cycles.
                 If 'forceplate', plot all cycles that start on valid forceplate
                 contact.
-                If list, must be a list of cycle instances.
         emg_cycles : list | dict of int | int | dict of list | 'all' | None
                 Same as above, applied to EMG variables.
         plotheightratios : list
@@ -489,9 +486,7 @@ class Plotter(object):
             """ Shorten overlong names for legend etc. """
             return name if len(name) <= max_len else '..'+name[-max_len+2:]
 
-
         # set default values for vars
-
         if toeoff_markers is None:
             toeoff_markers = cfg.plot.toeoff_markers
 
@@ -507,12 +502,8 @@ class Plotter(object):
         if emg_cycles is None:
             emg_cycles = cfg.plot.default_emg_cycles
 
-        # get cycles from data if they were not directly specified as instances
-        model_cycles = (model_cycles if isinstance(model_cycles, list) else
-                        trial._get_cycles(model_cycles))
-
-        emg_cycles = (emg_cycles if isinstance(emg_cycles, list) else
-                      trial._get_cycles(emg_cycles))
+        model_cycles = trial.get_cycles(model_cycles)
+        emg_cycles = trial.get_cycles(emg_cycles)
 
         if not (model_cycles or emg_cycles):
             raise ValueError('No matching gait cycles found in data')

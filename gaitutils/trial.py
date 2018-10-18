@@ -266,9 +266,6 @@ class Trial(object):
             return dict(R_strikes=[], R_toeoffs=[], L_strikes=[], L_toeoffs=[],
                         valid=set(), R_strikes_plate=[], L_strikes_plate=[])
 
-    
-    
-
     def set_norm_cycle(self, cycle=None):
         """ Set normalization cycle (int for cycle index or a Gaitcycle
         instance). None to get unnormalized data. Affects the data returned
@@ -280,19 +277,25 @@ class Trial(object):
 
     def get_cycles(self, cyclespec):
         """ Get specified gait cycles from the trial.
-        cycles: 'all' | 'forceplate' | int
-        for all cycles, cycles starting with forceplate contact, or a given
-        cycle number.
+        cycles: 'all' | 'forceplate' | int | list of int
+        correspondingly for: all cycles, cycles starting with forceplate
+        contact, given cycle number, or a list of cycle number.
         Will pick specified cycles for both contexts.
         Alternatively, dict with keys 'R' and 'L' and values as above.
         Returns list of gaitcycle instances.
+        XXX: cycle numbering is now zero-based
+        FIXME: need 'forceplate_or_0' or similar as fallback mechanism?
         """
         def _filter_cycles(cycles, cyclespec):
             if cyclespec is None:
                 return [None]  # listify
+            elif isinstance(cyclespec, Gaitcycle):
+                return [cyclespec]
             elif isinstance(cyclespec, int):
                 return [cycles[cyclespec]] if cyclespec < len(cycles) else []
             elif isinstance(cyclespec, list):
+                if all([isinstance(c, Gaitcycle) for c in cyclespec]):
+                    return cyclespec
                 return [cycles[c] for c in cyclespec if c < len(cycles)]
             elif cyclespec == 'all':
                 return cycles

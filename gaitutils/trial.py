@@ -266,6 +266,9 @@ class Trial(object):
             return dict(R_strikes=[], R_toeoffs=[], L_strikes=[], L_toeoffs=[],
                         valid=set(), R_strikes_plate=[], L_strikes_plate=[])
 
+    
+    
+
     def set_norm_cycle(self, cycle=None):
         """ Set normalization cycle (int for cycle index or a Gaitcycle
         instance). None to get unnormalized data. Affects the data returned
@@ -274,20 +277,45 @@ class Trial(object):
             cycle = self.cycles[cycle]
         self._normalize = cycle if cycle else None
 
-    def get_cycle(self, context, ncycle):
-        """ e.g. ncycle=2 and context='L' returns 2nd left gait cycle.
-        Note that this uses 1-based indexing in contrast to
-        set_norm_cycle() """
-        cycles = [cycle for cycle in self.cycles
-                  if cycle.context == context.upper()]
-        if ncycle < 1:
-            raise ValueError('Index of gait cycle must be >= 1')
-        if len(cycles) < ncycle:
-            raise ValueError('Gait cycle %s%d does not exist in %s'
-                             % (context, ncycle, self.trialname))
-        else:
-            return cycles[ncycle-1]
 
+    def get_cycles(self, cyclespec):
+        """ Get specified gait cycles from the trial.
+        cycles: 'all' | 'forceplate' | int
+        for all cycles, cycles starting with forceplate contact, or a given
+        cycle number.
+        Will pick specified cycles for both contexts.
+        Alternatively, dict with keys 'R' and 'L' and values as above.
+        Returns list of gaitcycle instances.
+        """
+        def _filter_cycles(cyclespec, context=None):
+            if context is not None:
+                our_cycles = [cycle for cycle in self.cycles
+                              if cycle.context == context.upper()]
+                cyclespec = cyclespec[context]
+            else:
+                our_cycles = self.cycles
+            if cyclespec is None:
+                return [None]  # listify
+            elif isinstance(cyclespec, int):
+                return our_cycles[cyclespec] if cyclespec < len(our_cycles) else []
+            elif isinstance(cyclespec, list):
+                return [our_cycles[c] for c in cyclespec if c < len(our_cycles)]
+            elif cyclespec == 'all':
+                return our_cycles
+            elif cyclespec == 'forceplate':
+                return [c for c in our_cycles if c.on_forceplate]
+            else:
+                raise ValueError('Invalid argument')
+        
+        if not isinstance(cyclespec, dict):
+            return _filter_cycles(cyclespec)
+        
+        else:
+            cycles_ok = list()
+            for context in cyclespec:
+                cycles_ok.append(_filter_cycles(cyclespec, context=context))
+            return cycles_ok
+            
     def _get_modelvar(self, var):
         """ Return (unnormalized) model variable, load and cache data for
         model if needed """

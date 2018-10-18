@@ -489,27 +489,6 @@ class Plotter(object):
             """ Shorten overlong names for legend etc. """
             return name if len(name) <= max_len else '..'+name[-max_len+2:]
 
-        def _get_cycles(cycles):
-            """ Get specified cycles from the gait trial """
-            if cycles is None:
-                cycles = [None]  # listify
-            elif cycles == 'all':
-                cycles = trial.cycles
-            elif cycles == 'forceplate':
-                cycles = [cyc for cyc in trial.cycles
-                          if cyc.on_forceplate]
-            elif isinstance(cycles, dict):
-                for side in ['L', 'R']:  # add L/R side if needed
-                    if side not in cycles:
-                        cycles[side] = [None]
-                # convert ints to lists
-                cycles.update({key: [val] for (key, val) in cycles.items()
-                              if isinstance(val, int)})
-                # get the specified cycles from trial
-                cycles = [trial.get_cycle(side, ncycle)
-                          for side in ['L', 'R']
-                          for ncycle in cycles[side] if ncycle]
-            return cycles
 
         # set default values for vars
 
@@ -530,10 +509,10 @@ class Plotter(object):
 
         # get cycles from data if they were not directly specified as instances
         model_cycles = (model_cycles if isinstance(model_cycles, list) else
-                        _get_cycles(model_cycles))
+                        trial._get_cycles(model_cycles))
 
         emg_cycles = (emg_cycles if isinstance(emg_cycles, list) else
-                      _get_cycles(emg_cycles))
+                      trial._get_cycles(emg_cycles))
 
         if not (model_cycles or emg_cycles):
             raise ValueError('No matching gait cycles found in data')

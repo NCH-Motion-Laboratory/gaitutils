@@ -260,9 +260,9 @@ def dash_report(info=None, sessions=None, tags=None):
         # for comparison report, include session info in plot legends and
         # use session specific line style
         trial_linestyles = 'session' if is_comparison else 'same'
-        legend_type = 'short_name_with_tag' if is_comparison else 'tag_only'
-        try:
+        legend_type = 'short_name_with_tag' if is_comparison else 'tag_with_cycle'
 
+        try:
             # special layout
             if isinstance(layout, basestring):
                 if layout == 'time_dist':

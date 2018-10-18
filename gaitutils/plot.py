@@ -347,11 +347,8 @@ class Plotter(object):
             trial : Trial
                 Trial to plot. If None, plot self.trial.
         model_cycles : list | dict of int |  dict of list | 'all' | None |
-                        'forceplate'
-                Gait cycles to plot. See trial.get_cycle()
-                If None, plot unnormalized data. If 'all', plot all cycles.
-                If 'forceplate', plot all cycles that start on valid forceplate
-                contact.
+                       'forceplate'
+                Gait cycles to plot. See trial.get_cycle() for options.
         emg_cycles : list | dict of int | int | dict of list | 'all' | None
                 Same as above, applied to EMG variables.
         plotheightratios : list

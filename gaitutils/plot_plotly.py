@@ -51,7 +51,7 @@ def _truncate_trialname(trialname):
         return trialname
 
 
-def plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
+def plot_trials(trials, layout, model_normaldata, legend_type='full',
                 trial_linestyles='same'):
     """Make a plotly plot of layout, including given trials.
 
@@ -88,15 +88,17 @@ def plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
 
     session_linestyles = dict()
     dash_styles = cycle(['solid', 'dash', 'dot', 'dashdot'])
+    
+    model_cycles_ = cfg.plot.default_model_cycles
+    # emg_cycles = cfg.plot.default_emg_cycles
 
     for trial in trials:
         trial_color = colors.next()
-
-        for context in ['R', 'L']:
-            # FIXME: hardcoded to 1st cycle
-            cycle_ind = 1
-            cyc = trial.get_cycle(context, cycle_ind)
+        model_cycles = trial.get_cycles(model_cycles_)
+        
+        for cyc in model_cycles:
             trial.set_norm_cycle(cyc)
+            context = cyc.context
 
             for i, row in enumerate(layout):
                 for j, var in enumerate(row):
@@ -113,10 +115,12 @@ def plot_trials(trials, layout, model_normaldata, legend_type='tag_only',
                                                   trial.eclipse_tag)
                     elif legend_type == 'tag_only':
                         tracegroup = trial.eclipse_tag
-                    elif legend_type == 'full':  # inc cycle
-                        raise Exception('not implemented yet')
-                        #tracegroup = '%s / %s' % (trial.name_with_description,
-                        #                          cycle_desc[context])
+                    elif legend_type == 'tag_with_cycle':
+                        tracegroup = '%s / %s' % (trial.eclipse_tag,
+                                                  cyc.name)
+                    elif legend_type == 'full':
+                        tracegroup = '%s / %s' % (trial.name_with_description,
+                                                  cyc.name)
                     else:
                         raise ValueError('Invalid legend type')
 

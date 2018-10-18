@@ -284,7 +284,6 @@ class Trial(object):
         Alternatively, dict with keys 'R' and 'L' and values as above.
         Returns list of gaitcycle instances.
         XXX: cycle numbering is now zero-based
-        FIXME: need 'forceplate_or_0' or similar as fallback mechanism?
         """
         def _filter_cycles(cycles, cyclespec):
             if cyclespec is None:
@@ -301,18 +300,22 @@ class Trial(object):
                 return cycles
             elif cyclespec == 'forceplate':
                 return [c for c in cycles if c.on_forceplate]
+            elif cyclespec == 'forceplate_or_1st':
+                # fall back to 1st cycle if no forceplate cycles
+                return (_filter_cycles(cycles, 'forceplate') or
+                        _filter_cycles(cycles, 0))
             else:
                 raise ValueError('Invalid argument')
 
-        if isinstance(cyclespec, dict):
-            cycs_ok = list()
-            for context in cyclespec:
-                cycles_ = [c for c in self.cycles if c.context ==
-                           context.upper()]
-                cycs_ok.extend(_filter_cycles(cycles_, cyclespec[context]))
-            return cycs_ok
-        else:
-            return _filter_cycles(self.cycles, cyclespec)
+        if not isinstance(cyclespec, dict):
+            cyclespec = {'R': cyclespec, 'L': cyclespec}
+
+        cycs_ok = list()
+        for context in cyclespec:
+            cycles_ = [c for c in self.cycles if c.context ==
+                       context.upper()]
+            cycs_ok.extend(_filter_cycles(cycles_, cyclespec[context]))
+        return cycs_ok
         
             
     def _get_modelvar(self, var):
@@ -333,7 +336,7 @@ class Trial(object):
         # with detected forceplate events, but may not match exactly, so use
         # a tolerance
         STRIKE_TOL = 7
-        sidestrs = {'R': 'Right', 'L': 'Left'}
+        sidestrs = {'R': 'right', 'L': 'left'}
         for strikes in [self.lstrikes, self.rstrikes]:
             len_s = len(strikes)
             if len_s < 2:
@@ -373,8 +376,8 @@ class Trial(object):
                                                             start))
                 else:
                     toeoff = toeoff[0]
-                fp_str = '(on forceplate)' if on_forceplate else ''
-                name = '%s %d %s' % (sidestrs[context], (k+1), fp_str)
+                fp_str = ' (fp)' if on_forceplate else ''
+                name = '%s%d%s' % (sidestrs[context], (k+1), fp_str)
                 yield Gaitcycle(start, end, toeoff, context,
                                 on_forceplate, plate_idx, self.samplesperframe,
                                 trial=self, index=k+1, name=name)

@@ -277,12 +277,17 @@ class Trial(object):
 
     def get_cycles(self, cyclespec):
         """ Get specified gait cycles from the trial.
-        cycles: 'all' | 'forceplate' | int | list of int
-        correspondingly for: all cycles, cycles starting with forceplate
-        contact, given cycle number, or a list of cycle number.
-        Will pick specified cycles for both contexts.
+        cyclespec: 'all' | 'forceplate' | Gaitcycle | int | list of int |
+                    list of Gaitcycle | tuple
+        Corresponding to: all cycles | cycles starting with forceplate
+        contact | cycle number | list of cycle numbers | tuple
+        of the above options.
+        In case of tuple, it will return the first condition of the tuple that
+        has corresponding cycles.
+
         Alternatively, dict with keys 'R' and 'L' and values as above.
         Returns list of gaitcycle instances.
+        FIXME: in case of Gaitcycle instances, there is no real need to call get_cycle -> fix plotter_gui.py
         XXX: cycle numbering is now zero-based
         """
         def _filter_cycles(cycles, cyclespec):
@@ -298,12 +303,13 @@ class Trial(object):
                 return [cycles[c] for c in cyclespec if c < len(cycles)]
             elif cyclespec == 'all':
                 return cycles
-            elif cyclespec == 'forceplate':
+            elif cyclespec == 'forceplate':  # all forceplate cycles
                 return [c for c in cycles if c.on_forceplate]
-            elif cyclespec == 'forceplate_or_1st':
-                # fall back to 1st cycle if no forceplate cycles
-                return (_filter_cycles(cycles, 'forceplate') or
-                        _filter_cycles(cycles, 0))
+            elif cyclespec == '1st_forceplate':  # 1st forceplate cycle
+                return [c for c in cycles if c.on_forceplate][:1]
+            elif isinstance(cyclespec, tuple):
+                return (_filter_cycles(cycles, cyclespec[0]) or
+                        _filter_cycles(cycles, cyclespec[1:]))
             else:
                 raise ValueError('Invalid argument')
 

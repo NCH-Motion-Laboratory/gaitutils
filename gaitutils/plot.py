@@ -22,7 +22,7 @@ import logging
 from . import models
 from . import numutils
 from . import normaldata
-from .trial import Trial, nexus_trial
+from .trial import Trial, nexus_trial, Gaitcycle
 from .stats import AvgTrial
 from .config import cfg
 
@@ -425,7 +425,6 @@ class Plotter(object):
                 Add line on y=0
 
         """
-
         if trial is None and self.trial is None:
             raise ValueError('No trial, specify one or call open_trial()')
         elif trial is None:
@@ -480,8 +479,18 @@ class Plotter(object):
                            left='off', labelleft='off')
 
         def _shorten_name(name, max_len=10):
-            """ Shorten overlong names for legend etc. """
+            """Shorten overlong names for legend etc."""
             return name if len(name) <= max_len else '..'+name[-max_len+2:]
+        
+        def _handle_cycle_arg(cycles):
+            """Process the cycle argument"""
+            if isinstance(cycles, Gaitcycle):
+                return [cycles]
+            elif (isinstance(cycles, list) and all([isinstance(c, Gaitcycle)
+                  for c in cycles])):
+                    return cycles
+            else:
+                return trial.get_cycles(cycles)
 
         # set default values for vars
         if toeoff_markers is None:
@@ -499,8 +508,8 @@ class Plotter(object):
         if emg_cycles is None:
             emg_cycles = cfg.plot.default_emg_cycles
 
-        model_cycles = trial.get_cycles(model_cycles)
-        emg_cycles = trial.get_cycles(emg_cycles)
+        model_cycles = _handle_cycle_arg(model_cycles)
+        emg_cycles = _handle_cycle_arg(emg_cycles)
 
         if not (model_cycles or emg_cycles):
             raise ValueError('No matching gait cycles found in data')

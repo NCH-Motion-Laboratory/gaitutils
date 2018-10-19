@@ -287,19 +287,14 @@ class Trial(object):
 
         Alternatively, dict with keys 'R' and 'L' and values as above.
         Returns list of gaitcycle instances.
-        FIXME: in case of Gaitcycle instances, there is no real need to call get_cycle -> fix plotter_gui.py
         XXX: cycle numbering is now zero-based
         """
         def _filter_cycles(cycles, cyclespec):
             if cyclespec is None:
                 return [None]  # listify
-            elif isinstance(cyclespec, Gaitcycle):
-                return [cyclespec]
             elif isinstance(cyclespec, int):
                 return [cycles[cyclespec]] if cyclespec < len(cycles) else []
             elif isinstance(cyclespec, list):
-                if all([isinstance(c, Gaitcycle) for c in cyclespec]):
-                    return cyclespec
                 return [cycles[c] for c in cyclespec if c < len(cycles)]
             elif cyclespec == 'all':
                 return cycles
@@ -308,8 +303,12 @@ class Trial(object):
             elif cyclespec == '1st_forceplate':  # 1st forceplate cycle
                 return [c for c in cycles if c.on_forceplate][:1]
             elif isinstance(cyclespec, tuple):
-                return (_filter_cycles(cycles, cyclespec[0]) or
-                        _filter_cycles(cycles, cyclespec[1:]))
+            # recurse until we have some cycles (or the cyclespec is exhausted)
+                if not cyclespec:
+                    return []
+                else:
+                    return (_filter_cycles(cycles, cyclespec[0]) or
+                            _filter_cycles(cycles, cyclespec[1:]))
             else:
                 raise ValueError('Invalid argument')
 

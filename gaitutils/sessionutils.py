@@ -11,6 +11,7 @@ import os.path as op
 import json
 import datetime
 import glob
+import re
 import logging
 
 from .eclipse import get_eclipse_keys
@@ -94,10 +95,11 @@ def _merge_session_info(sessions):
 def _enf2other(fname, ext):
     """Converts name of trial .enf file to corresponding .c3d or other
     file type"""
-    enfstr = '.Trial.enf'
-    if enfstr not in fname:
-        raise ValueError('Filename is not a trial .enf')
-    return fname.replace(enfstr, '.%s' % ext)
+    enfre = '\.*.Trial\d*.enf'  # .Trial followed by zero or more digits
+    res = re.search(enfre, fname)
+    if res is None:
+        raise GaitDataError('Filename %s is not a trial .enf' % fname)
+    return fname.replace(res.group(), '.%s' % ext)
 
 
 def get_session_date(sessionpath):
@@ -105,7 +107,7 @@ def get_session_date(sessionpath):
     enfs = get_session_enfs(sessionpath)
     x1ds = [_enf2other(fn, 'x1d') for fn in enfs]
     if not x1ds:
-        raise ValueError('Invalid session %s' % sessionpath)
+        raise GaitDataError('Invalid session %s' % sessionpath)
     return datetime.datetime.fromtimestamp(op.getmtime(x1ds[0]))
 
 

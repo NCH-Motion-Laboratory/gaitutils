@@ -238,8 +238,8 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                             # _axis_annotate(ax, 'disconnected')
                         if do_plot:
                             line = {'width': 1, 'color': trial_color}
-                            y *= 1e3  # plot mV
-                            trace = go.Scatter(x=t, y=y, name=tracegroup,
+                            trace = go.Scatter(x=t, y=y*cfg.plot.emg_multiplier,
+                                               name=tracegroup,
                                                legendgroup=tracegroup,
                                                showlegend=show_legend,
                                                line=line)

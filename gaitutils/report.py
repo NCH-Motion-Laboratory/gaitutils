@@ -232,9 +232,11 @@ def dash_report(info=None, sessions=None, tags=None):
                           'value': tr.trialname})
     # precreate graphs
     # in EMG layout, keep chs that are active in any of the trials
-    emgs = [tr.emg for tr in trials]
-    emg_layout = layouts.rm_dead_channels_multitrial(emgs, cfg.layouts.std_emg)
-    if len(emg_layout) == 0:  # no valid chs
+    try:
+        emgs = [tr.emg for tr in trials]
+        emg_layout = layouts.rm_dead_channels_multitrial(emgs,
+                                                         cfg.layouts.std_emg)
+    except GaitDataError:
         emg_layout = 'disabled'
 
     # FIXME: into config?

@@ -64,8 +64,8 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
     """
 
     # configurabe opts (here for now)
-    label_fontsize = 12  # x, y labels
-    subtitle_fontsize = 12  # subplot titles
+    label_fontsize = 18  # x, y labels
+    subtitle_fontsize = 20  # subplot titles
 
     nrows = len(layout)
     if nrows == 0:

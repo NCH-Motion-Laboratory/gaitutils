@@ -274,20 +274,55 @@ class Trial(object):
             cycle = self.cycles[cycle]
         self._normalize = cycle if cycle else None
 
-    def get_cycle(self, context, ncycle):
-        """ e.g. ncycle=2 and context='L' returns 2nd left gait cycle.
-        Note that this uses 1-based indexing in contrast to
-        set_norm_cycle() """
-        cycles = [cycle for cycle in self.cycles
-                  if cycle.context == context.upper()]
-        if ncycle < 1:
-            raise ValueError('Index of gait cycle must be >= 1')
-        if len(cycles) < ncycle:
-            raise ValueError('Gait cycle %s%d does not exist in %s'
-                             % (context, ncycle, self.trialname))
-        else:
-            return cycles[ncycle-1]
 
+    def get_cycles(self, cyclespec):
+        """ Get specified gait cycles from the trial.
+        cyclespec: 'all' | 'forceplate' | Gaitcycle | int | list of int |
+                    list of Gaitcycle | tuple
+        Corresponding to: all cycles | cycles starting with forceplate
+        contact | cycle number | list of cycle numbers | tuple
+        of the above options.
+        In case of tuple, it will return the first condition of the tuple that
+        has corresponding cycles.
+
+        Alternatively, dict with keys 'R' and 'L' and values as above.
+        Returns list of gaitcycle instances.
+        XXX: cycle numbering is now zero-based
+        """
+        def _filter_cycles(cycles, cyclespec):
+            if cyclespec is None:
+                return [None]  # listify
+            elif isinstance(cyclespec, int):
+                return [cycles[cyclespec]] if cyclespec < len(cycles) else []
+            elif isinstance(cyclespec, list):
+                return [cycles[c] for c in cyclespec if c < len(cycles)]
+            elif cyclespec == 'all':
+                return cycles
+            elif cyclespec == 'forceplate':  # all forceplate cycles
+                return [c for c in cycles if c.on_forceplate]
+            elif cyclespec == '1st_forceplate':  # 1st forceplate cycle
+                return [c for c in cycles if c.on_forceplate][:1]
+            elif isinstance(cyclespec, tuple):
+            # recurse until we have some cycles (or the cyclespec is exhausted)
+                if not cyclespec:
+                    return []
+                else:
+                    return (_filter_cycles(cycles, cyclespec[0]) or
+                            _filter_cycles(cycles, cyclespec[1:]))
+            else:
+                raise ValueError('Invalid argument')
+
+        if not isinstance(cyclespec, dict):
+            cyclespec = {'R': cyclespec, 'L': cyclespec}
+
+        cycs_ok = list()
+        for context in cyclespec:
+            cycles_ = [c for c in self.cycles if c.context ==
+                       context.upper()]
+            cycs_ok.extend(_filter_cycles(cycles_, cyclespec[context]))
+        return cycs_ok
+        
+            
     def _get_modelvar(self, var):
         """ Return (unnormalized) model variable, load and cache data for
         model if needed """
@@ -306,7 +341,7 @@ class Trial(object):
         # with detected forceplate events, but may not match exactly, so use
         # a tolerance
         STRIKE_TOL = 7
-        sidestrs = {'R': 'Right', 'L': 'Left'}
+        sidestrs = {'R': 'right', 'L': 'left'}
         for strikes in [self.lstrikes, self.rstrikes]:
             len_s = len(strikes)
             if len_s < 2:
@@ -346,8 +381,8 @@ class Trial(object):
                                                             start))
                 else:
                     toeoff = toeoff[0]
-                fp_str = '(on forceplate)' if on_forceplate else ''
-                name = '%s %d %s' % (sidestrs[context], (k+1), fp_str)
+                fp_str = ' (fp)' if on_forceplate else ''
+                name = '%s%d%s' % (sidestrs[context], (k+1), fp_str)
                 yield Gaitcycle(start, end, toeoff, context,
                                 on_forceplate, plate_idx, self.samplesperframe,
                                 trial=self, index=k+1, name=name)

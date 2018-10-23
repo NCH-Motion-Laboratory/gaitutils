@@ -22,7 +22,7 @@ import logging
 from . import models
 from . import numutils
 from . import normaldata
-from .trial import Trial, nexus_trial
+from .trial import Trial, nexus_trial, Gaitcycle
 from .stats import AvgTrial
 from .config import cfg
 
@@ -344,17 +344,11 @@ class Plotter(object):
 
         """ Create plot of variables. Parameters:
 
-        trial : Trial
+            trial : Trial
                 Trial to plot. If None, plot self.trial.
-        model_cycles : list | dict of int |  dict of list | 'all' | None
-                Gait cycles to plot. Defaults to first cycle (1) for
-                both contexts. Dict keys 'R' and 'L' specify the cycles
-                for right and left contexts. Multiple cycles can be given
-                as lists.
-                If None, plot unnormalized data. If 'all', plot all cycles.
-                If 'forceplate', plot all cycles that start on valid forceplate
-                contact.
-                If list, must be a list of cycle instances.
+        model_cycles : list | dict of int |  dict of list | 'all' | None |
+                       'forceplate'
+                Gait cycles to plot. See trial.get_cycle() for options.
         emg_cycles : list | dict of int | int | dict of list | 'all' | None
                 Same as above, applied to EMG variables.
         plotheightratios : list
@@ -431,7 +425,6 @@ class Plotter(object):
                 Add line on y=0
 
         """
-
         if trial is None and self.trial is None:
             raise ValueError('No trial, specify one or call open_trial()')
         elif trial is None:
@@ -486,33 +479,20 @@ class Plotter(object):
                            left='off', labelleft='off')
 
         def _shorten_name(name, max_len=10):
-            """ Shorten overlong names for legend etc. """
+            """Shorten overlong names for legend etc."""
             return name if len(name) <= max_len else '..'+name[-max_len+2:]
-
-        def _get_cycles(cycles):
-            """ Get specified cycles from the gait trial """
-            if cycles is None:
-                cycles = [None]  # listify
-            elif cycles == 'all':
-                cycles = trial.cycles
-            elif cycles == 'forceplate':
-                cycles = [cyc for cyc in trial.cycles
-                          if cyc.on_forceplate]
-            elif isinstance(cycles, dict):
-                for side in ['L', 'R']:  # add L/R side if needed
-                    if side not in cycles:
-                        cycles[side] = [None]
-                # convert ints to lists
-                cycles.update({key: [val] for (key, val) in cycles.items()
-                              if isinstance(val, int)})
-                # get the specified cycles from trial
-                cycles = [trial.get_cycle(side, ncycle)
-                          for side in ['L', 'R']
-                          for ncycle in cycles[side] if ncycle]
-            return cycles
+        
+        def _handle_cycle_arg(cycles):
+            """Process the cycle argument"""
+            if isinstance(cycles, Gaitcycle):
+                return [cycles]
+            elif (isinstance(cycles, list) and all([isinstance(c, Gaitcycle)
+                  for c in cycles])):
+                    return cycles
+            else:
+                return trial.get_cycles(cycles)
 
         # set default values for vars
-
         if toeoff_markers is None:
             toeoff_markers = cfg.plot.toeoff_markers
 
@@ -528,12 +508,8 @@ class Plotter(object):
         if emg_cycles is None:
             emg_cycles = cfg.plot.default_emg_cycles
 
-        # get cycles from data if they were not directly specified as instances
-        model_cycles = (model_cycles if isinstance(model_cycles, list) else
-                        _get_cycles(model_cycles))
-
-        emg_cycles = (emg_cycles if isinstance(emg_cycles, list) else
-                      _get_cycles(emg_cycles))
+        model_cycles = _handle_cycle_arg(model_cycles)
+        emg_cycles = _handle_cycle_arg(emg_cycles)
 
         if not (model_cycles or emg_cycles):
             raise ValueError('No matching gait cycles found in data')

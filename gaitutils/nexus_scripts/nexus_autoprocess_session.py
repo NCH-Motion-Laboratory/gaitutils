@@ -91,7 +91,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
 
     # close trial to prevent 'Save trial?' dialog on first open
     if nexus_ver >= 2.8:
-        logger.debug('Closing open trial')
+        logger.debug('force closing open trial')
         vicon.CloseTrial(5000)  # timeout in ms
 
     for filepath_ in enffiles:

@@ -19,16 +19,16 @@ logger = logging.getLogger(__name__)
 
 
 def get_analysis(c3dfile, condition='unknown'):
-    """ A wrapper that reads the c3d analysis values and inserts step width
-    which is not computed by Nexus """
+    """ A wrapper that reads the c3d analysis values """
     di = c3d.get_analysis(c3dfile, condition=condition)
-    # compute and insert step width - not done by Nexus
-    sw = _step_width(c3dfile)
-    di[condition]['Step Width'] = dict()
-    # XXX: uses avg of all cycles from trial
-    di[condition]['Step Width']['Right'] = np.array(sw['R']).mean()
-    di[condition]['Step Width']['Left'] = np.array(sw['L']).mean()
-    di[condition]['Step Width']['unit'] = 'mm'
+    # Nexus <2.8 does not compute step width into c3d
+    if 'Step Width' not in di[condition]:
+        sw = _step_width(c3dfile)
+        di[condition]['Step Width'] = dict()
+        # XXX: uses avg of all cycles from trial
+        di[condition]['Step Width']['Right'] = np.array(sw['R']).mean()
+        di[condition]['Step Width']['Left'] = np.array(sw['L']).mean()
+        di[condition]['Step Width']['unit'] = 'mm'
     return di
 
 

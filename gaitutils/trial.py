@@ -11,6 +11,7 @@ Read gait trials.
 from __future__ import division
 from collections import defaultdict
 import numpy as np
+import re
 import os.path as op
 import glob
 import logging
@@ -148,8 +149,16 @@ class Trial(object):
         self.rtoeoffs = [e - self.offset for e in sorted(self.rtoeoffs)]
 
         self.sessiondir = op.split(self.sessionpath)[-1]
-        # TODO: sometimes trial .enf name seems to be different?
-        enfpath = op.join(self.sessionpath, self.trialname + '.Trial.enf')
+
+        enfpath = op.join(self.sessionpath, '%s.Trial.enf' % self.trialname)
+        
+        # look for alternative (older?) enf name
+        if not op.isfile(enfpath):
+            trialn_re = re.search('\.*(\d*)$', self.trialname)
+            trialn = trialn_re.group(1)
+            if trialn:
+                trialname_ = '%s.Trial%s.enf' % (self.trialname, trialn)
+                enfpath = enfpath = op.join(self.sessionpath, trialname_)
 
         if op.isfile(enfpath):
             logger.debug('reading Eclipse info from %s' % enfpath)

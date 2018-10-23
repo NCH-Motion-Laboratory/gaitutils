@@ -89,6 +89,11 @@ def _do_autoproc(enffiles, update_eclipse=True):
     nexus_ver = nexus.true_ver()
     trials = dict()
 
+    # close trial to prevent 'Save trial?' dialog on first open
+    if nexus_ver >= 2.8:
+        logger.debug('Closing open trial')
+        vicon.CloseTrial(5000)  # timeout in ms
+
     for filepath_ in enffiles:
         filepath = filepath_[:filepath_.find('.Trial')]  # rm .Trial and .enf
         filename = os.path.split(filepath)[1]

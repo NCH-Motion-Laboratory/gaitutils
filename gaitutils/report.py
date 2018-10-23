@@ -149,7 +149,8 @@ def dash_report(info=None, sessions=None, tags=None):
     for session in sessions:
         c3ds = sessionutils.find_tagged(session, tags=tags)
         if not c3ds:
-            raise GaitDataError('No marked trials found for %s' % session)
+            raise GaitDataError('No marked trials %s found for session %s' %
+                                (tags, session))
         else:
             c3ds_all.append(c3ds)
             trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]

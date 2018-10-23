@@ -148,15 +148,14 @@ def dash_report(info=None, sessions=None, tags=None):
     c3ds_all = list()
     for session in sessions:
         c3ds = sessionutils.find_tagged(session, tags=tags)
-        if is_comparison and not c3ds:
-            raise GaitDataError('No representative trials %s found for %s'
-                                % (str(cfg.eclipse.repr_tags), session))
-        c3ds_all.append(c3ds)
-        trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
-        trials.extend(trials_this)
+        if not c3ds:
+            raise GaitDataError('No marked trials found for %s' % session)
+        else:
+            c3ds_all.append(c3ds)
+            trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
+            trials.extend(trials_this)
     trials = sorted(trials, key=lambda tr: tr.eclipse_tag)
-    if not c3ds_all:
-        raise ValueError('No trials found')
+    logger.debug('creating report from %s' % c3ds_all)
 
     # load normal data for gait models
     model_normaldata = dict()

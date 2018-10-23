@@ -7,7 +7,7 @@ Handling layouts.
 
 import logging
 
-from gaitutils import cfg
+from gaitutils import cfg, GaitDataError
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +37,8 @@ def rm_dead_channels_multitrial(emgs, layout):
         # previously OK chs propagated as ok
         chs_ok = ([a or b for a, b in zip(chs_ok, chs_ok_)] if i > 0 else
                   chs_ok_)
+    if not chs_ok:
+        raise GaitDataError('No acceptable channels in any of the EMGs')
     rowlen = len(layout[0])
     lout = zip(*[iter(chs_ok)]*rowlen)  # grouper recipe from itertools
     rows_ok = [any(row) for row in lout]

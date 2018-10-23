@@ -23,6 +23,7 @@ def get_analysis(c3dfile, condition='unknown'):
     di = c3d.get_analysis(c3dfile, condition=condition)
     # Nexus <2.8 does not compute step width into c3d
     if 'Step Width' not in di[condition]:
+        logger.warning('computing step widths (not found in %s)' % c3dfile)
         sw = _step_width(c3dfile)
         di[condition]['Step Width'] = dict()
         # XXX: uses avg of all cycles from trial
@@ -84,6 +85,7 @@ def _step_width(source):
     FIXME: marker name into params?
     FIXME: this (and similar) may also need to take Trial instance as argument
     to avoid creating new Trials
+    FIXME: units are mm instead of Nexus/Polygon m
     """
     tr = Trial(source)
     sw = dict()

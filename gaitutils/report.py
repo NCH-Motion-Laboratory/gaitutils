@@ -220,6 +220,11 @@ def dash_report(info=None, sessions=None, tags=None):
     if any([vid_urls['Static'][camera_label] for camera_label in camera_labels]):
         opts_tags.append({'label': 'Static', 'value': 'Static'})
 
+    # no videos at all
+    if not opts_tags:
+        opts_tags.append({'label': 'No videos', 'value': 'no videos',
+                          'disabled': True})
+
     # build dcc.Dropdown options list for the trials
     trials_dd = list()
     for tr in trials:
@@ -423,6 +428,8 @@ def dash_report(info=None, sessions=None, tags=None):
         )
     def update_videos(camera_label, tag):
         """Create a list of video divs according to camera and tag selection"""
+        if tag == 'no videos':
+            return 'No videos found'
         vid_urls_ = vid_urls[tag][camera_label]
         if not vid_urls_:
             return 'No videos found'

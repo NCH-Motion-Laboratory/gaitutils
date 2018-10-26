@@ -29,7 +29,7 @@ def get_analysis(c3dfile, condition='unknown'):
         # XXX: uses avg of all cycles from trial
         di[condition]['Step Width']['Right'] = np.array(sw['R']).mean()
         di[condition]['Step Width']['Left'] = np.array(sw['L']).mean()
-        di[condition]['Step Width']['unit'] = 'mm'
+        di[condition]['Step Width']['unit'] = 'm'
     return di
 
 
@@ -85,7 +85,6 @@ def _step_width(source):
     FIXME: marker name into params?
     FIXME: this (and similar) may also need to take Trial instance as argument
     to avoid creating new Trials
-    FIXME: units are mm instead of Nexus/Polygon m
     """
     tr = Trial(source)
     sw = dict()
@@ -117,5 +116,5 @@ def _step_width(source):
             VC = pos_next_co - pos_this
             VCP = V1 * np.dot(VC, V1)  # proj to ipsilateral line
             VSW = VCP - VC
-            sw[context].append(np.linalg.norm(VSW))
+            sw[context].append(np.linalg.norm(VSW) / 1000.)
     return sw

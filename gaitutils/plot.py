@@ -75,8 +75,8 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
                 continue
             stddevs_this = ([stddev[cond][var][context] if stddev[cond]
                              else None for cond in conds])
-            units_this = len(conds)*[units[ind]]
-            ypos = np.arange(0, len(vals_this) * thickness, thickness)
+            units_this = len(conds) * [units[ind]]
+            ypos = np.arange(len(vals_this) * thickness, 0, -thickness)
             xerr = stddevs_this if stddev_bars else None
             rects = ax.barh(ypos, vals_this, thickness, align='edge',
                             color=color, xerr=xerr)
@@ -122,8 +122,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
     rects = _plot_oneside(vars_, 'Right', 2)
 
     if len(conds) > 1:
-        # plotting happens from down -> up, so reverse legend
-        fig.legend(rects[::-1], conds[::-1], fontsize=7,
+        fig.legend(rects, conds, fontsize=7,
                    bbox_to_anchor=(.5, 0), loc="lower right",
                    bbox_transform=fig.transFigure)
 

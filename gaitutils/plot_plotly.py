@@ -92,7 +92,7 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
 
     session_linestyles = dict()
     dash_styles = cycle(['solid', 'dash', 'dot', 'dashdot'])
-    
+
     model_cycles_ = cfg.plot.default_model_cycles
     emg_cycles_ = cfg.plot.default_emg_cycles
 
@@ -100,7 +100,7 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
         trial_color = colors.next()
         model_cycles = trial.get_cycles(model_cycles_)
         emg_cycles = trial.get_cycles(emg_cycles_)
-        
+
         for cyc in model_cycles + emg_cycles:
             trial.set_norm_cycle(cyc)
             context = cyc.context
@@ -197,13 +197,12 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                             if (trial in _plot_cache and cyc in
                                 _plot_cache[trial] and var in
                                 _plot_cache[trial][cyc]):
-                                        logger.debug('cache hit for: %s / %s / %s' %
-                                                     (trial.trialname, cyc.name, var))
+                                        #logger.debug('cache hit for: %s / %s / %s' %
+                                        #             (trial.trialname, cyc.name, var))
                                         trace = _plot_cache[trial][cyc][var]
                             else:
-
-                                logger.debug('calling Scatter for: %s / %s / %s' %
-                                             (trial.trialname, cyc.name, var))
+                                #logger.debug('calling Scatter for: %s / %s / %s' %
+                                #             (trial.trialname, cyc.name, var))
                                 trace = go.Scatter(x=t, y=y, name=tracegroup,
                                                    legendgroup=tracegroup,
                                                    showlegend=show_legend,
@@ -260,13 +259,12 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                             if (trial in _plot_cache and cyc in
                                 _plot_cache[trial] and var in
                                 _plot_cache[trial][cyc]):
-                                        logger.debug('cache hit for: %s / %s / %s' %
-                                                     (trial.trialname, cyc.name, var))
+                                        #logger.debug('cache hit for: %s / %s / %s' %
+                                        #             (trial.trialname, cyc.name, var))
                                         trace = _plot_cache[trial][cyc][var]
                             else:
-
-                                logger.debug('calling Scatter for: %s / %s / %s' %
-                                             (trial.trialname, cyc.name, var))
+                                #logger.debug('calling Scatter for: %s / %s / %s' %
+                                #             (trial.trialname, cyc.name, var))
                                 trace = go.Scatter(x=t, y=y, name=tracegroup,
                                                    legendgroup=tracegroup,
                                                    showlegend=show_legend,

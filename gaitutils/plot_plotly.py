@@ -51,6 +51,9 @@ def _truncate_trialname(trialname):
         return trialname
 
 
+_plot_cache = dict()
+
+
 def plot_trials(trials, layout, model_normaldata, legend_type='full',
                 trial_linestyles='same'):
     """Make a plotly plot of layout, including given trials.
@@ -62,6 +65,7 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
     trial_linestyles: 'same' for all identical, 'trial' for trial specific
                       style, 'session' for session specific style
     """
+    global _plot_cache
 
     # configurabe opts (here for now)
     label_fontsize = 18  # x, y labels
@@ -190,10 +194,25 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                                     session_linestyles[trial.sessiondir] = dash_style
                                 line['dash'] = dash_style
 
-                            trace = go.Scatter(x=t, y=y, name=tracegroup,
-                                               legendgroup=tracegroup,
-                                               showlegend=show_legend,
-                                               line=line)
+                            if (trial in _plot_cache and cyc in
+                                _plot_cache[trial] and var in
+                                _plot_cache[trial][cyc]):
+                                        logger.debug('cache hit for: %s / %s / %s' %
+                                                     (trial.trialname, cyc.name, var))
+                                        trace = _plot_cache[trial][cyc][var]
+                            else:
+
+                                logger.debug('calling Scatter for: %s / %s / %s' %
+                                             (trial.trialname, cyc.name, var))
+                                trace = go.Scatter(x=t, y=y, name=tracegroup,
+                                                   legendgroup=tracegroup,
+                                                   showlegend=show_legend,
+                                                   line=line)
+                                if trial not in _plot_cache:
+                                    _plot_cache[trial] = dict()
+                                if cyc not in _plot_cache[trial]:
+                                    _plot_cache[trial][cyc] = dict()
+                                _plot_cache[trial][cyc][var] = trace
 
                             # add toeoff markers on each curve
                             marker = dict(color='black', symbol='triangle-up',
@@ -238,11 +257,26 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                             # _axis_annotate(ax, 'disconnected')
                         if do_plot:
                             line = {'width': 1, 'color': trial_color}
-                            trace = go.Scatter(x=t, y=y*cfg.plot.emg_multiplier,
-                                               name=tracegroup,
-                                               legendgroup=tracegroup,
-                                               showlegend=show_legend,
-                                               line=line)
+                            if (trial in _plot_cache and cyc in
+                                _plot_cache[trial] and var in
+                                _plot_cache[trial][cyc]):
+                                        logger.debug('cache hit for: %s / %s / %s' %
+                                                     (trial.trialname, cyc.name, var))
+                                        trace = _plot_cache[trial][cyc][var]
+                            else:
+
+                                logger.debug('calling Scatter for: %s / %s / %s' %
+                                             (trial.trialname, cyc.name, var))
+                                trace = go.Scatter(x=t, y=y, name=tracegroup,
+                                                   legendgroup=tracegroup,
+                                                   showlegend=show_legend,
+                                                   line=line)
+                                if trial not in _plot_cache:
+                                    _plot_cache[trial] = dict()
+                                if cyc not in _plot_cache[trial]:
+                                    _plot_cache[trial][cyc] = dict()
+                                _plot_cache[trial][cyc][var] = trace
+
                             tracegroups.add(tracegroup)
                             fig.append_trace(trace, i+1, j+1)
 

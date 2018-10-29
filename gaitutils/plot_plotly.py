@@ -200,6 +200,7 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                                         #logger.debug('cache hit for: %s / %s / %s' %
                                         #             (trial.trialname, cyc.name, var))
                                         trace = _plot_cache[trial][cyc][var]
+                                        toeoff_marker = _plot_cache[trial][cyc][var+'_toeoff']
                             else:
                                 #logger.debug('calling Scatter for: %s / %s / %s' %
                                 #             (trial.trialname, cyc.name, var))
@@ -207,23 +208,23 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                                                    legendgroup=tracegroup,
                                                    showlegend=show_legend,
                                                    line=line)
+                                marker = dict(color='black',
+                                              symbol='triangle-up',
+                                              size=8)
+                                toeoff = int(cyc.toeoffn)
+                                toeoff_marker = go.Scatter(x=t[toeoff:toeoff+1],
+                                                           y=y[toeoff:toeoff+1],
+                                                           showlegend=False,
+                                                           hoverinfo='skip',
+                                                           mode='markers',
+                                                           marker=marker)
+
                                 if trial not in _plot_cache:
                                     _plot_cache[trial] = dict()
                                 if cyc not in _plot_cache[trial]:
                                     _plot_cache[trial][cyc] = dict()
                                 _plot_cache[trial][cyc][var] = trace
-
-                            # add toeoff markers on each curve
-                            marker = dict(color='black', symbol='triangle-up',
-                                          size=8)
-                            toeoff = int(cyc.toeoffn)
-                            toeoff_marker = go.Scatter(x=t[toeoff:toeoff+1],
-                                                       y=y[toeoff:toeoff+1],
-                                                       showlegend=False,
-                                                       hoverinfo='skip',
-                                                       mode='markers',
-                                                       marker=marker)
-
+                                _plot_cache[trial][cyc][var+'_toeoff'] = toeoff_marker
 
                             tracegroups.add(tracegroup)
                             fig.append_trace(trace, i+1, j+1)

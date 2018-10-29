@@ -51,6 +51,9 @@ def _truncate_trialname(trialname):
         return trialname
 
 
+_plot_cache = dict()
+
+
 def plot_trials(trials, layout, model_normaldata, legend_type='full',
                 trial_linestyles='same'):
     """Make a plotly plot of layout, including given trials.
@@ -62,6 +65,7 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
     trial_linestyles: 'same' for all identical, 'trial' for trial specific
                       style, 'session' for session specific style
     """
+    global _plot_cache
 
     # configurabe opts (here for now)
     label_fontsize = 18  # x, y labels
@@ -88,7 +92,7 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
 
     session_linestyles = dict()
     dash_styles = cycle(['solid', 'dash', 'dot', 'dashdot'])
-    
+
     model_cycles_ = cfg.plot.default_model_cycles
     emg_cycles_ = cfg.plot.default_emg_cycles
 
@@ -96,7 +100,7 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
         trial_color = colors.next()
         model_cycles = trial.get_cycles(model_cycles_)
         emg_cycles = trial.get_cycles(emg_cycles_)
-        
+
         for cyc in model_cycles + emg_cycles:
             trial.set_norm_cycle(cyc)
             context = cyc.context
@@ -107,7 +111,8 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                     xaxis = 'xaxis%d' % plot_ind  # name of plotly xaxis
                     yaxis = 'yaxis%d' % plot_ind  # name of plotly yaxis
 
-                    # in legend, traces will be grouped according to tracegroup (which is also the label)
+                    # in legend, traces will be grouped according to tracegroup
+                    # (which is also the label)
                     if legend_type == 'name_with_tag':
                         tracegroup = '%s / %s' % (trial.trialname,
                                                   trial.eclipse_tag)
@@ -125,16 +130,17 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                     else:
                         raise ValueError('Invalid legend type')
 
-                    # only show the legend for the first trace in the tracegroup, so we do not repeat legends
+                    # only show the legend for the first trace in the
+                    # tracegroup, so we do not repeat legends
                     show_legend = tracegroup not in tracegroups
 
                     mod = models.model_from_var(var)
                     if mod:
                         do_plot = True  # FIXME: control flow is clumsy here
-                        
+
                         if var in mod.varnames_noside:
                             var = context + var
-                            
+
                         if cyc not in model_cycles:
                             do_plot = False
 
@@ -165,7 +171,8 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                                                               showlegend=model_normaldata_legend,
                                                               line=dict(width=0))  # no border lines
                                 fig.append_trace(ntrace, i+1, j+1)
-                                model_normaldata_legend = False  # add to legend only once
+                                # add to legend only once
+                                model_normaldata_legend = False
 
                         if do_plot:
                             t, y = trial[var]
@@ -184,28 +191,49 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                                 line = {'color':
                                         cfg.plot.model_tracecolors[context]}
                                 if trial.sessiondir in session_linestyles:
-                                    dash_style = session_linestyles[trial.sessiondir]
+                                    dash_style = session_linestyles[trial.
+                                                                    sessiondir]
                                 else:
                                     dash_style = dash_styles.next()
                                     session_linestyles[trial.sessiondir] = dash_style
                                 line['dash'] = dash_style
 
-                            trace = go.Scatter(x=t, y=y, name=tracegroup,
-                                               legendgroup=tracegroup,
-                                               showlegend=show_legend,
-                                               line=line)
+                            if (trial in _plot_cache and cyc in
+                                _plot_cache[trial] and var in
+                                _plot_cache[trial][cyc]):
+                                        #logger.debug('cache hit for: %s / %s / %s' %
+                                        #             (trial.trialname, cyc.name, var))
+                                        trace = _plot_cache[trial][cyc][var]
+                                        toeoff_marker = _plot_cache[trial][cyc][var+'_toeoff']
+                                        trace['name'] = tracegroup
+                                        trace['legendgroup'] = tracegroup
+                                        trace['showlegend'] = show_legend
+                            else:
+                                #logger.debug('calling Scatter for: %s / %s / %s' %
+                                #             (trial.trialname, cyc.name, var))
+                                trace = go.Scatter(x=t, y=y, name=tracegroup,
+                                                   legendgroup=tracegroup,
+                                                   showlegend=show_legend,
+                                                   line=line)
+                                marker = dict(color='black',
+                                              symbol='triangle-up',
+                                              size=8)
+                                toeoff = int(cyc.toeoffn)
+                                #logger.debug('calling Scatter for: %s / %s / %s' %
+                                #             (trial.trialname, cyc.name, var))
+                                toeoff_marker = go.Scatter(x=t[toeoff:toeoff+1],
+                                                           y=y[toeoff:toeoff+1],
+                                                           showlegend=False,
+                                                           hoverinfo='skip',
+                                                           mode='markers',
+                                                           marker=marker)
 
-                            # add toeoff markers on each curve
-                            marker = dict(color='black', symbol='triangle-up',
-                                          size=8)
-                            toeoff = int(cyc.toeoffn)
-                            toeoff_marker = go.Scatter(x=t[toeoff:toeoff+1],
-                                                       y=y[toeoff:toeoff+1],
-                                                       showlegend=False,
-                                                       hoverinfo='skip',
-                                                       mode='markers',
-                                                       marker=marker)
-
+                                if trial not in _plot_cache:
+                                    _plot_cache[trial] = dict()
+                                if cyc not in _plot_cache[trial]:
+                                    _plot_cache[trial][cyc] = dict()
+                                _plot_cache[trial][cyc][var] = trace
+                                _plot_cache[trial][cyc][var+'_toeoff'] = toeoff_marker
 
                             tracegroups.add(tracegroup)
                             fig.append_trace(trace, i+1, j+1)
@@ -238,11 +266,28 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                             # _axis_annotate(ax, 'disconnected')
                         if do_plot:
                             line = {'width': 1, 'color': trial_color}
-                            trace = go.Scatter(x=t, y=y*cfg.plot.emg_multiplier,
-                                               name=tracegroup,
-                                               legendgroup=tracegroup,
-                                               showlegend=show_legend,
-                                               line=line)
+                            if (trial in _plot_cache and cyc in
+                                _plot_cache[trial] and var in
+                                _plot_cache[trial][cyc]):
+                                        #logger.debug('cache hit for: %s / %s / %s' %
+                                        #             (trial.trialname, cyc.name, var))
+                                        trace = _plot_cache[trial][cyc][var]
+                                        trace['name'] = tracegroup
+                                        trace['legendgroup'] = tracegroup
+                                        trace['showlegend'] = show_legend
+                            else:
+                                #logger.debug('calling Scatter for: %s / %s / %s' %
+                                #             (trial.trialname, cyc.name, var))
+                                trace = go.Scatter(x=t, y=y, name=tracegroup,
+                                                   legendgroup=tracegroup,
+                                                   showlegend=show_legend,
+                                                   line=line)
+                                if trial not in _plot_cache:
+                                    _plot_cache[trial] = dict()
+                                if cyc not in _plot_cache[trial]:
+                                    _plot_cache[trial][cyc] = dict()
+                                _plot_cache[trial][cyc][var] = trace
+
                             tracegroups.add(tracegroup)
                             fig.append_trace(trace, i+1, j+1)
 
@@ -296,6 +341,6 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
     margin = go.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
     layout = go.Layout(margin=margin, font={'size': label_fontsize},
                        hovermode='closest')
-    
+
     fig['layout'].update(layout)
     return fig

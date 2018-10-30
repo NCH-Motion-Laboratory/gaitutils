@@ -12,6 +12,7 @@ import numpy as np
 from itertools import cycle
 import datetime
 import logging
+import copy
 
 from gaitutils import models, cfg
 
@@ -201,6 +202,9 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                                         #             (trial.trialname, cyc.name, var))
                                         trace = _plot_cache[trial][cyc][var]
                                         toeoff_marker = _plot_cache[trial][cyc][var+'_toeoff']
+                                        trace['name'] = tracegroup
+                                        trace['legendgroup'] = tracegroup
+                                        trace['showlegend'] = show_legend
                             else:
                                 #logger.debug('calling Scatter for: %s / %s / %s' %
                                 #             (trial.trialname, cyc.name, var))
@@ -212,6 +216,8 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                                               symbol='triangle-up',
                                               size=8)
                                 toeoff = int(cyc.toeoffn)
+                                #logger.debug('calling Scatter for: %s / %s / %s' %
+                                #             (trial.trialname, cyc.name, var))
                                 toeoff_marker = go.Scatter(x=t[toeoff:toeoff+1],
                                                            y=y[toeoff:toeoff+1],
                                                            showlegend=False,
@@ -263,6 +269,9 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                                         #logger.debug('cache hit for: %s / %s / %s' %
                                         #             (trial.trialname, cyc.name, var))
                                         trace = _plot_cache[trial][cyc][var]
+                                        trace['name'] = tracegroup
+                                        trace['legendgroup'] = tracegroup
+                                        trace['showlegend'] = show_legend
                             else:
                                 #logger.debug('calling Scatter for: %s / %s / %s' %
                                 #             (trial.trialname, cyc.name, var))

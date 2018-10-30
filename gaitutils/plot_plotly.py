@@ -12,7 +12,6 @@ import numpy as np
 from itertools import cycle
 import datetime
 import logging
-import copy
 
 from gaitutils import models, cfg
 
@@ -112,7 +111,8 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                     xaxis = 'xaxis%d' % plot_ind  # name of plotly xaxis
                     yaxis = 'yaxis%d' % plot_ind  # name of plotly yaxis
 
-                    # in legend, traces will be grouped according to tracegroup (which is also the label)
+                    # in legend, traces will be grouped according to tracegroup
+                    # (which is also the label)
                     if legend_type == 'name_with_tag':
                         tracegroup = '%s / %s' % (trial.trialname,
                                                   trial.eclipse_tag)
@@ -130,16 +130,17 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                     else:
                         raise ValueError('Invalid legend type')
 
-                    # only show the legend for the first trace in the tracegroup, so we do not repeat legends
+                    # only show the legend for the first trace in the
+                    # tracegroup, so we do not repeat legends
                     show_legend = tracegroup not in tracegroups
 
                     mod = models.model_from_var(var)
                     if mod:
                         do_plot = True  # FIXME: control flow is clumsy here
-                        
+
                         if var in mod.varnames_noside:
                             var = context + var
-                            
+
                         if cyc not in model_cycles:
                             do_plot = False
 
@@ -170,7 +171,8 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                                                               showlegend=model_normaldata_legend,
                                                               line=dict(width=0))  # no border lines
                                 fig.append_trace(ntrace, i+1, j+1)
-                                model_normaldata_legend = False  # add to legend only once
+                                # add to legend only once
+                                model_normaldata_legend = False
 
                         if do_plot:
                             t, y = trial[var]
@@ -189,7 +191,8 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                                 line = {'color':
                                         cfg.plot.model_tracecolors[context]}
                                 if trial.sessiondir in session_linestyles:
-                                    dash_style = session_linestyles[trial.sessiondir]
+                                    dash_style = session_linestyles[trial.
+                                                                    sessiondir]
                                 else:
                                     dash_style = dash_styles.next()
                                     session_linestyles[trial.sessiondir] = dash_style
@@ -338,6 +341,6 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
     margin = go.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
     layout = go.Layout(margin=margin, font={'size': label_fontsize},
                        hovermode='closest')
-    
+
     fig['layout'].update(layout)
     return fig

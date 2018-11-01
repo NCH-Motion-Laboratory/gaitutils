@@ -95,6 +95,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
         vicon.CloseTrial(5000)  # timeout in ms
 
     for filepath_ in enffiles:
+        # FIXME: use option
+        eclipse.reset_eclipse_fp_keys(filepath_)
         filepath = filepath_[:filepath_.find('.Trial')]  # rm .Trial and .enf
         filename = os.path.split(filepath)[1]
         logger.debug('loading in Nexus: %s' % filename)

@@ -97,3 +97,12 @@ def set_eclipse_keys(fname_enf, eclipse_dict, update_existing=False):
             fp.writelines(outu)
     else:
         logger.warning('Did not set any keys')
+
+
+def reset_eclipse_fp_keys(fname_enf):
+    """ Reset Eclipse forceplate keys. Mainly intended to reset 'invalid'
+    values that will prevent PiG from computing kinetics """
+    keys = get_eclipse_keys(fname_enf)
+    fp_keys = eclipse_fp_keys(keys)
+    fp_keys_auto = {fp: u'Auto' for fp in fp_keys.keys()}
+    set_eclipse_keys(fname_enf, fp_keys_auto, update_existing=True)

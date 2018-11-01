@@ -116,5 +116,6 @@ def _step_width(source):
             VC = pos_next_co - pos_this
             VCP = V1 * np.dot(VC, V1)  # proj to ipsilateral line
             VSW = VCP - VC
+            # marker data is in mm, but return step width in m
             sw[context].append(np.linalg.norm(VSW) / 1000.)
     return sw

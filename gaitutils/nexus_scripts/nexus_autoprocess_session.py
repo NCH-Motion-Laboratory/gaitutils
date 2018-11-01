@@ -94,14 +94,21 @@ def _do_autoproc(enffiles, update_eclipse=True):
         logger.debug('force closing open trial')
         vicon.CloseTrial(5000)  # timeout in ms
 
-    for filepath_ in enffiles:
-        filepath = filepath_[:filepath_.find('.Trial')]  # rm .Trial and .enf
+    # reset Eclipse fp keys so that PiG kinetics will not be affected by
+    # 'invalid' values
+    if cfg.autoproc.reset_eclipse_fp_invalid_values:
+        for enffile in enffiles:
+            logger.debug('reset Eclipse FP keys for %s' % enffile)
+            eclipse.reset_eclipse_fp_keys(enffile)
+
+    for enffile in enffiles:
+        filepath = enffile[:enffile.find('.Trial')]  # rm .TrialXXX and .enf
         filename = os.path.split(filepath)[1]
         logger.debug('loading in Nexus: %s' % filename)
         vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
         subjectname = nexus.get_metadata(vicon)['name']
         allmarkers = vicon.GetMarkerNames(subjectname)
-        edata = eclipse.get_eclipse_keys(filepath_, return_empty=True)
+        edata = eclipse.get_eclipse_keys(enffile, return_empty=True)
         logger.debug('type: %s' % edata['TYPE'])
         logger.debug('description: %s' % edata['DESCRIPTION'])
         logger.debug('notes: %s' % edata['NOTES'])
@@ -127,6 +134,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
                 trial['recon_ok'] = False
                 trial['description'] = 'skipped'
                 continue
+
 
         # reset ROI before operations
         if cfg.autoproc.reset_roi and nexus_ver >= 2.5:

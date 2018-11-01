@@ -96,6 +96,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
 
     for filepath_ in enffiles:
         # FIXME: use option
+        logger.debug('reset Eclipse FP keys for %s' % filepath_)
         eclipse.reset_eclipse_fp_keys(filepath_)
         filepath = filepath_[:filepath_.find('.Trial')]  # rm .Trial and .enf
         filename = os.path.split(filepath)[1]

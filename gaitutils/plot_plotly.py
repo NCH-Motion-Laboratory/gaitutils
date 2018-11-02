@@ -278,7 +278,9 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                             else:
                                 #logger.debug('calling Scatter for: %s / %s / %s' %
                                 #             (trial.trialname, cyc.name, var))
-                                trace = go.Scatter(x=t, y=y, name=tracegroup,
+                                trace = go.Scatter(x=t,
+                                                   y=y*cfg.plot.emg_multiplier,
+                                                   name=tracegroup,
                                                    legendgroup=tracegroup,
                                                    showlegend=show_legend,
                                                    line=line)

@@ -477,8 +477,9 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
 
     subjectname = get_subjectnames()
 
-    vel_thresholds = {'L_strike': None, 'L_toeoff': None,
-                      'R_strike': None, 'R_toeoff': None}
+    if vel_thresholds is None:
+        vel_thresholds = {'L_strike': None, 'L_toeoff': None,
+                          'R_strike': None, 'R_toeoff': None}
 
     # get foot center positions and velocities
     if mkrdata is None:

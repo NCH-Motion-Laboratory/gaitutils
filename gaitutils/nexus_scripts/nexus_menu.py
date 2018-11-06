@@ -103,54 +103,10 @@ class WebReportInfoDialog(QtWidgets.QDialog):
             qt_message_dialog('Please enter a valid name and hetu')
 
 
-class ComparisonDialog(QtWidgets.QDialog):
-    """ Display a dialog for the comparison report
-    FIXME: adapt web report gui """
+class ChooseSessionsDialog(QtWidgets.QDialog):
+    """Display a dialog for picking sessions"""
 
-    def __init__(self):
-        super(self.__class__, self).__init__()
-        # load user interface made with designer
-        uifile = resource_filename(__name__, 'comparison_dialog.ui')
-        uic.loadUi(uifile, self)
-        self.btnBrowseSession.clicked.connect(self.add_session)
-        self.btnAddNexusSession.clicked.connect(lambda: self.
-                                                add_session(from_nexus=True))
-        self.btnClear.clicked.connect(self.clear_sessions)
-        self.MAX_SESSIONS = 2  # FIXME: why only 2
-        self.sessions = list()
-
-    def add_session(self, from_nexus=False):
-        if len(self.sessions) == self.MAX_SESSIONS:
-            qt_message_dialog('You can specify maximum of %d sessions' %
-                              self.MAX_SESSIONS)
-            return
-        if from_nexus:
-            dir_ = nexus.get_sessionpath()
-        else:
-            dir_ = QtWidgets.QFileDialog.getExistingDirectory(self,
-                                                              'Select session')
-        if dir_ and dir_ not in self.sessions:
-            self.sessions.append(dir_)
-            self.update_session_list()
-
-    def clear_sessions(self):
-        self.sessions = list()  # sorry no .clear()
-        self.update_session_list()
-
-    def update_session_list(self):
-        self.lblSessions.setText(u'\n'.join(self.sessions))
-
-    def accept(self):
-        if len(self.sessions) < 2:
-            qt_message_dialog('Please select at least 2 sessions to compare')
-        else:
-            self.done(QtWidgets.QDialog.Accepted)
-
-
-class WebReportSessionsDialog(QtWidgets.QDialog):
-    """ Display a dialog for creating the web report """
-
-    def __init__(self):
+    def __init__(self, min_sessions=1, max_sessions=3):
         super(self.__class__, self).__init__()
         # load user interface made with designer
         uifile = resource_filename(__name__, 'web_report_sessions.ui')
@@ -160,12 +116,13 @@ class WebReportSessionsDialog(QtWidgets.QDialog):
                                                 add_session(from_nexus=True))
         self.btnClearAll.clicked.connect(self.listSessions.clear)
         self.btnClearCurrent.clicked.connect(self.listSessions.rm_current_item)
-        self.MAX_SESSIONS = 3
+        self.max_sessions = max_sessions
+        self.min_sessions = min_sessions
 
     def add_session(self, from_nexus=False):
-        if len(self.sessions) == self.MAX_SESSIONS:
+        if len(self.sessions) == self.max_sessions:
             qt_message_dialog('You can specify maximum of %d sessions' %
-                              self.MAX_SESSIONS)
+                              self.max_sessions)
             return
         if from_nexus:
             try:
@@ -187,8 +144,10 @@ class WebReportSessionsDialog(QtWidgets.QDialog):
         return [item.userdata for item in self.listSessions.items]
 
     def accept(self):
-        if not self.sessions:
-            qt_message_dialog('Please select at least one session')
+        if len(self.sessions) < self.min_sessions:
+            qt_message_dialog('Please select at least %d session%s' %
+                              (self.min_sessions,
+                               's' if self.min_sessions > 1 else ''))
         else:
             self.done(QtWidgets.QDialog.Accepted)
 
@@ -596,7 +555,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         dlg.exec_()
 
     def _create_comparison(self):
-        dlg = ComparisonDialog()
+        dlg = ChooseSessionsDialog(min_sessions=2, max_sessions=2)
         if dlg.exec_():
             self._sessions = dlg.sessions
             self._execute(nexus_make_comparison_report.do_plot,
@@ -606,7 +565,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         """Collect sessions, create the dash app, start it and launch a
         web browser on localhost on the correct port"""
 
-        dlg = WebReportSessionsDialog()
+        dlg = ChooseSessionsDialog()
         if not dlg.exec_():
             return
         sessions = dlg.sessions

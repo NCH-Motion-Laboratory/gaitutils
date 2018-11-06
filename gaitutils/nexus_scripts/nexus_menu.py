@@ -783,6 +783,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         for widget in self.opWidgets:
             self.__dict__[widget].setEnabled(True)
         QtWidgets.QApplication.restoreOverrideCursor()
+        # set status of report buttons separately
+        self._set_report_button_status()
 
     def _tardieu(self):
         win = nexus_tardieu.TardieuWindow()

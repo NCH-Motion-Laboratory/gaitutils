@@ -10,6 +10,9 @@ gaitutils common GUI functionality
 from PyQt5 import QtWidgets, QtCore
 import ctypes
 import sys
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class NiceListWidgetItem(QtWidgets.QListWidgetItem):
@@ -22,6 +25,10 @@ class NiceListWidgetItem(QtWidgets.QListWidgetItem):
         super(NiceListWidgetItem, self).__init__(*args, **kwargs)
         if checkable:
             self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
+
+    @property
+    def text(self):
+        return super(NiceListWidgetItem, self).text()
 
     @property
     def userdata(self):
@@ -50,7 +57,9 @@ class NiceListWidget(QtWidgets.QListWidget):
 
     @property
     def items(self):
-        """ Yield all items """
+        """ Yield all items. NB: be careful when modifying list items in
+        a loop with the generator - count() is evaluated only once, so the
+        generator may return items that have already been deleted """
         for i in range(self.count()):
             yield self.item(i)
 

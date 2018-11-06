@@ -13,6 +13,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 
 import flask
+from flask import request
 from collections import OrderedDict
 import logging
 import os.path as op
@@ -92,6 +93,13 @@ def _time_dist_plot(c3ds, sessions):
     buf.seek(0)
     return buf
 
+# helper to shutdown flask server, see http://flask.pocoo.org/snippets/67/
+def _shutdown_server():
+    func = request.environ.get('werkzeug.server.shutdown')
+    if func is None:
+        raise RuntimeError('Not running with the Werkzeug Server')
+    func()
+    
 
 def dash_report(info=None, sessions=None, tags=None):
     """Returns dash app for web report.
@@ -447,6 +455,13 @@ def dash_report(info=None, sessions=None, tags=None):
             if op.isfile(filepath):
                 return flask.send_from_directory(session, resource)
         return None
+
+    # add shutdown method - see http://flask.pocoo.org/snippets/67/
+    @app.server.route('/shutdown')
+    def shutdown():
+        logger.debug('Received shutdown request...')
+        _shutdown_server()
+        return 'Server shutting down...'
 
     # the 12-column external css
     # FIXME: local copy?

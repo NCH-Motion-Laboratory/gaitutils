@@ -53,7 +53,7 @@ def avg_markerdata(mkrdata, markers, var_type='_P'):
             mP += mkrdata[marker+var_type]
             n_ok += 1
     if n_ok == 0:
-        raise ValueError('No acceptable markers')
+        raise GaitDataError('No acceptable markers')
     else:
         return mP / n_ok
 

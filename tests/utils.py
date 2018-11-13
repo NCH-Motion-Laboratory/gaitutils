@@ -22,7 +22,7 @@ def start_nexus():
         # try to start Nexus for tests...
         exe = op.join(cfg.general.nexus_path, 'Nexus.exe')
         # silence Nexus output
-        blackhole = file(os.devnull, 'w')
+        blackhole = open(os.devnull, 'w')
         subprocess.Popen([exe], stdout=blackhole)
         time.sleep(9)
         if not nexus.pid():

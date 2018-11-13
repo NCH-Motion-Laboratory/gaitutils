@@ -24,7 +24,7 @@ using pythonw.exe on Windows. Without this, exception will be raised
 e.g. on any print statement. """
 if (sys.platform.find('win') != -1 and sys.executable.find('pythonw') != -1 and
    not envutils.run_from_ipython()):
-    blackhole = file(os.devnull, 'w')
+    blackhole = open(os.devnull, 'w')
     sys.stdout = sys.stderr = blackhole
 
 # default config

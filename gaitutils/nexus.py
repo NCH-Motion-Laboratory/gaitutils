@@ -30,8 +30,13 @@ from .config import cfg
 logger = logging.getLogger(__name__)
 
 # handle Nexus SDK import
+# logging handlers are not installed at this point, so use print
 nexus_path = op.normpath(cfg.general.nexus_path)
-if nexus_path:
+
+if sys.version_info.major >= 3:
+    print('running on Python 3 or newer, cannot import Nexus API (yet)')
+
+elif nexus_path:
     # see if there are more recent versions than the configured one
     try:
         cfg_ver = float(op.split(nexus_path)[1][5:])
@@ -77,17 +82,16 @@ if nexus_path:
         else:
             print('%s already in sys.path' % _win_sdk_path)
 
-        print('importing Vicon Nexus SDK from %s' % _win_sdk_path)
+        print('going to import Vicon Nexus SDK from %s' % _win_sdk_path)
 
     else:
         print('The configured Vicon Nexus directory at %s does not exist'
               % nexus_path)
+    try:
+        import ViconNexus
+    except ImportError:
 
-try:
-    import ViconNexus
-except ImportError:
-    # logging handlers are not installed at this point, so use print
-    print('Cannot import Vicon Nexus SDK, unable to communicate with Nexus')
+        print('Cannot import Vicon Nexus SDK')
 
 sys.stdout.flush()  # make sure import warnings get printed
 

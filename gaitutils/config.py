@@ -5,7 +5,7 @@ Handles gaitutils config files.
 @author: Jussi (jnu@iki.fi)
 """
 
-import ConfigParser
+import configparser
 import ast
 import os.path as op
 import os
@@ -51,7 +51,7 @@ class Section(object):
                              self._dict[item])
 
 
-class EpicParser(ConfigParser.SafeConfigParser):
+class EpicParser(configparser.SafeConfigParser):
     """ Extends SafeConfigParser by providing convenient attribute access
     (by parser.section.item) and autoconversion from strings to Python
     types.

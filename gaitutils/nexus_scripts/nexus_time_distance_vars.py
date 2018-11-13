@@ -5,6 +5,8 @@ Plot time-distance vars from single trial or as average of tagged trials
 @author: Jussi (jnu@iki.fi)
 """
 
+from builtins import zip
+from builtins import range
 import logging
 import argparse
 import os.path as op

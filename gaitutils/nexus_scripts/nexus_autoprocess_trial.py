@@ -6,11 +6,12 @@ Note: does not use stats for event detection -> less accurate
 
 @author: Jussi (jnu@iki.fi)
 """
+from __future__ import absolute_import
 
 import logging
 import os.path as op
 
-from nexus_autoprocess_session import _do_autoproc, _delete_c3ds
+from .nexus_autoprocess_session import _do_autoproc, _delete_c3ds
 from gaitutils import nexus, register_gui_exception_handler
 
 

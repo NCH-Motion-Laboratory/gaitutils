@@ -4,8 +4,9 @@ Created on Tue Jun 20 11:01:29 2017
 
 @author: HUS20664877
 """
+from __future__ import absolute_import
 
-from plotter_gui import NiceListWidget
+from .plotter_gui import NiceListWidget
 from PyQt5 import QtGui, QtCore, QtDesigner
 
 

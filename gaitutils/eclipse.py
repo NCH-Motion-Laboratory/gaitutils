@@ -6,6 +6,8 @@ Eclipse (database) hacks.
 
 @author: Jussi (jnu@iki.fi)
 """
+from builtins import str
+from builtins import object
 import logging
 import io
 import configobj
@@ -92,7 +94,7 @@ def set_eclipse_keys(fname_enf, eclipse_dict, update_existing=False):
         logger.debug('writing %s' % fname_enf)
         out = cp.write()  # output the config lines
         # result is utf8, but needs to be converted to unicode type for write
-        outu = [unicode(line+'\n', encoding='utf8') for line in out]
+        outu = [str(line+'\n', encoding='utf8') for line in out]
         with io.open(fname_enf, 'w', encoding='utf8') as fp:
             fp.writelines(outu)
     else:

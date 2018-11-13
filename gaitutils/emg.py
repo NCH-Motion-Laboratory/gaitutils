@@ -9,6 +9,7 @@ Class for reading EMG
 
 
 from __future__ import division
+from builtins import object
 import numpy as np
 from scipy import signal
 import logging

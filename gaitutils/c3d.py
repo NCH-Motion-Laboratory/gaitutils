@@ -8,6 +8,7 @@ c3d reader functions
 """
 
 from __future__ import print_function, division
+from builtins import zip
 import logging
 import numpy as np
 import os
@@ -55,9 +56,8 @@ def _get_c3d_metadata_field(acq, field, subfield):
 def _get_c3dacq(c3dfile):
     """Get a btk.btkAcquisition object"""
     reader = btk.btkAcquisitionFileReader()
-    if isinstance(c3dfile, unicode):
-        # btk interface cannot take unicode, so encode to latin-1 first
-        c3dfile = c3dfile.encode('latin-1')
+    # btk interface cannot take unicode, so encode to latin-1 first
+    c3dfile = c3dfile.encode('latin-1')
     reader.SetFilename(c3dfile)
     reader.Update()
     return reader.GetOutput()

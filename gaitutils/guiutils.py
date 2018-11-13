@@ -7,6 +7,8 @@ gaitutils common GUI functionality
 @author: Jussi (jnu@iki.fi)
 """
 
+from builtins import str
+from builtins import range
 from PyQt5 import QtWidgets, QtCore
 import ctypes
 import sys

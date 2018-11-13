@@ -9,6 +9,7 @@ Computations on gait trials
 
 
 from __future__ import division
+from builtins import zip
 import numpy as np
 import logging
 

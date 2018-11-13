@@ -19,6 +19,7 @@ NOTES:
 @author: Jussi (jnu@iki.fi)
 """
 
+from builtins import zip
 import os
 import os.path as op
 import numpy as np

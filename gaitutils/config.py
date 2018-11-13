@@ -4,7 +4,10 @@ Handles gaitutils config files.
 
 @author: Jussi (jnu@iki.fi)
 """
+from __future__ import print_function
 
+from builtins import str
+from builtins import object
 import configparser
 import ast
 import os.path as op

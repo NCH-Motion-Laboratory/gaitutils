@@ -6,6 +6,8 @@ Show a Qt menu for running various Nexus tasks.
 """
 
 from __future__ import print_function
+from builtins import str
+from builtins import range
 from PyQt5 import QtGui, QtCore, uic, QtWidgets
 from PyQt5.QtCore import QRunnable, QThreadPool, pyqtSignal, QObject
 from pkg_resources import resource_filename
@@ -96,7 +98,7 @@ class WebReportInfoDialog(QtWidgets.QDialog):
         show an error dialog """
         self.hetu = self.lnHetu.text()
         self.fullname = self.lnFullName.text()
-        self.report_notes = unicode(self.txtNotes.toPlainText()).strip()
+        self.report_notes = str(self.txtNotes.toPlainText()).strip()
         if self.fullname and check_hetu(self.hetu):
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
@@ -176,7 +178,7 @@ class XStream(QtCore.QObject):
 
     def write(self, msg):
         if not self.signalsBlocked():
-            self.messageWritten.emit(unicode(msg))
+            self.messageWritten.emit(str(msg))
 
     @staticmethod
     def stdout():

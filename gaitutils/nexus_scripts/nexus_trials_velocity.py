@@ -5,6 +5,7 @@ Created on Wed Jun 21 13:48:27 2017
 @author: Jussi (jnu@iki.fi)
 """
 
+from builtins import range
 from gaitutils import (nexus, utils, sessionutils,
                        register_gui_exception_handler)
 import numpy as np

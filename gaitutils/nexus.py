@@ -7,6 +7,9 @@ Data readers & processing utils, Nexus specific
 """
 
 from __future__ import print_function, division
+from builtins import zip
+from builtins import str
+from builtins import range
 import sys
 import numpy as np
 from scipy import signal

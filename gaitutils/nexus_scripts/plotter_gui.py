@@ -7,6 +7,7 @@ WIP
 @author: Jussi (jnu@iki.fi)
 """
 
+from builtins import str
 import logging
 import sys
 import traceback

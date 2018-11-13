@@ -6,6 +6,7 @@ Session related functions
 @author: Jussi (jnu@iki.fi)
 """
 
+from builtins import str
 import io
 import os.path as op
 import json
@@ -64,7 +65,7 @@ def save_info(session, patient_info):
     fname = op.join(session, 'patient_info.json')
     try:
         with io.open(fname, 'w', encoding='utf-8') as f:
-            f.write(unicode(json.dumps(patient_info, ensure_ascii=False)))
+            f.write(str(json.dumps(patient_info, ensure_ascii=False)))
     except (UnicodeDecodeError, EOFError, IOError, TypeError):
         raise GaitDataError('Error saving patient info file %s ' % fname)
 

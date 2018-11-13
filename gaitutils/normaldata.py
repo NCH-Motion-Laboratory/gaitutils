@@ -6,6 +6,7 @@ Normal data readers
 """
 
 
+from builtins import zip
 import numpy as np
 import openpyxl
 import os.path as op
@@ -96,7 +97,7 @@ def _read_xlsx(filename):
     """ Read normal data exported from Polygon (xlsx format). """
     wb = openpyxl.load_workbook(filename)
     ws = wb['Normal']
-    colnames = (cell.value for cell in ws.rows.next())  # first row: col names
+    colnames = (cell.value for cell in next(ws.rows))  # first row: col names
     normaldata = dict()
     # read the columns and produce dict of numpy arrays
     for colname, col in zip(colnames, ws.columns):

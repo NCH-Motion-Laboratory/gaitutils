@@ -54,7 +54,7 @@ def do_plot(sessions=None, tags=None, show=True, make_pdf=True,
             plot_model_normaldata = (c3d == c3ds[-1] and
                                      session == sessions[-1])
             # select style/color according to either session or trial
-            model_tracecolor = ccolors.next()
+            model_tracecolor = next(ccolors)
             if session_styles:
                 model_linestyle = session_style
                 linestyles_context = False

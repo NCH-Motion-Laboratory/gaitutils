@@ -47,7 +47,7 @@ def do_plot(tags=None, show=True, make_pdf=True):
 
         plot_emg_normaldata = (trialpath == c3dfiles[-1])
 
-        pl.plot_trial(emg_tracecolor=ccolors.next(),
+        pl.plot_trial(emg_tracecolor=next(ccolors),
                       maintitle='', annotate_emg=False,
                       superpose=True, show=False,
                       plot_emg_normaldata=plot_emg_normaldata)

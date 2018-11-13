@@ -5,6 +5,7 @@ plotly plotting functions
 @author: Jussi (jnu@iki.fi)
 """
 
+from builtins import range
 import plotly
 import plotly.graph_objs as go
 import plotly.tools
@@ -97,7 +98,7 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
     emg_cycles_ = cfg.plot.default_emg_cycles
 
     for trial in trials:
-        trial_color = colors.next()
+        trial_color = next(colors)
         model_cycles = trial.get_cycles(model_cycles_)
         emg_cycles = trial.get_cycles(emg_cycles_)
 
@@ -194,7 +195,7 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                                     dash_style = session_linestyles[trial.
                                                                     sessiondir]
                                 else:
-                                    dash_style = dash_styles.next()
+                                    dash_style = next(dash_styles)
                                     session_linestyles[trial.sessiondir] = dash_style
                                 line['dash'] = dash_style
 

@@ -5,12 +5,13 @@ Try to automatically figure out what to plot.
 Use kinetics layout if kinetics available, else kinematics only.
 
 """
+from __future__ import absolute_import
 
 
 from gaitutils import Plotter, register_gui_exception_handler, messagebox
-import nexus_kinematics_emgplot
-import nexus_kinetics_emgplot
-import nexus_emgplot
+from . import nexus_kinematics_emgplot
+from . import nexus_kinetics_emgplot
+from . import nexus_emgplot
 
 
 def do_plot():

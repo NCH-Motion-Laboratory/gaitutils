@@ -9,6 +9,8 @@ append to models_all.
 @author: Jussi (jnu@iki.fi)
 """
 
+from past.builtins import basestring
+from builtins import object
 from collections import defaultdict
 
 

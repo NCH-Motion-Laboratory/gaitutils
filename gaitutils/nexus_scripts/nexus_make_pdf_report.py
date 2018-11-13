@@ -7,6 +7,7 @@ Note: specific to the Helsinki gait lab.
 
 @author: Jussi (jnu@iki.fi)
 """
+from __future__ import absolute_import
 
 import logging
 import os.path as op
@@ -17,12 +18,12 @@ from collections import defaultdict
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
                        numutils, normaldata, sessionutils, nexus)
 
-import nexus_kin_consistency
-import nexus_emg_consistency
-import nexus_musclelen_consistency
-import nexus_kin_average
-import nexus_trials_velocity
-import nexus_time_distance_vars
+from . import nexus_kin_consistency
+from . import nexus_emg_consistency
+from . import nexus_musclelen_consistency
+from . import nexus_kin_average
+from . import nexus_trials_velocity
+from . import nexus_time_distance_vars
 
 
 logger = logging.getLogger(__name__)

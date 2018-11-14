@@ -575,7 +575,7 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
             raise GaitDataError('Could not detect any toe-off events')
 
         # check for multiple toeoffs
-        for s1, s2 in zip(strikes, np.roll(strikes, -1))[:-1]:
+        for s1, s2 in list(zip(strikes, np.roll(strikes, -1)))[:-1]:
             to_this = np.where(np.logical_and(toeoffs > s1, toeoffs < s2))[0]
             if len(to_this) > 1:
                 logger.debug('%d toeoffs during cycle, keeping the last one'

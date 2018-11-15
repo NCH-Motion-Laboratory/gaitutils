@@ -24,7 +24,6 @@ from __future__ import print_function
 from __future__ import division
 from builtins import zip
 from builtins import str
-from past.utils import old_div
 from builtins import object
 from collections import OrderedDict
 import matplotlib
@@ -476,7 +475,7 @@ class TardieuPlot(object):
         # the 'true' physiological starting angle (given as a param)
         self.ang0_nexus = ang0_nexus
         self.emg_chs = emg_chs
-        self.time = old_div(self.trial.t, self.trial.framerate)  # time axis in sec
+        self.time = self.trial.t / self.trial.framerate  # time axis in sec
         self.tmax = self.time[-1]
         self.nframes = len(self.time)
 
@@ -500,7 +499,7 @@ class TardieuPlot(object):
             self.acctot = None
 
         # FIXME: self.time?
-        self.time_analog = old_div(t_, self.trial.analograte)
+        self.time_analog = t_ / self.trial.analograte
 
         # read marker data and compute segment angle
         mnames = cfg.tardieu.marker_names
@@ -512,7 +511,7 @@ class TardieuPlot(object):
         # stack so that marker changes along 2nd dim for segment_angles
         Pall = np.stack([P0, P1, P2], axis=1)
         # compute segment angles (deg)
-        self.angd = old_div(segment_angles(Pall), np.pi * 180)
+        self.angd = segment_angles(Pall) / np.pi * 180
         # this is our calculated starting angle
         ang0_our = np.median(self.angd[~np.isnan(self.angd)][:10])
         # normalize: plantarflexion negative, our starting angle equals
@@ -564,7 +563,7 @@ class TardieuPlot(object):
                 self.emg_axes.append(ax)
 
             ysc = (cfg.plot.emg_yscale if emg_yscale is None
-                   else old_div(emg_yscale,1.e3))
+                   else emg_yscale / 1.e3)
             ax.set_ylim([-ysc*1e3, ysc*1e3])
             ax.set(ylabel='mV')
             ax.set_title(ch)
@@ -632,18 +631,18 @@ class TardieuPlot(object):
                                              self.trial.analograte)
             # max. velocity
             velr = self.angveld[fmin:fmax]
-            velmaxind = old_div(np.nanargmax(velr),self.trial.framerate) + tmin_
+            velmaxind = np.nanargmax(velr) / self.trial.framerate + tmin_
             markers.add(velmaxind, annotation='Max. velocity')
             # min. acceleration
             accr = self.angaccd[fmin:fmax]
-            accmaxind = old_div(np.nanargmin(accr),self.trial.framerate) + tmin_
+            accmaxind = np.nanargmin(accr) / self.trial.framerate + tmin_
             markers.add(accmaxind, annotation='Min. acceleration')
 
             for ch in self.emg_chs:
                 # check if channel is tagged for automark
                 if any([s in ch for s in self.emg_automark_chs]):
                     rmsdata = self.emg_rms[ch][smin:smax]
-                    rmsmaxind = old_div(np.argmax(rmsdata),self.trial.analograte) + tmin_
+                    rmsmaxind = np.argmax(rmsdata) / self.trial.analograte + tmin_
                     markers.add(rmsmaxind, annotation='%s max. RMS' % ch)
 
             # connect callbacks
@@ -824,13 +823,13 @@ class TardieuPlot(object):
                 s += 'No valid data in region'
                 return s
             angmax = np.nanmax(angr)
-            angmaxind = old_div(np.nanargmax(angr),self.trial.framerate) + tmin_
+            angmaxind = np.nanargmax(angr) / self.trial.framerate + tmin_
             angmin = np.nanmin(angr)
-            angminind = old_div(np.nanargmin(angr),self.trial.framerate) + tmin_
+            angminind = np.nanargmin(angr) / self.trial.framerate + tmin_
             # same for velocity
             velr = self.angveld[fmin:fmax]
             velmax = np.nanmax(velr)
-            velmaxind = old_div(np.nanargmax(velr),self.trial.framerate) + tmin_
+            velmaxind = np.nanargmax(velr) / self.trial.framerate + tmin_
             s += u'Values for range shown:\n'
             s += u'Max. dorsiflexion: %.2f° @ %.2f s\n' % (angmax, angmaxind)
             s += u'Max. plantarflexion: %.2f° @ %.2f s\n' % (angmin, angminind)
@@ -838,7 +837,7 @@ class TardieuPlot(object):
             for ch in self.emg_chs:
                 rmsdata = self.emg_rms[ch][smin:smax]
                 rmsmax = rmsdata.max()
-                rmsmaxind = old_div(np.argmax(rmsdata),self.trial.analograte) + tmin_
+                rmsmaxind = np.argmax(rmsdata) / self.trial.analograte + tmin_
                 s += u'%s max RMS: %.2f mV @ %.2f s\n' % (ch, rmsmax*1e3,
                                                           rmsmaxind)
             return s

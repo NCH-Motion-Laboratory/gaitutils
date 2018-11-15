@@ -25,22 +25,3 @@ from .guiutils import messagebox
 from .plot import Plotter
 from .trial import Trial
 from . import report
-
-from .nexus_scripts import nexus_emgplot
-from .nexus_scripts import nexus_musclelen_plot
-from .nexus_scripts import nexus_kinetics_emgplot
-from .nexus_scripts import nexus_emg_consistency
-from .nexus_scripts import nexus_kin_consistency
-from .nexus_scripts import nexus_musclelen_consistency
-from .nexus_scripts import nexus_autoprocess_trial
-from .nexus_scripts import nexus_autoprocess_session
-from .nexus_scripts import nexus_kinallplot
-from .nexus_scripts import nexus_tardieu
-from .nexus_scripts import nexus_copy_trial_videos
-from .nexus_scripts import nexus_trials_velocity
-from .nexus_scripts import nexus_make_pdf_report
-from .nexus_scripts import nexus_make_comparison_report
-from .nexus_scripts import nexus_kin_average
-from .nexus_scripts import nexus_automark_trial
-from .nexus_scripts import nexus_time_distance_vars
-

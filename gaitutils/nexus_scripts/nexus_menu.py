@@ -19,27 +19,34 @@ import os
 import subprocess
 import time
 import requests
+import logging
 
 from gaitutils.numutils import check_hetu
 from gaitutils.guiutils import (qt_message_dialog, qt_yesno_dialog,
                                 qt_dir_chooser)
-from gaitutils import (GaitDataError, nexus, cfg, report, nexus_emgplot,
-                       nexus_musclelen_plot, nexus_kinetics_emgplot,
-                       nexus_emg_consistency, nexus_kin_consistency,
-                       nexus_musclelen_consistency, nexus_autoprocess_trial,
-                       nexus_autoprocess_session, nexus_kinallplot,
-                       nexus_tardieu, nexus_copy_trial_videos,
-                       nexus_trials_velocity, nexus_make_pdf_report,
-                       nexus_make_comparison_report, nexus_kin_average,
-                       nexus_automark_trial, nexus_time_distance_vars,
-                       sessionutils)
+from gaitutils import GaitDataError, nexus, cfg, report, sessionutils
+from gaitutils.nexus_scripts import (nexus_emgplot, nexus_musclelen_plot,
+                                     nexus_kinetics_emgplot,
+                                     nexus_emg_consistency,
+                                     nexus_kin_consistency,
+                                     nexus_musclelen_consistency,
+                                     nexus_autoprocess_trial,
+                                     nexus_autoprocess_session,
+                                     nexus_kinallplot,
+                                     nexus_tardieu, nexus_copy_trial_videos,
+                                     nexus_trials_velocity,
+                                     nexus_make_pdf_report,
+                                     nexus_make_comparison_report,
+                                     nexus_kin_average,
+                                     nexus_automark_trial,
+                                     nexus_time_distance_vars)
 
 try:
-    from gaitutils import nexus_customplot
+    from gaitutils.nexus_scripts import nexus_customplot
     have_custom = True
 except ImportError:
     have_custom = False
-import logging
+
 
 logger = logging.getLogger(__name__)
 

@@ -93,13 +93,14 @@ def _time_dist_plot(c3ds, sessions):
     buf.seek(0)
     return buf
 
+
 # helper to shutdown flask server, see http://flask.pocoo.org/snippets/67/
 def _shutdown_server():
     func = request.environ.get('werkzeug.server.shutdown')
     if func is None:
         raise RuntimeError('Not running with the Werkzeug Server')
     func()
-    
+
 
 def dash_report(info=None, sessions=None, tags=None):
     """Returns dash app for web report.

@@ -41,13 +41,15 @@ def save_pdf(filename, fig):
                       'check that file is not already open.' % filename)
 
 
-def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
-                       interactive=True, stddev_bars=True):
+def time_dist_barchart(values, stddev=None, thickness=.5,
+                       color=None, interactive=True, stddev_bars=True,
+                       plotvars=None):
     """ Multi-variable and multi-condition barchart plot.
     values dict is keyed as values[condition][var][context],
     given by e.g. get_c3d_analysis()
     stddev can be None or a dict keyed as stddev[condition][var][context].
     If no stddev for a given condition, set stddev[condition] = None
+    plotvars gives variables to plot (if not all) and their order.
     """
 
     if interactive:
@@ -101,11 +103,20 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
     conds = values.keys()
     vals_1 = values[conds[0]]
     varsets = [set(values[cond].keys()) for cond in conds]
-    vars_ = set.intersection(*varsets)
-    not_in_all = set.union(*varsets) - vars_
-    if not_in_all:
-        logger.warning('Some conditions are missing the following variables: '
-                       '%s' % ' '.join(not_in_all))
+    # vars common to all conditions
+    vars_common = set.intersection(*varsets)
+
+    if plotvars is not None:
+        # pick specified vars that appear in all of the conditions
+        plotvars_set = set(plotvars)
+        vars_ok = set.intersection(plotvars_set, vars_common)
+        if plotvars_set - vars_ok:
+            logger.warning('some conditions are missing variables: %s'
+                           % (plotvars_set - vars_ok))
+        # to preserve original order
+        vars_ = [var for var in plotvars if var in vars_ok]
+    else:
+        vars_ = vars_common
 
     units = [vals_1[var]['unit'] for var in vars_]
 
@@ -113,10 +124,11 @@ def time_dist_barchart(values, stddev=None, thickness=.5, color=None,
     gs = gridspec.GridSpec(len(vars_), 3, width_ratios=[1, 1/3., 1])
 
     # variable names into the center column
-    for ind, var in enumerate(vars_):
+    for ind, (var, unit) in enumerate(zip(vars_, units)):
         textax = fig.add_subplot(gs[ind, 1])
         textax.axis('off')
-        textax.text(0, .5, var, ha='center', va='center')
+        label = '%s (%s)' % (var, unit)
+        textax.text(0, .5, label, ha='center', va='center')
 
     rects = _plot_oneside(vars_, 'Left', 0)
     rects = _plot_oneside(vars_, 'Right', 2)

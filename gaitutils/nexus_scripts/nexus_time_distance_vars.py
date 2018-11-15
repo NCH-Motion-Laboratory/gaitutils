@@ -108,7 +108,14 @@ def _plot_trials(trials, cond_labels=None):
     and list elements represent trials.
     Conditions is a matching list of condition labels.
     If there are multiple trials per condition, they will be averaged.
+    plotvars specifies variables to plot (if not all) and their order
     """
+    # XXX: hardcoded time-distance variables, to set a certain order
+    # set plotvars=None to plot all analysis variables from c3d
+    plotvars = ['Walking Speed', 'Cadence', 'Foot Off', 'Opposite Foot Off',
+                'Opposite Foot Contact', 'Double Support', 'Single Support',
+                'Stride Time', 'Stride Length', 'Step Width', 'Step Length']
+
     if cond_labels is None:
         cond_labels = ['Condition %d' % k for k in range(len(trials))]
     res_avg_all = dict()
@@ -128,7 +135,8 @@ def _plot_trials(trials, cond_labels=None):
         res_avg_all.update(res_avg)
         res_std_all.update(res_std)
 
-    return time_dist_barchart(res_avg_all, res_std_all, stddev_bars=False)
+    return time_dist_barchart(res_avg_all, stddev=res_std_all,
+                              stddev_bars=False, plotvars=plotvars)
 
 
 if __name__ == '__main__':

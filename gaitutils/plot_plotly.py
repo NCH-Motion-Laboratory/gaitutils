@@ -341,7 +341,7 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                                  titlefont={'size': label_fontsize},
                                  showticklabels=True)
 
-    margin = go.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
+    margin = go.layout.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
     layout = go.Layout(margin=margin, font={'size': label_fontsize},
                        hovermode='closest')
 

@@ -429,7 +429,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionQuit.triggered.connect(self.close)
         self.actionOpts.triggered.connect(self._options_dialog)
 
-        # add double click action to browse current report        
+        # add double click action to browse current report
         (self.listActiveReports.itemDoubleClicked.
          connect(lambda item: self._browse_localhost(item.userdata)))
 
@@ -439,11 +439,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
             if ((widget[:3] == 'btn' or widget[:4] == 'rbtn') and
                widget != 'btnQuit'):
                 self.opWidgets.append(widget)
-                
+
         # report related widgets
         self.reportWidgets = [self.btnDeleteReport, self.btnDeleteAllReports,
                               self.btnViewReport]
-        
+
         XStream.stdout().messageWritten.connect(self._log_message)
         XStream.stderr().messageWritten.connect(self._log_message)
 
@@ -638,7 +638,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         port = self.baseport
         while port in ports_taken:  # find first port not taken by us
             port += 1
-        
+
         # report ok - start server, thread and do not block ui
         # also enable the threaded mode of the server. serving is a bit flaky
         # in Python 2 (multiple requests cause exceptions)
@@ -649,7 +649,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._set_report_button_status()
         logger.debug('starting web browser')
         self._browse_localhost(port)
-        
+
     def _delete_report(self, item):
         """Shut down server for given list item, remove item"""
         port = item.userdata
@@ -671,7 +671,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if reply == QtWidgets.QMessageBox.YesRole:
             self._delete_report(item)
         self._set_report_button_status()
-            
+
     def _delete_all_reports(self):
         """Delete all web reports"""
         if self.listActiveReports.count() == 0:
@@ -684,7 +684,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         for item in list(self.listActiveReports.items):
             self._delete_report(item)
         self._set_report_button_status()
-        
+
     def _view_current_report(self):
         """Open current report in browser"""
         item = self.listActiveReports.currentItem()
@@ -744,8 +744,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self.__dict__[widget].setEnabled(False)
         # update display immediately in case thread gets blocked
         QtWidgets.QApplication.processEvents()
-        
-        
+
     def _enable_op_buttons(self):
         """ Enable all operation buttons """
         for widget in self.opWidgets:
@@ -794,6 +793,7 @@ class RunnerSignals(QObject):
 
 class Runner(QRunnable):
     """Encapsulates threaded functions for QThreadPool"""
+
     def __init__(self, fun):
         super(Runner, self).__init__()
         self.fun = fun

@@ -13,7 +13,6 @@ import shutil
 import logging
 
 from gaitutils import nexus, sessionutils, cfg
-from gaitutils.guiutils import messagebox
 
 
 logger = logging.getLogger(__name__)
@@ -43,9 +42,6 @@ def do_copy():
     for j, vidfile in enumerate(vidfiles):
         logger.debug('copying %s -> %s' % (vidfile, dest_dir))
         shutil.copy2(vidfile, dest_dir)
-
-    messagebox('Copied %d video file%s into %s' % ((j+1), 's' if j > 0 else '',
-                                                   dest_dir))
 
 
 if __name__ == '__main__':

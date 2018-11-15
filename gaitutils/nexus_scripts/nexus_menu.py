@@ -822,8 +822,9 @@ def main():
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
 
-    # uiparser logger makes too much noise
+    # quiet down some noisy loggers
     logging.getLogger('PyQt5.uic').setLevel(logging.WARNING)
+    logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
 
     gaitmenu = Gaitmenu()
     gaitmenu.show()

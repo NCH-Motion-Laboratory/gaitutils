@@ -18,12 +18,12 @@ from collections import defaultdict
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
                        numutils, normaldata, sessionutils, nexus)
 
-from . import nexus_kin_consistency
-from . import nexus_emg_consistency
-from . import nexus_musclelen_consistency
-from . import nexus_kin_average
-from . import nexus_trials_velocity
-from . import nexus_time_distance_vars
+from gaitutils.nexus_scripts import (nexus_kin_consistency,
+                                     nexus_emg_consistency,
+                                     nexus_musclelen_consistency,
+                                     nexus_kin_average,
+                                     nexus_trials_velocity,
+                                     nexus_time_distance_vars)
 
 
 logger = logging.getLogger(__name__)

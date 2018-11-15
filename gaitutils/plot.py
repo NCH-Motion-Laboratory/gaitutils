@@ -225,6 +225,7 @@ class Plotter(object):
 
         self._layout = layout
         self.allvars = [item for row in layout for item in row]
+        self.n_proper_vars = len([v for v in self.allvars if v is not None])
         self.nrows = len(layout)
         if self.nrows == 0:
             raise ValueError('No data to plot')
@@ -452,10 +453,13 @@ class Plotter(object):
         if self.interactive:
             if superpose:
                 if self.fig is None:
-                    logger.debug('No figure to superpose on, creating new one')
+                    logger.debug('no figure to superpose on, creating new one')
                     self._create_interactive_figure()
+                else:
+                    logger.debug('using existing figure for superpose')
             else:
                 # interactive, new figure
+                logger.debug('creating new figure')
                 self._create_interactive_figure()
         else:  # non interactive - figure should exist already
             if superpose:
@@ -495,7 +499,7 @@ class Plotter(object):
         def _shorten_name(name, max_len=10):
             """Shorten overlong names for legend etc."""
             return name if len(name) <= max_len else '..'+name[-max_len+2:]
-        
+
         def _handle_cycle_arg(cycles):
             """Process the cycle argument"""
             if isinstance(cycles, Gaitcycle):
@@ -545,14 +549,21 @@ class Plotter(object):
         is_avg_trial = isinstance(trial, AvgTrial)
 
         for i, var in enumerate(self.allvars):
+
+            if len(self.fig.axes) == len(self.allvars):
+                # looks like all axes were created already (superpose)
+                ax = self.fig.axes[i]
+            else:
+                if sharex and len(plotaxes) > 0:
+                    ax = self.fig.add_subplot(self.gridspec[i],
+                                              sharex=plotaxes[-1])
+                else:
+                    ax = self.fig.add_subplot(self.gridspec[i])
+
             var_type = self._var_type(var)
             if var_type is None:
+                ax.axis('off')
                 continue
-            if sharex and len(plotaxes) > 0:
-                ax = self.fig.add_subplot(self.gridspec[i],
-                                          sharex=plotaxes[-1])
-            else:
-                ax = self.fig.add_subplot(self.gridspec[i])
 
             if var_type == 'model':
                 model = models.model_from_var(var)

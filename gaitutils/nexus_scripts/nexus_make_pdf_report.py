@@ -149,7 +149,9 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
                 do_emg_consistency = True
 
             if pages['KinEMGMarked']:
-                # kinetics-EMG
+                logger.debug('creating representative kin-EMG plots')
+                # FIXME: the plotter logic is a bit weird here - it works
+                # but old axes get recreated
                 pl.layout = (cfg.layouts.lb_kinetics_emg_r if side == 'R' else
                              cfg.layouts.lb_kinetics_emg_l)
 
@@ -168,7 +170,7 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
                     pl.create_pdf(pdf_name=pdf_name)
 
             if pages['EMGMarked']:
-                # EMG
+                logger.debug('creating representative EMG plots')
                 maintitle = pl.title_with_eclipse_info('EMG plot for')
                 layout = cfg.layouts.std_emg
                 pl.layout = layouts.rm_dead_channels(pl.trial.emg, layout)
@@ -185,12 +187,14 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
 
     # trial velocity plot
     if pages['TrialVelocity']:
+        logger.debug('creating velocity plot')
         fig_vel = nexus_trials_velocity.do_plot(show=False, make_pdf=False)
     else:
         fig_vel = None
 
     # time-distance average
     if pages['TimeDistAverage']:
+        logger.debug('creating time-distance plot')
         fig_timedist_avg = (nexus_time_distance_vars.
                             do_session_average_plot(show=False,
                                                     make_pdf=False))
@@ -199,12 +203,14 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
 
     # consistency plots
     if pages['KinCons']:
+        logger.debug('creating kin consistency plot')
         fig_kin_cons = nexus_kin_consistency.do_plot(show=False,
                                                      make_pdf=make_separate_pdfs)
     else:
         fig_kin_cons = None
 
     if pages['MuscleLenCons']:
+        logger.debug('creating muscle length consistency plot')
         fig_musclelen_cons = nexus_musclelen_consistency.do_plot(show=False,
                                                                  age=age,
                                                                  make_pdf=make_separate_pdfs)
@@ -212,6 +218,7 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
         fig_musclelen_cons = None
 
     if do_emg_consistency:
+        logger.debug('creating EMG consistency plot')        
         fig_emg_cons = nexus_emg_consistency.do_plot(show=False, make_pdf=make_separate_pdfs)
     else:
         fig_emg_cons = None
@@ -243,5 +250,7 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
+    logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
+    logging.getLogger('gaitutils.utils').setLevel(logging.WARNING)
     register_gui_exception_handler()
     do_plot()

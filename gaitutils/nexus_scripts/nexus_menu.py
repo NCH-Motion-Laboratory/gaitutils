@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Show a Qt menu for running various Nexus tasks.

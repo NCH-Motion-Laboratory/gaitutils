@@ -1,0 +1,27 @@
+name: gaitutils-py2-test
+channels:
+  - defaults
+dependencies:
+  - configobj
+  - configparser
+  - flask
+  - freetype
+  - future
+  - matplotlib
+  - numpy
+  - openpyxl
+  - pyqt
+  - urllib3
+  - werkzeug
+  - xlrd
+  - xlsxwriter
+  - xlutils
+  - pip:
+    - dash
+    - dash-core-components
+    - dash-html-components
+    - dash-renderer
+    - gaitutils
+    - plotly
+prefix: C:\Anaconda2
+

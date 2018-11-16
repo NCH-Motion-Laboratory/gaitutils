@@ -1,4 +1,4 @@
-name: uls-py37
+name: gaitutils-py3
 channels:
   - defaults
 dependencies:

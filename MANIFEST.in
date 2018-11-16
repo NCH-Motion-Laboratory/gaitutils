@@ -1,2 +1,2 @@
 include README.md
-include nexus_scripts/nexus_menu.ui
+include gaitutils/nexus_scripts/nexus_menu.ui

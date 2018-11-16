@@ -1,4 +1,4 @@
-name: uls-py27
+name: gaitutils-py2
 channels:
   - defaults
 dependencies:

@@ -117,22 +117,23 @@ dependencies:
   - zeromq=4.2.5=he025d50_1
   - zlib=1.2.11=h8395fce_2
   - pip:
-    - click==7.0
-    - coverage==4.5.1
-    - dash==0.26.1
-    - dash-core-components==0.28.0
-    - dash-html-components==0.11.0
-    - dash-renderer==0.13.2
-    - flask==1.0.2
-    - flask-compress==1.4.0
-    - gprof2dot==2017.9.19
-    - itsdangerous==1.1.0
-    - mock==2.0.0
-    - nose2==0.8.0
-    - pbr==4.2.0
-    - plotly==3.1.1
-    - pypdf2==1.26.0
-    - retrying==1.3.3
-    - werkzeug==0.14.1
+    - click
+    - coverage
+    - dash
+    - dash-core-components
+    - dash-html-components
+    - dash-renderer
+    - flask
+    - flask-compress
+    - gaitutils
+    - gprof2dot
+    - itsdangerous
+    - mock
+    - nose2
+    - pbr
+    - plotly
+    - pypdf2
+    - retrying
+    - werkzeug
 prefix: C:\Anaconda2\envs\py3
 

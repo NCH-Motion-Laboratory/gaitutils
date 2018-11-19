@@ -1,4 +1,4 @@
-name: gaitutils-py2-test
+name: gaitutils
 channels:
   - defaults
 dependencies:
@@ -11,6 +11,8 @@ dependencies:
   - numpy
   - openpyxl
   - pyqt
+  - spyder
+  - jupyter
   - urllib3
   - werkzeug
   - xlrd

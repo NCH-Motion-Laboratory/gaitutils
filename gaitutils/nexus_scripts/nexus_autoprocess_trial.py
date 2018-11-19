@@ -1,7 +1,8 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 
-Auto process single trial.
+Autoprocess single trial.
 Note: does not use stats for event detection -> less accurate
 
 @author: Jussi (jnu@iki.fi)

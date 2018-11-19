@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Autoprocess all trials in current Nexus session directory. See autoproc

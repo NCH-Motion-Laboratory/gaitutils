@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Embed gaitplotter figure canvas into PyQt5 GUI

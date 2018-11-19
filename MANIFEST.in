@@ -1,2 +1,3 @@
 include README.md
 include gaitutils/nexus_scripts/nexus_menu.ui
+include gaitutils/default.cfg

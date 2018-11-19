@@ -30,6 +30,10 @@ if (sys.platform.find('win') != -1 and sys.executable.find('pythonw') != -1 and
 # default config
 cfg_template = resource_filename(__name__, 'default.cfg')
 # user specific config
+# On Windows, this typically puts the config at C:\Users\Username, since the
+# USERPROFILE environment variable points there. Putting the config in a
+# networked home dir requires some tinkering with environment variables
+# (e.g. setting HOME)
 homedir = op.expanduser('~')
 cfg_user = op.join(homedir, '.gaitutils.cfg')
 

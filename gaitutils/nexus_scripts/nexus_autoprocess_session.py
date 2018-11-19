@@ -183,13 +183,13 @@ def _do_autoproc(enffiles, update_eclipse=True):
                 _fail(trial, 'label_failure')
                 continue
 
-        # check forceplate data
-        fp_info = (eclipse.eclipse_fp_keys(edata) if
-                   cfg.autoproc.use_eclipse_fp_info else None)
-        fpev = utils.detect_forceplate_events(vicon, mkrdata, fp_info=fp_info)
-
-        # get foot velocity info for all events (do not reduce to median)
         try:
+        # check forceplate data
+            fp_info = (eclipse.eclipse_fp_keys(edata) if
+                       cfg.autoproc.use_eclipse_fp_info else None)
+            fpev = utils.detect_forceplate_events(vicon, mkrdata,
+                                                  fp_info=fp_info)
+            # get foot velocity info for all events (do not reduce to median)
             vel = utils.get_foot_contact_velocity(mkrdata, fpev, medians=False)
         except GaitDataError:
             logger.warning('cannot use foot marker data due to gaps')

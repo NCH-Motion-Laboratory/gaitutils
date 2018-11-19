@@ -9,6 +9,7 @@ dependencies:
   - future
   - matplotlib
   - numpy
+  - scipy
   - openpyxl
   - pyqt
   - spyder

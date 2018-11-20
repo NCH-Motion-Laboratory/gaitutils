@@ -66,7 +66,7 @@ class LoadDialog(QtWidgets.QDialog):
     def __init__(self):
 
         super(self.__class__, self).__init__()
-        uifile = resource_filename(__name__, 'tardieu_load_dialog.ui')
+        uifile = resource_filename('gaitutils', 'nexus_scripts/tardieu_load_dialog.ui')
         uic.loadUi(uifile, self)
         try:
             ang0_nexus = read_nexus_starting_angle()
@@ -81,7 +81,7 @@ class EMGFilterDialog(QtWidgets.QDialog):
     def __init__(self, emg_passband):
 
         super(self.__class__, self).__init__()
-        uifile = resource_filename(__name__, 'tardieu_filter_dialog.ui')
+        uifile = resource_filename('gaitutils', 'nexus_scripts/tardieu_filter_dialog.ui')
         uic.loadUi(uifile, self)
         self.spEMGLow.setValue(emg_passband[0])
         self.spEMGHigh.setValue(emg_passband[1])
@@ -93,7 +93,7 @@ class HelpDialog(QtWidgets.QDialog):
     def __init__(self):
 
         super(self.__class__, self).__init__()
-        uifile = resource_filename(__name__, 'tardieu_help_dialog.ui')
+        uifile = resource_filename('gaitutils', 'nexus_scripts/tardieu_help_dialog.ui')
         uic.loadUi(uifile, self)
 
 
@@ -113,7 +113,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
         super(TardieuWindow, self).__init__(parent)
 
-        uifile = resource_filename(__name__, 'tardieu.ui')
+        uifile = resource_filename('gaitutils', 'nexus_scripts/tardieu.ui')
         uic.loadUi(uifile, self)
 
         self._tardieu_plot = TardieuPlot()

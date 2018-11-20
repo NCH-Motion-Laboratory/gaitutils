@@ -57,7 +57,7 @@ class PdfReportDialog(QtWidgets.QDialog):
 
     def __init__(self, info, prompt='Hello', parent=None):
         super(self.__class__, self).__init__()
-        uifile = resource_filename(__name__, 'pdf_report_dialog.ui')
+        uifile = resource_filename('gaitutils', 'nexus_scripts/pdf_report_dialog.ui')
         uic.loadUi(uifile, self)
         self.prompt.setText(prompt)
         if info is not None:
@@ -91,7 +91,7 @@ class WebReportInfoDialog(QtWidgets.QDialog):
 
     def __init__(self, info, parent=None):
         super(self.__class__, self).__init__()
-        uifile = resource_filename(__name__, 'web_report_info.ui')
+        uifile = resource_filename('gaitutils', 'nexus_scripts/web_report_info.ui')
         uic.loadUi(uifile, self)
         if info is not None:
             if info['fullname'] is not None:
@@ -119,7 +119,7 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
     def __init__(self, min_sessions=1, max_sessions=3):
         super(self.__class__, self).__init__()
         # load user interface made with designer
-        uifile = resource_filename(__name__, 'web_report_sessions.ui')
+        uifile = resource_filename('gaitutils', 'nexus_scripts/web_report_sessions.ui')
         uic.loadUi(uifile, self)
         self.btnBrowseSession.clicked.connect(self.add_session)
         self.btnAddNexusSession.clicked.connect(lambda: self.
@@ -209,7 +209,7 @@ class OptionsDialog(QtWidgets.QDialog):
     def __init__(self, default_tab=0):
         super(self.__class__, self).__init__()
         # load user interface made with designer
-        uifile = resource_filename(__name__, 'options_dialog.ui')
+        uifile = resource_filename('gaitutils', 'nexus_scripts/options_dialog.ui')
         uic.loadUi(uifile, self)
 
         # add some buttons to the standard button box
@@ -363,7 +363,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def __init__(self):
         super(self.__class__, self).__init__()
         # load user interface made with designer
-        uifile = resource_filename(__name__, 'nexus_menu.ui')
+        uifile = resource_filename('gaitutils', 'nexus_scripts/nexus_menu.ui')
         uic.loadUi(uifile, self)
         """ Stuff that shows matplotlib plots cannot be run in directly in
         worker threads. To put plotting stuff into a worker thread, need to:

@@ -37,7 +37,7 @@ class AveragerDialog(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
         super(self.__class__, self).__init__()
-        uifile = resource_filename(__name__, 'averager.ui')
+        uifile = resource_filename('gaitutils', 'nexus_scripts/averager.ui')
         uic.loadUi(uifile, self)
 
         self.btnAddNexusTrial.clicked.connect(self._open_nexus_trial)
@@ -83,7 +83,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(PlotterWindow, self).__init__(parent)
 
-        uifile = resource_filename(__name__, 'plotter_gui.ui')
+        uifile = resource_filename('gaitutils', 'nexus_scripts/plotter_gui.ui')
         uic.loadUi(uifile, self)
 
         self.pl = Plotter(interactive=False)

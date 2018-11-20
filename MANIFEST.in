@@ -1,3 +1,13 @@
 include README.md
-include gaitutils/nexus_scripts/nexus_menu.ui
 include gaitutils/default.cfg
+include gaitutils/nexus_scripts/averager.ui
+include gaitutils/nexus_scripts/nexus_menu.ui
+include gaitutils/nexus_scripts/options_dialog.ui
+include gaitutils/nexus_scripts/pdf_report_dialog.ui
+include gaitutils/nexus_scripts/plotter_gui.ui
+include gaitutils/nexus_scripts/tardieu.ui
+include gaitutils/nexus_scripts/tardieu_filter_dialog.ui
+include gaitutils/nexus_scripts/tardieu_help_dialog.ui
+include gaitutils/nexus_scripts/tardieu_load_dialog.ui
+include gaitutils/nexus_scripts/web_report_info.ui
+include gaitutils/nexus_scripts/web_report_sessions.ui

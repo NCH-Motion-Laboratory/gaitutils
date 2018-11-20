@@ -10,6 +10,7 @@ dependencies:
   - matplotlib
   - numpy
   - scipy
+  - python=2.7
   - openpyxl
   - pyqt
   - spyder

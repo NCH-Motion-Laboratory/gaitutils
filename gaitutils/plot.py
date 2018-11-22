@@ -75,7 +75,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
             # FIXME: adding subplot here is unnnecessary and triggers mpl
             # depreciation
             ax = fig.add_subplot(gs[ind, col])
-            ax.axis(False)
+            ax.axis('off')
             # may have several bars (conditions) per variable
             vals_this = [values[cond][var][context] for cond in conds]
             if not np.count_nonzero(~np.isnan(vals_this)):
@@ -131,7 +131,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     # variable names into the center column
     for ind, (var, unit) in enumerate(zip(vars_, units)):
         textax = fig.add_subplot(gs[ind, 1])
-        textax.axis(False)
+        textax.axis('off')
         label = '%s (%s)' % (var, unit)
         textax.text(0, .5, label, ha='center', va='center')
 
@@ -564,7 +564,7 @@ class Plotter(object):
 
             var_type = self._var_type(var)
             if var_type is None:
-                ax.axis(False)
+                ax.axis('off')
                 continue
 
             if var_type == 'model':

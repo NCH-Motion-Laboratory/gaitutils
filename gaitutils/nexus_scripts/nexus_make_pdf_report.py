@@ -91,7 +91,7 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
     # timestr = time.strftime('%d.%m.%Y')  # current time, not currently used
     fig_hdr = plt.figure()
     ax = plt.subplot(111)
-    plt.axis(False)
+    plt.axis('off')
     title_txt = 'HUS Liikelaboratorio\n'
     title_txt += u'Kävelyanalyysin tulokset\n'
     title_txt += '\n'

@@ -64,7 +64,7 @@ def do_plot(sessions, pdfpath=None, pages=None):
     # make header page
     fig_hdr = plt.figure()
     ax = plt.subplot(111)
-    plt.axis(False)
+    plt.axis('off')
     title_txt = 'HUS Liikelaboratorio\n'
     title_txt += u'Kävelyanalyysin vertailuraportti\n'
     title_txt += '\n'

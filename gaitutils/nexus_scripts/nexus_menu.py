@@ -448,6 +448,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         XStream.stdout().messageWritten.connect(self._log_message)
         XStream.stderr().messageWritten.connect(self._log_message)
 
+
+        logger.debug('interpreter: %s' % sys.executable)
         self.threadpool = QThreadPool()
         logger.debug('started threadpool with max %d threads' %
                      self.threadpool.maxThreadCount())

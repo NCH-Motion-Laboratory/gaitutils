@@ -400,7 +400,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                 logger.debug('off plate in y dir')
             ok = xmin_ok and xmax_ok and ymin_ok and ymax_ok
             if ok:
-                logger.debug('on-plate check ok for side %s' % valid)
+                logger.debug('on-plate check ok for side %s' % side)
                 valid = side
 
         if valid:

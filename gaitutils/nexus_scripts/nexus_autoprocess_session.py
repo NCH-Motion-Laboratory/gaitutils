@@ -228,16 +228,18 @@ def _do_autoproc(enffiles, update_eclipse=True):
         _save_trial()
         trial['description'] = eclipse_str
 
+        # write Eclipse fp values according to our detection
+        if cfg.autoproc.write_eclipse_fp_info:
+            logger.debug('write Eclipse forceplate keys for %s' % enffile)
+            eclipse.set_eclipse_keys(enffile, fpev['our_fp_info'],
+                                     update_existing=True)
+
+
     # all preprocessing done
     # compute velocity thresholds using all trials
     vel_th = {key: (np.median(x) if x.size > 0 else None) for key, x in
               foot_vel.items()}
 
-    # write Eclipse fp values according to our detection
-    if cfg.autoproc.write_eclipse_fp_values:
-        logger.debug('write Eclipse forceplate keys for %s' % enffile)
-        eclipse.set_eclipse_keys(enffile, fp_info_new,
-                                 update_existing=True)
 
     # 2nd pass
     sel_trials = {filepath: trial for filepath, trial in trials.items()

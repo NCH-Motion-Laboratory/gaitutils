@@ -340,28 +340,32 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
             friseind = rising_zerocross(forcetot-f_threshold)[0]  # first rise
             ffallind = falling_zerocross(forcetot-f_threshold)[-1]  # last fall
             logger.debug('force rise: %d fall: %d' % (friseind, ffallind))
+            # we work with 0-based frame indices (=1 less than Nexus frame index)
+            strike_fr = int(np.round(friseind / info['samplesperframe']))
+            toeoff_fr = int(np.round(ffallind / info['samplesperframe']))
+            logger.debug('strike @ frame %d, toeoff @ %d' % (strike_fr, toeoff_fr))
         except IndexError:
             logger.debug('cannot detect force rise/fall')
             force_checks_ok = False
-
-        # we work with 0-based frame indices (=1 less than Nexus frame index)
-        strike_fr = int(np.round(friseind / info['samplesperframe']))
-        toeoff_fr = int(np.round(ffallind / info['samplesperframe']))
-        logger.debug('strike @ frame %d, toeoff @ %d' % (strike_fr, toeoff_fr))
-
-        # check shift of center of pressure during roi in fwd dir
-        cop_roi = fp['CoP'][friseind:ffallind, fwd_dir]
-        if len(cop_roi) == 0:
-            logger.warning('no CoP for given range')
-            force_checks_ok = False
-        else:
-            cop_shift = cop_roi.max() - cop_roi.min()
-            total_shift = np.linalg.norm(cop_shift)
-            logger.debug('CoP total shift %.2f mm' % total_shift)
-            if total_shift > cfg.autoproc.cop_shift_max:
-                logger.debug('center of pressure shifts too much '
-                             '(double contact?)')
+            
+        # CoP checks
+        if force_checks_ok:
+            # check shift of center of pressure during roi in fwd dir
+            cop_roi = fp['CoP'][friseind:ffallind, fwd_dir]
+            if len(cop_roi) == 0:
+                logger.warning('no CoP for given range')
                 force_checks_ok = False
+            else:
+                cop_shift = cop_roi.max() - cop_roi.min()
+                total_shift = np.linalg.norm(cop_shift)
+                logger.debug('CoP total shift %.2f mm' % total_shift)
+                if total_shift > cfg.autoproc.cop_shift_max:
+                    logger.debug('center of pressure shifts too much '
+                                 '(double contact?)')
+                    force_checks_ok = False
+                    
+        if not force_checks_ok:
+            valid = None
 
         if force_checks_ok and detect_foot:
             logger.debug('using autodetection of foot contact')
@@ -379,10 +383,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
 
             side = _leading_foot(mkrdata)[fr0]
             if side is None:
-                logger.warning('cannot determine leading foot from marker '
-                               'data')
-                our_fp_info[plate] = 'Invalid'
-                continue
+                raise Exception('cannot determine leading foot from marker '
+                                'data')
             logger.debug('checking contact for leading foot: %s' % side)
             footmins, footmaxes = _get_foot_points(mkrdata, side)
             logger.debug('foot edges x: %.2f to %.2f  y: %.2f to %.2f' %
@@ -398,11 +400,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                 logger.debug('off plate in y dir')
             ok = xmin_ok and xmax_ok and ymin_ok and ymax_ok
             if ok:
-                logger.debug('contact ok')
-
-            if ok:
-                valid = side
                 logger.debug('on-plate check ok for side %s' % valid)
+                valid = side
 
         if valid:
             logger.debug('plate %d: valid foot strike on %s at frame %d'

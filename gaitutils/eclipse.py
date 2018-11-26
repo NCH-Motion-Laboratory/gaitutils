@@ -99,13 +99,3 @@ def set_eclipse_keys(fname_enf, eclipse_dict, update_existing=False):
             fp.writelines(outu)
     else:
         logger.debug('did not set any keys')
-
-
-def reset_eclipse_fp_keys(fname_enf, reset_all=False):
-    """Reset Eclipse forceplate keys. If not reset_all, reset only 'Invalid'
-    entries."""
-    keys = get_eclipse_keys(fname_enf)
-    fp_keys = eclipse_fp_keys(keys)
-    fp_keys_auto = {key: u'Auto' for key, val in fp_keys.items()
-                    if val == u'Invalid' or reset_all}
-    set_eclipse_keys(fname_enf, fp_keys_auto, update_existing=True)

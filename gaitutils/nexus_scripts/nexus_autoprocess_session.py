@@ -96,13 +96,6 @@ def _do_autoproc(enffiles, update_eclipse=True):
         logger.debug('force closing open trial')
         vicon.CloseTrial(5000)  # timeout in ms
 
-    # reset Eclipse fp keys so that PiG kinetics will not be affected by
-    # 'invalid' values
-    if cfg.autoproc.reset_eclipse_fp_invalid_values:
-        for enffile in enffiles:
-            logger.debug('reset Eclipse FP keys for %s' % enffile)
-            eclipse.reset_eclipse_fp_keys(enffile)
-
     for enffile in enffiles:
         filepath = enffile[:enffile.find('.Trial')]  # rm .TrialXXX and .enf
         filename = os.path.split(filepath)[1]
@@ -136,7 +129,6 @@ def _do_autoproc(enffiles, update_eclipse=True):
                 trial['recon_ok'] = False
                 trial['description'] = 'skipped'
                 continue
-
 
         # reset ROI before operations
         if cfg.autoproc.reset_roi and nexus_ver >= 2.5:
@@ -184,11 +176,12 @@ def _do_autoproc(enffiles, update_eclipse=True):
                 continue
 
         try:
-        # check forceplate data
+            # check forceplate data
             fp_info = (eclipse.eclipse_fp_keys(edata) if
                        cfg.autoproc.use_eclipse_fp_info else None)
             fpev = utils.detect_forceplate_events(vicon, mkrdata,
                                                   fp_info=fp_info)
+
             # get foot velocity info for all events (do not reduce to median)
             vel = utils.get_foot_contact_velocity(mkrdata, fpev, medians=False)
         except GaitDataError:
@@ -239,6 +232,12 @@ def _do_autoproc(enffiles, update_eclipse=True):
     # compute velocity thresholds using all trials
     vel_th = {key: (np.median(x) if x.size > 0 else None) for key, x in
               foot_vel.items()}
+
+    # write Eclipse fp values according to our detection
+    if cfg.autoproc.write_eclipse_fp_values:
+        logger.debug('write Eclipse forceplate keys for %s' % enffile)
+        eclipse.set_eclipse_keys(enffile, fp_info_new,
+                                 update_existing=True)
 
     # 2nd pass
     sel_trials = {filepath: trial for filepath, trial in trials.items()

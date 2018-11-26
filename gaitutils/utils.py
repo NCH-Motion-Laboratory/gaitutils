@@ -250,11 +250,12 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
 
     If supplied, mkrdata must include foot and pelvis markers. Otherwise
     it will be read.
-    If fp_info dict is set, no marker and COP checks will be done;
+
+    If fp_info dict is supplied, no marker and COP checks will be done;
     instead the Eclipse forceplate info will be used. Eclipse info is written
     e.g. as {FP1: 'Left'} where plate indices start from 1 and the value can be
-    'Left', 'Right' or 'Invalid'. Even if Eclipse info is used, foot strike
-    and toeoff frames must be determined from forceplate data.
+    'Auto', 'Left', 'Right' or 'Invalid'. Even if Eclipse info is used, foot
+    strike and toeoff frames must be determined from forceplate data.
 
     Conditions:
     -check max total force, must correspond to subject weight
@@ -270,7 +271,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     info = read_data.get_metadata(source)
     fpdata = read_data.get_forceplate_data(source)
     results = dict(R_strikes=[], R_toeoffs=[], L_strikes=[], L_toeoffs=[],
-                   valid=set(), R_strikes_plate=[], L_strikes_plate=[])
+                   valid=set(), R_strikes_plate=[], L_strikes_plate=[],
+                   our_fp_info={})
 
     # get marker data and find "forward" direction (by max variance)
     if mkrdata is None:
@@ -286,30 +288,33 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     logger.debug('gait forward direction seems to be %s' %
                  {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])
 
-    # our internal forceplate index is 0-based
+    # loop over plates; our internal forceplate index is 0-based
     for plate_ind, fp in enumerate(fpdata):
         logger.debug('analyzing plate %d' % plate_ind)
-        # check Eclipse info if it exists
-        detect = True
-        # XXX: are we sure that the plate indices match Eclipse?
+        # XXX: are we sure that the plate indices always match Eclipse?
         plate = 'FP' + str(plate_ind + 1)  # Eclipse starts from FP1
         if fp_info is not None and plate in fp_info:
             ecl_valid = fp_info[plate]
-            detect = False
+            detect_foot = False
             logger.debug('using Eclipse forceplate info: %s' % ecl_valid)
             if ecl_valid == 'Right':
                 valid = 'R'
             elif ecl_valid == 'Left':
                 valid = 'L'
             elif ecl_valid == 'Invalid':
-                continue
+                valid = None
             elif ecl_valid == 'Auto':
-                detect = True
+                detect_foot = True
             else:
                 raise Exception('unexpected Eclipse forceplate field')
+        else:
+            logger.debug('not using Eclipse forceplate info')
+            valid = None
+            detect_foot = True
 
-        # first identify candidates for footstrike by looking at fp data
+        # identify candidate frames for foot strike
         # FIXME: filter should maybe depend on sampling freq
+        force_checks_ok = True
         forcetot = signal.medfilt(fp['Ftot'])
         forcetot = _baseline(forcetot)
         fmax = max(forcetot)
@@ -325,10 +330,9 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
             logger.debug('body mass %.2f kg' % bodymass)
             f_threshold = (cfg.autoproc.forceplate_contact_threshold *
                            bodymass * 9.81)
-            if (detect and fmax < cfg.autoproc.forceplate_min_weight *
-               bodymass * 9.81):
+            if fmax < cfg.autoproc.forceplate_min_weight * bodymass * 9.81:
                 logger.debug('insufficient max. force on plate')
-                continue
+                force_checks_ok = False
 
         # find indices where force crosses threshold
         try:
@@ -338,29 +342,29 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
             logger.debug('force rise: %d fall: %d' % (friseind, ffallind))
         except IndexError:
             logger.debug('cannot detect force rise/fall')
-            continue
+            force_checks_ok = False
 
         # we work with 0-based frame indices (=1 less than Nexus frame index)
         strike_fr = int(np.round(friseind / info['samplesperframe']))
         toeoff_fr = int(np.round(ffallind / info['samplesperframe']))
         logger.debug('strike @ frame %d, toeoff @ %d' % (strike_fr, toeoff_fr))
 
-        if detect:
-            logger.debug('using autodetection')
-
-            # check shift of center of pressure during roi in fwd dir
-            cop_roi = fp['CoP'][friseind:ffallind, fwd_dir]
-            if len(cop_roi) == 0:
-                logger.warning('no CoP for given range')
-                continue
+        # check shift of center of pressure during roi in fwd dir
+        cop_roi = fp['CoP'][friseind:ffallind, fwd_dir]
+        if len(cop_roi) == 0:
+            logger.warning('no CoP for given range')
+            force_checks_ok = False
+        else:
             cop_shift = cop_roi.max() - cop_roi.min()
             total_shift = np.linalg.norm(cop_shift)
             logger.debug('CoP total shift %.2f mm' % total_shift)
             if total_shift > cfg.autoproc.cop_shift_max:
                 logger.debug('center of pressure shifts too much '
                              '(double contact?)')
-                continue
+                force_checks_ok = False
 
+        if force_checks_ok and detect_foot:
+            logger.debug('using autodetection of foot contact')
             # check foot positions
             valid = None
             # plate boundaries in world coords
@@ -377,6 +381,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
             if side is None:
                 logger.warning('cannot determine leading foot from marker '
                                'data')
+                our_fp_info[plate] = 'Invalid'
                 continue
             logger.debug('checking contact for leading foot: %s' % side)
             footmins, footmaxes = _get_foot_points(mkrdata, side)
@@ -406,9 +411,10 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
             results[valid+'_strikes'].append(strike_fr)
             results[valid+'_toeoffs'].append(toeoff_fr)
             results[valid+'_strikes_plate'].append(plate_ind)
-
+            results['our_fp_info'][plate] = 'Right' if valid == 'R' else 'Left'
         else:
             logger.debug('plate %d: no valid foot strike' % plate_ind)
+            results['our_fp_info'][plate] = 'Invalid'
 
     logger.debug(results)
     return results

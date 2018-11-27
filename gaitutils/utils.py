@@ -196,15 +196,11 @@ def _get_foot_points(mkrdata, context, footlen=None):
     med_edge = foot_end - lankV
     # heel edge (compensate for marked position)
     heel_edge = heeP + htVn * cfg.autoproc.marker_diam/2
-    logger.debug('estimated foot length: %.1f mm width %.1f mm' %
-                 (np.nanmedian(np.linalg.norm(heel_edge-foot_end, axis=1)),
-                  np.nanmedian(np.linalg.norm(lat_edge-med_edge, axis=1))))
-    # minima and maxima in xy plane
-    # ignore nans in reduce()
-    with np.errstate(divide='ignore', invalid='ignore'):
-        pmin = np.minimum.reduce([heel_edge, lat_edge, med_edge])
-        pmax = np.maximum.reduce([heel_edge, lat_edge, med_edge])
-    return pmin, pmax
+    if footlen is None:
+        logger.debug('estimated foot length: %.1f mm width %.1f mm' %
+                     (np.nanmedian(np.linalg.norm(heel_edge-foot_end, axis=1)),
+                      np.nanmedian(np.linalg.norm(lat_edge-med_edge, axis=1))))
+    return heel_edge, lat_edge, med_edge, foot_end
 
 
 def _leading_foot(mkrdata):
@@ -248,12 +244,12 @@ def _trial_median_velocity(source):
     return vel * frate / 1000.  # convert to m/s
 
 
-def _points_in_poly(poly, pts):
+def _point_in_poly(poly, pt):
     """Point-in-polygon. poly is ordered nx3 array of vertices and P is mx3
     array of points. Returns mx3 array of booleans. 3rd dim is currently
     ignored"""
     p = path.Path(poly[:, :2])
-    return p.contains_points(pts)
+    return p.contains_point(pt)
 
 
 def detect_forceplate_events(source, mkrdata=None, fp_info=None):
@@ -385,39 +381,29 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
         if not force_checks_ok:
             valid = None
 
+        # marker checks
         if force_checks_ok and detect_foot:
             logger.debug('using autodetection of foot contact')
             # check foot positions
             valid = None
-            # plate boundaries in world coords
-            # FIXME: use plate corners and in-polygon algorithm
-            # (no need to assume coord axes aligned with plate)
-            mins, maxes = fp['lowerbounds'], fp['upperbounds']
-            # let foot settle for some tens of msec after strike
             settle_fr = int(50/1000 * info['framerate'])
             fr0 = strike_fr + settle_fr
-            logger.debug('plate edges x: %.2f to %.2f  y: %.2f to %.2f' %
-                         (mins[0], maxes[0], mins[1], maxes[1]))
-
             side = _leading_foot(mkrdata)[fr0]
             if side is None:
                 raise GaitDataError('cannot determine leading foot from marker'
                                     ' data')
             logger.debug('checking contact for leading foot: %s' % side)
-            footmins, footmaxes = _get_foot_points(mkrdata, side, footlen)
-            logger.debug('foot edges x: %.2f to %.2f  y: %.2f to %.2f' %
-                         (footmins[fr0, 0], footmaxes[fr0, 0],
-                          footmins[fr0, 1], footmaxes[fr0, 1]))
-            xmin_ok = mins[0] < footmins[fr0, 0] < maxes[0]
-            xmax_ok = mins[0] < footmaxes[fr0, 0] < maxes[0]
-            if not (xmin_ok and xmax_ok):
-                logger.debug('off plate in x dir')
-            ymin_ok = mins[1] < footmins[fr0, 1] < maxes[1]
-            ymax_ok = mins[1] < footmaxes[fr0, 1] < maxes[1]
-            if not (ymin_ok and ymax_ok):
-                logger.debug('off plate in y dir')
-            ok = xmin_ok and xmax_ok and ymin_ok and ymax_ok
-            if ok:
+            allpts = _get_foot_points(mkrdata, side, footlen)
+            poly = fp['cor_full']
+            pts_ok = True
+            pts_labels = ['heel', 'medial', 'lateral', 'toe']
+            for label, pts in zip(pts_labels, allpts):
+                pt = pts[fr0, :]
+                pt_ok = _point_in_poly(poly, pt)
+                logger.debug('%s point %s' %
+                             (label, 'ok' if pt_ok else 'not ok'))
+                pts_ok &= pt_ok
+            if pts_ok:
                 logger.debug('on-plate check ok for side %s' % side)
                 valid = side
 

@@ -354,38 +354,23 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
             friseind = rising_zerocross(forcetot-f_threshold)[0]  # first rise
             ffallind = falling_zerocross(forcetot-f_threshold)[-1]  # last fall
             logger.debug('force rise: %d fall: %d' % (friseind, ffallind))
-            # we work with 0-based frame indices (=1 less than Nexus frame index)
+            # 0-based frame indices (=1 less than Nexus frame index)
             strike_fr = int(np.round(friseind / info['samplesperframe']))
             toeoff_fr = int(np.round(ffallind / info['samplesperframe']))
-            logger.debug('strike @ frame %d, toeoff @ %d' % (strike_fr, toeoff_fr))
+            logger.debug('strike @ frame %d, toeoff @ %d'
+                         % (strike_fr, toeoff_fr))
         except IndexError:
             logger.debug('cannot detect force rise/fall')
             force_checks_ok = False
 
-        # CoP checks
-        if force_checks_ok:
-            # check shift of center of pressure during roi in fwd dir
-            cop_roi = fp['CoP'][friseind:ffallind, fwd_dir]
-            if len(cop_roi) == 0:
-                logger.warning('no CoP for given range')
-                force_checks_ok = False
-            else:
-                cop_shift = cop_roi.max() - cop_roi.min()
-                total_shift = np.linalg.norm(cop_shift)
-                logger.debug('CoP total shift %.2f mm' % total_shift)
-                if total_shift > cfg.autoproc.cop_shift_max:
-                    logger.debug('center of pressure shifts too much '
-                                 '(double contact?)')
-                    force_checks_ok = False
-
         if not force_checks_ok:
             valid = None
 
-        # marker checks
+        # foot marker (or point) checks
         if force_checks_ok and detect_foot:
             logger.debug('using autodetection of foot contact')
-            # check foot positions
             valid = None
+            # allows foot to settle for 50 ms after strike
             settle_fr = int(50/1000 * info['framerate'])
             fr0 = strike_fr + settle_fr
             side = _leading_foot(mkrdata)[fr0]
@@ -396,7 +381,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
             allpts = _get_foot_points(mkrdata, side, footlen)
             poly = fp['cor_full']
             pts_ok = True
-            pts_labels = ['heel', 'medial', 'lateral', 'toe']
+            pts_labels = ['heel', 'lateral', 'medial', 'toe']
             for label, pts in zip(pts_labels, allpts):
                 pt = pts[fr0, :]
                 pt_ok = _point_in_poly(poly, pt)

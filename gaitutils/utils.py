@@ -298,6 +298,12 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     else:
         logger.debug('foot length parameter not set')
 
+    from .nexus import automark_events, is_vicon_instance
+    if is_vicon_instance(source):
+        events_0 = automark_events(source, mkrdata=mkrdata, mark=False)
+    else:
+        events_0 = None
+
     # loop over plates; our internal forceplate index is 0-based
     for plate_ind, fp in enumerate(fpdata):
         logger.debug('analyzing plate %d' % plate_ind)
@@ -349,16 +355,17 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
             friseind = rising_zerocross(forcetot-f_threshold)[0]  # first rise
             ffallind = falling_zerocross(forcetot-f_threshold)[-1]  # last fall
             logger.debug('force rise: %d fall: %d' % (friseind, ffallind))
-            # we work with 0-based frame indices (=1 less than Nexus frame index)
+            # using 0-based frame indices (=1 less than Nexus frame index)
             strike_fr = int(np.round(friseind / info['samplesperframe']))
             toeoff_fr = int(np.round(ffallind / info['samplesperframe']))
-            logger.debug('strike @ frame %d, toeoff @ %d' % (strike_fr, toeoff_fr))
+            logger.debug('strike @ frame %d, toeoff @ %d'
+                         % (strike_fr, toeoff_fr))
         except IndexError:
             logger.debug('cannot detect force rise/fall')
             force_checks_ok = False
 
-        # CoP checks
-        if force_checks_ok:
+        # CoP checks - only if we don't have tentative events
+        if force_checks_ok and events_0 is None:
             # check shift of center of pressure during roi in fwd dir
             cop_roi = fp['CoP'][friseind:ffallind, fwd_dir]
             if len(cop_roi) == 0:
@@ -409,7 +416,31 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                 logger.debug('off plate in y dir')
             ok = xmin_ok and xmax_ok and ymin_ok and ymax_ok
             if ok:
-                logger.debug('on-plate check ok for side %s' % side)
+                logger.debug('foot on-plate check ok for side %s' % side)
+            if ok and events_0 is not None:
+                # check subsequent contralateral strike
+                contra_side = 'R' if side == 'L' else 'R'
+                contra_strikes = events_0[contra_side+'_strikes']
+                contra_strikes = contra_strikes[np.where(contra_strikes > strike_fr)]
+                logger.debug(contra_strikes)
+                if contra_strikes.size == 0:
+                    logger.debug('no subsequent contralateral strike')
+                else:
+                    fr0 = contra_strikes[0] + settle_fr
+                    logger.debug('checking contact for contralateral foot')
+                    footmins, footmaxes = _get_foot_points(mkrdata, contra_side, footlen)
+                    logger.debug('contra foot edges x: %.2f to %.2f  y: %.2f to %.2f' %
+                                 (footmins[fr0, 0], footmaxes[fr0, 0],
+                                  footmins[fr0, 1], footmaxes[fr0, 1]))
+                    xmin_ok = footmins[fr0, 0] < mins[0] or footmins[fr0, 0] > maxes[0]
+                    xmax_ok = footmaxes[fr0, 0] < mins[0] or footmaxes[fr0, 0] > maxes[0]
+                    ymin_ok = footmins[fr0, 1] < mins[1] or footmins[fr0, 1] > maxes[1]
+                    ymax_ok = footmaxes[fr0, 1] < mins[1] or footmaxes[fr0, 1] > maxes[1]
+                    contra_ok = (xmin_ok and xmax_ok) or (ymin_ok and ymax_ok)
+                    if contra_ok:
+                        logger.debug('contralateral foot check ok')
+                    ok = ok and contra_ok
+            if ok:
                 valid = side
 
         if valid:

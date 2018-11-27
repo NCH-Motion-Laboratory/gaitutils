@@ -600,7 +600,7 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
             strikes = strikes[dist_ok]
 
         # correct foot strikes with force plate autodetected events
-        if fp_events[context+'_strikes']:
+        if fp_events and fp_events[context+'_strikes']:
             fp_strikes = fp_events[context+'_strikes']
             logger.debug('forceplate strikes: %s' % fp_strikes)
             # find best fp matches for all strikes
@@ -689,5 +689,5 @@ def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
     if plot:
         plt.show()
 
-    return (strikes_all['R'], strikes_all['L'], toeoffs_all['R'],
-            toeoffs_all['L'])
+    return {'R_strikes': strikes_all['R'], 'L_strikes': strikes_all['L'],
+            'R_toeoffs': toeoffs_all['R'], 'L_toeoffs': toeoffs_all['L']}

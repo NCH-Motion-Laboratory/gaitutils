@@ -383,8 +383,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
 
             side = _leading_foot(mkrdata)[fr0]
             if side is None:
-                raise Exception('cannot determine leading foot from marker '
-                                'data')
+                raise GaitDataError('cannot determine leading foot from marker'
+                                    ' data')
             logger.debug('checking contact for leading foot: %s' % side)
             footmins, footmaxes = _get_foot_points(mkrdata, side)
             logger.debug('foot edges x: %.2f to %.2f  y: %.2f to %.2f' %

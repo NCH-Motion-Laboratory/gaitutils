@@ -11,6 +11,7 @@ from __future__ import division
 from builtins import str
 from builtins import zip
 from scipy import signal
+from matplotlib import path
 import numpy as np
 import logging
 
@@ -245,6 +246,14 @@ def _trial_median_velocity(source):
         return np.nan
     vel = np.median(vel_[np.where(vel_)])  # ignore zeros
     return vel * frate / 1000.  # convert to m/s
+
+
+def _points_in_poly(poly, pts):
+    """Point-in-polygon. poly is ordered nx3 array of vertices and P is mx3
+    array of points. Returns mx3 array of booleans. 3rd dim is currently
+    ignored"""
+    p = path.Path(poly[:, :2])
+    return p.contains_points(pts)
 
 
 def detect_forceplate_events(source, mkrdata=None, fp_info=None):

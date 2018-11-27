@@ -164,6 +164,15 @@ def _get_marker_data(c3dfile, markers, ignore_edge_gaps=True,
     return mkrdata
 
 
+def _get_c3d_subject_param(acq, param):
+    try:
+        param = _get_c3d_metadata_field(acq, 'PROCESSING', param)[0]
+    except ValueError:
+        logger.warning('Cannot get subject parameter %s' % param)
+        param = None
+    return param
+
+
 def get_metadata(c3dfile):
     """ Read trial and subject metadata """
     trialname = os.path.basename(os.path.splitext(c3dfile)[0])
@@ -212,11 +221,9 @@ def get_metadata(c3dfile):
     except ValueError:
         logger.warning('Cannot get subject name')
         name = u'Unknown'
-    try:
-        bodymass = _get_c3d_metadata_field(acq, 'PROCESSING', 'Bodymass')[0]
-    except ValueError:
-        logger.warning('Cannot get subject body mass')
-        bodymass = None
+
+    bodymass = _get_c3d_subject_param(acq, 'Bodymass')
+    footlen = _get_c3d_subject_param(acq, 'FootLen')
 
     # sort events (may be in wrong temporal order, at least in c3d files)
     for li in [lstrikes, rstrikes, ltoeoffs, rtoeoffs]:
@@ -227,7 +234,8 @@ def get_metadata(c3dfile):
             'name': name, 'bodymass': bodymass, 'lstrikes': lstrikes,
             'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs,
             'length': length, 'samplesperframe': samplesperframe,
-            'n_forceplates': n_forceplates, 'markers': markers}
+            'n_forceplates': n_forceplates, 'markers': markers,
+            'footlen': footlen}
 
 
 def get_model_data(c3dfile, model):

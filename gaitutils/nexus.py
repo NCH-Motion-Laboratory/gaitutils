@@ -195,24 +195,25 @@ def is_vicon_instance(obj):
     return obj.__class__.__name__ == 'ViconNexus'
 
 
+def _get_nexus_subject_param(vicon, name, param):
+    """Get subject parameter from Nexus."""
+    value = vicon.GetSubjectParam(name, param)
+    # for unknown reasons, above method may return tuple or float
+    # depending on whether script is run from Nexus or outside
+    if type(value) == tuple:
+        value = value[0] if value[1] else None
+    return value
+
+
 # FIXME: most of get_ methods below are intended to be called via read_data
 # so underscore them
-
 def get_metadata(vicon):
     """ Read trial and subject metadata """
     check_nexus()
     logger.debug('reading metadata from Vicon Nexus')
     name = get_subjectnames()
-    bodymass = vicon.GetSubjectParam(name, 'Bodymass')
-    # for unknown reasons, above method may return tuple or float
-    # depending on whether script is run from Nexus or outside
-    if type(bodymass) == tuple:
-        bodymass = vicon.GetSubjectParam(name, 'Bodymass')[0]
-    else:  # hopefully float
-        bodymass = vicon.GetSubjectParam(name, 'Bodymass')
-    if bodymass <= 0:
-        logger.warn('invalid or unspecified body mass: %.2f', bodymass)
-        bodymass = None
+    footlen = _get_nexus_subject_param(vicon, name, 'FootLen')
+    bodymass = _get_nexus_subject_param(vicon, name, 'BodyMass')
     trialname = get_trialname()
     if not trialname:
         raise GaitDataError('No trial loaded in Nexus')
@@ -254,7 +255,8 @@ def get_metadata(vicon):
             'name': name, 'bodymass': bodymass, 'lstrikes': lstrikes,
             'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs,
             'length': length, 'samplesperframe': samplesperframe,
-            'n_forceplates': len(fp_devids), 'markers': markers}
+            'n_forceplates': len(fp_devids), 'markers': markers,
+            'footlen': footlen}
 
 
 def get_emg_data(vicon):

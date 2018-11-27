@@ -165,7 +165,7 @@ def _normalize(V):
         return V / Vn[:, np.newaxis]
 
 
-def _get_foot_points(mkrdata, context):
+def _get_foot_points(mkrdata, context, footlen=None):
     """Estimate points in the xy plane enclosing the foot. Foot is modeled
     as a triangle"""
     # marker data as N x 3 matrices
@@ -180,7 +180,10 @@ def _get_foot_points(mkrdata, context):
     ha_len = np.linalg.norm(haV, axis=1)
     # estimate for end point of foot (just beyond 2nd toe):
     # heel-toe vector * heel-ankle length * constant
-    foot_end = heeP + htVn * np.median(ha_len) * cfg.autoproc.foot_relative_len
+    if footlen is None:
+        foot_end = heeP + htVn * np.median(ha_len) * cfg.autoproc.foot_relative_len
+    else:
+        foot_end = heeP + htVn * footlen
     # projection of HEE-ANK to HEE-TOE line
     ha_htV = htVn * np.sum(haV*htVn, axis=1)[:, np.newaxis]
     # lateral ANK vector (HEE-TOE line to ANK)
@@ -288,6 +291,13 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     logger.debug('gait forward direction seems to be %s' %
                  {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])
 
+    bodymass = info['bodymass']
+    footlen = info['footlen']
+    if footlen is not None:
+        logger.debug('foot length parameter set to %.2f' % footlen)
+    else:
+        logger.debug('foot length parameter not set')
+
     # loop over plates; our internal forceplate index is 0-based
     for plate_ind, fp in enumerate(fpdata):
         logger.debug('analyzing plate %d' % plate_ind)
@@ -320,7 +330,6 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
         fmax = max(forcetot)
         fmaxind = np.where(forcetot == fmax)[0][0]  # first maximum
         logger.debug('max force: %.2f N at %.2f' % (fmax, fmaxind))
-        bodymass = info['bodymass']
 
         if bodymass is None:
             f_threshold = cfg.autoproc.forceplate_contact_threshold * fmax
@@ -347,7 +356,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
         except IndexError:
             logger.debug('cannot detect force rise/fall')
             force_checks_ok = False
-            
+
         # CoP checks
         if force_checks_ok:
             # check shift of center of pressure during roi in fwd dir
@@ -363,7 +372,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                     logger.debug('center of pressure shifts too much '
                                  '(double contact?)')
                     force_checks_ok = False
-                    
+
         if not force_checks_ok:
             valid = None
 
@@ -386,7 +395,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                 raise GaitDataError('cannot determine leading foot from marker'
                                     ' data')
             logger.debug('checking contact for leading foot: %s' % side)
-            footmins, footmaxes = _get_foot_points(mkrdata, side)
+            footmins, footmaxes = _get_foot_points(mkrdata, side, footlen)
             logger.debug('foot edges x: %.2f to %.2f  y: %.2f to %.2f' %
                          (footmins[fr0, 0], footmaxes[fr0, 0],
                           footmins[fr0, 1], footmaxes[fr0, 1]))

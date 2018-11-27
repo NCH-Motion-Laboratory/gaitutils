@@ -334,6 +334,11 @@ def _get_1_forceplate_data(vicon, devid):
     # plate corners -> world coords
     cor = np.stack([nfp.LowerBounds, nfp.UpperBounds])
     cor_w = change_coords(cor, wR, wT)
+    cor_full = np.array([cor_w[0, :],
+                        [cor_w[0, 0], cor_w[1, 1], cor_w[0, 2]],
+                        cor_w[1, :],
+                        [cor_w[1, 0], cor_w[0, 1], cor_w[0, 2]]])
+
     lb = np.min(cor_w, axis=0)
     ub = np.max(cor_w, axis=0)
     # check that CoP stays inside plate boundaries
@@ -346,7 +351,7 @@ def _get_1_forceplate_data(vicon, devid):
         cop_w[:, 1] = np.clip(cop_w[:, 1], lb[1], ub[1])
     return {'F': F, 'M': M, 'Ftot': Ftot, 'CoP': cop_w,
             'wR': wR, 'wT': wT, 'lowerbounds': lb, 'upperbounds': ub,
-            'cor_w': cor_w}
+            'cor_w': cor_w, 'cor_full': cor_full}
 
 
 def get_forceplate_data(vicon):

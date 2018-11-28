@@ -315,5 +315,6 @@ def get_forceplate_data(c3dfile):
         data['lowerbounds'] = lb
         data['wR'] = wR
         data['wT'] = wT
+        data['cor_full'] = cor.T
         fpdata.append(data)
     return fpdata

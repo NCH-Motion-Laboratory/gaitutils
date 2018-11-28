@@ -30,7 +30,7 @@ def automark_single(plot=False):
     fpe = utils.detect_forceplate_events(vicon, mkrdata)
     vel = utils.get_foot_contact_velocity(mkrdata, fpe)
 
-    nexus.automark_events(vicon, vel_thresholds=vel,
+    utils.automark_events(vicon, vel_thresholds=vel,
                           fp_events=fpe, restrict_to_roi=True, plot=plot)
 
 

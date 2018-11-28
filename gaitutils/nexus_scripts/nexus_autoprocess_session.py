@@ -234,12 +234,10 @@ def _do_autoproc(enffiles, update_eclipse=True):
             eclipse.set_eclipse_keys(enffile, fpev['our_fp_info'],
                                      update_existing=True)
 
-
     # all preprocessing done
     # compute velocity thresholds using all trials
     vel_th = {key: (np.median(x) if x.size > 0 else None) for key, x in
               foot_vel.items()}
-
 
     # 2nd pass
     sel_trials = {filepath: trial for filepath, trial in trials.items()
@@ -255,7 +253,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         # automark using global velocity thresholds
         try:
             vicon.ClearAllEvents()
-            nexus.automark_events(vicon, vel_thresholds=vel_th,
+            utils.automark_events(vicon, vel_thresholds=vel_th,
                                   mkrdata=trial['mkrdata'],
                                   fp_events=trial['fpev'], plot=False,
                                   events_range=cfg.autoproc.events_range,

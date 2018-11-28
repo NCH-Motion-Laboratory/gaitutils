@@ -334,6 +334,11 @@ def _get_1_forceplate_data(vicon, devid):
     # plate corners -> world coords
     cor = np.stack([nfp.LowerBounds, nfp.UpperBounds])
     cor_w = change_coords(cor, wR, wT)
+    cor_full = np.array([cor_w[0, :],
+                        [cor_w[0, 0], cor_w[1, 1], cor_w[0, 2]],
+                        cor_w[1, :],
+                        [cor_w[1, 0], cor_w[0, 1], cor_w[0, 2]]])
+
     lb = np.min(cor_w, axis=0)
     ub = np.max(cor_w, axis=0)
     # check that CoP stays inside plate boundaries
@@ -346,7 +351,7 @@ def _get_1_forceplate_data(vicon, devid):
         cop_w[:, 1] = np.clip(cop_w[:, 1], lb[1], ub[1])
     return {'F': F, 'M': M, 'Ftot': Ftot, 'CoP': cop_w,
             'wR': wR, 'wT': wT, 'lowerbounds': lb, 'upperbounds': ub,
-            'cor_w': cor_w}
+            'cor_w': cor_w, 'cor_full': cor_full}
 
 
 def get_forceplate_data(vicon):
@@ -420,274 +425,14 @@ def get_model_data(vicon, model):
     return modeldata
 
 
-def _list_to_str(li):
-    """ Convenience for displaying lists """
-    return ','.join([str(it) for it in li])
-
-
-def automark_events(vicon, mkrdata=None, events_range=None, fp_events=None,
-                    vel_thresholds=None, restrict_to_roi=False,
-                    start_on_forceplate=False, plot=False, mark=True):
-
-    """ Mark events based on velocity thresholding. Absolute thresholds
-    can be specified as arguments. Otherwise, relative thresholds will be
-    calculated based on the data. Optimal results will be obtained when
-    thresholds based on force plate data are available.
-
-    If mkrdata is None, it will be read from Nexus. Otherwise mkrdata must
-    include both foot markers and the body tracking markers (see config)
-
-    vel_thresholds gives velocity thresholds for identifying events. These
-    can be obtained from forceplate data (utils.check_forceplate_contact).
-    Separate thresholds for left and right side.
-
-    fp_events is dict specifying the forceplate detected strikes and toeoffs
-    (see utils.detect_forceplate_events). These will not be marked by
-    velocity thresholding.
-
-    If events_range is specified, the events will be restricted to given
-    coordinate range in the principal gait direction.
-    E.g. events_range=[-1000, 1000]
-
-    If start_on_forceplate is True, the first cycle will start on forceplate
-    (i.e. events earlier than the first foot strike events in fp_events will
-    not be marked for the corresponding side(s)).
-
-    If plot=True, velocity curves and events are plotted.
-
-    If mark=False, no events will actually be marked in Nexus.
-
-    Before automark, run reconstruct, label, gap fill and filter pipelines.
-    Filtering is important to get reasonably smooth derivatives.
-    """
-
-    frate = vicon.GetFrameRate()
-    if not frate:
-        raise GaitDataError('Cannot get framerate from Nexus')
-
-    # TODO: move into config
-    # thresholds (relative to maximum velocity) for detecting strike/toeoff
-    REL_THRESHOLD_FALL = .2
-    REL_THRESHOLD_RISE = .5
-    # marker data is assumed to be in mm
-    # mm/frame = 1000 m/frame = 1000/frate m/s
-    VEL_CONV = 1000/frate
-    # reasonable limit for peak velocity (m/s before multiplier)
-    MAX_PEAK_VELOCITY = 12 * VEL_CONV
-    # reasonable limits for velocity on slope (increasing/decreasing)
-    MAX_SLOPE_VELOCITY = 6 * VEL_CONV
-    MIN_SLOPE_VELOCITY = 0  # not currently in use
-    # minimum swing velocity (rel to max velocity)
-    MIN_SWING_VELOCITY = .5
-    # median prefilter width
-    PREFILTER_MEDIAN_WIDTH = 3
-    # tolerance for matching forceplate and vel. thresholded events
-    FP_EVENT_TOL = 10
-
+def create_events(vicon, context, strikes, toeoffs):
+    """ Create foot strike and toeoff events in Nexus. """
+    logger.debug('marking events in Nexus')
+    side_str = 'Right' if context == 'R' else 'Left'
     subjectname = get_subjectnames()
-
-    if vel_thresholds is None:
-        vel_thresholds = {'L_strike': None, 'L_toeoff': None,
-                          'R_strike': None, 'R_toeoff': None}
-
-    # get foot center positions and velocities
-    if mkrdata is None:
-        mkrdata = _get_marker_data(vicon, cfg.autoproc.right_foot_markers +
-                                   cfg.autoproc.left_foot_markers +
-                                   cfg.autoproc.track_markers)
-    rfootctrv_ = utils.avg_markerdata(mkrdata, cfg.autoproc.right_foot_markers,
-                                      var_type='_V')
-    rfootctrv = np.linalg.norm(rfootctrv_, axis=1)
-    lfootctrv_ = utils.avg_markerdata(mkrdata, cfg.autoproc.left_foot_markers,
-                                      var_type='_V')
-    lfootctrv = np.linalg.norm(lfootctrv_, axis=1)
-    # position data: use ANK marker
-    rfootctrP = mkrdata['RANK']
-    lfootctrP = mkrdata['LANK']
-
-    strikes_all = {}
-    toeoffs_all = {}
-
-    # loop: same operations for left / right foot
-    for context, footctrP, footctrv in zip(('R', 'L'), (rfootctrP, lfootctrP),
-                                           (rfootctrv, lfootctrv)):
-        logger.debug('marking side %s' % context)
-        # foot center position
-        # filter scalar velocity data to suppress noise and spikes
-        footctrv = signal.medfilt(footctrv, PREFILTER_MEDIAN_WIDTH)
-        # get peak (swing) velocity
-        maxv = utils._get_foot_swing_velocity(footctrv, MAX_PEAK_VELOCITY,
-                                              MIN_SWING_VELOCITY)
-
-        # compute thresholds
-        threshold_fall_ = (vel_thresholds[context+'_strike'] or
-                           maxv * REL_THRESHOLD_FALL)
-        threshold_rise_ = (vel_thresholds[context+'_toeoff'] or
-                           maxv * REL_THRESHOLD_RISE)
-        logger.debug('side: %s, default thresholds fall/rise: %.2f/%.2f'
-                     % (context, maxv * REL_THRESHOLD_FALL,
-                        maxv * REL_THRESHOLD_RISE))
-        logger.debug('using thresholds: %.2f/%.2f' % (threshold_fall_,
-                                                      threshold_rise_))
-        # find point where velocity crosses threshold
-        # foot strikes (velocity decreases)
-        cross = falling_zerocross(footctrv - threshold_fall_)
-        # exclude edges of data vector
-        fmax = len(footctrv) - 1
-        cross = cross[np.where(np.logical_and(cross > 0, cross < fmax))]
-        # check velocity on slope
-        cind_min = np.logical_and(footctrv[cross-1] < MAX_SLOPE_VELOCITY,
-                                  footctrv[cross-1] > MIN_SLOPE_VELOCITY)
-        cind_max = np.logical_and(footctrv[cross+1] < MAX_SLOPE_VELOCITY,
-                                  footctrv[cross+1] > MIN_SLOPE_VELOCITY)
-        strikes = cross[np.logical_and(cind_min, cind_max)]
-
-        # check for foot swing (velocity maximum) between consecutive strikes
-        # if no swing, keep deleting the latter event until swing is found
-        bad = []
-        for sind in range(len(strikes)):
-            if sind in bad:
-                continue
-            for sind2 in range(sind+1, len(strikes)):
-                swing_max_vel = footctrv[strikes[sind]:strikes[sind2]].max()
-                # logger.debug('check %d-%d' % (strikes[sind], strikes[sind2]))
-                if swing_max_vel < maxv * MIN_SWING_VELOCITY:
-                    logger.debug('no swing between strikes %d-%d, deleting %d'
-                                 % (strikes[sind], strikes[sind2],
-                                    strikes[sind2]))
-                    bad.append(sind2)
-                else:
-                    break
-        strikes = np.delete(strikes, bad)
-
-        if len(strikes) == 0:
-            raise GaitDataError('No valid foot strikes detected')
-
-        # toe offs (velocity increases)
-        cross = rising_zerocross(footctrv - threshold_rise_)
-        cross = cross[np.where(np.logical_and(cross > 0,
-                                              cross < len(footctrv)))]
-        cind_min = np.logical_and(footctrv[cross-1] < MAX_SLOPE_VELOCITY,
-                                  footctrv[cross-1] > MIN_SLOPE_VELOCITY)
-        cind_max = np.logical_and(footctrv[cross+1] < MAX_SLOPE_VELOCITY,
-                                  footctrv[cross+1] > MIN_SLOPE_VELOCITY)
-        toeoffs = cross[np.logical_and(cind_min, cind_max)]
-
-        if len(toeoffs) == 0:
-            raise GaitDataError('Could not detect any toe-off events')
-
-        # check for multiple toeoffs
-        for s1, s2 in list(zip(strikes, np.roll(strikes, -1)))[:-1]:
-            to_this = np.where(np.logical_and(toeoffs > s1, toeoffs < s2))[0]
-            if len(to_this) > 1:
-                logger.debug('%d toeoffs during cycle, keeping the last one'
-                             % len(to_this))
-                toeoffs = np.delete(toeoffs, to_this[:-1])
-
-        logger.debug('autodetected strike events: %s' % _list_to_str(strikes))
-        logger.debug('autodetected toeoff events: %s' % _list_to_str(toeoffs))
-
-        # select events for which the foot is close enough to center frame
-        if events_range:
-            mP = utils.avg_markerdata(mkrdata, cfg.autoproc.track_markers)
-            fwd_dim = utils.principal_movement_direction(mP)
-            strike_pos = footctrP[strikes, fwd_dim]
-            dist_ok = np.logical_and(strike_pos > events_range[0],
-                                     strike_pos < events_range[1])
-            # exactly zero position at strike should indicate a gap -> exclude
-            # TODO: smarter gap handling
-            dist_ok = np.logical_and(dist_ok, strike_pos != 0)
-            strikes = strikes[dist_ok]
-
-        # correct foot strikes with force plate autodetected events
-        if fp_events[context+'_strikes']:
-            fp_strikes = fp_events[context+'_strikes']
-            logger.debug('forceplate strikes: %s' % fp_strikes)
-            # find best fp matches for all strikes
-            fpc = best_match(strikes, fp_strikes)
-            ok_ind = np.where(np.abs(fpc - strikes) < FP_EVENT_TOL)[0]
-            if ok_ind.size == 0:
-                logger.warning('could not match forceplate strike with an '
-                               'autodetected strike')
-            else:
-                # replace with fp detected strikes
-                strikes[ok_ind] = fpc[ok_ind]
-                logger.debug('fp corrected strikes: %s' % strikes)
-            # toeoffs
-            fp_toeoffs = fp_events[context+'_toeoffs']
-            logger.debug('forceplate toeoffs: %s' % fp_toeoffs)
-            fpc = best_match(toeoffs, fp_toeoffs)
-            ok_ind = np.where(np.abs(fpc - toeoffs) < FP_EVENT_TOL)[0]
-            if ok_ind.size == 0:
-                logger.warning('could not match forceplate toeoff with an '
-                               'autodetected toeoff')
-            else:
-                toeoffs[ok_ind] = fpc[ok_ind]
-                logger.debug('fp corrected toeoffs: %s' % toeoffs)
-            # delete strikes before (actual) 1st forceplate contact
-            if start_on_forceplate and len(fp_strikes) > 0:
-                # use a tolerance here to avoid deleting possible (uncorrected)
-                # strike near the fp
-                not_ok = np.where(strikes < fp_strikes[0] - FP_EVENT_TOL)[0]
-                if not_ok.size > 0:
-                    logger.debug('deleting foot strikes before forceplate: %s'
-                                 % strikes[not_ok])
-                    strikes = np.delete(strikes, not_ok)
-
-        if restrict_to_roi:
-            roi = vicon.GetTrialRegionOfInterest()
-            strikes = np.extract(np.logical_and(roi[0] <= strikes+1,
-                                                strikes+1 <= roi[1]), strikes)
-
-            toeoffs = np.extract(np.logical_and(roi[0] <= toeoffs+1,
-                                                toeoffs+1 <= roi[1]), toeoffs)
-
-        if len(strikes) == 0:
-            raise GaitDataError('No valid foot strikes detected')
-
-        # delete toeoffs that are not between strike events
-        not_ok = np.where(np.logical_or(toeoffs <= min(strikes),
-                                        toeoffs >= max(strikes)))
-        toeoffs = np.delete(toeoffs, not_ok)
-
-        logger.debug('final strike events: %s' % _list_to_str(strikes))
-        logger.debug('final toeoff events: %s' % _list_to_str(toeoffs))
-
-        # create the events in Vicon Nexus
-        # Nexus frame numbers are 1-based so add 1
-        logger.debug('marking events in Nexus')
-        side_str = 'Right' if context == 'R' else 'Left'
-        if mark:
-            for fr in strikes:
-                vicon.CreateAnEvent(subjectname, side_str, 'Foot Strike',
-                                    int(fr+1), 0)
-            for fr in toeoffs:
-                vicon.CreateAnEvent(subjectname, side_str, 'Foot Off',
-                                    int(fr+1), 0)
-        strikes_all[context] = strikes
-        toeoffs_all[context] = toeoffs
-
-        # plot velocities w/ thresholds and marked events
-        if plot:
-            first_call = context == 'R'
-            if first_call:
-                f, (ax1, ax2) = plt.subplots(2, 1)
-            ax = ax1 if first_call else ax2
-            ax.plot(footctrv, 'g', label='foot center velocity ' + context)
-            # algorithm, fixed thresholds
-            ax.plot(strikes, footctrv[strikes], 'kD', markersize=10,
-                    label='strike')
-            ax.plot(toeoffs, footctrv[toeoffs], 'k^', markersize=10,
-                    label='toeoff')
-            ax.legend(numpoints=1, fontsize=10)
-            ax.set_ylim(0, maxv+10)
-            if not first_call:
-                plt.xlabel('Frame')
-            ax.set_ylabel('Velocity (mm/frame)')
-            ax.set_title('Left' if context == 'L' else 'Right')
-
-    if plot:
-        plt.show()
-
-    return (strikes_all['R'], strikes_all['L'], toeoffs_all['R'],
-            toeoffs_all['L'])
+    for fr in strikes:
+        vicon.CreateAnEvent(subjectname, side_str, 'Foot Strike',
+                            int(fr+1), 0)
+    for fr in toeoffs:
+        vicon.CreateAnEvent(subjectname, side_str, 'Foot Off',
+                            int(fr+1), 0)

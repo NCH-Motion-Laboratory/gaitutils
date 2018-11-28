@@ -303,6 +303,12 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     else:
         logger.debug('foot length parameter not set')
 
+    from .nexus import automark_events, is_vicon_instance
+    if is_vicon_instance(source):
+        events_0 = automark_events(source, mkrdata=mkrdata, mark=False)
+    else:
+        events_0 = None
+
     # loop over plates; our internal forceplate index is 0-based
     for plate_ind, fp in enumerate(fpdata):
         logger.debug('analyzing plate %d' % plate_ind)

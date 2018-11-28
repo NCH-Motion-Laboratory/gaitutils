@@ -131,6 +131,10 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                     else:
                         raise ValueError('Invalid legend type')
 
+                    # plotly cannot directly handle unicode objects
+                    if isinstance(tracegroup, unicode):
+                        tracegroup = tracegroup.encode('utf-8')
+
                     # only show the legend for the first trace in the
                     # tracegroup, so we do not repeat legends
                     show_legend = tracegroup not in tracegroups

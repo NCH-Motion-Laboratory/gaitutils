@@ -119,7 +119,8 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
     def __init__(self, min_sessions=1, max_sessions=3):
         super(self.__class__, self).__init__()
         # load user interface made with designer
-        uifile = resource_filename('gaitutils', 'nexus_scripts/web_report_sessions.ui')
+        uifile = resource_filename('gaitutils',
+                                   'nexus_scripts/web_report_sessions.ui')
         uic.loadUi(uifile, self)
         self.btnBrowseSession.clicked.connect(self.add_session)
         self.btnAddNexusSession.clicked.connect(lambda: self.
@@ -447,7 +448,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         XStream.stdout().messageWritten.connect(self._log_message)
         XStream.stderr().messageWritten.connect(self._log_message)
-
 
         logger.debug('interpreter: %s' % sys.executable)
         self.threadpool = QThreadPool()

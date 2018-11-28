@@ -200,7 +200,8 @@ def _get_foot_points(mkrdata, context, footlen=None):
         logger.debug('estimated foot length: %.1f mm width %.1f mm' %
                      (np.nanmedian(np.linalg.norm(heel_edge-foot_end, axis=1)),
                       np.nanmedian(np.linalg.norm(lat_edge-med_edge, axis=1))))
-    return heel_edge, lat_edge, med_edge, foot_end
+    return {'heel': heel_edge, 'lateral': lat_edge, 'medial': med_edge,
+            'toe': foot_end}
 
 
 def _leading_foot(mkrdata):
@@ -273,6 +274,26 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     Returns dict with keys R_strikes, L_strikes, R_toeoffs, L_toeoffs.
     Dict values are lists of frames where valid forceplate contact occurs.
     """
+    def _foot_plate_check(fpdata, mkrdata, fr0, side, footlen):
+        """Helper for foot-plate check. Returns 0, 1, 2 for:
+            completely outside plate, partially outside plate, inside plate"""
+        allpts = _get_foot_points(mkrdata, side, footlen)
+        poly = fpdata['cor_full']
+        pts_ok = list()
+        logger.debug('plate: %s' % poly)
+        for label, pts in allpts.items():
+            pt = pts[fr0, :]
+            pt_ok = _point_in_poly(poly, pt)
+            logger.debug('%s point %s %son plate' %
+                         (label, pt, '' if pt_ok else 'not '))
+            pts_ok.append(pt_ok)
+        if all(pts_ok):
+            return 2
+        elif any(pts_ok):
+            return 1
+        else:
+            return 0
+
     # get subject info
     from . import read_data
     logger.debug('detect forceplate events from %s' % source)
@@ -303,6 +324,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     else:
         logger.debug('foot length parameter not set')
 
+    # FIXME: read from c3d also
     from .nexus import automark_events, is_vicon_instance
     if is_vicon_instance(source):
         events_0 = automark_events(source, mkrdata=mkrdata, mark=False)
@@ -375,7 +397,6 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
         # foot marker (or point) checks
         if force_checks_ok and detect_foot:
             logger.debug('using autodetection of foot contact')
-            valid = None
             # allows foot to settle for 50 ms after strike
             settle_fr = int(50/1000 * info['framerate'])
             fr0 = strike_fr + settle_fr
@@ -384,19 +405,36 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                 raise GaitDataError('cannot determine leading foot from marker'
                                     ' data')
             logger.debug('checking contact for leading foot: %s' % side)
-            allpts = _get_foot_points(mkrdata, side, footlen)
-            poly = fp['cor_full']
-            pts_ok = True
-            pts_labels = ['heel', 'lateral', 'medial', 'toe']
-            for label, pts in zip(pts_labels, allpts):
-                pt = pts[fr0, :]
-                pt_ok = _point_in_poly(poly, pt)
-                logger.debug('%s point %s' %
-                             (label, 'ok' if pt_ok else 'not ok'))
-                pts_ok &= pt_ok
-            if pts_ok:
-                logger.debug('on-plate check ok for side %s' % side)
-                valid = side
+            ok = _foot_plate_check(fp, mkrdata, fr0, side, footlen) == 2
+            # check that contralateral foot is not on plate (needs events)
+            if ok and events_0 is not None:
+                contra_side = 'R' if side == 'L' else 'L'
+                contra_strikes = events_0[contra_side+'_strikes']
+                contra_strikes_next = contra_strikes[np.where(contra_strikes >
+                                                              strike_fr)]
+                if contra_strikes_next.size == 0:
+                    logger.debug('no following contralateral strike')
+                else:
+                    fr0 = contra_strikes_next[0] + settle_fr
+                    logger.debug('checking next contact for contralateral '
+                                 'foot (at frame %d)' % fr0)
+                    contra_next_ok = _foot_plate_check(fp, mkrdata, fr0,
+                                                       contra_side,
+                                                       footlen) == 0
+                    ok &= contra_next_ok
+                contra_strikes_prev = contra_strikes[np.where(contra_strikes <
+                                                              strike_fr)]
+                if contra_strikes_prev.size == 0:
+                    logger.debug('no previous contralateral strike')
+                else:
+                    fr0 = contra_strikes_prev[-1] + settle_fr
+                    logger.debug('checking previous contact for contralateral '
+                                 'foot (at frame %d)' % fr0)
+                    contra_prev_ok = _foot_plate_check(fp, mkrdata, fr0,
+                                                       contra_side,
+                                                       footlen) == 0
+                    ok &= contra_prev_ok
+            valid = side if ok else None
 
         if valid:
             logger.debug('plate %d: valid foot strike on %s at frame %d'

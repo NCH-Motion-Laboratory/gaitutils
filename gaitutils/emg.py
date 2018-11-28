@@ -16,8 +16,6 @@ import logging
 
 from . import read_data
 from .config import cfg
-from .nexus import _list_to_str
-
 
 logger = logging.getLogger(__name__)
 

@@ -282,12 +282,11 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
         allpts = _get_foot_points(mkrdata, side, footlen)
         poly = fpdata['cor_full']
         pts_ok = list()
-        logger.debug('plate: %s' % poly)
         for label, pts in allpts.items():
             pt = pts[fr0, :]
             pt_ok = _point_in_poly(poly, pt)
-            logger.debug('%s point %s %son plate' %
-                         (label, pt, '' if pt_ok else 'not '))
+            logger.debug('%s point %son plate' %
+                         (label, '' if pt_ok else 'not '))
             pts_ok.append(pt_ok)
         if all(pts_ok):
             return 2
@@ -486,10 +485,6 @@ def automark_events(source, mkrdata=None, events_range=None, fp_events=None,
     Filtering is important to get reasonably smooth derivatives.
     """
 
-    def _list_to_str(li):
-        """ Convenience for displaying lists """
-        return ','.join([str(it) for it in li])
-
     from .read_data import get_metadata, get_marker_data
     info = get_metadata(source)
     frate = info['framerate']
@@ -613,8 +608,8 @@ def automark_events(source, mkrdata=None, events_range=None, fp_events=None,
                              % len(to_this))
                 toeoffs = np.delete(toeoffs, to_this[:-1])
 
-        logger.debug('autodetected strike events: %s' % _list_to_str(strikes))
-        logger.debug('autodetected toeoff events: %s' % _list_to_str(toeoffs))
+        logger.debug('autodetected strike events: %s' % strikes)
+        logger.debug('autodetected toeoff events: %s' % toeoffs)
 
         # select events for which the foot is close enough to center frame
         if events_range:
@@ -682,8 +677,8 @@ def automark_events(source, mkrdata=None, events_range=None, fp_events=None,
                                         toeoffs >= max(strikes)))
         toeoffs = np.delete(toeoffs, not_ok)
 
-        logger.debug('final strike events: %s' % _list_to_str(strikes))
-        logger.debug('final toeoff events: %s' % _list_to_str(toeoffs))
+        logger.debug('final strike events: %s' % strikes)
+        logger.debug('final toeoff events: %s' % toeoffs)
 
         if mark:
             if not nexus.is_vicon_instance(source):

@@ -13,12 +13,14 @@ from nose.tools import (assert_set_equal, assert_in, assert_equal,
 from numpy.testing import (assert_allclose, assert_array_equal,
                            assert_array_almost_equal)
 
+import gaitutils
 from gaitutils import nexus, utils, models, read_data
 from gaitutils.config import cfg
 from gaitutils import Trial
 from gaitutils.utils import detect_forceplate_events
 from utils import (run_tests_if_main, _nexus_open_trial, _trial_path,
                    start_nexus)
+
 
 cfg.load_default()  # so that user settings will not affect testing
 start_nexus()
@@ -68,6 +70,16 @@ def test_nexus_reader():
     assert_equal(cyc.context, 'R')
     assert_equal(cyc.on_forceplate, True)
     assert_equal(cyc.toeoff, 1186)
+
+
+def test_nexus_plot():
+    """Test basic plot from Nexus"""
+    trialname = '2015_10_22_girl6v_IN03'
+    _nexus_open_trial('girl6v', trialname)
+    pl = gaitutils.Plotter(interactive=False)
+    pl.open_nexus_trial()
+    pl.layout = [['HipAnglesX']]
+    pl.plot_trial(model_cycles='all')
 
 
 def test_fp_detection():

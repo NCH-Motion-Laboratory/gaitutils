@@ -17,6 +17,9 @@ import logging
 from gaitutils import nexus, cfg
 
 
+testdata_root = r'Z:\gaitutils_testdata'
+
+
 def start_nexus():
     if not nexus.pid():
         # try to start Nexus for tests...
@@ -29,16 +32,20 @@ def start_nexus():
             raise Exception('Please start Vicon Nexus first')
 
 
-def _subj_path(subject, trial):
-    """Return path to subject trial file"""
-    return op.join('testdata', 'test_subjects', subject, 'test_session',
-                   trial)
+def _file_path(filename):
+    """Path for files directly under testdata dir"""
+    return op.abspath(op.join(testdata_root, filename))
 
 
 def _trial_path(subject, trial):
-    """Return path to subject trial file"""
-    return op.abspath(op.join('testdata', 'test_subjects', subject,
+    """Return path to subject trial file (in session dir)"""
+    return op.abspath(op.join(testdata_root, 'test_subjects', subject,
                               'test_session', trial))
+
+
+def _c3d_path(filename):
+    """Return path to c3d test file"""
+    return op.abspath(op.join(testdata_root, 'test_c3ds', filename))
 
 
 def _nexus_open_trial(subject, trial):

@@ -1,3 +1,4 @@
+# used to install dependencies only (if using package via setup.py develop)
 name: gaitutils
 channels:
   - defaults
@@ -25,7 +26,6 @@ dependencies:
     - dash-core-components
     - dash-html-components
     - dash-renderer
-    - gaitutils
     - plotly
     - pytest
 prefix: C:\Anaconda2

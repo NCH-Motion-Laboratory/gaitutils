@@ -302,7 +302,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     fpdata = read_data.get_forceplate_data(source)
     results = dict(R_strikes=[], R_toeoffs=[], L_strikes=[], L_toeoffs=[],
                    valid=set(), R_strikes_plate=[], L_strikes_plate=[],
-                   our_fp_info={})
+                   our_fp_info={}, coded='')
 
     # get marker data and find "forward" direction (by max variance)
     if mkrdata is None:
@@ -441,9 +441,11 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
             results[valid+'_toeoffs'].append(toeoff_fr)
             results[valid+'_strikes_plate'].append(plate_ind)
             results['our_fp_info'][plate] = 'Right' if valid == 'R' else 'Left'
+            results['coded'] += valid
         else:
             logger.debug('plate %d: no valid foot strike' % plate_ind)
             results['our_fp_info'][plate] = 'Invalid'
+            results['coded'] += '0'
 
     logger.debug(results)
     return results

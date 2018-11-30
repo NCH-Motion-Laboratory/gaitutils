@@ -65,18 +65,15 @@ def avg_markerdata(mkrdata, markers, var_type='_P'):
 
 def _pig_markerset(fullbody=True, sacr=True):
     """ PiG marker set as dict (empty values) """
-    _pig = ['LASI', 'RASI', 'SACR', 'LTHI', 'LKNE', 'LTIB', 'LANK', 'LHEE',
+    _pig = ['LASI', 'RASI', 'LTHI', 'LKNE', 'LTIB', 'LANK', 'LHEE',
             'LTOE', 'RTHI', 'RKNE', 'RTIB', 'RANK', 'RHEE', 'RTOE']
     if fullbody:
         _pig += ['LFHD', 'RFHD', 'LBHD', 'RBHD', 'C7', 'T10', 'CLAV', 'STRN',
                  'RBAK', 'LSHO', 'LELB', 'LWRA', 'LWRB', 'LFIN', 'RSHO',
                  'RELB', 'RWRA', 'RWRB', 'RFIN']
-    _pig_dict = {mkr: None for mkr in _pig}
-    if not sacr:
-        _pig_dict.pop('SACR')
-        _pig_dict['RPSI'] = None
-        _pig_dict['LPSI'] = None
-    return _pig_dict
+    # add pelvis posterior markers; SACR or RPSI/LPSI
+    _pig.extend(['SACR'] if sacr else ['RPSI', 'LPSI'])
+    return {mkr: None for mkr in _pig}
 
 
 def is_plugingait_set(mkrdata):

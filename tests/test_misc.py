@@ -15,7 +15,8 @@ import logging
 from gaitutils.config import cfg
 from gaitutils.numutils import segment_angles, best_match
 from gaitutils import eclipse
-from gaitutils.utils import (is_plugingait_set, check_plugingait_set)
+from gaitutils.utils import (is_plugingait_set, check_plugingait_set,
+                             _point_in_poly, _pig_markerset)
 from utils import run_tests_if_main, _file_path
 
 
@@ -27,30 +28,24 @@ trial_enf = _file_path('anon.Trial.enf')
 trial_enf_write = _file_path('writetest.enf')
 
 
-def pig_mkrdata():
-    """ Fullbody PiG marker data (empty values) """
-    _pig = ['LFHD', 'RFHD', 'LBHD', 'RBHD', 'C7', 'T10', 'CLAV', 'STRN',
-            'RBAK', 'LSHO', 'LELB', 'LWRA', 'LWRB', 'LFIN', 'RSHO', 'RELB',
-            'RWRA', 'RWRB', 'RFIN', 'LASI', 'RASI', 'SACR', 'LTHI', 'LKNE',
-            'LTIB', 'LANK', 'LHEE', 'LTOE', 'RTHI', 'RKNE', 'RTIB', 'RANK',
-            'RHEE', 'RTOE']
-    return {mkr: None for mkr in _pig}
-
-
 def test_is_plugingait_set():
-    pig = pig_mkrdata()
+    pig = _pig_markerset()
     assert is_plugingait_set(pig)
-    pig.pop('SACR')  # ok
-    assert not is_plugingait_set(pig)
-    pig['RPSI'] = None
-    pig['LPSI'] = None
+    pig = _pig_markerset(fullbody=False, sacr=True)
     assert is_plugingait_set(pig)
-    pig.pop('RHEE')  # not ok
-    assert not is_plugingait_set(pig)
+    pig = _pig_markerset(fullbody=True, sacr=False)
+    assert is_plugingait_set(pig)
+    pig = _pig_markerset(fullbody=False, sacr=False)
+    assert is_plugingait_set(pig)
+    pig = _pig_markerset(fullbody=False, sacr=False)
+    # delete 1 marker at a time from lowerbody set
+    for mkr in pig:
+        pig_ = {k: v for k, v in pig.items() if k != mkr}
+        assert not is_plugingait_set(pig_)
 
 
 def test_check_plugingait_set():
-    mkrdata = pig_mkrdata()
+    mkrdata = _pig_markerset()
     # fake some marker data
     # pelvis and feet aligned
     mkrdata['SACR'] = np.atleast_2d([1, 0, 5])
@@ -65,6 +60,14 @@ def test_check_plugingait_set():
     mkrdata['LHEE'] = np.atleast_2d([0, 1.5, 0])
     mkrdata['LTOE'] = np.atleast_2d([0, 1, 0])
     assert not check_plugingait_set(mkrdata)
+
+
+def test_point_in_poly():
+    poly = np.array([[1, 1, 0], [1, 0, 0], [0, 0, 0], [0, 1, 0]])
+    pt = np.array([1.0001, 1.0001, 0])
+    assert not _point_in_poly(poly, pt)
+    pt = np.array([.5, .5, 0])
+    assert _point_in_poly(poly, pt)
 
 
 def test_segment_angles():

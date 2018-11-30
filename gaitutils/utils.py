@@ -63,18 +63,30 @@ def avg_markerdata(mkrdata, markers, var_type='_P'):
         return mP / n_ok
 
 
+def _pig_markerset(fullbody=True, sacr=True):
+    """ PiG marker set as dict (empty values) """
+    _pig = ['LASI', 'RASI', 'SACR', 'LTHI', 'LKNE', 'LTIB', 'LANK', 'LHEE',
+            'LTOE', 'RTHI', 'RKNE', 'RTIB', 'RANK', 'RHEE', 'RTOE']
+    if fullbody:
+        _pig += ['LFHD', 'RFHD', 'LBHD', 'RBHD', 'C7', 'T10', 'CLAV', 'STRN',
+                 'RBAK', 'LSHO', 'LELB', 'LWRA', 'LWRB', 'LFIN', 'RSHO',
+                 'RELB', 'RWRA', 'RWRB', 'RFIN']
+    _pig_dict = {mkr: None for mkr in _pig}
+    if not sacr:
+        _pig_dict.pop('SACR')
+        _pig_dict['RPSI'] = None
+        _pig_dict['LPSI'] = None
+    return _pig_dict
+
+
 def is_plugingait_set(mkrdata):
     """ Check whether marker data set corresponds to Plug-in Gait (full body or
-    lower body only) """
+    lower body only). Extra markers are accepted. """
     mkrs = set(mkrdata.keys())
     # required markers
-    mkrs_pig = set(['RASI', 'LASI', 'LTHI', 'LKNE', 'LTIB', 'LANK', 'LHEE',
-                    'LTOE', 'RTHI', 'RKNE', 'RTIB', 'RANK', 'RHEE', 'RTOE'])
-    # in addition, accept either RPSI/LPSI or SACR
-    pst_pelvis_markers = set(['RPSI', 'LPSI'])
-    sacr = set(['SACR'])
-    return (mkrs_pig.issubset(mkrs) and (pst_pelvis_markers.issubset(mkrs) or
-            sacr.issubset(mkrs)))
+    lb_mkrs_sacr = set(_pig_markerset(fullbody=False).keys())
+    lb_mkrs_psi = set(_pig_markerset(fullbody=False, sacr=False).keys())
+    return lb_mkrs_psi.issubset(mkrs) or lb_mkrs_sacr.issubset(mkrs)
 
 
 def check_plugingait_set(mkrdata):

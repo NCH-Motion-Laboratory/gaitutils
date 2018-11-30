@@ -7,21 +7,14 @@ Data readers & processing utils, Nexus specific
 """
 
 from __future__ import print_function, division
-from builtins import zip
-from builtins import str
-from builtins import range
 import sys
 import numpy as np
-from scipy import signal
 import os.path as op
 import psutil
 import glob
-import matplotlib.pyplot as plt
 import logging
 
-from .numutils import (rising_zerocross, best_match, falling_zerocross,
-                       change_coords)
-from . import utils
+from .numutils import change_coords
 from .envutils import GaitDataError
 
 from .config import cfg

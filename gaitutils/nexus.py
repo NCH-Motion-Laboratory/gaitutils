@@ -364,10 +364,7 @@ def get_forceplate_data(vicon):
         logger.debug('no forceplates detected')
         return None
     logger.debug('detected %d forceplate(s)' % len(devids))
-    data = []
-    for devid in devids:
-        data.append(_get_1_forceplate_data(vicon, devid))
-    return data
+    return [_get_1_forceplate_data(vicon, devid) for devid in devids]
 
 
 def _get_marker_data(vicon, markers, ignore_edge_gaps=True,

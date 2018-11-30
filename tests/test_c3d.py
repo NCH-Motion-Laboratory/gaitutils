@@ -14,7 +14,7 @@ import logging
 from gaitutils.config import cfg
 from gaitutils import Trial, c3d, read_data, utils
 from gaitutils.utils import detect_forceplate_events
-from utils import run_tests_if_main, _trial_path, _c3d_path
+from utils import run_tests_if_main, _trial_path, _c3d_path, _file_path
 
 
 # load default cfg so that user settings will not affect testing
@@ -72,7 +72,8 @@ def test_c3d_marker_data():
             assert mkrdata[mkr].shape == (442, 3)
     # LHEE gaps from 360 to 388
     assert_equal(mkrdata['LHEE_gaps'], np.arange(360, 389))
-    lhee_data = np.load('lhee_data.npy')
+    lhee_file = _file_path('lhee_data.npy')
+    lhee_data = np.load(lhee_file)
     # allow some deviation from saved reference data (was read using btk)
     assert_allclose(mkrdata['LHEE'], lhee_data, rtol=1e-4)
 

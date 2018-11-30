@@ -941,7 +941,7 @@
          <item row="1" column="0">
           <widget class="QLabel" name="label_9">
            <property name="text">
-            <string>Tags for the trials of interest</string>
+            <string>Tags for trials of interest</string>
            </property>
           </widget>
          </item>
@@ -958,7 +958,7 @@
            </property>
           </spacer>
          </item>
-         <item row="2" column="0">
+         <item row="3" column="0">
           <widget class="QLabel" name="label_18">
            <property name="text">
             <string/>
@@ -967,6 +967,16 @@
          </item>
          <item row="1" column="1">
           <widget class="QLineEdit" name="cfg_tags"/>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_8">
+           <property name="text">
+            <string>Taqs for representative trials</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="cfg_repr_tags"/>
          </item>
         </layout>
        </item>

@@ -33,11 +33,25 @@ def get_metadata(source):
     framerate: capture framerate
     analograte: sampling rate for analog devices
     name: subject name
-    bodymass: mass of subject
+    subj_params: subject parameters (bodymass etc.)
     lstrikes, rstrikes: foot strike events l/r
     ltoeoffs, rtoeoffs: toeoffs l/r
     """
-    return _reader_module(source).get_metadata(source)
+    meta = _reader_module(source).get_metadata(source)
+    # Nexus uses slightly different metadata field names as c3d,
+    # so translate here into c3d naming convention
+    # XXX: c3d angle params are apparently in radians while Nexus uses degrees
+    # - NOT translated here!
+    if nexus.is_vicon_instance(source):
+        pars = meta['subj_params']
+        for par in pars.keys():
+            if 'Right' in par:
+                new_par = par.replace('Right', 'R')
+                pars[new_par] = pars.pop(par)
+            if 'Left' in par:
+                new_par = par.replace('Left', 'L')
+                pars[new_par] = pars.pop(par)
+    return meta
 
 
 def get_forceplate_data(source):

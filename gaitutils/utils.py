@@ -327,12 +327,19 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     logger.debug('gait forward direction seems to be %s' %
                  {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])
 
-    bodymass = info['bodymass']
-    footlen = info['footlen']
+    footlen = info['subj_params']['FootLen']
+    rfootlen = info['subj_params']['RightFootLen']
+    lfootlen = info['subj_params']['LeftFootLen']
     if footlen is not None:
-        logger.debug('foot length parameter set to %.2f' % footlen)
+        logger.debug('(obsolete) single foot length parameter set to %.2f'
+                     % footlen)
+        rfootlen = lfootlen = footlen
+    elif rfootlen is not None and lfootlen is not None:
+        logger.debug('foot length parameters set to r=%.2f, l=%.2f' %
+                     (rfootlen, lfootlen))
     else:
         logger.debug('foot length parameter not set')
+    bodymass = info['subj_params']['BodyMass']
 
     logger.debug('acquiring gait events')
     events_0 = automark_events(source, mkrdata=mkrdata, mark=False)
@@ -410,6 +417,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
             if side is None:
                 raise GaitDataError('cannot determine leading foot from marker'
                                     ' data')
+            footlen = rfootlen if side == 'R' else lfootlen
             logger.debug('checking contact for leading foot: %s' % side)
             ok = _foot_plate_check(fp, mkrdata, fr0, side, footlen) == 2
             # check that contralateral foot is not on plate (needs events)

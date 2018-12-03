@@ -9,6 +9,7 @@ c3d reader functions
 
 from __future__ import print_function, division
 from builtins import zip
+from collections import defaultdict
 import logging
 import numpy as np
 import os
@@ -31,6 +32,13 @@ def is_c3dfile(obj):
         return os.path.isfile(obj)
     except TypeError:
         return False
+
+
+def _get_c3d_metadata_subfields(acq, field):
+    """ Return names of metadata subfields for a given field"""
+    meta = acq.GetMetaData()
+    meta_s = meta.GetChild(field)
+    return [f.GetLabel() for f in btk.Iterate(meta_s)]
 
 
 def _get_c3d_metadata_field(acq, field, subfield):
@@ -222,8 +230,10 @@ def get_metadata(c3dfile):
         logger.warning('Cannot get subject name')
         name = u'Unknown'
 
-    bodymass = _get_c3d_subject_param(acq, 'Bodymass')
-    footlen = _get_c3d_subject_param(acq, 'FootLen')
+    par_names = _get_c3d_metadata_subfields(acq, 'PROCESSING')
+    subj_params = defaultdict(lambda: None)
+    subj_params.update({par: _get_c3d_subject_param(acq, par) for
+                        par in par_names})
 
     # sort events (may be in wrong temporal order, at least in c3d files)
     for li in [lstrikes, rstrikes, ltoeoffs, rtoeoffs]:
@@ -231,11 +241,10 @@ def get_metadata(c3dfile):
 
     return {'trialname': trialname, 'sessionpath': sessionpath,
             'offset': offset, 'framerate': framerate, 'analograte': analograte,
-            'name': name, 'bodymass': bodymass, 'lstrikes': lstrikes,
+            'name': name, 'subj_params': subj_params, 'lstrikes': lstrikes,
             'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs,
             'length': length, 'samplesperframe': samplesperframe,
-            'n_forceplates': n_forceplates, 'markers': markers,
-            'footlen': footlen}
+            'n_forceplates': n_forceplates, 'markers': markers}
 
 
 def get_model_data(c3dfile, model):

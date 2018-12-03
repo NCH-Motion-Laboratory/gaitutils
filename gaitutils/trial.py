@@ -140,8 +140,8 @@ class Trial(object):
     def __init__(self, source):
         logger.debug('new trial instance from %s' % source)
         self.source = source
-        # read metadata into instance attributes
         meta = read_data.get_metadata(source)
+        # insert metadata dict directly as instance attributes
         self.__dict__.update(meta)
 
         # sort events and make them 0-based so that indexing matches frame data
@@ -153,7 +153,7 @@ class Trial(object):
         self.sessiondir = op.split(self.sessionpath)[-1]
 
         enfpath = op.join(self.sessionpath, '%s.Trial.enf' % self.trialname)
-        
+
         # look for alternative (older?) enf name
         if not op.isfile(enfpath):
             trialn_re = re.search('\.*(\d*)$', self.trialname)

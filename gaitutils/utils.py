@@ -328,8 +328,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                  {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])
 
     footlen = info['subj_params']['FootLen']
-    rfootlen = info['subj_params']['RightFootLen']
-    lfootlen = info['subj_params']['LeftFootLen']
+    rfootlen = info['subj_params']['RFootLen']
+    lfootlen = info['subj_params']['LFootLen']
     if footlen is not None:
         logger.debug('(obsolete) single foot length parameter set to %.2f'
                      % footlen)

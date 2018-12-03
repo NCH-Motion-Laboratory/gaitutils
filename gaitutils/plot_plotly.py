@@ -311,7 +311,7 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
                                                                   name='EMG norm.',
                                                                   legendgroup='EMG norm.',
                                                                   showlegend=emg_normaldata_legend,
-                                                                  fillcolor='rgba(255, 0, 0, 0.3)',
+                                                                  fillcolor='rgba(255, 0, 0, 0.1)',
                                                                   line=dict(width=0))  # no border lines                                                               
                                     fig.append_trace(ntrace, i+1, j+1)
                                     emg_normaldata_legend = False  # add to legend only once

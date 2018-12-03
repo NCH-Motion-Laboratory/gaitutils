@@ -3,16 +3,24 @@
 
 c3d unit tests.
 
+
+MISSING:
+    event detection
+    model data reads
+    EMG data reads
+    forceplate data direct reads
+
+
 @author: jussi (jnu@iki.fi)
 """
 
-
+import pickle
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 import logging
 
 from gaitutils.config import cfg
-from gaitutils import Trial, c3d, read_data, utils
+from gaitutils import Trial, read_data, utils
 from gaitutils.utils import detect_forceplate_events
 from utils import run_tests_if_main, _trial_path, _c3d_path, _file_path
 
@@ -65,7 +73,7 @@ def test_c3d_marker_data():
     mkrset = utils._pig_markerset().keys()
     mkrdata = read_data.get_marker_data(c3dfile, mkrset)
     assert utils.is_plugingait_set(mkrdata)
-    assert len(mkrdata) == 5 * len(mkrset)  # P, P, V, A, gaps for all
+    assert len(mkrdata) == 5 * len(mkrset)  # vars = P*2, V, A & gaps
     # check array dimensions for all markers (gap data has different dims)
     for mkr in mkrdata:
         if '_gaps' not in mkr:
@@ -76,6 +84,25 @@ def test_c3d_marker_data():
     lhee_data = np.load(lhee_file)
     # allow some deviation from saved reference data (was read using btk)
     assert_allclose(mkrdata['LHEE'], lhee_data, rtol=1e-4)
+
+
+def test_c3d_analysis_data():
+    """Test analysis var reads from c3d"""
+    c3dfile = _c3d_path('double_contact.c3d')
+    an_ = read_data.get_analysis(c3dfile, 'c3dtest')
+    assert 'c3dtest' in an_
+    an = an_['c3dtest']
+    an_vars = ['Stride Time', 'Opposite Foot Off', 'Double Support',
+               'Step Time', 'Single Support', 'Step Length', 'Foot Off',
+               'Walking Speed', 'Stride Length', 'Opposite Foot Contact',
+               'Cadence']
+    assert all([var in an for var in an_vars])
+    assert all(['Left' in an[var] for var in an_vars])
+    assert all(['Right' in an[var] for var in an_vars])
+    an_file = _file_path('analysis_testdata.p')
+    an_g = pickle.load(open(an_file, 'rb'))
+    for context in ['Left', 'Right']:
+        assert_allclose(an_g['unknown'][var][context], an[var][context])
 
 
 def test_c3d_fp_detection():

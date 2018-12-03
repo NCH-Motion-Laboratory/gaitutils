@@ -77,6 +77,12 @@ def get_emg_data(source):
     return _reader_module(source).get_emg_data(source)
 
 
+def get_analysis(source, condition='unknown'):
+    if nexus.is_vicon_instance(source):
+        raise Exception('Analysis var reads from Nexus not supported yet')
+    return _reader_module(source).get_analysis(source, condition)
+
+
 def get_accelerometer_data(source):
     """ Get accelerometer data. Returns dict with keys """
     return _reader_module(source).get_accelerometer_data(source)

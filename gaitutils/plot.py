@@ -809,24 +809,29 @@ class Plotter(object):
                                                     linewidth=2))
                     ncol = (1 if len(self.legendnames) + len(leg_ctxt_titles)
                             < 5 else 2)
-                    ax.legend(self.modelartists + leg_ctxt_artists,
-                              self.legendnames + leg_ctxt_titles,
-                              loc='upper left', ncol=ncol,
-                              prop={'size': cfg.plot.legend_fontsize})
+                    self.fig.legends = []
+                    self.fig.legend(self.modelartists + leg_ctxt_artists,
+                                    self.legendnames + leg_ctxt_titles,
+                                    loc='lower left', ncol=ncol,
+                                    prop={'size': cfg.plot.legend_fontsize},
+                                    bbox_to_anchor=[.02, .02])
 
                 else:  # emg_legend
                     self.emgartists.append(Line2D((0, 1), (0, 0),
                                            linewidth=2,
                                            color=emg_tracecolor))
                     ncol = 1 if len(self.legendnames) < 5 else 2
-                    ax.legend(self.emgartists, self.legendnames,
-                              loc='upper left', ncol=ncol,
-                              prop={'size': cfg.plot.legend_fontsize})
+                    self.fig.legends = []
+                    self.fig.legend(self.emgartists, self.legendnames,
+                                    loc='lower left', ncol=ncol,
+                                    prop={'size': cfg.plot.legend_fontsize},
+                                    bbox_to_anchor=[.02, .02])
 
             plotaxes.append(ax)
 
         self.set_title(maintitle)
-        self.fig.subplots_adjust(left=0, bottom=0, right=1, top=1)
+        #self.fig.tight_layout()
+        #self.fig.subplots_adjust(left=0, bottom=0, right=1, top=1)
 
         if show and self.interactive:
             self.show()

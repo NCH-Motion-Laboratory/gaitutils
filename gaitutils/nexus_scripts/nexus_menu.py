@@ -139,7 +139,7 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
             try:
                 dirs = [nexus.get_sessionpath()]
             except GaitDataError as e:
-                qt_message_dialog(str(e))
+                qt_message_dialog(repr(e))
                 return
         else:
             dirs = qt_dir_chooser()
@@ -526,12 +526,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         try:
             session = nexus.get_sessionpath()
         except GaitDataError as e:
-            qt_message_dialog(str(e))
+            qt_message_dialog(repr(e))
             return
         try:
             vidfiles = self._collect_vidfiles(session)
         except GaitDataError as e:
-            qt_message_dialog(str(e))
+            qt_message_dialog(repr(e))
             return
         if not vidfiles:
             qt_message_dialog('Cannot find any video files for session %s')
@@ -707,7 +707,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         try:
             subj = nexus.get_subjectnames()
         except GaitDataError as e:
-            qt_message_dialog(str(e))
+            qt_message_dialog(repr(e))
             return
 
         # ask for patient info, update saved info accordingly
@@ -738,7 +738,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _exception(self, e):
         logger.debug('caught exception while running task')
-        qt_message_dialog(str(e))
+        qt_message_dialog(repr(e))
 
     def _disable_op_buttons(self):
         """ Disable all operation buttons """

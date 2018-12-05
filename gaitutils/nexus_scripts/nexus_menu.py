@@ -57,7 +57,8 @@ class PdfReportDialog(QtWidgets.QDialog):
 
     def __init__(self, info, prompt='Hello', parent=None):
         super(self.__class__, self).__init__()
-        uifile = resource_filename('gaitutils', 'nexus_scripts/pdf_report_dialog.ui')
+        uifile = resource_filename('gaitutils',
+                                   'nexus_scripts/pdf_report_dialog.ui')
         uic.loadUi(uifile, self)
         self.prompt.setText(prompt)
         if info is not None:
@@ -89,10 +90,12 @@ class PdfReportDialog(QtWidgets.QDialog):
 class WebReportInfoDialog(QtWidgets.QDialog):
     """Ask for patient info"""
 
-    def __init__(self, info, parent=None):
+    def __init__(self, info, parent=None, check_info=True):
         super(self.__class__, self).__init__()
-        uifile = resource_filename('gaitutils', 'nexus_scripts/web_report_info.ui')
+        uifile = resource_filename('gaitutils',
+                                   'nexus_scripts/web_report_info.ui')
         uic.loadUi(uifile, self)
+        self.check_info = check_info
         if info is not None:
             if info['fullname'] is not None:
                 self.lnFullName.setText(info['fullname'])
@@ -104,13 +107,20 @@ class WebReportInfoDialog(QtWidgets.QDialog):
     def accept(self):
         """ Update config and close dialog, if widget inputs are ok. Otherwise
         show an error dialog """
-        self.hetu = self.lnHetu.text()
-        self.fullname = self.lnFullName.text()
+        self.hetu = self.lnHetu.text().strip()
+        self.fullname = self.lnFullName.text().strip()
         self.report_notes = str(self.txtNotes.toPlainText()).strip()
-        if self.fullname and check_hetu(self.hetu):
+        if self.check_info:
+            ok = self.fullname and check_hetu(self.hetu)
+        else:
+            ok = not self.hetu or check_hetu(self.hetu)
+        if ok:
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
-            qt_message_dialog('Please enter a valid name and hetu')
+            msg = 'Please enter a valid name and hetu'
+            if not self.check_info:
+                msg += ' (or leave empty)'
+            qt_message_dialog(msg)
 
 
 class ChooseSessionsDialog(QtWidgets.QDialog):
@@ -599,7 +609,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                               'patient info.')
             info = sessionutils.default_info()
         else:
-            dlg_info = WebReportInfoDialog(info)
+            dlg_info = WebReportInfoDialog(info, check_info=False)
             if dlg_info.exec_():
                 new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,
                                 report_notes=dlg_info.report_notes)

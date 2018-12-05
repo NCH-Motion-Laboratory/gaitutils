@@ -35,6 +35,8 @@ def check_hetu(hetu):
 def age_from_hetu(hetu, d1=None):
     """ Return age at date d1 (datetime.date object) from hetu. If d1 is None,
     it is taken from current system time. """
+    if not hetu:
+        return None
     if not check_hetu(hetu):
         raise ValueError('Invalid hetu')
     if d1 is None:

@@ -139,7 +139,6 @@ pig_lowerbody.read_vars = _list_with_side(['HipMoment',
                                            'AnklePower',
                                            'HipAngles',
                                            'KneeAngles',
-                                           'AbsAnkleAngle',
                                            'AnkleAngles',
                                            'PelvisAngles',
                                            'FootProgressAngles'])

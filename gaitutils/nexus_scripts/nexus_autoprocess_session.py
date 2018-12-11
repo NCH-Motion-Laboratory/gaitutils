@@ -99,17 +99,24 @@ def _do_autoproc(enffiles, update_eclipse=True):
     for enffile in enffiles:
         filepath = enffile[:enffile.find('.Trial')]  # rm .TrialXXX and .enf
         filename = os.path.split(filepath)[1]
+        trial = dict()
+        trials[filepath] = trial
         logger.debug('loading in Nexus: %s' % filename)
         vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
-        subjectname = nexus.get_metadata(vicon)['name']
+        try:
+            subjectname = nexus.get_metadata(vicon)['name']
+        except GaitDataError:
+            # may indicate broken or video-only trial
+            logger.warning('cannot read metadata')
+            trial['recon_ok'] = False
+            trial['description'] = 'skipped'
+            continue
         allmarkers = vicon.GetMarkerNames(subjectname)
         edata = eclipse.get_eclipse_keys(enffile, return_empty=True)
         logger.debug('type: %s' % edata['TYPE'])
         logger.debug('description: %s' % edata['DESCRIPTION'])
         logger.debug('notes: %s' % edata['NOTES'])
         eclipse_str = ''
-        trial = dict()
-        trials[filepath] = trial
 
         # check whether to skip trial
         if edata['TYPE'] in cfg.autoproc.type_skip:

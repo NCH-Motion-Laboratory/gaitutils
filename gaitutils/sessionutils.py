@@ -128,7 +128,8 @@ def find_tagged(sessionpath, tags=None, eclipse_keys=None):
     if tags is None:
         tags = cfg.eclipse.tags
     tagged_enfs = list(_find_enfs(sessionpath, tags, eclipse_keys))
-    return [_enf2other(fn, 'c3d') for fn in tagged_enfs]
+    c3ds = [_enf2other(fn, 'c3d') for fn in tagged_enfs]
+    return [fn for fn in c3ds if op.isfile(fn)]
 
 
 def _find_enfs(sessionpath, tags, eclipse_keys):

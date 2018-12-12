@@ -27,7 +27,7 @@
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="plot">
       <attribute name="title">
@@ -736,27 +736,13 @@
            </property>
           </widget>
          </item>
-         <item row="10" column="1">
-          <widget class="QCheckBox" name="cfg_use_eclipse_fp_info">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
          <item row="11" column="0">
           <widget class="QLabel" name="label_60">
            <property name="toolTip">
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Writes the detected forceplate contacts back into Eclipse after autodetection.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
-            <string>Write Eclipse forceplate info after detection</string>
-           </property>
-          </widget>
-         </item>
-         <item row="11" column="1">
-          <widget class="QCheckBox" name="cfg_write_eclipse_fp_info">
-           <property name="text">
-            <string/>
+            <string>Write Eclipse forceplate info</string>
            </property>
           </widget>
          </item>
@@ -926,6 +912,16 @@
          </item>
          <item row="21" column="1">
           <widget class="QLineEdit" name="cfg_enf_descriptions"/>
+         </item>
+         <item row="10" column="1">
+          <widget class="QCheckBox" name="cfg_use_eclipse_fp_info">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="11" column="1">
+          <widget class="QLineEdit" name="cfg_write_eclipse_fp_info"/>
          </item>
         </layout>
        </item>

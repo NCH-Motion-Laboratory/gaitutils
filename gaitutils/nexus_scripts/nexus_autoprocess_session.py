@@ -236,9 +236,15 @@ def _do_autoproc(enffiles, update_eclipse=True):
         trial['description'] = eclipse_str
 
         # write Eclipse fp values according to our detection
-        if cfg.autoproc.write_eclipse_fp_info:
-            logger.debug('write Eclipse forceplate keys for %s' % enffile)
-            eclipse.set_eclipse_keys(enffile, fpev['our_fp_info'],
+        fp_info = fpev['our_fp_info']
+        if cfg.autoproc.write_eclipse_fp_info is True:
+            logger.debug('writing detected forceplate info into Eclipse')
+            eclipse.set_eclipse_keys(enffile, fp_info,
+                                     update_existing=True)
+        elif cfg.autoproc.write_eclipse_fp_info == 'reset':
+            logger.debug('resetting Eclipse forceplate info')
+            fp_info_auto = {k: 'Auto' for k, v in fp_info.items()}
+            eclipse.set_eclipse_keys(enffile, fp_info_auto,
                                      update_existing=True)
 
     # all preprocessing done

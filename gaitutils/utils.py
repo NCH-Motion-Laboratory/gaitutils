@@ -190,12 +190,12 @@ def _get_foot_points(mkrdata, context, footlen=None):
     # heel - ankle vectors
     haV = ankP - heeP
     ha_len = np.linalg.norm(haV, axis=1)
-    # estimate for end point of foot (just beyond 2nd toe):
-    # heel-toe vector * heel-ankle length * constant
+    # end point of foot (just beyond 2nd toe)
     if footlen is None:
-        foot_end = heeP + htVn * np.median(ha_len) * cfg.autoproc.foot_relative_len
-    else:
-        foot_end = heeP + htVn * footlen
+        # rough estimate based on marker distances
+        logger.debug('using estimated foot length')
+        footlen = np.median(ha_len) * cfg.autoproc.foot_relative_len
+    foot_end = heeP + htVn * footlen
     # projection of HEE-ANK to HEE-TOE line
     ha_htV = htVn * np.sum(haV*htVn, axis=1)[:, np.newaxis]
     # lateral ANK vector (HEE-TOE line to ANK)
@@ -207,10 +207,9 @@ def _get_foot_points(mkrdata, context, footlen=None):
     med_edge = foot_end - lankV
     # heel edge (compensate for marked position)
     heel_edge = heeP + htVn * cfg.autoproc.marker_diam/2
-    if footlen is None:
-        logger.debug('estimated foot length: %.1f mm width %.1f mm' %
-                     (np.nanmedian(np.linalg.norm(heel_edge-foot_end, axis=1)),
-                      np.nanmedian(np.linalg.norm(lat_edge-med_edge, axis=1))))
+    logger.debug('foot length: %.1f mm width: %.1f mm' %
+                 (np.nanmedian(np.linalg.norm(heel_edge-foot_end, axis=1)),
+                  np.nanmedian(np.linalg.norm(lat_edge-med_edge, axis=1))))
     return {'heel': heel_edge, 'lateral': lat_edge, 'medial': med_edge,
             'toe': foot_end}
 
@@ -266,24 +265,17 @@ def _point_in_poly(poly, pt):
 
 def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     """ Detect frames where valid forceplate strikes and toeoffs occur.
-    Uses forceplate data and marker positions.
+    Uses forceplate data and estimated foot shape.
 
     If supplied, mkrdata must include foot and pelvis markers. Otherwise
     it will be read.
 
-    If fp_info dict is supplied, no marker and COP checks will be done;
-    instead the Eclipse forceplate info will be used. Eclipse info is written
-    e.g. as {FP1: 'Left'} where plate indices start from 1 and the value can be
-    'Auto', 'Left', 'Right' or 'Invalid'. Even if Eclipse info is used, foot
-    strike and toeoff frames must be determined from forceplate data.
-
-    Conditions:
-    -check max total force, must correspond to subject weight
-    -center of pressure must not change too much during contact time
-    -foot must be inside plate at strike & toeoff
-
-    Returns dict with keys R_strikes, L_strikes, R_toeoffs, L_toeoffs.
-    Dict values are lists of frames where valid forceplate contact occurs.
+    If fp_info dict is supplied, no marker-based checks will be done;
+    instead the Eclipse forceplate info will be used to determine the foot.
+    Eclipse info is written e.g. as {FP1: 'Left'} where plate indices start
+    from 1 and the value can be 'Auto', 'Left', 'Right' or 'Invalid'.
+    Even if Eclipse info is used, foot strike and toeoff frames must be
+    determined from forceplate data.
     """
     def _foot_plate_check(fpdata, mkrdata, fr0, side, footlen):
         """Helper for foot-plate check. Returns 0, 1, 2 for:
@@ -475,9 +467,9 @@ def automark_events(source, mkrdata=None, events_range=None, fp_events=None,
     """ Mark events based on velocity thresholding. Absolute thresholds
     can be specified as arguments. Otherwise, relative thresholds will be
     calculated based on the data. Optimal results will be obtained when
-    thresholds based on force plate data are available.
+    thresholds based on force plate data are precomputed.
 
-    If mkrdata is None, it will be read from Nexus. Otherwise mkrdata must
+    If mkrdata is None, it will be read from source. Otherwise mkrdata must
     include both foot markers and the body tracking markers (see config)
 
     vel_thresholds gives velocity thresholds for identifying events. These
@@ -485,8 +477,8 @@ def automark_events(source, mkrdata=None, events_range=None, fp_events=None,
     Separate thresholds for left and right side.
 
     fp_events is dict specifying the forceplate detected strikes and toeoffs
-    (see utils.detect_forceplate_events). These will not be marked by
-    velocity thresholding.
+    (see utils.detect_forceplate_events). These will be used instead of
+    (nearby) autodetected events.
 
     If events_range is specified, the events will be restricted to given
     coordinate range in the principal gait direction.

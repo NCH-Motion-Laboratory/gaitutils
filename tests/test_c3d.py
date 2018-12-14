@@ -112,18 +112,18 @@ def test_c3d_fp_detection():
     assert res == 'LRL'
     c3dfile = _trial_path('runner', 'JL brooks 2,8 51.c3d')
     res = detect_forceplate_events(c3dfile)['coded']
-    assert res == '0RL00'
+    assert res == 'XRLXX'
     c3dfile = _trial_path('girl6v', '2015_10_22_girl6v_IN02.c3d')
     res = detect_forceplate_events(c3dfile)['coded']
     assert res == 'R'
     # detect slight overstep (toeoff not on plate)
     c3d1 = _c3d_path('slight_overstep.c3d')
     res = detect_forceplate_events(c3d1)['coded']
-    assert res == '0'
+    assert res == 'X'
     # detect double contact (both feet on plate)
     c3d2 = _c3d_path('double_contact.c3d')
     res = detect_forceplate_events(c3d2)['coded']
-    assert res == '0'
+    assert res == 'X'
     # almost overstepped but should be flagged as ok
     # too hard - disabled for now
     #c3d3 = 'testdata/test_c3ds/barely_ok.c3d'
@@ -135,13 +135,13 @@ def test_c3d_fp_detection():
     assert res == 'L'
     c3d4 = _c3d_path('adult_barely_overstepped.c3d')
     res = detect_forceplate_events(c3d4)['coded']
-    assert res == '0'
+    assert res == 'X'
     c3d4 = _c3d_path('adult_almost_overstepped.c3d')
     res = detect_forceplate_events(c3d4)['coded']
     assert res == 'L'
     c3d4 = _c3d_path('adult_overstep.c3d')
     res = detect_forceplate_events(c3d4)['coded']
-    assert res == '0'
+    assert res == 'X'
     c3d4 = _c3d_path('adult_ok.c3d')
     res = detect_forceplate_events(c3d4)['coded']
     assert res == 'L'

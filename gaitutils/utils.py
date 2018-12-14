@@ -454,7 +454,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
         else:
             logger.debug('plate %d: no valid foot strike' % plate_ind)
             results['our_fp_info'][plate] = 'Invalid'
-            results['coded'] += '0'
+            results['coded'] += 'X'
 
     logger.debug(results)
     return results

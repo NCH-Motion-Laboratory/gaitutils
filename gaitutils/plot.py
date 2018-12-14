@@ -506,6 +506,8 @@ class Plotter(object):
             """Process the cycle argument"""
             if isinstance(cycles, Gaitcycle):
                 return [cycles]
+            elif cycles is None or cycles == [None]:
+                return [None]
             elif (isinstance(cycles, list) and all([isinstance(c, Gaitcycle)
                   for c in cycles])):
                     return cycles
@@ -592,8 +594,8 @@ class Plotter(object):
                     # FIXME: varname[0] == cycle.context may not apply to
                     # all model vars
                     if (data is not None and kin_ok and
-                        (varname[0] == cycle.context or not
-                         auto_match_model_cycle or cycle is None)):
+                        (cycle is None or varname[0] == cycle.context or not
+                         auto_match_model_cycle)):
 
                         # logger.debug('plotting data for %s' % varname)
                         x = (x_ / trial.framerate if cycle is None and

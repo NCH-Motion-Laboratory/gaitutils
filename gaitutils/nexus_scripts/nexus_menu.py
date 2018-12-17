@@ -544,7 +544,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog(repr(e))
             return
         if not vidfiles:
-            qt_message_dialog('Cannot find any video files for session %s')
+            qt_message_dialog('Cannot find any video files for session %s'
+                              % session)
             return
         if report.convert_videos(vidfiles, check_only=True):
             qt_message_dialog('It looks like the session videos have already '

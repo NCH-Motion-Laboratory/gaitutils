@@ -55,8 +55,8 @@ def _truncate_trialname(trialname):
 _plot_cache = dict()
 
 
-def plot_trials(trials, layout, model_normaldata, legend_type='full',
-                trial_linestyles='same'):
+def plot_trials(trials, layout, model_normaldata, model_cycles=None,
+                emg_cycles=None, legend_type='full', trial_linestyles='same'):
     """Make a plotly plot of layout, including given trials.
 
     trials: list of gaitutils.Trial instances
@@ -94,8 +94,10 @@ def plot_trials(trials, layout, model_normaldata, legend_type='full',
     session_linestyles = dict()
     dash_styles = cycle(['solid', 'dash', 'dot', 'dashdot'])
 
-    model_cycles_ = cfg.plot.default_model_cycles
-    emg_cycles_ = cfg.plot.default_emg_cycles
+    model_cycles_ = (cfg.plot.default_model_cycles if model_cycles is None else
+                     model_cycles)
+    emg_cycles_ = (cfg.plot.default_emg_cycles if emg_cycles is None else
+                   emg_cycles)
 
     for trial in trials:
         trial_color = next(colors)

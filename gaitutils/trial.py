@@ -68,9 +68,8 @@ def _nexus_crop_events_before_forceplate():
 
 class Gaitcycle(object):
     """" Holds information about one gait cycle """
-    def __init__(self, start, end, toeoff, context,
-                 on_forceplate, plate_idx, smp_per_frame, trial=None,
-                 name=None, index=None):
+    def __init__(self, start, end, toeoff, context, on_forceplate, plate_idx,
+                 smp_per_frame, trial=None, name=None, index=None):
         self.len = end - start
         # convert frame indices to 0-based
         self.start = start
@@ -154,7 +153,7 @@ class Trial(object):
 
         enfpath = op.join(self.sessionpath, '%s.Trial.enf' % self.trialname)
 
-        # look for alternative (older?) enf name
+        # look for alternative (older style?) enf name
         if not op.isfile(enfpath):
             trialn_re = re.search('\.*(\d*)$', self.trialname)
             trialn = trialn_re.group(1)
@@ -281,13 +280,14 @@ class Trial(object):
         """ Set normalization cycle (int for cycle index or a Gaitcycle
         instance). None to get unnormalized data. Affects the data returned
         by __getitem__ """
-        if type(cycle) == int:
+        if isinstance(cycle, int):
+            if cycle >= len(self.cycles) or cycle < 0:
+                raise ValueError('No such cycle')
             cycle = self.cycles[cycle]
         self._normalize = cycle if cycle else None
 
-
     def get_cycles(self, cyclespec):
-        """ Get specified gait cycles from the trial.
+        """ Get specified gait cycles (Gaitcycle instances) from the trial.
         cyclespec: 'all' | 'forceplate' | Gaitcycle | int | list of int |
                     list of Gaitcycle | tuple
         Corresponding to: all cycles | cycles starting with forceplate
@@ -307,6 +307,8 @@ class Trial(object):
                 return [cycles[cyclespec]] if cyclespec < len(cycles) else []
             elif isinstance(cyclespec, list):
                 return [cycles[c] for c in cyclespec if c < len(cycles)]
+            elif cyclespec == 'unnormalized':
+                return [None]
             elif cyclespec == 'all':
                 return cycles
             elif cyclespec == 'forceplate':  # all forceplate cycles
@@ -314,7 +316,7 @@ class Trial(object):
             elif cyclespec == '1st_forceplate':  # 1st forceplate cycle
                 return [c for c in cycles if c.on_forceplate][:1]
             elif isinstance(cyclespec, tuple):
-            # recurse until we have some cycles (or the cyclespec is exhausted)
+                # recurse until we have cycles (or cyclespec is exhausted)
                 if not cyclespec:
                     return []
                 else:

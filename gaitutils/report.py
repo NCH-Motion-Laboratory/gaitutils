@@ -168,7 +168,17 @@ def dash_report(info=None, sessions=None, tags=None):
             trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
             trials.extend(trials_this)
     trials = sorted(trials, key=lambda tr: tr.eclipse_tag)
-    logger.debug('creating report from %s' % c3ds_all)
+    logger.debug('using dynamic trials: %s' % c3ds_all)
+
+    # load static trials separately
+    c3ds_static = list()
+    trials_static = list()
+    for session in sessions:
+        c3ds = sessionutils.find_tagged(session, tags=['Static'],
+                                        eclipse_keys=['TYPE'])
+        c3ds_static.append(c3ds[-1])  # pick only 1 static trial per session
+    trials_static = [gaitutils.Trial(c3d) for c3d in c3ds_static]        
+    logger.debug('added static trials: %s' % c3ds_static)
 
     # load normal data for gait models
     model_normaldata = dict()
@@ -227,9 +237,11 @@ def dash_report(info=None, sessions=None, tags=None):
         opts_cameras.append({'label': label, 'value': label})
     opts_tags = list()
     for tag in tags + cfg.eclipse.video_tags:
-        if any([vid_urls[tag][camera_label] for camera_label in camera_labels]):
+        if any([vid_urls[tag][camera_label] for camera_label in
+                camera_labels]):
             opts_tags.append({'label': '%s' % tag, 'value': tag})
-    if any([vid_urls['Static'][camera_label] for camera_label in camera_labels]):
+    if any([vid_urls['Static'][camera_label] for camera_label in
+            camera_labels]):
         opts_tags.append({'label': 'Static', 'value': 'Static'})
 
     # no videos at all
@@ -255,6 +267,7 @@ def dash_report(info=None, sessions=None, tags=None):
     _layouts = OrderedDict([
             ('Patient info', 'patient_info'),
             ('Kinematics', cfg.layouts.lb_kinematics),
+            ('Static kinematics', 'static_kinematics'),
             ('Kinematics + kinetics', cfg.layouts.lb_kin_web),
             ('Kinetics', cfg.layouts.lb_kinetics_web),
             ('EMG', emg_layout),
@@ -279,7 +292,8 @@ def dash_report(info=None, sessions=None, tags=None):
         # for comparison report, include session info in plot legends and
         # use session specific line style
         trial_linestyles = 'session' if is_comparison else 'same'
-        legend_type = 'short_name_with_tag' if is_comparison else 'tag_with_cycle'
+        legend_type = ('short_name_with_tag' if is_comparison else
+                       'tag_with_cycle')
 
         try:
             # special layout
@@ -300,6 +314,16 @@ def dash_report(info=None, sessions=None, tags=None):
                 elif layout == 'patient_info':
                     graph_upper = dcc.Markdown(patient_info_text)
                     graph_lower = graph_upper
+
+                elif layout == 'static_kinematics':
+                    fig_ = plot_trials(trials_static, layout, model_normaldata,
+                                       legend_type=legend_type,
+                                       trial_linestyles=trial_linestyles)
+                    graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
+                                            style={'height': '100%'})
+                    graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
+                                            % (len(_layouts)+k),
+                                            style={'height': '100%'})
 
                 # will be caught and menu item will be empty
                 elif layout == 'disabled':

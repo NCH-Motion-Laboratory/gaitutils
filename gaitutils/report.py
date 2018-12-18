@@ -316,9 +316,12 @@ def dash_report(info=None, sessions=None, tags=None):
                     graph_lower = graph_upper
 
                 elif layout == 'static_kinematics':
-                    fig_ = plot_trials(trials_static, layout, model_normaldata,
+                    layout_ = cfg.layouts.lb_kinematics
+                    fig_ = plot_trials(trials_static, layout_,
+                                       model_normaldata,
                                        model_cycles='unnormalized',
-                                       legend_type=legend_type,
+                                       emg_cycles=[],
+                                       legend_type='short_name_with_cyclename',
                                        trial_linestyles=trial_linestyles)
                     graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
                                             style={'height': '100%'})

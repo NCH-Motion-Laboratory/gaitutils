@@ -15,6 +15,7 @@ import datetime
 import logging
 
 from gaitutils import models, cfg
+from gaitutils.trial import Gaitcycle, Noncycle
 
 
 logger = logging.getLogger(__name__)
@@ -103,8 +104,14 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
         trial_color = next(colors)
         model_cycles = trial.get_cycles(model_cycles_)
         emg_cycles = trial.get_cycles(emg_cycles_)
+        allcycles = model_cycles + emg_cycles
 
-        for cyc in model_cycles + emg_cycles:
+        is_unnormalized = any([isinstance(cyc, Noncycle) for cyc in allcycles])
+        if (is_unnormalized and
+           any([isinstance(cyc, Gaitcycle) for cyc in allcycles])):
+                raise ValueError('Cannot mix normalized and unnormalized data')
+
+        for cyc in allcycles:
             trial.set_norm_cycle(cyc)
             context = cyc.context
 
@@ -129,6 +136,9 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                                                   cyc.name)
                     elif legend_type == 'full':
                         tracegroup = '%s / %s' % (trial.name_with_description,
+                                                  cyc.name)
+                    elif legend_type == 'short_name_with_cyclename':
+                        tracegroup = '%s / %s' % (_truncate_trialname(trial.trialname),
                                                   cyc.name)
                     else:
                         raise ValueError('Invalid legend type')
@@ -157,7 +167,8 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                         # plot model normal data first so that its z order
                         # is lowest (otherwise normaldata will mask other
                         # traces on hover)
-                        if trial == trials[0] and context == 'R':
+                        if (isinstance(cyc, Gaitcycle) and trial == trials[0]
+                           and context == 'R'):
                             if var[0].upper() in ['L', 'R']:
                                 nvar = var[1:]
                             if model_normaldata and nvar in model_normaldata:
@@ -225,15 +236,21 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                                 marker = dict(color='black',
                                               symbol='triangle-up',
                                               size=8)
-                                toeoff = int(cyc.toeoffn)
-                                #logger.debug('calling Scatter for: %s / %s / %s' %
-                                #             (trial.trialname, cyc.name, var))
-                                toeoff_marker = go.Scatter(x=t[toeoff:toeoff+1],
-                                                           y=y[toeoff:toeoff+1],
-                                                           showlegend=False,
-                                                           hoverinfo='skip',
-                                                           mode='markers',
-                                                           marker=marker)
+                                fig.append_trace(trace, i+1, j+1)
+
+                                if cyc.toeoffn is not None:
+                                    toeoff = int(cyc.toeoffn)
+                                    #logger.debug('calling Scatter for: %s / %s / %s' %
+                                    #             (trial.trialname, cyc.name, var))
+                                    toeoff_marker = go.Scatter(x=t[toeoff:toeoff+1],
+                                                               y=y[toeoff:toeoff+1],
+                                                               showlegend=False,
+                                                               hoverinfo='skip',
+                                                               mode='markers',
+                                                               marker=marker)
+                                    fig.append_trace(toeoff_marker, i+1, j+1)
+                                else:
+                                    toeoff_marker = None
 
                                 if trial not in _plot_cache:
                                     _plot_cache[trial] = dict()
@@ -243,8 +260,6 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                                 _plot_cache[trial][cyc][var+'_toeoff'] = toeoff_marker
 
                             tracegroups.add(tracegroup)
-                            fig.append_trace(trace, i+1, j+1)
-                            fig.append_trace(toeoff_marker, i+1, j+1)
 
                             # rm x tick labels, plot too crowded
                             fig['layout'][xaxis].update(showticklabels=False)
@@ -322,7 +337,8 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                             fig['layout'][yaxis].update(title=cfg.plot.emg_ylabel, titlefont={'size': label_fontsize},
                                                         range=emg_yrange)  # FIXME: cfg
                             # prevent changes due to legend clicks etc.
-                            fig['layout'][xaxis].update(range=[0, 100])
+                            if not is_unnormalized:
+                                fig['layout'][xaxis].update(range=[0, 100])
                             # rm x tick labels, plot too crowded
                             fig['layout'][xaxis].update(showticklabels=False)
 
@@ -342,8 +358,9 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
     # put x labels on last row only, re-enable tick labels for last row
     inds_last = range((nrows-1)*ncols, nrows*ncols)
     axes_last = ['xaxis%d' % (ind+1) for ind in inds_last]
+    xtitle = 'frame' if is_unnormalized else '% of gait cycle'
     for ax in axes_last:
-        fig['layout'][ax].update(title='% of gait cycle',
+        fig['layout'][ax].update(title=xtitle,
                                  titlefont={'size': label_fontsize},
                                  showticklabels=True)
 

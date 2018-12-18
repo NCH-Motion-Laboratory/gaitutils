@@ -66,8 +66,19 @@ def _nexus_crop_events_before_forceplate():
         vicon.CreateAnEvent(tr.name, context_other, 'Foot Off', ev, 0)
 
 
+class Noncycle(object):
+    """Used in place of Gaitcycle when requesting unnormalized data.
+    Just stores context and trial info. """
+    def __init__(self, context, trial=None):
+        self.context = context
+        self.trial = trial
+        self.name = 'unnormalized (%s)' % context
+        self.toeoffn = None
+        self.on_forceplate = False
+
+
 class Gaitcycle(object):
-    """" Holds information about one gait cycle """
+    """ Holds information about one gait cycle """
     def __init__(self, start, end, toeoff, context, on_forceplate, plate_idx,
                  smp_per_frame, trial=None, name=None, index=None):
         self.len = end - start
@@ -235,13 +246,13 @@ class Trial(object):
         try:
             t = self.t
             data = self._get_modelvar(item)
-            if self._normalize:
+            if self._normalize is not None:
                 t, data = self._normalize.normalize(data)
             return t, data
         except ValueError:
             t = self.t_analog
             data = self.emg[item]
-            if self._normalize:
+            if self._normalize is not None:
                 t, data = self._normalize.crop_analog(data)
             return t, data
 
@@ -284,7 +295,11 @@ class Trial(object):
             if cycle >= len(self.cycles) or cycle < 0:
                 raise ValueError('No such cycle')
             cycle = self.cycles[cycle]
-        self._normalize = cycle if cycle else None
+            self._normalize = cycle
+        elif isinstance(cycle, Gaitcycle):
+            self._normalize = cycle
+        elif isinstance(cycle, Noncycle):
+            self._normalize = None
 
     def get_cycles(self, cyclespec):
         """ Get specified gait cycles (Gaitcycle instances) from the trial.
@@ -296,19 +311,22 @@ class Trial(object):
         In case of tuple, it will return the first condition of the tuple that
         has corresponding cycles.
 
-        Alternatively, dict with keys 'R' and 'L' and values as above.
+        Alternatively, dict with keys 'R' and 'L' and values as above, to give
+        separate cyclespecs for left and right.
         Returns list of gaitcycle instances.
         XXX: cycle numbering is now zero-based
         """
-        def _filter_cycles(cycles, cyclespec):
+        def _filter_cycles(cycles, context, cyclespec):
+            """Takes a list of cycles and filters it according to cyclespec,
+            returning only cycles that match the spec"""
             if cyclespec is None:
-                return [None]  # listify
+                return [Noncycle(context=context, trial=self)]
             elif isinstance(cyclespec, int):
                 return [cycles[cyclespec]] if cyclespec < len(cycles) else []
             elif isinstance(cyclespec, list):
                 return [cycles[c] for c in cyclespec if c < len(cycles)]
             elif cyclespec == 'unnormalized':
-                return [None]
+                return [Noncycle(context=context)]
             elif cyclespec == 'all':
                 return cycles
             elif cyclespec == 'forceplate':  # all forceplate cycles
@@ -320,8 +338,8 @@ class Trial(object):
                 if not cyclespec:
                     return []
                 else:
-                    return (_filter_cycles(cycles, cyclespec[0]) or
-                            _filter_cycles(cycles, cyclespec[1:]))
+                    return (_filter_cycles(cycles, context, cyclespec[0]) or
+                            _filter_cycles(cycles, context, cyclespec[1:]))
             else:
                 raise ValueError('Invalid argument')
 
@@ -330,9 +348,12 @@ class Trial(object):
 
         cycs_ok = list()
         for context in cyclespec:
-            cycles_ = [c for c in self.cycles if c.context ==
-                       context.upper()]
-            cycs_ok.extend(_filter_cycles(cycles_, cyclespec[context]))
+            # pick trial cycles for this context
+            cycles_ = [c for c in self.cycles if c.context == context.upper()]
+            # filter them according to cyclespec
+            good_cycles = _filter_cycles(cycles_, context, cyclespec[context])
+            cycs_ok.extend(good_cycles)
+
         return cycs_ok
 
     def _get_modelvar(self, var):

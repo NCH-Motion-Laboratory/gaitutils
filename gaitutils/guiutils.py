@@ -138,8 +138,7 @@ def qt_dir_chooser():
 # non-qt dialogs - Windows specific
 def error_exit(message):
     """ Custom error handler """
-    # casts to str are needed, since MessageBoxA does not like Unicode
-    ctypes.windll.user32.MessageBoxA(0, str(message),
+    ctypes.windll.user32.MessageBoxA(0, message.encode('latin-1'),
                                      "Error in Nexus Python script", 0)
     sys.exit()
 

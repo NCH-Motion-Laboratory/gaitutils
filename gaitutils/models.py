@@ -72,8 +72,7 @@ class GaitModel(object):
 """ Create models """
 
 #
-# Plug-in Gait upper body
-# for now, kinematics only
+# Plug-in Gait upper body kinematics
 #
 pig_upperbody = GaitModel()
 pig_upperbody.desc = 'Plug-in Gait upper body kinematics'
@@ -93,7 +92,7 @@ pig_upperbody.varlabels_noside = {'ThoraxAnglesX': 'Thorax flex/ext',
                                   'ThoraxAnglesZ': 'Thorax rotation',
                                   'ShoulderAnglesX': 'Shoulder flex/ext',
                                   'ShoulderAnglesY': 'Shoulder abd/add',
-                                  'ShoulderAnglesZ': 'Shoulder rotation',                                  
+                                  'ShoulderAnglesZ': 'Shoulder rotation',
                                   'SpineAnglesX': 'Spine flex/ext',
                                   'SpineAnglesY': 'Spine lateral flex',
                                   'SpineAnglesZ': 'Spine rotation',
@@ -105,39 +104,30 @@ pig_upperbody.varlabels_noside = {'ThoraxAnglesX': 'Thorax flex/ext',
                                   'ElbowAnglesZ': 'Elbow Z',
                                   'NeckAnglesX': 'Neck sagittal',
                                   'NeckAnglesY': 'Neck frontal',
-                                  'NeckAnglesZ': 'Neck rotation',                                  
+                                  'NeckAnglesZ': 'Neck rotation',
                                   'HeadAnglesX': 'Head sagittal',
                                   'HeadAnglesY': 'Head frontal',
                                   'HeadAnglesZ': 'Head rotation'}
 
-# for now, ylabel is just the degree sign for all vars
+# FIXME: for now, ylabel is just the degree sign for all vars
 pig_upperbody.ylabels = defaultdict(lambda: 'deg')
 
 pig_upperbody.varlabels = _dict_with_side(pig_upperbody.varlabels_noside)
 pig_upperbody.varnames = pig_upperbody.varlabels.keys()
 pig_upperbody.varnames_noside = pig_upperbody.varlabels_noside.keys()
 
-pig_upperbody.is_kinetic_var = (lambda varname: 'Moment' in varname or
-                                'Power' in varname)
-# TODO: add kinetic vars
-# TODO: ylabels
+pig_upperbody.is_kinetic_var = lambda varname: False
 models_all.append(pig_upperbody)
 
 
 #
-# Plug-in Gait lowerbody
+# Plug-in Gait lower body kinematics
 #
 pig_lowerbody = GaitModel()
-pig_lowerbody.desc = 'Plug-in Gait lower body'
+pig_lowerbody.desc = 'Plug-in Gait lower body kinematics'
 pig_lowerbody.type = 'PiG'
 pig_lowerbody.read_strategy = 'split_xyz'
-pig_lowerbody.read_vars = _list_with_side(['HipMoment',
-                                           'KneeMoment',
-                                           'AnkleMoment',
-                                           'HipPower',
-                                           'KneePower',
-                                           'AnklePower',
-                                           'HipAngles',
+pig_lowerbody.read_vars = _list_with_side(['HipAngles',
                                            'KneeAngles',
                                            'AnkleAngles',
                                            'PelvisAngles',
@@ -147,25 +137,13 @@ pig_lowerbody.varlabels_noside = {
                              'AnkleAnglesX': 'Ankle dorsi/plant',
                              'AnkleAnglesY': 'Ankle adduction',
                              'AnkleAnglesZ': 'Ankle rotation',
-                             'AnkleMomentX': 'Ankle dors/plan moment',
-                             'AnkleMomentY': 'Ankle ab/add moment',
-                             'AnkleMomentZ': 'Ankle rotation moment',
-                             'AnklePowerZ': 'Ankle power',
                              'FootProgressAnglesZ': 'Foot progress angles',
                              'HipAnglesX': 'Hip flexion',
                              'HipAnglesY': 'Hip adduction',
                              'HipAnglesZ': 'Hip rotation',
-                             'HipMomentX': 'Hip flex/ext moment',
-                             'HipMomentY': 'Hip ab/add moment',
-                             'HipMomentZ': 'Hip rotation moment',
-                             'HipPowerZ': 'Hip power',
                              'KneeAnglesX': 'Knee flexion',
                              'KneeAnglesY': 'Knee adduction',
                              'KneeAnglesZ': 'Knee rotation',
-                             'KneeMomentX': 'Knee flex/ext moment',
-                             'KneeMomentY': 'Knee ab/add moment',
-                             'KneeMomentZ': 'Knee rotation moment',
-                             'KneePowerZ': 'Knee power',
                              'PelvisAnglesX': 'Pelvic tilt',
                              'PelvisAnglesY': 'Pelvic obliquity',
                              'PelvisAnglesZ': 'Pelvic rotation'}
@@ -177,27 +155,15 @@ pig_lowerbody.varnames_noside = pig_lowerbody.varlabels_noside.keys()
 
 
 pig_lowerbody.gcd_normaldata_map = {
-            'AnklePower': 'AnklePowerZ',
             'DorsiPlanFlex': 'AnkleAnglesX',
-            'DorsiPlanFlexMoment': 'AnkleMomentX',
-            'FootAbAdductMoment': 'AnkleMomentY',
             'FootProgression': 'FootProgressAnglesZ',
             'FootRotation': 'AnkleAnglesZ',
-            'FootRotationMoment': 'AnkleMomentZ',
             'HipAbAdduct': 'HipAnglesY',
-            'HipAbAdductMoment': 'HipMomentY',
             'HipFlexExt': 'HipAnglesX',
-            'HipFlexExtMoment': 'HipMomentX',
-            'HipPower': 'HipPowerZ',
             'HipRotation': 'HipAnglesZ',
-            'HipRotationMoment': 'HipMomentZ',
             'KneeFlexExt': 'KneeAnglesX',
-            'KneeFlexExtMoment': 'KneeMomentX',
-            'KneePower': 'KneePowerZ',
             'KneeRotation': 'KneeAnglesZ',
-            'KneeRotationMoment': 'KneeMomentZ',
             'KneeValgVar': 'KneeAnglesY',
-            'KneeValgVarMoment': 'KneeMomentY',
             'PelvicObliquity': 'PelvisAnglesY',
             'PelvicRotation': 'PelvisAnglesZ',
             'PelvicTilt': 'PelvisAnglesX'}
@@ -208,33 +174,90 @@ pig_lowerbody.ylabels = _dict_with_side({
                          'AnkleAnglesX': 'Pla%s($^\\circ$)%sDor' % spacer,
                          'AnkleAnglesY': 'Abd%s($^\\circ$)%sAdd' % spacer,
                          'AnkleAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
-                         'AnkleMomentX': 'Idors%sNm/kg%sIplan' % spacer,
-                         'AnkleMomentY': 'Iadd%sNm/kg%sIabd' % spacer,
-                         'AnkleMomentZ': '%sNm/kg%s' % spacer,
-                         'AnklePowerZ': 'Abs%sW/kg%sGen' % spacer,
                          'FootProgressAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
                          'HipAnglesX': 'Ext%s($^\\circ$)%sFlex' % spacer,
                          'HipAnglesY': 'Abd%s($^\\circ$)%sAdd' % spacer,
                          'HipAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
-                         'HipMomentX': 'Iflex%sNm/kg%sIext' % spacer,
-                         'HipMomentY': 'Iadd%sNm/kg%sIabd' % spacer,
-                         'HipMomentZ': 'Iint%sNm/kg%sIext' % spacer,
-                         'HipPowerZ': 'Abs%sW/kg%sGen' % spacer,
                          'KneeAnglesX': 'Ext%s($^\\circ$)%sFlex' % spacer,
                          'KneeAnglesY': 'Val%s($^\\circ$)%sVar' % spacer,
                          'KneeAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
-                         'KneeMomentX': 'Iflex%sNm/kg%sIext' % spacer,
-                         'KneeMomentY': 'Ivar%sNm/kg%sIvalg' % spacer,
-                         'KneeMomentZ': 'Iint%sNm/kg%sIext' % spacer,
-                         'KneePowerZ': 'Abs%sW/kg%sGen' % spacer,
                          'PelvisAnglesX': 'Pst%s($^\\circ$)%sAnt' % spacer,
                          'PelvisAnglesY': 'Dwn%s($^\\circ$)%sUp' % spacer,
                          'PelvisAnglesZ': 'Bak%s($^\\circ$)%sFor' % spacer})
 
-pig_lowerbody.is_kinetic_var = (lambda varname: 'Moment' in varname or
-                                'Power' in varname)
+pig_lowerbody.is_kinetic_var = lambda varname: False
 
 models_all.append(pig_lowerbody)
+
+
+#
+# Plug-in Gait lowerbody kinetics
+#
+pig_lowerbody_kinetics = GaitModel()
+pig_lowerbody_kinetics.desc = 'Plug-in Gait lower body kinetics'
+pig_lowerbody_kinetics.type = 'PiG'
+pig_lowerbody_kinetics.read_strategy = 'split_xyz'
+pig_lowerbody_kinetics.read_vars = _list_with_side(['HipMoment',
+                                                    'KneeMoment',
+                                                    'AnkleMoment',
+                                                    'HipPower',
+                                                    'KneePower',
+                                                    'AnklePower'])
+
+pig_lowerbody_kinetics.varlabels_noside = {
+                             'AnkleMomentX': 'Ankle dors/plan moment',
+                             'AnkleMomentY': 'Ankle ab/add moment',
+                             'AnkleMomentZ': 'Ankle rotation moment',
+                             'AnklePowerZ': 'Ankle power',
+                             'HipMomentX': 'Hip flex/ext moment',
+                             'HipMomentY': 'Hip ab/add moment',
+                             'HipMomentZ': 'Hip rotation moment',
+                             'HipPowerZ': 'Hip power',
+                             'KneeMomentX': 'Knee flex/ext moment',
+                             'KneeMomentY': 'Knee ab/add moment',
+                             'KneeMomentZ': 'Knee rotation moment',
+                             'KneePowerZ': 'Knee power'}
+
+pig_lowerbody_kinetics.varlabels = _dict_with_side(pig_lowerbody_kinetics.
+                                                   varlabels_noside)
+
+pig_lowerbody_kinetics.varnames = pig_lowerbody_kinetics.varlabels.keys()
+pig_lowerbody_kinetics.varnames_noside = (pig_lowerbody_kinetics.
+                                          varlabels_noside.keys())
+
+pig_lowerbody_kinetics.gcd_normaldata_map = {
+            'AnklePower': 'AnklePowerZ',
+            'DorsiPlanFlexMoment': 'AnkleMomentX',
+            'FootAbAdductMoment': 'AnkleMomentY',
+            'FootRotationMoment': 'AnkleMomentZ',
+            'HipAbAdductMoment': 'HipMomentY',
+            'HipFlexExtMoment': 'HipMomentX',
+            'HipPower': 'HipPowerZ',
+            'HipRotationMoment': 'HipMomentZ',
+            'KneeFlexExtMoment': 'KneeMomentX',
+            'KneePower': 'KneePowerZ',
+            'KneeRotationMoment': 'KneeMomentZ',
+            'KneeValgVarMoment': 'KneeMomentY'}
+
+# add some space for the labels between units and directions
+spacer = (2*(1*' ',))
+pig_lowerbody_kinetics.ylabels = _dict_with_side({
+                         'AnkleMomentX': 'Idors%sNm/kg%sIplan' % spacer,
+                         'AnkleMomentY': 'Iadd%sNm/kg%sIabd' % spacer,
+                         'AnkleMomentZ': '%sNm/kg%s' % spacer,
+                         'AnklePowerZ': 'Abs%sW/kg%sGen' % spacer,
+                         'HipMomentX': 'Iflex%sNm/kg%sIext' % spacer,
+                         'HipMomentY': 'Iadd%sNm/kg%sIabd' % spacer,
+                         'HipMomentZ': 'Iint%sNm/kg%sIext' % spacer,
+                         'HipPowerZ': 'Abs%sW/kg%sGen' % spacer,
+                         'KneeMomentX': 'Iflex%sNm/kg%sIext' % spacer,
+                         'KneeMomentY': 'Ivar%sNm/kg%sIvalg' % spacer,
+                         'KneeMomentZ': 'Iint%sNm/kg%sIext' % spacer,
+                         'KneePowerZ': 'Abs%sW/kg%sGen' % spacer})
+
+pig_lowerbody_kinetics.is_kinetic_var = (lambda varname: True)
+
+models_all.append(pig_lowerbody_kinetics)
 
 #
 # Muscle length (MuscleLength.mod)

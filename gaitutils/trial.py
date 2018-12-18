@@ -332,8 +332,7 @@ class Trial(object):
                        context.upper()]
             cycs_ok.extend(_filter_cycles(cycles_, cyclespec[context]))
         return cycs_ok
-        
-            
+
     def _get_modelvar(self, var):
         """ Return (unnormalized) model variable, load and cache data for
         model if needed """

@@ -268,6 +268,7 @@ def dash_report(info=None, sessions=None, tags=None):
             ('Patient info', 'patient_info'),
             ('Kinematics', cfg.layouts.lb_kinematics),
             ('Static kinematics', 'static_kinematics'),
+            ('Static EMG', 'static_emg'),
             ('Kinematics + kinetics', cfg.layouts.lb_kin_web),
             ('Kinetics', cfg.layouts.lb_kinetics_web),
             ('EMG', emg_layout),
@@ -328,6 +329,21 @@ def dash_report(info=None, sessions=None, tags=None):
                     graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
                                             % (len(_layouts)+k),
                                             style={'height': '100%'})
+
+                elif layout == 'static_emg':
+                    layout_ = cfg.layouts.std_emg
+                    fig_ = plot_trials(trials_static, layout_,
+                                       model_normaldata,
+                                       model_cycles=[],
+                                       emg_cycles='unnormalized',
+                                       legend_type='short_name_with_cyclename',
+                                       trial_linestyles=trial_linestyles)
+                    graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
+                                            style={'height': '100%'})
+                    graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
+                                            % (len(_layouts)+k),
+                                            style={'height': '100%'})
+
 
                 # will be caught and menu item will be empty
                 elif layout == 'disabled':

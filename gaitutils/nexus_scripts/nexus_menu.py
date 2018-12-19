@@ -369,6 +369,28 @@ class OptionsDialog(QtWidgets.QDialog):
             qt_message_dialog("Invalid input: %s" % txt)
 
 
+class ProgressBar(object):
+    """ Qt-based progress bar """
+
+    def __init__(self, title):
+        self.prog = QtWidgets.QProgressDialog()
+        self.prog.setWindowTitle(title)
+        self.prog.setCancelButton(None)
+        self.prog.setMinimum(0)
+        self.prog.setMaximum(100)
+        self.prog.setGeometry(500, 300, 500, 100)
+        self.prog.show()
+
+    def update(self, text, p):
+        """ Update bar, showing text and bar at p% """
+        self.prog.setLabelText(text)
+        self.prog.setValue(p)
+        QtWidgets.QApplication.processEvents()
+
+    def hide(self):
+        self.prog.hide()
+
+
 class Gaitmenu(QtWidgets.QMainWindow):
 
     def __init__(self):
@@ -482,25 +504,18 @@ class Gaitmenu(QtWidgets.QMainWindow):
         """Convert given list of video files to web format. Uses non-blocking
         Popen() calls"""
         self._disable_op_buttons()
-        prog = QtWidgets.QProgressDialog()
-        prog.setWindowTitle('Converting videos...')
-        prog.setCancelButton(None)
-        prog.setMinimum(0)
-        prog.setMaximum(100)
-        prog.setGeometry(500, 300, 500, 100)
-        prog.show()
-        QtWidgets.QApplication.processEvents()
+        prog = ProgressBar('Converting videos...')
         procs = self._execute(report.convert_videos, thread=False,
                               block_ui=False, vidfiles=vidfiles)
         if not procs:
             return
+
         completed = False
         while not completed:
             n_complete = len([p for p in procs if p.poll() is not None])
-            prog.setLabelText('%d of %d files done' % (n_complete,
-                                                       len(procs)))
-            prog.setValue(100*n_complete/float(len(procs)))
-            QtWidgets.QApplication.processEvents()
+            prog_txt = '%d of %d files done' % (n_complete, len(procs))
+            prog_p = 100 * n_complete / float(len(procs))
+            prog.update(prog_txt, prog_p)
             time.sleep(.25)
             completed = n_complete == len(procs)
         prog.hide()
@@ -661,6 +676,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                       info=info, sessions=sessions, tags=tags,
                       progressbar=prog)
 
+        # wait for report creation thread to complete
         while self._report_creation_finished is None:
             QtWidgets.QApplication.processEvents()
 

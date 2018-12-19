@@ -38,9 +38,10 @@ logger = logging.getLogger(__name__)
 def convert_videos(vidfiles, check_only=False):
     """Convert video files using command and options defined in cfg.
     If check_only, return whether files were already converted.
-    During conversion, prog_callback will be called with % of task done
-    and name of current video file. After conversion, finished_callback will
-    be called"""
+    Instantly starts as many converter processes as there are files and
+    returns. This has the disadvantage of potentially starting dozens of
+    processes, causing slowdown.
+    """
     CONV_EXT = '.ogv'  # extension for converted files
     if not isinstance(vidfiles, list):
         vidfiles = [vidfiles]
@@ -105,12 +106,14 @@ def _shutdown_server():
     func()
 
 
-def dash_report(info=None, sessions=None, tags=None, progressbar=None):
+def dash_report(info=None, sessions=None, tags=None, progressbar_updater=None):
     """Returns dash app for web report.
     info: patient info
     sessions: list of session dirs
     tags: tags for gait trials
     """
+
+    progressbar_updater('Collecting trials...', 0)
 
     # relative width of left panel (1-12)
     # 3-session comparison uses narrower video panel
@@ -192,6 +195,7 @@ def dash_report(info=None, sessions=None, tags=None, progressbar=None):
             age_ndata = normaldata.read_normaldata(age_ndata_file)
             model_normaldata.update(age_ndata)
 
+    progressbar_updater('Finding videos', 0)
     # create directory of trial videos for each tag and camera selection
     vid_urls = dict()
     for tag in tags:
@@ -257,6 +261,7 @@ def dash_report(info=None, sessions=None, tags=None, progressbar=None):
                           'value': tr.trialname})
     # precreate graphs
     # in EMG layout, keep chs that are active in any of the trials
+    progressbar_updater('Reading EMG data', 0)
     try:
         emgs = [tr.emg for tr in trials]
         emg_layout = layouts.rm_dead_channels_multitrial(emgs,
@@ -291,6 +296,7 @@ def dash_report(info=None, sessions=None, tags=None, progressbar=None):
 
     for k, (label, layout) in enumerate(_layouts.items()):
         logger.debug('creating plot for %s' % label)
+        progressbar_updater('Creating plot %s' % label, 100*k/len(_layouts))
         # for comparison report, include session info in plot legends and
         # use session specific line style
         trial_linestyles = 'session' if is_comparison else 'same'
@@ -375,6 +381,8 @@ def dash_report(info=None, sessions=None, tags=None, progressbar=None):
             dd_opts_multi_lower.append({'label': label, 'value': label,
                                         'disabled': True})
             continue
+
+
 
     opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
     opts_multi, mapper_multi_lower = _make_dropdown_lists(dd_opts_multi_lower)

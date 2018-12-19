@@ -370,7 +370,7 @@ class OptionsDialog(QtWidgets.QDialog):
 
 
 class ProgressBar(object):
-    """ Qt-based progress bar """
+    """ Qt progress bar with reasonable defaults """
 
     def __init__(self, title):
         self.prog = QtWidgets.QProgressDialog()
@@ -662,19 +662,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if not report.convert_videos(vidfiles, check_only=True):
             self._convert_vidfiles(vidfiles)
 
-        logger.debug('Creating web report...')
-
-        prog = QtWidgets.QProgressDialog()
-        prog.setWindowTitle('Creating web report...')
-        prog.setCancelButton(None)
-        prog.setMinimum(0)
-        prog.setMaximum(100)
-        prog.setGeometry(500, 300, 500, 100)
-        prog.show()
+        logger.debug('creating web report...')
+        prog = ProgressBar('Creating web report...')
         self._execute(report.dash_report, thread=True, block_ui=True,
                       finished_func=self._web_report_finished,
                       info=info, sessions=sessions, tags=tags,
-                      progressbar=prog)
+                      progressbar_updater=prog.update)
 
         # wait for report creation thread to complete
         while self._report_creation_finished is None:

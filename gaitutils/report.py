@@ -105,7 +105,7 @@ def _shutdown_server():
     func()
 
 
-def dash_report(info=None, sessions=None, tags=None):
+def dash_report(info=None, sessions=None, tags=None, progressbar=None):
     """Returns dash app for web report.
     info: patient info
     sessions: list of session dirs

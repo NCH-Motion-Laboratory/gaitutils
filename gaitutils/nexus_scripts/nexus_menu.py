@@ -468,12 +468,15 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._browser_procs = list()
         self._flask_apps = dict()
         self._set_report_button_status()
+        self._report_creation_finished = None
 
     def _button_connect_task(self, button, fun, thread=False):
         """ Helper to connect button with task function. Use lambda to consume
         unused events argument. If thread=True, launch in a separate worker
         thread. """
-        button.clicked.connect(lambda ev: self._execute(fun, thread=thread))
+        # by default, just enable UI buttons when thread finishes
+        finished_func = self._enable_op_buttons if thread else None
+        button.clicked.connect(lambda ev: self._execute(fun, thread=thread, finished_func=finished_func))
 
     def _convert_vidfiles(self, vidfiles):
         """Convert given list of video files to web format. Uses non-blocking
@@ -501,7 +504,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             time.sleep(.25)
             completed = n_complete == len(procs)
         prog.hide()
-        self._enable_op_buttons()
+        self._enable_op_buttons(None)
 
     def _browse_localhost(self, port):
         """Open configured browser on localhost:port"""
@@ -584,6 +587,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._execute(nexus_make_comparison_report.do_plot,
                           sessions=dlg.sessions)
 
+    def _web_report_finished(self, app):
+        """Gets called when web report creation is finished"""
+        self._enable_op_buttons(None)
+        self._report_creation_finished = app
+
     def _create_web_report(self):
         """Collect sessions, create the dash app, start it and launch a
         web browser on localhost on the correct port"""
@@ -640,8 +648,25 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._convert_vidfiles(vidfiles)
 
         logger.debug('Creating web report...')
-        app = self._execute(report.dash_report, info=info, sessions=sessions,
-                            tags=tags)
+
+        prog = QtWidgets.QProgressDialog()
+        prog.setWindowTitle('Creating web report...')
+        prog.setCancelButton(None)
+        prog.setMinimum(0)
+        prog.setMaximum(100)
+        prog.setGeometry(500, 300, 500, 100)
+        prog.show()
+        self._execute(report.dash_report, thread=True, block_ui=True,
+                      finished_func=self._web_report_finished,
+                      info=info, sessions=sessions, tags=tags,
+                      progressbar=prog)
+
+        while self._report_creation_finished is None:
+            QtWidgets.QApplication.processEvents()
+
+        prog.hide()
+        app = self._report_creation_finished
+
         if app is None:
             qt_message_dialog('Could not create report, check that session is '
                               'valid')
@@ -730,6 +755,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             new_info = dict(hetu=dlg.hetu, fullname=dlg.fullname,
                             session_description=dlg.session_description)
             self._execute(nexus_make_pdf_report.do_plot, thread=True,
+                          finished_func=self._enable_op_buttons,
                           fullname=dlg.fullname, hetu=dlg.hetu,
                           session_description=dlg.session_description,
                           pages=dlg.pages)
@@ -759,8 +785,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # update display immediately in case thread gets blocked
         QtWidgets.QApplication.processEvents()
 
-    def _enable_op_buttons(self):
-        """ Enable all operation buttons """
+    def _enable_op_buttons(self, r):
+        """Enable all operation buttons and restore cursor. Takes single
+        argument to fit the _finished_func call signature (see _execute) """
         for widget in self.opWidgets:
             self.__dict__[widget].setEnabled(True)
         QtWidgets.QApplication.restoreOverrideCursor()
@@ -771,11 +798,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
         win = nexus_tardieu.TardieuWindow()
         win.show()
 
-    def _execute(self, fun, thread=False, block_ui=True, **kwargs):
+    def _execute(self, fun, thread=False, block_ui=True, finished_func=None,
+                 **kwargs):
         """ Run function fun. If thread==True, run it in a separate worker
         thread. If block_ui, disable the ui until worker thread is finished
         (except for messages!) Returns function return value if not threaded.
-        kwargs are passed to function
+        If threaded and finished_func is given, the latter is called with the
+        function return value as single argument when thread completes
+        execution.
+        If block_ui, finished_func should re-enable UI buttons.
+        kwargs are passed to function.
         """
         fun_ = partial(fun, **kwargs)
         if block_ui:
@@ -783,11 +815,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if thread:
             self.runner = Runner(fun_)
             if block_ui:
-                self.runner.signals.finished.connect(self._enable_op_buttons)
+                if finished_func:
+                    self.runner.signals.finished.connect(lambda r:
+                                                         finished_func(r))
             self.runner.signals.error.connect(lambda e: self._exception(e))
             self.threadpool.start(self.runner)
             retval = None
-        else:
+        else:  # nonthreaded execute
             try:
                 retval = fun_()
             except Exception as e:
@@ -795,13 +829,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 self._exception(e)
             finally:
                 if block_ui:
-                    self._enable_op_buttons()
+                    self._enable_op_buttons(None)
         return retval
 
 
 class RunnerSignals(QObject):
     """Need a separate class since QRunnable cannot emit signals"""
-    finished = pyqtSignal()
+    finished = pyqtSignal(object)
     error = pyqtSignal(Exception)
 
 
@@ -812,14 +846,15 @@ class Runner(QRunnable):
         super(Runner, self).__init__()
         self.fun = fun
         self.signals = RunnerSignals()
+        self.retval = False  # default "return value" when  exception is thrown
 
     def run(self):
         try:
-            self.fun()
+            self.retval = self.fun()
         except Exception as e:
             self.signals.error.emit(e)
         finally:
-            self.signals.finished.emit()
+            self.signals.finished.emit(self.retval)
 
 
 def main():

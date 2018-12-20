@@ -186,15 +186,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     logger.debug('added static trials: %s' % c3ds_static)
 
     # load normal data for gait models
-    model_normaldata = dict()
-    for fn in cfg.general.normaldata_files:
-        ndata = normaldata.read_normaldata(fn)
-        model_normaldata.update(ndata)
-    if age is not None:
-        age_ndata_file = normaldata.normaldata_age(age)
-        if age_ndata_file:
-            age_ndata = normaldata.read_normaldata(age_ndata_file)
-            model_normaldata.update(age_ndata)
+    model_normaldata = normaldata.read_all_normaldata(age)
 
     signals.progress.emit('Finding videos...', 0)
     # create directory of trial videos for each tag and camera selection

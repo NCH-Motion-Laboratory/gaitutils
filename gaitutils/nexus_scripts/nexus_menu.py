@@ -369,26 +369,24 @@ class OptionsDialog(QtWidgets.QDialog):
             qt_message_dialog("Invalid input: %s" % txt)
 
 
-class ProgressBar(object):
+class ProgressBar(QtWidgets.QProgressDialog):
     """ Qt progress bar with reasonable defaults """
 
     def __init__(self, title):
-        self.prog = QtWidgets.QProgressDialog()
-        self.prog.setWindowTitle(title)
-        self.prog.setCancelButton(None)
-        self.prog.setMinimum(0)
-        self.prog.setMaximum(100)
-        self.prog.setGeometry(500, 300, 500, 100)
-        self.prog.show()
+        super(self.__class__, self).__init__()
+        self.setWindowTitle(title)
+        self.setCancelButton(None)
+        self.setMinimum(0)
+        self.setMaximum(100)
+        self.setGeometry(500, 300, 500, 100)
+        self.show()
 
     def update(self, text, p):
         """ Update bar, showing text and bar at p% """
-        self.prog.setLabelText(text)
-        self.prog.setValue(p)
+        self.setLabelText(text)
+        self.setValue(p)
+        # update right away in case that thread is blocked
         QtWidgets.QApplication.processEvents()
-
-    def hide(self):
-        self.prog.hide()
 
 
 class ProgressSignals(QObject):

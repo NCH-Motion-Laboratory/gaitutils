@@ -297,7 +297,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
 
     for k, (label, layout) in enumerate(_layouts.items()):
         logger.debug('creating plot for %s' % label)
-        signals.progress.emit('Creating plot %s' % label, 100*k/len(_layouts))
+        signals.progress.emit('Creating plot: %s' % label, 100*k/len(_layouts))
         # for comparison report, include session info in plot legends and
         # use session specific line style
         trial_linestyles = 'session' if is_comparison else 'same'

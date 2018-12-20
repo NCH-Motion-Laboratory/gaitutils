@@ -493,7 +493,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._browser_procs = list()
         self._flask_apps = dict()
         self._set_report_button_status()
-        self._report_creation_finished = None
 
     def _button_connect_task(self, button, fun, thread=False):
         """ Helper to connect button with task function. Use lambda to consume
@@ -608,9 +607,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _web_report_finished(self, app):
         """Gets called when web report creation is finished"""
         self._enable_op_buttons(None)
-        self._report_creation_finished = app
-
-
+        self._report_creation_status = app
 
     def _create_web_report(self):
         """Collect sessions, create the dash app, start it and launch a
@@ -654,6 +651,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
             else:
                 return
 
+        prog = ProgressBar('Creating web report...')
+        prog.update('Collecting session information...', 0)
+
         # for comparison between sessions, get representative trials only
         tags = (cfg.eclipse.repr_tags if len(sessions) > 1 else
                 cfg.eclipse.tags)
@@ -667,25 +667,24 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if not report.convert_videos(vidfiles, check_only=True):
             self._convert_vidfiles(vidfiles)
 
-        logger.debug('creating web report...')
-        prog = ProgressBar('Creating web report...')
         signals = ProgressSignals()
         signals.progress.connect(lambda text, p: prog.update(text, p))
+        self._report_creation_status = None
         self._execute(report.dash_report, thread=True, block_ui=True,
                       finished_func=self._web_report_finished,
                       info=info, sessions=sessions, tags=tags, signals=signals)
 
         # wait for report creation thread to complete
-        while self._report_creation_finished is None:
+        while self._report_creation_status is None:
+            time.sleep(.05)
             QtWidgets.QApplication.processEvents()
-
         prog.hide()
-        app = self._report_creation_finished
 
-        if app is None:
+        if self._report_creation_status is False:
             qt_message_dialog('Could not create report, check that session is '
                               'valid')
             return
+        app = self._report_creation_status
 
         # figure out first free TCP port
         ports_taken = [item.userdata for item in self.listActiveReports.items]
@@ -861,7 +860,7 @@ class Runner(QRunnable):
         super(Runner, self).__init__()
         self.fun = fun
         self.signals = RunnerSignals()
-        self.retval = False  # default "return value" when  exception is thrown
+        self.retval = False  # default "return value" when exception is thrown
 
     def run(self):
         try:

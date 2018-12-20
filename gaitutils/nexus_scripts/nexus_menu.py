@@ -391,6 +391,11 @@ class ProgressBar(object):
         self.prog.hide()
 
 
+class ProgressSignals(QObject):
+    """Used to emit progress signals"""
+    progress = pyqtSignal(object, object)
+
+
 class Gaitmenu(QtWidgets.QMainWindow):
 
     def __init__(self):
@@ -607,6 +612,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._enable_op_buttons(None)
         self._report_creation_finished = app
 
+
+
     def _create_web_report(self):
         """Collect sessions, create the dash app, start it and launch a
         web browser on localhost on the correct port"""
@@ -664,10 +671,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         logger.debug('creating web report...')
         prog = ProgressBar('Creating web report...')
+        signals = ProgressSignals()
+        signals.progress.connect(lambda text, p: prog.update(text, p))
         self._execute(report.dash_report, thread=True, block_ui=True,
                       finished_func=self._web_report_finished,
-                      info=info, sessions=sessions, tags=tags,
-                      progressbar_updater=prog.update)
+                      info=info, sessions=sessions, tags=tags, signals=signals)
 
         # wait for report creation thread to complete
         while self._report_creation_finished is None:

@@ -403,7 +403,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # load user interface made with designer
         uifile = resource_filename('gaitutils', 'nexus_scripts/nexus_menu.ui')
         uic.loadUi(uifile, self)
-        """ Stuff that shows matplotlib plots cannot be run in directly in
+        """ Functions that show matplotlib plots cannot be run in directly in
         worker threads. To put plotting stuff into a worker thread, need to:
         -make the plotting function return a figure (and not invoke the qt
         event loop)
@@ -441,7 +441,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnEMGCons,
                                   nexus_emg_consistency.do_plot)
         self._button_connect_task(self.btnKinCons,
-                                  nexus_kin_consistency.do_plot)
+                                  nexus_kin_consistency.do_plot,
+                                  thread=thread_plotters)
         self._button_connect_task(self.btnMuscleLenCons,
                                   nexus_musclelen_consistency.do_plot)
         self._button_connect_task(self.btnKinAverage,

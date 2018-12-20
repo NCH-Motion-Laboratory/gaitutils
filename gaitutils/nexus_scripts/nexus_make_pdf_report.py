@@ -206,7 +206,8 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
     if pages['KinCons']:
         logger.debug('creating kin consistency plot')
         fig_kin_cons = nexus_kin_consistency.do_plot(show=False,
-                                                     make_pdf=make_separate_pdfs)
+                                                     make_pdf=make_separate_pdfs,
+                                                     backend='matplotlib')
     else:
         fig_kin_cons = None
 

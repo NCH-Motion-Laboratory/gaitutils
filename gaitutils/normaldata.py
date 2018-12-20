@@ -19,6 +19,21 @@ from .config import cfg
 logger = logging.getLogger(__name__)
 
 
+def read_all_normaldata(age=None):
+    """ Read all normal data defined in config. If age is specified, include
+    age specific normaldata. """
+    model_normaldata = dict()
+    for fn in cfg.general.normaldata_files:
+        ndata = read_normaldata(fn)
+        model_normaldata.update(ndata)
+    if age is not None:
+        age_ndata_file = normaldata_age(age)
+        if age_ndata_file:
+            age_ndata = read_normaldata(age_ndata_file)
+            model_normaldata.update(age_ndata)
+    return model_normaldata
+
+
 def read_normaldata(filename):
     """ Read normal data into dict. Dict keys are variables and values
     are Numpy arrays of shape (n, 2). n is either 1 (scalar variable)

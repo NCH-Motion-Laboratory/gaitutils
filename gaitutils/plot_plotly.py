@@ -56,7 +56,7 @@ def _truncate_trialname(trialname):
 _plot_cache = dict()
 
 
-def plot_trials(trials, layout, model_normaldata, model_cycles=None,
+def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                 emg_cycles=None, legend_type='full', trial_linestyles='same'):
     """Make a plotly plot of layout, including given trials.
 
@@ -167,11 +167,11 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                         if mod.is_kinetic_var(var) and not cyc.on_forceplate:
                             do_plot = False
 
-                        # plot model normal data first so that its z order
+                        # plot model normaldata first so that its z order
                         # is lowest (otherwise normaldata will mask other
                         # traces on hover)
                         if (isinstance(cyc, Gaitcycle) and trial == trials[0]
-                           and context == 'R'):
+                           and context == 'R' and model_normaldata):
                             if var[0].upper() in ['L', 'R']:
                                 nvar = var[1:]
                             if model_normaldata and nvar in model_normaldata:

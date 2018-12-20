@@ -379,6 +379,8 @@ class ProgressBar(QtWidgets.QProgressDialog):
         self.setMinimum(0)
         self.setMaximum(100)
         self.setGeometry(500, 300, 500, 100)
+        self.setAutoClose(False)
+        self.setAutoReset(False)
         self.show()
 
     def update(self, text, p):
@@ -502,11 +504,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
         finished_func = self._enable_op_buttons if thread else None
         button.clicked.connect(lambda ev: self._execute(fun, thread=thread, finished_func=finished_func))
 
-    def _convert_vidfiles(self, vidfiles):
+    def _convert_vidfiles(self, vidfiles, signals):
         """Convert given list of video files to web format. Uses non-blocking
         Popen() calls"""
         self._disable_op_buttons()
-        prog = ProgressBar('Converting videos...')
         procs = self._execute(report.convert_videos, thread=False,
                               block_ui=False, vidfiles=vidfiles)
         if not procs:
@@ -517,10 +518,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
             n_complete = len([p for p in procs if p.poll() is not None])
             prog_txt = '%d of %d files done' % (n_complete, len(procs))
             prog_p = 100 * n_complete / float(len(procs))
-            prog.update(prog_txt, prog_p)
+            signals.progress.emit(prog_txt, prog_p)
             time.sleep(.25)
             completed = n_complete == len(procs)
-        prog.hide()
         self._enable_op_buttons(None)
 
     def _browse_localhost(self, port):
@@ -653,6 +653,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         prog = ProgressBar('Creating web report...')
         prog.update('Collecting session information...', 0)
+        signals = ProgressSignals()
+        signals.progress.connect(lambda text, p: prog.update(text, p))
 
         # for comparison between sessions, get representative trials only
         tags = (cfg.eclipse.repr_tags if len(sessions) > 1 else
@@ -665,10 +667,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
             vidfiles.extend(vidfiles_this)
 
         if not report.convert_videos(vidfiles, check_only=True):
-            self._convert_vidfiles(vidfiles)
+            self._convert_vidfiles(vidfiles, signals)
 
-        signals = ProgressSignals()
-        signals.progress.connect(lambda text, p: prog.update(text, p))
         self._report_creation_status = None
         self._execute(report.dash_report, thread=True, block_ui=True,
                       finished_func=self._web_report_finished,

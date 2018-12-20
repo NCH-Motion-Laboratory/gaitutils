@@ -176,8 +176,9 @@ def dash_report(info=None, sessions=None, tags=None):
     for session in sessions:
         c3ds = sessionutils.find_tagged(session, tags=['Static'],
                                         eclipse_keys=['TYPE'])
-        c3ds_static.append(c3ds[-1])  # pick only 1 static trial per session
-    trials_static = [gaitutils.Trial(c3d) for c3d in c3ds_static]        
+        if c3ds:
+            c3ds_static.append(c3ds[-1])  # pick at most static trial
+    trials_static = [gaitutils.Trial(c3d) for c3d in c3ds_static]
     logger.debug('added static trials: %s' % c3ds_static)
 
     # load normal data for gait models

@@ -69,6 +69,9 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
     """
     global _plot_cache
 
+    if not trials:
+        raise ValueError('No data')
+
     # configurabe opts (here for now)
     label_fontsize = 18  # x, y labels
     subtitle_fontsize = 20  # subplot titles

@@ -416,7 +416,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
         Running the plotting functions directly from the GUI thread is also a
         bit ugly since the Qt event loop gets called twice, but this does not
         seem to do any harm.
+
         """
+        # plotly backend can do the plotting in another thread
+        thread_plotters = cfg.plot.backend == 'plotly'
         self._button_connect_task(self.btnCopyVideos,
                                   nexus_copy_trial_videos.do_copy, thread=True)
         self._button_connect_task(self.btnEMG, nexus_emgplot.do_plot)
@@ -424,7 +427,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   nexus_musclelen_plot.do_plot)
         self._button_connect_task(self.btnKinEMG,
                                   nexus_kinetics_emgplot.do_plot)
-        self._button_connect_task(self.btnKinall, nexus_kinallplot.do_plot)
+        self._button_connect_task(self.btnKinall, nexus_kinallplot.do_plot,
+                                  thread=thread_plotters)
         self._button_connect_task(self.btnTardieu, self._tardieu)
 
         if have_custom:

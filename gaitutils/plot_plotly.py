@@ -72,7 +72,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     if not trials:
         raise ValueError('No data')
 
-    # configurabe opts (here for now)
+    # configurable opts (here for now)
     label_fontsize = 18  # x, y labels
     subtitle_fontsize = 20  # subplot titles
 
@@ -90,7 +90,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     allvars = [item for row in layout for item in row]
     titles = [_var_title(var) for var in allvars]
     fig = plotly.tools.make_subplots(rows=nrows, cols=ncols,
-                                     subplot_titles=titles)
+                                     subplot_titles=titles, print_grid=False)
     tracegroups = set()
     model_normaldata_legend = True
     emg_normaldata_legend = True

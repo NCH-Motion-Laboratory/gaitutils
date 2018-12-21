@@ -89,7 +89,7 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
 
     allvars = [item for row in layout for item in row]
     titles = [_var_title(var) for var in allvars]
-    fig = plotly.tools.make_subplots(rows=nrows, cols=ncols,
+    fig = plotly.tools.make_subplots(rows=nrows, cols=ncols, print_grid=False,
                                      subplot_titles=titles)
     tracegroups = set()
     model_normaldata_legend = True
@@ -219,19 +219,17 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                                     session_linestyles[trial.sessiondir] = dash_style
                                 line['dash'] = dash_style
 
+                            # check whether trace was already created
                             if (trial in _plot_cache and cyc in
                                 _plot_cache[trial] and var in
                                 _plot_cache[trial][cyc]):
-                                        #logger.debug('cache hit for: %s / %s / %s' %
-                                        #             (trial.trialname, cyc.name, var))
                                         trace = _plot_cache[trial][cyc][var]
                                         toeoff_marker = _plot_cache[trial][cyc][var+'_toeoff']
+                                        # update some of the properties
                                         trace['name'] = tracegroup
                                         trace['legendgroup'] = tracegroup
                                         trace['showlegend'] = show_legend
-                            else:
-                                #logger.debug('calling Scatter for: %s / %s / %s' %
-                                #             (trial.trialname, cyc.name, var))
+                            else:  # need to create trace
                                 trace = go.Scatter(x=t, y=y, name=tracegroup,
                                                    legendgroup=tracegroup,
                                                    showlegend=show_legend,
@@ -250,10 +248,11 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                                                                hoverinfo='skip',
                                                                mode='markers',
                                                                marker=marker)
-                                    fig.append_trace(toeoff_marker, i+1, j+1)
+
                                 else:
                                     toeoff_marker = None
 
+                                # add trace to cache
                                 if trial not in _plot_cache:
                                     _plot_cache[trial] = dict()
                                 if cyc not in _plot_cache[trial]:
@@ -261,6 +260,8 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                                 _plot_cache[trial][cyc][var] = trace
                                 _plot_cache[trial][cyc][var+'_toeoff'] = toeoff_marker
 
+                            if toeoff_marker is not None:
+                                fig.append_trace(toeoff_marker, i+1, j+1)
                             fig.append_trace(trace, i+1, j+1)
                             tracegroups.add(tracegroup)
 

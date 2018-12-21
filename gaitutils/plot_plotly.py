@@ -239,7 +239,6 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                                 marker = dict(color='black',
                                               symbol='triangle-up',
                                               size=8)
-                                fig.append_trace(trace, i+1, j+1)
 
                                 if cyc.toeoffn is not None:
                                     toeoff = int(cyc.toeoffn)
@@ -262,6 +261,7 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                                 _plot_cache[trial][cyc][var] = trace
                                 _plot_cache[trial][cyc][var+'_toeoff'] = toeoff_marker
 
+                            fig.append_trace(trace, i+1, j+1)
                             tracegroups.add(tracegroup)
 
                             # rm x tick labels, plot too crowded

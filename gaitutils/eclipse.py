@@ -30,12 +30,18 @@ class FileFilter(object):
     replace = {'\n=\n': '\n'}
 
     def __init__(self, fname):
-        # enf files are supposed to be in utf8 encoding
-        self.fp = io.open(fname, encoding='utf8')
+        self.fname = fname
 
     def read(self):
         """ ConfigObj seems to use only this method """
-        data = self.fp.read()
+        # Eclipse switched from latin-1 to utf-8 at some point...
+        try:
+            self.fp = io.open(self.fname, encoding='utf8')
+            data = self.fp.read()
+        except UnicodeDecodeError:
+            logger.warning('Cannot interpret file as utf-8, trying latin-1')
+            self.fp = io.open(self.fname, encoding='latin-1')
+            data = self.fp.read()
         # filter
         for val, newval in FileFilter.replace.items():
             data = data.replace(val, newval)

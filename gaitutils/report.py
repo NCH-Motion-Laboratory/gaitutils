@@ -115,7 +115,6 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     """
 
     signals.progress.emit('Collecting trials...', 0)
-
     # relative width of left panel (1-12)
     # 3-session comparison uses narrower video panel
     # LEFT_WIDTH = 8 if len(sessions) == 3 else 7

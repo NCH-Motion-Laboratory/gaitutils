@@ -607,6 +607,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _web_report_finished(self, app):
         """Gets called when web report creation is finished"""
+        logger.debug('report creation finished')
         self._enable_op_buttons(None)
         self._report_creation_status = app
 
@@ -679,7 +680,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         while self._report_creation_status is None:
             time.sleep(.05)
             QtWidgets.QApplication.processEvents()
-        prog.hide()
+        prog.close()
 
         if self._report_creation_status is False:
             qt_message_dialog('Could not create report, check that session is '
@@ -829,10 +830,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._disable_op_buttons()
         if thread:
             self.runner = Runner(fun_)
-            if block_ui:
-                if finished_func:
-                    self.runner.signals.finished.connect(lambda r:
-                                                         finished_func(r))
+            if finished_func:
+                self.runner.signals.finished.connect(lambda r:
+                                                     finished_func(r))
             self.runner.signals.error.connect(lambda e: self._exception(e))
             self.threadpool.start(self.runner)
             retval = None

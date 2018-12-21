@@ -53,6 +53,11 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+def _exception_msg(e):
+    """Return text representation of exception e"""
+    return 'There was an error running the operation. Details:\n%s' % repr(e)
+
+
 class PdfReportDialog(QtWidgets.QDialog):
     """Ask for patient/session info and report options"""
 
@@ -150,7 +155,7 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
             try:
                 dirs = [nexus.get_sessionpath()]
             except GaitDataError as e:
-                qt_message_dialog(repr(e))
+                qt_message_dialog(_exception_msg(e))
                 return
         else:
             dirs = qt_dir_chooser()
@@ -221,7 +226,8 @@ class OptionsDialog(QtWidgets.QDialog):
     def __init__(self, default_tab=0):
         super(self.__class__, self).__init__()
         # load user interface made with designer
-        uifile = resource_filename('gaitutils', 'nexus_scripts/options_dialog.ui')
+        uifile = resource_filename('gaitutils',
+                                   'nexus_scripts/options_dialog.ui')
         uic.loadUi(uifile, self)
 
         # add some buttons to the standard button box
@@ -557,12 +563,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         try:
             session = nexus.get_sessionpath()
         except GaitDataError as e:
-            qt_message_dialog(repr(e))
+            qt_message_dialog(_exception_msg(e))
             return
         try:
             vidfiles = self._collect_vidfiles(session)
         except GaitDataError as e:
-            qt_message_dialog(repr(e))
+            qt_message_dialog(_exception_msg(e))
             return
         if not vidfiles:
             qt_message_dialog('Cannot find any video files for session %s'
@@ -759,7 +765,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         try:
             subj = nexus.get_subjectnames()
         except GaitDataError as e:
-            qt_message_dialog(repr(e))
+            qt_message_dialog(_exception_msg(e))
             return
 
         # ask for patient info, update saved info accordingly
@@ -791,7 +797,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _exception(self, e):
         logger.debug('caught exception while running task')
-        qt_message_dialog(repr(e))
+        qt_message_dialog(_exception_msg(e))
 
     def _disable_op_buttons(self):
         """ Disable all operation buttons """
@@ -880,8 +886,8 @@ def main():
         """ Custom handler for unhandled exceptions:
         report to user via GUI and terminate. """
         tb_full = u''.join(traceback.format_exception(type_, value, tback))
-        qt_message_dialog('Oops! An unhandled exception was generated: %s'
-                          % tb_full)
+        qt_message_dialog('Oops! An unhandled exception was generated. '
+                          'The application will be closed.\n\n %s' % tb_full)
         # dump traceback to file
         # try:
         #    with io.open(Config.traceback_file, 'w', encoding='utf-8') as f:

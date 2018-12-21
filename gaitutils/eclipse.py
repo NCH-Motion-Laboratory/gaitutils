@@ -39,7 +39,8 @@ class FileFilter(object):
             self.fp = io.open(self.fname, encoding='utf8')
             data = self.fp.read()
         except UnicodeDecodeError:
-            logger.warning('Cannot interpret file as utf-8, trying latin-1')
+            logger.warning('Cannot interpret %s as utf-8, trying latin-1' %
+                           self.fname)
             self.fp = io.open(self.fname, encoding='latin-1')
             data = self.fp.read()
         # filter

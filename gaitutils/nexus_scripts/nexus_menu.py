@@ -21,6 +21,7 @@ import subprocess
 import time
 import requests
 import logging
+import traceback
 
 from gaitutils.numutils import check_hetu
 from gaitutils.guiutils import (qt_message_dialog, qt_yesno_dialog,
@@ -874,6 +875,25 @@ class Runner(QRunnable):
 def main():
 
     app = QtWidgets.QApplication(sys.argv)
+
+    def my_excepthook(type_, value, tback):
+        """ Custom handler for unhandled exceptions:
+        report to user via GUI and terminate. """
+        tb_full = u''.join(traceback.format_exception(type_, value, tback))
+        qt_message_dialog('Oops! An unhandled exception was generated: %s'
+                          % tb_full)
+        # dump traceback to file
+        # try:
+        #    with io.open(Config.traceback_file, 'w', encoding='utf-8') as f:
+        #        f.write(tb_full)
+        # here is a danger of infinitely looping the exception hook,
+        # so try to catch any exceptions...
+        # except Exception:
+        #    print('Cannot dump traceback!')
+        sys.__excepthook__(type_, value, tback)
+        app.quit()
+
+    sys.excepthook = my_excepthook
 
     logger = logging.getLogger()
     handler = QtHandler()  # log to Qt logging widget

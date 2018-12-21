@@ -224,7 +224,6 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                                 _plot_cache[trial] and var in
                                 _plot_cache[trial][cyc]):
                                         trace = _plot_cache[trial][cyc][var]
-                                        toeoff_marker = _plot_cache[trial][cyc][var+'_toeoff']
                                         # update some of the properties
                                         trace['name'] = tracegroup
                                         trace['legendgroup'] = tracegroup
@@ -234,34 +233,28 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                                                    legendgroup=tracegroup,
                                                    showlegend=show_legend,
                                                    line=line)
-                                marker = dict(color='black',
-                                              symbol='triangle-up',
-                                              size=8)
-
-                                if cyc.toeoffn is not None:
-                                    toeoff = int(cyc.toeoffn)
-                                    #logger.debug('calling Scatter for: %s / %s / %s' %
-                                    #             (trial.trialname, cyc.name, var))
-                                    toeoff_marker = go.Scatter(x=t[toeoff:toeoff+1],
-                                                               y=y[toeoff:toeoff+1],
-                                                               showlegend=False,
-                                                               hoverinfo='skip',
-                                                               mode='markers',
-                                                               marker=marker)
-
-                                else:
-                                    toeoff_marker = None
-
                                 # add trace to cache
                                 if trial not in _plot_cache:
                                     _plot_cache[trial] = dict()
                                 if cyc not in _plot_cache[trial]:
                                     _plot_cache[trial][cyc] = dict()
                                 _plot_cache[trial][cyc][var] = trace
-                                _plot_cache[trial][cyc][var+'_toeoff'] = toeoff_marker
 
-                            if toeoff_marker is not None:
+                            # add toeoff marker
+                            if cyc.toeoffn is not None:
+                                toeoff = int(cyc.toeoffn)
+                                marker = dict(color='black',
+                                              symbol='triangle-up',
+                                              size=8)
+                                toeoff_marker = go.Scatter(x=t[toeoff:toeoff+1],
+                                                           y=y[toeoff:toeoff+1],
+                                                           showlegend=False,
+                                                           hoverinfo='skip',
+                                                           mode='markers',
+                                                           marker=marker)
                                 fig.append_trace(toeoff_marker, i+1, j+1)
+                            
+                            # add trace to figure
                             fig.append_trace(trace, i+1, j+1)
                             tracegroups.add(tracegroup)
 

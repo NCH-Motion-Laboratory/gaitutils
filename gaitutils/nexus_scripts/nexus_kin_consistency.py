@@ -25,7 +25,6 @@ def do_plot(sessions=None, tags=None, show=True, make_pdf=True,
     By default, plots tagged trials in the current Nexus session.
     session_styles uses different linestyles for each session
     """
-
     if sessions is None:
         sessions = [nexus.get_sessionpath()]
 

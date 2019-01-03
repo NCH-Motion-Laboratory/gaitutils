@@ -13,6 +13,7 @@ from builtins import range
 from builtins import object
 import matplotlib
 from matplotlib.figure import Figure
+from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.lines import Line2D
 import matplotlib.gridspec as gridspec
@@ -60,6 +61,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
         fig = plt.figure()
     else:
         fig = Figure()
+        canvas = FigureCanvasAgg(fig)
 
     def _plot_label(ax, rects, texts):
         """Plot a label inside each rect"""

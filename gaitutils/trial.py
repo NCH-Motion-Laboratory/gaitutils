@@ -244,21 +244,29 @@ class Trial(object):
                                 self.eclipse_data['DESCRIPTION'],
                                 self.eclipse_data['NOTES'])
 
-    def get_model_data(self, var):
-        data = self._get_modelvar(var)
+    def _normalized_frame_data(self, data):
+        """Return time axis and cycle normalized frame data"""
         if self._normalize is not None:
             t, data = self._normalize.normalize(data)
         else:
             t = self.t
         return t, data
 
-    def get_emg_data(self, ch):
-        data = self.emg[ch]
+    def _normalized_analog_data(self, data):
+        """Return time axis and cycle normalized (cropped) analog data"""
         if self._normalize is not None:
             t, data = self._normalize.crop_analog(data)
         else:
             t = self.t_analog
         return t, data
+
+    def get_model_data(self, var):
+        data = self._get_modelvar(var)
+        return self._normalized_frame_data(data)
+
+    def get_emg_data(self, ch):
+        data = self.emg[ch]
+        return self._normalized_analog_data(data)
 
     def get_marker_data(self, marker):
         if marker not in self.markers:
@@ -267,11 +275,7 @@ class Trial(object):
             self._marker_data = read_data.get_marker_data(self.source,
                                                           self.markers)
         data = self._marker_data[marker]
-        if self._normalize is not None:
-            t, data = self._normalize.normalize(data)
-        else:
-            t = self.t
-        return t, data
+        return self._normalized_frame_data(data)
 
     def get_forceplate_data(self, nplate, kind='force'):
         if not self._forceplate_data:
@@ -284,11 +288,7 @@ class Trial(object):
             data = self._forceplate_data[nplate]['M']
         elif kind == 'cop':
             data = self._forceplate_data[nplate]['CoP']
-        if self._normalize is not None:
-            t, data = self._normalize.crop_analog(data)
-        else:
-            t = self.t_analog
-        return t, data
+        return self._normalized_analog_data(data)
 
     """WIP"""
     def get_accelerometer_data(self):

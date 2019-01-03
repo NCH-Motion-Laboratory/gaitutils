@@ -262,6 +262,14 @@ class Trial(object):
             t = self.t_analog
         return t, data
 
+    @property
+    def full_marker_data(self):
+        """ Returns the full marker data dict """
+        if not self._marker_data:
+            self._marker_data = read_data.get_marker_data(self.source,
+                                                          self.markers)
+        return self._marker_data
+
     def get_model_data(self, var):
         data = self._get_modelvar(var)
         return self._normalized_frame_data(data)
@@ -271,12 +279,10 @@ class Trial(object):
         return self._normalized_analog_data(data)
 
     def get_marker_data(self, marker):
+        """Get marker data for specific marker"""
         if marker not in self.markers:
             raise GaitDataError('No such marker')
-        if not self._marker_data:
-            self._marker_data = read_data.get_marker_data(self.source,
-                                                          self.markers)
-        data = self._marker_data[marker]
+        data = self.full_marker_data[marker]
         return self._normalized_frame_data(data)
 
     def get_forceplate_data(self, nplate, kind='force'):

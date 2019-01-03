@@ -586,9 +586,8 @@ class Plotter(object):
 
                     # check for kinetics variable
                     kin_ok = True
-                    if match_pig_kinetics:
-                        if model.is_kinetic_var(var):
-                            kin_ok = cycle.on_forceplate
+                    if match_pig_kinetics and model.is_kinetic_var(var):
+                        kin_ok = cycle.on_forceplate
 
                     # whether to plot or not
                     x_, data = trial.get_model_data(varname)

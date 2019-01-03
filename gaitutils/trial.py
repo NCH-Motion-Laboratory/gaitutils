@@ -273,10 +273,22 @@ class Trial(object):
             t = self.t
         return t, data
 
-    def get_forceplate_data(self):
+    def get_forceplate_data(self, nplate, kind='force'):
         if not self._forceplate_data:
             self._forceplate_data = read_data.get_forceplate_data(self.source)
-        return self._forceplate_data
+        if nplate < 0 or nplate >= len(self._forceplate_data):
+            raise GaitDataError('Invalid plate index %d' % nplate)
+        if kind == 'force':
+            data = self._forceplate_data[nplate]['F']
+        elif kind == 'moment':
+            data = self._forceplate_data[nplate]['M']
+        elif kind == 'cop':
+            data = self._forceplate_data[nplate]['CoP']
+        if self._normalize is not None:
+            t, data = self._normalize.crop_analog(data)
+        else:
+            t = self.t_analog
+        return t, data
 
     """WIP"""
     def get_accelerometer_data(self):
@@ -361,7 +373,7 @@ class Trial(object):
             good_cycles = _filter_cycles(cycles_, context, cyclespec[context])
             cycs_ok.extend(good_cycles)
 
-        return cycs_ok
+        return sorted(cycs_ok, key=lambda cyc: cyc.start)
 
     def _get_modelvar(self, var):
         """ Return (unnormalized) model variable, load and cache data for

@@ -75,6 +75,8 @@ class Noncycle(object):
         self.name = 'unnormalized (%s)' % context
         self.toeoffn = None
         self.on_forceplate = False
+        self.start = None
+        self.end = None
 
 
 class Gaitcycle(object):
@@ -309,7 +311,7 @@ class Trial(object):
     def set_norm_cycle(self, cycle=None):
         """ Set normalization cycle (int for cycle index or a Gaitcycle
         instance). None to get unnormalized data. Affects the data returned
-        by __getitem__ """
+        by getters. """
         if isinstance(cycle, int):
             if cycle >= len(self.cycles) or cycle < 0:
                 raise ValueError('No such cycle')

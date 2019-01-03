@@ -75,6 +75,8 @@ class Noncycle(object):
         self.name = 'unnormalized (%s)' % context
         self.toeoffn = None
         self.on_forceplate = False
+        self.start = None
+        self.end = None
 
 
 class Gaitcycle(object):
@@ -118,9 +120,16 @@ class Gaitcycle(object):
         return s
 
     def normalize(self, var):
-        """ Normalize frames-based variable var to the cycle.
-        New interpolated x axis is 0..100% of the cycle. """
-        return self.tn, np.interp(self.tn, self.t, var[self.start:self.end])
+        """Normalize (columns of) frames-based variable var to the cycle.
+        New interpolated x axis is 0..100% of the cycle."""
+        # convert 1D arrays to 2D
+        if len(var.shape) == 1:
+            var = var[:, np.newaxis]
+        ncols = var.shape[1]
+        idata = np.array([np.interp(self.tn,
+                                    self.t, var[self.start:self.end, k])
+                          for k in range(ncols)]).T
+        return self.tn, np.squeeze(idata)
 
     def crop_analog(self, var):
         """ Crop analog variable (EMG, forceplate, etc. ) to the
@@ -237,44 +246,57 @@ class Trial(object):
                                 self.eclipse_data['DESCRIPTION'],
                                 self.eclipse_data['NOTES'])
 
-    def __getitem__(self, item):
-        """ Get model variable or EMG channel by indexing, normalized
-        according to normalization cycle.
-        FIXME: risk of duplicate names is getting too high, need to change to
-        dedicated getters or include variable type in name (e.g. EMG:LHam)
-        """
-        try:
+    def _normalized_frame_data(self, data):
+        """Return time axis and cycle normalized frame data"""
+        if self._normalize is not None:
+            t, data = self._normalize.normalize(data)
+        else:
             t = self.t
-            data = self._get_modelvar(item)
-            if self._normalize is not None:
-                t, data = self._normalize.normalize(data)
-            return t, data
-        except ValueError:
+        return t, data
+
+    def _normalized_analog_data(self, data):
+        """Return time axis and cycle normalized (cropped) analog data"""
+        if self._normalize is not None:
+            t, data = self._normalize.crop_analog(data)
+        else:
             t = self.t_analog
-            data = self.emg[item]
-            if self._normalize is not None:
-                t, data = self._normalize.crop_analog(data)
-            return t, data
+        return t, data
 
-    """ The following properties are WIP and do not implement gait cycle
-    normalization """
-    @property
-    def accelerometer_data(self):
-        # FIXME: caching?
-        return read_data.get_accelerometer_data(self.source)
+    def get_model_data(self, var):
+        data = self._get_modelvar(var)
+        return self._normalized_frame_data(data)
 
-    @property
-    def forceplate_data(self):
-        if not self._forceplate_data:
-            self._forceplate_data = read_data.get_forceplate_data(self.source)
-        return self._forceplate_data
+    def get_emg_data(self, ch):
+        data = self.emg[ch]
+        return self._normalized_analog_data(data)
 
-    @property
-    def marker_data(self):
+    def get_marker_data(self, marker):
+        if marker not in self.markers:
+            raise GaitDataError('No such marker')
         if not self._marker_data:
             self._marker_data = read_data.get_marker_data(self.source,
                                                           self.markers)
-        return self._marker_data
+        data = self._marker_data[marker]
+        return self._normalized_frame_data(data)
+
+    def get_forceplate_data(self, nplate, kind='force'):
+        if not self._forceplate_data:
+            self._forceplate_data = read_data.get_forceplate_data(self.source)
+        if nplate < 0 or nplate >= len(self._forceplate_data):
+            raise GaitDataError('Invalid plate index %d' % nplate)
+        if kind == 'force':
+            data = self._forceplate_data[nplate]['F']
+        elif kind == 'moment':
+            data = self._forceplate_data[nplate]['M']
+        elif kind == 'cop':
+            data = self._forceplate_data[nplate]['CoP']
+        else:
+            raise ValueError('Invalid kind of forceplate data requested')
+        return self._normalized_analog_data(data)
+
+    """WIP"""
+    def get_accelerometer_data(self):
+        return read_data.get_accelerometer_data(self.source)
 
     def _get_fp_events(self):
         """Read the forceplate events or set to empty"""
@@ -290,7 +312,7 @@ class Trial(object):
     def set_norm_cycle(self, cycle=None):
         """ Set normalization cycle (int for cycle index or a Gaitcycle
         instance). None to get unnormalized data. Affects the data returned
-        by __getitem__ """
+        by getters. """
         if isinstance(cycle, int):
             if cycle >= len(self.cycles) or cycle < 0:
                 raise ValueError('No such cycle')
@@ -298,7 +320,7 @@ class Trial(object):
             self._normalize = cycle
         elif isinstance(cycle, Gaitcycle):
             self._normalize = cycle
-        elif isinstance(cycle, Noncycle):
+        elif cycle is None or isinstance(cycle, Noncycle):
             self._normalize = None
 
     def get_cycles(self, cyclespec):
@@ -354,7 +376,7 @@ class Trial(object):
             good_cycles = _filter_cycles(cycles_, context, cyclespec[context])
             cycs_ok.extend(good_cycles)
 
-        return cycs_ok
+        return sorted(cycs_ok, key=lambda cyc: cyc.start)
 
     def _get_modelvar(self, var):
         """ Return (unnormalized) model variable, load and cache data for

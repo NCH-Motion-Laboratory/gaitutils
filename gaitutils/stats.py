@@ -41,8 +41,8 @@ class AvgTrial(Trial):
         self.ncycles = 2
         self.sessionpath = None
 
-    def __getitem__(self, item):
-        return self.t, self._model_data[item]
+    def get_model_data(self, var):
+        return self.t, self._model_data[var]
 
     def set_norm_cycle(self, cycle=None):
         if cycle is None:
@@ -168,7 +168,7 @@ def _collect_model_data(trials, fp_cycles_only=False):
         for model in models.models_all:
             var = model.varnames[0]
             try:
-                data = trial[var][1]
+                data = trial.get_model_data(var)[1]
                 models_ok.append(model)
             except GaitDataError:
                 logger.debug('cannot read variable %s from %s, skipping '
@@ -191,7 +191,7 @@ def _collect_model_data(trials, fp_cycles_only=False):
                         if ((model.is_kinetic_var(var) or fp_cycles_only) and
                            not cycle.on_forceplate):
                                 continue
-                        data = trial[var][1]
+                        data = trial.get_model_data(var)[1]
                         # add as first row or concatenate to existing data
                         data_all[var] = (data[None, :] if data_all[var]
                                          is None else

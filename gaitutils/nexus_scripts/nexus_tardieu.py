@@ -484,7 +484,7 @@ class TardieuPlot(object):
         self.emgdata = dict()
         self.emg_rms = dict()
         for ch in self.emg_chs:
-            t_, self.emgdata[ch] = self.trial[ch]
+            t_, self.emgdata[ch] = self.trial.get_emg_data(ch)
             self.emg_rms[ch] = rms(self.emgdata[ch], cfg.emg.rms_win)
 
         if cfg.tardieu.acc_chs:
@@ -688,7 +688,7 @@ class TardieuPlot(object):
         logger.debug('reset EMG filter to %.2f-%.2f' % (f1, f2))
         self.trial.emg.passband = [f1, f2]
         for ind, ch in enumerate(self.emg_chs):
-            t_, self.emgdata[ch] = self.trial[ch]
+            t_, self.emgdata[ch] = self.trial.get_emg_data(ch)
             self.emg_rms[ch] = rms(self.emgdata[ch], cfg.emg.rms_win)
             self.emg_traces[ind].set_ydata(self.emgdata[ch]*1e3)
             self.rms_traces[ind].set_ydata(self.emg_rms[ch]*1e3)

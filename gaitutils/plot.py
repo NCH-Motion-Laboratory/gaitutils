@@ -589,7 +589,7 @@ class Plotter(object):
                             kin_ok = cycle.on_forceplate
 
                     # whether to plot or not
-                    x_, data = trial[varname]
+                    x_, data = trial.get_model_data(varname)
                     # FIXME: varname[0] == cycle.context may not apply to
                     # all model vars
                     if (data is not None and kin_ok and
@@ -717,7 +717,7 @@ class Plotter(object):
                     if cycle is not None:  # plot normalized data
                         trial.set_norm_cycle(cycle)
                     try:
-                        x_, data = trial[var]
+                        x_, data = trial.get_emg_data(var)
                     except KeyError:  # channel not found
                         _no_ticks_or_labels(ax)
                         if annotate_emg:

@@ -32,14 +32,12 @@ logger = logging.getLogger(__name__)
 
 
 def nexus_trial():
-    """ Return Trial instance reading from Nexus """
+    """Return Trial instance from currently open Nexus trial."""
     return Trial(nexus.viconnexus())
 
 
 def _nexus_crop_events_before_forceplate():
-    """Delete events before forceplate strike so that the first cycle starts
-    on forceplate
-    FIXME: why not use events from trial instance?"""
+    """Delete events preceding first forceplate strike."""
     vicon = nexus.viconnexus()
     tr = Trial(vicon)
     fp_cycles = [cyc for cyc in tr.cycles if cyc.on_forceplate]
@@ -67,8 +65,7 @@ def _nexus_crop_events_before_forceplate():
 
 
 class Noncycle(object):
-    """Used in place of Gaitcycle when requesting unnormalized data.
-    Just stores context and trial info. """
+    """Used in place of Gaitcycle when requesting unnormalized data."""
     def __init__(self, context, trial=None):
         self.context = context
         self.trial = trial
@@ -80,7 +77,7 @@ class Noncycle(object):
 
 
 class Gaitcycle(object):
-    """ Holds information about one gait cycle """
+    """Holds information about one gait cycle."""
     def __init__(self, start, end, toeoff, context, on_forceplate, plate_idx,
                  smp_per_frame, trial=None, name=None, index=None):
         self.len = end - start
@@ -121,7 +118,12 @@ class Gaitcycle(object):
 
     def normalize(self, var):
         """Normalize (columns of) frames-based variable var to the cycle.
-        New interpolated x axis is 0..100% of the cycle."""
+
+        Parameters
+        ----------
+        var : array
+            NxM array of frame-based data to normalize.
+        """
         # convert 1D arrays to 2D
         if len(var.shape) == 1:
             var = var[:, np.newaxis]
@@ -132,19 +134,24 @@ class Gaitcycle(object):
         return self.tn, np.squeeze(idata)
 
     def crop_analog(self, var):
-        """ Crop analog variable (EMG, forceplate, etc. ) to the
-        cycle; no interpolation. """
+        """Crop analog variable (EMG, forceplate, etc. ) to the cycle.
+
+        Parameters
+        ----------
+        var : array
+            NxM array of analog data to normalize.
+        """
         return self.tn_analog, var[self.start_smp:self.end_smp]
 
 
 class Trial(object):
-    """ A gait trial. Contains:
-    -subject and trial info
-    -gait cycles
-    -analog data (EMG, forceplate, etc.)
-    -model output variables (Plug-in Gait, muscle length, etc.)
-    FIXME: lazy reads should check whether underlying trial has changed
-    (at least for Nexus)
+    """Gait trial class.
+
+        Parameters
+        ----------
+        source : str | instance of ViconNexus
+            Source to read data from. Can be a c3d filename or a ViconNexus
+            connection.
     """
 
     def __repr__(self):
@@ -208,8 +215,9 @@ class Trial(object):
         self.cycles = list(self._scan_cycles())
         self.ncycles = len(self.cycles)
 
+    # FIXME: maybe combine next 3 methods
     def video_files(self, ext='avi'):
-        """Return video files associated with trial"""
+        """Return video files associated with trial."""
         return glob.glob(op.join(self.sessionpath, self.trialname+'*%s' % ext))
 
     def _get_videos_by_id(self, camera_id, ext='avi'):
@@ -217,7 +225,7 @@ class Trial(object):
         return [vid for vid in self.video_files(ext=ext) if camera_id in vid]
 
     def get_video_by_label(self, camera_label, ext='avi'):
-        """Get trial video correspoding to given camera id (str)"""
+        """Get trial video corresponding to given camera id (str)"""
         ids = [id_ for id_, label in cfg.general.camera_labels.items() if
                camera_label == label]
         vids = [vid for id_ in ids for vid in
@@ -231,7 +239,7 @@ class Trial(object):
 
     @property
     def eclipse_tag(self):
-        """Return (first) Eclipse tag for this trial"""
+        """Return the first matching Eclipse tag for this trial."""
         for tag in cfg.eclipse.tags:
             if any([tag in self.eclipse_data[fld] for fld in
                     cfg.eclipse.tag_keys]):
@@ -240,7 +248,7 @@ class Trial(object):
 
     @property
     def name_with_description(self):
-        """Return trial name with some Eclipse info"""
+        """Return string consisting of trial name and some Eclipse info."""
         # FIXME: Eclipse keys hardcoded
         return '%s (%s, %s)' % (self.trialname,
                                 self.eclipse_data['DESCRIPTION'],
@@ -264,28 +272,59 @@ class Trial(object):
 
     @property
     def full_marker_data(self):
-        """ Returns the full marker data dict """
+        """Return the full marker data dict."""
         if not self._marker_data:
             self._marker_data = read_data.get_marker_data(self.source,
                                                           self.markers)
         return self._marker_data
 
     def get_model_data(self, var):
+        """Return trial data for a model variable.
+
+        Parameters
+        ----------
+        var : string
+            The model variable name.
+        """
         data = self._get_modelvar(var)
         return self._normalized_frame_data(data)
 
     def get_emg_data(self, ch):
+        """Return trial data for an EMG variable.
+
+        Parameters
+        ----------
+        ch : string
+            The EMG channel name.
+        """
         data = self.emg[ch]
         return self._normalized_analog_data(data)
 
     def get_marker_data(self, marker):
-        """Get marker data for specific marker"""
+        """Return trial data for a given marker.
+
+        Parameters
+        ----------
+        marker : string
+            The marker name.
+        """
         if marker not in self.markers:
             raise GaitDataError('No such marker')
         data = self.full_marker_data[marker]
         return self._normalized_frame_data(data)
 
     def get_forceplate_data(self, nplate, kind='force'):
+        """Return trial data for a forceplate.
+
+        Parameters
+        ----------
+        nplate : int
+            The forceplate index. Plates are numbered starting from 0, i.e.
+            nplate=0 corresponds to Nexus plate 1.
+        kind : str
+            The type of data to return. Can be 'force', 'moment', or 'cop'
+            (center of pressure).
+        """
         if not self._forceplate_data:
             self._forceplate_data = read_data.get_forceplate_data(self.source)
         if nplate < 0 or nplate >= len(self._forceplate_data):
@@ -305,7 +344,7 @@ class Trial(object):
         return read_data.get_accelerometer_data(self.source)
 
     def _get_fp_events(self):
-        """Read the forceplate events or set to empty"""
+        """Read the forceplate events."""
         try:
             fp_info = (eclipse.eclipse_fp_keys(self.eclipse_data) if
                        cfg.trial.use_eclipse_fp_info else None)
@@ -316,9 +355,18 @@ class Trial(object):
                         valid=set(), R_strikes_plate=[], L_strikes_plate=[])
 
     def set_norm_cycle(self, cycle=None):
-        """ Set normalization cycle (int for cycle index or a Gaitcycle
-        instance). None to get unnormalized data. Affects the data returned
-        by getters. """
+        """ Set normalization cycle.
+
+        The get_ methods will return data normalized to the given cycle.
+
+        Parameters
+        ----------
+        cycle : int | Gaitcycle | None
+            The cycle to normalize data to. Can be a Gaitcycle index (obtain
+            cycle by e.g. get_cycles) or a direct index to trial.cycles.
+            If None, do not normalize data to gait cycles.
+        """
+
         if isinstance(cycle, int):
             if cycle >= len(self.cycles) or cycle < 0:
                 raise ValueError('No such cycle')
@@ -330,19 +378,26 @@ class Trial(object):
             self._normalize = None
 
     def get_cycles(self, cyclespec):
-        """ Get specified gait cycles (Gaitcycle instances) from the trial.
-        cyclespec: 'all' | 'forceplate' | Gaitcycle | int | list of int |
-                    list of Gaitcycle | tuple
-        Corresponding to: all cycles | cycles starting with forceplate
-        contact | cycle number | list of cycle numbers | tuple
-        of the above options.
-        In case of tuple, it will return the first condition of the tuple that
-        has corresponding cycles.
+        """ Get specified gait cycles from the trial as Gaitcycle instances.
 
-        Alternatively, dict with keys 'R' and 'L' and values as above, to give
-        separate cyclespecs for left and right.
-        Returns list of gaitcycle instances.
-        XXX: cycle numbering is now zero-based
+        Parameters
+        ----------
+        cyclespec : dict | str | int | tuple | list
+            The cycles to get. Can be dict with 'R' and 'L' keys and
+            specification as values to get context specific cycles. If not a
+            dict, the given specification will be applied to both contexts.
+
+            'all' gets all trial cycles. 'forceplate' gets cycles starting with
+            valid forceplate contact. '1st_forceplate' gets the 1st cycle with
+            valid forceplate contact. 'unnormalized' gets a Noncycle that is
+            used as a sentinel for unnormalized data.
+            An int or a list of int gives the specified cycle indices from the
+            trial.
+            A tuple can be used to match conditions one by one. For example,
+            ('forceplate', 0) would return forceplate cycles if any, and the
+            first cycle in case there are none.
+
+        Returns list of gaitcycle instances, sorted by starting frame.
         """
         def _filter_cycles(cycles, context, cyclespec):
             """Takes a list of cycles and filters it according to cyclespec,
@@ -385,8 +440,7 @@ class Trial(object):
         return sorted(cycs_ok, key=lambda cyc: cyc.start)
 
     def _get_modelvar(self, var):
-        """ Return (unnormalized) model variable, load and cache data for
-        model if needed """
+        """Return unnormalized data for a model variable."""
         model_ = models.model_from_var(var)
         if not model_:
             raise ValueError('No model found for %s' % var)
@@ -397,7 +451,7 @@ class Trial(object):
         return self._models_data[model_.desc][var]
 
     def _scan_cycles(self):
-        """ Create gait cycle instances based on strike/toeoff markers. """
+        """Create Gaitcycle instances based on trial strike/toeoff markers."""
         # The events marked in the trial marked events need to be matched
         # with detected forceplate events, but may not match exactly, so use
         # a tolerance

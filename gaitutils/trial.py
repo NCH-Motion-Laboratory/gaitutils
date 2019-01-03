@@ -253,24 +253,28 @@ class Trial(object):
             t = self.t_analog
         return t, data
 
-    """WIP"""
-    @property
-    def accelerometer_data(self):
-        # FIXME: caching?
-        return read_data.get_accelerometer_data(self.source)
+    def get_marker_data(self, marker):
+        if marker not in self.markers:
+            raise GaitDataError('No such marker')
+        if not self._marker_data:
+            self._marker_data = read_data.get_marker_data(self.source,
+                                                          self.markers)
+        data = self._marker_data[marker]
+        if self._normalize is not None:
+            t, data = self._normalize.normalize(data)
+        else:
+            t = self.t
+        return t, data
 
-    @property
-    def forceplate_data(self):
+    def get_forceplate_data(self):
         if not self._forceplate_data:
             self._forceplate_data = read_data.get_forceplate_data(self.source)
         return self._forceplate_data
 
-    @property
-    def marker_data(self):
-        if not self._marker_data:
-            self._marker_data = read_data.get_marker_data(self.source,
-                                                          self.markers)
-        return self._marker_data
+    """WIP"""
+    def get_accelerometer_data(self):
+        # FIXME: caching?
+        return read_data.get_accelerometer_data(self.source)
 
     def _get_fp_events(self):
         """Read the forceplate events or set to empty"""
@@ -294,7 +298,7 @@ class Trial(object):
             self._normalize = cycle
         elif isinstance(cycle, Gaitcycle):
             self._normalize = cycle
-        elif isinstance(cycle, Noncycle):
+        elif cycle is None or isinstance(cycle, Noncycle):
             self._normalize = None
 
     def get_cycles(self, cyclespec):

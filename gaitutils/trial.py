@@ -290,11 +290,12 @@ class Trial(object):
             data = self._forceplate_data[nplate]['M']
         elif kind == 'cop':
             data = self._forceplate_data[nplate]['CoP']
+        else:
+            raise ValueError('Invalid kind of forceplate data requested')
         return self._normalized_analog_data(data)
 
     """WIP"""
     def get_accelerometer_data(self):
-        # FIXME: caching?
         return read_data.get_accelerometer_data(self.source)
 
     def _get_fp_events(self):

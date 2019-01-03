@@ -129,7 +129,7 @@ class Gaitcycle(object):
         idata = np.array([np.interp(self.tn,
                                     self.t, var[self.start:self.end, k])
                           for k in range(ncols)]).T
-        return self.tn, idata
+        return self.tn, np.squeeze(idata)
 
     def crop_analog(self, var):
         """ Crop analog variable (EMG, forceplate, etc. ) to the

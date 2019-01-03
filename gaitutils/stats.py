@@ -41,8 +41,8 @@ class AvgTrial(Trial):
         self.ncycles = 2
         self.sessionpath = None
 
-    def __getitem__(self, item):
-        return self.t, self._model_data[item]
+    def get_model_data(self, var):
+        return self.t, self._model_data[var]
 
     def set_norm_cycle(self, cycle=None):
         if cycle is None:

@@ -237,27 +237,23 @@ class Trial(object):
                                 self.eclipse_data['DESCRIPTION'],
                                 self.eclipse_data['NOTES'])
 
-    def __getitem__(self, item):
-        """ Get model variable or EMG channel by indexing, normalized
-        according to normalization cycle.
-        FIXME: risk of duplicate names is getting too high, need to change to
-        dedicated getters or include variable type in name (e.g. EMG:LHam)
-        """
-        try:
+    def get_model_data(self, var):
+        data = self._get_modelvar(var)
+        if self._normalize is not None:
+            t, data = self._normalize.normalize(data)
+        else:
             t = self.t
-            data = self._get_modelvar(item)
-            if self._normalize is not None:
-                t, data = self._normalize.normalize(data)
-            return t, data
-        except ValueError:
-            t = self.t_analog
-            data = self.emg[item]
-            if self._normalize is not None:
-                t, data = self._normalize.crop_analog(data)
-            return t, data
+        return t, data
 
-    """ The following properties are WIP and do not implement gait cycle
-    normalization """
+    def get_emg_data(self, ch):
+        data = self.emg[ch]
+        if self._normalize is not None:
+            t, data = self._normalize.crop_analog(data)
+        else:
+            t = self.t_analog
+        return t, data
+
+    """WIP"""
     @property
     def accelerometer_data(self):
         # FIXME: caching?

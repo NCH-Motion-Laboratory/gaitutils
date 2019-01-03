@@ -196,7 +196,7 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                                 model_normaldata_legend = False
 
                         if do_plot:
-                            t, y = trial[var]
+                            t, y = trial.get_model_data(var)
 
                             if trial_linestyles == 'trial':
                                 # trial specific color, left side dashed
@@ -271,15 +271,12 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                     elif (trial.emg.is_channel(var) or var in
                           cfg.emg.channel_labels):
                         do_plot = True
-                        if cyc not in emg_cycles:
-                            do_plot = False
                         # plot only if EMG channel context matches cycle ctxt
                         # FIXME: this assumes that EMG names begin with context
-                        if var[0] != context:
+                        if (var[0] != context or not trial.emg.status_ok(var)
+                            or cyc not in emg_cycles):
                             do_plot = False
-                        t, y = trial[var]
-                        if not trial.emg.status_ok(var):
-                            do_plot = False
+                        t, y = trial.get_emg_data(var)
                             # FIXME: maybe annotate disconnected chans
                             # _no_ticks_or_labels(ax)
                             # _axis_annotate(ax, 'disconnected')

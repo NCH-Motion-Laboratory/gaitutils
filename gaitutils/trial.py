@@ -118,9 +118,16 @@ class Gaitcycle(object):
         return s
 
     def normalize(self, var):
-        """ Normalize frames-based variable var to the cycle.
-        New interpolated x axis is 0..100% of the cycle. """
-        return self.tn, np.interp(self.tn, self.t, var[self.start:self.end])
+        """Normalize (columns of) frames-based variable var to the cycle.
+        New interpolated x axis is 0..100% of the cycle."""
+        # convert 1D arrays to 2D
+        if len(var.shape) == 1:
+            var = var[:, np.newaxis]
+        ncols = var.shape[1]
+        idata = np.array([np.interp(self.tn,
+                                    self.t, var[self.start:self.end, k])
+                          for k in range(ncols)]).T
+        return self.tn, idata
 
     def crop_analog(self, var):
         """ Crop analog variable (EMG, forceplate, etc. ) to the

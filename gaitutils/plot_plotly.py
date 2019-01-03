@@ -158,18 +158,26 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                     if mod:
                         do_plot = True  # FIXME: control flow is clumsy here
 
-                        if var in mod.varnames_noside:
-                            var = context + var
-
                         if cyc not in model_cycles:
                             do_plot = False
 
+                        if var in mod.varnames_noside:
+                            # var context was unspecified, so choose it accding 
+                            # to cycle context
+                            var = context + var
+                        elif var[0] != context:
+                            # var context was specified, and has to match cycle
+                            do_plot = False
+
                         if mod.is_kinetic_var(var) and not cyc.on_forceplate:
+                            # kinetic var cycles are req'd to have valid
+                            # forceplate data
                             do_plot = False
 
                         # plot model normal data first so that its z order
                         # is lowest (otherwise normaldata will mask other
                         # traces on hover)
+                        # only done before first trace of each plot
                         if (isinstance(cyc, Gaitcycle) and trial == trials[0]
                            and context == 'R'):
                             if var[0].upper() in ['L', 'R']:

@@ -528,7 +528,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         completed = False
         while not completed:
             n_complete = len([p for p in procs if p.poll() is not None])
-            prog_txt = '%d of %d files done' % (n_complete, len(procs))
+            prog_txt = ('Converting videos: %d of %d files done'
+                        % (n_complete, len(procs)))
             prog_p = 100 * n_complete / float(len(procs))
             signals.progress.emit(prog_txt, prog_p)
             time.sleep(.25)
@@ -583,7 +584,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog('It looks like the session videos have already '
                               'been converted.')
             return
-        self._convert_vidfiles(vidfiles)
+        prog = ProgressBar('')
+        signals = ProgressSignals()
+        signals.progress.connect(lambda text, p: prog.update(text, p))
+        self._convert_vidfiles(vidfiles, signals)
+        prog.close()
 
     def closeEvent(self, event):
         """ Confirm and close application. """

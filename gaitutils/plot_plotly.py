@@ -43,13 +43,14 @@ def _var_title(var):
 
 
 def _truncate_trialname(trialname):
-    """Remove leading date string from trial names, e.g. 2018_5_12"""
-    tn_split = trialname.split('_')
-    datetxt = '-'.join(tn_split[:3])
+    """Shorten trial name."""
     try:
-        datetime.datetime.strptime(datetxt, '%Y-%m-%d')
-        return '%s' % '_'.join(tn_split[3:])
-    except ValueError:
+        # try to truncate date string of the form yyyy_mm_dd
+        tn_split = trialname.split('_')
+        datetxt = '-'.join(tn_split[:3])
+        d = datetime.datetime.strptime(datetxt, '%Y-%m-%d')
+        return '%d..%s' % (d.year, '_'.join(tn_split[3:]))
+    except ValueError:  # trial was not named as expected
         return trialname
 
 
@@ -102,6 +103,8 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                      model_cycles)
     emg_cycles_ = (cfg.plot.default_emg_cycles if emg_cycles is None else
                    emg_cycles)
+
+    trials = sorted(trials, key=lambda tr: _truncate_trialname(tr.trialname))
 
     for trial in trials:
         trial_color = next(colors)

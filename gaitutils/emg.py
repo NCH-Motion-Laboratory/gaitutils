@@ -71,17 +71,12 @@ class EMG(object):
         compared to broadband signal. Cause is typically disconnected/badly
         connected electrodes.
         TODO: should use multiple-zero IIR notch filter """
-        # FIXME: check for too little signal energy
-        #if y.std() < 1e-10:
-         #   return False
-        # max. relative interference at 50 Hz harmonics
-        emg_max_interference = 20  # maximum relative interference level (dB)
         # bandwidth of broadband signal. should be less than dist between
         # the powerline harmonics
         broadband_bw = 30
         power_bw = 4  # width of power line peak detector (bandpass)
         nharm = 3  # number of harmonics to detect
-        # detect 50 Hz harmonics
+        # detect the 50 Hz harmonics
         linefreqs = (np.arange(nharm+1)+1) * self.linefreq
         intvar = 0
         for f in linefreqs:
@@ -91,7 +86,7 @@ class EMG(object):
         band = [self.linefreq+10, self.linefreq+10+broadband_bw]
         emgvar = np.var(self.filt(y, band)) / broadband_bw
         intrel = 10*np.log10(intvar/emgvar)
-        return intrel < emg_max_interference
+        return intrel < cfg.emg.max_interference
 
     def filt(self, y, passband):
         """ Filter given data y to passband, e.g. [1, 40].

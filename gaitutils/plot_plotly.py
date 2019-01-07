@@ -123,6 +123,7 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
 
             for i, row in enumerate(layout):
                 for j, var in enumerate(row):
+                    new_subplot = True
                     plot_ind = i * ncols + j + 1  # plotly subplot index
                     xaxis = 'xaxis%d' % plot_ind  # name of plotly xaxis
                     yaxis = 'yaxis%d' % plot_ind  # name of plotly yaxis
@@ -176,13 +177,11 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                             # kinetic var cycles are req'd to have valid
                             # forceplate data
                             do_plot = False
-
-                        # plot model normal data first so that its z order
+                            
+                        # plot normaldata before other data so that its z order
                         # is lowest (otherwise normaldata will mask other
-                        # traces on hover)
-                        # only done before first trace of each plot
-                        if (isinstance(cyc, Gaitcycle) and trial == trials[0]
-                           and context == 'R'):
+                        # traces on hover) and it gets the 1st legend entry
+                        if new_subplot:
                             if var[0].upper() in ['L', 'R']:
                                 nvar = var[1:]
                             if model_normaldata and nvar in model_normaldata:
@@ -205,6 +204,7 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                                 fig.append_trace(ntrace, i+1, j+1)
                                 # add to legend only once
                                 model_normaldata_legend = False
+                                new_subplot = False
 
                         if do_plot:
                             t, y = trial.get_model_data(var)

@@ -15,6 +15,7 @@ import datetime
 import logging
 
 from gaitutils import models, cfg
+from gaitutils.envutils import GaitDataError
 from gaitutils.trial import Gaitcycle, Noncycle
 
 
@@ -71,7 +72,7 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
     global _plot_cache
 
     if not trials:
-        raise ValueError('No data')
+        raise GaitDataError('No trials')
 
     # configurabe opts (here for now)
     label_fontsize = 18  # x, y labels
@@ -79,10 +80,10 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
 
     nrows = len(layout)
     if nrows == 0:
-        raise ValueError('Empty layout')
+        raise GaitDataError('Empty layout')
     ncols = len(layout[0])
     if ncols == 0:
-        raise ValueError('Empty layout')
+        raise GaitDataError('Empty layout')
 
     if len(trials) > len(plotly.colors.DEFAULT_PLOTLY_COLORS):
         logger.warning('Not enough colors for plot')
@@ -112,10 +113,14 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
         emg_cycles = trial.get_cycles(emg_cycles_)
         allcycles = model_cycles + emg_cycles
 
+        if not allcycles:
+            raise GaitDataError('Trial %s has no cycles of specified type' %
+                                trial.trialname)
+
         is_unnormalized = any([isinstance(cyc, Noncycle) for cyc in allcycles])
         if (is_unnormalized and
            any([isinstance(cyc, Gaitcycle) for cyc in allcycles])):
-                raise ValueError('Cannot mix normalized and unnormalized data')
+                raise GaitDataError('Cannot mix normalized and unnormalized data')
 
         for cyc in allcycles:
             trial.set_norm_cycle(cyc)
@@ -123,7 +128,6 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
 
             for i, row in enumerate(layout):
                 for j, var in enumerate(row):
-                    new_subplot = True
                     plot_ind = i * ncols + j + 1  # plotly subplot index
                     xaxis = 'xaxis%d' % plot_ind  # name of plotly xaxis
                     yaxis = 'yaxis%d' % plot_ind  # name of plotly yaxis
@@ -177,11 +181,11 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                             # kinetic var cycles are req'd to have valid
                             # forceplate data
                             do_plot = False
-                            
+
                         # plot normaldata before other data so that its z order
                         # is lowest (otherwise normaldata will mask other
                         # traces on hover) and it gets the 1st legend entry
-                        if new_subplot:
+                        if trial == trials[0] and cyc == allcycles[0]:
                             if var[0].upper() in ['L', 'R']:
                                 nvar = var[1:]
                             if model_normaldata and nvar in model_normaldata:
@@ -196,7 +200,7 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                                 ntrace = _plotly_fill_between(normalx,
                                                               ndata[:, 0],
                                                               ndata[:, 1],
-                                                              fillcolor='rgba(100, 100, 100, 0.1)',
+                                                              fillcolor='rgba(100, 100, 100, 0.2)',
                                                               name='Norm.',
                                                               legendgroup='Norm.',
                                                               showlegend=model_normaldata_legend,

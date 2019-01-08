@@ -418,6 +418,9 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
 
     # create the app
     app = dash.Dash(__name__)
+    # use local packaged versions of JavaScript libs etc. (no internet needed)
+    app.css.config.serve_locally = True
+    app.scripts.config.serve_locally = True
 
     # this is for generating the classnames in the CSS
     num2words = {1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five',

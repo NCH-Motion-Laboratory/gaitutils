@@ -32,6 +32,12 @@
     z-index: 1002;
 }*/
 
+/* local (gaitutils specific) css additions */
+/* disable the undo button */
+._dash-undo-redo {
+  display: none;
+}
+
 /* Grid
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 .container {

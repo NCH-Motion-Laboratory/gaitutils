@@ -417,7 +417,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
         return html.Div(items, style={'height': '80vh'})
 
     # create the app
-    app = dash.Dash()
+    app = dash.Dash(__name__)
 
     # this is for generating the classnames in the CSS
     num2words = {1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five',
@@ -521,11 +521,5 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
         logger.debug('Received shutdown request...')
         _shutdown_server()
         return 'Server shutting down...'
-
-    # the 12-column external css
-    # FIXME: local copy?
-    app.css.append_css({
-        'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'
-    })
 
     return app

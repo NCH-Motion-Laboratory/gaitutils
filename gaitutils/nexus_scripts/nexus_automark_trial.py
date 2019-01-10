@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 
-Run automark for single trial.
+Run automark for single Nexus trial. Events are restricted to ROI.
 
 Note: event detection is less accurate compared to running autoprocess for the
 whole session, since here we cannot use statistics for velocity thresholding.
@@ -20,18 +20,17 @@ from gaitutils import nexus, utils, read_data, cfg
 def automark_single(plot=False):
 
     vicon = nexus.viconnexus()
+    roi = vicon.GetTrialRegionOfInterest()
     vicon.ClearAllEvents()
 
-    # TODO: might want to use Eclipse forceplate info also here
     foot_markers = (cfg.autoproc.left_foot_markers +
                     cfg.autoproc.right_foot_markers)
     mkrs = foot_markers + cfg.autoproc.pelvis_markers
     mkrdata = read_data.get_marker_data(vicon, mkrs, ignore_missing=True)
-    fpe = utils.detect_forceplate_events(vicon, mkrdata)
-    vel = utils.get_foot_contact_velocity(mkrdata, fpe)
-
-    utils.automark_events(vicon, vel_thresholds=vel,
-                          fp_events=fpe, restrict_to_roi=True, plot=plot)
+    fpe = utils.detect_forceplate_events(vicon, mkrdata, roi=roi)
+    vel = utils.get_foot_contact_velocity(mkrdata, fpe, roi=roi)
+    utils.automark_events(vicon, vel_thresholds=vel, fp_events=fpe, roi=roi,
+                          plot=plot)
 
 
 if __name__ == '__main__':

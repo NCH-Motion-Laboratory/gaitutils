@@ -55,17 +55,15 @@ def avg_markerdata(mkrdata, markers, var_type='_P', roi=None):
     n_ok = 0
     for marker in markers:
         gap_frames = mkrdata[marker+'_gaps']
-        #logger.debug('marker %s' % marker)
-        #logger.debug('roi %s' % roi_frames)
-        #logger.debug('gaps %s' % gap_frames)
         if np.intersect1d(roi_frames, gap_frames).size > 0:
-            logger.debug('averager: skipping marker %s with gaps' % marker)
+            logger.warning('averager: skipping marker %s with gaps' % marker)
             continue
         else:
             mP += mkrdata[marker+var_type]
             n_ok += 1
     if n_ok == 0:
-        raise GaitDataError('No acceptable markers')
+        raise GaitDataError('All markers have gaps in the region of '
+                            ' interest: %s' % markers)
     else:
         return mP / n_ok
 
@@ -142,14 +140,14 @@ def butter_filt(data, passband, sfreq, bord=5):
     return signal.filtfilt(b, a, data)
 
 
-def get_foot_contact_velocity(mkrdata, fp_events, medians=True):
+def get_foot_contact_velocity(mkrdata, fp_events, medians=True, roi=None):
     """ Return foot velocities during forceplate strike/toeoff frames.
     fp_events is from detect_forceplate_events()
     If medians=True, return median values. """
     results = dict()
     for context, markers in zip(('R', 'L'), [cfg.autoproc.right_foot_markers,
                                 cfg.autoproc.left_foot_markers]):
-        footctrv_ = avg_markerdata(mkrdata, markers, var_type='_V')
+        footctrv_ = avg_markerdata(mkrdata, markers, var_type='_V', roi=roi)
         footctrv = np.linalg.norm(footctrv_, axis=1)
         strikes = fp_events[context+'_strikes']
         toeoffs = fp_events[context+'_toeoffs']
@@ -221,7 +219,7 @@ def _get_foot_points(mkrdata, context, footlen=None):
             'toe': foot_end}
 
 
-def _leading_foot(mkrdata):
+def _leading_foot(mkrdata, roi=None):
     """Determine which foot is leading (ahead in the direction of gait).
     Returns n-length list of 'R' or 'L' correspondingly (n = number of
     frames). Gaps are indicated as None. mkrdata must include foot and
@@ -230,12 +228,12 @@ def _leading_foot(mkrdata):
     if 'SACR' in mkrdata:
         mkr_rear = mkrdata['SACR_P']
     else:
-        mkr_rear = avg_markerdata(mkrdata, ['RPSI', 'LPSI'])
+        mkr_rear = avg_markerdata(mkrdata, ['RPSI', 'LPSI'], roi=roi)
     # front of pelvis
-    mkr_front = avg_markerdata(mkrdata, ['RASI', 'LASI'])
+    mkr_front = avg_markerdata(mkrdata, ['RASI', 'LASI'], roi=roi)
     pVn = _normalize(mkr_front - mkr_rear)  # vec pelvis -> direction of gait
-    lfoot = avg_markerdata(mkrdata, cfg.autoproc.left_foot_markers)
-    rfoot = avg_markerdata(mkrdata, cfg.autoproc.right_foot_markers)
+    lfoot = avg_markerdata(mkrdata, cfg.autoproc.left_foot_markers, roi=roi)
+    rfoot = avg_markerdata(mkrdata, cfg.autoproc.right_foot_markers, roi=roi)
     lV = lfoot - mkr_rear
     rV = rfoot - mkr_rear
     lproj = np.sum(lV*pVn, axis=1)
@@ -270,7 +268,8 @@ def _point_in_poly(poly, pt):
     return p.contains_point(pt)
 
 
-def detect_forceplate_events(source, mkrdata=None, fp_info=None):
+def detect_forceplate_events(source, mkrdata=None, fp_info=None,
+                             roi=None):
     """ Detect frames where valid forceplate strikes and toeoffs occur.
     Uses forceplate data and estimated foot shape.
 
@@ -283,6 +282,9 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     from 1 and the value can be 'Auto', 'Left', 'Right' or 'Invalid'.
     Even if Eclipse info is used, foot strike and toeoff frames must be
     determined from forceplate data.
+
+    If roi is given e.g. [100, 300], all marker data checks will be restricted
+    to roi.
     """
     def _foot_plate_check(fpdata, mkrdata, fr0, side, footlen):
         """Helper for foot-plate check. Returns 0, 1, 2 for:
@@ -334,7 +336,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
     bodymass = info['subj_params']['BodyMass']
 
     logger.debug('acquiring gait events')
-    events_0 = automark_events(source, mkrdata=mkrdata, mark=False)
+    events_0 = automark_events(source, mkrdata=mkrdata, mark=False,
+                               roi=roi)
 
     # loop over plates; our internal forceplate index is 0-based
     for plate_ind, fp in enumerate(fpdata):
@@ -405,7 +408,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
             # allows foot to settle for 50 ms after strike
             settle_fr = int(50/1000 * info['framerate'])
             fr0 = strike_fr + settle_fr
-            side = _leading_foot(mkrdata)[fr0]
+            side = _leading_foot(mkrdata, roi=roi)[fr0]
             if side is None:
                 raise GaitDataError('cannot determine leading foot from marker'
                                     ' data')
@@ -461,7 +464,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
 
 
 def automark_events(source, mkrdata=None, events_range=None, fp_events=None,
-                    vel_thresholds=None, restrict_to_roi=False,
+                    vel_thresholds=None, roi=None,
                     start_on_forceplate=False, plot=False, mark=True):
 
     """ Mark events based on velocity thresholding. Absolute thresholds
@@ -483,6 +486,8 @@ def automark_events(source, mkrdata=None, events_range=None, fp_events=None,
     If events_range is specified, the events will be restricted to given
     coordinate range in the principal gait direction.
     E.g. events_range=[-1000, 1000]
+    
+    If roi is specified, events will be restricted to roi.
 
     If start_on_forceplate is True, the first cycle will start on forceplate
     (i.e. events earlier than the first foot strike events in fp_events will
@@ -531,10 +536,10 @@ def automark_events(source, mkrdata=None, events_range=None, fp_events=None,
                                   cfg.autoproc.left_foot_markers +
                                   cfg.autoproc.track_markers)
     rfootctrv_ = avg_markerdata(mkrdata, cfg.autoproc.right_foot_markers,
-                                var_type='_V')
+                                var_type='_V', roi=roi)
     rfootctrv = np.linalg.norm(rfootctrv_, axis=1)
     lfootctrv_ = avg_markerdata(mkrdata, cfg.autoproc.left_foot_markers,
-                                var_type='_V')
+                                var_type='_V', roi=roi)
     lfootctrv = np.linalg.norm(lfootctrv_, axis=1)
     # position data: use ANK marker
     rfootctrP = mkrdata['RANK']
@@ -624,7 +629,7 @@ def automark_events(source, mkrdata=None, events_range=None, fp_events=None,
 
         # select events for which the foot is close enough to center frame
         if events_range:
-            mP = avg_markerdata(mkrdata, cfg.autoproc.track_markers)
+            mP = avg_markerdata(mkrdata, cfg.autoproc.track_markers, roi=roi)
             fwd_dim = principal_movement_direction(mP)
             strike_pos = footctrP[strikes, fwd_dim]
             dist_ok = np.logical_and(strike_pos > events_range[0],
@@ -669,11 +674,7 @@ def automark_events(source, mkrdata=None, events_range=None, fp_events=None,
                                  % strikes[not_ok])
                     strikes = np.delete(strikes, not_ok)
 
-        if restrict_to_roi:
-            if not nexus.is_vicon_instance(source):
-                raise ValueError('ROI supported only for Nexus')
-            vicon = nexus.viconnexus()
-            roi = vicon.GetTrialRegionOfInterest()
+        if roi is not None:
             strikes = np.extract(np.logical_and(roi[0] <= strikes+1,
                                                 strikes+1 <= roi[1]), strikes)
 

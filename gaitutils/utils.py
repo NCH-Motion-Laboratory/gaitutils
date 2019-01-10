@@ -44,14 +44,21 @@ def get_crossing_frame(mP, dim=1, p0=0):
     return ycross
 
 
-def avg_markerdata(mkrdata, markers, var_type='_P'):
-    """ Average marker data for given markers. Markers with gaps are
-    ignored."""
+def avg_markerdata(mkrdata, markers, var_type='_P', roi=None):
+    """ Average marker data.
+    """
     data_shape = mkrdata[markers[0]+var_type].shape
     mP = np.zeros(data_shape)
+    if roi is None:
+        roi = [0, data_shape[0]]
+    roi_frames = np.arange(roi[0], roi[1])
     n_ok = 0
     for marker in markers:
-        if mkrdata[marker+'_gaps'].size > 0:
+        gap_frames = mkrdata[marker+'_gaps']
+        #logger.debug('marker %s' % marker)
+        #logger.debug('roi %s' % roi_frames)
+        #logger.debug('gaps %s' % gap_frames)
+        if np.intersect1d(roi_frames, gap_frames).size > 0:
             logger.debug('averager: skipping marker %s with gaps' % marker)
             continue
         else:

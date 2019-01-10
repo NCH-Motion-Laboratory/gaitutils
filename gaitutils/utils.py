@@ -120,26 +120,6 @@ def principal_movement_direction(mP):
     return np.argmax(np.var(mP[inds_ok], axis=0))
 
 
-def butter_filt(data, passband, sfreq, bord=5):
-    """ Design a filter and forward-backward filter given data to
-    passband, e.g. [1, 40].
-    Passband is given in Hz. None for no filtering.
-    Implemented as pure lowpass/highpass, if highpass/lowpass freq == 0
-    """
-    if passband is None:
-        return data
-    elif len(passband) != 2:
-        raise ValueError('Passband must be a vector of length 2')
-    passbandn = 2 * np.array(passband) / sfreq
-    if passbandn[0] == 0:  # lowpass
-        b, a = signal.butter(bord, passbandn[1], btype='lowpass')
-    elif passbandn[1] == 0:  # highpass
-        b, a = signal.butter(bord, passbandn[1], btype='highpass')
-    else:  # bandpass
-        b, a = signal.butter(bord, passbandn, btype='bandpass')
-    return signal.filtfilt(b, a, data)
-
-
 def get_foot_contact_velocity(mkrdata, fp_events, medians=True, roi=None):
     """ Return foot velocities during forceplate strike/toeoff frames.
     fp_events is from detect_forceplate_events()

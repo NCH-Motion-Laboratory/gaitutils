@@ -312,16 +312,6 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None):
                 cfg.autoproc.pelvis_markers)
         mkrdata = read_data.get_marker_data(source, mkrs, ignore_missing=True)
 
-    # FIXME: should get rid of fwd_dir since it implies coord frame orthogonal
-    # to forceplates
-    try:
-        mP = avg_markerdata(mkrdata, cfg.autoproc.track_markers)
-    except KeyError:
-        raise GaitDataError('cannot read tracking marker data')
-    fwd_dir = principal_movement_direction(mP)
-    logger.debug('gait forward direction seems to be %s' %
-                 {0: 'x', 1: 'y', 2: 'z'}[fwd_dir])
-
     footlen = info['subj_params']['FootLen']
     rfootlen = info['subj_params']['RFootLen']
     lfootlen = info['subj_params']['LFootLen']

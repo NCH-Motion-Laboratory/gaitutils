@@ -164,7 +164,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
             _fail(trial, 'label_failure')
             continue
 
-        # check markers for remaining gaps; leading/trailing gaps are ignored
+        # fail on any gaps in trial (off by default)
         gaps_found = False
         if cfg.autoproc.fail_on_gaps:
             for marker in set(allmarkers) - set(cfg.autoproc.ignore_markers):
@@ -176,7 +176,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
                 _fail(trial, 'gaps')
                 continue
 
-        # plug-in gait labelling sanity checks
+        # plug-in gait checks
         if not utils.is_plugingait_set(mkrdata):
             logger.warning('marker set does not correspond to Plug-in Gait')
             _fail(trial, 'label_failure')
@@ -186,6 +186,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
                 _fail(trial, 'label_failure')
                 continue
 
+        # get subject position by tracking markers
         try:
             subj_pos = utils.avg_markerdata(mkrdata,
                                             cfg.autoproc.track_markers)
@@ -193,8 +194,9 @@ def _do_autoproc(enffiles, update_eclipse=True):
             logger.debug('gaps in tracking markers')
             _fail(trial, 'label_failure')
             continue
-
         gait_dim = utils.principal_movement_direction(subj_pos)
+        # our roi according to events_range
+        # this is not the same as Nexus ROI, which is unset at this point
         roi = _range_to_roi(subj_pos, gait_dim, cfg.autoproc.events_range)
         logger.debug('events range corresponds to frames %d-%d' % roi)
 
@@ -209,8 +211,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
                            'to gaps')
             _fail(trial, 'gaps')
             continue
+        # get foot velocity info for all events (do not reduce to median)
         try:
-            # get foot velocity info for all events (do not reduce to median)
             vel = utils.get_foot_contact_velocity(mkrdata, fpev, medians=False,
                                                   roi=roi)
         except GaitDataError:

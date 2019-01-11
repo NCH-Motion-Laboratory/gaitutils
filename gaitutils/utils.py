@@ -337,7 +337,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None,
             elif ecl_valid == 'Auto':
                 detect_foot = True
             else:
-                raise Exception('unexpected Eclipse forceplate field')
+                raise GaitDataError('unexpected Eclipse forceplate field')
         else:
             logger.debug('not using Eclipse forceplate info')
             valid = None

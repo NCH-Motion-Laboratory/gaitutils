@@ -81,6 +81,15 @@ def _do_autoproc(enffiles, update_eclipse=True):
         trial['description'] = fail_desc
         _save_trial()
 
+    def _range_to_roi(subj_pos, gait_dim, mov_range):
+        """Try to determine ROI (in frames) from movement range"""
+        subj_pos1 = subj_pos[:, [gait_dim]]
+        # find non-gap frames where we are inside movement range
+        dist_ok = np.where((subj_pos1 >= mov_range[0]) &
+                           (subj_pos1 <= mov_range[1]) &
+                           (subj_pos1 != 0.0))[0]
+        return min(dist_ok), max(dist_ok)
+
     # used to store stats about foot velocity
     foot_vel = {'L_strike': np.array([]), 'R_strike': np.array([]),
                 'L_toeoff': np.array([]), 'R_toeoff': np.array([])}
@@ -177,20 +186,36 @@ def _do_autoproc(enffiles, update_eclipse=True):
                 _fail(trial, 'label_failure')
                 continue
 
-        subj_pos = utils.avg_markerdata(mkrdata, cfg.autoproc.track_markers)
-        gait_dim = utils.principal_movement_direction(subj_pos)
-
         try:
-            # check forceplate data
-            fp_info = (eclipse.eclipse_fp_keys(edata) if
-                       cfg.autoproc.use_eclipse_fp_info else None)
-            fpev = utils.detect_forceplate_events(vicon, mkrdata,
-                                                  fp_info=fp_info)
-
-            # get foot velocity info for all events (do not reduce to median)
-            vel = utils.get_foot_contact_velocity(mkrdata, fpev, medians=False)
+            subj_pos = utils.avg_markerdata(mkrdata,
+                                            cfg.autoproc.track_markers)
         except GaitDataError:
-            logger.warning('cannot use foot marker data due to gaps')
+            logger.debug('gaps in tracking markers')
+            _fail(trial, 'label_failure')
+            continue
+
+        gait_dim = utils.principal_movement_direction(subj_pos)
+        roi = _range_to_roi(subj_pos, gait_dim, cfg.autoproc.events_range)
+        logger.debug('events range corresponds to frames %d-%d' % roi)
+
+        # check forceplate data
+        fp_info = (eclipse.eclipse_fp_keys(edata) if
+                   cfg.autoproc.use_eclipse_fp_info else None)
+        try:
+            fpev = utils.detect_forceplate_events(vicon, mkrdata,
+                                                  fp_info=fp_info, roi=roi)
+        except GaitDataError:
+            logger.warning('cannot determine forceplate events, possibly due '
+                           'to gaps')
+            _fail(trial, 'gaps')
+            continue
+        try:
+            # get foot velocity info for all events (do not reduce to median)
+            vel = utils.get_foot_contact_velocity(mkrdata, fpev, medians=False,
+                                                  roi=roi)
+        except GaitDataError:
+            logger.warning('cannot determine foot velocity, possibly due to '
+                           'gaps')
             _fail(trial, 'gaps')
             continue
 
@@ -267,7 +292,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
                                   fp_events=trial['fpev'], plot=False,
                                   events_range=cfg.autoproc.events_range,
                                   start_on_forceplate=cfg.autoproc.
-                                  start_on_forceplate)
+                                  start_on_forceplate, roi=roi)
         except GaitDataError:  # cannot automark
             eclipse_str = '%s,%s' % (trial['description'],
                                      cfg.autoproc.enf_descriptions

@@ -307,7 +307,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None,
                      (rfootlen, lfootlen))
     else:
         logger.debug('foot length parameter not set')
-    bodymass = info['subj_params']['BodyMass']
+    bodymass = info['subj_params']['Bodymass']
 
     logger.debug('acquiring gait events')
     events_0 = automark_events(source, mkrdata=mkrdata, mark=False,

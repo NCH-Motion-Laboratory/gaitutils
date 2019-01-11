@@ -63,6 +63,7 @@ def avg_markerdata(mkrdata, markers, var_type='_P', roi=None):
     else:
         return mP / n_ok
 
+
 # FIXME: marker sets could be moved into models.py?
 def _pig_markerset(fullbody=True, sacr=True):
     """ PiG marker set as dict (empty values) """
@@ -204,23 +205,16 @@ def _leading_foot(mkrdata, roi=None):
     Returns n-length list of 'R' or 'L' correspondingly (n = number of
     frames). Gaps are indicated as None. mkrdata must include foot and
     pelvis markers"""
-    # rear of pelvis
-    if 'SACR' in mkrdata:
-        mkr_rear = mkrdata['SACR_P']
-    else:
-        mkr_rear = avg_markerdata(mkrdata, ['RPSI', 'LPSI'], roi=roi)
-    # front of pelvis
-    mkr_front = avg_markerdata(mkrdata, ['RASI', 'LASI'], roi=roi)
-    pVn = _normalize(mkr_front - mkr_rear)  # vec pelvis -> direction of gait
-    lfoot = avg_markerdata(mkrdata, cfg.autoproc.left_foot_markers, roi=roi)
-    rfoot = avg_markerdata(mkrdata, cfg.autoproc.right_foot_markers, roi=roi)
-    lV = lfoot - mkr_rear
-    rV = rfoot - mkr_rear
-    lproj = np.sum(lV*pVn, axis=1)
-    rproj = np.sum(rV*pVn, axis=1)
-    # ugly but the best alternative so far
-    return [None if (np.isnan(l) or np.isnan(r)) else ('R' if r >= l else 'L')
-            for r, l in zip(rproj, lproj)]
+    subj_pos = avg_markerdata(mkrdata, cfg.autoproc.track_markers)
+    gait_dim = principal_movement_direction(subj_pos)
+    gait_dir = np.median(np.diff(subj_pos, axis=0), axis=0)[gait_dim]
+    lfoot = avg_markerdata(mkrdata, cfg.autoproc.left_foot_markers,
+                           roi=roi)[:, gait_dim]
+    rfoot = avg_markerdata(mkrdata, cfg.autoproc.right_foot_markers,
+                           roi=roi)[:, gait_dim]
+    cmpfun = np.greater if gait_dir > 0 else np.less
+    return [None if R == 0.0 or L == 0.0 else ('R' if cmpfun(R, L) else 'L')
+            for R, L in zip(rfoot, lfoot)]
 
 
 def _trial_median_velocity(source):

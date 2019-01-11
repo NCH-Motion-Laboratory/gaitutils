@@ -63,7 +63,7 @@ def avg_markerdata(mkrdata, markers, var_type='_P', roi=None):
     else:
         return mP / n_ok
 
-
+# FIXME: marker sets could be moved into models.py?
 def _pig_markerset(fullbody=True, sacr=True):
     """ PiG marker set as dict (empty values) """
     _pig = ['LASI', 'RASI', 'LTHI', 'LKNE', 'LTIB', 'LANK', 'LHEE',
@@ -75,6 +75,10 @@ def _pig_markerset(fullbody=True, sacr=True):
     # add pelvis posterior markers; SACR or RPSI/LPSI
     _pig.extend(['SACR'] if sacr else ['RPSI', 'LPSI'])
     return {mkr: None for mkr in _pig}
+
+
+def _pig_pelvis_markers():
+    return ['RASI', 'RPSI', 'LASI', 'LPSI', 'SACR']
 
 
 def is_plugingait_set(mkrdata):
@@ -294,7 +298,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None,
     if mkrdata is None:
         mkrs = (cfg.autoproc.right_foot_markers +
                 cfg.autoproc.left_foot_markers +
-                cfg.autoproc.pelvis_markers)
+                _pig_pelvis_markers())
         mkrdata = read_data.get_marker_data(source, mkrs, ignore_missing=True)
 
     footlen = info['subj_params']['FootLen']

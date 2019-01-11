@@ -25,7 +25,7 @@ def automark_single(plot=False):
 
     foot_markers = (cfg.autoproc.left_foot_markers +
                     cfg.autoproc.right_foot_markers)
-    mkrs = foot_markers + cfg.autoproc.pelvis_markers
+    mkrs = foot_markers + utils._pig_pelvis_markers()
     mkrdata = read_data.get_marker_data(vicon, mkrs, ignore_missing=True)
     fpe = utils.detect_forceplate_events(vicon, mkrdata, roi=roi)
     vel = utils.get_foot_contact_velocity(mkrdata, fpe, roi=roi)

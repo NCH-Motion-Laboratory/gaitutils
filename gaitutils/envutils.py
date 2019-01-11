@@ -14,10 +14,7 @@ from .guiutils import error_exit
 
 
 class GaitDataError(Exception):
-    """ Exception specific to erroneous or unexpected gait data """
-    def __init__(self, arg):
-        super(self.__class__, self).__init__(self, arg)
-        self.gaiterror = arg
+    pass
 
 
 def register_gui_exception_handler(full_traceback=False):

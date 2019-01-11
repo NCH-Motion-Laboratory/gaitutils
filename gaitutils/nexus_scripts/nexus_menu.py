@@ -57,7 +57,7 @@ def _exception_msg(e):
     """Return text representation of exception e"""
     # for our own error class, we know that a neat message is there
     if isinstance(e, GaitDataError):
-        err_msg = e.gaiterror
+        err_msg = e.message
     else:  # otherwise, we have no idea, so use generic repr()
         err_msg = repr(e)
     return 'There was an error running the operation. Details:\n%s' % err_msg

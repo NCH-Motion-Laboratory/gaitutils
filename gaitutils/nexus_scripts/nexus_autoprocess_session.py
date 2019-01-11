@@ -137,11 +137,6 @@ def _do_autoproc(enffiles, update_eclipse=True):
                 trial['description'] = 'skipped'
                 continue
 
-        # reset ROI before operations
-        if cfg.autoproc.reset_roi and nexus_ver >= 2.5:
-            (fstart, fend) = vicon.GetTrialRange()
-            vicon.SetTrialRegionOfInterest(fstart, fend)
-
         # try to run preprocessing pipelines
         _run_pipelines(cfg.autoproc.pre_pipelines)
 

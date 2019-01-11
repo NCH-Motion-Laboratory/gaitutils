@@ -56,14 +56,10 @@ def avg_markerdata(mkrdata, markers, var_type='_P', roi=None):
     for marker in markers:
         gap_frames = mkrdata[marker+'_gaps']
         if np.intersect1d(roi_frames, gap_frames).size > 0:
-            logger.warning('averager: skipping marker %s with gaps' % marker)
-            continue
+            raise GaitDataError('Averaging data for %s has gaps' % marker)
         else:
             mP += mkrdata[marker+var_type]
             n_ok += 1
-    if n_ok == 0:
-        raise GaitDataError('All markers have gaps in the region of '
-                            ' interest: %s' % markers)
     else:
         return mP / n_ok
 

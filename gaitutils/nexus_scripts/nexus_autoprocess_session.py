@@ -182,6 +182,9 @@ def _do_autoproc(enffiles, update_eclipse=True):
                 _fail(trial, 'label_failure')
                 continue
 
+        subj_pos = utils.avg_markerdata(mkrdata, cfg.autoproc.track_markers)
+        gait_dim = utils.principal_movement_direction(subj_pos)
+
         try:
             # check forceplate data
             fp_info = (eclipse.eclipse_fp_keys(edata) if
@@ -214,8 +217,6 @@ def _do_autoproc(enffiles, update_eclipse=True):
         eclipse_str += ','
 
         # main direction in lab frame (1,2,3 for x,y,z)
-        subj_pos = utils.avg_markerdata(mkrdata, cfg.autoproc.track_markers)
-        gait_dim = utils.principal_movement_direction(subj_pos)
         inds_ok = np.where(np.any(subj_pos, axis=1))  # ignore gaps
         subj_pos_ = subj_pos[inds_ok]
         # +1/-1 for forward/backward (coord increase / decrease)

@@ -17,7 +17,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 from collections import defaultdict
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
-                       numutils, normaldata, sessionutils, nexus)
+                       numutils, normaldata, sessionutils, nexus,
+                       GaitDataError)
 
 from gaitutils.nexus_scripts import (nexus_kin_consistency,
                                      nexus_emg_consistency,
@@ -82,7 +83,7 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
 
     tagged_trials = sessionutils.find_tagged(sessionpath)
     if not tagged_trials:
-        raise ValueError('No marked trials found in session directory')
+        raise GaitDataError('No marked trials found in session directory')
     session_t = sessionutils.get_session_date(sessionpath)
     logger.debug('session timestamp: %s', session_t)
     age = numutils.age_from_hetu(hetu, session_t) if hetu else None

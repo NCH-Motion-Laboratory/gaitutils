@@ -14,8 +14,12 @@ section in config for options.
 
 -write Eclipse info
 
-NOTES:
--ROI operations only work for Nexus >= 2.5
+GAP HANDLING:
+    If cfg.autoproc.fail_on_gaps is set, the processing will fail on ANY gaps.
+    Otherwise, a ROI (region of interest) will be determined based on
+    cfg.autoproc.events_range. Gaps outside the ROI will not affect processing.
+    However the tracking markers (cfg.autoproc.track_markers) are used to
+    determine the ROI and they may not have any gaps anywhere.
 
 @author: Jussi (jnu@iki.fi)
 """

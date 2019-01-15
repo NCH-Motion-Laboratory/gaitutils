@@ -126,7 +126,7 @@ if not isinstance(cfg.plot.emg_yscale, float):
     print('WARNING: emg_yscale was changed to float, using %g' % ysc)
     cfg['plot']['emg_yscale'] = str(cfg.plot.emg_yscale[1])
 
-if cfg.general.normaldata_files is None:
+if cfg.general.normaldata_files == 'default':
     fn = resource_filename('gaitutils', 'data/normal.gcd')
     cfg['general']['normaldata_files'] = repr([fn])
 

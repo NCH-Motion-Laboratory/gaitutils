@@ -67,6 +67,10 @@ class GaitModel(object):
         self.gcd_normaldata_map = dict()
         # y axis labels for plotting the variables (optional)
         self.ylabels = dict()
+        # callable to return whether var requires valid forceplate contact
+        self.is_kinetic_var = lambda var: False
+        # callable to return whether var read may fail
+        self.is_optional_var = lambda var: False
 
 
 """ Create models """
@@ -116,7 +120,6 @@ pig_upperbody.varlabels = _dict_with_side(pig_upperbody.varlabels_noside)
 pig_upperbody.varnames = pig_upperbody.varlabels.keys()
 pig_upperbody.varnames_noside = pig_upperbody.varlabels_noside.keys()
 
-pig_upperbody.is_kinetic_var = lambda varname: False
 models_all.append(pig_upperbody)
 
 
@@ -184,8 +187,6 @@ pig_lowerbody.ylabels = _dict_with_side({
                          'PelvisAnglesX': 'Pst%s($^\\circ$)%sAnt' % spacer,
                          'PelvisAnglesY': 'Dwn%s($^\\circ$)%sUp' % spacer,
                          'PelvisAnglesZ': 'Bak%s($^\\circ$)%sFor' % spacer})
-
-pig_lowerbody.is_kinetic_var = lambda varname: False
 
 models_all.append(pig_lowerbody)
 
@@ -263,6 +264,7 @@ pig_lowerbody_kinetics.ylabels = _dict_with_side({
                          'NormalisedGRFZ': 'N/kg'})
 
 pig_lowerbody_kinetics.is_kinetic_var = (lambda varname: True)
+pig_lowerbody_kinetics.is_optional_var = lambda varname: 'GRF' in varname
 
 models_all.append(pig_lowerbody_kinetics)
 
@@ -323,8 +325,6 @@ musclelen.varlabels = _dict_with_side(musclelen.varlabels_noside)
 musclelen.read_vars = musclelen.varlabels.keys()
 musclelen.varnames = musclelen.read_vars
 musclelen.varnames_noside = musclelen.varlabels_noside.keys()
-
-musclelen.is_kinetic_var = lambda varname: False
 
 musclelen.ylabels = {}
 for var_ in musclelen.varnames:

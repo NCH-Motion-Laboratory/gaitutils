@@ -202,7 +202,8 @@ pig_lowerbody_kinetics.read_vars = _list_with_side(['HipMoment',
                                                     'AnkleMoment',
                                                     'HipPower',
                                                     'KneePower',
-                                                    'AnklePower'])
+                                                    'AnklePower',
+                                                    'NormalisedGRF'])
 
 pig_lowerbody_kinetics.varlabels_noside = {
                              'AnkleMomentX': 'Ankle dors/plan moment',
@@ -216,7 +217,10 @@ pig_lowerbody_kinetics.varlabels_noside = {
                              'KneeMomentX': 'Knee flex/ext moment',
                              'KneeMomentY': 'Knee ab/add moment',
                              'KneeMomentZ': 'Knee rotation moment',
-                             'KneePowerZ': 'Knee power'}
+                             'KneePowerZ': 'Knee power',
+                             'NormalisedGRFX': 'Norm. GRF (x)',
+                             'NormalisedGRFY': 'Norm. GRF (y)',
+                             'NormalisedGRFZ': 'Norm. GRF (z)'}
 
 pig_lowerbody_kinetics.varlabels = _dict_with_side(pig_lowerbody_kinetics.
                                                    varlabels_noside)
@@ -253,7 +257,10 @@ pig_lowerbody_kinetics.ylabels = _dict_with_side({
                          'KneeMomentX': 'Iflex%sNm/kg%sIext' % spacer,
                          'KneeMomentY': 'Ivar%sNm/kg%sIvalg' % spacer,
                          'KneeMomentZ': 'Iint%sNm/kg%sIext' % spacer,
-                         'KneePowerZ': 'Abs%sW/kg%sGen' % spacer})
+                         'KneePowerZ': 'Abs%sW/kg%sGen' % spacer,
+                         'NormalisedGRFX': 'N/kg',
+                         'NormalisedGRFY': 'N/kg',
+                         'NormalisedGRFZ': 'N/kg'})
 
 pig_lowerbody_kinetics.is_kinetic_var = (lambda varname: True)
 

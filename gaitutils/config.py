@@ -132,6 +132,6 @@ if cfg.general.normaldata_files == 'default':
 
 if cfg.general.videoconv_path == 'default':
     fn = resource_filename('gaitutils', 'thirdparty/ffmpeg2theora.exe')
-    cfg['general']['videoconv_path'] = repr([fn])
+    cfg['general']['videoconv_path'] = repr(fn)
 
 sys.stdout.flush()  # make sure that warnings are printed out

@@ -3,4 +3,4 @@ include gaitutils/default.cfg
 recursive-include gaitutils/nexus_scripts *.ui
 recursive-include gaitutils/assets *
 recursive-include gaitutils/data *
-recursive-include thirdparty *
+recursive-include gaitutils/thirdparty *

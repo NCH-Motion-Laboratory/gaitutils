@@ -206,6 +206,7 @@ def _leading_foot(mkrdata, roi=None):
     frames). Gaps are indicated as None. mkrdata must include foot and
     pelvis markers"""
     subj_pos = avg_markerdata(mkrdata, cfg.autoproc.track_markers)
+    # FIXME: should not use a single dim here
     gait_dim = principal_movement_direction(subj_pos)
     gait_dir = np.median(np.diff(subj_pos, axis=0), axis=0)[gait_dim]
     lfoot = avg_markerdata(mkrdata, cfg.autoproc.left_foot_markers,
@@ -292,8 +293,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None,
     if mkrdata is None:
         mkrs = (cfg.autoproc.right_foot_markers +
                 cfg.autoproc.left_foot_markers +
-                _pig_pelvis_markers())
-        mkrdata = read_data.get_marker_data(source, mkrs, ignore_missing=True)
+                cfg.autoproc.track_markers)
+        mkrdata = read_data.get_marker_data(source, mkrs)
 
     footlen = info['subj_params']['FootLen']
     rfootlen = info['subj_params']['RFootLen']
@@ -504,17 +505,19 @@ def automark_events(source, mkrdata=None, events_range=None, fp_events=None,
         vel_thresholds = {'L_strike': None, 'L_toeoff': None,
                           'R_strike': None, 'R_toeoff': None}
 
-    # get foot center positions and velocities
     if mkrdata is None:
-        mkrdata = get_marker_data(source, cfg.autoproc.right_foot_markers +
-                                  cfg.autoproc.left_foot_markers +
-                                  cfg.autoproc.track_markers)
+        reqd_markers = (cfg.autoproc.right_foot_markers +
+                        cfg.autoproc.left_foot_markers +
+                        cfg.autoproc.track_markers)
+        mkrdata = get_marker_data(source, reqd_markers)
+
     rfootctrv_ = avg_markerdata(mkrdata, cfg.autoproc.right_foot_markers,
                                 var_type='_V', roi=roi)
     rfootctrv = np.linalg.norm(rfootctrv_, axis=1)
     lfootctrv_ = avg_markerdata(mkrdata, cfg.autoproc.left_foot_markers,
                                 var_type='_V', roi=roi)
     lfootctrv = np.linalg.norm(lfootctrv_, axis=1)
+
     # position data: use ANK marker
     rfootctrP = mkrdata['RANK']
     lfootctrP = mkrdata['LANK']

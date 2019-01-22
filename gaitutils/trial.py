@@ -373,6 +373,7 @@ class Trial(object):
         try:
             fp_info = (eclipse.eclipse_fp_keys(self.eclipse_data) if
                        cfg.trial.use_eclipse_fp_info else None)
+            # FIXME: marker data already read?
             return utils.detect_forceplate_events(self.source, fp_info=fp_info)
         except GaitDataError:
             logger.warning('Could not detect forceplate events')

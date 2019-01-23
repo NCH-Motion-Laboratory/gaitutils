@@ -113,11 +113,14 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
         trial_color = next(colors)
         model_cycles = trial.get_cycles(model_cyclespec)
         emg_cycles = trial.get_cycles(emg_cyclespec)
-        allcycles = model_cycles + emg_cycles
-
+        allcycles = list(set.intersection(set(model_cycles), set(emg_cycles)))
         if not allcycles:
             raise GaitDataError('Trial %s has no cycles of specified type' %
                                 trial.trialname)
+
+        logger.debug('plotting total of %d cycles for %s (%d model, %d EMG)'
+                     % (len(allcycles), trial.trialname, len(model_cycles),
+                        len(emg_cycles)))
 
         is_unnormalized = any([isinstance(cyc, Noncycle) for cyc in allcycles])
         if (is_unnormalized and

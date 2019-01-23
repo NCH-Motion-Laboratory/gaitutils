@@ -264,6 +264,7 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                                 toeoff_marker = go.Scatter(x=t[toeoff:toeoff+1],
                                                            y=y[toeoff:toeoff+1],
                                                            showlegend=False,
+                                                           legendgroup=tracegroup,
                                                            hoverinfo='skip',
                                                            mode='markers',
                                                            marker=marker)

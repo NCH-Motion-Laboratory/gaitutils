@@ -100,17 +100,19 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
     session_linestyles = dict()
     dash_styles = cycle(['solid', 'dash', 'dot', 'dashdot'])
 
-    model_cycles_ = (cfg.plot.default_model_cycles if model_cycles is None else
-                     model_cycles)
-    emg_cycles_ = (cfg.plot.default_emg_cycles if emg_cycles is None else
-                   emg_cycles)
+    # these are the cycle specifications, e.g. 'forceplate'
+    # the cycles
+    model_cyclespec = (cfg.plot.default_model_cycles if model_cycles is None
+                       else model_cycles)
+    emg_cyclespec = (cfg.plot.default_emg_cycles if emg_cycles is None else
+                     emg_cycles)
 
     trials = sorted(trials, key=lambda tr: _truncate_trialname(tr.trialname))
 
     for trial in trials:
         trial_color = next(colors)
-        model_cycles = trial.get_cycles(model_cycles_)
-        emg_cycles = trial.get_cycles(emg_cycles_)
+        model_cycles = trial.get_cycles(model_cyclespec)
+        emg_cycles = trial.get_cycles(emg_cyclespec)
         allcycles = model_cycles + emg_cycles
 
         if not allcycles:

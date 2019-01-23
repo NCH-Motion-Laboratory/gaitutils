@@ -288,7 +288,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     # pick desired single variables from model and append
     pig_singlevars_ = (models.pig_lowerbody.varlabels_noside.items() +
                        models.pig_lowerbody_kinetics.varlabels_noside.items())
-    pig_singlevars = sorted(pig_singlevars_, key=lambda item: item[1]) 
+    pig_singlevars = sorted(pig_singlevars_, key=lambda item: item[1])
     singlevars = OrderedDict([(varlabel, [[var]]) for var, varlabel in
                               pig_singlevars])
     _layouts.update(singlevars)
@@ -353,12 +353,11 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                                             % (len(_layouts)+k),
                                             style={'height': '100%'})
 
-
                 # will be caught and menu item will be empty
                 elif layout == 'disabled':
                     raise ValueError
 
-                else:  # unrecognized layout
+                else:  # unrecognized layout; this is not caught by us
                     raise Exception('Unrecognized layout: %s' % layout)
 
             # regular gaitutils layout
@@ -383,7 +382,6 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             dd_opts_multi_lower.append({'label': label, 'value': label,
                                         'disabled': True})
             continue
-
 
 
     opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)

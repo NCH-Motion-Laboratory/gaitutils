@@ -405,15 +405,23 @@ def get_roi(vicon):
 def get_model_data(vicon, model):
     """ Read model output variables (e.g. Plug-in Gait) """
     modeldata = dict()
+    var_dims = (3, vicon.GetFrameCount())
     subj = get_subjectnames()
     for var in model.read_vars:
         nums, bools = vicon.GetModelOutput(subj, var)
-        if not nums:
-            raise GaitDataError('Cannot read model variable %s. Make sure '
-                                'that the appropriate model has been run.'
-                                % var)
-        # remove singleton dimensions
-        modeldata[var] = np.squeeze(np.array(nums))
+        if nums:
+            data = np.squeeze(np.array(nums))
+        else:
+            if model.is_optional_var(var):
+                logger.info('cannot read optional variable %s, returning nans'
+                            % var)
+                data = np.empty(var_dims)
+                data[:] = np.nan
+            else:
+                raise GaitDataError('Cannot read model variable %s. Make sure '
+                                    'that the appropriate model has been run.'
+                                    % var)
+        modeldata[var] = data
     return modeldata
 
 

@@ -9,11 +9,11 @@ Report related functions
 from __future__ import division
 from builtins import str
 from past.builtins import basestring
+import numpy as np
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
-
 import flask
 from flask import request
 from collections import OrderedDict
@@ -174,6 +174,31 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     trials = sorted(trials, key=lambda tr: tr.eclipse_tag)
     logger.debug('using dynamic trials: %s' % c3ds_all)
 
+    # read some extra data from trials and create supplementary data
+    tibial_torsion = dict()
+    for tr in trials:
+        # read tibial torsion for each trial and make supplementary traces
+        # these will only be shown for KneeAnglesZ (knee rotation) variable
+        tors = dict()
+        tors['R'], tors['L'] = (tr.subj_params['RTibialTorsion'],
+                                tr.subj_params['LTibialTorsion'])
+        if tors['R'] is None or tors['L'] is None:
+            logger.warning('could not read tibial torsion values from %s'
+                           % tr.trialname)
+            continue
+        # FIXME: should set model cycles spec somewhere earlier
+        cycs = tr.get_cycles(cfg.plot.default_model_cycles)
+        for cyc in cycs:
+            tibial_torsion[cyc] = dict()
+            for ctxt in tors:
+                var = ctxt + 'KneeAnglesZ'
+                tibial_torsion[cyc][var] = dict()
+                # x = % of gait cycle
+                tibial_torsion[cyc][var]['t'] = np.arange(101)
+                # static tibial torsion value as function of x
+                tibial_torsion[cyc][var]['data'] = np.ones(101) * tors[ctxt]
+                tibial_torsion[cyc][var]['label'] = 'Tib. tors. (%s)' % ctxt
+
     # load static trials separately
     c3ds_static = list()
     trials_static = list()
@@ -293,6 +318,10 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                               pig_singlevars])
     _layouts.update(singlevars)
 
+    # add supplementary data for normal layouts
+    supplementary_default = dict()
+    supplementary_default.update(tibial_torsion)
+
     dd_opts_multi_upper = list()
     dd_opts_multi_lower = list()
 
@@ -364,7 +393,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             else:
                 fig_ = plot_trials(trials, layout, model_normaldata,
                                    legend_type=legend_type,
-                                   trial_linestyles=trial_linestyles)
+                                   trial_linestyles=trial_linestyles,
+                                   supplementary_data=supplementary_default)
                 graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
                                         style={'height': '100%'})
                 graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
@@ -382,7 +412,6 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             dd_opts_multi_lower.append({'label': label, 'value': label,
                                         'disabled': True})
             continue
-
 
     opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
     opts_multi, mapper_multi_lower = _make_dropdown_lists(dd_opts_multi_lower)

@@ -58,8 +58,9 @@ def _truncate_trialname(trialname):
 _plot_cache = dict()
 
 
-def plot_trials(trials, layout, model_normaldata, model_cycles=None,
-                emg_cycles=None, legend_type='full', trial_linestyles='same'):
+def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
+                emg_cycles=None, legend_type='full', trial_linestyles='same',
+                supplementary_data=None):
     """Make a plotly plot of layout, including given trials.
 
     trials: list of gaitutils.Trial instances
@@ -68,11 +69,15 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
     legend_type: 'tag_only' for Eclipse tag, 'name_with_tag' or 'full'
     trial_linestyles: 'same' for all identical, 'trial' for trial specific
                       style, 'session' for session specific style
+    supplementary_data: dict of additional data for each cycle and variable
     """
     global _plot_cache
 
     if not trials:
         raise GaitDataError('No trials')
+
+    if supplementary_data is None:
+        supplementary_data = dict()
 
     # configurabe opts (here for now)
     label_fontsize = 18  # x, y labels
@@ -111,6 +116,7 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
 
     for trial in trials:
         trial_color = next(colors)
+
         model_cycles = trial.get_cycles(model_cyclespec)
         emg_cycles = trial.get_cycles(emg_cyclespec)
         allcycles = list(set.intersection(set(model_cycles), set(emg_cycles)))
@@ -125,9 +131,10 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
         is_unnormalized = any([isinstance(cyc, Noncycle) for cyc in allcycles])
         if (is_unnormalized and
            any([isinstance(cyc, Gaitcycle) for cyc in allcycles])):
-                raise GaitDataError('Cannot mix normalized and unnormalized data')
+                raise GaitDataError('Cannot mix norm and unnorm data')
 
         for cyc in allcycles:
+            logger.debug('trial %s, cycle: %s' % (trial.trialname, cyc))
             trial.set_norm_cycle(cyc)
             context = cyc.context
 
@@ -175,25 +182,26 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                             do_plot = False
 
                         if var in mod.varnames_noside:
-                            # var context was unspecified, so choose it accding 
-                            # to cycle context
+                            # var context was unspecified, so choose it
+                            # according to cycle context
                             var = context + var
                         elif var[0] != context:
                             # var context was specified, and has to match cycle
                             do_plot = False
 
                         if mod.is_kinetic_var(var) and not cyc.on_forceplate:
-                            # kinetic var cycles are req'd to have valid
+                            # kinetic var cycles are required to have valid
                             # forceplate data
                             do_plot = False
 
                         # plot normaldata before other data so that its z order
                         # is lowest (otherwise normaldata will mask other
                         # traces on hover) and it gets the 1st legend entry
-                        if trial == trials[0] and cyc == allcycles[0]:
+                        if (model_normaldata is not None and trial == trials[0]
+                            and cyc == allcycles[0]):
                             if var[0].upper() in ['L', 'R']:
                                 nvar = var[1:]
-                            if model_normaldata and nvar in model_normaldata:
+                            if nvar in model_normaldata:
                                 key = nvar
                             else:
                                 key = None
@@ -274,10 +282,26 @@ def plot_trials(trials, layout, model_normaldata, model_cycles=None,
                                                            mode='markers',
                                                            marker=marker)
                                 fig.append_trace(toeoff_marker, i+1, j+1)
-                            
+
                             # add trace to figure
                             fig.append_trace(trace, i+1, j+1)
                             tracegroups.add(tracegroup)
+
+                            # add supplementary data
+                            if cyc in supplementary_data:
+                                supdata = supplementary_data[cyc]
+                                if var in supdata:
+                                    logger.debug('plotting supplementary data '
+                                                 'for var %s' % var)
+                                    t_sup = supdata[var]['t']
+                                    data_sup = supdata[var]['data']
+                                    label_sup = supdata[var]['label']
+                                    strace = go.Scatter(x=t_sup, y=data_sup,
+                                                        name=label_sup,
+                                                        line=line,
+                                                        legendgroup=tracegroup,
+                                                        showlegend=False)
+                                    fig.append_trace(strace, i+1, j+1)
 
                             # rm x tick labels, plot too crowded
                             fig['layout'][xaxis].update(showticklabels=False)

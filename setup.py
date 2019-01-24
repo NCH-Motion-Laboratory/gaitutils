@@ -9,7 +9,7 @@ from setuptools import setup, find_packages
 
 
 setup(name='gaitutils',
-      version='0.11.20',
+      version='0.11.21',
       description='Utilities for processing and plotting gait data',
       author='Jussi Nurminen',
       author_email='jnu@iki.fi',

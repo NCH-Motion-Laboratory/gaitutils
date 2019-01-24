@@ -223,18 +223,21 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
 
     signals.progress.emit('Finding videos...', 0)
 
-    # create directory of trial videos for each tag and camera selection
+    # add camera labels for overlay videos
     camera_labels_overlay = [lbl+' overlay' for lbl in camera_labels]
     camera_labels += camera_labels_overlay
+
+    # create directory of trial videos for each tag and camera selection
     vid_urls = dict()
     for tag in tags:
         vid_urls[tag] = dict()
         for camera_label in camera_labels:
             tagged = [tr for tr in trials if tag == tr.eclipse_tag]
             overlay = 'overlay' in camera_label
-            vid_files = [tr.get_video_by_label(camera_label, ext='ogv', overlay=overlay)
+            real_camera_label = (camera_label[:camera_label.find(' overlay')]
+                                 if overlay else camera_label)
+            vid_files = [tr.get_video_by_label(real_camera_label, ext='ogv', overlay=overlay)
                          for tr in tagged]
-            vid_urls[tag][camera_label] = dict()
             vid_urls[tag][camera_label] = ['/static/%s' % op.split(fn)[1] if fn
                                            else None for fn in vid_files]
 

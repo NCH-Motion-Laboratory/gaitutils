@@ -312,7 +312,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
                             # rm x tick labels, plot too crowded
                             fig['layout'][xaxis].update(showticklabels=False)
-                            # LaTeX does not render, so rm units from ylabel
+                            # LaTeX code for units does not render,
+                            # so rm units from ylabel
+                            # e.g. Iadd (N) Iabd -> Iadd Iabd
                             ylabel = ' '.join(mod.ylabels[var].split(' ')[k]
                                               for k in [0, -1])
                             fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize})

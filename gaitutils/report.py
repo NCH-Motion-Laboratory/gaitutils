@@ -222,14 +222,17 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             model_normaldata.update(age_ndata)
 
     signals.progress.emit('Finding videos...', 0)
+
     # create directory of trial videos for each tag and camera selection
+    camera_labels_overlay = [lbl+' overlay' for lbl in camera_labels]
+    camera_labels += camera_labels_overlay
     vid_urls = dict()
     for tag in tags:
         vid_urls[tag] = dict()
         for camera_label in camera_labels:
-
             tagged = [tr for tr in trials if tag == tr.eclipse_tag]
-            vid_files = [tr.get_video_by_label(camera_label, ext='ogv')
+            overlay = 'overlay' in camera_label
+            vid_files = [tr.get_video_by_label(camera_label, ext='ogv', overlay=overlay)
                          for tr in tagged]
             vid_urls[tag][camera_label] = dict()
             vid_urls[tag][camera_label] = ['/static/%s' % op.split(fn)[1] if fn
@@ -248,11 +251,13 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                 c3ds.append(c3ds_this[-1])
         for camera_id, camera_label in cfg.general.camera_labels.items():
             urls[camera_label] = list()
+            urls[camera_label+' overlay'] = list()
             for c3dfile in c3ds:
                 vid_files = gaitutils.nexus.find_trial_videos(c3dfile,
                                                               'ogv', camera_id)
                 urls[camera_label].extend(['/static/%s' % op.split(fn)[1]
                                           for fn in vid_files])
+                # FIXME: add overlays for extra video files
         return urls
 
     vid_urls['Static'] = _extra_video_urls(eclipse_keys=['TYPE'],

@@ -191,13 +191,13 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
         for cyc in cycs:
             tibial_torsion[cyc] = dict()
             for ctxt in tors:
-                var = ctxt + 'KneeAnglesZ'
-                tibial_torsion[cyc][var] = dict()
+                var_ = ctxt + 'KneeAnglesZ'
+                tibial_torsion[cyc][var_] = dict()
                 # x = % of gait cycle
-                tibial_torsion[cyc][var]['t'] = np.arange(101)
+                tibial_torsion[cyc][var_]['t'] = np.arange(101)
                 # static tibial torsion value as function of x
-                tibial_torsion[cyc][var]['data'] = np.ones(101) * tors[ctxt]
-                tibial_torsion[cyc][var]['label'] = 'Tib. tors. (%s)' % ctxt
+                tibial_torsion[cyc][var_]['data'] = np.ones(101) * tors[ctxt]
+                tibial_torsion[cyc][var_]['label'] = 'Tib. tors. (%s)' % ctxt
 
     # load static trials separately
     c3ds_static = list()

@@ -197,7 +197,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                 tibial_torsion[cyc][var_]['t'] = np.arange(101)
                 # static tibial torsion value as function of x
                 tibial_torsion[cyc][var_]['data'] = np.ones(101) * tors[ctxt]
-                tibial_torsion[cyc][var_]['label'] = 'Tib. tors. (%s)' % ctxt
+                tibial_torsion[cyc][var_]['label'] = 'Tib. tors. (%s) % s' % (ctxt, tr.trialname)
 
     # load static trials separately
     c3ds_static = list()

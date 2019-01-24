@@ -165,7 +165,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                                   cyc.name)
                     else:
                         raise ValueError('Invalid legend type')
-
+                    tracename_full = '%s (%s) / %s' % (trial.trialname,
+                                                       trial.eclipse_tag,
+                                                       cyc.name)
                     # plotly cannot directly handle unicode objects
                     if isinstance(tracegroup, unicode):
                         tracegroup = tracegroup.encode('utf-8')
@@ -258,8 +260,11 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                         trace['showlegend'] = show_legend
                             else:  # need to create trace
                                 trace = go.Scatter(x=t, y=y, name=tracegroup,
+                                                   text=tracename_full,
                                                    legendgroup=tracegroup,
                                                    showlegend=show_legend,
+                                                   hoverlabel=dict(namelength=-1),
+                                                   hoverinfo='x+y+text',
                                                    line=line)
                                 # add trace to cache
                                 if trial not in _plot_cache:
@@ -298,8 +303,10 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     label_sup = supdata[var]['label']
                                     strace = go.Scatter(x=t_sup, y=data_sup,
                                                         name=label_sup,
+                                                        text=label_sup,
                                                         line=line,
                                                         legendgroup=tracegroup,
+                                                        hoverinfo='x+y+text',
                                                         showlegend=False)
                                     fig.append_trace(strace, i+1, j+1)
 

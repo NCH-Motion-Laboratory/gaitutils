@@ -246,15 +246,21 @@ class Trial(object):
         return glob.glob(op.join(self.sessionpath, self.trialname+'*%s' % ext))
 
     def _get_videos_by_id(self, camera_id, ext='avi'):
-        """Get trial video corresponding to given camera id (str)"""
+        """Get all trial videos corresponding to given camera id (str)"""
         return [vid for vid in self.video_files(ext=ext) if camera_id in vid]
 
-    def get_video_by_label(self, camera_label, ext='avi'):
+    def get_video_by_label(self, camera_label, ext='avi', overlay=False):
         """Get trial video corresponding to given camera id (str)"""
+        # find all camera ids matching the camera label
         ids = [id_ for id_, label in cfg.general.camera_labels.items() if
                camera_label == label]
+        # find all videos matching any id
         vids = [vid for id_ in ids for vid in
                 self._get_videos_by_id(id_, ext=ext)]
+        # filter according to whether overlay is wanted or not
+        vids_overlay = [vid for vid in vids if 'overlay' in vid]
+        vids_nooverlay = list(set(vids) - set(vids_overlay))
+        vids = vids_overlay if overlay else vids_nooverlay
         if len(vids) > 1:
             logger.warning('Multiple video files match label "%s", using the '
                            'newest one' % camera_label)

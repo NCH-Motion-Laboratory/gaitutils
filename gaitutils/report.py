@@ -112,7 +112,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     info: patient info
     sessions: list of session dirs
     tags: tags for gait trials
-    signals: instance of ProgressSignals
+    signals: instance of ProgressSignals, used to send progress updates across
+    threads
     """
 
     signals.progress.emit('Collecting trials...', 0)
@@ -122,6 +123,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     LEFT_WIDTH = 8
     VIDS_TOTAL_HEIGHT = 88  # % of browser window height
     camera_labels = cfg.general.camera_labels.values()
+    model_cycles = cfg.plot.default_model_cycles
+    emg_cycles = cfg.plot.default_emg_cycles
 
     if len(sessions) < 1 or len(sessions) > 3:
         raise ValueError('Need a list of one to three sessions')
@@ -186,8 +189,9 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             logger.warning('could not read tibial torsion values from %s'
                            % tr.trialname)
             continue
-        # FIXME: should set model cycles spec somewhere earlier
-        cycs = tr.get_cycles(cfg.plot.default_model_cycles)
+        # include torsion info for all cycles; this is useful when plotting
+        # isolated cycles
+        cycs = tr.get_cycles(model_cycles)
         for cyc in cycs:
             tibial_torsion[cyc] = dict()
             for ctxt in tors:

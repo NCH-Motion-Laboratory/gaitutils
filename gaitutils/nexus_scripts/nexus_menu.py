@@ -467,7 +467,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnAutomark,
                                   nexus_automark_trial.automark_single)
 
-        self.btnConvertVideos.clicked.connect(self._process_session_videos)
+        self.btnPostprocessSession.clicked.connect(self._postprocess_session)
         self.btnCreatePDFs.clicked.connect(self._create_pdf_report)
         self.btnCreateComparison.clicked.connect(self._create_comparison)
         self.btnCreateWebReport.clicked.connect(self._create_web_report)
@@ -547,35 +547,17 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog('Cannot start configured web browser: %s'
                               % cfg.general.browser_path)
 
-    @staticmethod
-    def _collect_vidfiles(session, tags=None):
-        """Collect video files for session. Includes tagged trials (tags),
-        static trial and video-only trials as specified in config"""
-        tagged = sessionutils.find_tagged(session, tags=tags)
-        vidfiles = []
-        for c3dfile in tagged:
-            vidfiles.extend(sessionutils.get_trial_videos(c3dfile))
-        static_c3ds = sessionutils.find_tagged(session, ['Static'], ['TYPE'])
-        if static_c3ds:
-            vidfiles.extend(sessionutils.get_trial_videos(static_c3ds[-1]))
-        video_c3ds = sessionutils.find_tagged(session,
-                                              tags=cfg.eclipse.video_tags)
-        for c3dfile in video_c3ds:
-            vidfiles.extend(sessionutils.get_trial_videos(c3dfile))
-        return vidfiles
-
-    def _process_session_videos(self):
-        """Do additional video processing steps (after trials of interest have
-        been tagged)."""
+    def _postprocess_session(self):
+        """Do additional postprocessing steps, after trials of interest have
+        been tagged"""
         try:
             session = nexus.get_sessionpath()
         except GaitDataError as e:
             qt_message_dialog(_exception_msg(e))
             return
-        
         # convert session videos to web format
         try:
-            vidfiles = self._collect_vidfiles(session)
+            vidfiles = sessionutils._collect_tagged_videos(session)
         except GaitDataError as e:
             qt_message_dialog(_exception_msg(e))
             return
@@ -684,7 +666,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # collect all video files for conversion
         vidfiles = list()
         for session in sessions:
-            vidfiles_this = self._collect_vidfiles(session, tags=tags)
+            vidfiles_this = sessionutils._collect_tagged_videos(session,
+                                                                tags=tags)
             vidfiles.extend(vidfiles_this)
 
         if not report.convert_videos(vidfiles, check_only=True):

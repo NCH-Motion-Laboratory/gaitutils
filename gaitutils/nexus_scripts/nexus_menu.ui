@@ -311,9 +311,9 @@
        </widget>
       </item>
       <item row="4" column="7">
-       <widget class="QPushButton" name="btnConvertVideos">
+       <widget class="QPushButton" name="btnPostprocessSession">
         <property name="text">
-         <string>Convert videos to web format</string>
+         <string>Postprocess session</string>
         </property>
        </widget>
       </item>

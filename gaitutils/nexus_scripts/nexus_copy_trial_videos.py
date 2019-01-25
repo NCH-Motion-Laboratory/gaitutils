@@ -34,7 +34,7 @@ def do_copy():
     # concatenate video iterators for all .enf files
     vidfiles = []
     for c3d in c3dfiles:
-        vidfiles += nexus.find_trial_videos(c3d)
+        vidfiles += sessionutils.get_trial_videos(c3d)
 
     if not vidfiles:
         raise Exception('No video files found for representative trials')

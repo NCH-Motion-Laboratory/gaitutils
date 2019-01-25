@@ -256,8 +256,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             urls[camera_label] = list()
             urls[camera_label+' overlay'] = list()
             for c3dfile in c3ds:
-                vid_files = gaitutils.nexus.find_trial_videos(c3dfile,
-                                                              'ogv', camera_id)
+                vid_files = sessionutils.get_trial_videos(c3dfile, 'ogv',
+                                                          camera_id)
                 urls[camera_label].extend(['/static/%s' % op.split(fn)[1]
                                           for fn in vid_files])
                 # FIXME: add overlays for extra video files

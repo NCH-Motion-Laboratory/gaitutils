@@ -167,23 +167,6 @@ def get_trialname():
     return trialname_[1]
 
 
-def find_trial_videos(fname, ext='avi', camera_id=None):
-    """ Finds Nexus video files for trial file (e.g. x1d or c3d) """
-    trialbase = op.splitext(fname)[0]
-    vids = glob.glob(trialbase + '*' + ext)
-    if camera_id is not None:
-        vids = [vid for vid in vids if _camera_id(vid) == camera_id]
-    return vids
-
-
-def _camera_id(fname):
-    """ Returns camera id for a video file """
-    fn_split = op.split(fname)[-1].split('.')
-    if len(fn_split) < 3:
-        raise ValueError('Unexpected video file name %s' % fname)
-    return fn_split[-3]
-
-
 def is_vicon_instance(obj):
     """ Check if obj is an instance of ViconNexus """
     return obj.__class__.__name__ == 'ViconNexus'

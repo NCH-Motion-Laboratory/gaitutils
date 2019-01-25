@@ -112,6 +112,23 @@ def get_session_date(sessionpath):
     return datetime.datetime.fromtimestamp(op.getmtime(x1ds[0]))
 
 
+def get_trial_videos(fname, ext='avi', camera_id=None):
+    """Return list of video files for trial file (e.g. x1d or c3d) """
+    trialbase = op.splitext(fname)[0]
+    vids = glob.glob(trialbase + '*' + ext)
+    if camera_id is not None:
+        vids = [vid for vid in vids if _camera_id(vid) == camera_id]
+    return vids
+
+
+def _camera_id(fname):
+    """ Returns camera id for a video file """
+    fn_split = op.split(fname)[-1].split('.')
+    if len(fn_split) < 3:
+        raise ValueError('Unexpected video file name %s' % fname)
+    return fn_split[-3]
+
+
 def get_session_enfs(sessionpath):
     """Return list of .enf files for the session """
     enfglob = op.join(sessionpath, '*Trial*.enf')

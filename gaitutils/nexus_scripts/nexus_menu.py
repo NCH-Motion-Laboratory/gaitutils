@@ -554,14 +554,14 @@ class Gaitmenu(QtWidgets.QMainWindow):
         tagged = sessionutils.find_tagged(session, tags=tags)
         vidfiles = []
         for c3dfile in tagged:
-            vidfiles.extend(nexus.find_trial_videos(c3dfile))
+            vidfiles.extend(sessionutils.get_trial_videos(c3dfile))
         static_c3ds = sessionutils.find_tagged(session, ['Static'], ['TYPE'])
         if static_c3ds:
-            vidfiles.extend(nexus.find_trial_videos(static_c3ds[-1]))
+            vidfiles.extend(sessionutils.get_trial_videos(static_c3ds[-1]))
         video_c3ds = sessionutils.find_tagged(session,
                                               tags=cfg.eclipse.video_tags)
         for c3dfile in video_c3ds:
-            vidfiles.extend(nexus.find_trial_videos(c3dfile))
+            vidfiles.extend(sessionutils.get_trial_videos(c3dfile))
         return vidfiles
 
     def _convert_session_videos(self):

@@ -46,18 +46,6 @@ def _do_autoproc(enffiles, update_eclipse=True):
     paths to .enf files).
     """
 
-    def _run_pipelines(plines):
-        """Run given Nexus pipeline(s)"""
-        if type(plines) != list:
-            plines = [plines]
-        for pipeline in plines:
-            logger.debug('running pipeline: %s' % pipeline)
-            result = vicon.Client.RunPipeline(pipeline.encode('utf-8'), '',
-                                              cfg.autoproc.nexus_timeout)
-            if result.Error():
-                logger.warning('error while trying to run Nexus pipeline: %s'
-                               % pipeline)
-
     def _save_trial():
         """Save trial in Nexus"""
         logger.debug('saving trial')
@@ -144,14 +132,14 @@ def _do_autoproc(enffiles, update_eclipse=True):
                 # run preprocessing + save even for skipped trials, to mark
                 # them as processed - mostly so that Eclipse export to Polygon
                 # will work
-                _run_pipelines(cfg.autoproc.pre_pipelines)
+                nexus.run_pipelines(vicon, cfg.autoproc.pre_pipelines)
                 _save_trial()
                 trial['recon_ok'] = False
                 trial['description'] = 'skipped'
                 continue
 
         # try to run preprocessing pipelines
-        _run_pipelines(cfg.autoproc.pre_pipelines)
+        nexus.run_pipelines(vicon, cfg.autoproc.pre_pipelines)
 
         # check trial length
         trange = vicon.GetTrialRange()
@@ -326,7 +314,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         # run model pipeline and save
         eclipse_str = '%s,%s' % (cfg.autoproc.enf_descriptions['ok'],
                                  trial['description'])
-        _run_pipelines(cfg.autoproc.model_pipelines)
+        nexus.run_pipelines(vicon, cfg.autoproc.model_pipelines)
         _save_trial()
         trial['description'] = eclipse_str
 

@@ -160,6 +160,18 @@ def get_sessionpath():
     return op.normpath(sessionpath)
 
 
+def run_pipelines(vicon, plines):
+    """Run given Nexus pipeline(s)"""
+    if type(plines) != list:
+        plines = [plines]
+    for pipeline in plines:
+        logger.debug('running pipeline: %s' % pipeline)
+        result = vicon.Client.RunPipeline(pipeline.encode('utf-8'), '',
+                                          cfg.autoproc.nexus_timeout)
+        if result.Error():
+            logger.warning('error while trying to run Nexus pipeline: %s'
+                           % pipeline)
+
 def get_trialname():
     """ Get trial name without session path """
     vicon = viconnexus()

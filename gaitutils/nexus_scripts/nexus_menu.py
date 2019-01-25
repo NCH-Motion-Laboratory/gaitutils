@@ -573,7 +573,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog(_exception_msg(e))
             return
         
-        # convert to web format
+        # convert session videos to web format
         try:
             vidfiles = self._collect_vidfiles(session)
         except GaitDataError as e:

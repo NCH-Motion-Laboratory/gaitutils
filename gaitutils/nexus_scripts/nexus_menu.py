@@ -467,7 +467,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnAutomark,
                                   nexus_automark_trial.automark_single)
 
-        self.btnConvertVideos.clicked.connect(self._convert_session_videos)
+        self.btnConvertVideos.clicked.connect(self._process_session_videos)
         self.btnCreatePDFs.clicked.connect(self._create_pdf_report)
         self.btnCreateComparison.clicked.connect(self._create_comparison)
         self.btnCreateWebReport.clicked.connect(self._create_web_report)
@@ -564,13 +564,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
             vidfiles.extend(sessionutils.get_trial_videos(c3dfile))
         return vidfiles
 
-    def _convert_session_videos(self):
-        """Convert current Nexus session videos to web format."""
+    def _process_session_videos(self):
+        """Do additional video processing steps (after trials of interest have
+        been tagged)."""
         try:
             session = nexus.get_sessionpath()
         except GaitDataError as e:
             qt_message_dialog(_exception_msg(e))
             return
+        
+        # convert to web format
         try:
             vidfiles = self._collect_vidfiles(session)
         except GaitDataError as e:

@@ -27,11 +27,11 @@ def get_trial_videos(fname):
 
 def _filter_by_label(vids, camera_label):
     """Filter videos by label"""
-    ids = [id_ for id_, label in cfg.general.camera_labels.items() if
+    ids = [id for id, label in cfg.general.camera_labels.items() if
            camera_label == label]
-    # find all videos matching any id
-    for id in ids:
-        for vid in _filter_by_id(vids, id):
+    vid_its = itertools.tee(vids, len(ids))  # need to reuse vids iterator
+    for id, vids_ in zip(ids, vid_its):
+        for vid in _filter_by_id(vids_, id):
             yield vid
 
 

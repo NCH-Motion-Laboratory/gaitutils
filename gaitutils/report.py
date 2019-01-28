@@ -164,18 +164,18 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
 
     # load the trials
     trials = list()
-    c3ds_all = list()
+    c3ds_dyn = list()
     for session in sessions:
         c3ds = sessionutils.find_tagged(session, tags=tags)
         if not c3ds:
             raise GaitDataError('No marked trials %s found for session %s' %
                                 (tags, session))
         else:
-            c3ds_all.append(c3ds)
+            c3ds_dyn.append(c3ds)
             trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
             trials.extend(trials_this)
     trials = sorted(trials, key=lambda tr: tr.eclipse_tag)
-    logger.debug('using dynamic trials: %s' % c3ds_all)
+    logger.debug('using dynamic trials: %s' % c3ds_dyn)
 
     # read some extra data from trials and create supplementary data
     tibial_torsion = dict()
@@ -215,6 +215,13 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     trials_static = [gaitutils.Trial(c3d) for c3d in c3ds_static]
     logger.debug('added static trials: %s' % c3ds_static)
 
+    # find trials that won't get loaded (video only)
+    c3ds_vidonly = list()
+    for session in sessions:
+        c3ds = sessionutils.find_tagged(session, tags=cfg.eclipse.video_tags)
+        if c3ds:
+            c3ds_vidonly.append(c3ds[-1])  # only one video tag per session
+
     # load normal data for gait models
     model_normaldata = dict()
     for fn in cfg.general.normaldata_files:
@@ -230,6 +237,25 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     # add camera labels for overlay videos
     camera_labels_overlay = [lbl+' overlay' for lbl in camera_labels]
     camera_labels += camera_labels_overlay
+
+    c3ds_all = c3ds_dyn + c3ds_static + c3ds_vidonly
+    for camera_label in camera_labels:
+        urls[camera_label] = list()
+        urls[camera_label+' overlay'] = list()
+        overlay = 'overlay' in camera_label
+        for fn in c3ds_all:
+
+            vids_ = videos.get_trial_videos(c3dfile)
+            vids_ = videos._filter_by_id(vids_, camera_id)
+            vids_ = videos._filter_by_extension(vids_, 'ogv')
+            vids_ = videos._filter_by_extension(vids, overlay)
+            urls[camera_label].extend(['/static/%s' % op.split(fn)[1]
+                                      for fn in vids])
+
+            
+        
+    
+
 
     # create dict of dynamic trial videos for each tag and camera selection
     vid_urls = dict()
@@ -340,7 +366,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             # special layout
             if isinstance(layout, basestring):
                 if layout == 'time_dist':
-                    buf = _time_dist_plot(c3ds_all, sessions)
+                    buf = _time_dist_plot(c3ds_dyn, sessions)
                     encoded_image = base64.b64encode(buf.read())
                     graph_upper = html.Img(src='data:image/svg+xml;base64,{}'.
                                            format(encoded_image),

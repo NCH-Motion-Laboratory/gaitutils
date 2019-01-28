@@ -248,32 +248,21 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             vid_urls[tag][camera_label] = ['/static/%s' % op.split(vid)[1] if vid
                                            else None for vid in vids]
 
-    def _extra_video_urls(eclipse_keys=None, tags=None):
-        """Add extra video files for unloaded trials"""
-        urls = dict()
-        c3ds = list()
-        for session in sessions:
-            # only pick one trial (last one), since we need a single video
-            # entry for each given tag
-            c3ds_this = sessionutils.find_tagged(session, tags=tags,
-                                                 eclipse_keys=eclipse_keys)[-1:]
-            c3ds.extend(c3ds_this)
-        for camera_id, camera_label in cfg.general.camera_labels.items():
+    # add extra videos for unloaded trials
+    for tag in cfg.eclipse.video_tags:
+        its = (sessionutils.find_tagged(session, tags=[tag], eclipse_keys=eclipse_keys)[:-1] for session in sessions)
+        c3ds = itertools.chain.from_iterable(its)
+        for camera_label in camera_labels:
             urls[camera_label] = list()
             urls[camera_label+' overlay'] = list()
             for c3dfile in c3ds:
+                overlay = 'overlay' in camera_label
                 vids_ = videos.get_trial_videos(c3dfile)
                 vids_ = videos._filter_by_id(vids_, camera_id)
                 vids_ = videos._filter_by_extension(vids_, 'ogv')
+                vids_ = videos._filter_by_extension(vids, overlay)
                 urls[camera_label].extend(['/static/%s' % op.split(fn)[1]
                                           for fn in vids])
-                # FIXME: add overlays for extra video files
-        return urls
-
-    for tag in cfg.eclipse.video_tags:
-        vid_urls[tag] = _extra_video_urls(tags=[tag])
-
-    logger.debug('found following video urls: %s' % vid_urls)
 
     # build dcc.Dropdown options list for the cameras and tags
     opts_cameras = list()

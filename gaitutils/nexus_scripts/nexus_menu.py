@@ -550,11 +550,21 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _postprocess_session(self):
         """Do additional postprocessing steps, after trials of interest have
         been tagged"""
+        logger.info('running postprocessing pipelines for tagged trials')
         try:
             session = nexus.get_sessionpath()
         except GaitDataError as e:
             qt_message_dialog(_exception_msg(e))
             return
+        # run postprocessing pipelines for tagged trials
+        trials = sessionutils.find_tagged(session)
+        logger.debug(trials)
+        if trials:
+            vicon = nexus.viconnexus()
+            for c3dfile in trials:
+                fnbase = op.splitext(c3dfile)[0]
+                vicon.OpenTrial(fnbase, cfg.autoproc.nexus_timeout)
+                nexus.run_pipelines(vicon, cfg.autoproc.postproc_pipelines)
         # convert session videos to web format
         try:
             vidfiles = sessionutils._collect_tagged_videos(session)
@@ -574,14 +584,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         signals.progress.connect(lambda text, p: prog.update(text, p))
         self._convert_vidfiles(vidfiles, signals)
         prog.close()
-        # run postprocessing pipelines for tagged trials
-        trials = sessionutils.find_tagged(session)
-        if trials:
-            vicon = nexus.viconnexus()
-            for c3dfile in trials:
-                fnbase = op.splitext(c3dfile)[0]
-                vicon.OpenTrial(fnbase, cfg.autoproc.nexus_timeout)
-                nexus.run_pipelines(vicon, cfg.autoproc.postproc_pipelines)
 
     def closeEvent(self, event):
         """ Confirm and close application. """

@@ -242,7 +242,7 @@ class Trial(object):
 
     def _get_videos_by_id(self, camera_id=None, ext='avi'):
         """Get all trial videos corresponding to given camera id number"""
-        trialbase = op.join(self.sessionpath, self.trialname)        
+        trialbase = op.join(self.sessionpath, self.trialname)
         return sessionutils.get_trial_videos(trialbase,
                                              camera_id=camera_id, ext=ext)
 

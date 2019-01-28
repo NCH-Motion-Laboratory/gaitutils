@@ -116,20 +116,14 @@ def _collect_tagged_videos(session, tags=None):
     """Collect video files of interest for session. Includes tagged trials,
     static trial and video-only trials as specified in config"""
     tagged = find_tagged(session, tags=tags)
-    vidfiles = []
-    for c3dfile in tagged:
-        vidfiles.extend(get_trial_videos(c3dfile))
-    static_c3ds = find_tagged(session, ['Static'], ['TYPE'])
-    if static_c3ds:
-        vidfiles.extend(get_trial_videos(static_c3ds[-1]))
+    static_c3d = find_tagged(session, ['Static'], ['TYPE'])[:1]
     video_c3ds = find_tagged(session, tags=cfg.eclipse.video_tags)
-    for c3dfile in video_c3ds:
-        vidfiles.extend(get_trial_videos(c3dfile))
-    return vidfiles
+    return [get_trial_videos(c3dfile) for c3dfile in tagged + static_c3d +
+            video_c3ds]
 
 
-def get_trial_videos(fname, ext='avi', camera_id=None):
-    """Return list of video files for trial file (e.g. x1d or c3d) """
+def get_trial_videos(fname, camera_id=None, ext='avi'):
+    """Return list of video files for trial file. File may be c3d or enf etc"""
     trialbase = op.splitext(fname)[0]
     vids = glob.glob(trialbase + '*' + ext)
     if camera_id is not None:

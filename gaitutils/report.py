@@ -240,7 +240,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             overlay = 'overlay' in camera_label
             real_camera_label = (camera_label[:camera_label.find(' overlay')]
                                  if overlay else camera_label)
-            vid_files = [tr.get_video_by_label(real_camera_label, ext='ogv', overlay=overlay)
+            vid_files = [tr._get_video_by_label(real_camera_label, ext='ogv',
+                                                overlay=overlay)
                          for tr in tagged]
             vid_urls[tag][camera_label] = ['/static/%s' % op.split(fn)[1] if fn
                                            else None for fn in vid_files]
@@ -260,8 +261,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             urls[camera_label] = list()
             urls[camera_label+' overlay'] = list()
             for c3dfile in c3ds:
-                vid_files = sessionutils.get_trial_videos(c3dfile, 'ogv',
-                                                          camera_id)
+                vid_files = sessionutils.get_trial_videos(c3dfile, camera_id,
+                                                          'ogv')
                 urls[camera_label].extend(['/static/%s' % op.split(fn)[1]
                                           for fn in vid_files])
                 # FIXME: add overlays for extra video files

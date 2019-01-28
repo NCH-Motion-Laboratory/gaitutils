@@ -23,6 +23,7 @@ from . import nexus
 from . import utils
 from . import eclipse
 from . import models
+from . import sessionutils
 from .emg import EMG
 from .config import cfg
 from .envutils import GaitDataError
@@ -204,18 +205,17 @@ class Trial(object):
         self.sessiondir = op.split(self.sessionpath)[-1]
 
         enfpath = op.join(self.sessionpath, '%s.Trial.enf' % self.trialname)
-
-        # look for alternative (older style?) enf name
+        # also look for alternative (older style?) enf name
         if not op.isfile(enfpath):
             trialn_re = re.search('\.*(\d*)$', self.trialname)
             trialn = trialn_re.group(1)
             if trialn:
                 trialname_ = '%s.Trial%s.enf' % (self.trialname, trialn)
-                enfpath = enfpath = op.join(self.sessionpath, trialname_)
-
-        if op.isfile(enfpath):
-            logger.debug('reading Eclipse info from %s' % enfpath)
-            edata = eclipse.get_eclipse_keys(enfpath)
+                enfpath = op.join(self.sessionpath, trialname_)
+        self.enfpath = enfpath
+        if op.isfile(self.enfpath):
+            logger.debug('reading Eclipse info from %s' % self.enfpath)
+            edata = eclipse.get_eclipse_keys(self.enfpath)
             # for convenience, eclipse_data returns '' for nonexistent keys
             self.eclipse_data = defaultdict(lambda: '', edata)
         else:
@@ -240,17 +240,14 @@ class Trial(object):
         self.cycles = list(self._scan_cycles())
         self.ncycles = len(self.cycles)
 
-    # FIXME: maybe combine next 3 methods
-    def video_files(self, ext='avi'):
-        """Return video files associated with trial."""
-        return glob.glob(op.join(self.sessionpath, self.trialname+'*%s' % ext))
+    def _get_videos_by_id(self, camera_id=None, ext='avi'):
+        """Get all trial videos corresponding to given camera id number"""
+        trialbase = op.join(self.sessionpath, self.trialname)        
+        return sessionutils.get_trial_videos(trialbase,
+                                             camera_id=camera_id, ext=ext)
 
-    def _get_videos_by_id(self, camera_id, ext='avi'):
-        """Get all trial videos corresponding to given camera id (str)"""
-        return [vid for vid in self.video_files(ext=ext) if camera_id in vid]
-
-    def get_video_by_label(self, camera_label, ext='avi', overlay=False):
-        """Get trial video corresponding to given camera id (str)"""
+    def _get_video_by_label(self, camera_label, ext='avi', overlay=False):
+        """Get the trial video corresponding to given camera label (str)"""
         # find all camera ids matching the camera label
         ids = [id_ for id_, label in cfg.general.camera_labels.items() if
                camera_label == label]

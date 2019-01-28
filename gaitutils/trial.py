@@ -23,7 +23,7 @@ from . import nexus
 from . import utils
 from . import eclipse
 from . import models
-from . import sessionutils
+from . import videos
 from .emg import EMG
 from .config import cfg
 from .envutils import GaitDataError
@@ -240,30 +240,11 @@ class Trial(object):
         self.cycles = list(self._scan_cycles())
         self.ncycles = len(self.cycles)
 
-    def _get_videos_by_id(self, camera_id=None, ext='avi'):
-        """Get all trial videos corresponding to given camera id number"""
+    @property
+    def videos(self):
+        """Get all trial videos"""
         trialbase = op.join(self.sessionpath, self.trialname)
-        return sessionutils.get_trial_videos(trialbase,
-                                             camera_id=camera_id, ext=ext)
-
-    def _get_video_by_label(self, camera_label, ext='avi', overlay=False):
-        """Get the trial video corresponding to given camera label (str)"""
-        # find all camera ids matching the camera label
-        ids = [id_ for id_, label in cfg.general.camera_labels.items() if
-               camera_label == label]
-        # find all videos matching any id
-        vids = [vid for id_ in ids for vid in
-                self._get_videos_by_id(id_, ext=ext)]
-        # filter according to whether overlay is wanted or not
-        vids_overlay = [vid for vid in vids if 'overlay' in vid]
-        vids_nooverlay = list(set(vids) - set(vids_overlay))
-        vids = vids_overlay if overlay else vids_nooverlay
-        if len(vids) > 1:
-            logger.warning('Multiple video files match label "%s", using the '
-                           'newest one' % camera_label)
-            # this relies on the yyyymmdd... timestamp in the filename
-            return sorted(vids)[-1]
-        return vids[0] if vids else None
+        return videos.get_trial_videos(trialbase)
 
     @property
     def eclipse_tag(self):

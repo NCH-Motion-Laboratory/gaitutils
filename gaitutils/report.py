@@ -24,13 +24,13 @@ import subprocess
 import ctypes
 import base64
 import io
+import itertools
 
 import gaitutils
 from gaitutils import (cfg, normaldata, models, layouts, GaitDataError,
-                       sessionutils, numutils)
+                       sessionutils, numutils, videos)
 from gaitutils.plot_plotly import plot_trials
 from gaitutils.nexus_scripts import nexus_time_distance_vars
-
 
 logger = logging.getLogger(__name__)
 
@@ -201,16 +201,17 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                 tibial_torsion[cyc][var_]['t'] = np.arange(101)
                 # static tibial torsion value as function of x
                 tibial_torsion[cyc][var_]['data'] = np.ones(101) * tors[ctxt]
-                tibial_torsion[cyc][var_]['label'] = 'Tib. tors. (%s) % s' % (ctxt, tr.trialname)
+                tibial_torsion[cyc][var_]['label'] = ('Tib. tors. (%s) % s' %
+                                                      (ctxt, tr.trialname))
 
-    # load static trials separately
+    # load static trials
     c3ds_static = list()
     trials_static = list()
     for session in sessions:
         c3ds = sessionutils.find_tagged(session, tags=['Static'],
                                         eclipse_keys=['TYPE'])
         if c3ds:
-            c3ds_static.append(c3ds[-1])  # pick at most static trial
+            c3ds_static.append(c3ds[-1])  # pick only latest static trial
     trials_static = [gaitutils.Trial(c3d) for c3d in c3ds_static]
     logger.debug('added static trials: %s' % c3ds_static)
 
@@ -226,29 +227,29 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             model_normaldata.update(age_ndata)
 
     signals.progress.emit('Finding videos...', 0)
-
     # add camera labels for overlay videos
     camera_labels_overlay = [lbl+' overlay' for lbl in camera_labels]
     camera_labels += camera_labels_overlay
 
-    # create directory of trial videos for each tag and camera selection
+    # create dict of dynamic trial videos for each tag and camera selection
     vid_urls = dict()
     for tag in tags:
         vid_urls[tag] = dict()
         for camera_label in camera_labels:
-            tagged = [tr for tr in trials if tag == tr.eclipse_tag]
             overlay = 'overlay' in camera_label
             real_camera_label = (camera_label[:camera_label.find(' overlay')]
                                  if overlay else camera_label)
-            vid_files = [tr._get_video_by_label(real_camera_label, ext='ogv',
-                                                overlay=overlay)
-                         for tr in tagged]
-            vid_urls[tag][camera_label] = ['/static/%s' % op.split(fn)[1] if fn
-                                           else None for fn in vid_files]
+            tagged = [tr for tr in trials if tag == tr.eclipse_tag]
+            trs = tagged + trials_static
+            vids = itertools.chain.from_iterable(tr.videos for tr in trs)
+            vids = videos._filter_by_label(vids, real_camera_label)
+            vids = videos._filter_by_overlay(vids, overlay)
+            vids = videos._filter_by_extension(vids, 'ogv')
+            vid_urls[tag][camera_label] = ['/static/%s' % op.split(vid)[1] if vid
+                                           else None for vid in vids]
 
     def _extra_video_urls(eclipse_keys=None, tags=None):
-        """Put video files from each session according to Eclipse key and
-        tags into vid_urls dict"""
+        """Add extra video files for unloaded trials"""
         urls = dict()
         c3ds = list()
         for session in sessions:
@@ -261,15 +262,14 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             urls[camera_label] = list()
             urls[camera_label+' overlay'] = list()
             for c3dfile in c3ds:
-                vid_files = sessionutils.get_trial_videos(c3dfile, camera_id,
-                                                          'ogv')
+                vids_ = videos.get_trial_videos(c3dfile)
+                vids_ = videos._filter_by_id(vids_, camera_id)
+                vids_ = videos._filter_by_extension(vids_, 'ogv')
                 urls[camera_label].extend(['/static/%s' % op.split(fn)[1]
-                                          for fn in vid_files])
+                                          for fn in vids])
                 # FIXME: add overlays for extra video files
         return urls
 
-    vid_urls['Static'] = _extra_video_urls(eclipse_keys=['TYPE'],
-                                           tags=['Static'])
     for tag in cfg.eclipse.video_tags:
         vid_urls[tag] = _extra_video_urls(tags=[tag])
 

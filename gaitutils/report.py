@@ -277,7 +277,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
 
     # build dcc.Dropdown options list for the cameras and tags
     opts_cameras = list()
-    for label in set(camera_labels):
+    for label in sorted(set(camera_labels)):
         opts_cameras.append({'label': label, 'value': label})
     opts_tags = list()
     for tag in tags + cfg.eclipse.video_tags:

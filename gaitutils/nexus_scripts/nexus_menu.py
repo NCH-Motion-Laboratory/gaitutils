@@ -550,7 +550,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _postprocess_session(self):
         """Do additional postprocessing steps, after trials of interest have
         been tagged"""
-        logger.info('running postprocessing pipelines for tagged trials')
+        prog = None
         try:
             session = nexus.get_sessionpath()
         except GaitDataError as e:
@@ -558,13 +558,19 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         # run postprocessing pipelines for tagged trials
         trials = sessionutils.find_tagged(session)
-        logger.debug(trials)
-        if trials:
+        if trials and cfg.autoproc.postproc_pipelines:
+            prog = ProgressBar('')
+            signals = ProgressSignals()
             vicon = nexus.viconnexus()
-            for c3dfile in trials:
-                fnbase = op.splitext(c3dfile)[0]
-                vicon.OpenTrial(fnbase, cfg.autoproc.nexus_timeout)
+            logger.info('running postprocessing pipelines for tagged trials')
+            prog.update('Running postprocessing pipelines: %s' %
+                        cfg.autoproc.postproc_pipelines, 0)
+            for k, tr in enumerate(trials):
+                trbase = op.splitext(tr)[0]
+                vicon.OpenTrial(trbase, cfg.autoproc.nexus_timeout)
                 nexus.run_pipelines(vicon, cfg.autoproc.postproc_pipelines)
+                prog.update('Running postprocessing pipelines: %s' %
+                            cfg.autoproc.postproc_pipelines, 100*k/len(trials))
         # convert session videos to web format
         try:
             vidfiles = sessionutils._collect_tagged_videos(session)
@@ -579,8 +585,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog('It looks like the session videos have already '
                               'been converted.')
             return
-        prog = ProgressBar('')
-        signals = ProgressSignals()
+        if prog is None:
+            prog = ProgressBar('')
+            signals = ProgressSignals()
         signals.progress.connect(lambda text, p: prog.update(text, p))
         self._convert_vidfiles(vidfiles, signals)
         prog.close()

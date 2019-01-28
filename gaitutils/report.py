@@ -252,11 +252,11 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
         urls = dict()
         c3ds = list()
         for session in sessions:
+            # only pick one trial (last one), since we need a single video
+            # entry for each given tag
             c3ds_this = sessionutils.find_tagged(session, tags=tags,
-                                                 eclipse_keys=eclipse_keys)
-            if c3ds_this:
-                # only pick last matching trial from each session
-                c3ds.append(c3ds_this[-1])
+                                                 eclipse_keys=eclipse_keys)[-1:]
+            c3ds.extend(c3ds_this)
         for camera_id, camera_label in cfg.general.camera_labels.items():
             urls[camera_label] = list()
             urls[camera_label+' overlay'] = list()

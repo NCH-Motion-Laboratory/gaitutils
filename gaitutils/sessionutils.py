@@ -118,8 +118,9 @@ def _collect_tagged_videos(session, tags=None):
     tagged = find_tagged(session, tags=tags)
     static_c3d = find_tagged(session, ['Static'], ['TYPE'])[:1]
     video_c3ds = find_tagged(session, tags=cfg.eclipse.video_tags)
-    return [get_trial_videos(c3dfile) for c3dfile in tagged + static_c3d +
+    vids = [get_trial_videos(c3dfile) for c3dfile in tagged + static_c3d +
             video_c3ds]
+    return [vid for vids_ in vids for vid in vids_]  # flatten list of lists
 
 
 def get_trial_videos(fname, camera_id=None, ext='avi'):

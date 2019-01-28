@@ -557,7 +557,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog(_exception_msg(e))
             return
         # run postprocessing pipelines for tagged trials
-        trials = sessionutils.find_tagged(session)
+        trials = sessionutils._trials_of_interest(session)
         if trials and cfg.autoproc.postproc_pipelines:
             prog = ProgressBar('')
             signals = ProgressSignals()

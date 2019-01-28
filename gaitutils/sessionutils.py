@@ -112,14 +112,19 @@ def get_session_date(sessionpath):
     return datetime.datetime.fromtimestamp(op.getmtime(x1ds[0]))
 
 
-def _collect_tagged_videos(session, tags=None):
-    """Collect video files of interest for session. Includes tagged trials,
-    static trial and video-only trials as specified in config"""
+def _trials_of_interest(session, tags=None):
+    """Return tagged, static and video-tagged trials"""
     tagged = find_tagged(session, tags=tags)
-    static_c3d = find_tagged(session, ['Static'], ['TYPE'])[:1]
-    video_c3ds = find_tagged(session, tags=cfg.eclipse.video_tags)
-    vids = [get_trial_videos(c3dfile) for c3dfile in tagged + static_c3d +
-            video_c3ds]
+    static = find_tagged(session, ['Static'], ['TYPE'])[:1]
+    video_only = find_tagged(session, tags=cfg.eclipse.video_tags)
+    return tagged + static + video_only
+
+
+def _collect_videos(session, tags=None):
+    """Collect video files of interest for session. Includes tagged trials,
+    static trial and video-tagged trials as specified in config"""
+    trials = _trials_of_interest(session, tags=None)
+    vids = [get_trial_videos(c3dfile) for c3dfile in trials]
     return [vid for vids_ in vids for vid in vids_]  # flatten list of lists
 
 

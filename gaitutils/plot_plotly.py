@@ -119,7 +119,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
         model_cycles = trial.get_cycles(model_cyclespec)
         emg_cycles = trial.get_cycles(emg_cyclespec)
-        allcycles = list(set.intersection(set(model_cycles), set(emg_cycles)))
+        allcycles = list(set.union(set(model_cycles), set(emg_cycles)))
         if not allcycles:
             raise GaitDataError('Trial %s has no cycles of specified type' %
                                 trial.trialname)

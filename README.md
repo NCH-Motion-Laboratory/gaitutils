@@ -1,6 +1,8 @@
 # gaitutils
 
-Gaitutils facilitates extracting and plotting gait data. It also includes some data processing functionality (e.g. automatic event detection). 
+The aim of gaitutils is to provide convenient methods for extracting and plotting 3D gait analysis data. Compared to packages such as btk, it provides higher-level interface, with abstractions such as 'trial' and 'gait cycle'. Data can be read from Vicon Nexus or directly from c3d files.
 
-Gaitutils can work with Vicon Nexus and also read directly from .c3d files (if you install the btk package).
+An example operation would be "read a trial from Vicon Nexus, extract all gait cycles with valid forceplate contact, normalize the kinetics data to those cycles, and plot the ankle dorsi/plantarflexion moment". This can be accomplished with just a couple of lines of code.
+
+
 

@@ -16,6 +16,7 @@ import re
 import logging
 
 from .eclipse import get_eclipse_keys
+from .videos import get_trial_videos
 from .envutils import GaitDataError
 from .config import cfg
 
@@ -126,23 +127,6 @@ def _collect_videos(session, tags=None):
     trials = _trials_of_interest(session, tags=None)
     vids = [get_trial_videos(c3dfile) for c3dfile in trials]
     return [vid for vids_ in vids for vid in vids_]  # flatten list of lists
-
-
-def get_trial_videos(fname, camera_id=None, ext='avi'):
-    """Return list of video files for trial file. File may be c3d or enf etc"""
-    trialbase = op.splitext(fname)[0]
-    vids = glob.glob(trialbase + '*' + ext)
-    if camera_id is not None:
-        vids = [vid for vid in vids if _camera_id(vid) == camera_id]
-    return vids
-
-
-def _camera_id(fname):
-    """ Returns camera id for a video file """
-    fn_split = op.split(fname)[-1].split('.')
-    if len(fn_split) < 3:
-        raise ValueError('Unexpected video file name %s' % fname)
-    return fn_split[-3]
 
 
 def get_session_enfs(sessionpath):

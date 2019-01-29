@@ -162,43 +162,45 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     if info['report_notes']:
         patient_info_text += info['report_notes']
 
-    # load the trials
-    trials = list()
-    c3ds_dyn = list()
+    # load normal data for gait models
+    model_normaldata = dict()
+    for fn in cfg.general.normaldata_files:
+        ndata = normaldata.read_normaldata(fn)
+        model_normaldata.update(ndata)
+    if age is not None:
+        age_ndata_file = normaldata.normaldata_age(age)
+        if age_ndata_file:
+            age_ndata = normaldata.read_normaldata(age_ndata_file)
+            model_normaldata.update(age_ndata)
+
+    # find the c3d files
+    c3ds = dict(dynamic=[], static=[], vid_only=[])
     for session in sessions:
-        c3ds = sessionutils.find_tagged(session, tags=tags)
-        if not c3ds:
-            raise GaitDataError('No marked trials %s found for session %s' %
+        c3ds_dyn = sessionutils.get_c3ds(session, tags=tags,
+                                         trial_type='dynamic',
+                                         return_tags=True)
+        if not c3ds_dyn:
+            raise GaitDataError('No tagged trials %s found for session %s' %
                                 (tags, session))
-        else:
-            c3ds_dyn.append(c3ds)
-            trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
-            trials.extend(trials_this)
-    trials = sorted(trials, key=lambda tr: tr.eclipse_tag)
-    logger.debug('using dynamic trials: %s' % c3ds_dyn)
+        c3ds['dynamic'].extend(c3ds_dyn)
+        c3ds_static = sessionutils.get_c3ds(session, tags=tags,
+                                            trial_type='static',
+                                            return_tags=True)
+        c3ds['static'].extend(c3ds_static)
+        c3ds_vidonly = sessionutils.get_c3ds(session,
+                                             tags=cfg.eclipse.video_tags,
+                                             return_tags=True)[:1]
+        c3ds['vidonly'].extend(c3ds_vidonly)
 
-    # load static trials
-    c3ds_static = list()
-    trials_static = list()
-    for session in sessions:
-        c3ds = sessionutils.find_tagged(session, tags=['Static'],
-                                        eclipse_keys=['TYPE'])
-        if c3ds:
-            c3ds_static.append(c3ds[-1])  # pick only latest static trial
-    trials_static = [gaitutils.Trial(c3d) for c3d in c3ds_static]
-    logger.debug('added static trials: %s' % c3ds_static)
-
-    # find video-only trials that won't get loaded as Trial instances
-    c3ds_vidonly = list()
-    for session in sessions:
-        c3ds = sessionutils.find_tagged(session, tags=cfg.eclipse.video_tags)
-        if c3ds:
-            c3ds_vidonly.append(c3ds[-1])  # only one video tag per session
-
+    # load trials
+    trials_dyn = [(gaitutils.Trial(c3d), tag) for
+                  c3d, tag in c3ds['dynamic']]
+    trials_static = [(gaitutils.Trial(c3d), tag) for
+                     c3d, tag in c3ds['static']]
 
     # read some extra data from trials and create supplementary data
     tibial_torsion = dict()
-    for tr in trials:
+    for tr in trials_dyn:
         # read tibial torsion for each trial and make supplementary traces
         # these will only be shown for KneeAnglesZ (knee rotation) variable
         tors = dict()
@@ -222,17 +224,6 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                 tibial_torsion[cyc][var_]['data'] = np.ones(101) * tors[ctxt]
                 tibial_torsion[cyc][var_]['label'] = ('Tib. tors. (%s) % s' %
                                                       (ctxt, tr.trialname))
-
-    # load normal data for gait models
-    model_normaldata = dict()
-    for fn in cfg.general.normaldata_files:
-        ndata = normaldata.read_normaldata(fn)
-        model_normaldata.update(ndata)
-    if age is not None:
-        age_ndata_file = normaldata.normaldata_age(age)
-        if age_ndata_file:
-            age_ndata = normaldata.read_normaldata(age_ndata_file)
-            model_normaldata.update(age_ndata)
 
     signals.progress.emit('Finding videos...', 0)
     # add camera labels for overlay videos

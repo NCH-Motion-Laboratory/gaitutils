@@ -192,11 +192,9 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                                              return_tags=True)[:1]
         c3ds['vidonly'].extend(c3ds_vidonly)
 
-    # load trials
-    trials_dyn = [(gaitutils.Trial(c3d), tag) for
-                  c3d, tag in c3ds['dynamic']]
-    trials_static = [(gaitutils.Trial(c3d), tag) for
-                     c3d, tag in c3ds['static']]
+    # load dynamic and static trials
+    trials_dyn = [gaitutils.Trial(c3d) for c3d, tag in c3ds['dynamic']]
+    trials_static = [gaitutils.Trial(c3d) for c3d, tag in c3ds['static']]
 
     # read some extra data from trials and create supplementary data
     tibial_torsion = dict()
@@ -229,54 +227,20 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     # add camera labels for overlay videos
     camera_labels_overlay = [lbl+' overlay' for lbl in camera_labels]
     camera_labels += camera_labels_overlay
-
-    c3ds_all = c3ds_dyn + c3ds_static + c3ds_vidonly
-    for camera_label in camera_labels:
-        urls[camera_label] = list()
-        urls[camera_label+' overlay'] = list()
-        overlay = 'overlay' in camera_label
-        for fn in c3ds_all:
-
-            vids_ = videos.get_trial_videos(c3dfile)
-            vids_ = videos._filter_by_id(vids_, camera_id)
-            vids_ = videos._filter_by_extension(vids_, 'ogv')
-            vids_ = videos._filter_by_extension(vids, overlay)
-            urls[camera_label].extend(['/static/%s' % op.split(fn)[1]
-                                      for fn in vids])
-
-
-    # create dict of dynamic trial videos for each tag and camera selection
     vid_urls = dict()
-    for tag in tags:
-        vid_urls[tag] = dict()
-        for camera_label in camera_labels:
-            overlay = 'overlay' in camera_label
+    for camera_label in camera_labels:
+        overlay = 'overlay' in camera_label
+        for c3d, tag in c3ds['dynamic'] + c3ds['static'] + c3ds['vidonly']:
+            vid_urls[tag] = dict()
+            vids_ = videos.get_trial_videos(c3d)
             real_camera_label = (camera_label[:camera_label.find(' overlay')]
                                  if overlay else camera_label)
-            tagged = [tr for tr in trials if tag == tr.eclipse_tag]
-            trs = tagged + trials_static
-            vids = itertools.chain.from_iterable(tr.videos for tr in trs)
-            vids = videos._filter_by_label(vids, real_camera_label)
-            vids = videos._filter_by_overlay(vids, overlay)
-            vids = videos._filter_by_extension(vids, 'ogv')
-            vid_urls[tag][camera_label] = ['/static/%s' % op.split(vid)[1] if vid
-                                           else None for vid in vids]
-
-    # add extra videos for unloaded trials
-    for tag in cfg.eclipse.video_tags:
-        its = (sessionutils.find_tagged(session, tags=[tag], eclipse_keys=eclipse_keys)[:-1] for session in sessions)
-        c3ds = itertools.chain.from_iterable(its)
-        for camera_label in camera_labels:
-            urls[camera_label] = list()
-            urls[camera_label+' overlay'] = list()
-            for c3dfile in c3ds:
-                overlay = 'overlay' in camera_label
-                vids_ = videos.get_trial_videos(c3dfile)
-                vids_ = videos._filter_by_id(vids_, camera_id)
-                vids_ = videos._filter_by_extension(vids_, 'ogv')
-                vids_ = videos._filter_by_extension(vids, overlay)
-                urls[camera_label].extend(['/static/%s' % op.split(fn)[1]
-                                          for fn in vids])
+            vids_ = videos._filter_by_id(vids_, real_camera_label)
+            vids_ = videos._filter_by_extension(vids_, 'ogv')
+            if overlay:
+                vids_ = videos._filter_by_overlay(vids_, overlay)
+            urls = ['/static/%s' % op.split(fn)[1] for fn in vids_]
+            vid_urls[tag][camera_label].extend(urls)
 
     # build dcc.Dropdown options list for the cameras and tags
     opts_cameras = list()
@@ -298,14 +262,14 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
 
     # build dcc.Dropdown options list for the trials
     trials_dd = list()
-    for tr in trials:
+    for tr in trials_dyn:
         trials_dd.append({'label': tr.name_with_description,
                           'value': tr.trialname})
     # precreate graphs
     # in EMG layout, keep chs that are active in any of the trials
     signals.progress.emit('Reading EMG data', 0)
     try:
-        emgs = [tr.emg for tr in trials]
+        emgs = [tr.emg for tr in trials_dyn]
         emg_layout = layouts.rm_dead_channels_multitrial(emgs,
                                                          cfg.layouts.std_emg)
     except GaitDataError:
@@ -407,7 +371,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
 
             # regular gaitutils layout
             else:
-                fig_ = plot_trials(trials, layout, model_normaldata,
+                fig_ = plot_trials(trials_dyn, layout, model_normaldata,
                                    legend_type=legend_type,
                                    trial_linestyles=trial_linestyles,
                                    supplementary_data=supplementary_default)

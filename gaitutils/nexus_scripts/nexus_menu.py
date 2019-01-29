@@ -26,7 +26,7 @@ import traceback
 from gaitutils.numutils import check_hetu
 from gaitutils.guiutils import (qt_message_dialog, qt_yesno_dialog,
                                 qt_dir_chooser)
-from gaitutils import GaitDataError, nexus, cfg, report, sessionutils
+from gaitutils import GaitDataError, nexus, cfg, report, sessionutils, videos
 from gaitutils.nexus_scripts import (nexus_emgplot, nexus_musclelen_plot,
                                      nexus_kinetics_emgplot,
                                      nexus_emg_consistency,
@@ -681,11 +681,18 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 cfg.eclipse.tags)
 
         # collect all video files for conversion
+        # includes tagged dynamic, video-only tagged, and static trials
         vidfiles = list()
         for session in sessions:
-            vidfiles_this = sessionutils._collect_tagged_videos(session,
-                                                                tags=tags)
-            vidfiles.extend(vidfiles_this)
+            c3ds = sessionutils.get_c3ds(session, tags=tags,
+                                         trial_type='dynamic')
+            c3ds = sessionutils.get_c3ds(session, tags=cfg.eclipse.video_tags,
+                                         trial_type='dynamic')
+            c3ds += sessionutils.get_c3ds(session, trial_type='static')[-1:]
+            for c3d in c3ds:
+                vids = videos.get_trial_videos(c3d)
+                vids = videos._filter_by_extension('.avi')
+                vidfiles.extend(list(vids))
 
         if not report.convert_videos(vidfiles, check_only=True):
             self._convert_vidfiles(vidfiles, signals)

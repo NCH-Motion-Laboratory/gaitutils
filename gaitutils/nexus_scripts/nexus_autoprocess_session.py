@@ -373,7 +373,7 @@ def _delete_c3ds(enffiles):
 def autoproc_session(patterns=None, update_eclipse=True):
 
     sessionpath = nexus.get_sessionpath()
-    enffiles = sessionutils.get_session_enfs(sessionpath)
+    enffiles = list(sessionutils.get_session_enfs(sessionpath))
 
     if not enffiles:
         raise GaitDataError('No trials found (no .enf files in session)')

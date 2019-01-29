@@ -132,10 +132,7 @@ def _collect_videos(session, tags=None):
 def get_session_enfs(sessionpath):
     """Return list of .enf files for the session """
     enfglob = op.join(sessionpath, '*Trial*.enf')
-    enffiles = glob.glob(enfglob) if sessionpath else None
-    logger.debug('found %d .enf files for session %s' %
-                 (len(enffiles) if enffiles else 0, sessionpath))
-    return enffiles
+    return glob.iglob(enfglob)
 
 
 def find_tagged(sessionpath, tags=None, eclipse_keys=None):

@@ -547,6 +547,21 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog('Cannot start configured web browser: %s'
                               % cfg.general.browser_path)
 
+    @staticmethod
+    def _collect_videos(session, tags):
+        """Collect video files of interest for conversion"""
+        c3ds = sessionutils.get_c3ds(session, tags=tags,
+                                     trial_type='dynamic')
+        c3ds = sessionutils.get_c3ds(session, tags=cfg.eclipse.video_tags,
+                                     trial_type='dynamic')
+        c3ds += sessionutils.get_c3ds(session, trial_type='static')[-1:]
+        vids_all = list()
+        for c3d in c3ds:
+            vids = videos.get_trial_videos(c3d)
+            vids = videos._filter_by_extension(vids, '.avi')
+            vids_all.extend(vids)
+        return vids_all
+
     def _postprocess_session(self):
         """Do additional postprocessing steps, after trials of interest have
         been tagged"""
@@ -556,8 +571,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
         except GaitDataError as e:
             qt_message_dialog(_exception_msg(e))
             return
-        # run postprocessing pipelines for tagged trials
-        trials = sessionutils._trials_of_interest(session)
+        # postprocessing pipelines are run for tagged and static trials
+        trials = sessionutils.get_c3ds(session, tags=cfg.eclipse.tags,
+                                       trial_type='dynamic')
+        trials = sessionutils.get_c3ds(session, trial_type='static')
+
         if trials and cfg.autoproc.postproc_pipelines:
             prog = ProgressBar('')
             signals = ProgressSignals()
@@ -573,7 +591,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                             cfg.autoproc.postproc_pipelines, 100*k/len(trials))
         # convert session videos to web format
         try:
-            vidfiles = sessionutils._collect_tagged_videos(session)
+            vidfiles = self._collect_videos(session, tags=cfg.eclipse.tags)
         except GaitDataError as e:
             qt_message_dialog(_exception_msg(e))
             return
@@ -684,15 +702,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # includes tagged dynamic, video-only tagged, and static trials
         vidfiles = list()
         for session in sessions:
-            c3ds = sessionutils.get_c3ds(session, tags=tags,
-                                         trial_type='dynamic')
-            c3ds = sessionutils.get_c3ds(session, tags=cfg.eclipse.video_tags,
-                                         trial_type='dynamic')
-            c3ds += sessionutils.get_c3ds(session, trial_type='static')[-1:]
-            for c3d in c3ds:
-                vids = videos.get_trial_videos(c3d)
-                vids = videos._filter_by_extension('.avi')
-                vidfiles.extend(list(vids))
+            vids = self._collect_videos(session, tags=tags)
+            vidfiles.extend(vids)
 
         if not report.convert_videos(vidfiles, check_only=True):
             self._convert_vidfiles(vidfiles, signals)

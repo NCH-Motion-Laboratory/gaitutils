@@ -179,12 +179,12 @@ def _filter_to_c3ds(enfs):
 
 def get_c3ds(sessionpath, tags=None, trial_type=None, return_tags=False):
     enfs = get_session_enfs(sessionpath)
-    if tags is not None:
-        enfs = _filter_tagged(enfs, tags)
     if trial_type is not None:
         if trial_type.lower() == 'dynamic':
             enfs = _filter_dynamic(enfs)
         elif trial_type.lower() == 'static':
             enfs = _filter_static(enfs)
+    if tags is not None:
+        enfs = _filter_tagged(enfs, tags)
     c3ds = _filter_to_c3ds(enfs)
     return list(c3ds) if return_tags else list(fn for fn, tag in c3ds)

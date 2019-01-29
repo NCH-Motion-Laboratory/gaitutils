@@ -174,7 +174,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             model_normaldata.update(age_ndata)
 
     # find the c3d files
-    c3ds = dict(dynamic=[], static=[], vid_only=[])
+    c3ds = dict(dynamic=[], static=[], vidonly=[])
     for session in sessions:
         c3ds_dyn = sessionutils.get_c3ds(session, tags=tags,
                                          trial_type='dynamic',
@@ -183,13 +183,12 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             raise GaitDataError('No tagged trials %s found for session %s' %
                                 (tags, session))
         c3ds['dynamic'].extend(c3ds_dyn)
-        c3ds_static = sessionutils.get_c3ds(session, tags=tags,
-                                            trial_type='static',
-                                            return_tags=True)
+        c3ds_static = sessionutils.get_c3ds(session, trial_type='static',
+                                            return_tags=True)[-1:]
         c3ds['static'].extend(c3ds_static)
         c3ds_vidonly = sessionutils.get_c3ds(session,
                                              tags=cfg.eclipse.video_tags,
-                                             return_tags=True)[:1]
+                                             return_tags=True)[-1:]
         c3ds['vidonly'].extend(c3ds_vidonly)
 
     # load dynamic and static trials
@@ -228,17 +227,20 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     camera_labels_overlay = [lbl+' overlay' for lbl in camera_labels]
     camera_labels += camera_labels_overlay
     vid_urls = dict()
-    for camera_label in camera_labels:
-        overlay = 'overlay' in camera_label
-        for c3d, tag in c3ds['dynamic'] + c3ds['static'] + c3ds['vidonly']:
-            vid_urls[tag] = dict()
-            vids_ = videos.get_trial_videos(c3d)
+    for tag in tags + cfg.eclipse.video_tags + ['Static']:
+        vid_urls[tag.upper()] = dict()
+    for c3d, tag_ in c3ds['dynamic'] + c3ds['static'] + c3ds['vidonly']:
+        tag = tag_.upper()
+        for camera_label in camera_labels:
+            if camera_label not in vid_urls[tag]:
+                vid_urls[tag][camera_label] = list()
+            overlay = 'overlay' in camera_label
             real_camera_label = (camera_label[:camera_label.find(' overlay')]
                                  if overlay else camera_label)
-            vids_ = videos._filter_by_id(vids_, real_camera_label)
-            vids_ = videos._filter_by_extension(vids_, 'ogv')
-            if overlay:
-                vids_ = videos._filter_by_overlay(vids_, overlay)
+            vids_ = videos.get_trial_videos(c3d)
+            vids_ = videos._filter_by_label(vids_, real_camera_label)
+            vids_ = videos._filter_by_extension(vids_, '.ogv')
+            vids_ = videos._filter_by_overlay(vids_, overlay)
             urls = ['/static/%s' % op.split(fn)[1] for fn in vids_]
             vid_urls[tag][camera_label].extend(urls)
 
@@ -246,16 +248,13 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     opts_cameras = list()
     for label in sorted(set(camera_labels)):
         opts_cameras.append({'label': label, 'value': label})
-    opts_tags = list()
-    for tag in tags + cfg.eclipse.video_tags:
-        if any([vid_urls[tag][camera_label] for camera_label in
-                camera_labels]):
-            opts_tags.append({'label': '%s' % tag, 'value': tag})
-    if any([vid_urls['Static'][camera_label] for camera_label in
-            camera_labels]):
-        opts_tags.append({'label': 'Static', 'value': 'Static'})
 
-    # no videos at all
+    opts_tags = list()
+    for tag in vid_urls:
+        if any([vid_urls[tag][camera_label] for camera_label in camera_labels]):
+            opts_tags.append({'label': '%s' % tag, 'value': tag})
+
+    # we got no videos at all
     if not opts_tags:
         opts_tags.append({'label': 'No videos', 'value': 'no videos',
                           'disabled': True})

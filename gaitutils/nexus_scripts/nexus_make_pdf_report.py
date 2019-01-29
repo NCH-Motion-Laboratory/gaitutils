@@ -81,7 +81,8 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
     pdfname = session + '.pdf'
     pdf_all = op.join(sessionpath, pdfname)
 
-    tagged_trials = sessionutils.find_tagged(sessionpath)
+    tagged_trials = sessionutils.get_c3ds(sessionpath, tags=cfg.eclipse.tags,
+                                          trial_type='dynamic')
     if not tagged_trials:
         raise GaitDataError('No marked trials found in session directory')
     session_t = sessionutils.get_session_date(sessionpath)

@@ -22,7 +22,8 @@ logger = logging.getLogger(__name__)
 def do_plot(tags=None, age=None, show=True, make_pdf=True):
 
     sessionpath = nexus.get_sessionpath()
-    tagged_trials = sessionutils.find_tagged(sessionpath, tags=tags)
+    tagged_trials = sessionutils.get_c3ds(sessionpath, tags=tags,
+                                          trial_type='dynamic')
 
     if not tagged_trials:
         raise GaitDataError('No marked trials found for current session')

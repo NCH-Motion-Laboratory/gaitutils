@@ -26,7 +26,8 @@ def do_session_average_plot(tags=None, show=True, make_pdf=True):
     """Find tagged trials from current session dir and plot average"""
 
     sessionpath = nexus.get_sessionpath()
-    trials = sessionutils.find_tagged(sessionpath, tags=tags)
+    trials = sessionutils.get_c3ds(sessionpath, tags=tags,
+                                   trial_type='dynamic')
     if not trials:
         raise GaitDataError('No marked trials found for current Nexus session')
     sessionpath = nexus.get_sessionpath()
@@ -91,7 +92,7 @@ def do_comparison_plot(sessions, tags, show=True):
 
     trials = list()
     for session in sessions:
-        c3ds = sessionutils.find_tagged(session, tags=tags)
+        c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
         if not c3ds:
             raise ValueError('No tagged trials found in session %s' % session)
         trials.append(c3ds)

@@ -177,6 +177,25 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     trials = sorted(trials, key=lambda tr: tr.eclipse_tag)
     logger.debug('using dynamic trials: %s' % c3ds_dyn)
 
+    # load static trials
+    c3ds_static = list()
+    trials_static = list()
+    for session in sessions:
+        c3ds = sessionutils.find_tagged(session, tags=['Static'],
+                                        eclipse_keys=['TYPE'])
+        if c3ds:
+            c3ds_static.append(c3ds[-1])  # pick only latest static trial
+    trials_static = [gaitutils.Trial(c3d) for c3d in c3ds_static]
+    logger.debug('added static trials: %s' % c3ds_static)
+
+    # find video-only trials that won't get loaded as Trial instances
+    c3ds_vidonly = list()
+    for session in sessions:
+        c3ds = sessionutils.find_tagged(session, tags=cfg.eclipse.video_tags)
+        if c3ds:
+            c3ds_vidonly.append(c3ds[-1])  # only one video tag per session
+
+
     # read some extra data from trials and create supplementary data
     tibial_torsion = dict()
     for tr in trials:
@@ -203,24 +222,6 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                 tibial_torsion[cyc][var_]['data'] = np.ones(101) * tors[ctxt]
                 tibial_torsion[cyc][var_]['label'] = ('Tib. tors. (%s) % s' %
                                                       (ctxt, tr.trialname))
-
-    # load static trials
-    c3ds_static = list()
-    trials_static = list()
-    for session in sessions:
-        c3ds = sessionutils.find_tagged(session, tags=['Static'],
-                                        eclipse_keys=['TYPE'])
-        if c3ds:
-            c3ds_static.append(c3ds[-1])  # pick only latest static trial
-    trials_static = [gaitutils.Trial(c3d) for c3d in c3ds_static]
-    logger.debug('added static trials: %s' % c3ds_static)
-
-    # find trials that won't get loaded (video only)
-    c3ds_vidonly = list()
-    for session in sessions:
-        c3ds = sessionutils.find_tagged(session, tags=cfg.eclipse.video_tags)
-        if c3ds:
-            c3ds_vidonly.append(c3ds[-1])  # only one video tag per session
 
     # load normal data for gait models
     model_normaldata = dict()
@@ -251,10 +252,6 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             vids_ = videos._filter_by_extension(vids, overlay)
             urls[camera_label].extend(['/static/%s' % op.split(fn)[1]
                                       for fn in vids])
-
-            
-        
-    
 
 
     # create dict of dynamic trial videos for each tag and camera selection

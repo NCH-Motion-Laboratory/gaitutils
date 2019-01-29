@@ -28,8 +28,8 @@ def do_copy():
         os.mkdir(dest_dir)
 
     sessionpath = nexus.get_sessionpath()
-    tags = cfg.eclipse.repr_tags
-    c3dfiles = sessionutils.find_tagged(sessionpath, tags=tags)
+    c3dfiles = sessionutils.get_c3ds(sessionpath, tags=cfg.eclipse.repr_tags,
+                                     trial_type='dynamic')
 
     # concatenate video iterators for all .enf files
     vidfiles = []

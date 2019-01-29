@@ -18,8 +18,7 @@ def do_plot(show=True, make_pdf=True):
 
     figs = []
     sessionpath = nexus.get_sessionpath()
-    c3ds = sessionutils.find_tagged(sessionpath, eclipse_keys=['TYPE'],
-                                    tags=['DYNAMIC'])
+    c3ds = sessionutils.get_c3ds(sessionpath, trial_type='dynamic')
     if not c3ds:
         raise GaitDataError('No dynamic trials found for current session')
 

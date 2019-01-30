@@ -176,21 +176,28 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     # find the c3d files
     c3ds = dict(dynamic=[], static=[], vidonly=[])
     for session in sessions:
-        c3ds_dyn = sessionutils.get_c3ds(session, tags=tags,
-                                         trial_type='dynamic',
-                                         return_tags=True)
+        c3ds_dyn = list()
+        for tag in tags:
+            print('getting', tag)
+            # get only one dynamic trial per tag
+            c3d_dyn = sessionutils.get_c3ds(session, tags=tag, trial_type='dynamic',
+                                            return_tags=True)[-1:]
+            print(c3d_dyn)
         if not c3ds_dyn:
             raise GaitDataError('No tagged trials %s found for session %s' %
                                 (tags, session))
         c3ds['dynamic'].extend(c3ds_dyn)
-        c3ds_static = sessionutils.get_c3ds(session, trial_type='static',
-                                            return_tags=True)[-1:]
-        c3ds['static'].extend(c3ds_static)
+        c3d_static = sessionutils.get_c3ds(session, trial_type='static')[-1]
+        # tag static trials by 'Static'
+        c3ds['static'].append((c3d_static, 'Static'))
         c3ds_vidonly = sessionutils.get_c3ds(session,
                                              tags=cfg.eclipse.video_tags,
                                              return_tags=True)[-1:]
         c3ds['vidonly'].extend(c3ds_vidonly)
-
+    print(c3ds)
+    all_tags = set(tag for c3dlist in c3ds.values() for c3d, tag in c3dlist)
+    print(all_tags)
+    raise Exception
     # load dynamic and static trials
     trials_dyn = [gaitutils.Trial(c3d) for c3d, tag in c3ds['dynamic']]
     trials_static = [gaitutils.Trial(c3d) for c3d, tag in c3ds['static']]
@@ -240,8 +247,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             overlay = 'overlay' in camera_label
             real_camera_label = (camera_label[:camera_label.find(' overlay')]
                                  if overlay else camera_label)
-            vids_ = videos.get_trial_videos(c3d, camera_label=real_camera_label,
-                                            vid_ext='.ogv', overlay=overlay)
+            vids_ = videos.get_trial_videos(c3d, camera_label=real_camera_label, vid_ext='.ogv', overlay=overlay)
             urls = ['/static/%s' % op.split(fn)[1] for fn in vids_]
             vid_urls[tag][camera_label].extend(urls)
 

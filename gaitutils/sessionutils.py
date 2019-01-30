@@ -173,8 +173,11 @@ def get_c3ds(sessionpath, tags=None, trial_type=None, return_tags=False):
         enfs = _filter_by_type(enfs, trial_type)
     if tags is not None:
         if return_tags:
-            enfs, tags_found = zip(*_filter_by_tags(enfs, tags,
-                                                    return_tag=True))
+            stuff = list(_filter_by_tags(enfs, tags, return_tag=True))
+            if stuff:
+                enfs, tags_found = zip(*stuff)
+            else:
+                enfs, tags_found = [], []
         else:
             enfs = _filter_by_tags(enfs, tags)
     c3ds = _filter_to_c3ds(enfs)

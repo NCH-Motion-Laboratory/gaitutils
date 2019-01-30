@@ -229,6 +229,9 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     vid_urls = dict()
     for tag in tags + cfg.eclipse.video_tags + ['Static']:
         vid_urls[tag.upper()] = dict()
+    for tag in vid_urls:
+        for camera_label in camera_labels:
+            vid_urls[tag][camera_label] = list()
     for c3d, tag_ in c3ds['dynamic'] + c3ds['static'] + c3ds['vidonly']:
         tag = tag_.upper()
         for camera_label in camera_labels:
@@ -254,7 +257,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
         if any([vid_urls[tag][camera_label] for camera_label in camera_labels]):
             opts_tags.append({'label': '%s' % tag, 'value': tag})
 
-    # we got no videos at all
+    # add null entry in case we got no videos at all
     if not opts_tags:
         opts_tags.append({'label': 'No videos', 'value': 'no videos',
                           'disabled': True})
@@ -264,7 +267,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     for tr in trials_dyn:
         trials_dd.append({'label': tr.name_with_description,
                           'value': tr.trialname})
-    # precreate graphs
+
     # in EMG layout, keep chs that are active in any of the trials
     signals.progress.emit('Reading EMG data', 0)
     try:
@@ -274,7 +277,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     except GaitDataError:
         emg_layout = 'disabled'
 
-    # FIXME: into config?
+    # FIXME: layouts into config?
     _layouts = OrderedDict([
             ('Patient info', 'patient_info'),
             ('Kinematics', cfg.layouts.lb_kinematics),

@@ -17,12 +17,19 @@ from gaitutils import cfg
 logger = logging.getLogger(__name__)
 
 
-def get_trial_videos(fname):
+def get_trial_videos(trialfile, camera_label=None, vid_ext=None, overlay=None):
     """Return list of video files for trial file. File may be c3d or enf etc"""
     vid_exts = ['avi', 'ogv']
-    trialbase = op.splitext(fname)[0]
+    trialbase = op.splitext(trialfile)[0]
     globs_ = ('%s*%s' % (trialbase, vid_ext) for vid_ext in vid_exts)
-    return itertools.chain.from_iterable(glob.iglob(glob_) for glob_ in globs_)
+    vids = itertools.chain.from_iterable(glob.iglob(glob_) for glob_ in globs_)
+    if camera_label is not None:
+        vids = _filter_by_label(vids, camera_label)
+    if vid_ext is not None:
+        vids = _filter_by_extension(vids, vid_ext)
+    if overlay is not None:
+        vids = _filter_by_overlay(vids, overlay)
+    return vids
 
 
 def _filter_by_label(vids, camera_label):

@@ -178,6 +178,7 @@ def _filter_to_c3ds(enfs):
 
 
 def get_c3ds(sessionpath, tags=None, trial_type=None, return_tags=False):
+    """ Get specified c3d files for given session. """
     enfs = get_session_enfs(sessionpath)
     if trial_type is not None:
         if trial_type.lower() == 'dynamic':

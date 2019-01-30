@@ -120,37 +120,24 @@ def get_session_enfs(sessionpath):
         yield enf
 
 
-def _eclipse_find_patterns(enf, patterns, eclipse_keys):
-    """Return first pattern that appears in the given Eclipse keys"""
+def _filter_by_eclipse_keys(enfs, patterns, eclipse_keys):
+    """Filter for enfs whose Eclipse key values match given patterns."""
     if not isinstance(patterns, list):
         patterns = [patterns]
     if not isinstance(eclipse_keys, list):
         eclipse_keys = [eclipse_keys]
-    ecldi = {key.upper(): val.upper() for key, val in
-             get_eclipse_keys(enf).items()}
-    eclvals = [val for key, val in ecldi.items() if key in eclipse_keys]
-    for pattern in patterns:
-        if any(pattern.upper() in eclval for eclval in eclvals):
-            return pattern
-    return None  # no matches
-
-
-def _filter_by_eclipse_keys(enfs, patterns, eclipse_keys,
-                            return_pattern=False):
-    """Filter for enfs whose Eclipse key values match given patterns."""
     for enf in enfs:
-        pattern = _eclipse_find_patterns(enf, patterns, eclipse_keys)
-        if pattern:
-            if return_pattern:
-                yield enf, pattern
-            else:
+        ecldi = {key.upper(): val.upper() for key, val in
+                 get_eclipse_keys(enf).items()}
+        eclvals = [val for key, val in ecldi.items() if key in eclipse_keys]
+        for pattern in patterns:
+            if any(pattern.upper() in eclval for eclval in eclvals):
                 yield enf
 
 
-def _filter_by_tags(enfs, tags, return_tag=False):
+def _filter_by_tags(enfs, tags):
     """Filter by given tags"""
-    return _filter_by_eclipse_keys(enfs, tags, cfg.eclipse.tag_keys,
-                                   return_pattern=return_tag)
+    return _filter_by_eclipse_keys(enfs, tags, cfg.eclipse.tag_keys)
 
 
 def _filter_by_type(enfs, trial_type):
@@ -159,26 +146,17 @@ def _filter_by_type(enfs, trial_type):
 
 
 def _filter_to_c3ds(enfs):
-    """Convert filenames to c3d and check existence"""
+    """Convert enf filenames to c3d"""
     for enf in enfs:
-        c3d = _enf2other(enf, 'c3d')
-        if op.isfile(c3d):
-            yield c3d
+        yield _enf2other(enf, 'c3d')
 
 
-def get_c3ds(sessionpath, tags=None, trial_type=None, return_tags=False):
+def get_c3ds(sessionpath, tags=None, trial_type=None):
     """ Get specified c3d files for given session. """
     enfs = get_session_enfs(sessionpath)
     if trial_type is not None:
         enfs = _filter_by_type(enfs, trial_type)
     if tags is not None:
-        if return_tags:
-            stuff = list(_filter_by_tags(enfs, tags, return_tag=True))
-            if stuff:
-                enfs, tags_found = zip(*stuff)
-            else:
-                enfs, tags_found = [], []
-        else:
-            enfs = _filter_by_tags(enfs, tags)
+        enfs = _filter_by_tags(enfs, tags)
     c3ds = _filter_to_c3ds(enfs)
-    return list(zip(c3ds, tags_found)) if return_tags else list(c3ds)
+    return list(c3ds)

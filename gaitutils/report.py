@@ -173,30 +173,36 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             age_ndata = normaldata.read_normaldata(age_ndata_file)
             model_normaldata.update(age_ndata)
 
-    # find the c3d files
-    c3ds = dict(dynamic=[], static=[], vidonly=[])
+    # find the c3d files and build a nice dict
+    c3ds = dict(dynamic=dict(), static=dict(), vidonly=dict())
     for session in sessions:
-        c3ds_dyn = list()
+        n_dyn = 0
         for tag in tags:
-            print('getting', tag)
-            # get only one dynamic trial per tag
-            c3d_dyn = sessionutils.get_c3ds(session, tags=tag, trial_type='dynamic',
-                                            return_tags=True)[-1:]
-            print(c3d_dyn)
-        if not c3ds_dyn:
-            raise GaitDataError('No tagged trials %s found for session %s' %
+            # get only one dynamic trial per tag / session
+            c3d_dyn = sessionutils.get_c3ds(session, tags=tag,
+                                            trial_type='dynamic')[-1:]
+            if c3d_dyn:
+                n_dyn += 1
+                if tag not in c3ds['dynamic']:
+                    c3ds['dynamic'][tag] = list()
+                c3ds['dynamic'][tag].extend(c3d_dyn)
+        if n_dyn == 0:
+            raise GaitDataError('No tagged dynamic trials %s found for %s' %
                                 (tags, session))
-        c3ds['dynamic'].extend(c3ds_dyn)
-        c3d_static = sessionutils.get_c3ds(session, trial_type='static')[-1]
-        # tag static trials by 'Static'
-        c3ds['static'].append((c3d_static, 'Static'))
-        c3ds_vidonly = sessionutils.get_c3ds(session,
-                                             tags=cfg.eclipse.video_tags,
-                                             return_tags=True)[-1:]
-        c3ds['vidonly'].extend(c3ds_vidonly)
+        for tag in cfg.eclipse.video_tags:
+            c3ds_vidonly = sessionutils.get_c3ds(session,
+                                                 tags=cfg.eclipse.video_tags)[-1:]
+            if c3ds_vidonly:
+                if tag not in c3ds['vidonly']:
+                    c3ds['vidonly'][tag] = list()
+                c3ds['vidonly'][tag].extend(c3ds_vidonly)
+        c3d_static = sessionutils.get_c3ds(session, trial_type='static')[-1:]
+        if 'Static' not in c3ds['static']:
+            c3ds['static']['Static'] = list()
+        c3ds['static']['Static'].extend(c3d_static)
+
     print(c3ds)
-    all_tags = set(tag for c3dlist in c3ds.values() for c3d, tag in c3dlist)
-    print(all_tags)
+
     raise Exception
     # load dynamic and static trials
     trials_dyn = [gaitutils.Trial(c3d) for c3d, tag in c3ds['dynamic']]

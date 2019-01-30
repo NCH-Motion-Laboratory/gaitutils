@@ -201,12 +201,11 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             c3ds['static']['Static'] = list()
         c3ds['static']['Static'].extend(c3d_static)
 
-    print(c3ds)
-
-    raise Exception
-    # load dynamic and static trials
-    trials_dyn = [gaitutils.Trial(c3d) for c3d, tag in c3ds['dynamic']]
-    trials_static = [gaitutils.Trial(c3d) for c3d, tag in c3ds['static']]
+    all_tags = list(tag for di in c3ds.values() for tag in di)
+    trials_dyn = [gaitutils.Trial(c3d) for li in c3ds['dynamic'].values()
+                  for c3d in li]
+    trials_static = [gaitutils.Trial(c3d) for li in c3ds['static'].values()
+                     for c3d in li]
 
     # read some extra data from trials and create supplementary data
     tibial_torsion = dict()
@@ -239,23 +238,22 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     # add camera labels for overlay videos
     camera_labels_overlay = [lbl+' overlay' for lbl in camera_labels]
     camera_labels += camera_labels_overlay
-    vid_urls = dict()
-    for tag in tags + cfg.eclipse.video_tags + ['Static']:
-        vid_urls[tag.upper()] = dict()
+    vid_urls = dict()  # build dict of videos for tag / camera label
+    for tag in all_tags:
+        vid_urls[tag] = dict()
     for tag in vid_urls:
         for camera_label in camera_labels:
             vid_urls[tag][camera_label] = list()
-    for c3d, tag_ in c3ds['dynamic'] + c3ds['static'] + c3ds['vidonly']:
-        tag = tag_.upper()
-        for camera_label in camera_labels:
-            if camera_label not in vid_urls[tag]:
-                vid_urls[tag][camera_label] = list()
-            overlay = 'overlay' in camera_label
-            real_camera_label = (camera_label[:camera_label.find(' overlay')]
-                                 if overlay else camera_label)
-            vids_ = videos.get_trial_videos(c3d, camera_label=real_camera_label, vid_ext='.ogv', overlay=overlay)
-            urls = ['/static/%s' % op.split(fn)[1] for fn in vids_]
-            vid_urls[tag][camera_label].extend(urls)
+    for tag_dict in c3ds.values():
+        for tag, tagfiles in tag_dict.items():
+            for camera_label in camera_labels:
+                overlay = 'overlay' in camera_label
+                real_camera_label = (camera_label[:camera_label.find(' overlay')]
+                                     if overlay else camera_label)
+                for tagfile in tagfiles:
+                    vids_ = videos.get_trial_videos(tagfile, camera_label=real_camera_label, vid_ext='.ogv', overlay=overlay)
+                urls = ['/static/%s' % op.split(fn)[1] for fn in vids_]
+                vid_urls[tag][camera_label].extend(urls)
 
     # build dcc.Dropdown options list for the cameras and tags
     opts_cameras = list()

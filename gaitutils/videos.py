@@ -19,8 +19,9 @@ logger = logging.getLogger(__name__)
 
 def get_trial_videos(trialfile, camera_label=None, vid_ext=None, overlay=None):
     """Return list of video files for trial file. File may be c3d or enf etc"""
-    vid_exts = ['avi', 'ogv']
     trialbase = op.splitext(trialfile)[0]
+    # XXX: should really be case insensitive, but does not matter on Windows
+    vid_exts = ['avi', 'ogv']
     globs_ = ('%s*%s' % (trialbase, vid_ext) for vid_ext in vid_exts)
     vids = itertools.chain.from_iterable(glob.iglob(glob_) for glob_ in globs_)
     if camera_label is not None:
@@ -33,7 +34,7 @@ def get_trial_videos(trialfile, camera_label=None, vid_ext=None, overlay=None):
 
 
 def _filter_by_label(vids, camera_label):
-    """Filter videos by label"""
+    """Filter videos by camera label"""
     ids = [id for id, label in cfg.general.camera_labels.items() if
            camera_label == label]
     vid_its = itertools.tee(vids, len(ids))  # need to reuse vids iterator
@@ -43,7 +44,7 @@ def _filter_by_label(vids, camera_label):
 
 
 def _filter_by_extension(vids, ext):
-    """Filter by filename extension. Case insensitive"""
+    """Filter videos by filename extension. Case insensitive"""
     for vid in vids:
         if op.splitext(vid)[1].upper() == ext.upper():
             yield vid

@@ -240,10 +240,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             overlay = 'overlay' in camera_label
             real_camera_label = (camera_label[:camera_label.find(' overlay')]
                                  if overlay else camera_label)
-            vids_ = videos.get_trial_videos(c3d)
-            vids_ = videos._filter_by_label(vids_, real_camera_label)
-            vids_ = videos._filter_by_extension(vids_, '.ogv')
-            vids_ = videos._filter_by_overlay(vids_, overlay)
+            vids_ = videos.get_trial_videos(c3d, camera_label=real_camera_label,
+                                            vid_ext='.ogv', overlay=overlay)
             urls = ['/static/%s' % op.split(fn)[1] for fn in vids_]
             vid_urls[tag][camera_label].extend(urls)
 

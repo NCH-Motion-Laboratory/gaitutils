@@ -113,44 +113,33 @@ def get_session_date(sessionpath):
     return datetime.datetime.fromtimestamp(op.getmtime(x1ds[0]))
 
 
-def _trials_of_interest(session, tags=None):
-    """Return tagged, static and video-tagged trials"""
-    tagged = find_tagged(session, tags=tags)
-    static = find_tagged(session, ['Static'], ['TYPE'])[:1]
-    video_only = find_tagged(session, tags=cfg.eclipse.video_tags)
-    return tagged + static + video_only
-
-
-def _collect_videos(session, tags=None):
-    """Collect video files of interest for session. Includes tagged trials,
-    static trial and video-tagged trials as specified in config"""
-    trials = _trials_of_interest(session, tags=None)
-    vids = [get_trial_videos(c3dfile) for c3dfile in trials]
-    return [vid for vids_ in vids for vid in vids_]  # flatten list of lists
-
-
 def get_session_enfs(sessionpath):
+    for enf, _, _ in _get_session_enfs(sessionpath):
+        yield enf
+
+
+def _get_session_enfs(sessionpath):
     """Return list of .enf files for the session """
     enfglob = op.join(sessionpath, '*Trial*.enf')
     for enf in glob.iglob(enfglob):
-        yield enf, None
+        yield enf, None, None  # the filter funcs expect 3-tuples
 
 
 def _filter_by_eclipse(enfs, patterns, eclipse_keys):
     """Filter for enfs whose Eclipse keys match given tags. Case insensitive.
-    Yields tuples of (filename, tag)"""
+    Yields tuples of (filename, trial_type, tag)"""
     if not isinstance(patterns, list):
         patterns = [patterns]
     if not isinstance(eclipse_keys, list):
         eclipse_keys = [eclipse_keys]
     eclipse_keys = [key.upper() for key in eclipse_keys]
-    for enf, _ in enfs:
+    for enf, trial_tag, trial_type in enfs:
         ecldi = {key.upper(): val.upper() for key, val in
                  get_eclipse_keys(enf).items()}
         eclvals = [val for key, val in ecldi.items() if key in eclipse_keys]
         for pattern in patterns:
             if any(pattern.upper() in eclval for eclval in eclvals):
-                yield (enf, pattern)
+                yield (enf, pattern, trial_type)
                 break  # only yield for 1st matching pattern
 
 
@@ -171,10 +160,10 @@ def _filter_static(enfs):
 
 def _filter_to_c3ds(enfs):
     """Change filenames to c3ds and check existence"""
-    for enf, tag in enfs:
+    for enf, tag, trial_type in enfs:
         c3d = _enf2other(enf, 'c3d')
         if op.isfile(c3d):
-            yield c3d, tag
+            yield c3d, tag, trial_type
 
 
 def get_c3ds(sessionpath, tags=None, trial_type=None, return_tags=False):

@@ -114,67 +114,68 @@ def get_session_date(sessionpath):
 
 
 def get_session_enfs(sessionpath):
-    for enf, _, _ in _get_session_enfs(sessionpath):
-        yield enf
-
-
-def _get_session_enfs(sessionpath):
     """Return list of .enf files for the session """
     enfglob = op.join(sessionpath, '*Trial*.enf')
     for enf in glob.iglob(enfglob):
-        yield enf, None, None  # the filter funcs expect 3-tuples
+        yield enf
 
 
-def _filter_by_eclipse(enfs, patterns, eclipse_keys):
-    """Filter for enfs whose Eclipse keys match given tags. Case insensitive.
-    Yields tuples of (filename, trial_type, tag)"""
+def _eclipse_find_patterns(enf, patterns, eclipse_keys):
+    """Return first pattern that appears in the given Eclipse keys"""
     if not isinstance(patterns, list):
         patterns = [patterns]
     if not isinstance(eclipse_keys, list):
         eclipse_keys = [eclipse_keys]
-    eclipse_keys = [key.upper() for key in eclipse_keys]
-    for enf, trial_tag, trial_type in enfs:
-        ecldi = {key.upper(): val.upper() for key, val in
-                 get_eclipse_keys(enf).items()}
-        eclvals = [val for key, val in ecldi.items() if key in eclipse_keys]
-        for pattern in patterns:
-            if any(pattern.upper() in eclval for eclval in eclvals):
-                yield (enf, pattern, trial_type)
-                break  # only yield for 1st matching pattern
+    ecldi = {key.upper(): val.upper() for key, val in
+             get_eclipse_keys(enf).items()}
+    eclvals = [val for key, val in ecldi.items() if key in eclipse_keys]
+    for pattern in patterns:
+        if any(pattern.upper() in eclval for eclval in eclvals):
+            return pattern
+    return None  # no matches
 
 
-def _filter_tagged(enfs, tags):
+def _filter_by_eclipse_keys(enfs, patterns, eclipse_keys,
+                            return_pattern=False):
+    """Filter for enfs whose Eclipse key values match given patterns."""
+    for enf in enfs:
+        pattern = _eclipse_find_patterns(enf, patterns, eclipse_keys)
+        if pattern:
+            if return_pattern:
+                yield enf, pattern
+            else:
+                yield enf
+
+
+def _filter_by_tags(enfs, tags, return_tag=False):
     """Filter by given tags"""
-    return _filter_by_eclipse(enfs, tags, cfg.eclipse.tag_keys)
+    return _filter_by_eclipse_keys(enfs, tags, cfg.eclipse.tag_keys,
+                                   return_pattern=return_tag)
 
 
-def _filter_dynamic(enfs):
-    """Filter for dynamic trials"""
-    return _filter_by_eclipse(enfs, 'Dynamic', 'TYPE')
-
-
-def _filter_static(enfs):
-    """Filter for static trials"""
-    return _filter_by_eclipse(enfs, 'Static', 'TYPE')
+def _filter_by_type(enfs, trial_type):
+    """Filter by trial type"""
+    return _filter_by_eclipse_keys(enfs, trial_type, 'TYPE')
 
 
 def _filter_to_c3ds(enfs):
-    """Change filenames to c3ds and check existence"""
-    for enf, tag, trial_type in enfs:
+    """Convert filenames to c3d and check existence"""
+    for enf in enfs:
         c3d = _enf2other(enf, 'c3d')
         if op.isfile(c3d):
-            yield c3d, tag, trial_type
+            yield c3d
 
 
 def get_c3ds(sessionpath, tags=None, trial_type=None, return_tags=False):
     """ Get specified c3d files for given session. """
     enfs = get_session_enfs(sessionpath)
     if trial_type is not None:
-        if trial_type.lower() == 'dynamic':
-            enfs = _filter_dynamic(enfs)
-        elif trial_type.lower() == 'static':
-            enfs = _filter_static(enfs)
+        enfs = _filter_by_type(enfs, trial_type)
     if tags is not None:
-        enfs = _filter_tagged(enfs, tags)
+        if return_tags:
+            enfs, tags_found = zip(*_filter_by_tags(enfs, tags,
+                                                    return_tag=True))
+        else:
+            enfs = _filter_by_tags(enfs, tags)
     c3ds = _filter_to_c3ds(enfs)
-    return list(c3ds) if return_tags else list(fn for fn, tag in c3ds)
+    return list(zip(c3ds, tags_found)) if return_tags else list(c3ds)

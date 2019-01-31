@@ -469,6 +469,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   nexus_automark_trial.automark_single)
 
         self.btnPostprocessSession.clicked.connect(self._postprocess_session)
+        self.btnConvertSessionVideos.clicked.connect(self._convert_session_videos)        
         self.btnCreatePDFs.clicked.connect(self._create_pdf_report)
         self.btnCreateComparison.clicked.connect(self._create_comparison)
         self.btnCreateWebReport.clicked.connect(self._create_web_report)
@@ -560,36 +561,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
                    for c3d in c3ds)
         return itertools.chain.from_iterable(vids_it)
 
-    def _postprocess_session(self):
-        """Do additional postprocessing steps, after trials of interest have
-        been tagged"""
-        prog = None
+    def _convert_session_videos(self):
+        """Convert current Nexus session videos to web format."""
         try:
             session = nexus.get_sessionpath()
         except GaitDataError as e:
             qt_message_dialog(_exception_msg(e))
             return
-
-        # postprocessing pipelines are run for tagged and static trials
-        trials_tagged = sessionutils.get_c3ds(session, tags=cfg.eclipse.tags,
-                                              trial_type='dynamic')
-        trials_static = sessionutils.get_c3ds(session, trial_type='static')
-        trials = trials_tagged + trials_static
-        if trials and cfg.autoproc.postproc_pipelines:
-            logger.debug('running postprocessing for %s' % trials)
-            prog = ProgressBar('')
-            signals = ProgressSignals()
-            vicon = nexus.viconnexus()
-            prog.update('Running postprocessing pipelines: %s' %
-                        cfg.autoproc.postproc_pipelines, 0)
-            for k, tr in enumerate(trials):
-                trbase = op.splitext(tr)[0]
-                vicon.OpenTrial(trbase, cfg.autoproc.nexus_timeout)
-                nexus.run_pipelines(vicon, cfg.autoproc.postproc_pipelines)
-                prog.update('Running postprocessing pipelines: %s' %
-                            cfg.autoproc.postproc_pipelines, 100*k/len(trials))
-
-        # convert session videos to web format
         try:
             vidfiles = self._collect_videos_to_convert(session,
                                                        tags=cfg.eclipse.tags)
@@ -604,12 +582,37 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog('It looks like the session videos have already '
                               'been converted.')
             return
-        if prog is None:
-            prog = ProgressBar('')
-            signals = ProgressSignals()
+        prog = ProgressBar('')
+        signals = ProgressSignals()
         signals.progress.connect(lambda text, p: prog.update(text, p))
         self._convert_vidfiles(vidfiles, signals)
         prog.close()
+
+    def _postprocess_session(self):
+        """Run additional postprocessing pipelines for tagged trials"""
+        try:
+            session = nexus.get_sessionpath()
+        except GaitDataError as e:
+            qt_message_dialog(_exception_msg(e))
+            return
+        # XXX: run for tagged + static - maybe this should be configurable
+        trials = sessionutils.get_c3ds(session, tags=cfg.eclipse.tags,
+                                       trial_type='dynamic')
+        trials += sessionutils.get_c3ds(session, trial_type='static')
+        if trials and cfg.autoproc.postproc_pipelines:
+            logger.debug('running postprocessing for %s' % trials)
+            prog = ProgressBar('')
+            vicon = nexus.viconnexus()
+            prog.update('Running postprocessing pipelines: %s' %
+                        cfg.autoproc.postproc_pipelines, 0)
+            for k, tr in enumerate(trials):
+                trbase = op.splitext(tr)[0]
+                vicon.OpenTrial(trbase, cfg.autoproc.nexus_timeout)
+                nexus.run_pipelines(vicon, cfg.autoproc.postproc_pipelines)
+                prog.update('Running postprocessing pipelines: %s' %
+                            cfg.autoproc.postproc_pipelines, 100*k/len(trials))
+        elif not trials:
+            qt_message_dialog('No trials in session to run postprocessing for')
 
     def closeEvent(self, event):
         """ Confirm and close application. """

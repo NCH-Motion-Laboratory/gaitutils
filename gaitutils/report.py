@@ -121,7 +121,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     # LEFT_WIDTH = 8 if len(sessions) == 3 else 7
     LEFT_WIDTH = 8
     VIDS_TOTAL_HEIGHT = 88  # % of browser window height
-    camera_labels = cfg.general.camera_labels.values()
+    # reduce to set, since there may be several labels for given id
+    camera_labels = set(cfg.general.camera_labels.values())
     model_cycles = cfg.plot.default_model_cycles
     emg_cycles = cfg.plot.default_emg_cycles
 
@@ -196,7 +197,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
         if len(sts) > 1:
             logger.warning('multiple static trials for %s, using last one'
                            % session)
-        c3ds[session]['static']['Static'] = sts[-1:]
+        c3ds[session]['static'][static_tag] = sts[-1:]
         # collect video-only dynamic trials
         for tag in cfg.eclipse.video_tags:
             dyn_vids = sessionutils.get_c3ds(session, tags=tag)
@@ -204,8 +205,6 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                 logger.warning('multiple tagged video-only trials (%s) for %s'
                                % (tag, session))
             c3ds[session]['vid_only'][tag] = dyn_vids[-1:]
-
-    all_tags = dyn_tags + cfg.eclipse.video_tags + 'Static'
 
     # make Trial instances for all dynamic and static trials
     trials_dyn = list()
@@ -215,7 +214,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             if c3ds[session]['dynamic'][tag]:
                 tri = gaitutils.Trial(c3ds[session]['dynamic'][tag][0])
                 trials_dyn.append(tri)
-        if c3ds[session]['static']['Static']:
+        if c3ds[session]['static'][static_tag]:
             tri = gaitutils.Trial(c3ds[session]['static']['Static'][0])
             trials_static.append(tri)
 
@@ -249,35 +248,48 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     # find video files for all trials
     signals.progress.emit('Finding videos...', 0)
     # add camera labels for overlay videos
+    # XXX: may cause trouble if labels already contain the string 'overlay'
     camera_labels_overlay = [lbl+' overlay' for lbl in camera_labels]
-    camera_labels += camera_labels_overlay
-    vid_urls = dict()  # build dict of videos for tag / camera label
+    camera_labels.update(camera_labels_overlay)
+
+    # build dict of videos for given tag / camera label
+    # videos will be listed in session order
+    vid_urls = dict()
+    all_tags = dyn_tags + [static_tag] + cfg.eclipse.video_tags
     for tag in all_tags:
         vid_urls[tag] = dict()
-    for tag in vid_urls:
         for camera_label in camera_labels:
             vid_urls[tag][camera_label] = list()
-    for tag_dict in c3ds.values():
-        for tag, tagfiles in tag_dict.items():
-            for camera_label in camera_labels:
-                overlay = 'overlay' in camera_label
-                real_camera_label = (camera_label[:camera_label.find(' overlay')]
-                                     if overlay else camera_label)
-                for tagfile in tagfiles:
-                    vids_ = videos.get_trial_videos(tagfile, camera_label=real_camera_label, vid_ext='.ogv', overlay=overlay)
-                urls = ['/static/%s' % op.split(fn)[1] for fn in vids_]
-                vid_urls[tag][camera_label].extend(urls)
 
-    # build dcc.Dropdown options list for the cameras and tags
+    # collect all videos for given tag and camera, listed in session order
+    for session in sessions:
+        for trial_type in c3ds[session]:
+            for tag in c3ds[session][trial_type]:
+                c3ds_this = c3ds[session][trial_type][tag]
+                if c3ds_this:
+                    c3d = c3ds_this[0]
+                    for camera_label in camera_labels:
+                        overlay = 'overlay' in camera_label
+                        real_camera_label = (camera_label[:camera_label.find(' overlay')]
+                                             if overlay else camera_label)
+                        vids_this = list(videos.get_trial_videos(c3d, camera_label=real_camera_label, vid_ext='.ogv', overlay=overlay))
+                        if vids_this:
+                            vid = vids_this[0]
+                            logger.debug('session %s, tag %s, camera %s -> %s' % (session, tag, camera_label, vid))
+                            url = '/static/%s' % op.split(vid)[1]
+                            vid_urls[tag][camera_label].append(url)
+
+    # build dcc.Dropdown options list for cameras and tags
+    # list cameras which have videos for any tag
     opts_cameras = list()
-    for label in sorted(set(camera_labels)):
-        opts_cameras.append({'label': label, 'value': label})
-
+    for camera_label in sorted(camera_labels):
+        if any(vid_urls[tag][camera_label] for tag in all_tags):
+            opts_cameras.append({'label': camera_label, 'value': camera_label})
+    # list tags which have videos for any camera
     opts_tags = list()
-    for tag in vid_urls:
-        if any([vid_urls[tag][camera_label] for camera_label in camera_labels]):
+    for tag in all_tags:
+        if any(vid_urls[tag][camera_label] for camera_label in camera_labels):
             opts_tags.append({'label': '%s' % tag, 'value': tag})
-
     # add null entry in case we got no videos at all
     if not opts_tags:
         opts_tags.append({'label': 'No videos', 'value': 'no videos',
@@ -341,7 +353,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             # special layout
             if isinstance(layout, basestring):
                 if layout == 'time_dist':
-                    c3ds_dyn_
+                    # need c3ds in lists, one list for each session
+                    c3ds_dyn = [[c3d for tag in dyn_tags for c3d in c3ds[session]['dynamic'][tag]] for session in sessions]
                     buf = _time_dist_plot(c3ds_dyn, sessions)
                     encoded_image = base64.b64encode(buf.read())
                     graph_upper = html.Img(src='data:image/svg+xml;base64,{}'.

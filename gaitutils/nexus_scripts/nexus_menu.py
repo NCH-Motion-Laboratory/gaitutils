@@ -571,16 +571,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
         except GaitDataError as e:
             qt_message_dialog(_exception_msg(e))
             return
+
         # postprocessing pipelines are run for tagged and static trials
         trials = sessionutils.get_c3ds(session, tags=cfg.eclipse.tags,
                                        trial_type='dynamic')
         trials = sessionutils.get_c3ds(session, trial_type='static')
-
         if trials and cfg.autoproc.postproc_pipelines:
+            logger.debug('running postprocessing for %s' % trials)
             prog = ProgressBar('')
             signals = ProgressSignals()
             vicon = nexus.viconnexus()
-            logger.info('running postprocessing pipelines for tagged trials')
             prog.update('Running postprocessing pipelines: %s' %
                         cfg.autoproc.postproc_pipelines, 0)
             for k, tr in enumerate(trials):
@@ -589,6 +589,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 nexus.run_pipelines(vicon, cfg.autoproc.postproc_pipelines)
                 prog.update('Running postprocessing pipelines: %s' %
                             cfg.autoproc.postproc_pipelines, 100*k/len(trials))
+
         # convert session videos to web format
         try:
             vidfiles = self._collect_videos(session, tags=cfg.eclipse.tags)

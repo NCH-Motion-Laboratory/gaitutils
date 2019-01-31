@@ -22,6 +22,7 @@ import time
 import requests
 import logging
 import traceback
+import itertools
 
 from gaitutils.numutils import check_hetu
 from gaitutils.guiutils import (qt_message_dialog, qt_yesno_dialog,
@@ -548,19 +549,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
                               % cfg.general.browser_path)
 
     @staticmethod
-    def _collect_videos(session, tags):
-        """Collect video files of interest for conversion"""
+    def _collect_videos_to_convert(session, tags):
+        """Collect session AVI files for conversion to web format"""
         c3ds = sessionutils.get_c3ds(session, tags=tags,
                                      trial_type='dynamic')
-        c3ds = sessionutils.get_c3ds(session, tags=cfg.eclipse.video_tags,
-                                     trial_type='dynamic')
-        c3ds += sessionutils.get_c3ds(session, trial_type='static')[-1:]
-        vids_all = list()
-        for c3d in c3ds:
-            vids = videos.get_trial_videos(c3d)
-            vids = videos._filter_by_extension(vids, '.avi')
-            vids_all.extend(vids)
-        return vids_all
+        c3ds += sessionutils.get_c3ds(session, tags=cfg.eclipse.video_tags,
+                                      trial_type='dynamic')
+        c3ds += sessionutils.get_c3ds(session, trial_type='static')
+        vids_it = (videos.get_trial_videos(c3d, vid_ext='.avi')
+                   for c3d in c3ds)
+        return itertools.chain.from_iterable(vids_it)
 
     def _postprocess_session(self):
         """Do additional postprocessing steps, after trials of interest have
@@ -573,9 +571,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
 
         # postprocessing pipelines are run for tagged and static trials
-        trials = sessionutils.get_c3ds(session, tags=cfg.eclipse.tags,
-                                       trial_type='dynamic')
-        trials = sessionutils.get_c3ds(session, trial_type='static')
+        trials_tagged = sessionutils.get_c3ds(session, tags=cfg.eclipse.tags,
+                                              trial_type='dynamic')
+        trials_static = sessionutils.get_c3ds(session, trial_type='static')
+        trials = trials_tagged + trials_static
         if trials and cfg.autoproc.postproc_pipelines:
             logger.debug('running postprocessing for %s' % trials)
             prog = ProgressBar('')
@@ -592,7 +591,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         # convert session videos to web format
         try:
-            vidfiles = self._collect_videos(session, tags=cfg.eclipse.tags)
+            vidfiles = self._collect_videos_to_convert(session,
+                                                       tags=cfg.eclipse.tags)
         except GaitDataError as e:
             qt_message_dialog(_exception_msg(e))
             return
@@ -703,7 +703,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # includes tagged dynamic, video-only tagged, and static trials
         vidfiles = list()
         for session in sessions:
-            vids = self._collect_videos(session, tags=tags)
+            vids = self._collect_videos_to_convert(session, tags=tags)
             vidfiles.extend(vids)
 
         if not report.convert_videos(vidfiles, check_only=True):

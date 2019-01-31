@@ -354,7 +354,9 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             if isinstance(layout, basestring):
                 if layout == 'time_dist':
                     # need c3ds in lists, one list for each session
-                    c3ds_dyn = [[c3d for tag in dyn_tags for c3d in c3ds[session]['dynamic'][tag]] for session in sessions]
+                    c3ds_dyn = [[c3d for tag in dyn_tags for c3d in
+                                 c3ds[session]['dynamic'][tag]]
+                                for session in sessions]
                     buf = _time_dist_plot(c3ds_dyn, sessions)
                     encoded_image = base64.b64encode(buf.read())
                     graph_upper = html.Img(src='data:image/svg+xml;base64,{}'.

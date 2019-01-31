@@ -30,7 +30,7 @@ def get_trial_videos(trialfile, camera_label=None, vid_ext=None, overlay=None):
         vids = _filter_by_extension(vids, vid_ext)
     if overlay is not None:
         vids = _filter_by_overlay(vids, overlay)
-    return vids
+    return list(vids)
 
 
 def _filter_by_label(vids, camera_label):

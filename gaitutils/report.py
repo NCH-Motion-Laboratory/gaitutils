@@ -272,7 +272,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                         overlay = 'overlay' in camera_label
                         real_camera_label = (camera_label[:camera_label.find(' overlay')]
                                              if overlay else camera_label)
-                        vids_this = list(videos.get_trial_videos(c3d, camera_label=real_camera_label, vid_ext='.ogv', overlay=overlay))
+                        vids_this = videos.get_trial_videos(c3d, camera_label=real_camera_label, vid_ext='.ogv', overlay=overlay)
                         if vids_this:
                             vid = vids_this[0]
                             logger.debug('session %s, tag %s, camera %s -> %s' % (session, tag, camera_label, vid))

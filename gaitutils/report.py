@@ -24,7 +24,6 @@ import subprocess
 import ctypes
 import base64
 import io
-import itertools
 
 import gaitutils
 from gaitutils import (cfg, normaldata, models, layouts, GaitDataError,
@@ -111,7 +110,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     """Returns dash app for web report.
     info: patient info
     sessions: list of session dirs
-    tags: tags for gait trials
+    tags: tags for dynamic gait trials
     signals: instance of ProgressSignals, used to send progress updates across
     threads
     """
@@ -136,11 +135,14 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                    else 'Comparison report:')
     report_name = '%s %s' % (report_type, sessions_str)
 
-    # if doing a comparison, pick representative trials only
-    tags = tags or (cfg.eclipse.repr_tags if is_comparison else
-                    cfg.eclipse.tags)
-
     info = info or sessionutils.default_info()
+
+    # tags for dynamic trials
+    # if doing a comparison, pick representative trials only
+    dyn_tags = tags or (cfg.eclipse.repr_tags if is_comparison else
+                        cfg.eclipse.tags)
+    # will be shown in the menu for static trials
+    static_tag = 'Static'
 
     age = None
     if info['hetu'] is not None:
@@ -174,38 +176,48 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             model_normaldata.update(age_ndata)
 
     # find the c3d files and build a nice dict
-    c3ds = dict(dynamic=dict(), static=dict(), vidonly=dict())
+    c3ds = {session: dict() for session in sessions}
     for session in sessions:
-        n_dyn = 0
-        for tag in tags:
-            # get only one dynamic trial per tag / session
-            c3d_dyn = sessionutils.get_c3ds(session, tags=tag,
-                                            trial_type='dynamic')[-1:]
-            if c3d_dyn:
-                n_dyn += 1
-                if tag not in c3ds['dynamic']:
-                    c3ds['dynamic'][tag] = list()
-                c3ds['dynamic'][tag].extend(c3d_dyn)
-        if n_dyn == 0:
-            raise GaitDataError('No tagged dynamic trials %s found for %s' %
-                                (tags, session))
+        c3ds[session] = dict(dynamic=dict(), static=dict(), vid_only=dict())
+        # collect dynamic trials for each tag
+        for tag in dyn_tags:
+            dyns = sessionutils.get_c3ds(session, tags=tag,
+                                         trial_type='dynamic')
+            if len(dyns) > 1:
+                logger.warning('multiple tagged trials (%s) for %s' %
+                               (tag, session))
+            c3ds[session]['dynamic'][tag] = dyns[-1:]
+        # require at least one dynamic for each session
+        if not any(c3ds[session]['dynamic'][tag] for tag in dyn_tags):
+            raise GaitDataError('No tagged dynamic trials found for %s' %
+                                (session))
+        # collect static trial (at most 1 per session)
+        sts = sessionutils.get_c3ds(session, trial_type='static')
+        if len(sts) > 1:
+            logger.warning('multiple static trials for %s, using last one'
+                           % session)
+        c3ds[session]['static']['Static'] = sts[-1:]
+        # collect video-only dynamic trials
         for tag in cfg.eclipse.video_tags:
-            c3ds_vidonly = sessionutils.get_c3ds(session,
-                                                 tags=cfg.eclipse.video_tags)[-1:]
-            if c3ds_vidonly:
-                if tag not in c3ds['vidonly']:
-                    c3ds['vidonly'][tag] = list()
-                c3ds['vidonly'][tag].extend(c3ds_vidonly)
-        c3d_static = sessionutils.get_c3ds(session, trial_type='static')[-1:]
-        if 'Static' not in c3ds['static']:
-            c3ds['static']['Static'] = list()
-        c3ds['static']['Static'].extend(c3d_static)
+            dyn_vids = sessionutils.get_c3ds(session, tags=tag)
+            if len(dyn_vids) > 1:
+                logger.warning('multiple tagged video-only trials (%s) for %s'
+                               % (tag, session))
+            c3ds[session]['vid_only'][tag] = dyn_vids[-1:]
 
-    all_tags = list(tag for di in c3ds.values() for tag in di)
-    trials_dyn = [gaitutils.Trial(c3d) for li in c3ds['dynamic'].values()
-                  for c3d in li]
-    trials_static = [gaitutils.Trial(c3d) for li in c3ds['static'].values()
-                     for c3d in li]
+    all_tags = dyn_tags + cfg.eclipse.video_tags + 'Static'
+
+    # make Trial instances for all dynamic and static trials
+    trials_dyn = list()
+    trials_static = list()
+    for session in sessions:
+        for tag in dyn_tags:
+            if c3ds[session]['dynamic'][tag]:
+                tri = gaitutils.Trial(c3ds[session]['dynamic'][tag][0])
+                trials_dyn.append(tri)
+        if c3ds[session]['static']['Static']:
+            tri = gaitutils.Trial(c3ds[session]['static']['Static'][0])
+            trials_static.append(tri)
 
     # read some extra data from trials and create supplementary data
     tibial_torsion = dict()
@@ -234,6 +246,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                 tibial_torsion[cyc][var_]['label'] = ('Tib. tors. (%s) % s' %
                                                       (ctxt, tr.trialname))
 
+    # find video files for all trials
     signals.progress.emit('Finding videos...', 0)
     # add camera labels for overlay videos
     camera_labels_overlay = [lbl+' overlay' for lbl in camera_labels]

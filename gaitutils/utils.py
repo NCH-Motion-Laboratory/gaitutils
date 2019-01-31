@@ -205,7 +205,7 @@ def _leading_foot(mkrdata, roi=None):
     Returns n-length list of 'R' or 'L' correspondingly (n = number of
     frames). Gaps are indicated as None. mkrdata must include foot and
     pelvis markers"""
-    subj_pos = avg_markerdata(mkrdata, cfg.autoproc.track_markers)
+    subj_pos = avg_markerdata(mkrdata, cfg.autoproc.track_markers, roi=roi)
     # FIXME: should not use a single dim here
     gait_dim = principal_movement_direction(subj_pos)
     gait_dir = np.median(np.diff(subj_pos, axis=0), axis=0)[gait_dim]

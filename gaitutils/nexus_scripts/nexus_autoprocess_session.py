@@ -168,15 +168,18 @@ def _do_autoproc(enffiles, update_eclipse=True):
                 _fail(trial, 'gaps')
                 continue
 
-        # plug-in gait checks
+        # check for valid Plug-in Gait set
         if not utils.is_plugingait_set(mkrdata):
             logger.warning('marker set does not correspond to Plug-in Gait')
             _fail(trial, 'label_failure')
             continue
-        elif not utils.check_plugingait_set(mkrdata):
-                logger.debug('Plug-in Gait marker sanity checks failed')
-                _fail(trial, 'label_failure')
-                continue
+        # check for flipped markers
+        flipped = list(utils._check_markers_flipped(mkrdata))
+        if flipped:
+            for m1, m2 in flipped:
+                logger.warning('trying to swap trajectories for %s and %s'
+                               % (m1, m2))
+                nexus._swap_markers(vicon, m1, m2)
 
         # get subject position by tracking markers
         try:

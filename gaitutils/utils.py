@@ -92,27 +92,22 @@ def is_plugingait_set(mkrdata):
     return lb_mkrs_psi.issubset(mkrs) or lb_mkrs_sacr.issubset(mkrs)
 
 
-def check_plugingait_set(mkrdata):
-    """ Sanity checks for Plug-in Gait marker set """
-    is_ok = dict()
-    if not is_plugingait_set(mkrdata):
-        raise ValueError('Not a Plug-in Gait set')
-    # vector orientation checks
+def _check_markers_flipped(mkrdata):
+    """Checks for markers that may typically get flipped in labeling.
+    Yields pairs of flipped markers"""
     MAX_ANGLE = 90  # max angle to consider vectors 'similarly oriented'
+    # HEE-TOE checks
     for side in ['L', 'R']:
-        is_ok[side] = True
         # compare HEE-TOE line to pelvis orientation
-        ht = _normalize(mkrdata[side+'TOE'] - mkrdata[side+'HEE'])
+        mkr_toe, mkr_hee = '%sTOE' % side, '%sHEE' % side
+        ht = _normalize(mkrdata[mkr_toe] - mkrdata[mkr_hee])
         if side+'PSI' in mkrdata:
             pa = _normalize(mkrdata[side+'ASI'] - mkrdata[side+'PSI'])
         elif 'SACR' in mkrdata:
             pa = _normalize(mkrdata[side+'ASI'] - mkrdata['SACR'])
         angs = np.arccos(np.sum(ht * pa, axis=1)) / np.pi * 180
         if np.nanmedian(angs) > MAX_ANGLE:
-            logger.warning('%sHEE and %sTOE markers probably flipped'
-                           % (side, side))
-            is_ok[side] = False
-    return is_ok['R'] and is_ok['L']
+            yield mkr_toe, mkr_hee
 
 
 def principal_movement_direction(mP):

@@ -172,6 +172,7 @@ def run_pipelines(vicon, plines):
             logger.warning('error while trying to run Nexus pipeline: %s'
                            % pipeline)
 
+
 def get_trialname():
     """ Get trial name without session path """
     vicon = viconnexus()
@@ -355,6 +356,15 @@ def get_forceplate_data(vicon):
         return None
     logger.debug('detected %d forceplate(s)' % len(devids))
     return [_get_1_forceplate_data(vicon, devid) for devid in devids]
+
+
+def _swap_markers(vicon, marker1, marker2):
+    """Swap two marker trajectories in currently loaded trial."""
+    subj = get_subjectnames()
+    m1 = vicon.GetTrajectory(subj, marker1)
+    m2 = vicon.GetTrajectory(subj, marker2)
+    vicon.SetTrajectory(subj, marker2, m1[0], m1[1], m1[2], m1[3])
+    vicon.SetTrajectory(subj, marker1, m2[0], m2[1], m2[2], m2[3])
 
 
 def _get_marker_data(vicon, markers, ignore_edge_gaps=True,

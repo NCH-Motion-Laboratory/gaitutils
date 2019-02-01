@@ -559,7 +559,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         c3ds += sessionutils.get_c3ds(session, trial_type='static')
         vids_it = (videos.get_trial_videos(c3d, vid_ext='.avi')
                    for c3d in c3ds)
-        return itertools.chain.from_iterable(vids_it)
+        return list(itertools.chain.from_iterable(vids_it))
 
     def _convert_session_videos(self):
         """Convert current Nexus session videos to web format."""

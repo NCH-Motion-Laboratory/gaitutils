@@ -112,7 +112,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
             trial['recon_ok'] = False
             trial['description'] = 'skipped'
             continue
-        allmarkers = vicon.GetMarkerNames(subjectname)
+
         edata = eclipse.get_eclipse_keys(enffile, return_empty=True)
         logger.debug('type: %s' % edata['TYPE'])
         logger.debug('description: %s' % edata['DESCRIPTION'])
@@ -148,6 +148,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
             continue
 
         # check for valid marker data
+        allmarkers = nexus._get_marker_names(vicon, trajs_only=True)
         try:
             mkrdata = read_data.get_marker_data(vicon, allmarkers,
                                                 ignore_missing=True)

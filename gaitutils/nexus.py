@@ -195,6 +195,17 @@ def _get_nexus_subject_param(vicon, name, param):
     return value
 
 
+def _get_marker_names(vicon, trajs_only=True):
+    """Return marker names (only ones with trajectories, if trajs_only)"""
+    subjname = get_subjectnames()
+    markers = vicon.GetMarkerNames(subjname)
+    # only get markers with trajectories - excludes calibration markers
+    if trajs_only:
+        markers = [mkr for mkr in markers if vicon.HasTrajectory(subjname,
+                                                                 mkr)]
+    return markers
+
+
 # FIXME: most of get_ methods below are intended to be called via read_data
 # so underscore them
 def get_metadata(vicon):
@@ -210,9 +221,7 @@ def get_metadata(vicon):
     if not trialname:
         raise GaitDataError('No trial loaded in Nexus')
     sessionpath = get_sessionpath()
-    markers = vicon.GetMarkerNames(subjname)
-    # only get markers with trajectories - excludes calibration markers
-    markers = [mkr for mkr in markers if vicon.HasTrajectory(subjname, mkr)]
+    markers = _get_marker_names(vicon)
     # get events - GetEvents() indices seem to often be 1 frame less than on
     # Nexus display - only happens with ROI?
     lstrikes = vicon.GetEvents(subjname, "Left", "Foot Strike")[0]

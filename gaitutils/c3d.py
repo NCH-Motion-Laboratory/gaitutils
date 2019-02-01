@@ -74,6 +74,7 @@ def _get_c3dacq(c3dfile):
 def get_analysis(c3dfile, condition='unknown'):
     """Get analysis values from c3d (e.g. gait parameters). Returns a dict
     keyed by var and context. First key can optionally be a condition label."""
+    logger.debug('getting analysis values from %s' % c3dfile)
     acq = _get_c3dacq(c3dfile)
     vars_ = _get_c3d_metadata_field(acq, 'ANALYSIS', 'NAMES')
     units = _get_c3d_metadata_field(acq, 'ANALYSIS', 'UNITS')

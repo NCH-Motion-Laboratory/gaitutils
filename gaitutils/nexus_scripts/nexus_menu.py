@@ -603,14 +603,15 @@ class Gaitmenu(QtWidgets.QMainWindow):
             logger.debug('running postprocessing for %s' % trials)
             prog = ProgressBar('')
             vicon = nexus.viconnexus()
-            prog.update('Running postprocessing pipelines: %s' %
-                        cfg.autoproc.postproc_pipelines, 0)
+            prog.update('Running postprocessing pipelines: %s for %d '
+                        'trials' % (cfg.autoproc.postproc_pipelines,
+                                    len(trials)), 0)
             for k, tr in enumerate(trials):
                 trbase = op.splitext(tr)[0]
                 vicon.OpenTrial(trbase, cfg.autoproc.nexus_timeout)
                 nexus.run_pipelines(vicon, cfg.autoproc.postproc_pipelines)
-                prog.update('Running postprocessing pipelines: %s' %
-                            cfg.autoproc.postproc_pipelines, 100*k/len(trials))
+                prog.update('Running postprocessing pipelines: %s for %d '
+                            'trials' % (cfg.autoproc.postproc_pipelines, len(trials)), 100*k/len(trials))
         elif not trials:
             qt_message_dialog('No trials in session to run postprocessing for')
 

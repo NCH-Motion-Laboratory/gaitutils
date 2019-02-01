@@ -16,8 +16,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 
 from gaitutils import (nexus, register_gui_exception_handler, analysis,
-                       GaitDataError, sessionutils)
-from gaitutils.plot import time_dist_barchart, save_pdf
+                       GaitDataError, sessionutils, cfg)
+from gaitutils.plot import time_dist_barchart
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +26,7 @@ def do_session_average_plot(tags=None, show=True, make_pdf=True):
     """Find tagged trials from current session dir and plot average"""
 
     sessionpath = nexus.get_sessionpath()
+    tags = tags or cfg.eclipse.tags
     trials = sessionutils.get_c3ds(sessionpath, tags=tags,
                                    trial_type='dynamic')
     if not trials:

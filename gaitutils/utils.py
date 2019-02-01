@@ -534,10 +534,16 @@ def automark_events(source, mkrdata=None, events_range=None, fp_events=None,
                                         MIN_SWING_VELOCITY)
 
         # compute thresholds
-        threshold_fall_ = (vel_thresholds[context+'_strike'] or
-                           maxv * cfg.autoproc.strike_vel_threshold)
-        threshold_rise_ = (vel_thresholds[context+'_toeoff'] or
-                           maxv * cfg.autoproc.toeoff_vel_threshold)
+        if (cfg.autoproc.use_fp_vel_thresholds and
+           vel_thresholds[context+'_strike']):
+            threshold_fall_ = vel_thresholds[context+'_strike']
+        else:
+            threshold_fall_ = maxv * cfg.autoproc.strike_vel_threshold
+        if (cfg.autoproc.use_fp_vel_thresholds and
+           vel_thresholds[context+'_toeoff']):
+            threshold_rise_ = vel_thresholds[context+'_toeoff']
+        else:
+            threshold_rise_ = maxv * cfg.autoproc.toeoff_vel_threshold
         logger.debug('side: %s, default thresholds fall/rise: %.2f/%.2f'
                      % (context, maxv * cfg.autoproc.strike_vel_threshold,
                         maxv * cfg.autoproc.toeoff_vel_threshold))

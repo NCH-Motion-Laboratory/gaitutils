@@ -22,11 +22,12 @@ import time
 import requests
 import logging
 import traceback
+import itertools
 
 from gaitutils.numutils import check_hetu
 from gaitutils.guiutils import (qt_message_dialog, qt_yesno_dialog,
                                 qt_dir_chooser)
-from gaitutils import GaitDataError, nexus, cfg, report, sessionutils
+from gaitutils import GaitDataError, nexus, cfg, report, sessionutils, videos
 from gaitutils.nexus_scripts import (nexus_emgplot, nexus_musclelen_plot,
                                      nexus_kinetics_emgplot,
                                      nexus_emg_consistency,
@@ -467,7 +468,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnAutomark,
                                   nexus_automark_trial.automark_single)
 
-        self.btnConvertVideos.clicked.connect(self._convert_session_videos)
+        self.btnPostprocessSession.clicked.connect(self._postprocess_session)
+        self.btnConvertSessionVideos.clicked.connect(self._convert_session_videos)        
         self.btnCreatePDFs.clicked.connect(self._create_pdf_report)
         self.btnCreateComparison.clicked.connect(self._create_comparison)
         self.btnCreateWebReport.clicked.connect(self._create_web_report)
@@ -548,21 +550,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
                               % cfg.general.browser_path)
 
     @staticmethod
-    def _collect_vidfiles(session, tags=None):
-        """Collect video files for session. Includes tagged trials (tags),
-        static trial and video-only trials as specified in config"""
-        tagged = sessionutils.find_tagged(session, tags=tags)
-        vidfiles = []
-        for c3dfile in tagged:
-            vidfiles.extend(nexus.find_trial_videos(c3dfile))
-        static_c3ds = sessionutils.find_tagged(session, ['Static'], ['TYPE'])
-        if static_c3ds:
-            vidfiles.extend(nexus.find_trial_videos(static_c3ds[-1]))
-        video_c3ds = sessionutils.find_tagged(session,
-                                              tags=cfg.eclipse.video_tags)
-        for c3dfile in video_c3ds:
-            vidfiles.extend(nexus.find_trial_videos(c3dfile))
-        return vidfiles
+    def _collect_videos_to_convert(session, tags):
+        """Collect session AVI files for conversion to web format"""
+        c3ds = sessionutils.get_c3ds(session, tags=tags,
+                                     trial_type='dynamic')
+        c3ds += sessionutils.get_c3ds(session, tags=cfg.eclipse.video_tags,
+                                      trial_type='dynamic')
+        c3ds += sessionutils.get_c3ds(session, trial_type='static')
+        vids_it = (videos.get_trial_videos(c3d, vid_ext='.avi')
+                   for c3d in c3ds)
+        return itertools.chain.from_iterable(vids_it)
 
     def _convert_session_videos(self):
         """Convert current Nexus session videos to web format."""
@@ -572,7 +569,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog(_exception_msg(e))
             return
         try:
-            vidfiles = self._collect_vidfiles(session)
+            vidfiles = self._collect_videos_to_convert(session,
+                                                       tags=cfg.eclipse.tags)
         except GaitDataError as e:
             qt_message_dialog(_exception_msg(e))
             return
@@ -589,6 +587,32 @@ class Gaitmenu(QtWidgets.QMainWindow):
         signals.progress.connect(lambda text, p: prog.update(text, p))
         self._convert_vidfiles(vidfiles, signals)
         prog.close()
+
+    def _postprocess_session(self):
+        """Run additional postprocessing pipelines for tagged trials"""
+        try:
+            session = nexus.get_sessionpath()
+        except GaitDataError as e:
+            qt_message_dialog(_exception_msg(e))
+            return
+        # XXX: run for tagged + static - maybe this should be configurable
+        trials = sessionutils.get_c3ds(session, tags=cfg.eclipse.tags,
+                                       trial_type='dynamic')
+        trials += sessionutils.get_c3ds(session, trial_type='static')
+        if trials and cfg.autoproc.postproc_pipelines:
+            logger.debug('running postprocessing for %s' % trials)
+            prog = ProgressBar('')
+            vicon = nexus.viconnexus()
+            prog.update('Running postprocessing pipelines: %s' %
+                        cfg.autoproc.postproc_pipelines, 0)
+            for k, tr in enumerate(trials):
+                trbase = op.splitext(tr)[0]
+                vicon.OpenTrial(trbase, cfg.autoproc.nexus_timeout)
+                nexus.run_pipelines(vicon, cfg.autoproc.postproc_pipelines)
+                prog.update('Running postprocessing pipelines: %s' %
+                            cfg.autoproc.postproc_pipelines, 100*k/len(trials))
+        elif not trials:
+            qt_message_dialog('No trials in session to run postprocessing for')
 
     def closeEvent(self, event):
         """ Confirm and close application. """
@@ -679,10 +703,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 cfg.eclipse.tags)
 
         # collect all video files for conversion
+        # includes tagged dynamic, video-only tagged, and static trials
         vidfiles = list()
         for session in sessions:
-            vidfiles_this = self._collect_vidfiles(session, tags=tags)
-            vidfiles.extend(vidfiles_this)
+            vids = self._collect_videos_to_convert(session, tags=tags)
+            vidfiles.extend(vids)
 
         if not report.convert_videos(vidfiles, check_only=True):
             self._convert_vidfiles(vidfiles, signals)

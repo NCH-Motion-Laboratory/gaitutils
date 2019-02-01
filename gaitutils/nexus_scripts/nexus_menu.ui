@@ -303,17 +303,24 @@
         </property>
        </spacer>
       </item>
-      <item row="5" column="7">
+      <item row="4" column="7">
+       <widget class="QPushButton" name="btnPostprocessSession">
+        <property name="text">
+         <string>Run postprocessing pipelines</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="7">
        <widget class="QPushButton" name="btnCopyVideos">
         <property name="text">
          <string>Copy session videos to desktop</string>
         </property>
        </widget>
       </item>
-      <item row="4" column="7">
-       <widget class="QPushButton" name="btnConvertVideos">
+      <item row="5" column="7">
+       <widget class="QPushButton" name="btnConvertSessionVideos">
         <property name="text">
-         <string>Convert videos to web format</string>
+         <string>Convert session videos to web format</string>
         </property>
        </widget>
       </item>

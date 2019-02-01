@@ -23,7 +23,8 @@ logger = logging.getLogger(__name__)
 def do_plot(tags=None, show=True, make_pdf=True):
 
     sessionpath = nexus.get_sessionpath()
-    c3dfiles = sessionutils.find_tagged(sessionpath)
+    c3dfiles = sessionutils.get_c3ds(sessionpath, tags=cfg.eclipse.tags,
+                                     trial_type='dynamic')
 
     if not c3dfiles:
         raise GaitDataError('No marked trials found for current session')

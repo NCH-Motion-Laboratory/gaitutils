@@ -11,9 +11,10 @@ Copy trial videos to desktop under nexus_videos
 import os
 import os.path as op
 import shutil
+import itertools
 import logging
 
-from gaitutils import nexus, sessionutils, cfg
+from gaitutils import nexus, sessionutils, cfg, GaitDataError
 
 
 logger = logging.getLogger(__name__)
@@ -28,19 +29,15 @@ def do_copy():
         os.mkdir(dest_dir)
 
     sessionpath = nexus.get_sessionpath()
-    tags = cfg.eclipse.repr_tags
-    c3dfiles = sessionutils.find_tagged(sessionpath, tags=tags)
-
-    # concatenate video iterators for all .enf files
-    vidfiles = []
-    for c3d in c3dfiles:
-        vidfiles += nexus.find_trial_videos(c3d)
-
+    c3dfiles = sessionutils.get_c3ds(sessionpath, tags=cfg.eclipse.repr_tags,
+                                     trial_type='dynamic')
+    vidfiles = itertools.chain.from_iterable(sessionutils.get_trial_videos(c3d)
+                                             for c3d in c3dfiles)
+    vidfiles = list(vidfiles)
     if not vidfiles:
-        raise Exception('No video files found for representative trials')
+        raise GaitDataError('No video files found for representative trials')
 
-    # copy each file
-    for j, vidfile in enumerate(vidfiles):
+    for vidfile in vidfiles:
         logger.debug('copying %s -> %s' % (vidfile, dest_dir))
         shutil.copy2(vidfile, dest_dir)
 

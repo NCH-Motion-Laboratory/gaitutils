@@ -16,6 +16,7 @@ import re
 import logging
 
 from .eclipse import get_eclipse_keys
+from .videos import get_trial_videos
 from .envutils import GaitDataError
 from .config import cfg
 
@@ -115,30 +116,47 @@ def get_session_date(sessionpath):
 def get_session_enfs(sessionpath):
     """Return list of .enf files for the session """
     enfglob = op.join(sessionpath, '*Trial*.enf')
-    enffiles = glob.glob(enfglob) if sessionpath else None
-    logger.debug('found %d .enf files for session %s' %
-                 (len(enffiles) if enffiles else 0, sessionpath))
-    return enffiles
+    for enf in glob.iglob(enfglob):
+        yield enf
 
 
-def find_tagged(sessionpath, tags=None, eclipse_keys=None):
-    """ Find tagged trials in given path. Returns a list of .c3d files. """
-    if eclipse_keys is None:
-        eclipse_keys = cfg.eclipse.tag_keys
-    if tags is None:
-        tags = cfg.eclipse.tags
-    tagged_enfs = list(_find_enfs(sessionpath, tags, eclipse_keys))
-    c3ds = [_enf2other(fn, 'c3d') for fn in tagged_enfs]
-    return [fn for fn in c3ds if op.isfile(fn)]
+def _filter_by_eclipse_keys(enfs, patterns, eclipse_keys):
+    """Filter for enfs whose Eclipse key values match given patterns."""
+    if not isinstance(patterns, list):
+        patterns = [patterns]
+    if not isinstance(eclipse_keys, list):
+        eclipse_keys = [eclipse_keys]
+    for enf in enfs:
+        ecldi = {key.upper(): val.upper() for key, val in
+                 get_eclipse_keys(enf).items()}
+        eclvals = [val for key, val in ecldi.items() if key in eclipse_keys]
+        for pattern in patterns:
+            if any(pattern.upper() in eclval for eclval in eclvals):
+                yield enf
 
 
-def _find_enfs(sessionpath, tags, eclipse_keys):
-    """ Yield .enf files for trials in current Nexus session directory
-    (or given session path) whose Eclipse fields (list) contain any of
-    strings (list). Case insensitive. """
-    tags = [t.upper() for t in tags]
-    for enf in get_session_enfs(sessionpath):
-        ecldi = get_eclipse_keys(enf).items()
-        eclvals = [val.upper() for key, val in ecldi if key in eclipse_keys]
-        if any([s in val for s in tags for val in eclvals]):
-            yield enf
+def _filter_by_tags(enfs, tags):
+    """Filter by given tags"""
+    return _filter_by_eclipse_keys(enfs, tags, cfg.eclipse.tag_keys)
+
+
+def _filter_by_type(enfs, trial_type):
+    """Filter by trial type"""
+    return _filter_by_eclipse_keys(enfs, trial_type, 'TYPE')
+
+
+def _filter_to_c3ds(enfs):
+    """Convert enf filenames to c3d"""
+    for enf in enfs:
+        yield _enf2other(enf, 'c3d')
+
+
+def get_c3ds(sessionpath, tags=None, trial_type=None):
+    """ Get specified c3d files for given session. """
+    enfs = get_session_enfs(sessionpath)
+    if trial_type is not None:
+        enfs = _filter_by_type(enfs, trial_type)
+    if tags is not None:
+        enfs = _filter_by_tags(enfs, tags)
+    c3ds = _filter_to_c3ds(enfs)
+    return list(c3ds)

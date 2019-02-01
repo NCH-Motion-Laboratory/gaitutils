@@ -27,10 +27,9 @@ import io
 
 import gaitutils
 from gaitutils import (cfg, normaldata, models, layouts, GaitDataError,
-                       sessionutils, numutils)
+                       sessionutils, numutils, videos)
 from gaitutils.plot_plotly import plot_trials
 from gaitutils.nexus_scripts import nexus_time_distance_vars
-
 
 logger = logging.getLogger(__name__)
 
@@ -111,8 +110,9 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     """Returns dash app for web report.
     info: patient info
     sessions: list of session dirs
-    tags: tags for gait trials
-    signals: instance of ProgressSignals
+    tags: tags for dynamic gait trials
+    signals: instance of ProgressSignals, used to send progress updates across
+    threads
     """
 
     signals.progress.emit('Collecting trials...', 0)
@@ -121,7 +121,10 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     # LEFT_WIDTH = 8 if len(sessions) == 3 else 7
     LEFT_WIDTH = 8
     VIDS_TOTAL_HEIGHT = 88  # % of browser window height
-    camera_labels = cfg.general.camera_labels.values()
+    # reduce to set, since there may be several labels for given id
+    camera_labels = set(cfg.general.camera_labels.values())
+    model_cycles = cfg.plot.default_model_cycles
+    emg_cycles = cfg.plot.default_emg_cycles
 
     if len(sessions) < 1 or len(sessions) > 3:
         raise ValueError('Need a list of one to three sessions')
@@ -133,11 +136,14 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                    else 'Comparison report:')
     report_name = '%s %s' % (report_type, sessions_str)
 
-    # if doing a comparison, pick representative trials only
-    tags = tags or (cfg.eclipse.repr_tags if is_comparison else
-                    cfg.eclipse.tags)
-
     info = info or sessionutils.default_info()
+
+    # tags for dynamic trials
+    # if doing a comparison, pick representative trials only
+    dyn_tags = tags or (cfg.eclipse.repr_tags if is_comparison else
+                        cfg.eclipse.tags)
+    # will be shown in the menu for static trials
+    static_tag = 'Static'
 
     age = None
     if info['hetu'] is not None:
@@ -159,57 +165,6 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     if info['report_notes']:
         patient_info_text += info['report_notes']
 
-    # load the trials
-    trials = list()
-    c3ds_all = list()
-    for session in sessions:
-        c3ds = sessionutils.find_tagged(session, tags=tags)
-        if not c3ds:
-            raise GaitDataError('No marked trials %s found for session %s' %
-                                (tags, session))
-        else:
-            c3ds_all.append(c3ds)
-            trials_this = [gaitutils.Trial(c3d) for c3d in c3ds]
-            trials.extend(trials_this)
-    trials = sorted(trials, key=lambda tr: tr.eclipse_tag)
-    logger.debug('using dynamic trials: %s' % c3ds_all)
-
-    # read some extra data from trials and create supplementary data
-    tibial_torsion = dict()
-    for tr in trials:
-        # read tibial torsion for each trial and make supplementary traces
-        # these will only be shown for KneeAnglesZ (knee rotation) variable
-        tors = dict()
-        tors['R'], tors['L'] = (tr.subj_params['RTibialTorsion'],
-                                tr.subj_params['LTibialTorsion'])
-        if tors['R'] is None or tors['L'] is None:
-            logger.warning('could not read tibial torsion values from %s'
-                           % tr.trialname)
-            continue
-        # FIXME: should set model cycles spec somewhere earlier
-        cycs = tr.get_cycles(cfg.plot.default_model_cycles)
-        for cyc in cycs:
-            tibial_torsion[cyc] = dict()
-            for ctxt in tors:
-                var_ = ctxt + 'KneeAnglesZ'
-                tibial_torsion[cyc][var_] = dict()
-                # x = % of gait cycle
-                tibial_torsion[cyc][var_]['t'] = np.arange(101)
-                # static tibial torsion value as function of x
-                tibial_torsion[cyc][var_]['data'] = np.ones(101) * tors[ctxt]
-                tibial_torsion[cyc][var_]['label'] = 'Tib. tors. (%s) % s' % (ctxt, tr.trialname)
-
-    # load static trials separately
-    c3ds_static = list()
-    trials_static = list()
-    for session in sessions:
-        c3ds = sessionutils.find_tagged(session, tags=['Static'],
-                                        eclipse_keys=['TYPE'])
-        if c3ds:
-            c3ds_static.append(c3ds[-1])  # pick at most static trial
-    trials_static = [gaitutils.Trial(c3d) for c3d in c3ds_static]
-    logger.debug('added static trials: %s' % c3ds_static)
-
     # load normal data for gait models
     model_normaldata = dict()
     for fn in cfg.general.normaldata_files:
@@ -221,81 +176,141 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             age_ndata = normaldata.read_normaldata(age_ndata_file)
             model_normaldata.update(age_ndata)
 
+    # find the c3d files and build a nice dict
+    c3ds = {session: dict() for session in sessions}
+    for session in sessions:
+        c3ds[session] = dict(dynamic=dict(), static=dict(), vid_only=dict())
+        # collect dynamic trials for each tag
+        for tag in dyn_tags:
+            dyns = sessionutils.get_c3ds(session, tags=tag,
+                                         trial_type='dynamic')
+            if len(dyns) > 1:
+                logger.warning('multiple tagged trials (%s) for %s' %
+                               (tag, session))
+            c3ds[session]['dynamic'][tag] = dyns[-1:]
+        # require at least one dynamic for each session
+        if not any(c3ds[session]['dynamic'][tag] for tag in dyn_tags):
+            raise GaitDataError('No tagged dynamic trials found for %s' %
+                                (session))
+        # collect static trial (at most 1 per session)
+        sts = sessionutils.get_c3ds(session, trial_type='static')
+        if len(sts) > 1:
+            logger.warning('multiple static trials for %s, using last one'
+                           % session)
+        c3ds[session]['static'][static_tag] = sts[-1:]
+        # collect video-only dynamic trials
+        for tag in cfg.eclipse.video_tags:
+            dyn_vids = sessionutils.get_c3ds(session, tags=tag)
+            if len(dyn_vids) > 1:
+                logger.warning('multiple tagged video-only trials (%s) for %s'
+                               % (tag, session))
+            c3ds[session]['vid_only'][tag] = dyn_vids[-1:]
+
+    # make Trial instances for all dynamic and static trials
+    trials_dyn = list()
+    trials_static = list()
+    for session in sessions:
+        for tag in dyn_tags:
+            if c3ds[session]['dynamic'][tag]:
+                tri = gaitutils.Trial(c3ds[session]['dynamic'][tag][0])
+                trials_dyn.append(tri)
+        if c3ds[session]['static'][static_tag]:
+            tri = gaitutils.Trial(c3ds[session]['static']['Static'][0])
+            trials_static.append(tri)
+
+    # read some extra data from trials and create supplementary data
+    tibial_torsion = dict()
+    for tr in trials_dyn:
+        # read tibial torsion for each trial and make supplementary traces
+        # these will only be shown for KneeAnglesZ (knee rotation) variable
+        tors = dict()
+        tors['R'], tors['L'] = (tr.subj_params['RTibialTorsion'],
+                                tr.subj_params['LTibialTorsion'])
+        if tors['R'] is None or tors['L'] is None:
+            logger.warning('could not read tibial torsion values from %s'
+                           % tr.trialname)
+            continue
+        # include torsion info for all cycles; this is useful when plotting
+        # isolated cycles
+        cycs = tr.get_cycles(model_cycles)
+        for cyc in cycs:
+            tibial_torsion[cyc] = dict()
+            for ctxt in tors:
+                var_ = ctxt + 'KneeAnglesZ'
+                tibial_torsion[cyc][var_] = dict()
+                # x = % of gait cycle
+                tibial_torsion[cyc][var_]['t'] = np.arange(101)
+                # static tibial torsion value as function of x
+                tibial_torsion[cyc][var_]['data'] = np.ones(101) * tors[ctxt]
+                tibial_torsion[cyc][var_]['label'] = ('Tib. tors. (%s) % s' %
+                                                      (ctxt, tr.trialname))
+
+    # find video files for all trials
     signals.progress.emit('Finding videos...', 0)
-    # create directory of trial videos for each tag and camera selection
+    # add camera labels for overlay videos
+    # XXX: may cause trouble if labels already contain the string 'overlay'
+    camera_labels_overlay = [lbl+' overlay' for lbl in camera_labels]
+    camera_labels.update(camera_labels_overlay)
+
+    # build dict of videos for given tag / camera label
+    # videos will be listed in session order
     vid_urls = dict()
-    for tag in tags:
+    all_tags = dyn_tags + [static_tag] + cfg.eclipse.video_tags
+    for tag in all_tags:
         vid_urls[tag] = dict()
         for camera_label in camera_labels:
+            vid_urls[tag][camera_label] = list()
 
-            tagged = [tr for tr in trials if tag == tr.eclipse_tag]
-            vid_files = [tr.get_video_by_label(camera_label, ext='ogv')
-                         for tr in tagged]
-            vid_urls[tag][camera_label] = dict()
-            vid_urls[tag][camera_label] = ['/static/%s' % op.split(fn)[1] if fn
-                                           else None for fn in vid_files]
+    # collect all videos for given tag and camera, listed in session order
+    for session in sessions:
+        for trial_type in c3ds[session]:
+            for tag in c3ds[session][trial_type]:
+                c3ds_this = c3ds[session][trial_type][tag]
+                if c3ds_this:
+                    c3d = c3ds_this[0]
+                    for camera_label in camera_labels:
+                        overlay = 'overlay' in camera_label
+                        real_camera_label = (camera_label[:camera_label.find(' overlay')]
+                                             if overlay else camera_label)
+                        vids_this = videos.get_trial_videos(c3d, camera_label=real_camera_label, vid_ext='.ogv', overlay=overlay)
+                        if vids_this:
+                            vid = vids_this[0]
+                            logger.debug('session %s, tag %s, camera %s -> %s' % (session, tag, camera_label, vid))
+                            url = '/static/%s' % op.split(vid)[1]
+                            vid_urls[tag][camera_label].append(url)
 
-    def _extra_video_urls(eclipse_keys=None, tags=None):
-        """Put video files from each session according to Eclipse key and
-        tags into vid_urls dict"""
-        urls = dict()
-        c3ds = list()
-        for session in sessions:
-            c3ds_this = sessionutils.find_tagged(session, tags=tags,
-                                                 eclipse_keys=eclipse_keys)
-            if c3ds_this:
-                # only pick last matching trial from each session
-                c3ds.append(c3ds_this[-1])
-        for camera_id, camera_label in cfg.general.camera_labels.items():
-            urls[camera_label] = list()
-            for c3dfile in c3ds:
-                vid_files = gaitutils.nexus.find_trial_videos(c3dfile,
-                                                              'ogv', camera_id)
-                urls[camera_label].extend(['/static/%s' % op.split(fn)[1]
-                                          for fn in vid_files])
-        return urls
-
-    vid_urls['Static'] = _extra_video_urls(eclipse_keys=['TYPE'],
-                                           tags=['Static'])
-    for tag in cfg.eclipse.video_tags:
-        vid_urls[tag] = _extra_video_urls(tags=[tag])
-
-    logger.debug('found following video urls: %s' % vid_urls)
-
-    # build dcc.Dropdown options list for the cameras and tags
+    # build dcc.Dropdown options list for cameras and tags
+    # list cameras which have videos for any tag
     opts_cameras = list()
-    for label in set(camera_labels):
-        opts_cameras.append({'label': label, 'value': label})
+    for camera_label in sorted(camera_labels):
+        if any(vid_urls[tag][camera_label] for tag in all_tags):
+            opts_cameras.append({'label': camera_label, 'value': camera_label})
+    # list tags which have videos for any camera
     opts_tags = list()
-    for tag in tags + cfg.eclipse.video_tags:
-        if any([vid_urls[tag][camera_label] for camera_label in
-                camera_labels]):
+    for tag in all_tags:
+        if any(vid_urls[tag][camera_label] for camera_label in camera_labels):
             opts_tags.append({'label': '%s' % tag, 'value': tag})
-    if any([vid_urls['Static'][camera_label] for camera_label in
-            camera_labels]):
-        opts_tags.append({'label': 'Static', 'value': 'Static'})
-
-    # no videos at all
+    # add null entry in case we got no videos at all
     if not opts_tags:
         opts_tags.append({'label': 'No videos', 'value': 'no videos',
                           'disabled': True})
 
     # build dcc.Dropdown options list for the trials
     trials_dd = list()
-    for tr in trials:
+    for tr in trials_dyn:
         trials_dd.append({'label': tr.name_with_description,
                           'value': tr.trialname})
-    # precreate graphs
+
     # in EMG layout, keep chs that are active in any of the trials
     signals.progress.emit('Reading EMG data', 0)
     try:
-        emgs = [tr.emg for tr in trials]
+        emgs = [tr.emg for tr in trials_dyn]
         emg_layout = layouts.rm_dead_channels_multitrial(emgs,
                                                          cfg.layouts.std_emg)
     except GaitDataError:
         emg_layout = 'disabled'
 
-    # FIXME: into config?
+    # FIXME: layouts into config?
     _layouts = OrderedDict([
             ('Patient info', 'patient_info'),
             ('Kinematics', cfg.layouts.lb_kinematics),
@@ -338,7 +353,11 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             # special layout
             if isinstance(layout, basestring):
                 if layout == 'time_dist':
-                    buf = _time_dist_plot(c3ds_all, sessions)
+                    # need c3ds in lists, one list for each session
+                    c3ds_dyn = [[c3d for tag in dyn_tags for c3d in
+                                 c3ds[session]['dynamic'][tag]]
+                                for session in sessions]
+                    buf = _time_dist_plot(c3ds_dyn, sessions)
                     encoded_image = base64.b64encode(buf.read())
                     graph_upper = html.Img(src='data:image/svg+xml;base64,{}'.
                                            format(encoded_image),
@@ -391,7 +410,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
 
             # regular gaitutils layout
             else:
-                fig_ = plot_trials(trials, layout, model_normaldata,
+                fig_ = plot_trials(trials_dyn, layout, model_normaldata,
                                    legend_type=legend_type,
                                    trial_linestyles=trial_linestyles,
                                    supplementary_data=supplementary_default)

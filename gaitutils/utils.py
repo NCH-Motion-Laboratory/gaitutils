@@ -483,9 +483,6 @@ def automark_events(source, mkrdata=None, events_range=None, fp_events=None,
     from . import nexus
 
     # TODO: move into config
-    # thresholds (relative to maximum velocity) for detecting strike/toeoff
-    REL_THRESHOLD_FALL = .2
-    REL_THRESHOLD_RISE = .5
     # marker data is assumed to be in mm
     # mm/frame = 1000 m/frame = 1000/frate m/s
     VEL_CONV = 1000/frate
@@ -538,12 +535,12 @@ def automark_events(source, mkrdata=None, events_range=None, fp_events=None,
 
         # compute thresholds
         threshold_fall_ = (vel_thresholds[context+'_strike'] or
-                           maxv * REL_THRESHOLD_FALL)
+                           maxv * cfg.autoproc.strike_vel_threshold)
         threshold_rise_ = (vel_thresholds[context+'_toeoff'] or
-                           maxv * REL_THRESHOLD_RISE)
+                           maxv * cfg.autoproc.toeoff_vel_threshold)
         logger.debug('side: %s, default thresholds fall/rise: %.2f/%.2f'
-                     % (context, maxv * REL_THRESHOLD_FALL,
-                        maxv * REL_THRESHOLD_RISE))
+                     % (context, maxv * cfg.autoproc.strike_vel_threshold,
+                        maxv * cfg.autoproc.toeoff_vel_threshold))
         logger.debug('using thresholds: %.2f/%.2f' % (threshold_fall_,
                                                       threshold_rise_))
         # find point where velocity crosses threshold

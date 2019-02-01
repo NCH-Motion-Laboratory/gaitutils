@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 def do_plot(tags=None, age=None, show=True, make_pdf=True):
 
+    tags = tags or cfg.eclipse.tags
     sessionpath = nexus.get_sessionpath()
     tagged_trials = sessionutils.get_c3ds(sessionpath, tags=tags,
                                           trial_type='dynamic')

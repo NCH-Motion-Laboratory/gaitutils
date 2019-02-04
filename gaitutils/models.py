@@ -259,9 +259,9 @@ pig_lowerbody_kinetics.ylabels = _dict_with_side({
                          'KneeMomentY': 'Ivar%sNm/kg%sIvalg' % spacer,
                          'KneeMomentZ': 'Iint%sNm/kg%sIext' % spacer,
                          'KneePowerZ': 'Abs%sW/kg%sGen' % spacer,
-                         'NormalisedGRFX': 'N/kg',
-                         'NormalisedGRFY': 'N/kg',
-                         'NormalisedGRFZ': 'N/kg'})
+                         'NormalisedGRFX': '% (BW)',
+                         'NormalisedGRFY': '% (BW)',
+                         'NormalisedGRFZ': '% (BW)'})
 
 pig_lowerbody_kinetics.is_kinetic_var = (lambda varname: True)
 pig_lowerbody_kinetics.is_optional_var = lambda varname: 'GRF' in varname

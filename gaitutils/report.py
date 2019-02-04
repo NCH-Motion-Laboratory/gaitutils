@@ -241,7 +241,9 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                 # x = % of gait cycle
                 tibial_torsion[cyc][var_]['t'] = np.arange(101)
                 # static tibial torsion value as function of x
-                tibial_torsion[cyc][var_]['data'] = np.ones(101) * tors[ctxt]
+                # convert radians -> degrees
+                tibial_torsion[cyc][var_]['data'] = (np.ones(101) * tors[ctxt]
+                                                     / np.pi * 180)
                 tibial_torsion[cyc][var_]['label'] = ('Tib. tors. (%s) % s' %
                                                       (ctxt, tr.trialname))
 

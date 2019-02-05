@@ -89,22 +89,24 @@ ofm.read_vars = _list_with_side(['FFHFA',
                                  'HXFFA',
                                  'TIBA'])
 
-ofm.varlabels_noside = {'FFHFAx': 'Forefoot-hindfoot x',
-                        'FFHFAy': 'Forefoot-hindfoot y',
-                        'FFHFAz': 'Forefoot-hindfoot z',
-                        'FFTBAx': 'Forefoot-tibia x',
-                        'FFTBAy': 'Forefoot-tibia y',
-                        'FFTBAz': 'Forefoot-tibia z',
-                        'HFTBAx': 'Hindfoot-tibia x',
-                        'HFTBAy': 'Hindfoot-tibia y',
-                        'HFTBAz': 'Hindfoot-tibia z',
+ofm.varlabels_noside = {'FFHFAx': 'Forefoot-hindfoot dorsiflexion',
+                        'FFHFAy': 'Forefoot-hindfoot adduction',
+                        'FFHFAz': 'Forefoot-hindfoot supination',
+                        'FFTBAx': 'Forefoot-tibia dorsiflexion',
+                        'FFTBAy': 'Forefoot-tibia adduction',
+                        'FFTBAz': 'Forefoot-tibia supination',
+                        'HFTBAx': 'Hindfoot-tibia dorsiflexion',
+                        'HFTBAy': 'Hindfoot-tibia internal rotation',
+                        'HFTBAz': 'Hindfoot-tibia inversion',
                         'HFTFLx': 'Hindfoot-lab x',
                         'HFTFLy': 'Hindfoot-lab y',
                         'HFTFLz': 'Hindfoot-lab z',
-                        'HXFFAx': 'Hallux-forefoot x',
-                        'HXFFAy': 'Hallux-forefoot y',
-                        'HXFFAz': 'Hallux-forefoot z'}
-
+                        'HXFFAx': 'Hallux-forefoot dorsiflexion',
+                        'HXFFAy': 'Hallux-forefoot varus',
+                        'HXFFAz': 'NA',
+                        'TIBAx': 'Tibia-lab x',
+                        'TIBAy': 'Tibia-lab y',
+                        'TIBAz': 'Tibia-lab z'}
 
 # FIXME: for now, ylabel is just the degree sign for all vars
 ofm.ylabels = defaultdict(lambda: 'deg')

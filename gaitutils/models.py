@@ -75,7 +75,8 @@ class GaitModel(object):
 
 """ Create models """
 #
-# OFM right
+
+# Oxford foot model
 #
 ofm = GaitModel()
 ofm.desc = 'Oxford foot model kinematics'

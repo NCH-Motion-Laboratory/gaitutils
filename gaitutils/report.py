@@ -266,10 +266,9 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     # collect all videos for given tag and camera, listed in session order
     for session in sessions:
         for trial_type in c3ds[session]:
-            for tag in c3ds[session][trial_type]:
-                c3ds_this = c3ds[session][trial_type][tag]
+            for tag, c3ds_this in c3ds[session][trial_type].items():
                 if c3ds_this:
-                    c3d = c3ds_this[0]
+                    c3d = c3ds_this[0]  # only one c3d per tag and session
                     for camera_label in camera_labels:
                         overlay = 'overlay' in camera_label
                         real_camera_label = (camera_label[:camera_label.find(' overlay')]
@@ -277,7 +276,6 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                         vids_this = videos.get_trial_videos(c3d, camera_label=real_camera_label, vid_ext='.ogv', overlay=overlay)
                         if vids_this:
                             vid = vids_this[0]
-                            logger.debug('session %s, tag %s, camera %s -> %s' % (session, tag, camera_label, vid))
                             url = '/static/%s' % op.split(vid)[1]
                             vid_urls[tag][camera_label].append(url)
 

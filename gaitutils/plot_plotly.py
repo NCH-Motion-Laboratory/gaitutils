@@ -14,7 +14,7 @@ from itertools import cycle
 import datetime
 import logging
 
-from gaitutils import models, cfg
+from gaitutils import models, cfg, normaldata
 from gaitutils.envutils import GaitDataError
 from gaitutils.trial import Gaitcycle, Noncycle
 
@@ -55,12 +55,18 @@ def _truncate_trialname(trialname):
         return trialname
 
 
-_plot_cache = dict()
+def plot_trials_browser(trials, layout, **kwargs):
+    """ Convenience plotter, uses plotly.offline to plot directly to browser"""
+    fig = plot_trials(trials, layout, **kwargs)
+    plotly.offline.plot(fig)
+
+
+_plot_cache = dict()  # global for plot_trials
 
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                 emg_cycles=None, legend_type='full', trial_linestyles='same',
-                supplementary_data=None):
+                supplementary_data=None, maintitle=None):
     """Make a plotly plot of layout, including given trials.
 
     trials: list of gaitutils.Trial instances
@@ -78,6 +84,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     if supplementary_data is None:
         supplementary_data = dict()
+
+    if model_normaldata is None:
+        model_normaldata = normaldata.read_all_normaldata()
 
     # configurabe opts (here for now)
     label_fontsize = 18  # x, y labels
@@ -414,7 +423,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     margin = go.layout.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
     layout = go.Layout(margin=margin, font={'size': label_fontsize},
-                       hovermode='closest')
+                       hovermode='closest', title=maintitle)
 
     fig['layout'].update(layout)
     return fig

@@ -10,23 +10,34 @@ Plot Plug-in Gait outputs (online) from Nexus.
 
 import logging
 
-from gaitutils import Plotter, cfg, register_gui_exception_handler
+from gaitutils import (Plotter, cfg, register_gui_exception_handler,
+                       trial, plot_plotly)
 
 
 def do_plot():
 
-    pl = Plotter()
-    pl.open_nexus_trial()
-    pl.layout = cfg.layouts.lb_kin
-    maintitleprefix = 'Kinetics/kinematics plot for '
+    layout = cfg.layouts.lb_kin
 
-    if cfg.plot.show_videos:
-        for vidfile in pl.trial._get_videos_by_id():
-            pl.external_play_video(vidfile)
+    if cfg.plot.backend == 'matplotlib':
+        maintitleprefix = 'Kinetics/kinematics plot for '
+        pl = Plotter()
+        pl.layout = layout
+        pl.open_nexus_trial()
 
-    pl.plot_trial(maintitleprefix=maintitleprefix, show=False)
-    pl.move_plot_window(10, 30)
-    pl.show()
+        if cfg.plot.show_videos:
+            for vidfile in pl.trial._get_videos_by_id():
+                pl.external_play_video(vidfile)
+
+        pl.plot_trial(maintitleprefix=maintitleprefix, show=False)
+        pl.move_plot_window(10, 30)
+        pl.show()
+
+    elif cfg.plot.backend == 'plotly':
+        trials = [trial.nexus_trial()]
+        plot_plotly.plot_trials_browser(trials, layout)
+
+    else:
+        raise ValueError('Invalid plotting backend %s' % cfg.plot.backend)
 
 
 if __name__ == '__main__':

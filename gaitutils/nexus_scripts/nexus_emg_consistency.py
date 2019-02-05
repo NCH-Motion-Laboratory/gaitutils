@@ -11,16 +11,20 @@ description and defined search strings.
 
 import logging
 import argparse
+import os.path as op
 from itertools import cycle
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, EMG,
-                       GaitDataError, sessionutils, nexus)
+                       GaitDataError, sessionutils, nexus, Trial, plot_plotly)
 from gaitutils.layouts import rm_dead_channels_multitrial
 
 logger = logging.getLogger(__name__)
 
 
-def do_plot(tags=None, show=True, make_pdf=True):
+def do_plot(tags=None, show=True, make_pdf=True, backend=None):
+
+    if backend is None:
+        backend = cfg.plot.backend
 
     sessionpath = nexus.get_sessionpath()
     c3dfiles = sessionutils.get_c3ds(sessionpath, tags=cfg.eclipse.tags,
@@ -32,42 +36,54 @@ def do_plot(tags=None, show=True, make_pdf=True):
     linecolors = cfg.plot.overlay_colors
     ccolors = cycle(linecolors)
 
-    pl = Plotter()
     layout = cfg.layouts.overlay_std_emg
     emgs = [EMG(tr) for tr in c3dfiles]
-    pl.layout = rm_dead_channels_multitrial(emgs, layout)
+    layout = rm_dead_channels_multitrial(emgs, layout)
 
-    for i, trialpath in enumerate(c3dfiles):
-        if i > len(linecolors):
-            logger.warning('not enough colors for plot!')
-        pl.open_trial(c3dfiles[i])
+    if backend == 'matplotlib':
+        pl = Plotter()
+        pl.layout = layout
 
-        emg_active = any([pl.trial.emg.status_ok(ch) for ch in
-                          cfg.emg.channel_labels])
-        if not emg_active:
-            continue
+        for i, trialpath in enumerate(c3dfiles):
+            if i > len(linecolors):
+                logger.warning('not enough colors for plot!')
+            pl.open_trial(c3dfiles[i])
 
-        plot_emg_normaldata = (trialpath == c3dfiles[-1])
+            emg_active = any([pl.trial.emg.status_ok(ch) for ch in
+                              cfg.emg.channel_labels])
+            if not emg_active:
+                continue
 
-        pl.plot_trial(emg_tracecolor=next(ccolors),
-                      maintitle='', annotate_emg=False,
-                      superpose=True, show=False,
-                      plot_emg_normaldata=plot_emg_normaldata)
+            plot_emg_normaldata = (trialpath == c3dfiles[-1])
 
-    if not pl.fig:
-        raise GaitDataError('None of the marked trials have valid EMG data')
+            pl.plot_trial(emg_tracecolor=next(ccolors),
+                          maintitle='', annotate_emg=False,
+                          superpose=True, show=False,
+                          plot_emg_normaldata=plot_emg_normaldata)
 
-    maintitle = ('EMG consistency plot, '
-                 'session %s' % pl.trial.sessiondir)
-    pl.set_title(maintitle)
+        if not pl.fig:
+            raise GaitDataError('None of the trials have valid EMG data')
 
-    if show:
-        pl.show()
+        maintitle = ('EMG consistency plot, '
+                     'session %s' % pl.trial.sessiondir)
+        pl.set_title(maintitle)
 
-    if make_pdf:
-        pl.create_pdf('emg_consistency.pdf')
+        if show:
+            pl.show()
 
-    return pl.fig
+        if make_pdf:
+            pl.create_pdf('emg_consistency.pdf')
+
+        return pl.fig
+
+    elif backend == 'plotly':
+
+        trials = [Trial(c3d) for c3d in c3dfiles]
+        maintitle = ('EMG consistency plot, session %s' %
+                     op.split(sessionpath)[-1])
+        plot_plotly.plot_trials_browser(trials, layout,
+                                        legend_type='short_name_with_tag',
+                                        maintitle=None)
 
 
 if __name__ == '__main__':

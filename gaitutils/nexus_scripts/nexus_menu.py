@@ -430,14 +430,18 @@ class Gaitmenu(QtWidgets.QMainWindow):
         bit ugly since the Qt event loop gets called twice, but this does not
         seem to do any harm.
         """
+        # if using the plotly backend, we can run plotters in worker threads
+        thread_plotters = cfg.plot.backend == 'plotly'
         self._button_connect_task(self.btnCopyVideos,
                                   nexus_copy_trial_videos.do_copy, thread=True)
-        self._button_connect_task(self.btnEMG, nexus_emgplot.do_plot)
+        self._button_connect_task(self.btnEMG, nexus_emgplot.do_plot,
+                                  thread=thread_plotters)
         self._button_connect_task(self.btnMuscleLen,
                                   nexus_musclelen_plot.do_plot)
         self._button_connect_task(self.btnKinEMG,
                                   nexus_kinetics_emgplot.do_plot)
-        self._button_connect_task(self.btnKinall, nexus_kinallplot.do_plot)
+        self._button_connect_task(self.btnKinall, nexus_kinallplot.do_plot,
+                                  thread=thread_plotters)
         self._button_connect_task(self.btnTardieu, self._tardieu)
 
         if have_custom:
@@ -448,9 +452,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnTrialVelocity,
                                   nexus_trials_velocity.do_plot)
         self._button_connect_task(self.btnEMGCons,
-                                  nexus_emg_consistency.do_plot)
+                                  nexus_emg_consistency.do_plot,
+                                  thread=thread_plotters)
         self._button_connect_task(self.btnKinCons,
-                                  nexus_kin_consistency.do_plot)
+                                  nexus_kin_consistency.do_plot,
+                                  thread=thread_plotters)
         self._button_connect_task(self.btnMuscleLenCons,
                                   nexus_musclelen_consistency.do_plot)
         self._button_connect_task(self.btnKinAverage,
@@ -458,7 +464,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnTimeDistAverage,
                                   nexus_time_distance_vars.
                                   do_session_average_plot)
-        # these take a long time and do not use matplotlib, so thread them
         self._button_connect_task(self.btnAutoprocTrial,
                                   nexus_autoprocess_trial.autoproc_single,
                                   thread=True)

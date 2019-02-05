@@ -74,6 +74,48 @@ class GaitModel(object):
 
 
 """ Create models """
+#
+# OFM right
+#
+ofm = GaitModel()
+ofm.desc = 'Oxford foot model kinematics'
+ofm.type = 'OFM'
+ofm.read_strategy = 'split_xyz'
+
+ofm.read_vars = _list_with_side(['FFHFA',
+                                 'FFTBA',
+                                 'HFTBA',
+                                 'HFTFL',
+                                 'HXFFA',
+                                 'TIBA'])
+
+ofm.varlabels_noside = {'FFHFAx': 'Forefoot-hindfoot x',
+                        'FFHFAy': 'Forefoot-hindfoot y',
+                        'FFHFAz': 'Forefoot-hindfoot z',
+                        'FFTBAx': 'Forefoot-tibia x',
+                        'FFTBAy': 'Forefoot-tibia y',
+                        'FFTBAz': 'Forefoot-tibia z',
+                        'HFTBAx': 'Hindfoot-tibia x',
+                        'HFTBAy': 'Hindfoot-tibia y',
+                        'HFTBAz': 'Hindfoot-tibia z',
+                        'HFTFLx': 'Hindfoot-lab x',
+                        'HFTFLy': 'Hindfoot-lab y',
+                        'HFTFLz': 'Hindfoot-lab z',
+                        'HXFFAx': 'Hallux-forefoot x',
+                        'HXFFAy': 'Hallux-forefoot y',
+                        'HXFFAz': 'Hallux-forefoot z'}
+
+
+# FIXME: for now, ylabel is just the degree sign for all vars
+ofm.ylabels = defaultdict(lambda: 'deg')
+# OFM may be unilateral, so make all vars optional
+ofm.is_optional_var = lambda var: True
+ofm.varlabels = _dict_with_side(ofm.varlabels_noside)
+ofm.varnames = ofm.varlabels.keys()
+ofm.varnames_noside = ofm.varlabels_noside.keys()
+
+models_all.append(ofm)
+
 
 #
 # Plug-in Gait upper body kinematics

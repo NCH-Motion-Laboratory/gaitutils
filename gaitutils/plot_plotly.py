@@ -134,7 +134,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                 raise GaitDataError('Cannot mix norm and unnorm data')
 
         for cyc in allcycles:
-            logger.debug('trial %s, cycle: %s' % (trial.trialname, cyc))
+            #logger.debug('trial %s, cycle: %s' % (trial.trialname, cyc))
             trial.set_norm_cycle(cyc)
             context = cyc.context
 

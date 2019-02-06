@@ -9,12 +9,31 @@ Stuff related to Python environment
 
 import sys
 import traceback
+import subprocess
+import os.path as op
+from pkg_resources import resource_filename
 
 from .guiutils import error_exit
 
 
 class GaitDataError(Exception):
     pass
+
+
+def _git_autoupdate():
+    """Hacky way to update repo to latest master, if running under git"""
+    mod_dir = resource_filename('gaitutils', '')
+    repo_dir = op.abspath(op.join(mod_dir, op.pardir))
+    if op.isdir(op.join(repo_dir, '.git')):
+        print('running git autoupdate')
+        o = subprocess.check_output(['git', 'pull'], cwd=repo_dir)
+        up_to_date = 'Already up to date' in o
+        if up_to_date:
+            print('Package already up to date')
+            return False
+        else:
+            print('Autoupdate status: %s' % o)
+            return True
 
 
 def register_gui_exception_handler(full_traceback=False):

@@ -27,7 +27,8 @@ import itertools
 from gaitutils.numutils import check_hetu
 from gaitutils.guiutils import (qt_message_dialog, qt_yesno_dialog,
                                 qt_dir_chooser)
-from gaitutils import GaitDataError, nexus, cfg, report, sessionutils, videos
+from gaitutils import (GaitDataError, nexus, cfg, report, sessionutils, videos,
+                       envutils)
 from gaitutils.nexus_scripts import (nexus_emgplot, nexus_musclelen_plot,
                                      nexus_kinetics_emgplot,
                                      nexus_emg_consistency,
@@ -430,6 +431,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         bit ugly since the Qt event loop gets called twice, but this does not
         seem to do any harm.
         """
+        if cfg.general.git_autoupdate:
+            if envutils._git_autoupdate():
+                qt_message_dialog('The package was automatically updated '
+                                  ', please restart.')
+                sys.exit()
+
         # if using the plotly backend, we can run plotters in worker threads
         thread_plotters = cfg.plot.backend == 'plotly'
         self._button_connect_task(self.btnCopyVideos,

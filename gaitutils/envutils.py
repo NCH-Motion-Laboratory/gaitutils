@@ -27,13 +27,15 @@ def _git_autoupdate():
     if op.isdir(op.join(repo_dir, '.git')):
         print('running git autoupdate')
         o = subprocess.check_output(['git', 'pull'], cwd=repo_dir)
-        up_to_date = 'Already up to date' in o
+        up_to_date = 'Already' in o
         if up_to_date:
             print('Package already up to date')
             return False
         else:
             print('Autoupdate status: %s' % o)
             return True
+    else:
+        return True
 
 
 def register_gui_exception_handler(full_traceback=False):

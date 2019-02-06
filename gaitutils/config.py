@@ -14,6 +14,7 @@ import os.path as op
 import os
 import copy
 import sys
+import subprocess
 from pkg_resources import resource_filename
 
 from . import envutils
@@ -133,5 +134,17 @@ if cfg.general.normaldata_files == 'default':
 if cfg.general.videoconv_path == 'default':
     fn = resource_filename('gaitutils', 'thirdparty/ffmpeg2theora.exe')
     cfg['general']['videoconv_path'] = repr(fn)
+
+# autoupdate git repo
+if cfg.general.git_autoupdate:
+    mod_dir = resource_filename('gaitutils', '')
+    repo_dir = os.path.abspath(os.path.join(mod_dir, os.pardir))
+    if op.isdir(op.join(repo_dir, '.git')):
+        print('running git autoupdate')
+        p = subprocess.Popen(['git', 'pull'], cwd=repo_dir)
+        out, err = p.communicate()
+        o = subprocess.check_output(['git', 'pull'], cwd=repo_dir)
+        print('autoupdate status: %s' % o)
+
 
 sys.stdout.flush()  # make sure that warnings are printed out

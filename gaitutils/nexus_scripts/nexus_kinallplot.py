@@ -34,7 +34,8 @@ def do_plot():
 
     elif cfg.plot.backend == 'plotly':
         trials = [trial.nexus_trial()]
-        plot_plotly.plot_trials_browser(trials, layout)
+        plot_plotly.plot_trials_browser(trials, layout,
+                                        legend_type='short_name_with_cyclename')
 
     else:
         raise ValueError('Invalid plotting backend %s' % cfg.plot.backend)

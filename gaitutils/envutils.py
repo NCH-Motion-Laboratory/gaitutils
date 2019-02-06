@@ -21,21 +21,23 @@ class GaitDataError(Exception):
 
 
 def _git_autoupdate():
-    """Hacky way to update repo to latest master, if running under git"""
+    """Hacky way to update repo to latest master, if running under git.
+    Return True if update was ran, else False"""
     mod_dir = resource_filename('gaitutils', '')
     repo_dir = op.abspath(op.join(mod_dir, op.pardir))
     if op.isdir(op.join(repo_dir, '.git')):
         print('running git autoupdate')
         o = subprocess.check_output(['git', 'pull'], cwd=repo_dir)
-        up_to_date = 'Already' in o
-        if up_to_date:
-            print('Package already up to date')
-            return False
-        else:
+        updated = 'Updating' in o  # XXX: fragile as hell
+        if updated:
             print('Autoupdate status: %s' % o)
             return True
-    else:
-        return True
+        else:
+            print('Package already up to date')
+            return False
+    else:  # not a git repo
+        print('%s not look like a git repo, not running autoupdate' % repo_dir)
+        return False
 
 
 def register_gui_exception_handler(full_traceback=False):

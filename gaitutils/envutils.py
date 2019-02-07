@@ -28,12 +28,12 @@ def _git_autoupdate():
     if op.isdir(op.join(repo_dir, '.git')):
         print('running git autoupdate')
         o = subprocess.check_output(['git', 'pull'], cwd=repo_dir)
-        updated = 'Updating' in o  # XXX: fragile as hell
+        updated = 'pdating' in o  # XXX: fragile as hell
         if updated:
-            print('Autoupdate status: %s' % o)
+            print('autoupdate status: %s' % o)
             return True
         else:
-            print('Package already up to date')
+            print('package already up to date')
             return False
     else:  # not a git repo
         print('%s is a git repo, not running autoupdate' % repo_dir)

@@ -36,7 +36,7 @@ def _git_autoupdate():
             print('Package already up to date')
             return False
     else:  # not a git repo
-        print('%s not look like a git repo, not running autoupdate' % repo_dir)
+        print('%s is a git repo, not running autoupdate' % repo_dir)
         return False
 
 

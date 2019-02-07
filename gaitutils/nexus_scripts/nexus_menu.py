@@ -431,11 +431,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         bit ugly since the Qt event loop gets called twice, but this does not
         seem to do any harm.
         """
+
         if cfg.general.git_autoupdate:
             if envutils._git_autoupdate():
-                qt_message_dialog('The package was automatically updated '
-                                  ', please restart.')
-                sys.exit()
+                qt_message_dialog('The package was automatically updated. '
+                                  'Restarting...')
+                os.execv(sys.executable, ['python'] + sys.argv)
 
         # if using the plotly backend, we can run plotters in worker threads
         thread_plotters = cfg.plot.backend == 'plotly'

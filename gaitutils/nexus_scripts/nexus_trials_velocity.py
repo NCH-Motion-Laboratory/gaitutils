@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def _plot_vel_curves():
-
+    """Plot time-dependent velocity for each dynamic trial in Nexus session."""
     sessionpath = nexus.get_sessionpath()
     c3ds = sessionutils.get_c3ds(sessionpath, trial_type='dynamic')
     if len(c3ds) == 0:
@@ -33,7 +33,7 @@ def _plot_vel_curves():
     traces = list()
     for c3d in c3ds[:10]:
         v, vel = utils._trial_median_velocity(c3d, return_curve=True)
-        #vel = signal.medfilt(vel, 3)
+        #vel = signal.medfilt(vel, 3)  # if spikes
         tname = op.split(c3d)[-1]
         trace = go.Scatter(y=vel, text=tname, name=tname, hoverinfo='x+y+text')
         traces.append(trace)
@@ -41,7 +41,7 @@ def _plot_vel_curves():
 
 
 def do_plot(show=True, make_pdf=True):
-
+    """Plot median velocities for each dynamic trial in Nexus session."""
     sessionpath = nexus.get_sessionpath()
     c3ds = sessionutils.get_c3ds(sessionpath, trial_type='dynamic')
 
@@ -74,7 +74,7 @@ def do_plot(show=True, make_pdf=True):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-
+    register_gui_exception_handler()
     parser = argparse.ArgumentParser()
     parser.add_argument('--curves', action='store_true',
                         help='plot velocity curves')
@@ -83,6 +83,3 @@ if __name__ == '__main__':
         _plot_vel_curves()
     else:
         do_plot()
-        
-
-    

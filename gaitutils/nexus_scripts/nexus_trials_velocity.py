@@ -10,12 +10,30 @@ from builtins import range
 from gaitutils import (nexus, utils, sessionutils,
                        register_gui_exception_handler)
 import numpy as np
+import plotly.graph_objs as go
+import plotly
+from scipy import signal
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import os.path as op
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def _plot_vel_curves():
+
+    sessionpath = nexus.get_sessionpath()
+    c3ds = sessionutils.get_c3ds(sessionpath, trial_type='dynamic')
+    if len(c3ds) == 0:
+        raise Exception('Did not find any dynamic trials in current '
+                        'session directory')
+    traces = list()        
+    for c3d in c3ds[:10]:
+        v, vel = utils._trial_median_velocity(c3d, return_curve=True)
+        vel = signal.medfilt(vel, 11)
+        traces.append(go.Scatter({'y': vel, 'name': op.split(c3d)[-1]}))
+    plotly.offline.plot(traces)
 
 
 def do_plot(show=True, make_pdf=True):

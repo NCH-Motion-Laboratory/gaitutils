@@ -178,6 +178,7 @@ pig_lowerbody.read_strategy = 'split_xyz'
 pig_lowerbody.read_vars = _list_with_side(['HipAngles',
                                            'KneeAngles',
                                            'AnkleAngles',
+                                           'ForeFootAngles',
                                            'PelvisAngles',
                                            'FootProgressAngles'])
 
@@ -186,6 +187,9 @@ pig_lowerbody.varlabels_noside = {
                              'AnkleAnglesY': 'Ankle adduction',
                              'AnkleAnglesZ': 'Ankle rotation',
                              'FootProgressAnglesZ': 'Foot progress angles',
+                             'ForeFootAnglesX': 'Forefoot x',
+                             'ForeFootAnglesY': 'Forefoot y',
+                             'ForeFootAnglesZ': 'Forefoot z',
                              'HipAnglesX': 'Hip flexion',
                              'HipAnglesY': 'Hip adduction',
                              'HipAnglesZ': 'Hip rotation',
@@ -200,6 +204,8 @@ pig_lowerbody.varlabels = _dict_with_side(pig_lowerbody.varlabels_noside)
 
 pig_lowerbody.varnames = pig_lowerbody.varlabels.keys()
 pig_lowerbody.varnames_noside = pig_lowerbody.varlabels_noside.keys()
+# for CGM2 compatibility
+pig_lowerbody.is_optional_var = lambda var: 'ForeFootAngles' in var
 
 
 pig_lowerbody.gcd_normaldata_map = {
@@ -223,6 +229,9 @@ pig_lowerbody.ylabels = _dict_with_side({
                          'AnkleAnglesY': 'Abd%s($^\\circ$)%sAdd' % spacer,
                          'AnkleAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
                          'FootProgressAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
+                         'ForeFootAnglesX': '(deg)',
+                         'ForeFootAnglesY': '(deg)',
+                         'ForeFootAnglesZ': '(deg)',
                          'HipAnglesX': 'Ext%s($^\\circ$)%sFlex' % spacer,
                          'HipAnglesY': 'Abd%s($^\\circ$)%sAdd' % spacer,
                          'HipAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,

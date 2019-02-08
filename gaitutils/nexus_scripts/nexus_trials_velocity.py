@@ -6,16 +6,38 @@ Created on Wed Jun 21 13:48:27 2017
 @author: Jussi (jnu@iki.fi)
 """
 
+import argparse
 from builtins import range
-from gaitutils import (nexus, utils, sessionutils,
-                       register_gui_exception_handler)
 import numpy as np
+import plotly.graph_objs as go
+import plotly
+from scipy import signal
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import os.path as op
 import logging
 
+from gaitutils import (nexus, utils, sessionutils,
+                       register_gui_exception_handler)
+
 logger = logging.getLogger(__name__)
+
+
+def _plot_vel_curves():
+
+    sessionpath = nexus.get_sessionpath()
+    c3ds = sessionutils.get_c3ds(sessionpath, trial_type='dynamic')
+    if len(c3ds) == 0:
+        raise Exception('Did not find any dynamic trials in current '
+                        'session directory')
+    traces = list()
+    for c3d in c3ds[:10]:
+        v, vel = utils._trial_median_velocity(c3d, return_curve=True)
+        #vel = signal.medfilt(vel, 3)
+        tname = op.split(c3d)[-1]
+        trace = go.Scatter(y=vel, text=tname, name=tname, hoverinfo='x+y+text')
+        traces.append(trace)
+    plotly.offline.plot(traces)
 
 
 def do_plot(show=True, make_pdf=True):
@@ -52,5 +74,15 @@ def do_plot(show=True, make_pdf=True):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    register_gui_exception_handler()
-    do_plot()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--curves', action='store_true',
+                        help='plot velocity curves')
+    args = parser.parse_args()
+    if args.curves:
+        _plot_vel_curves()
+    else:
+        do_plot()
+        
+
+    

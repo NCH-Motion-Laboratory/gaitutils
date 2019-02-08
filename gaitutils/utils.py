@@ -213,7 +213,7 @@ def _leading_foot(mkrdata, roi=None):
             for R, L in zip(rfoot, lfoot)]
 
 
-def _trial_median_velocity(source):
+def _trial_median_velocity(source, return_curve=False):
     """Compute median velocity (walking speed) over whole trial by
     differentiation of marker data from track markers. Up/down movement of
     markers may slightly increase speed compared to time-distance values"""
@@ -227,7 +227,13 @@ def _trial_median_velocity(source):
     except (GaitDataError, ValueError):
         return np.nan
     vel = np.median(vel_[np.where(vel_)])  # ignore zeros
-    return vel * frate / 1000.  # convert to m/s
+    vel_ms = vel * frate / 1000.  # convert to m/s
+    if return_curve:
+        tn = np.linspace(0, 100, 101)
+        vel_curve = np.interp(tn, np.linspace(0, 100, len(vel_)), vel_)
+        return vel_ms, vel_curve
+    else:
+        return vel_ms
 
 
 def _point_in_poly(poly, pt):

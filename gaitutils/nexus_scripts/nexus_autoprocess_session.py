@@ -352,8 +352,7 @@ def _delete_c3ds(enffiles):
     load analog data from existing c3d files which are affected by previous
     crop operations, e.g. forceplate data might be clipped """
     logger.debug('deleting previous c3d files')
-    c3dfiles = [sessionutils._enf2other(enffile, 'c3d') for enffile in
-                enffiles]
+    c3dfiles = sessionutils._filter_to_c3ds(enffiles)
     for enffile, c3dfile in zip(enffiles, c3dfiles):
         if not op.isfile(c3dfile):
             continue

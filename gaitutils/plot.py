@@ -646,7 +646,13 @@ class Plotter(object):
                     # set labels, ticks, etc. after plotting last cycle
                     if cycle == model_cycles[-1]:
 
-                        ax.set(ylabel=model.ylabels[varname])  # no xlabel now
+                        yunit = model.units[varname]
+                        if yunit == 'deg':
+                            yunit = '$^\circ$'
+                        
+                        ydesc = [s[:3] for s in model.ydesc[varname]]  # shorten
+                        ylabel_ = '%s  %s  %s' % (ydesc[0], yunit, ydesc[1])
+                        ax.set(ylabel=ylabel_)
                         ax.xaxis.label.set_fontsize(cfg.
                                                     plot.label_fontsize)
                         ax.yaxis.label.set_fontsize(cfg.

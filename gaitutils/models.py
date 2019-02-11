@@ -19,7 +19,7 @@ models_all = []
 
 def model_from_var(var_):
     """ Return model corresponding to specified variable.
-    Returns GaitModel instance that has the specified variable. """
+    Returns the GaitModel instance that has the specified variable. """
     if var_ is None:
         return None
     elif not isinstance(var_, basestring):
@@ -38,11 +38,20 @@ def _list_with_side(vars_):
     return [side+var for var in vars_ for side in ['L', 'R']]
 
 
+def _dict_with_side_gen(di, append_side=False):
+    for key, val in di.items():
+        for ctxt in 'RL':
+            if append_side:
+                yield ctxt+key, '%s (%s)' % (val, ctxt)
+            else:
+                yield ctxt+key, val
+
+
 def _dict_with_side(di, append_side=False):
-    """ Prepend dict keys with 'R' or 'L'. If append_side,
-    also append corresponding ' (R)' or ' (L)' to every dict value. """
-    return {side+key: val + (' (%s)' % side if append_side else '')
-            for key, val in di.items() for side in ['R', 'L']}
+    """Helper: prepend all dict keys with 'R' and 'L' and return new dict.
+    If append_side, also append corresponding ' (R)' or ' (L)' to every dict
+    value."""
+    return dict(_dict_with_side_gen(di, append_side=append_side))
 
 
 class GaitModel(object):
@@ -72,7 +81,7 @@ class GaitModel(object):
         self.ydesc = dict()
         # callable to return whether var requires valid forceplate contact
         self.is_kinetic_var = lambda var: False
-        # callable to return whether var read may fail
+        # callable to return whether var read is allowed to fail
         self.is_optional_var = lambda var: False
 
 

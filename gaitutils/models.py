@@ -65,8 +65,11 @@ class GaitModel(object):
         self.varlabels = dict()  # descriptive label for each variable
         # mapping from variable names to gcd normal data variables
         self.gcd_normaldata_map = dict()
-        # y axis labels for plotting the variables (optional)
-        self.ylabels = dict()
+        # units for the variables
+        self.units = dict()
+        # description of neg/pos dirs for each variable in
+        # tuples, e.g. ('Plantarflexion', 'Dorsiflexion')
+        self.ydesc = dict()
         # callable to return whether var requires valid forceplate contact
         self.is_kinetic_var = lambda var: False
         # callable to return whether var read may fail
@@ -74,8 +77,8 @@ class GaitModel(object):
 
 
 """ Create models """
-#
 
+#
 # Oxford foot model
 #
 ofm = GaitModel()
@@ -109,8 +112,9 @@ ofm.varlabels_noside = {'FFHFAX': 'Forefoot-hindfoot dorsiflexion',
                         'TIBAY': 'Tibia-lab y',
                         'TIBAZ': 'Tibia-lab z'}
 
-# FIXME: for now, ylabel is just the degree sign for all vars
-ofm.ylabels = defaultdict(lambda: 'deg')
+ofm.units = defaultdict(lambda: 'deg')
+ofm.ydesc = defaultdict(lambda: ('', ''))  # FIXME: see Vicon docs
+
 # OFM may be unilateral, so make all vars optional
 ofm.is_optional_var = lambda var: True
 ofm.varlabels = _dict_with_side(ofm.varlabels_noside)
@@ -149,8 +153,8 @@ pig_upperbody.varlabels_noside = {'ThoraxAnglesX': 'Thorax flex/ext',
                                   'WristAnglesY': 'Wrist ulnar/radial',
                                   'WristAnglesZ': 'Wrist sup/pron',
                                   'ElbowAnglesX': 'Elbow flex/ext',
-                                  'ElbowAnglesY': 'Elbow Y',
-                                  'ElbowAnglesZ': 'Elbow Z',
+                                  'ElbowAnglesY': 'Elbow y angle',
+                                  'ElbowAnglesZ': 'Elbow rotation',
                                   'NeckAnglesX': 'Neck sagittal',
                                   'NeckAnglesY': 'Neck frontal',
                                   'NeckAnglesZ': 'Neck rotation',
@@ -159,7 +163,8 @@ pig_upperbody.varlabels_noside = {'ThoraxAnglesX': 'Thorax flex/ext',
                                   'HeadAnglesZ': 'Head rotation'}
 
 # FIXME: for now, ylabel is just the degree sign for all vars
-pig_upperbody.ylabels = defaultdict(lambda: 'deg')
+pig_upperbody.units = defaultdict(lambda: 'deg')
+pig_upperbody.ydesc = defaultdict(lambda: ('', ''))  # FIXME: see Vicon docs
 
 pig_upperbody.varlabels = _dict_with_side(pig_upperbody.varlabels_noside)
 pig_upperbody.varnames = pig_upperbody.varlabels.keys()
@@ -222,25 +227,26 @@ pig_lowerbody.gcd_normaldata_map = {
             'PelvicRotation': 'PelvisAnglesZ',
             'PelvicTilt': 'PelvisAnglesX'}
 
-# add some space for the labels between units and directions
-spacer = (2*(1*' ',))
-pig_lowerbody.ylabels = _dict_with_side({
-                         'AnkleAnglesX': 'Pla%s($^\\circ$)%sDor' % spacer,
-                         'AnkleAnglesY': 'Abd%s($^\\circ$)%sAdd' % spacer,
-                         'AnkleAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
-                         'FootProgressAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
-                         'ForeFootAnglesX': '(deg)',
-                         'ForeFootAnglesY': '(deg)',
-                         'ForeFootAnglesZ': '(deg)',
-                         'HipAnglesX': 'Ext%s($^\\circ$)%sFlex' % spacer,
-                         'HipAnglesY': 'Abd%s($^\\circ$)%sAdd' % spacer,
-                         'HipAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
-                         'KneeAnglesX': 'Ext%s($^\\circ$)%sFlex' % spacer,
-                         'KneeAnglesY': 'Val%s($^\\circ$)%sVar' % spacer,
-                         'KneeAnglesZ': 'Ext%s($^\\circ$)%sInt' % spacer,
-                         'PelvisAnglesX': 'Pst%s($^\\circ$)%sAnt' % spacer,
-                         'PelvisAnglesY': 'Dwn%s($^\\circ$)%sUp' % spacer,
-                         'PelvisAnglesZ': 'Bak%s($^\\circ$)%sFor' % spacer})
+# unit is degrees for each kinematic variable
+pig_lowerbody.units = defaultdict(lambda: 'deg')
+
+pig_lowerbody.ydesc = _dict_with_side({
+                         'AnkleAnglesX': ('Plantarflexion', 'Dorsiflexion'),
+                         'AnkleAnglesY': ('Abduction', 'Adduction'),
+                         'AnkleAnglesZ': ('External', 'Internal'),
+                         'FootProgressAnglesZ': ('External', 'Internal'),
+                         'ForeFootAnglesX': ('', ''),  # FIXME: see CGM2 docs
+                         'ForeFootAnglesY': ('', ''),
+                         'ForeFootAnglesZ': ('', ''),
+                         'HipAnglesX': ('Extension', 'Flexion'),
+                         'HipAnglesY': ('Abduction', 'Adduction'),
+                         'HipAnglesZ': ('External', 'Internal'),
+                         'KneeAnglesX': ('Extension', 'Flexion'),
+                         'KneeAnglesY': ('Valgus', 'Varus'),
+                         'KneeAnglesZ': ('External', 'Internal'),
+                         'PelvisAnglesX': ('Posterior', 'Anterior'),
+                         'PelvisAnglesY': ('Down', 'Up'),
+                         'PelvisAnglesZ': ('Backward', 'Forward')})
 
 models_all.append(pig_lowerbody)
 
@@ -298,26 +304,42 @@ pig_lowerbody_kinetics.gcd_normaldata_map = {
             'KneeRotationMoment': 'KneeMomentZ',
             'KneeValgVarMoment': 'KneeMomentY'}
 
-# add some space for the labels between units and directions
-spacer = (2*(1*' ',))
-pig_lowerbody_kinetics.ylabels = _dict_with_side({
-                         'AnkleMomentX': 'Idors%sNm/kg%sIplan' % spacer,
-                         'AnkleMomentY': 'Iadd%sNm/kg%sIabd' % spacer,
-                         'AnkleMomentZ': '%sNm/kg%s' % spacer,
-                         'AnklePowerZ': 'Abs%sW/kg%sGen' % spacer,
-                         'HipMomentX': 'Iflex%sNm/kg%sIext' % spacer,
-                         'HipMomentY': 'Iadd%sNm/kg%sIabd' % spacer,
-                         'HipMomentZ': 'Iint%sNm/kg%sIext' % spacer,
-                         'HipPowerZ': 'Abs%sW/kg%sGen' % spacer,
-                         'KneeMomentX': 'Iflex%sNm/kg%sIext' % spacer,
-                         'KneeMomentY': 'Ivar%sNm/kg%sIvalg' % spacer,
-                         'KneeMomentZ': 'Iint%sNm/kg%sIext' % spacer,
-                         'KneePowerZ': 'Abs%sW/kg%sGen' % spacer,
-                         'NormalisedGRFX': '% (BW)',
-                         'NormalisedGRFY': '% (BW)',
-                         'NormalisedGRFZ': '% (BW)'})
+pig_lowerbody_kinetics.units = _dict_with_side({
+                         'AnkleMomentX': 'Nm/kg',
+                         'AnkleMomentY': 'Nm/kg',
+                         'AnkleMomentZ': 'Nm/kg',
+                         'AnklePowerZ': 'W/kg',
+                         'HipMomentX': 'Nm/kg',
+                         'HipMomentY': 'Nm/kg',
+                         'HipMomentZ': 'Nm/kg',
+                         'HipPowerZ': 'W/kg',
+                         'KneeMomentX': 'Nm/kg',
+                         'KneeMomentY': 'Nm/kg',
+                         'KneeMomentZ': 'Nm/kg',
+                         'KneePowerZ': 'W/kg',
+                         'NormalisedGRFX': '%BW',
+                         'NormalisedGRFY': '%BW',
+                         'NormalisedGRFZ': '%BW'})
+
+pig_lowerbody_kinetics.ydesc = _dict_with_side({
+                         'AnkleMomentX': ('Dorsiflexion', 'Plantarflexion'),
+                         'AnkleMomentY': ('Adduction', 'Abduction'),
+                         'AnkleMomentZ': ('Internal', 'External'),  # FIXME: check
+                         'AnklePowerZ': ('Absorbing', 'Generating'),
+                         'HipMomentX': ('Flexion', 'Extension'),
+                         'HipMomentY': ('Adduction', 'Abduction'),
+                         'HipMomentZ': ('Internal', 'External'),
+                         'HipPowerZ': ('Absorbing', 'Generating'),
+                         'KneeMomentX': ('Flexion', 'Extension'),
+                         'KneeMomentY': ('Varus', 'Valgus'),
+                         'KneeMomentZ': ('Internal', 'External'),
+                         'KneePowerZ': ('Absorbing', 'Generating'),
+                         'NormalisedGRFX': ('', ''),
+                         'NormalisedGRFY': ('', ''),
+                         'NormalisedGRFZ': ('Downward', 'Upward')})
 
 pig_lowerbody_kinetics.is_kinetic_var = (lambda varname: True)
+# GRF may not be present if no kinetics
 pig_lowerbody_kinetics.is_optional_var = lambda varname: 'GRF' in varname
 
 models_all.append(pig_lowerbody_kinetics)
@@ -380,8 +402,7 @@ musclelen.read_vars = musclelen.varlabels.keys()
 musclelen.varnames = musclelen.read_vars
 musclelen.varnames_noside = musclelen.varlabels_noside.keys()
 
-musclelen.ylabels = {}
-for var_ in musclelen.varnames:
-    musclelen.ylabels[var_] = 'Length norm.'
+musclelen.units = defaultdict(lambda: 'Norm length')  # FIXME: % of what?
+musclelen.ydesc = defaultdict(lambda: ('', ''))
 
 models_all.append(musclelen)

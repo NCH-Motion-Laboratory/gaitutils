@@ -195,6 +195,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         # this is not the same as Nexus ROI, which is unset at this point
         roi = _range_to_roi(subj_pos, gait_dim, cfg.autoproc.events_range)
         logger.debug('events range corresponds to frames %d-%d' % roi)
+        trial['roi'] = roi
 
         # check forceplate data
         fp_info = (eclipse.eclipse_fp_keys(edata) if
@@ -290,7 +291,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
                                   fp_events=trial['fpev'], plot=False,
                                   events_range=cfg.autoproc.events_range,
                                   start_on_forceplate=cfg.autoproc.
-                                  start_on_forceplate, roi=roi)
+                                  start_on_forceplate, roi=trial['roi'])
         except GaitDataError:  # cannot automark
             eclipse_str = '%s,%s' % (trial['description'],
                                      cfg.autoproc.enf_descriptions

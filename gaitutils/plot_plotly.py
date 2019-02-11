@@ -89,7 +89,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
         model_normaldata = normaldata.read_all_normaldata()
 
     # configurabe opts (here for now)
-    label_fontsize = 18  # x, y labels
+    label_fontsize = 16  # x, y labels
     subtitle_fontsize = 20  # subplot titles
 
     nrows = len(layout)
@@ -321,11 +321,14 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
                             # rm x tick labels, plot too crowded
                             fig['layout'][xaxis].update(showticklabels=False)
-                            # LaTeX code for units does not render,
-                            # so rm units from ylabel
-                            # e.g. Iadd (N) Iabd -> Iadd Iabd
-                            ylabel = ' '.join(mod.ylabels[var].split(' ')[k]
-                                              for k in [0, -1])
+                            yunit = mod.units[var]
+                            if yunit == 'deg':
+                                # plotly supports neither unicode (bug) or
+                                # latex
+                                yunit = ''
+                                #yunit = u'\u00B0'  # degree sign
+                            ydesc = [s[:3] for s in mod.ydesc[var]]  # shorten
+                            ylabel = u'%s  %s  %s' % (ydesc[0], yunit, ydesc[1])
                             fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize})
                             # less decimals on hover label
                             fig['layout'][yaxis].update(hoverformat='.2f')

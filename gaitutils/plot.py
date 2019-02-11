@@ -648,8 +648,7 @@ class Plotter(object):
 
                         yunit = model.units[varname]
                         if yunit == 'deg':
-                            yunit = '$^\circ$'
-                        
+                            yunit = u'\u00B0'  # degree sign
                         ydesc = [s[:3] for s in model.ydesc[varname]]  # shorten
                         ylabel_ = '%s  %s  %s' % (ydesc[0], yunit, ydesc[1])
                         ax.set(ylabel=ylabel_)

@@ -137,9 +137,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                      % (len(allcycles), trial.trialname, len(model_cycles),
                         len(emg_cycles)))
 
-        is_unnormalized = any([isinstance(cyc, Noncycle) for cyc in allcycles])
+        is_unnormalized = any([cyc.start is None for cyc in allcycles])
         if (is_unnormalized and
-           any([isinstance(cyc, Gaitcycle) for cyc in allcycles])):
+           any([cyc.start is not None for cyc in allcycles])):
                 raise GaitDataError('Cannot mix norm and unnorm data')
 
         for cyc in allcycles:

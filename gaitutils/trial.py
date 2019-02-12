@@ -221,11 +221,16 @@ class Trial(object):
         else:
             logger.debug('no .enf file found')
             self.eclipse_data = defaultdict(lambda: '', {})
+        self.is_static = self.eclipse_data['TYPE'].upper() == 'STATIC'
         # data are lazily read
         self.emg = EMG(self.source)
         self._forceplate_data = None
         self._marker_data = None
-        self.fp_events = self._get_fp_events()
+        if not self.is_static:
+            self.fp_events = self._get_fp_events()
+        else:
+            self.fp_events = utils.empty_fp_events()
+
         self._models_data = dict()
         self.stddev_data = None  # AvgTrial only
         # whether to normalize data
@@ -237,7 +242,7 @@ class Trial(object):
         # normalized x-axis of 0, 1, 2 .. 100%
         self.tn = np.linspace(0, 100, 101)
         self.samplesperframe = self.analograte/self.framerate
-        self.cycles = list(self._scan_cycles())
+        self.cycles = list() if self.is_static else list(self._scan_cycles())
         self.ncycles = len(self.cycles)
 
     @property
@@ -361,8 +366,7 @@ class Trial(object):
             return utils.detect_forceplate_events(self.source, fp_info=fp_info)
         except GaitDataError:
             logger.warning('Could not detect forceplate events')
-            return dict(R_strikes=[], R_toeoffs=[], L_strikes=[], L_toeoffs=[],
-                        valid=set(), R_strikes_plate=[], L_strikes_plate=[])
+            return utils.empty_fp_events()
 
     def set_norm_cycle(self, cycle=None):
         """ Set normalization cycle.

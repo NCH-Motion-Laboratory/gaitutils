@@ -247,6 +247,13 @@ def _point_in_poly(poly, pt):
     return p.contains_point(pt)
 
 
+def empty_fp_events():
+    """Helper to return no forceplate events"""
+    return dict(R_strikes=[], R_toeoffs=[], L_strikes=[], L_toeoffs=[],
+                valid=set(), R_strikes_plate=[], L_strikes_plate=[],
+                our_fp_info={}, coded='')
+
+
 def detect_forceplate_events(source, mkrdata=None, fp_info=None,
                              roi=None):
     """ Detect frames where valid forceplate strikes and toeoffs occur.
@@ -289,9 +296,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None,
     logger.debug('detect forceplate events from %s' % source)
     info = read_data.get_metadata(source)
     fpdata = read_data.get_forceplate_data(source)
-    results = dict(R_strikes=[], R_toeoffs=[], L_strikes=[], L_toeoffs=[],
-                   valid=set(), R_strikes_plate=[], L_strikes_plate=[],
-                   our_fp_info={}, coded='')
+    results = empty_fp_events()
 
     # get marker data and find "forward" direction (by max variance)
     if mkrdata is None:

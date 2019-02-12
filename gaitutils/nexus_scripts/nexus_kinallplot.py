@@ -16,25 +16,27 @@ from gaitutils import (Plotter, cfg, register_gui_exception_handler,
 
 def do_plot():
 
-    layout = cfg.layouts.lb_kin
+    tr = trial.nexus_trial()
+    layout = cfg.layouts.lb_kinematics if tr.is_static else cfg.layouts.lb_kin
+    cycles = 'unnormalized' if tr.is_static else cfg.plot.default_model_cycles
 
     if cfg.plot.backend == 'matplotlib':
         maintitleprefix = 'Kinetics/kinematics plot for '
         pl = Plotter()
         pl.layout = layout
-        pl.open_nexus_trial()
+        pl.trial = tr
 
         if cfg.plot.show_videos:
             for vidfile in pl.trial._get_videos_by_id():
                 pl.external_play_video(vidfile)
 
-        pl.plot_trial(maintitleprefix=maintitleprefix, show=False)
+        pl.plot_trial(maintitleprefix=maintitleprefix,  model_cycles=cycles,
+                      show=False)
         pl.move_plot_window(10, 30)
         pl.show()
 
     elif cfg.plot.backend == 'plotly':
-        trials = [trial.nexus_trial()]
-        plot_plotly.plot_trials_browser(trials, layout,
+        plot_plotly.plot_trials_browser([tr], layout, model_cycles=cycles,
                                         legend_type='short_name_with_cyclename')
 
     else:

@@ -34,8 +34,7 @@ import logging
 import itertools
 
 from gaitutils import (nexus, eclipse, utils, GaitDataError, sessionutils,
-                       read_data)
-from gaitutils.config import cfg
+                       read_data, cfg)
 
 
 logger = logging.getLogger(__name__)
@@ -128,15 +127,15 @@ def _do_autoproc(enffiles, update_eclipse=True):
         skip = [s.upper() for s in cfg.autoproc.eclipse_skip]
         if (any([s in edata['DESCRIPTION'].upper() for s in skip]) or
            any([s in edata['NOTES'].upper() for s in skip])):
-                logger.debug('skipping based on description/notes')
-                # run preprocessing + save even for skipped trials, to mark
-                # them as processed - mostly so that Eclipse export to Polygon
-                # will work
-                nexus.run_pipelines(vicon, cfg.autoproc.pre_pipelines)
-                _save_trial()
-                trial['recon_ok'] = False
-                trial['description'] = 'skipped'
-                continue
+            logger.debug('skipping based on description/notes')
+            # run preprocessing + save even for skipped trials, to mark
+            # them as processed - mostly so that Eclipse export to Polygon
+            # will work
+            nexus.run_pipelines(vicon, cfg.autoproc.pre_pipelines)
+            _save_trial()
+            trial['recon_ok'] = False
+            trial['description'] = 'skipped'
+            continue
 
         # try to run preprocessing pipelines
         nexus.run_pipelines(vicon, cfg.autoproc.pre_pipelines)

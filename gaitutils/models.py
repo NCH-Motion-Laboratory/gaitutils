@@ -122,24 +122,24 @@ ofm.varlabels_noside = {'FFHFAX': 'Forefoot-hindfoot dorsiflexion',
                         'TIBAZ': 'Tibia internal rotation'}
 
 ofm.units = defaultdict(lambda: 'deg')
-ofm.ydesc = {'FFHFAX': ('Plantarflexion', 'Dorsiflexion'),
-             'FFHFAY': ('Abduction', 'Adduction'),
-             'FFHFAZ': ('Pronation', 'Supination'),
-             'FFTBAX': ('Plantarflexion', 'Dorsiflexion'),
-             'FFTBAY': ('Abduction', 'Adduction'),
-             'FFTBAZ': ('Pronation', 'Supination'),
-             'HFTBAX': ('Plantarflexion', 'Dorsiflexion'),
-             'HFTBAY': ('External', 'Internal'),
-             'HFTBAZ': ('Eversion', 'Inversion'),
-             'HFTFLX': ('Plantarflexion', 'Dorsiflexion'),
-             'HFTFLY': ('External', 'Internal'),
-             'HFTFLZ': ('Eversion', 'Inversion'),
-             'HXFFAX': ('Plantarflexion', 'Dorsiflexion'),
-             'HXFFAY': ('Valgus', 'Varus'),
-             'HXFFAZ': ('NA', 'NA'),
-             'TIBAX': ('Backward', 'Forward'),
-             'TIBAY': ('Distal', 'Lateral'),
-             'TIBAZ': ('External', 'Internal')}
+ofm.ydesc = _dict_with_side({'FFHFAX': ('Plantarflexion', 'Dorsiflexion'),
+                             'FFHFAY': ('Abduction', 'Adduction'),
+                             'FFHFAZ': ('Pronation', 'Supination'),
+                             'FFTBAX': ('Plantarflexion', 'Dorsiflexion'),
+                             'FFTBAY': ('Abduction', 'Adduction'),
+                             'FFTBAZ': ('Pronation', 'Supination'),
+                             'HFTBAX': ('Plantarflexion', 'Dorsiflexion'),
+                             'HFTBAY': ('External', 'Internal'),
+                             'HFTBAZ': ('Eversion', 'Inversion'),
+                             'HFTFLX': ('Plantarflexion', 'Dorsiflexion'),
+                             'HFTFLY': ('External', 'Internal'),
+                             'HFTFLZ': ('Eversion', 'Inversion'),
+                             'HXFFAX': ('Plantarflexion', 'Dorsiflexion'),
+                             'HXFFAY': ('Valgus', 'Varus'),
+                             'HXFFAZ': ('NA', 'NA'),
+                             'TIBAX': ('Backward', 'Forward'),
+                             'TIBAY': ('Distal', 'Lateral'),
+                             'TIBAZ': ('External', 'Internal')})
 
 
 # OFM may be unilateral, so make all vars optional

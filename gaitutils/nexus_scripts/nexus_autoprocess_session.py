@@ -31,7 +31,7 @@ import numpy as np
 import argparse
 import time
 import logging
-
+import itertools
 
 from gaitutils import (nexus, eclipse, utils, GaitDataError, sessionutils,
                        read_data)
@@ -87,11 +87,11 @@ def _do_autoproc(enffiles, update_eclipse=True):
                 'L_toeoff': np.array([]), 'R_toeoff': np.array([])}
     # 1st pass
     logger.debug('\n1st pass - processing %d trial(s)\n' % len(enffiles))
+    trials = dict()
 
     vicon = nexus.viconnexus()
     nexus_ver = nexus.true_ver()
-    trials = dict()
-
+    logger.debug('detected Nexus version: %g' % nexus_ver)
     # close trial to prevent 'Save trial?' dialog on first open
     if nexus_ver >= 2.8:
         logger.debug('force closing open trial')
@@ -105,7 +105,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         logger.debug('loading in Nexus: %s' % filename)
         vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
         try:
-            subjectname = nexus.get_metadata(vicon)['name']
+            nexus.get_metadata(vicon)
         except GaitDataError:
             # may indicate broken or video-only trial
             logger.warning('cannot read metadata')
@@ -286,12 +286,12 @@ def _do_autoproc(enffiles, update_eclipse=True):
         # automark using global velocity thresholds
         try:
             vicon.ClearAllEvents()
-            utils.automark_events(vicon, vel_thresholds=vel_th,
-                                  mkrdata=trial['mkrdata'],
-                                  fp_events=trial['fpev'], plot=False,
-                                  events_range=cfg.autoproc.events_range,
-                                  start_on_forceplate=cfg.autoproc.
-                                  start_on_forceplate, roi=trial['roi'])
+            evs = utils.automark_events(vicon, vel_thresholds=vel_th,
+                                        mkrdata=trial['mkrdata'],
+                                        fp_events=trial['fpev'],
+                                        events_range=cfg.autoproc.events_range,
+                                        start_on_forceplate=cfg.autoproc.
+                                        start_on_forceplate, roi=trial['roi'])
         except GaitDataError:  # cannot automark
             eclipse_str = '%s,%s' % (trial['description'],
                                      cfg.autoproc.enf_descriptions
@@ -301,20 +301,16 @@ def _do_autoproc(enffiles, update_eclipse=True):
             trial['description'] = eclipse_str
             continue  # next trial
 
-        # events ok
-        # crop trial
+        # crop trial around events
         if nexus_ver >= 2.5:
-            evs = vicon.GetEvents(subjectname, "Left", "Foot Strike")[0]
-            evs += vicon.GetEvents(subjectname, "Right", "Foot Strike")[0]
-            evs += vicon.GetEvents(subjectname, "Left", "Foot Off")[0]
-            evs += vicon.GetEvents(subjectname, "Right", "Foot Off")[0]
-
-            if evs:
+            evs_all = list(itertools.chain.from_iterable(evs.values()))
+            if evs_all:
                 # when setting roi, do not go beyond trial range
                 minfr, maxfr = vicon.GetTrialRange()
-                roistart = max(min(evs) - cfg.autoproc.crop_margin, minfr)
-                roiend = min(max(evs) + cfg.autoproc.crop_margin, maxfr)
-                vicon.SetTrialRegionOfInterest(roistart, roiend)
+                roistart = max(min(evs_all) - cfg.autoproc.crop_margin, minfr)
+                roiend = min(max(evs_all) + cfg.autoproc.crop_margin, maxfr)
+                # method cannot take numpy.int64
+                vicon.SetTrialRegionOfInterest(int(roistart), int(roiend))
 
         # run model pipeline and save
         eclipse_str = '%s,%s' % (cfg.autoproc.enf_descriptions['ok'],

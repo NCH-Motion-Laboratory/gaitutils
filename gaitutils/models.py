@@ -35,7 +35,7 @@ def _list_with_side(vars_):
     """ Prepend variables in vars with 'L' and 'R', creating a new list of
     variables. Many model variables share the same name, except for leading
     'L' or 'R' that indicates side. """
-    return [side+var for var in vars_ for side in ['L', 'R']]
+    return [side+var for var in vars_ for side in 'LR']
 
 
 def _dict_with_side_gen(di, append_side=False):
@@ -122,7 +122,26 @@ ofm.varlabels_noside = {'FFHFAX': 'Forefoot-hindfoot dorsiflexion',
                         'TIBAZ': 'Tibia-lab z'}
 
 ofm.units = defaultdict(lambda: 'deg')
-ofm.ydesc = defaultdict(lambda: ('', ''))  # FIXME: see Vicon docs
+ofm.ydesc = {'FFHFAX': ('Plantarflexion', 'Dorsiflexion'),
+             'FFHFAY': 'Forefoot-hindfoot adduction',
+             'FFHFAZ': 'Forefoot-hindfoot supination',
+             'FFTBAX': 'Forefoot-tibia dorsiflexion',
+             'FFTBAY': 'Forefoot-tibia adduction',
+             'FFTBAZ': 'Forefoot-tibia supination',
+             'HFTBAX': 'Hindfoot-tibia dorsiflexion',
+             'HFTBAY': 'Hindfoot-tibia internal rotation',
+             'HFTBAZ': 'Hindfoot-tibia inversion',
+             'HFTFLX': 'Hindfoot-lab x',
+             'HFTFLY': 'Hindfoot-lab y',
+             'HFTFLZ': 'Hindfoot-lab z',
+             'HXFFAX': 'Hallux-forefoot dorsiflexion',
+             'HXFFAY': 'Hallux-forefoot varus',
+             'HXFFAZ': 'NA',
+             'TIBAX': 'Tibia-lab x',
+             'TIBAY': 'Tibia-lab y',
+             'TIBAZ': 'Tibia-lab z'}
+
+
 
 # OFM may be unilateral, so make all vars optional
 ofm.is_optional_var = lambda var: True
@@ -201,8 +220,8 @@ pig_lowerbody.varlabels_noside = {
                              'AnkleAnglesY': 'Ankle adduction',
                              'AnkleAnglesZ': 'Ankle rotation',
                              'FootProgressAnglesZ': 'Foot progress angles',
-                             'ForeFootAnglesX': 'Forefoot x',
-                             'ForeFootAnglesY': 'Forefoot y',
+                             'ForeFootAnglesX': 'Fore/hindfoot sagittal',
+                             'ForeFootAnglesY': 'Fore/hindfoot ',
                              'ForeFootAnglesZ': 'Forefoot z',
                              'HipAnglesX': 'Hip flexion',
                              'HipAnglesY': 'Hip adduction',
@@ -255,7 +274,7 @@ pig_lowerbody.ydesc = _dict_with_side({
                          'KneeAnglesZ': ('External', 'Internal'),
                          'PelvisAnglesX': ('Posterior', 'Anterior'),
                          'PelvisAnglesY': ('Down', 'Up'),
-                         'PelvisAnglesZ': ('Backward', 'Forward')})
+                         'PelvisAnglesZ': ('External', 'Internal')})
 
 models_all.append(pig_lowerbody)
 

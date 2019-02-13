@@ -137,10 +137,10 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                      % (len(allcycles), trial.trialname, len(model_cycles),
                         len(emg_cycles)))
 
-        is_unnormalized = any([cyc.start is None for cyc in allcycles])
-        if (is_unnormalized and
-           any([cyc.start is not None for cyc in allcycles])):
-                raise GaitDataError('Cannot mix norm and unnorm data')
+        cycs_unnorm = [cyc.start is None for cyc in allcycles]
+        is_unnormalized = any(cycs_unnorm)
+        if is_unnormalized and not all(cycs_unnorm):
+            raise GaitDataError('Cannot mix normalized and unnormalized data')
 
         for cyc in allcycles:
             #logger.debug('trial %s, cycle: %s' % (trial.trialname, cyc))
@@ -324,9 +324,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             yunit = mod.units[var]
                             if yunit == 'deg':
                                 # plotly supports neither unicode (bug) or
-                                # latex
+                                # latex; anyway, y axes are crowded
                                 yunit = ''
-                                #yunit = u'\u00B0'  # degree sign
+                                #yunit = u'\u00B0'  # Unicode degree sign
                             ydesc = [s[:3] for s in mod.ydesc[var]]  # shorten
                             ylabel = u'%s  %s  %s' % (ydesc[0], yunit, ydesc[1])
                             fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize})

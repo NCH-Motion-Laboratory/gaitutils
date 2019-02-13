@@ -160,7 +160,7 @@ class Gaitcycle(object):
         return self.tn, np.squeeze(idata)
 
     def crop_analog(self, var):
-        """Crop analog variable (EMG, forceplate, etc. ) to the cycle.
+        """Crop analog variable (EMG, forceplate, etc. ) to the gait cycle.
 
         Parameters
         ----------

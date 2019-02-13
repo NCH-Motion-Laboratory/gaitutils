@@ -263,17 +263,6 @@ class Plotter(object):
     def open_trial(self, source):
         self.trial = Trial(source)
 
-    def external_play_video(self, vidfile):
-        """ Launch video player (defined in config) to play vidfile. """
-        PLAYER_CMD = cfg.general.videoplayer_path
-        if not (op.isfile(PLAYER_CMD) and os.access(PLAYER_CMD, os.X_OK)):
-            raise ValueError('Invalid video player executable: %s'
-                             % PLAYER_CMD)
-        PLAYER_OPTS = cfg.general.videoplayer_opts
-        # command needs to be constructed in a very particular way
-        # see subprocess.list2cmdline
-        subprocess.Popen([PLAYER_CMD]+PLAYER_OPTS.split()+[vidfile])
-
     def move_plot_window(self, x, y):
         """ Move figure upper left corner to x,y. Only works with
         Qt backend. """

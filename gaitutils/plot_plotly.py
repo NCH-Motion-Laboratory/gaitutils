@@ -342,11 +342,13 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         if (var[0] != context or not trial.emg.status_ok(var)
                             or cyc not in emg_cycles):
                             do_plot = False
-                        t, y = trial.get_emg_data(var)
                             # FIXME: maybe annotate disconnected chans
                             # _no_ticks_or_labels(ax)
                             # _axis_annotate(ax, 'disconnected')
                         if do_plot:
+                            t_, y = trial.get_emg_data(var)
+                            t = (t_ / trial.samplesperframe if is_unnormalized
+                                 else t_)
                             line = {'width': 1, 'color': trial_color}
                             if (trial in _plot_cache and cyc in
                                 _plot_cache[trial] and var in
@@ -378,7 +380,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         # last trace was plotted
                         if trial == trials[-1] and context == 'L':
                             # plot EMG normal bars
-                            if var in cfg.emg.channel_normaldata:
+                            if not is_unnormalized and var in cfg.emg.channel_normaldata:
                                 emgbar_ind = cfg.emg.channel_normaldata[var]
                                 for inds in emgbar_ind:
                                     # FIXME: hardcoded color

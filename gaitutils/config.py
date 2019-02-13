@@ -52,6 +52,8 @@ class Section(object):
         exist as instance variables, so referencing them will cause
         __getattr__ to be called. The items are returned from the section dict
         and automatically converted from strings to Python types. """
+        if item not in self._dict:
+            raise AttributeError('Config key does not exist: %s' % item)
         try:
             return ast.literal_eval(self._dict[item])
         except ValueError:

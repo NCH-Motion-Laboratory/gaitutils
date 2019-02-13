@@ -18,7 +18,9 @@ def rm_dead_channels(emg, layout):
     """ From EMG layout, remove rows with no valid EMG data """
     layout_ = list()
     for row in layout:
-        if any([emg.status_ok(ch) for ch in row]):
+        # accept channels w/ status ok, or anything that is NOT a
+        # preconfigured EMG channel
+        if any([ch not in cfg.emg.channel_labels or emg.status_ok(ch) for ch in row]):
             layout_.append(row)
         else:
             logger.debug('no valid data for %s, removed row' % str(row))

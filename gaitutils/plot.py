@@ -26,6 +26,7 @@ import logging
 from . import models
 from . import numutils
 from . import normaldata
+from . import plot_plotly
 from .trial import Trial, nexus_trial, Gaitcycle
 from .stats import AvgTrial
 from .config import cfg
@@ -358,7 +359,7 @@ class Plotter(object):
                    superpose=False,
                    maintitle=None,
                    maintitleprefix=None,
-                   add_zeroline=True,
+                   add_zeroline=False,
                    legend_maxlen=10):
 
         """ Create plot of variables. Parameters:

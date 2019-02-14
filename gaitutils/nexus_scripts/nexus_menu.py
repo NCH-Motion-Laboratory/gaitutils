@@ -29,14 +29,12 @@ from gaitutils.guiutils import (qt_message_dialog, qt_yesno_dialog,
                                 qt_dir_chooser)
 from gaitutils import (GaitDataError, nexus, cfg, report, sessionutils, videos,
                        envutils)
-from gaitutils.nexus_scripts import (nexus_emgplot, nexus_musclelen_plot,
-                                     nexus_kinetics_emgplot,
+from gaitutils.nexus_scripts import (nexus_kinetics_emgplot,
                                      nexus_emg_consistency,
                                      nexus_kin_consistency,
                                      nexus_musclelen_consistency,
                                      nexus_autoprocess_trial,
                                      nexus_autoprocess_session,
-                                     nexus_kinallplot,
                                      nexus_tardieu, nexus_copy_trial_videos,
                                      nexus_trials_velocity,
                                      nexus_make_pdf_report,
@@ -44,12 +42,6 @@ from gaitutils.nexus_scripts import (nexus_emgplot, nexus_musclelen_plot,
                                      nexus_kin_average,
                                      nexus_automark_trial,
                                      nexus_time_distance_vars)
-
-try:
-    from gaitutils.nexus_scripts import nexus_customplot
-    have_custom = True
-except ImportError:
-    have_custom = False
 
 
 logger = logging.getLogger(__name__)
@@ -451,12 +443,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._button_connect_task(self.btnKinall, nexus_kinallplot.do_plot,
                                   thread=thread_plotters)
         self._button_connect_task(self.btnTardieu, self._tardieu)
-
-        if have_custom:
-            self._button_connect_task(self.btnCustom, nexus_customplot.do_plot)
-        else:
-            self.btnCustom.clicked.connect(self._no_custom)
-
         self._button_connect_task(self.btnTrialVelocity,
                                   nexus_trials_velocity.do_plot)
         self._button_connect_task(self.btnEMGCons,
@@ -839,10 +825,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.txtOutput.setTextCursor(c)
         self.txtOutput.insertPlainText(msg)
         self.txtOutput.ensureCursorVisible()
-
-    def _no_custom(self):
-        qt_message_dialog('No custom plot defined. Please create '
-                          'nexus_scripts/nexus_customplot.py')
 
     def _exception(self, e):
         logger.debug('caught exception while running task')

@@ -332,7 +332,7 @@ class Plotter(object):
                    split_model_vars=True,
                    auto_match_model_cycle=True,
                    model_stddev=None,
-                   x_axis_is_time=True,
+                   x_axis_is_time=False,
                    match_pig_kinetics=True,
                    auto_match_emg_cycle=True,
                    linestyles_context=False,
@@ -565,8 +565,8 @@ class Plotter(object):
                 model = models.model_from_var(var)
                 for cycle in model_cycles:
                     # logger.debug('cycle %d-%d' % (cycle.start, cycle.end))
-                    if cycle is not None:  # plot normalized data
-                        trial.set_norm_cycle(cycle)
+                    is_unnormalized = cycle.start is None
+                    trial.set_norm_cycle(cycle)
 
                     if (split_model_vars and cycle.context + var
                        in model.varnames):
@@ -583,12 +583,12 @@ class Plotter(object):
                     x_, data = trial.get_model_data(varname)
                     # FIXME: varname[0] == cycle.context may not apply to
                     # all model vars
-                    if (data is not None and kin_ok and
-                        (cycle is None or varname[0] == cycle.context or not
+                    if (data is not None and kin_ok and is_unnormalized or
+                        (varname[0] == cycle.context or not
                          auto_match_model_cycle)):
 
                         # logger.debug('plotting data for %s' % varname)
-                        x = (x_ / trial.framerate if cycle is None and
+                        x = (x_ / trial.framerate if is_unnormalized and
                              x_axis_is_time else x_)
                         # FIXME: cycle may not have context?
                         tcolor = (model_tracecolor if model_tracecolor
@@ -607,7 +607,7 @@ class Plotter(object):
                             line_._trialname = trial.trialname
                             line_._cycle = cycle
                         # add toeoff marker for this cycle
-                        if (cycle is not None and not is_avg_trial and
+                        if (not is_unnormalized and not is_avg_trial and
                            toeoff_markers):
                             toeoff = cycle.toeoffn
                             ax.axvline(toeoff, color=tcolor, linewidth=.5)
@@ -619,7 +619,7 @@ class Plotter(object):
                             logger.debug('(no data)')
 
                     # each cycle gets its own stddev plot (if data was found)
-                    if (model_stddev is not None and cycle is not None and
+                    if (model_stddev is not None and not is_unnormalized and
                        data is not None):
                         if varname in model_stddev:
                             sdata = model_stddev[varname]
@@ -664,13 +664,13 @@ class Plotter(object):
                         ax.tick_params(axis='both', which='major',
                                        labelsize=cfg.plot.ticks_fontsize)
 
-                        if cycle is None and var in self.layout[-1]:
+                        if is_unnormalized and var in self.layout[-1]:
                             xlabel = 'Time (s)' if x_axis_is_time else 'Frame'
                             ax.set(xlabel=xlabel)
                             ax.xaxis.label.set_fontsize(cfg.
                                                         plot.label_fontsize)
 
-                        if plot_model_normaldata and cycle is not None:
+                        if plot_model_normaldata and not is_unnormalized:
                             # normaldata vars are without preceding side
                             # this is a bit hackish
                             if varname[0].upper() in ['L', 'R']:
@@ -710,8 +710,8 @@ class Plotter(object):
                 ax.title.set_fontsize(cfg.plot.title_fontsize)
 
                 for cycle in emg_cycles:
-                    if cycle is not None:  # plot normalized data
-                        trial.set_norm_cycle(cycle)
+                    trial.set_norm_cycle(cycle)
+                    is_unnormalized = cycle.start is None
                     try:
                         x_, data = trial.get_emg_data(var)
                     except KeyError:  # channel not found
@@ -724,14 +724,14 @@ class Plotter(object):
                         if annotate_emg:
                             _axis_annotate(ax, 'disconnected')
                         break  # data no good - skip all cycles
-                    x = (x_ / trial.analograte if cycle is None and
+                    x = (x_ / trial.analograte if is_unnormalized and
                          x_axis_is_time else x_ / 1.)
 
-                    if cycle is None and not x_axis_is_time:
+                    if is_unnormalized and not x_axis_is_time:
                         # analog -> frames
                         x /= trial.samplesperframe
 
-                    if (cycle is None or var[0] == cycle.context or not
+                    if (is_unnormalized or var[0] == cycle.context or not
                        auto_match_emg_cycle):
                         # plot data and/or rms
                         if plot_emg_rms != 'rms_only':
@@ -761,7 +761,7 @@ class Plotter(object):
                         ax.set_ylim(ysc[0]*cfg.plot.emg_multiplier,
                                     ysc[1]*cfg.plot.emg_multiplier)
 
-                        if (plot_emg_normaldata and cycle is not None and
+                        if (plot_emg_normaldata and not is_unnormalized and
                            var in cfg.emg.channel_normaldata):
                             # plot EMG normal bars
                             emgbar_ind = cfg.emg.channel_normaldata[var]
@@ -772,7 +772,7 @@ class Plotter(object):
                                            color=cfg.plot.
                                            emg_normals_color)
 
-                        if cycle is None and var in self.layout[-1]:
+                        if is_unnormalized and var in self.layout[-1]:
                             xlabel = 'Time (s)' if x_axis_is_time else 'Frame'
                             ax.set(xlabel=xlabel)
                             ax.xaxis.label.set_fontsize(cfg.

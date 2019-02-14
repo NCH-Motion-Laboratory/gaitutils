@@ -471,7 +471,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnQuit.clicked.connect(self.close)
 
         # add predefined plot layouts to combobox
-        self.cbNexusTrialLayout.addItems(sorted(cfg.options('layouts')))
+        cb_items = cfg.layouts.menu_layouts.keys()
+        self.cbNexusTrialLayout.addItems(cb_items)
 
         # dropdown menu items
         self.actionQuit.triggered.connect(self.close)
@@ -507,8 +508,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._set_report_button_status()
 
     def _plot_nexus_trial(self):
-        layout_name = self.cbNexusTrialLayout.currentText()
-        nexus_plot.do_plot(layout_name)
+        lout_desc = self.cbNexusTrialLayout.currentText()
+        lout_name = cfg.layouts.menu_layouts[lout_desc]
+        nexus_plot.do_plot(lout_name)
 
     def _button_connect_task(self, button, fun, thread=False):
         """ Helper to connect button with task function. Use lambda to consume

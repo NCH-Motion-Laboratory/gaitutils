@@ -292,6 +292,13 @@
         </property>
        </widget>
       </item>
+      <item row="3" column="1">
+       <widget class="QCheckBox" name="checkBox">
+        <property name="text">
+         <string>Plot unnormalized</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>
@@ -436,9 +443,30 @@
     </property>
     <addaction name="actionTardieu_analysis"/>
    </widget>
+   <widget class="QMenu" name="menuProcessing">
+    <property name="title">
+     <string>Processing</string>
+    </property>
+    <addaction name="actionAutoprocess_session"/>
+    <addaction name="actionAutoprocess_single_trial"/>
+    <addaction name="actionAutomark_events"/>
+    <addaction name="actionRun_postprocessing_pipelines"/>
+    <addaction name="actionConvert_session_videos_to_web_format"/>
+    <addaction name="actionCopy_session_videos_to_desktop"/>
+   </widget>
+   <widget class="QMenu" name="menuReports">
+    <property name="title">
+     <string>Reports</string>
+    </property>
+    <addaction name="actionCreate_PDF_report"/>
+    <addaction name="actionCreate_comparison_PDF_report"/>
+    <addaction name="actionCreate_web_report"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuSettings"/>
    <addaction name="menuAnalysis"/>
+   <addaction name="menuProcessing"/>
+   <addaction name="menuReports"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOptions">
@@ -474,6 +502,51 @@
   <action name="actionTardieu_analysis">
    <property name="text">
     <string>Tardieu analysis...</string>
+   </property>
+  </action>
+  <action name="actionAutoprocess_session">
+   <property name="text">
+    <string>Autoprocess session</string>
+   </property>
+  </action>
+  <action name="actionAutoprocess_single_trial">
+   <property name="text">
+    <string>Autoprocess single trial</string>
+   </property>
+  </action>
+  <action name="actionAutomark_events">
+   <property name="text">
+    <string>Automark events</string>
+   </property>
+  </action>
+  <action name="actionRun_postprocessing_pipelines">
+   <property name="text">
+    <string>Run postprocessing pipelines</string>
+   </property>
+  </action>
+  <action name="actionConvert_session_videos_to_web_format">
+   <property name="text">
+    <string>Convert session videos to web format</string>
+   </property>
+  </action>
+  <action name="actionCopy_session_videos_to_desktop">
+   <property name="text">
+    <string>Copy session videos to desktop</string>
+   </property>
+  </action>
+  <action name="actionCreate_PDF_report">
+   <property name="text">
+    <string>Create PDF report...</string>
+   </property>
+  </action>
+  <action name="actionCreate_comparison_PDF_report">
+   <property name="text">
+    <string>Create comparison PDF report...</string>
+   </property>
+  </action>
+  <action name="actionCreate_web_report">
+   <property name="text">
+    <string>Create web report...</string>
    </property>
   </action>
  </widget>

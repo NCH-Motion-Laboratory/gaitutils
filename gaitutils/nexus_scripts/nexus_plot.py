@@ -17,7 +17,6 @@ from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
 
 def do_plot(layout_name, backend=None, model_cycles=None, emg_cycles=None,
             maintitle=None):
-
     try:
         layout = getattr(cfg.layouts, layout_name)
     except AttributeError:

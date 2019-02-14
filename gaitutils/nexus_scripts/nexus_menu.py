@@ -29,7 +29,7 @@ from gaitutils.guiutils import (qt_message_dialog, qt_yesno_dialog,
                                 qt_dir_chooser)
 from gaitutils import (GaitDataError, nexus, cfg, report, sessionutils, videos,
                        envutils)
-from gaitutils.nexus_scripts import (nexus_kinetics_emgplot,
+from gaitutils.nexus_scripts import (nexus_kinetics_emgplot, nexus_plot,
                                      nexus_emg_consistency,
                                      nexus_kin_consistency,
                                      nexus_musclelen_consistency,
@@ -432,17 +432,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         # if using the plotly backend, we can run plotters in worker threads
         thread_plotters = cfg.plot.backend == 'plotly'
+        self._button_connect_task(self.btnPlotNexusTrial,
+                                  self._plot_nexus_trial)
         self._button_connect_task(self.btnCopyVideos,
                                   nexus_copy_trial_videos.do_copy, thread=True)
-        self._button_connect_task(self.btnEMG, nexus_emgplot.do_plot,
-                                  thread=thread_plotters)
-        self._button_connect_task(self.btnMuscleLen,
-                                  nexus_musclelen_plot.do_plot)
-        self._button_connect_task(self.btnKinEMG,
-                                  nexus_kinetics_emgplot.do_plot)
-        self._button_connect_task(self.btnKinall, nexus_kinallplot.do_plot,
-                                  thread=thread_plotters)
-        self._button_connect_task(self.btnTardieu, self._tardieu)
         self._button_connect_task(self.btnTrialVelocity,
                                   nexus_trials_velocity.do_plot)
         self._button_connect_task(self.btnEMGCons,
@@ -477,9 +470,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnViewReport.clicked.connect(self._view_current_report)
         self.btnQuit.clicked.connect(self.close)
 
+        # add predefined plot layouts to combobox
+        self.cbNexusTrialLayout.addItems(sorted(cfg.options('layouts')))
+
         # dropdown menu items
         self.actionQuit.triggered.connect(self.close)
         self.actionOpts.triggered.connect(self._options_dialog)
+        self.actionTardieu_analysis.triggered.connect(self._tardieu)
 
         # add double click action to browse current report
         (self.listActiveReports.itemDoubleClicked.
@@ -508,6 +505,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._browser_procs = list()
         self._flask_apps = dict()
         self._set_report_button_status()
+
+    def _plot_nexus_trial(self):
+        layout_name = self.cbNexusTrialLayout.currentText()
+        nexus_plot.do_plot(layout_name)
 
     def _button_connect_task(self, button, fun, thread=False):
         """ Helper to connect button with task function. Use lambda to consume

@@ -432,35 +432,47 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         # if using the plotly backend, we can run plotters in worker threads
         thread_plotters = cfg.plot.backend == 'plotly'
-        self._button_connect_task(self.btnPlotNexusTrial,
+        self._widget_connect_task(self.btnPlotNexusTrial,
                                   self._plot_nexus_trial)
-        self._button_connect_task(self.btnCopyVideos,
+        self._widget_connect_task(self.btnCopyVideos,
                                   nexus_copy_trial_videos.do_copy, thread=True)
-        self._button_connect_task(self.btnTrialVelocity,
+
+        self._widget_connect_task(self.btnTrialVelocity,
                                   nexus_trials_velocity.do_plot)
-        self._button_connect_task(self.btnEMGCons,
+        self._widget_connect_task(self.btnEMGCons,
                                   nexus_emg_consistency.do_plot,
                                   thread=thread_plotters)
-        self._button_connect_task(self.btnKinCons,
+        self._widget_connect_task(self.btnKinCons,
                                   nexus_kin_consistency.do_plot,
                                   thread=thread_plotters)
-        self._button_connect_task(self.btnMuscleLenCons,
+        self._widget_connect_task(self.btnMuscleLenCons,
                                   nexus_musclelen_consistency.do_plot)
-        self._button_connect_task(self.btnKinAverage,
+        self._widget_connect_task(self.btnKinAverage,
                                   nexus_kin_average.do_plot)
-        self._button_connect_task(self.btnTimeDistAverage,
+        self._widget_connect_task(self.btnTimeDistAverage,
                                   nexus_time_distance_vars.
                                   do_session_average_plot)
-        self._button_connect_task(self.btnAutoprocTrial,
+
+        self._widget_connect_task(self.btnAutoprocTrial,
                                   nexus_autoprocess_trial.autoproc_single,
                                   thread=True)
-        self._button_connect_task(self.btnAutoprocSession,
+        self._widget_connect_task(self.btnAutoprocSession,
                                   nexus_autoprocess_session.autoproc_session,
                                   thread=True)
-        self._button_connect_task(self.btnAutomark,
+        self._widget_connect_task(self.btnAutomark,
                                   nexus_automark_trial.automark_single)
 
-        self.btnPostprocessSession.clicked.connect(self._postprocess_session)
+        self._widget_connect_task(self.actionAutoprocess_session,
+                                  nexus_autoprocess_session.autoproc_session,
+                                  thread=True)
+        self._widget_connect_task(self.actionAutoprocess_single_trial,
+                                  nexus_autoprocess_trial.autoproc_single,
+                                  thread=True)
+        self._widget_connect_task(self.actionAutomark_events,
+                                  nexus_automark_trial.automark_single)
+        self._widget_connect_task(self.actionRun_postprocessing_pipelines,
+                                  self._postprocess_session)
+
         self.btnConvertSessionVideos.clicked.connect(self._convert_session_videos)        
         self.btnCreatePDFs.clicked.connect(self._create_pdf_report)
         self.btnCreateComparison.clicked.connect(self._create_comparison)
@@ -512,13 +524,18 @@ class Gaitmenu(QtWidgets.QMainWindow):
         lout_name = cfg.layouts.menu_layouts[lout_desc]
         nexus_plot.do_plot(lout_name)
 
-    def _button_connect_task(self, button, fun, thread=False):
-        """ Helper to connect button with task function. Use lambda to consume
+    def _widget_connect_task(self, widget, fun, thread=False):
+        """ Helper to connect button or action item with task. Use lambda to consume
         unused events argument. If thread=True, launch in a separate worker
         thread. """
         # by default, just enable UI buttons when thread finishes
         finished_func = self._enable_op_buttons if thread else None
-        button.clicked.connect(lambda ev: self._execute(fun, thread=thread, finished_func=finished_func))
+        if isinstance(widget, QtWidgets.QPushButton):
+            sig = widget.clicked
+        elif isinstance(widget, QtWidgets.QAction):
+            sig = widget.triggered
+        sig.connect(lambda ev: self._execute(fun, thread=thread,
+                                             finished_func=finished_func))
 
     def _convert_vidfiles(self, vidfiles, signals):
         """Convert given list of video files to web format. Uses non-blocking

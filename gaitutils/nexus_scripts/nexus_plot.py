@@ -16,13 +16,13 @@ from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
 
 
 def do_plot(layout_name, backend=None, model_cycles=None, emg_cycles=None,
-            maintitle=None):
+            maintitle=None, from_c3d=True):
     try:
         layout = getattr(cfg.layouts, layout_name)
     except AttributeError:
         raise GaitDataError('No such layout %s' % layout_name)
 
-    tr = trial.nexus_trial()
+    tr = trial.nexus_trial(from_c3d=from_c3d)
     model_cycles = ('unnormalized' if tr.is_static else
                     model_cycles)
     emg_cycles = ('unnormalized' if tr.is_static else

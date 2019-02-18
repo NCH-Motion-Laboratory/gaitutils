@@ -32,9 +32,20 @@ from .envutils import GaitDataError
 logger = logging.getLogger(__name__)
 
 
-def nexus_trial():
+def nexus_trial(from_c3d=False):
     """Return Trial instance from currently open Nexus trial."""
-    return Trial(nexus.viconnexus())
+    vicon = nexus.viconnexus()
+    if from_c3d:
+        trname = vicon.GetTrialName()
+        c3dfile = op.join(*trname) + '.c3d'
+        if op.isfile(c3dfile):
+            return Trial(c3dfile)
+        else:
+            logger.info('no c3d file for currently loaded trial, loading '
+                        'directly from Nexus')
+            return Trial(nexus.viconnexus())
+    else:
+        return Trial(nexus.viconnexus())
 
 
 def _nexus_crop_events_before_forceplate():

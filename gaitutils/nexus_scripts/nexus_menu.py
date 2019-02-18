@@ -515,7 +515,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _plot_nexus_trial(self):
         lout_desc = self.cbNexusTrialLayout.currentText()
         lout_name = cfg.layouts.menu_layouts[lout_desc]
-        nexus_plot.do_plot(lout_name)
+        cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
+        model_cycles = emg_cycles = cycs
+        from_c3d = self.xbPlotFromC3D.checkState()
+        nexus_plot.do_plot(lout_name, model_cycles=model_cycles,
+                           emg_cycles=emg_cycles, from_c3d=from_c3d)
 
     def _widget_connect_task(self, widget, fun, thread=False):
         """ Helper to connect button or action item with task. Use lambda to consume

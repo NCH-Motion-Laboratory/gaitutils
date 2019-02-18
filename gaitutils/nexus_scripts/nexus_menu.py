@@ -434,9 +434,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         thread_plotters = cfg.plot.backend == 'plotly'
         self._widget_connect_task(self.btnPlotNexusTrial,
                                   self._plot_nexus_trial)
-        self._widget_connect_task(self.btnCopyVideos,
-                                  nexus_copy_trial_videos.do_copy, thread=True)
-
+        """
         self._widget_connect_task(self.btnTrialVelocity,
                                   nexus_trials_velocity.do_plot)
         self._widget_connect_task(self.btnEMGCons,
@@ -452,16 +450,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._widget_connect_task(self.btnTimeDistAverage,
                                   nexus_time_distance_vars.
                                   do_session_average_plot)
-
-        self._widget_connect_task(self.btnAutoprocTrial,
-                                  nexus_autoprocess_trial.autoproc_single,
-                                  thread=True)
-        self._widget_connect_task(self.btnAutoprocSession,
-                                  nexus_autoprocess_session.autoproc_session,
-                                  thread=True)
-        self._widget_connect_task(self.btnAutomark,
-                                  nexus_automark_trial.automark_single)
-
+        """
         self._widget_connect_task(self.actionAutoprocess_session,
                                   nexus_autoprocess_session.autoproc_session,
                                   thread=True)
@@ -472,15 +461,19 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   nexus_automark_trial.automark_single)
         self._widget_connect_task(self.actionRun_postprocessing_pipelines,
                                   self._postprocess_session)
+        self._widget_connect_task(self.actionConvert_session_videos_to_web_format,
+                                  self._convert_session_videos)
+        self._widget_connect_task(self.actionCopy_session_videos_to_desktop,
+                                  nexus_copy_trial_videos.do_copy)
+        self._widget_connect_task(self.actionCreate_PDF_report,
+                                  self._create_pdf_report)
+        self._widget_connect_task(self.actionCreate_comparison_PDF_report,
+                                  self._create_comparison)
 
-        self.btnConvertSessionVideos.clicked.connect(self._convert_session_videos)        
-        self.btnCreatePDFs.clicked.connect(self._create_pdf_report)
-        self.btnCreateComparison.clicked.connect(self._create_comparison)
-        self.btnCreateWebReport.clicked.connect(self._create_web_report)
+        self.btnCreateReport.clicked.connect(self._create_web_report)
         self.btnDeleteReport.clicked.connect(self._delete_current_report)
         self.btnDeleteAllReports.clicked.connect(self._delete_all_reports)
         self.btnViewReport.clicked.connect(self._view_current_report)
-        self.btnQuit.clicked.connect(self.close)
 
         # add predefined plot layouts to combobox
         cb_items = cfg.layouts.menu_layouts.keys()

@@ -424,6 +424,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         bit ugly since the Qt event loop gets called twice, but this does not
         seem to do any harm.
         """
+        # FIXME: into config
+        # where to start occupying TCP ports
+        self.baseport = 50000
 
         if cfg.general.git_autoupdate:
             if envutils._git_autoupdate():
@@ -436,13 +439,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         # widget_connect_task is used to automatically disable ui buttons and
         # launch worker threads if needed. This is not needed for e.g. modal
-        # dialogs 
-        self._widget_connect_task(self.btnPlotNexusTrial,
-                                  self._plot_nexus_trial,
-                                  thread=thread_plotters)
+        # dialogs
         """
-        self._widget_connect_task(self.btnTrialVelocity,
-                                  nexus_trials_velocity.do_plot)
         self._widget_connect_task(self.btnEMGCons,
                                   nexus_emg_consistency.do_plot,
                                   thread=thread_plotters)
@@ -453,10 +451,15 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   nexus_musclelen_consistency.do_plot)
         self._widget_connect_task(self.btnKinAverage,
                                   nexus_kin_average.do_plot)
-        self._widget_connect_task(self.btnTimeDistAverage,
+        """
+        self._widget_connect_task(self.btnPlotNexusTrial,
+                                  self._plot_nexus_trial,
+                                  thread=thread_plotters)
+        self._widget_connect_task(self.actionTrial_velocity,
+                                  nexus_trials_velocity.do_plot)
+        self._widget_connect_task(self.actionTime_distance_average,
                                   nexus_time_distance_vars.
                                   do_session_average_plot)
-        """
         self._widget_connect_task(self.actionAutoprocess_session,
                                   nexus_autoprocess_session.autoproc_session,
                                   thread=True)
@@ -509,13 +512,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         XStream.stdout().messageWritten.connect(self._log_message)
         XStream.stderr().messageWritten.connect(self._log_message)
-
         logger.debug('interpreter: %s' % sys.executable)
         self.threadpool = QThreadPool()
         logger.debug('started threadpool with max %d threads' %
                      self.threadpool.maxThreadCount())
 
-        self.baseport = 50000  # where to start occupying TCP ports
         self._browser_procs = list()
         self._flask_apps = dict()
         self._set_report_button_status()

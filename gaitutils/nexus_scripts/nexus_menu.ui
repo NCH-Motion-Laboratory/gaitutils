@@ -91,6 +91,16 @@
         </property>
        </spacer>
       </item>
+      <item row="1" column="5">
+       <widget class="QCheckBox" name="xbPlotFromC3D">
+        <property name="text">
+         <string>Plot from C3D</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
       <item row="1" column="6">
        <widget class="QPushButton" name="btnPlotNexusTrial">
         <property name="sizePolicy">
@@ -104,7 +114,7 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="2">
+      <item row="5" column="2">
        <widget class="QLabel" name="label_2">
         <property name="text">
          <string/>
@@ -114,7 +124,7 @@
       <item row="1" column="1">
        <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>Plot Nexus trial:</string>
+         <string>Nexus single trial plot:</string>
         </property>
        </widget>
       </item>
@@ -131,15 +141,38 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="5">
-       <widget class="QCheckBox" name="xbPlotFromC3D">
-        <property name="text">
-         <string>Plot from C3D</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
+      <item row="4" column="2">
+       <widget class="QComboBox" name="cbNexusTrialLayout_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
        </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Nexus consistency plot:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="3">
+       <spacer name="horizontalSpacer_6">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Preferred</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
       </item>
      </layout>
     </item>
@@ -301,8 +334,10 @@
    </widget>
    <widget class="QMenu" name="menuPlotting">
     <property name="title">
-     <string>Plotting</string>
+     <string>Session plots</string>
     </property>
+    <addaction name="actionTrial_velocity"/>
+    <addaction name="actionTime_distance_average"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuProcessing"/>
@@ -389,6 +424,21 @@
   <action name="actionCreate_web_report">
    <property name="text">
     <string>Create web report...</string>
+   </property>
+  </action>
+  <action name="actionTrial_velocity">
+   <property name="text">
+    <string>Trial velocity</string>
+   </property>
+  </action>
+  <action name="actionKinematics_average">
+   <property name="text">
+    <string>Kinematics average</string>
+   </property>
+  </action>
+  <action name="actionTime_distance_average">
+   <property name="text">
+    <string>Time-distance average</string>
    </property>
   </action>
  </widget>

@@ -529,9 +529,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
                            emg_cycles=emg_cycles, from_c3d=from_c3d)
 
     def _widget_connect_task(self, widget, fun, thread=False):
-        """ Helper to connect button or action item with task. Use lambda to consume
-        unused events argument. If thread=True, launch in a separate worker
-        thread. """
+        """ Helper to connect button or action item with task. Use lambda to
+        consume unused events argument. If thread=True, launch in a separate
+        worker thread. """
         # by default, just enable UI buttons when thread finishes
         finished_func = self._enable_op_buttons if thread else None
         if isinstance(widget, QtWidgets.QPushButton):

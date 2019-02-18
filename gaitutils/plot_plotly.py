@@ -209,7 +209,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         # is lowest (otherwise normaldata will mask other
                         # traces on hover) and it gets the 1st legend entry
                         if (model_normaldata is not None and trial == trials[0]
-                            and cyc == allcycles[0]):
+                            and cyc == allcycles[0] and not is_unnormalized):
                             if var[0].upper() in ['L', 'R']:
                                 nvar = var[1:]
                             if nvar in model_normaldata:

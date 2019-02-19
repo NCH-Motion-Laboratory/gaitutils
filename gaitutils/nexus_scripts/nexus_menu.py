@@ -424,6 +424,15 @@ class Gaitmenu(QtWidgets.QMainWindow):
         bit ugly since the Qt event loop gets called twice, but this does not
         seem to do any harm.
         """
+        if not cfg.general.allow_multiple_menu_instances:
+            sname = op.split(__file__)[1]
+            nprocs = envutils._count_script_instances(sname)
+            if nprocs >= 2:
+                qt_message_dialog('Another instance of the menu seems to be '
+                                  'running. Please use that instance or '
+                                  'stop it before starting a new one.')
+                sys.exit()
+
         # FIXME: into config
         # where to start occupying TCP ports
         self.baseport = 50000

@@ -10,6 +10,7 @@ Stuff related to Python environment
 import sys
 import traceback
 import subprocess
+import psutil
 import os.path as op
 from pkg_resources import resource_filename
 
@@ -18,6 +19,21 @@ from .guiutils import error_exit
 
 class GaitDataError(Exception):
     pass
+
+
+def _count_script_instances(scriptname):
+    """Count running instances of Python script"""
+    nprocs = 0
+    for proc in psutil.process_iter():
+        try:
+            cmdline = proc.cmdline()
+            if cmdline:
+                if ('python' in cmdline[0] and scriptname in cmdline[1]):
+                    nprocs += 1
+        # catch NoSuchProcess for procs that disappear inside loop
+        except (psutil.AccessDenied, psutil.NoSuchProcess):
+            continue
+    return nprocs
 
 
 def _git_autoupdate():

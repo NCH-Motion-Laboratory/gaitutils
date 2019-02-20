@@ -410,8 +410,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # load user interface made with designer
         uifile = resource_filename('gaitutils', 'nexus_scripts/nexus_menu.ui')
         uic.loadUi(uifile, self)
-        """ Stuff that shows matplotlib plots cannot be run in directly in
-        worker threads. To put plotting stuff into a worker thread, need to:
+        """
+        matplotlib and threads:
+        -----------------------
+        Stuff that shows matplotlib plots cannot be run in directly in
+        worker threads. To put plotting stuff into a worker thread, we need to:
         -make the plotting function return a figure (and not invoke the qt
         event loop)
         -put the plotting function into a worker thread
@@ -423,7 +426,23 @@ class Gaitmenu(QtWidgets.QMainWindow):
         Running the plotting functions directly from the GUI thread is also a
         bit ugly since the Qt event loop gets called twice, but this does not
         seem to do any harm.
+
+        launching web servers:
+        ----------------------
+        Web servers need to go into separate threads/processes so that the rest
+        of the app can continue running. It's hard to use processes because of
+        problems with multiprocessing/pickle, so the Qt threadpool is used to
+        launch the servers. However since each running server occupies a
+        thread, this means that we need to increase the threadpool max threads
+        limit; otherwise new servers will get queued by the threadpool and will
+        not run.
         """
+        # FIXME: into config
+        # where to start occupying TCP ports
+        self.baseport = 50000
+        # maximum number of simultaneous reports
+        self.MAX_WEB_REPORTS = 16
+
         if not cfg.general.allow_multiple_menu_instances:
             sname = op.split(__file__)[1]
             nprocs = envutils._count_script_instances(sname)
@@ -432,10 +451,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   'running. Please use that instance or '
                                   'stop it before starting a new one.')
                 sys.exit()
-
-        # FIXME: into config
-        # where to start occupying TCP ports
-        self.baseport = 50000
 
         if cfg.general.git_autoupdate:
             if envutils._git_autoupdate():
@@ -523,8 +538,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         XStream.stderr().messageWritten.connect(self._log_message)
         logger.debug('interpreter: %s' % sys.executable)
         self.threadpool = QThreadPool()
-        logger.debug('started threadpool with max %d threads' %
-                     self.threadpool.maxThreadCount())
+        # we need a thread for each web server plus one worker thread
+        self.threadpool.setMaxThreadCount(self.MAX_WEB_REPORTS + 1)
 
         self._browser_procs = list()
         self._flask_apps = dict()
@@ -690,6 +705,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
         """Collect sessions, create the dash app, start it and launch a
         web browser on localhost on the correct port"""
 
+        if self.listActiveReports.count() == self.MAX_WEB_REPORTS:
+            qt_message_dialog('Maximum number of active web reports active. '
+                              'Please delete some reports first.')
+            return
+
         dlg = ChooseSessionsDialog()
         if not dlg.exec_():
             return
@@ -770,7 +790,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         while port in ports_taken:  # find first port not taken by us
             port += 1
 
-        # report ok - start server, thread and do not block ui
+        # report ok - start server in a thread
         # also enable the threaded mode of the server. serving is a bit flaky
         # in Python 2 (multiple requests cause exceptions)
         self._execute(app.server.run, thread=True, block_ui=False,
@@ -780,6 +800,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._set_report_button_status()
         logger.debug('starting web browser')
         self._browse_localhost(port)
+
+        logger.debug('%d thread(s) now active (%d max)'
+                     % (self.threadpool.activeThreadCount(),
+                        self.threadpool.maxThreadCount()))
 
     def _delete_report(self, item):
         """Shut down server for given list item, remove item"""
@@ -981,6 +1005,7 @@ def main():
     logging.getLogger('PyQt5.uic').setLevel(logging.WARNING)
     logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
     logging.getLogger('matplotlib.backends.backend_pdf').setLevel(logging.WARNING)
+    logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
     gaitmenu = Gaitmenu()
     gaitmenu.show()

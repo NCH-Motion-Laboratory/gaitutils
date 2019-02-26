@@ -226,9 +226,12 @@ def _trial_median_velocity(source, return_curve=False):
                                var_type='_V')
         vel_ = np.sqrt(np.sum(vel_3**2, 1))  # scalar velocity
     except (GaitDataError, ValueError):
-        nanvec = np.empty(100, 1)
-        nanvec[:] = np.nan
-        return np.nan, nanvec if return_curve else np.nan
+        if return_curve:
+            nanvec = np.empty((100, 1))
+            nanvec[:] = np.nan
+            return np.nan, nanvec
+        else:
+            return np.nan
     vel = np.median(vel_[np.where(vel_)])  # ignore zeros
     vel_ms = vel * frate / 1000.  # convert to m/s
     if return_curve:

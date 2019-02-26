@@ -200,10 +200,11 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             # var context was specified, and has to match cycle
                             do_plot = False
 
-                        if mod.is_kinetic_var(var) and not cyc.on_forceplate:
+                        if mod.is_kinetic_var(var):
                             # kinetic var cycles are required to have valid
                             # forceplate data
-                            do_plot = False
+                            if not is_unnormalized and not cyc.on_forceplate:
+                                do_plot = False
 
                         # plot normaldata before other data so that its z order
                         # is lowest (otherwise normaldata will mask other

@@ -299,7 +299,7 @@
    </widget>
    <widget class="QMenu" name="menuAnalysis">
     <property name="title">
-     <string>Analysis</string>
+     <string>Tools</string>
     </property>
     <addaction name="actionTardieu_analysis"/>
    </widget>

@@ -885,17 +885,15 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _disable_op_buttons(self):
         """ Disable all operation buttons """
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-        for widget in self.opWidgets:
-            self.__dict__[widget].setEnabled(False)
+        self.setEnabled(False)  # disables whole main window
         # update display immediately in case thread gets blocked
         QtWidgets.QApplication.processEvents()
 
     def _enable_op_buttons(self, r):
         """Enable all operation buttons and restore cursor. Takes single
         argument to fit the _finished_func call signature (see _execute) """
-        for widget in self.opWidgets:
-            self.__dict__[widget].setEnabled(True)
         QtWidgets.QApplication.restoreOverrideCursor()
+        self.setEnabled(True)
         # set status of report buttons separately
         self._set_report_button_status()
 

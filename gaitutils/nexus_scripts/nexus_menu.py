@@ -437,11 +437,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         limit; otherwise new servers will get queued by the threadpool and will
         not run.
         """
-        # FIXME: into config
-        # where to start occupying TCP ports
-        self.baseport = 50000
-        # maximum number of simultaneous reports
-        self.MAX_WEB_REPORTS = 16
 
         if not cfg.general.allow_multiple_menu_instances:
             sname = op.split(__file__)[1]
@@ -532,7 +527,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         logger.debug('interpreter: %s' % sys.executable)
         self.threadpool = QThreadPool()
         # we need a thread for each web server plus one worker thread
-        self.threadpool.setMaxThreadCount(self.MAX_WEB_REPORTS + 1)
+        self.threadpool.setMaxThreadCount(cfg.web_report.max_reports + 1)
 
         self._browser_procs = list()
         self._flask_apps = dict()
@@ -698,7 +693,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         """Collect sessions, create the dash app, start it and launch a
         web browser on localhost on the correct port"""
 
-        if self.listActiveReports.count() == self.MAX_WEB_REPORTS:
+        if self.listActiveReports.count() == cfg.web_report.max_reports:
             qt_message_dialog('Maximum number of active web reports active. '
                               'Please delete some reports first.')
             return
@@ -779,7 +774,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         # figure out first free TCP port
         ports_taken = [item.userdata for item in self.listActiveReports.items]
-        port = self.baseport
+        port = cfg.web_report.tcp_port
         while port in ports_taken:  # find first port not taken by us
             port += 1
 

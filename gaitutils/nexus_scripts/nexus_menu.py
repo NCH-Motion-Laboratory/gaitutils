@@ -509,19 +509,19 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   nexus_copy_trial_videos.do_copy)
 
         # add predefined plot layouts to combobox
-        cb_items = cfg.layouts.menu_layouts.keys()
+        cb_items = sorted(cfg.layouts.menu_layouts.keys())
         self.cbNexusTrialLayout.addItems(cb_items)
+        # set default option to PiG lower body (if it's on the list)
+        try:
+            default_index = cb_items.index('PiG lower body kinematics+'
+                                           'kinetics')
+        except ValueError:
+            default_index = 0
+        self.cbNexusTrialLayout.setCurrentIndex(default_index)
 
         # add double click action to browse current report
         (self.listActiveReports.itemDoubleClicked.
          connect(lambda item: self._browse_localhost(item.userdata)))
-
-        # collect operation widgets
-        self.opWidgets = list()
-        for widget in self.__dict__:
-            if ((widget[:3] == 'btn' or widget[:4] == 'rbtn') and
-               widget != 'btnQuit'):
-                self.opWidgets.append(widget)
 
         # these require active reports to be enabled
         self.reportWidgets = [self.btnDeleteReport, self.btnDeleteAllReports,

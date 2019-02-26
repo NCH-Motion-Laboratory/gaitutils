@@ -91,19 +91,6 @@
         </property>
        </spacer>
       </item>
-      <item row="4" column="7">
-       <widget class="QPushButton" name="btnPlotNexusConsistency">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Plot consistency</string>
-        </property>
-       </widget>
-      </item>
       <item row="4" column="2">
        <widget class="QCheckBox" name="xbPlotUnnorm">
         <property name="sizePolicy">
@@ -120,7 +107,7 @@
       <item row="1" column="1">
        <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>Layout:</string>
+         <string>Plot Nexus trial:</string>
         </property>
        </widget>
       </item>
@@ -140,7 +127,7 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>Plot single trial</string>
+         <string>Plot</string>
         </property>
        </widget>
       </item>

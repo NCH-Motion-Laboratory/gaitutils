@@ -324,10 +324,13 @@
    </widget>
    <widget class="QMenu" name="menuPlotting">
     <property name="title">
-     <string>Session plots</string>
+     <string>Consistency plots</string>
     </property>
     <addaction name="actionTrial_velocity"/>
     <addaction name="actionTime_distance_average"/>
+    <addaction name="actionKinematics_consistency"/>
+    <addaction name="actionEMG_consistency"/>
+    <addaction name="actionMuscle_length_consistency"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuProcessing"/>
@@ -429,6 +432,21 @@
   <action name="actionTime_distance_average">
    <property name="text">
     <string>Time-distance average</string>
+   </property>
+  </action>
+  <action name="actionKinematics_consistency">
+   <property name="text">
+    <string>Kinematics consistency</string>
+   </property>
+  </action>
+  <action name="actionEMG_consistency">
+   <property name="text">
+    <string>EMG consistency</string>
+   </property>
+  </action>
+  <action name="actionMuscle_length_consistency">
+   <property name="text">
+    <string>Muscle length consistency</string>
    </property>
   </action>
  </widget>

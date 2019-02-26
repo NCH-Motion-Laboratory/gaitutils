@@ -461,29 +461,37 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # if using the plotly backend, we can run plotters in worker threads
         thread_plotters = cfg.plot.backend == 'plotly'
 
-        # widget_connect_task is used to automatically disable ui buttons and
-        # launch worker threads if needed. This is not needed for e.g. modal
-        # dialogs
-        """
-        self._widget_connect_task(self.btnEMGCons,
-                                  nexus_emg_consistency.do_plot,
-                                  thread=thread_plotters)
-        self._widget_connect_task(self.btnKinCons,
-                                  nexus_kin_consistency.do_plot,
-                                  thread=thread_plotters)
-        self._widget_connect_task(self.btnMuscleLenCons,
-                                  nexus_musclelen_consistency.do_plot)
-        self._widget_connect_task(self.btnKinAverage,
-                                  nexus_kin_average.do_plot)
-        """
+        # modal dialogs etc. (simple signal->slot connection)
+        self.btnCreateReport.clicked.connect(self._create_web_report)
+        self.btnDeleteReport.clicked.connect(self._delete_current_report)
+        self.btnDeleteAllReports.clicked.connect(self._delete_all_reports)
+        self.btnViewReport.clicked.connect(self._view_current_report)
+        self.actionCreate_PDF_report.triggered.connect(self._create_pdf_report)
+        self.actionCreate_comparison_PDF_report.triggered.connect(self._create_comparison)
+        self.actionCreate_web_report.triggered.connect(self._create_web_report)
+        self.actionQuit.triggered.connect(self.close)
+        self.actionOpts.triggered.connect(self._options_dialog)
+        self.actionTardieu_analysis.triggered.connect(self._tardieu)
+
+        # main UI buttons
         self._widget_connect_task(self.btnPlotNexusTrial,
                                   self._plot_nexus_trial,
                                   thread=thread_plotters)
+
+        # consistency menu
         self._widget_connect_task(self.actionTrial_velocity,
                                   nexus_trials_velocity.do_plot)
         self._widget_connect_task(self.actionTime_distance_average,
                                   nexus_time_distance_vars.
                                   do_session_average_plot)
+        self._widget_connect_task(self.actionKinematics_consistency,
+                                  nexus_kin_consistency.do_plot)
+        self._widget_connect_task(self.actionEMG_consistency,
+                                  nexus_emg_consistency.do_plot)
+        self._widget_connect_task(self.actionMuscle_length_consistency,
+                                  nexus_musclelen_consistency.do_plot)
+
+        # processing menu
         self._widget_connect_task(self.actionAutoprocess_session,
                                   nexus_autoprocess_session.autoproc_session,
                                   thread=True)
@@ -499,21 +507,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   self._convert_session_videos)
         self._widget_connect_task(self.actionCopy_session_videos_to_desktop,
                                   nexus_copy_trial_videos.do_copy)
-        self._widget_connect_task(self.actionCreate_PDF_report,
-                                  self._create_pdf_report)
-        self._widget_connect_task(self.actionCreate_comparison_PDF_report,
-                                  self._create_comparison)
-
-        # web report action buttons
-        self.btnCreateReport.clicked.connect(self._create_web_report)
-        self.btnDeleteReport.clicked.connect(self._delete_current_report)
-        self.btnDeleteAllReports.clicked.connect(self._delete_all_reports)
-        self.btnViewReport.clicked.connect(self._view_current_report)
-
-        # misc action menu items
-        self.actionQuit.triggered.connect(self.close)
-        self.actionOpts.triggered.connect(self._options_dialog)
-        self.actionTardieu_analysis.triggered.connect(self._tardieu)
 
         # add predefined plot layouts to combobox
         cb_items = cfg.layouts.menu_layouts.keys()

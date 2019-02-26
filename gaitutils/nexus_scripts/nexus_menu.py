@@ -467,6 +467,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionQuit.triggered.connect(self.close)
         self.actionOpts.triggered.connect(self._options_dialog)
         self.actionTardieu_analysis.triggered.connect(self._tardieu)
+        self.actionAutoprocess_session.triggered.connect(self._autoproc_session)
 
         # main UI buttons
         self._widget_connect_task(self.btnPlotNexusTrial,
@@ -487,9 +488,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   nexus_musclelen_consistency.do_plot)
 
         # processing menu
-        self._widget_connect_task(self.actionAutoprocess_session,
-                                  nexus_autoprocess_session.autoproc_session,
-                                  thread=True)
         self._widget_connect_task(self.actionAutoprocess_single_trial,
                                   nexus_autoprocess_trial.autoproc_single,
                                   thread=True)
@@ -533,7 +531,23 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._flask_apps = dict()
         self._set_report_button_status()
 
+    def _autoproc_session(self):
+        """Run autoprocess for Nexus session"""
+        sessionpath = nexus.get_sessionpath()
+        enfs = sessionutils.get_session_enfs(sessionpath)
+        enfs = sessionutils._filter_by_type(enfs, 'DYNAMIC')
+        c3ds = list(sessionutils._filter_to_c3ds(enfs))
+        if c3ds:
+            reply = qt_yesno_dialog('Some of the dynamic trials have been '
+                                    'processed already. Are you sure you want '
+                                    'to run autoprocessing?')
+            if reply == QtWidgets.QMessageBox.YesRole:
+                self._execute(nexus_autoprocess_session.autoproc_session,
+                              thread=True,
+                              finished_func=self._enable_op_buttons)
+
     def _plot_nexus_trial(self):
+        """Plot the current Nexus trial"""
         lout_desc = self.cbNexusTrialLayout.currentText()
         lout_name = cfg.layouts.menu_layouts[lout_desc]
         cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None

@@ -131,19 +131,184 @@ class WebReportInfoDialog(QtWidgets.QDialog):
 
 class WebReportDialog(QtWidgets.QDialog):
     """Dialog for managing web reports"""
+
     def __init__(self, parent):
         super(self.__class__, self).__init__()
         # load user interface made with designer
         uifile = resource_filename('gaitutils',
-                                   'nexus_scripts/web_report_sessions.ui')
+                                   'nexus_scripts/web_report_dialog.ui')
         uic.loadUi(uifile, self)
-        self.btnCreateReport.clicked.connect(parent._create_web_report)
-        self.btnDeleteReport.clicked.connect(parent._delete_current_report)
-        self.btnDeleteAllReports.clicked.connect(parent._delete_all_reports)
-        self.btnViewReport.clicked.connect(parent._view_current_report)
+        self.btnCreateReport.clicked.connect(self._create_web_report)
+        self.btnDeleteReport.clicked.connect(self._delete_current_report)
+        self.btnDeleteAllReports.clicked.connect(self._delete_all_reports)
+        self.btnViewReport.clicked.connect(self._view_current_report)
         # add double click action to browse current report
         (self.listActiveReports.itemDoubleClicked.
          connect(lambda item: parent._browse_localhost(item.userdata)))
+        # these require active reports to be enabled
+        self.reportWidgets = [self.btnDeleteReport, self.btnDeleteAllReports,
+                              self.btnViewReport]
+        self._set_report_button_status()
+
+    def _create_web_report(self):
+        """Collect sessions, create the dash app, start it and launch a
+        web browser on localhost on the correct port"""
+
+        if self.listActiveReports.count() == cfg.web_report.max_reports:
+            qt_message_dialog('Maximum number of active web reports active. '
+                              'Please delete some reports first.')
+            return
+
+        dlg = ChooseSessionsDialog()
+        if not dlg.exec_():
+            return
+        sessions = dlg.sessions
+
+        sessions_str = '/'.join([op.split(s)[-1] for s in sessions])
+        report_type = ('single session' if len(sessions) == 1
+                       else 'comparison')
+        report_name = '%s: %s' % (report_type, sessions_str)
+        existing_names = [item.text for item in self.listActiveReports.items]
+        if report_name in existing_names:
+            qt_message_dialog('There is already a report for %s' %
+                              report_name)
+            return
+
+        session_infos, info = sessionutils._merge_session_info(sessions)
+        if info is None:
+            qt_message_dialog('Patient files do not match. Sessions may be '
+                              'from different patients. Continuing without '
+                              'patient info.')
+            info = sessionutils.default_info()
+        else:
+            dlg_info = WebReportInfoDialog(info, check_info=False)
+            if dlg_info.exec_():
+                new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,
+                                report_notes=dlg_info.report_notes)
+                info.update(new_info)
+
+                # update info files (except session specific keys)
+                for session in sessions:
+                    update_dict = dict(report_notes=dlg_info.report_notes,
+                                       fullname=dlg_info.fullname,
+                                       hetu=dlg_info.hetu)
+                    session_infos[session].update(update_dict)
+                    sessionutils.save_info(session, session_infos[session])
+            else:
+                return
+
+        prog = ProgressBar('Creating web report...')
+        prog.update('Collecting session information...', 0)
+        signals = ProgressSignals()
+        signals.progress.connect(lambda text, p: prog.update(text, p))
+
+        # for comparison between sessions, get representative trials only
+        tags = (cfg.eclipse.repr_tags if len(sessions) > 1 else
+                cfg.eclipse.tags)
+
+        # collect all video files for conversion
+        # includes tagged dynamic, video-only tagged, and static trials
+        vidfiles = list()
+        for session in sessions:
+            vids = self._collect_videos_to_convert(session, tags=tags)
+            vidfiles.extend(vids)
+
+        if not report.convert_videos(vidfiles, check_only=True):
+            self._convert_vidfiles(vidfiles, signals)
+
+        self._report_creation_status = None
+        self._execute(report.dash_report, thread=True, block_ui=True,
+                      finished_func=self._web_report_finished,
+                      info=info, sessions=sessions, tags=tags, signals=signals)
+
+        # wait for report creation thread to complete
+        while self._report_creation_status is None:
+            time.sleep(.05)
+            QtWidgets.QApplication.processEvents()
+        prog.close()
+
+        if self._report_creation_status is False:
+            qt_message_dialog('Could not create report, check that session is '
+                              'valid')
+            return
+        app = self._report_creation_status
+
+        # figure out first free TCP port
+        ports_taken = [item.userdata for item in self.listActiveReports.items]
+        port = cfg.web_report.tcp_port
+        while port in ports_taken:  # find first port not taken by us
+            port += 1
+
+        # report ok - start server in a thread
+        # also enable the threaded mode of the server. serving is a bit flaky
+        # in Python 2 (multiple requests cause exceptions)
+        self._execute(app.server.run, thread=True, block_ui=False,
+                      debug=False, port=port, threaded=True)
+        # double clicking on the list item will browse to corresponding port
+        self.listActiveReports.add_item(report_name, data=port)
+        logger.debug('starting web browser')
+        self._browse_localhost(port)
+
+        logger.debug('%d thread(s) now active (%d max)'
+                     % (self.threadpool.activeThreadCount(),
+                        self.threadpool.maxThreadCount()))
+
+    def _delete_report(self, item):
+        """Shut down server for given list item, remove item"""
+        port = item.userdata
+        # compose url for shutdown request - see report.py
+        url = 'http://127.0.0.1:%d/shutdown' % port
+        # we have to make sure that localhost is not proxied
+        proxies = {"http": None, "https": None}
+        logger.debug('requesting server shutdown for port %d' % port)
+        requests.get(url, proxies=proxies)
+        self.listActiveReports.rm_current_item()
+
+    def _delete_current_report(self):
+        """Shut down server for current item, remove item"""
+        item = self.listActiveReports.currentItem()
+        if item is None:
+            return
+        msg = 'Are you sure you want to delete the report for %s?' % item.text
+        reply = qt_yesno_dialog(msg)
+        if reply == QtWidgets.QMessageBox.YesRole:
+            self._delete_report(item)
+        self._set_report_button_status()
+
+    def _delete_all_reports(self):
+        """Delete all web reports"""
+        if self.listActiveReports.count() == 0:
+            return
+        msg = 'Are you sure you want to delete all reports?'
+        reply = qt_yesno_dialog(msg)
+        if reply != QtWidgets.QMessageBox.YesRole:
+            return
+        # cannot use generator here since the loop changes the items
+        for item in list(self.listActiveReports.items):
+            self._delete_report(item)
+        self._set_report_button_status()
+
+    def _view_current_report(self):
+        """Open current report in browser"""
+        item = self.listActiveReports.currentItem()
+        if item is None:
+            return
+        port = item.userdata
+        self._browse_localhost(port)
+
+    def _set_report_button_status(self):
+        """Enable report buttons if active reports, otherwise disable them"""
+        status = bool(self.listActiveReports.count())
+        for widget in self.reportWidgets:
+            widget.setEnabled(status)
+
+    def _web_report_finished(self, app):
+        """Gets called when web report creation is finished"""
+        logger.debug('report creation finished')
+        self._enable_op_buttons(None)
+        self._report_creation_status = app
+
+
 
 
 class ChooseSessionsDialog(QtWidgets.QDialog):
@@ -526,11 +691,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
             default_index = 0
         self.cbNexusTrialLayout.setCurrentIndex(default_index)
 
-
-        # these require active reports to be enabled
-        self.reportWidgets = [self.btnDeleteReport, self.btnDeleteAllReports,
-                              self.btnViewReport]
-
         XStream.stdout().messageWritten.connect(self._log_message)
         XStream.stderr().messageWritten.connect(self._log_message)
         logger.debug('interpreter: %s' % sys.executable)
@@ -540,7 +700,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         self._browser_procs = list()
         self._flask_apps = dict()
-        self._set_report_button_status()
 
     def _web_report_dialog(self):
         dlg = WebReportDialog(self)
@@ -712,164 +871,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._execute(nexus_make_comparison_report.do_plot,
                           sessions=dlg.sessions)
 
-    def _web_report_finished(self, app):
-        """Gets called when web report creation is finished"""
-        logger.debug('report creation finished')
-        self._enable_op_buttons(None)
-        self._report_creation_status = app
-
-    def _create_web_report(self):
-        """Collect sessions, create the dash app, start it and launch a
-        web browser on localhost on the correct port"""
-
-        if self.listActiveReports.count() == cfg.web_report.max_reports:
-            qt_message_dialog('Maximum number of active web reports active. '
-                              'Please delete some reports first.')
-            return
-
-        dlg = ChooseSessionsDialog()
-        if not dlg.exec_():
-            return
-        sessions = dlg.sessions
-
-        sessions_str = '/'.join([op.split(s)[-1] for s in sessions])
-        report_type = ('single session' if len(sessions) == 1
-                       else 'comparison')
-        report_name = '%s: %s' % (report_type, sessions_str)
-        existing_names = [item.text for item in self.listActiveReports.items]
-        if report_name in existing_names:
-            qt_message_dialog('There is already a report for %s' %
-                              report_name)
-            return
-
-        session_infos, info = sessionutils._merge_session_info(sessions)
-        if info is None:
-            qt_message_dialog('Patient files do not match. Sessions may be '
-                              'from different patients. Continuing without '
-                              'patient info.')
-            info = sessionutils.default_info()
-        else:
-            dlg_info = WebReportInfoDialog(info, check_info=False)
-            if dlg_info.exec_():
-                new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,
-                                report_notes=dlg_info.report_notes)
-                info.update(new_info)
-
-                # update info files (except session specific keys)
-                for session in sessions:
-                    update_dict = dict(report_notes=dlg_info.report_notes,
-                                       fullname=dlg_info.fullname,
-                                       hetu=dlg_info.hetu)
-                    session_infos[session].update(update_dict)
-                    sessionutils.save_info(session, session_infos[session])
-            else:
-                return
-
-        prog = ProgressBar('Creating web report...')
-        prog.update('Collecting session information...', 0)
-        signals = ProgressSignals()
-        signals.progress.connect(lambda text, p: prog.update(text, p))
-
-        # for comparison between sessions, get representative trials only
-        tags = (cfg.eclipse.repr_tags if len(sessions) > 1 else
-                cfg.eclipse.tags)
-
-        # collect all video files for conversion
-        # includes tagged dynamic, video-only tagged, and static trials
-        vidfiles = list()
-        for session in sessions:
-            vids = self._collect_videos_to_convert(session, tags=tags)
-            vidfiles.extend(vids)
-
-        if not report.convert_videos(vidfiles, check_only=True):
-            self._convert_vidfiles(vidfiles, signals)
-
-        self._report_creation_status = None
-        self._execute(report.dash_report, thread=True, block_ui=True,
-                      finished_func=self._web_report_finished,
-                      info=info, sessions=sessions, tags=tags, signals=signals)
-
-        # wait for report creation thread to complete
-        while self._report_creation_status is None:
-            time.sleep(.05)
-            QtWidgets.QApplication.processEvents()
-        prog.close()
-
-        if self._report_creation_status is False:
-            qt_message_dialog('Could not create report, check that session is '
-                              'valid')
-            return
-        app = self._report_creation_status
-
-        # figure out first free TCP port
-        ports_taken = [item.userdata for item in self.listActiveReports.items]
-        port = cfg.web_report.tcp_port
-        while port in ports_taken:  # find first port not taken by us
-            port += 1
-
-        # report ok - start server in a thread
-        # also enable the threaded mode of the server. serving is a bit flaky
-        # in Python 2 (multiple requests cause exceptions)
-        self._execute(app.server.run, thread=True, block_ui=False,
-                      debug=False, port=port, threaded=True)
-        # double clicking on the list item will browse to corresponding port
-        self.listActiveReports.add_item(report_name, data=port)
-        self._set_report_button_status()
-        logger.debug('starting web browser')
-        self._browse_localhost(port)
-
-        logger.debug('%d thread(s) now active (%d max)'
-                     % (self.threadpool.activeThreadCount(),
-                        self.threadpool.maxThreadCount()))
-
-    def _delete_report(self, item):
-        """Shut down server for given list item, remove item"""
-        port = item.userdata
-        # compose url for shutdown request - see report.py
-        url = 'http://127.0.0.1:%d/shutdown' % port
-        # we have to make sure that localhost is not proxied
-        proxies = {"http": None, "https": None}
-        logger.debug('requesting server shutdown for port %d' % port)
-        requests.get(url, proxies=proxies)
-        self.listActiveReports.rm_current_item()
-
-    def _delete_current_report(self):
-        """Shut down server for current item, remove item"""
-        item = self.listActiveReports.currentItem()
-        if item is None:
-            return
-        msg = 'Are you sure you want to delete the report for %s?' % item.text
-        reply = qt_yesno_dialog(msg)
-        if reply == QtWidgets.QMessageBox.YesRole:
-            self._delete_report(item)
-        self._set_report_button_status()
-
-    def _delete_all_reports(self):
-        """Delete all web reports"""
-        if self.listActiveReports.count() == 0:
-            return
-        msg = 'Are you sure you want to delete all reports?'
-        reply = qt_yesno_dialog(msg)
-        if reply != QtWidgets.QMessageBox.YesRole:
-            return
-        # cannot use generator here since the loop changes the items
-        for item in list(self.listActiveReports.items):
-            self._delete_report(item)
-        self._set_report_button_status()
-
-    def _view_current_report(self):
-        """Open current report in browser"""
-        item = self.listActiveReports.currentItem()
-        if item is None:
-            return
-        port = item.userdata
-        self._browse_localhost(port)
-
-    def _set_report_button_status(self):
-        """Enable report buttons if active reports, otherwise disable them"""
-        status = bool(self.listActiveReports.count())
-        for widget in self.reportWidgets:
-            widget.setEnabled(status)
 
     def _create_pdf_report(self):
         """Creates the full pdf report"""

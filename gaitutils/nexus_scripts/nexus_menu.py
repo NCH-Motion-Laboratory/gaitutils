@@ -58,6 +58,18 @@ def _exception_msg(e):
     return 'There was an error running the operation. Details:\n%s' % err_msg
 
 
+def _collect_videos_to_convert(session, tags):
+    """Collect session AVI files for conversion to web format"""
+    c3ds = sessionutils.get_c3ds(session, tags=tags,
+                                 trial_type='dynamic')
+    c3ds += sessionutils.get_c3ds(session, tags=cfg.eclipse.video_tags,
+                                  trial_type='dynamic')
+    c3ds += sessionutils.get_c3ds(session, trial_type='static')
+    vids_it = (videos.get_trial_videos(c3d, vid_ext='.avi')
+               for c3d in c3ds)
+    return list(itertools.chain.from_iterable(vids_it))
+
+
 class PdfReportDialog(QtWidgets.QDialog):
     """Ask for patient/session info and report options"""
 
@@ -66,6 +78,7 @@ class PdfReportDialog(QtWidgets.QDialog):
         uifile = resource_filename('gaitutils',
                                    'nexus_scripts/pdf_report_dialog.ui')
         uic.loadUi(uifile, self)
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)        
         self.prompt.setText(prompt)
         if info is not None:
             if info['fullname'] is not None:
@@ -101,6 +114,7 @@ class WebReportInfoDialog(QtWidgets.QDialog):
         uifile = resource_filename('gaitutils',
                                    'nexus_scripts/web_report_info.ui')
         uic.loadUi(uifile, self)
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.check_info = check_info
         if info is not None:
             if info['fullname'] is not None:
@@ -130,10 +144,12 @@ class WebReportInfoDialog(QtWidgets.QDialog):
 
 
 class WebReportDialog(QtWidgets.QDialog):
-    """Dialog for managing web reports"""
+    """Dialog for managing web reports. In current implementation, this needs a
+    GaitMenu instance as a parent"""
 
     def __init__(self, parent):
-        super(self.__class__, self).__init__()
+        super(self.__class__, self).__init__(parent)
+        self.parent = parent
         # load user interface made with designer
         uifile = resource_filename('gaitutils',
                                    'nexus_scripts/web_report_dialog.ui')
@@ -149,6 +165,7 @@ class WebReportDialog(QtWidgets.QDialog):
         self.reportWidgets = [self.btnDeleteReport, self.btnDeleteAllReports,
                               self.btnViewReport]
         self._set_report_button_status()
+        self._browser_procs = list()
 
     def _create_web_report(self):
         """Collect sessions, create the dash app, start it and launch a
@@ -210,16 +227,17 @@ class WebReportDialog(QtWidgets.QDialog):
         # includes tagged dynamic, video-only tagged, and static trials
         vidfiles = list()
         for session in sessions:
-            vids = self._collect_videos_to_convert(session, tags=tags)
+            vids = _collect_videos_to_convert(session, tags=tags)
             vidfiles.extend(vids)
 
         if not report.convert_videos(vidfiles, check_only=True):
             self._convert_vidfiles(vidfiles, signals)
 
         self._report_creation_status = None
-        self._execute(report.dash_report, thread=True, block_ui=True,
-                      finished_func=self._web_report_finished,
-                      info=info, sessions=sessions, tags=tags, signals=signals)
+        self.parent._execute(report.dash_report, thread=True, block_ui=True,
+                             finished_func=self._web_report_finished,
+                             info=info, sessions=sessions, tags=tags,
+                             signals=signals)
 
         # wait for report creation thread to complete
         while self._report_creation_status is None:
@@ -252,6 +270,18 @@ class WebReportDialog(QtWidgets.QDialog):
         logger.debug('%d thread(s) now active (%d max)'
                      % (self.threadpool.activeThreadCount(),
                         self.threadpool.maxThreadCount()))
+
+    @property
+    def active_reports(self):
+        return self._web_report_dialog.listActiveReports.count()
+
+    def shutdown(self):
+        # try to shutdown browser processes and web servers
+        for proc in self._browser_procs:
+            proc.kill()
+        # cannot use generator here since the loop changes the items
+        for item in list(self._web_report_dialog.listActiveReports.items):
+            self._delete_report(item)
 
     def _delete_report(self, item):
         """Shut down server for given list item, remove item"""
@@ -308,7 +338,16 @@ class WebReportDialog(QtWidgets.QDialog):
         self._enable_op_buttons(None)
         self._report_creation_status = app
 
-
+    def _browse_localhost(self, port):
+        """Open configured browser on localhost:port"""
+        url = '127.0.0.1:%d' % port
+        try:
+            proc = subprocess.Popen([cfg.general.browser_path, url])
+            self._browser_procs.append(proc)
+            logger.debug('new browser pid %d' % proc.pid)
+        except Exception:
+            qt_message_dialog('Cannot start configured web browser: %s'
+                              % cfg.general.browser_path)
 
 
 class ChooseSessionsDialog(QtWidgets.QDialog):
@@ -320,6 +359,7 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
         uifile = resource_filename('gaitutils',
                                    'nexus_scripts/web_report_sessions.ui')
         uic.loadUi(uifile, self)
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.btnBrowseSession.clicked.connect(self.add_session)
         self.btnAddNexusSession.clicked.connect(lambda: self.
                                                 add_session(from_nexus=True))
@@ -639,10 +679,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # if using the plotly backend, we can run plotters in worker threads
         thread_plotters = cfg.plot.backend == 'plotly'
 
+        self._web_report_dialog = WebReportDialog(self)
+
         # modal dialogs etc. (simple signal->slot connection)
         self.actionCreate_PDF_report.triggered.connect(self._create_pdf_report)
         self.actionCreate_comparison_PDF_report.triggered.connect(self._create_comparison)
-        self.actionWeb_reports.triggered.connect(self._web_report_dialog)
+        self.actionWeb_reports.triggered.connect(self._web_report_dialog.show)
         self.actionQuit.triggered.connect(self.close)
         self.actionOpts.triggered.connect(self._options_dialog)
         self.actionTardieu_analysis.triggered.connect(self._tardieu)
@@ -698,12 +740,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # we need a thread for each web server plus one worker thread
         self.threadpool.setMaxThreadCount(cfg.web_report.max_reports + 1)
 
-        self._browser_procs = list()
-        self._flask_apps = dict()
-
-    def _web_report_dialog(self):
-        dlg = WebReportDialog(self)
-        dlg.show()
 
     def _autoproc_session(self):
         """Run autoprocess for Nexus session"""
@@ -763,29 +799,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
             completed = n_complete == len(procs)
         self._enable_op_buttons(None)
 
-    def _browse_localhost(self, port):
-        """Open configured browser on localhost:port"""
-        url = '127.0.0.1:%d' % port
-        try:
-            proc = subprocess.Popen([cfg.general.browser_path, url])
-            self._browser_procs.append(proc)
-            logger.debug('new browser pid %d' % proc.pid)
-        except Exception:
-            qt_message_dialog('Cannot start configured web browser: %s'
-                              % cfg.general.browser_path)
-
-    @staticmethod
-    def _collect_videos_to_convert(session, tags):
-        """Collect session AVI files for conversion to web format"""
-        c3ds = sessionutils.get_c3ds(session, tags=tags,
-                                     trial_type='dynamic')
-        c3ds += sessionutils.get_c3ds(session, tags=cfg.eclipse.video_tags,
-                                      trial_type='dynamic')
-        c3ds += sessionutils.get_c3ds(session, trial_type='static')
-        vids_it = (videos.get_trial_videos(c3d, vid_ext='.avi')
-                   for c3d in c3ds)
-        return list(itertools.chain.from_iterable(vids_it))
-
     def _convert_session_videos(self):
         """Convert current Nexus session videos to web format."""
         try:
@@ -794,8 +807,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog(_exception_msg(e))
             return
         try:
-            vidfiles = self._collect_videos_to_convert(session,
-                                                       tags=cfg.eclipse.tags)
+            vidfiles = _collect_videos_to_convert(session,
+                                                  tags=cfg.eclipse.tags)
         except GaitDataError as e:
             qt_message_dialog(_exception_msg(e))
             return
@@ -842,17 +855,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         """ Confirm and close application. """
-        if self.listActiveReports.count():
-            reply = qt_yesno_dialog('There are active processes which '
-                                    'will be terminated. Are you sure you '
+        if self._web_report_dialog.active_reports:
+            reply = qt_yesno_dialog('There are active web reports which '
+                                    'will be closed. Are you sure you '
                                     'want to quit?')
             if reply == QtWidgets.QMessageBox.YesRole:
-                # try to shutdown browser processes and web servers
-                for proc in self._browser_procs:
-                    proc.kill()
-                # cannot use generator here since the loop changes the items
-                for item in list(self.listActiveReports.items):
-                    self._delete_report(item)
+                self._web_report_dialog.shutdown()
                 event.accept()
             else:
                 event.ignore()
@@ -919,8 +927,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         argument to fit the _finished_func call signature (see _execute) """
         QtWidgets.QApplication.restoreOverrideCursor()
         self.setEnabled(True)
-        # set status of report buttons separately
-        self._set_report_button_status()
 
     def _tardieu(self):
         win = nexus_tardieu.TardieuWindow()

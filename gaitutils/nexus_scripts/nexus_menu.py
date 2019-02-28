@@ -129,6 +129,23 @@ class WebReportInfoDialog(QtWidgets.QDialog):
             qt_message_dialog(msg)
 
 
+class WebReportDialog(QtWidgets.QDialog):
+    """Dialog for managing web reports"""
+    def __init__(self, parent):
+        super(self.__class__, self).__init__()
+        # load user interface made with designer
+        uifile = resource_filename('gaitutils',
+                                   'nexus_scripts/web_report_sessions.ui')
+        uic.loadUi(uifile, self)
+        self.btnCreateReport.clicked.connect(parent._create_web_report)
+        self.btnDeleteReport.clicked.connect(parent._delete_current_report)
+        self.btnDeleteAllReports.clicked.connect(parent._delete_all_reports)
+        self.btnViewReport.clicked.connect(parent._view_current_report)
+        # add double click action to browse current report
+        (self.listActiveReports.itemDoubleClicked.
+         connect(lambda item: parent._browse_localhost(item.userdata)))
+
+
 class ChooseSessionsDialog(QtWidgets.QDialog):
     """Display a dialog for picking sessions"""
 
@@ -223,12 +240,13 @@ class XStream(QtCore.QObject):
 class OptionsDialog(QtWidgets.QDialog):
     """ Display a tabbed dialog for changing gaitutils options """
 
-    def __init__(self, default_tab=0):
-        super(self.__class__, self).__init__()
+    def __init__(self, parent, default_tab=0):
+        super(self.__class__, self).__init__(parent)
         # load user interface made with designer
         uifile = resource_filename('gaitutils',
                                    'nexus_scripts/options_dialog.ui')
         uic.loadUi(uifile, self)
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
         # add some buttons to the standard button box
         loadButton = QtWidgets.QPushButton('Load...')
@@ -457,13 +475,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         thread_plotters = cfg.plot.backend == 'plotly'
 
         # modal dialogs etc. (simple signal->slot connection)
-        self.btnCreateReport.clicked.connect(self._create_web_report)
-        self.btnDeleteReport.clicked.connect(self._delete_current_report)
-        self.btnDeleteAllReports.clicked.connect(self._delete_all_reports)
-        self.btnViewReport.clicked.connect(self._view_current_report)
         self.actionCreate_PDF_report.triggered.connect(self._create_pdf_report)
         self.actionCreate_comparison_PDF_report.triggered.connect(self._create_comparison)
-        self.actionCreate_web_report.triggered.connect(self._create_web_report)
+        self.actionWeb_reports.triggered.connect(self._web_report_dialog)
         self.actionQuit.triggered.connect(self.close)
         self.actionOpts.triggered.connect(self._options_dialog)
         self.actionTardieu_analysis.triggered.connect(self._tardieu)
@@ -512,9 +526,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
             default_index = 0
         self.cbNexusTrialLayout.setCurrentIndex(default_index)
 
-        # add double click action to browse current report
-        (self.listActiveReports.itemDoubleClicked.
-         connect(lambda item: self._browse_localhost(item.userdata)))
 
         # these require active reports to be enabled
         self.reportWidgets = [self.btnDeleteReport, self.btnDeleteAllReports,
@@ -530,6 +541,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._browser_procs = list()
         self._flask_apps = dict()
         self._set_report_button_status()
+
+    def _web_report_dialog(self):
+        dlg = WebReportDialog(self)
+        dlg.show()
 
     def _autoproc_session(self):
         """Run autoprocess for Nexus session"""
@@ -686,8 +701,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
             event.accept()
 
     def _options_dialog(self):
-        """ Show the autoprocessing options dialog """
-        dlg = OptionsDialog()
+        """Show the options dialog"""
+        dlg = OptionsDialog(self)
         dlg.exec_()
 
     def _create_comparison(self):

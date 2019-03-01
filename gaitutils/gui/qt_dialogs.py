@@ -5,14 +5,12 @@ Created on Fri Mar  1 11:11:33 2019
 @author: hus20664877
 """
 
-from PyQt5 import QtGui, QtCore, uic, QtWidgets
-from PyQt5.QtCore import QRunnable, QThreadPool, pyqtSignal, QObject
+from PyQt5 import QtCore, uic, QtWidgets
 from pkg_resources import resource_filename
 import os.path as op
 import ast
 
-from .config import cfg
-from . import nexus, GaitDataError
+from .. import nexus, GaitDataError, cfg
 
 
 class NiceListWidgetItem(QtWidgets.QListWidgetItem):

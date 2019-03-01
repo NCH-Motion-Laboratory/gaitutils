@@ -40,11 +40,12 @@ from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg,
                                                 NavigationToolbar2QT)
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
-                       Trial, Plotter, layouts, utils, GaitDataError,
-                       register_gui_exception_handler)
-from gaitutils.numutils import segment_angles, rms
-from gaitutils.qt_dialogs import qt_message_dialog, qt_yesno_dialog
+
+from .. import (EMG, nexus, cfg, read_data, trial, eclipse, models,
+                Trial, Plotter, layouts, utils, GaitDataError,
+                register_gui_exception_handler)
+from ..numutils import segment_angles, rms
+from .qt_dialogs import qt_message_dialog, qt_yesno_dialog
 
 
 matplotlib.style.use(cfg.plot.mpl_style)
@@ -66,7 +67,7 @@ class LoadDialog(QtWidgets.QDialog):
     def __init__(self):
 
         super(self.__class__, self).__init__()
-        uifile = resource_filename('gaitutils', 'nexus_scripts/tardieu_load_dialog.ui')
+        uifile = resource_filename('gaitutils', 'gui/tardieu_load_dialog.ui')
         uic.loadUi(uifile, self)
         try:
             ang0_nexus = read_nexus_starting_angle()
@@ -81,7 +82,7 @@ class EMGFilterDialog(QtWidgets.QDialog):
     def __init__(self, emg_passband):
 
         super(self.__class__, self).__init__()
-        uifile = resource_filename('gaitutils', 'nexus_scripts/tardieu_filter_dialog.ui')
+        uifile = resource_filename('gaitutils', 'gui/tardieu_filter_dialog.ui')
         uic.loadUi(uifile, self)
         self.spEMGLow.setValue(emg_passband[0])
         self.spEMGHigh.setValue(emg_passband[1])
@@ -93,7 +94,7 @@ class HelpDialog(QtWidgets.QDialog):
     def __init__(self):
 
         super(self.__class__, self).__init__()
-        uifile = resource_filename('gaitutils', 'nexus_scripts/tardieu_help_dialog.ui')
+        uifile = resource_filename('gaitutils', 'gui/tardieu_help_dialog.ui')
         uic.loadUi(uifile, self)
 
 
@@ -113,7 +114,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
         super(TardieuWindow, self).__init__(parent)
 
-        uifile = resource_filename('gaitutils', 'nexus_scripts/tardieu.ui')
+        uifile = resource_filename('gaitutils', 'gui/tardieu.ui')
         uic.loadUi(uifile, self)
 
         self._tardieu_plot = TardieuPlot()
@@ -844,7 +845,8 @@ class TardieuPlot(object):
             return s
 
 
-if __name__ == '__main__':
+def main():
+
     logging.basicConfig(level=logging.DEBUG)
 
     # uiparser logger makes too much noise

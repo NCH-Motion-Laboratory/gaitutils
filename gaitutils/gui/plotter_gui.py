@@ -13,17 +13,15 @@ import logging
 import sys
 import traceback
 from pkg_resources import resource_filename
-from PyQt5 import QtGui, QtWidgets, uic, QtCore
+from PyQt5 import QtWidgets, uic, QtCore
 from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
                                                 FigureCanvas)
 from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
                                                 NavigationToolbar)
 
-from gaitutils import (Plotter, Trial, nexus, layouts, cfg, GaitDataError,
-                       stats, models)
-from gaitutils.nexus_scripts.nexus_menu import OptionsDialog
-#from gaitutils.qt_widgets import NiceListWidget, NiceListWidgetItem
-from gaitutils.qt_dialogs import qt_message_dialog
+from .. import (Plotter, Trial, nexus, layouts, cfg, GaitDataError,
+                stats)
+from .qt_dialogs import qt_message_dialog, OptionsDialog
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +35,7 @@ class AveragerDialog(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
         super(self.__class__, self).__init__()
-        uifile = resource_filename('gaitutils', 'nexus_scripts/averager.ui')
+        uifile = resource_filename('gaitutils', 'gui/averager.ui')
         uic.loadUi(uifile, self)
 
         self.btnAddNexusTrial.clicked.connect(self._open_nexus_trial)
@@ -83,7 +81,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(PlotterWindow, self).__init__(parent)
 
-        uifile = resource_filename('gaitutils', 'nexus_scripts/plotter_gui.ui')
+        uifile = resource_filename('gaitutils', 'gui/plotter_gui.ui')
         uic.loadUi(uifile, self)
 
         self.pl = Plotter(interactive=False)
@@ -318,14 +316,14 @@ class PlotterWindow(QtWidgets.QMainWindow):
                 self.canvas.print_figure(fname)
             except IOError:
                 qt_message_dialog('Error writing PDF file, check that file '
-                               'is not open')
+                                  'is not open')
             # reset title for onscreen and redraw canvas
             self.pl.set_title('')
             self.pl.fig.set_size_inches(old_size)  # needed?
             self.canvas.draw()
 
 
-if __name__ == '__main__':
+def main():
 
     logging.basicConfig(level=logging.DEBUG)
     # uiparser logger makes too much noise

@@ -22,26 +22,26 @@ import logging
 import traceback
 import itertools
 
-from gaitutils.qt_dialogs import OptionsDialog, qt_message_dialog, qt_yesno_dialog, ChooseSessionsDialog
-from gaitutils.qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
-from gaitutils.numutils import check_hetu
-
-from gaitutils import (GaitDataError, nexus, cfg, report, sessionutils, videos,
-                       envutils)
-from gaitutils.nexus_scripts import (nexus_plot,
-                                     nexus_emg_consistency,
-                                     nexus_kin_consistency,
-                                     nexus_musclelen_consistency,
-                                     nexus_autoprocess_trial,
-                                     nexus_autoprocess_session,
-                                     nexus_tardieu,
-                                     nexus_copy_trial_videos,
-                                     nexus_trials_velocity,
-                                     nexus_make_pdf_report,
-                                     nexus_make_comparison_report,
-                                     nexus_kin_average,
-                                     nexus_automark_trial,
-                                     nexus_time_distance_vars)
+from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
+                         ChooseSessionsDialog)
+from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
+from ..numutils import check_hetu
+from .. import (GaitDataError, nexus, cfg, report, sessionutils, videos,
+                envutils)
+from . import _tardieu
+from ..nexus_scripts import (nexus_plot,
+                             nexus_emg_consistency,
+                             nexus_kin_consistency,
+                             nexus_musclelen_consistency,
+                             nexus_autoprocess_trial,
+                             nexus_autoprocess_session,
+                             nexus_copy_trial_videos,
+                             nexus_trials_velocity,
+                             nexus_make_pdf_report,
+                             nexus_make_comparison_report,
+                             nexus_kin_average,
+                             nexus_automark_trial,
+                             nexus_time_distance_vars)
 
 
 logger = logging.getLogger(__name__)
@@ -74,8 +74,7 @@ class PdfReportDialog(QtWidgets.QDialog):
 
     def __init__(self, info, prompt='Hello', parent=None):
         super(self.__class__, self).__init__()
-        uifile = resource_filename('gaitutils',
-                                   'nexus_scripts/pdf_report_dialog.ui')
+        uifile = resource_filename('gaitutils', 'gui/pdf_report_dialog.ui')
         uic.loadUi(uifile, self)
         #self.setAttribute(QtCore.Qt.WA_DeleteOnClose)        
         self.prompt.setText(prompt)
@@ -150,8 +149,7 @@ class WebReportDialog(QtWidgets.QDialog):
         super(self.__class__, self).__init__(parent)
         self.parent = parent
         # load user interface made with designer
-        uifile = resource_filename('gaitutils',
-                                   'nexus_scripts/web_report_dialog.ui')
+        uifile = resource_filename('gaitutils', 'gui/web_report_dialog.ui')
         uic.loadUi(uifile, self)
         self.btnCreateReport.clicked.connect(self._create_web_report)
         self.btnDeleteReport.clicked.connect(self._delete_current_report)
@@ -354,7 +352,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def __init__(self):
         super(self.__class__, self).__init__()
         # load user interface made with designer
-        uifile = resource_filename('gaitutils', 'nexus_scripts/nexus_menu.ui')
+        uifile = resource_filename('gaitutils', 'gui/nexus_menu.ui')
         uic.loadUi(uifile, self)
         """
         matplotlib and threads:
@@ -650,7 +648,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.setEnabled(True)
 
     def _tardieu(self):
-        win = nexus_tardieu.TardieuWindow()
+        win = _tardieu.TardieuWindow()
         win.show()
 
     def _execute(self, fun, thread=False, block_ui=True, finished_func=None,
@@ -756,7 +754,3 @@ def main():
     nexus_status = 'Vicon Nexus is %srunning' % ('' if nexus.pid() else 'not ')
     logger.debug(nexus_status)
     app.exec_()
-
-
-if __name__ == '__main__':
-    main()

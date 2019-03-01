@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Show a Qt menu for running various Nexus tasks.
+PyQt graphical interface to gaitutils
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -78,7 +78,7 @@ class PdfReportDialog(QtWidgets.QDialog):
         uifile = resource_filename('gaitutils',
                                    'nexus_scripts/pdf_report_dialog.ui')
         uic.loadUi(uifile, self)
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)        
+        #self.setAttribute(QtCore.Qt.WA_DeleteOnClose)        
         self.prompt.setText(prompt)
         if info is not None:
             if info['fullname'] is not None:
@@ -114,7 +114,7 @@ class WebReportInfoDialog(QtWidgets.QDialog):
         uifile = resource_filename('gaitutils',
                                    'nexus_scripts/web_report_info.ui')
         uic.loadUi(uifile, self)
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        #self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.check_info = check_info
         if info is not None:
             if info['fullname'] is not None:
@@ -327,7 +327,7 @@ class WebReportDialog(QtWidgets.QDialog):
         self._browse_localhost(port)
 
     def _set_report_button_status(self):
-        """Enable report buttons if active reports, otherwise disable them"""
+        """Enable report buttons if reports exist, otherwise disable them"""
         status = bool(self.listActiveReports.count())
         for widget in self.reportWidgets:
             widget.setEnabled(status)
@@ -359,7 +359,7 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
         uifile = resource_filename('gaitutils',
                                    'nexus_scripts/web_report_sessions.ui')
         uic.loadUi(uifile, self)
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        #self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.btnBrowseSession.clicked.connect(self.add_session)
         self.btnAddNexusSession.clicked.connect(lambda: self.
                                                 add_session(from_nexus=True))
@@ -451,7 +451,7 @@ class OptionsDialog(QtWidgets.QDialog):
         uifile = resource_filename('gaitutils',
                                    'nexus_scripts/options_dialog.ui')
         uic.loadUi(uifile, self)
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        #self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
         # add some buttons to the standard button box
         loadButton = QtWidgets.QPushButton('Load...')

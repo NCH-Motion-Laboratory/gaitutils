@@ -22,8 +22,8 @@ from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
 from gaitutils import (Plotter, Trial, nexus, layouts, cfg, GaitDataError,
                        stats, models)
 from gaitutils.nexus_scripts.nexus_menu import OptionsDialog
-from gaitutils.guiutils import (NiceListWidget, NiceListWidgetItem,
-                                qt_message_dialog)
+#from gaitutils.qt_widgets import NiceListWidget, NiceListWidgetItem
+from gaitutils.qt_dialogs import qt_message_dialog
 
 logger = logging.getLogger(__name__)
 

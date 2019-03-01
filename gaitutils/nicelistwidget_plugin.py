@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jun 20 11:01:29 2017
+Widget plugin for Qt Designer
 
-@author: HUS20664877
+@author: Jussi (jnu@iki.fi)
 """
 from __future__ import absolute_import
 
-from .plotter_gui import NiceListWidget
-from PyQt5 import QtGui, QtCore, QtDesigner
+from .qt_widgets import NiceListWidget
+from PyQt5 import QtDesigner
 
 
 class NiceListWidgetPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin):
@@ -41,4 +41,4 @@ class NiceListWidgetPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin):
         return False
 
     def includeFile(self):
-        return "plotter_gui"
+        return "qt_widgets"

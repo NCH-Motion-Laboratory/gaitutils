@@ -8,13 +8,11 @@ PyQt graphical interface to gaitutils
 
 from __future__ import print_function
 from builtins import str
-from builtins import range
 from PyQt5 import QtGui, QtCore, uic, QtWidgets
 from PyQt5.QtCore import QRunnable, QThreadPool, pyqtSignal, QObject
 from pkg_resources import resource_filename
 from functools import partial
 import sys
-import ast
 import os.path as op
 import os
 import subprocess
@@ -24,9 +22,10 @@ import logging
 import traceback
 import itertools
 
+from gaitutils.qt_dialogs import OptionsDialog, qt_message_dialog, qt_yesno_dialog, ChooseSessionsDialog
+from gaitutils.qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from gaitutils.numutils import check_hetu
-from gaitutils.guiutils import (qt_message_dialog, qt_yesno_dialog,
-                                qt_dir_chooser)
+
 from gaitutils import (GaitDataError, nexus, cfg, report, sessionutils, videos,
                        envutils)
 from gaitutils.nexus_scripts import (nexus_plot,
@@ -350,282 +349,6 @@ class WebReportDialog(QtWidgets.QDialog):
                               % cfg.general.browser_path)
 
 
-class ChooseSessionsDialog(QtWidgets.QDialog):
-    """Display a dialog for picking sessions"""
-
-    def __init__(self, min_sessions=1, max_sessions=3):
-        super(self.__class__, self).__init__()
-        # load user interface made with designer
-        uifile = resource_filename('gaitutils',
-                                   'nexus_scripts/web_report_sessions.ui')
-        uic.loadUi(uifile, self)
-        #self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        self.btnBrowseSession.clicked.connect(self.add_session)
-        self.btnAddNexusSession.clicked.connect(lambda: self.
-                                                add_session(from_nexus=True))
-        self.btnClearAll.clicked.connect(self.listSessions.clear)
-        self.btnClearCurrent.clicked.connect(self.listSessions.rm_current_item)
-        self.max_sessions = max_sessions
-        self.min_sessions = min_sessions
-
-    def add_session(self, from_nexus=False):
-        if len(self.sessions) == self.max_sessions:
-            qt_message_dialog('You can specify maximum of %d sessions' %
-                              self.max_sessions)
-            return
-        if from_nexus:
-            try:
-                dirs = [nexus.get_sessionpath()]
-            except GaitDataError as e:
-                qt_message_dialog(_exception_msg(e))
-                return
-        else:
-            dirs = qt_dir_chooser()
-        if dirs:
-            for dir_ in dirs:
-                if dir_ in self.sessions:
-                    qt_message_dialog('Session %s already loaded' % dir_)
-                elif dir_:
-                    self.listSessions.add_item(dir_, data=dir_)
-
-    @property
-    def sessions(self):
-        return [item.userdata for item in self.listSessions.items]
-
-    def accept(self):
-        if len(self.sessions) < self.min_sessions:
-            qt_message_dialog('Please select at least %d session%s' %
-                              (self.min_sessions,
-                               's' if self.min_sessions > 1 else ''))
-        else:
-            self.done(QtWidgets.QDialog.Accepted)
-
-
-class QtHandler(logging.Handler):
-
-    def __init__(self):
-        logging.Handler.__init__(self)
-
-    def emit(self, record):
-        record = self.format(record)
-        if record:
-            XStream.stdout().write('%s\n' % record)
-
-
-class XStream(QtCore.QObject):
-    _stdout = None
-    _stderr = None
-    messageWritten = QtCore.pyqtSignal(str)
-
-    def flush(self):
-        pass
-
-    def fileno(self):
-        return -1
-
-    def write(self, msg):
-        if not self.signalsBlocked():
-            self.messageWritten.emit(str(msg))
-
-    @staticmethod
-    def stdout():
-        if not XStream._stdout:
-            XStream._stdout = XStream()
-            sys.stdout = XStream._stdout  # also capture stdout
-        return XStream._stdout
-
-    @staticmethod
-    def stderr():
-        if not XStream._stderr:
-            XStream._stderr = XStream()
-            sys.stderr = XStream._stderr  # ... and stderr
-        return XStream._stderr
-
-
-class OptionsDialog(QtWidgets.QDialog):
-    """ Display a tabbed dialog for changing gaitutils options """
-
-    def __init__(self, parent, default_tab=0):
-        super(self.__class__, self).__init__(parent)
-        # load user interface made with designer
-        uifile = resource_filename('gaitutils',
-                                   'nexus_scripts/options_dialog.ui')
-        uic.loadUi(uifile, self)
-        #self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-
-        # add some buttons to the standard button box
-        loadButton = QtWidgets.QPushButton('Load...')
-        self.buttonBox.addButton(loadButton,
-                                 QtWidgets.QDialogButtonBox.ActionRole)
-        loadButton.clicked.connect(self.load_config_dialog)
-        saveButton = QtWidgets.QPushButton('Save...')
-        self.buttonBox.addButton(saveButton,
-                                 QtWidgets.QDialogButtonBox.ActionRole)
-        saveButton.clicked.connect(self.save_config_dialog)
-
-        # show page
-        self.tabWidget.setCurrentIndex(default_tab)
-
-        """ Collect config widgets into a dict of dict. First key is tab
-        (same as config category, e.g. autoproc), second key is widget name """
-        self.cfg_widgets = dict()
-        for page in [self.tabWidget.widget(n) for n in
-                     range(self.tabWidget.count())]:
-            pname = page.objectName()
-            self.cfg_widgets[pname] = dict()
-            for w in page.findChildren(QtWidgets.QWidget):
-                wname = w.objectName()
-                if wname[:4] == 'cfg_':  # config widgets are specially named
-                    self.cfg_widgets[pname][wname] = w
-        self._update_widgets()
-        self.homedir = os.path.expanduser('~')
-
-    def load_config_dialog(self):
-        """ Bring up load dialog and load selected file. """
-        global cfg
-        fout = QtWidgets.QFileDialog.getOpenFileName(self,
-                                                     'Load config file',
-                                                     self.homedir,
-                                                     'Config files (*.cfg)')
-        # TODO : filedialog set filter -> PyQt5.QtCore.QDir.Hidden?
-        fname = fout[0]
-        if fname:
-            # TODO: check for errors on config read
-            # cfg.load_default()  TODO: load defaults before loading cfg file?
-            cfg.read(fname)
-            self._update_widgets()
-
-    def save_config_dialog(self):
-        """ Bring up save dialog and save data. """
-        global cfg
-        res, txt = self._check_widget_inputs()
-        if not res:
-            qt_message_dialog('Invalid input: %s\nPlease fix before saving'
-                              % txt)
-        else:
-            fout = QtWidgets.QFileDialog.getSaveFileName(self,
-                                                         'Save config file',
-                                                         self.homedir,
-                                                         'Config files '
-                                                         '(*.cfg)')
-            fname = fout[0]
-            if fname:
-                self.update_cfg()
-                cfg.write_file(fname)
-
-    def _update_widgets(self):
-        """ Update config widgets according to current cfg """
-        for section in self.cfg_widgets:
-            for wname, widget in self.cfg_widgets[section].items():
-                item = wname[4:]
-                cfgval = getattr(getattr(cfg, section), item)
-                if str(cfgval) != str(self._getval(widget)):
-                    self._setval(widget, cfgval)  # set using native type
-                if isinstance(widget, QtWidgets.QLineEdit):
-                    widget.setCursorPosition(0)  # show beginning of line
-
-    def _check_widget_inputs(self):
-        """ Check widget inputs. Currently only QLineEdits are checked for
-        eval - ability """
-        for section in self.cfg_widgets:
-            for widget in self.cfg_widgets[section].values():
-                if isinstance(widget, QtWidgets.QLineEdit):
-                    txt = widget.text()
-                    try:
-                        ast.literal_eval(txt)
-                    except (SyntaxError, ValueError):
-                        return (False, txt)
-        return (True, '')
-
-    def _getval(self, widget):
-        """ Universal value getter that takes any type of config widget.
-        Returns native types, except QLineEdit input is auto-evaluated """
-        if (isinstance(widget, QtWidgets.QSpinBox) or
-           isinstance(widget, QtWidgets.QDoubleSpinBox)):
-            return widget.value()
-        elif isinstance(widget, QtWidgets.QCheckBox):
-            return bool(widget.checkState())
-        elif isinstance(widget, QtWidgets.QComboBox):
-            # convert to str to avoid writing out unicode repr() into config
-            # files unnecessarily
-            return str(widget.currentText())
-        elif isinstance(widget, QtWidgets.QLineEdit):
-            # Directly eval lineEdit contents. This means that string vars
-            # must be quoted in the lineEdit.
-            txt = widget.text()
-            return ast.literal_eval(txt) if txt else None
-        else:
-            raise Exception('Unhandled type of config widget')
-
-    def _setval(self, widget, val):
-        """ Universal value setter that takes any type of config widget.
-        val must match widget type, except for QLineEdit that can take
-        any type, which will be converted to its repr """
-        if (isinstance(widget, QtWidgets.QSpinBox) or
-           isinstance(widget, QtWidgets.QDoubleSpinBox)):
-            widget.setValue(val)
-        elif isinstance(widget, QtWidgets.QCheckBox):
-            widget.setCheckState(2 if val else 0)
-        elif isinstance(widget, QtWidgets.QComboBox):
-            idx = widget.findText(val)
-            if idx >= 0:
-                widget.setCurrentIndex(idx)
-            else:
-                raise ValueError('Tried to set combobox to invalid value.')
-        elif isinstance(widget, QtWidgets.QLineEdit):
-            widget.setText(repr(val))
-        else:
-            raise Exception('Unhandled type of config widget')
-
-    def update_cfg(self):
-        """ Update cfg according to current dialog settings """
-        global cfg
-        for section in self.cfg_widgets.keys():
-            for wname, widget in self.cfg_widgets[section].items():
-                item = wname[4:]
-                widgetval = self._getval(widget)
-                cfgval = getattr(getattr(cfg, section), item)
-                if widgetval != cfgval:
-                    cfg[section][item] = repr(widgetval)
-
-    def accept(self):
-        """ Update config and close dialog, if widget inputs are ok. Otherwise
-        show an error dialog """
-        res, txt = self._check_widget_inputs()
-        if res:
-            self.update_cfg()
-            self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
-        else:
-            qt_message_dialog("Invalid input: %s" % txt)
-
-
-class ProgressBar(QtWidgets.QProgressDialog):
-    """ Qt progress bar with reasonable defaults """
-
-    def __init__(self, title):
-        super(self.__class__, self).__init__()
-        self.setWindowTitle(title)
-        self.setCancelButton(None)
-        self.setMinimum(0)
-        self.setMaximum(100)
-        self.setGeometry(500, 300, 500, 100)
-        self.setAutoClose(False)
-        self.setAutoReset(False)
-        self.show()
-
-    def update(self, text, p):
-        """ Update bar, showing text and bar at p% """
-        self.setLabelText(text)
-        self.setValue(p)
-        # update right away in case that thread is blocked
-        QtWidgets.QApplication.processEvents()
-
-
-class ProgressSignals(QObject):
-    """Used to emit progress signals"""
-    progress = pyqtSignal(object, object)
-
-
 class Gaitmenu(QtWidgets.QMainWindow):
 
     def __init__(self):
@@ -739,7 +462,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.threadpool = QThreadPool()
         # we need a thread for each web server plus one worker thread
         self.threadpool.setMaxThreadCount(cfg.web_report.max_reports + 1)
-
 
     def _autoproc_session(self):
         """Run autoprocess for Nexus session"""
@@ -878,7 +600,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._sessions = dlg.sessions
             self._execute(nexus_make_comparison_report.do_plot,
                           sessions=dlg.sessions)
-
 
     def _create_pdf_report(self):
         """Creates the full pdf report"""

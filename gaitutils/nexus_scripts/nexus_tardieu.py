@@ -44,7 +44,7 @@ from gaitutils import (EMG, nexus, cfg, read_data, trial, eclipse, models,
                        Trial, Plotter, layouts, utils, GaitDataError,
                        register_gui_exception_handler)
 from gaitutils.numutils import segment_angles, rms
-from gaitutils.guiutils import qt_message_dialog, qt_yesno_dialog
+from gaitutils.qt_dialogs import qt_message_dialog, qt_yesno_dialog
 
 
 matplotlib.style.use(cfg.plot.mpl_style)

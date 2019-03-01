@@ -29,19 +29,19 @@ from ..numutils import check_hetu
 from .. import (GaitDataError, nexus, cfg, report, sessionutils, videos,
                 envutils)
 from . import _tardieu
-from ..nexus_scripts import (nexus_plot,
-                             nexus_emg_consistency,
-                             nexus_kin_consistency,
-                             nexus_musclelen_consistency,
-                             nexus_autoprocess_trial,
-                             nexus_autoprocess_session,
-                             nexus_copy_trial_videos,
-                             nexus_trials_velocity,
-                             nexus_make_pdf_report,
-                             nexus_make_comparison_report,
-                             nexus_kin_average,
-                             nexus_automark_trial,
-                             nexus_time_distance_vars)
+from ..scripts import (nexus_plot,
+                       nexus_emg_consistency,
+                       nexus_kin_consistency,
+                       nexus_musclelen_consistency,
+                       nexus_autoprocess_trial,
+                       nexus_autoprocess_session,
+                       nexus_copy_trial_videos,
+                       nexus_trials_velocity,
+                       nexus_make_pdf_report,
+                       nexus_make_comparison_report,
+                       nexus_kin_average,
+                       nexus_automark_trial,
+                       nexus_time_distance_vars)
 
 
 logger = logging.getLogger(__name__)
@@ -76,7 +76,7 @@ class PdfReportDialog(QtWidgets.QDialog):
         super(self.__class__, self).__init__()
         uifile = resource_filename('gaitutils', 'gui/pdf_report_dialog.ui')
         uic.loadUi(uifile, self)
-        #self.setAttribute(QtCore.Qt.WA_DeleteOnClose)        
+        #self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.prompt.setText(prompt)
         if info is not None:
             if info['fullname'] is not None:
@@ -351,7 +351,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def __init__(self):
         super(self.__class__, self).__init__()
         # load user interface made with designer
-        uifile = resource_filename('gaitutils', 'gui/nexus_menu.ui')
+        uifile = resource_filename('gaitutils', 'gui/gaitmenu.ui')
         uic.loadUi(uifile, self)
         """
         matplotlib and threads:

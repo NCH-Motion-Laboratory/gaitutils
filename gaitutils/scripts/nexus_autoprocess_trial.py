@@ -12,8 +12,8 @@ from __future__ import absolute_import
 import logging
 import os.path as op
 
-from gaitutils.nexus_scripts.nexus_autoprocess_session import (_do_autoproc,
-                                                               _delete_c3ds)
+from gaitutils.scripts.nexus_autoprocess_session import (_do_autoproc,
+                                                         _delete_c3ds)
 from gaitutils import nexus, register_gui_exception_handler, GaitDataError
 
 

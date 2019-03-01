@@ -6,7 +6,7 @@ Widget plugin for Qt Designer
 """
 from __future__ import absolute_import
 
-from .qt_widgets import NiceListWidget
+from qt_widgets import NiceListWidget
 from PyQt5 import QtDesigner
 
 
@@ -41,4 +41,4 @@ class NiceListWidgetPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin):
         return False
 
     def includeFile(self):
-        return "qt_widgets"
+        return "gaitutils.gui.qt_widgets"

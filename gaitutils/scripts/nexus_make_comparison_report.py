@@ -19,8 +19,8 @@ from collections import defaultdict
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
                        numutils, normaldata, nexus, sessionutils)
 from PyQt5 import QtWidgets
-from gaitutils.nexus_scripts import (nexus_kin_consistency,
-                                     nexus_time_distance_vars)
+from gaitutils.scripts import (nexus_kin_consistency,
+                               nexus_time_distance_vars)
 
 logger = logging.getLogger(__name__)
 

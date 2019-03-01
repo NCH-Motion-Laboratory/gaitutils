@@ -29,7 +29,7 @@ import gaitutils
 from gaitutils import (cfg, normaldata, models, layouts, GaitDataError,
                        sessionutils, numutils, videos)
 from gaitutils.plot_plotly import plot_trials
-from gaitutils.nexus_scripts import nexus_time_distance_vars
+from gaitutils.scripts import nexus_time_distance_vars
 
 logger = logging.getLogger(__name__)
 

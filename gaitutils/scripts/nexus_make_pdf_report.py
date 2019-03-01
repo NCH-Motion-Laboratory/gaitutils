@@ -20,12 +20,12 @@ from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
                        numutils, normaldata, sessionutils, nexus,
                        GaitDataError)
 
-from gaitutils.nexus_scripts import (nexus_kin_consistency,
-                                     nexus_emg_consistency,
-                                     nexus_musclelen_consistency,
-                                     nexus_kin_average,
-                                     nexus_trials_velocity,
-                                     nexus_time_distance_vars)
+from gaitutils.scripts import (nexus_kin_consistency,
+                               nexus_emg_consistency,
+                               nexus_musclelen_consistency,
+                               nexus_kin_average,
+                               nexus_trials_velocity,
+                               nexus_time_distance_vars)
 
 
 logger = logging.getLogger(__name__)

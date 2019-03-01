@@ -6,7 +6,7 @@ Created on Fri Mar  1 13:17:37 2019
 """
 
 
-from gaitutils.gui import plotter_gui
+from gaitutils.gui import _plotter_gui
 
 
-plotter_gui.main()
+_plotter_gui.main()

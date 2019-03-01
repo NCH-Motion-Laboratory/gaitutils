@@ -142,7 +142,7 @@ class WebReportInfoDialog(QtWidgets.QDialog):
 
 class WebReportDialog(QtWidgets.QDialog):
     """Dialog for managing web reports. In current implementation, this needs a
-    GaitMenu instance as a parent"""
+    GaitMenu instance as a parent (uses _execute() and other parent methods"""
 
     def __init__(self, parent):
         super(self.__class__, self).__init__(parent)
@@ -156,7 +156,7 @@ class WebReportDialog(QtWidgets.QDialog):
         self.btnViewReport.clicked.connect(self._view_current_report)
         # add double click action to browse current report
         (self.listActiveReports.itemDoubleClicked.
-         connect(lambda item: parent._browse_localhost(item.userdata)))
+         connect(lambda item: self._browse_localhost(item.userdata)))
         # these require active reports to be enabled
         self.reportWidgets = [self.btnDeleteReport, self.btnDeleteAllReports,
                               self.btnViewReport]
@@ -256,23 +256,22 @@ class WebReportDialog(QtWidgets.QDialog):
         # report ok - start server in a thread
         # also enable the threaded mode of the server. serving is a bit flaky
         # in Python 2 (multiple requests cause exceptions)
-        self._execute(app.server.run, thread=True, block_ui=False,
-                      debug=False, port=port, threaded=True)
+        self.parent._execute(app.server.run, thread=True, block_ui=False,
+                             debug=False, port=port, threaded=True)
         # double clicking on the list item will browse to corresponding port
         self.listActiveReports.add_item(report_name, data=port)
+        # enable delete buttons etc.
+        self._set_report_button_status()
         logger.debug('starting web browser')
         self._browse_localhost(port)
 
-        logger.debug('%d thread(s) now active (%d max)'
-                     % (self.threadpool.activeThreadCount(),
-                        self.threadpool.maxThreadCount()))
-
     @property
     def active_reports(self):
-        return self._web_report_dialog.listActiveReports.count()
+        """Return number of active web reports"""
+        return self.listActiveReports.count()
 
     def shutdown(self):
-        # try to shutdown browser processes and web servers
+        """Try to shutdown browser processes and web servers"""
         for proc in self._browser_procs:
             proc.kill()
         # cannot use generator here since the loop changes the items
@@ -324,15 +323,16 @@ class WebReportDialog(QtWidgets.QDialog):
 
     def _set_report_button_status(self):
         """Enable report buttons if reports exist, otherwise disable them"""
-        status = bool(self.listActiveReports.count())
+        n_reports = self.active_reports
         for widget in self.reportWidgets:
-            widget.setEnabled(status)
+            widget.setEnabled(True if n_reports else False)
 
     def _web_report_finished(self, app):
         """Gets called when web report creation is finished"""
         logger.debug('report creation finished')
-        self._enable_op_buttons(None)
         self._report_creation_status = app
+        # this enables controls on all windows
+        self.parent._enable_op_buttons(None)
 
     def _browse_localhost(self, port):
         """Open configured browser on localhost:port"""

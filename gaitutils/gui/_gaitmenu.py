@@ -462,7 +462,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _autoproc_session(self):
         """Run autoprocess for Nexus session"""
-        sessionpath = nexus.get_sessionpath()
+        try:
+            sessionpath = nexus.get_sessionpath()
+        except GaitDataError as e:
+            self._exception(e)
+            return
+
         enfs = sessionutils.get_session_enfs(sessionpath)
         enfs = sessionutils._filter_by_type(enfs, 'DYNAMIC')
         c3ds = list(sessionutils._filter_to_c3ds(enfs))

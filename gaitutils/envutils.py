@@ -27,8 +27,8 @@ def _count_script_instances(scriptname):
     for proc in psutil.process_iter():
         try:
             cmdline = proc.cmdline()
-            if cmdline:
-                if ('python' in cmdline[0] and scriptname in cmdline[1]):
+            if len(cmdline) > 1:
+                if 'python' in cmdline[0] and scriptname in cmdline[1]:
                     nprocs += 1
         # catch NoSuchProcess for procs that disappear inside loop
         except (psutil.AccessDenied, psutil.NoSuchProcess):

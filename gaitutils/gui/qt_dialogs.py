@@ -137,8 +137,7 @@ class OptionsDialog(QtWidgets.QDialog):
     def __init__(self, parent, default_tab=0):
         super(self.__class__, self).__init__(parent)
         # load user interface made with designer
-        uifile = resource_filename('gaitutils',
-                                   'nexus_scripts/options_dialog.ui')
+        uifile = resource_filename('gaitutils', 'gui/options_dialog.ui')
         uic.loadUi(uifile, self)
         #self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
@@ -294,8 +293,7 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
     def __init__(self, min_sessions=1, max_sessions=3):
         super(self.__class__, self).__init__()
         # load user interface made with designer
-        uifile = resource_filename('gaitutils',
-                                   'nexus_scripts/web_report_sessions.ui')
+        uifile = resource_filename('gaitutils', 'gui/web_report_sessions.ui')
         uic.loadUi(uifile, self)
         #self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.btnBrowseSession.clicked.connect(self.add_session)

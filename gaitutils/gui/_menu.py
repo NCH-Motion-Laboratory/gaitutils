@@ -109,8 +109,7 @@ class WebReportInfoDialog(QtWidgets.QDialog):
 
     def __init__(self, info, parent=None, check_info=True):
         super(self.__class__, self).__init__()
-        uifile = resource_filename('gaitutils',
-                                   'nexus_scripts/web_report_info.ui')
+        uifile = resource_filename('gaitutils', 'gui/web_report_info.ui')
         uic.loadUi(uifile, self)
         #self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.check_info = check_info

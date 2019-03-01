@@ -461,13 +461,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.threadpool.setMaxThreadCount(cfg.web_report.max_reports + 1)
 
     def _autoproc_session(self):
-        """Run autoprocess for Nexus session"""
+        """Wrapper to run autoprocess for Nexus session"""
         try:
             sessionpath = nexus.get_sessionpath()
         except GaitDataError as e:
             self._exception(e)
             return
-
         enfs = sessionutils.get_session_enfs(sessionpath)
         enfs = sessionutils._filter_by_type(enfs, 'DYNAMIC')
         c3ds = list(sessionutils._filter_to_c3ds(enfs))
@@ -475,10 +474,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
             reply = qt_yesno_dialog('Some of the dynamic trials have been '
                                     'processed already. Are you sure you want '
                                     'to run autoprocessing?')
-            if reply == QtWidgets.QMessageBox.YesRole:
-                self._execute(nexus_autoprocess_session.autoproc_session,
-                              thread=True,
-                              finished_func=self._enable_op_buttons)
+            if reply == QtWidgets.QMessageBox.NoRole:
+                return
+
+        self._execute(nexus_autoprocess_session.autoproc_session,
+                      thread=True,
+                      finished_func=self._enable_op_buttons)
 
     def _plot_nexus_trial(self):
         """Plot the current Nexus trial"""

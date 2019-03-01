@@ -142,7 +142,7 @@ class WebReportInfoDialog(QtWidgets.QDialog):
 
 class WebReportDialog(QtWidgets.QDialog):
     """Dialog for managing web reports. In current implementation, this needs a
-    GaitMenu instance as a parent (uses _execute() and other parent methods"""
+    GaitMenu instance as a parent (uses _execute() and other parent methods)"""
 
     def __init__(self, parent):
         super(self.__class__, self).__init__(parent)
@@ -227,7 +227,7 @@ class WebReportDialog(QtWidgets.QDialog):
             vidfiles.extend(vids)
 
         if not report.convert_videos(vidfiles, check_only=True):
-            self._convert_vidfiles(vidfiles, signals)
+            self.parent._convert_vidfiles(vidfiles, signals)
 
         self._report_creation_status = None
         self.parent._execute(report.dash_report, thread=True, block_ui=True,

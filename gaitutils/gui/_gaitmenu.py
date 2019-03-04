@@ -409,11 +409,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionOpts.triggered.connect(self._options_dialog)
         self.actionTardieu_analysis.triggered.connect(self._tardieu)
         self.actionAutoprocess_session.triggered.connect(self._autoproc_session)
-
-        # main UI buttons
-        self._widget_connect_task(self.btnPlotNexusTrial,
-                                  self._plot_nexus_trial,
-                                  thread=thread_plotters)
+        self.btnPlotNexusTrial.clicked.connect(self._plot_nexus_trial)
 
         # consistency menu
         self._widget_connect_task(self.actionTrial_velocity,
@@ -491,8 +487,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
         cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
         model_cycles = emg_cycles = cycs
         from_c3d = self.xbPlotFromC3D.checkState()
-        nexus_plot.do_plot(lout_name, model_cycles=model_cycles,
-                           emg_cycles=emg_cycles, from_c3d=from_c3d)
+        self._execute(nexus_plot.do_plot, thread=True,
+                      finished_func=self._enable_op_buttons,
+                      layout_name=lout_name, model_cycles=model_cycles,
+                      emg_cycles=emg_cycles, from_c3d=from_c3d)
 
     def _widget_connect_task(self, widget, fun, thread=False):
         """Helper to connect widget with task. Use lambda to consume unused

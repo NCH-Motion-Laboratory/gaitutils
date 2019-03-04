@@ -15,8 +15,12 @@ from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
                        trial, plot_plotly, GaitDataError)
 
 
-def do_plot(layout_name, backend=None, model_cycles=None, emg_cycles=None,
+def do_plot(layout_name=None, backend=None, model_cycles=None, emg_cycles=None,
             maintitle=None, from_c3d=True):
+
+    if layout_name is None:
+        layout_name = 'lb_kinematics'
+
     try:
         layout = getattr(cfg.layouts, layout_name)
     except AttributeError:
@@ -63,9 +67,9 @@ if __name__ == '__main__':
     parser.add_argument('--model_cycles', type=str)
     parser.add_argument('--emg_cycles', type=str)
     args = parser.parse_args()
-    layout = args.layout or 'lb_kinematics'
+
     if args.unnorm:
         args.model_cycles = args.emg_cycles = 'unnormalized'
 
-    do_plot(layout, backend=args.backend, model_cycles=args.model_cycles,
-            emg_cycles=args.emg_cycles)
+    do_plot(layout_name=args.layout, backend=args.backend,
+            model_cycles=args.model_cycles, emg_cycles=args.emg_cycles)

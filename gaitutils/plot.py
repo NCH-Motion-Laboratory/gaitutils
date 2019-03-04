@@ -583,8 +583,8 @@ class Plotter(object):
                     x_, data = trial.get_model_data(varname)
                     # FIXME: varname[0] == cycle.context may not apply to
                     # all model vars
-                    if (data is not None and kin_ok and is_unnormalized or
-                        (varname[0] == cycle.context or not
+                    if (data is not None and kin_ok and (is_unnormalized or
+                        varname[0] == cycle.context or not
                          auto_match_model_cycle)):
 
                         # logger.debug('plotting data for %s' % varname)

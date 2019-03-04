@@ -83,7 +83,8 @@ class NiceListWidget(QtWidgets.QListWidget):
         self.setCurrentItem(item)
 
     def rm_current_item(self):
-        self.takeItem(self.row(self.currentItem()))
+        """ Remove currently selected item """
+        return self.takeItem(self.row(self.currentItem()))
 
 
 class QtHandler(logging.Handler):

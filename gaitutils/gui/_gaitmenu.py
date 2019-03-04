@@ -417,6 +417,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._widget_connect_task(self.actionTime_distance_average,
                                   nexus_time_distance_vars.
                                   do_session_average_plot)
+        self._widget_connect_task(self.actionKin_average,
+                                  nexus_kin_average.do_plot)
         self._widget_connect_task(self.actionKinematics_consistency,
                                   nexus_kin_consistency.do_plot,
                                   thread=thread_plotters)

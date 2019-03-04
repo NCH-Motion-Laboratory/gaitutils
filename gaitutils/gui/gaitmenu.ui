@@ -254,6 +254,8 @@
     </property>
     <addaction name="actionTrial_velocity"/>
     <addaction name="actionTime_distance_average"/>
+    <addaction name="actionKin_average"/>
+    <addaction name="separator"/>
     <addaction name="actionKinematics_consistency"/>
     <addaction name="actionEMG_consistency"/>
     <addaction name="actionMuscle_length_consistency"/>
@@ -373,6 +375,11 @@
   <action name="actionMuscle_length_consistency">
    <property name="text">
     <string>Muscle length consistency</string>
+   </property>
+  </action>
+  <action name="actionKin_average">
+   <property name="text">
+    <string>Kinematics average</string>
    </property>
   </action>
  </widget>

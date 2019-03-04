@@ -275,7 +275,7 @@ class WebReportDialog(QtWidgets.QDialog):
         for proc in self._browser_procs:
             proc.kill()
         # cannot use generator here since the loop changes the items
-        for item in list(self._web_report_dialog.listActiveReports.items):
+        for item in list(self.listActiveReports.items):
             self._delete_report(item)
 
     def _delete_report(self, item):

@@ -89,6 +89,7 @@ class NiceListWidget(QtWidgets.QListWidget):
 
 class QtHandler(logging.Handler):
     """Qt logging handler"""
+
     def __init__(self):
         logging.Handler.__init__(self)
 
@@ -99,6 +100,7 @@ class QtHandler(logging.Handler):
 
 
 class XStream(QtCore.QObject):
+    """Stream for Qt logging handler"""
     _stdout = None
     _stderr = None
     messageWritten = QtCore.pyqtSignal(str)

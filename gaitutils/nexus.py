@@ -152,8 +152,11 @@ def check_nexus():
 
 def get_sessionpath():
     """ Get path to current session """
-    vicon = viconnexus()
-    sessionpath = vicon.GetTrialName()[0]
+    try:
+        vicon = viconnexus()
+        sessionpath = vicon.GetTrialName()[0]
+    except IOError:  # may be raised if Nexus was just terminated
+        sessionpath = None
     if not sessionpath:
         raise GaitDataError('Cannot get Nexus session path, '
                             'no session or maybe in Live mode?')

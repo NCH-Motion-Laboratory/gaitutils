@@ -237,8 +237,8 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
         if from_nexus:
             try:
                 dirs = [nexus.get_sessionpath()]
-            except GaitDataError as e:
-                qt_message_dialog(_exception_msg(e))
+            except GaitDataError:
+                qt_message_dialog('Cannot get session path from Nexus')
                 return
         else:
             dirs = qt_dir_chooser()

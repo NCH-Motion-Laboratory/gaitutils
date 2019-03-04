@@ -252,13 +252,13 @@
     <property name="title">
      <string>Consistency plots</string>
     </property>
-    <addaction name="actionTrial_velocity"/>
-    <addaction name="actionTime_distance_average"/>
-    <addaction name="actionKin_average"/>
-    <addaction name="separator"/>
     <addaction name="actionKinematics_consistency"/>
     <addaction name="actionEMG_consistency"/>
     <addaction name="actionMuscle_length_consistency"/>
+    <addaction name="separator"/>
+    <addaction name="actionTrial_velocity"/>
+    <addaction name="actionTime_distance_average"/>
+    <addaction name="actionKin_average"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuProcessing"/>

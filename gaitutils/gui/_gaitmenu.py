@@ -422,11 +422,14 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   nexus_time_distance_vars.
                                   do_session_average_plot)
         self._widget_connect_task(self.actionKinematics_consistency,
-                                  nexus_kin_consistency.do_plot)
+                                  nexus_kin_consistency.do_plot,
+                                  thread=thread_plotters)
         self._widget_connect_task(self.actionEMG_consistency,
-                                  nexus_emg_consistency.do_plot)
+                                  nexus_emg_consistency.do_plot,
+                                  thread=thread_plotters)
         self._widget_connect_task(self.actionMuscle_length_consistency,
-                                  nexus_musclelen_consistency.do_plot)
+                                  nexus_musclelen_consistency.do_plot,
+                                  thread=thread_plotters)
 
         # processing menu
         self._widget_connect_task(self.actionAutoprocess_single_trial,
@@ -492,15 +495,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
                            emg_cycles=emg_cycles, from_c3d=from_c3d)
 
     def _widget_connect_task(self, widget, fun, thread=False):
-        """ Helper to connect button or action item with task. Use lambda to
-        consume unused events argument. If thread=True, launch in a separate
-        worker thread. """
+        """Helper to connect widget with task. Use lambda to consume unused
+        events argument. If thread=True, launch in a separate worker thread."""
         # by default, just enable UI buttons when thread finishes
         finished_func = self._enable_op_buttons if thread else None
         if isinstance(widget, QtWidgets.QPushButton):
             sig = widget.clicked
         elif isinstance(widget, QtWidgets.QAction):
             sig = widget.triggered
+        else:
+            raise ValueError('Invalid widget type')
         sig.connect(lambda ev: self._execute(fun, thread=thread,
                                              finished_func=finished_func))
 

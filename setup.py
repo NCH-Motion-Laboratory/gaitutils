@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Nov 14 15:50:55 2016
-
 @author: Jussi (jnu@iki.fi)
 """
 
@@ -9,7 +7,7 @@ from setuptools import setup, find_packages
 
 
 setup(name='gaitutils',
-      version='0.11.25',
+      version='0.11.26',
       description='Utilities for processing and plotting gait data',
       author='Jussi Nurminen',
       author_email='jnu@iki.fi',

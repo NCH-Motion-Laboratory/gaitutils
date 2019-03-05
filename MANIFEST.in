@@ -1,6 +1,7 @@
 include README.md
 include gaitutils/default.cfg
-recursive-include gaitutils/scripts *.ui
+recursive-include gaitutils/gui *
+recursive-include gaitutils/scripts *
 recursive-include gaitutils/assets *
 recursive-include gaitutils/data *
 recursive-include gaitutils/thirdparty *

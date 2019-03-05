@@ -18,15 +18,12 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.lines import Line2D
 import matplotlib.gridspec as gridspec
 import os.path as op
-import os
-import subprocess
 import numpy as np
 import logging
 
 from . import models
 from . import numutils
 from . import normaldata
-from . import plot_plotly
 from .trial import Trial, nexus_trial, Gaitcycle
 from .stats import AvgTrial
 from .config import cfg
@@ -262,15 +259,6 @@ class Plotter(object):
 
     def open_trial(self, source):
         self.trial = Trial(source)
-
-    def move_plot_window(self, x, y):
-        """ Move figure upper left corner to x,y. Only works with
-        Qt backend. """
-        pass  # pylab not imported
-        # if 'Qt4' in pylab.get_backend():
-        #    cman = pylab.get_current_fig_manager()
-        #    _, _, dx, dy = cman.window.geometry().getRect()
-        #    cman.window.setGeometry(x, y, dx, dy)
 
     def _var_type(self, var):
         """ Helper to return variable type """

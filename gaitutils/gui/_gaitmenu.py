@@ -472,7 +472,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         enfs = sessionutils.get_session_enfs(sessionpath)
         enfs = sessionutils._filter_by_type(enfs, 'DYNAMIC')
         c3ds = list(sessionutils._filter_to_c3ds(enfs))
-        if c3ds:
+        any_c3ds = any(op.isfile(fn) for fn in c3ds)
+        if any_c3ds:
             reply = qt_yesno_dialog('Some of the dynamic trials have been '
                                     'processed already. Are you sure you want '
                                     'to run autoprocessing?')

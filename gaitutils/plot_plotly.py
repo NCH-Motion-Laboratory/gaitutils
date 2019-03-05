@@ -142,7 +142,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
         if is_unnormalized and not all(cycs_unnorm):
             raise GaitDataError('Cannot mix normalized and unnormalized data')
 
-        for cyc in allcycles:
+        for cyc_ind, cyc in enumerate(allcycles):
             #logger.debug('trial %s, cycle: %s' % (trial.trialname, cyc))
             trial.set_norm_cycle(cyc)
             context = cyc.context
@@ -378,9 +378,12 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             tracegroups.add(tracegroup)
                             fig.append_trace(trace, i+1, j+1)
 
-                        # last trace was plotted
-                        if trial == trials[-1] and context == 'L':
-                            # plot EMG normal bars
+                        # check whether this is the last EMG cycle and plot
+                        # normals if so
+                        remaining = allcycles[cyc_ind+1:]
+                        last_emg = (trial == trials[-1] and not
+                                    any(c in remaining for c in emg_cycles))
+                        if last_emg:
                             if not is_unnormalized and var in cfg.emg.channel_normaldata:
                                 emgbar_ind = cfg.emg.channel_normaldata[var]
                                 for inds in emgbar_ind:

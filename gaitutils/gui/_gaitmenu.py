@@ -657,8 +657,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.setEnabled(True)
 
     def _tardieu(self):
-        win = _tardieu.TardieuWindow()
-        win.show()
+        self._tardieuwin = _tardieu.TardieuWindow()
+        self._tardieuwin.show()
 
     def _execute(self, fun, thread=False, block_ui=True, finished_func=None,
                  **kwargs):

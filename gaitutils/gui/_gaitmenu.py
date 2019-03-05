@@ -460,6 +460,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.threadpool = QThreadPool()
         # we need a thread for each web server plus one worker thread
         self.threadpool.setMaxThreadCount(cfg.web_report.max_reports + 1)
+        self._tardieuwin = None
 
     def _autoproc_session(self):
         """Wrapper to run autoprocess for Nexus session"""
@@ -657,8 +658,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.setEnabled(True)
 
     def _tardieu(self):
-        self._tardieuwin = _tardieu.TardieuWindow()
-        self._tardieuwin.show()
+        """Open the Tardieu window if it is not currently open"""
+        if self._tardieuwin is None or not self._tardieuwin.isVisible():
+            self._tardieuwin = _tardieu.TardieuWindow()
+            self._tardieuwin.show()
 
     def _execute(self, fun, thread=False, block_ui=True, finished_func=None,
                  **kwargs):

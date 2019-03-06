@@ -155,12 +155,20 @@ def _filter_to_c3ds(enfs):
         yield _enf2other(enf, 'c3d')
 
 
-def get_c3ds(sessionpath, tags=None, trial_type=None):
-    """ Get specified c3d files for given session. """
+def _filter_exists(files):
+    for f in files:
+        if op.isfile(f):
+            yield f
+
+
+def get_c3ds(sessionpath, tags=None, trial_type=None, check_if_exists=False):
+    """Get specified c3d files for session."""
     enfs = get_session_enfs(sessionpath)
     if trial_type is not None:
         enfs = _filter_by_type(enfs, trial_type)
     if tags is not None:
         enfs = _filter_by_tags(enfs, tags)
     c3ds = _filter_to_c3ds(enfs)
+    if check_if_exists:
+        c3ds = _filter_exists(c3ds)
     return list(c3ds)

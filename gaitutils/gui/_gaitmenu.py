@@ -467,14 +467,17 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _open_mpl_window(self, fig):
         """Show matplotlib figure fig in new window"""
         _mpl_win = QtWidgets.QDialog()
+        _mpl_win.setGeometry(100, 100, 1500, 1000)
         _mpl_win._canvas = FigureCanvas(fig)
         _mpl_win._canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                        QtWidgets.QSizePolicy.Expanding)
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(_mpl_win._canvas)
+        layout.setSpacing(0)
         _mpl_win.setLayout(layout)
         _mpl_win._canvas.draw()
         self._mpl_windows.append(_mpl_win)  # keep ref and prevent gc
+
         _mpl_win.show()
 
     def _autoproc_session(self):

@@ -120,20 +120,6 @@ def do_plot(sessionpath, info=None, pages=None):
         pl.open_trial(c3d)
         representative = pl.trial.eclipse_tag in cfg.eclipse.repr_tags
 
-        # FIXME: this would choose R when valid for both
-        if 'R' in pl.trial.fp_events['valid']:
-            side = 'R'
-        elif 'L' in pl.trial.fp_events['valid']:
-            side = 'L'
-        else:
-            # raise Exception('No kinetics for %s' % c3d)
-            # in some cases, kinetics are not available, but we do not want
-            # to die on it
-            logger.warning('No kinetics for %s' % c3d)
-            side = 'R'
-
-        side_str = 'right' if side == 'R' else 'left'
-
         # representative single trial plots
         if representative:
             if pages['TimeDistRepresentative']:
@@ -154,22 +140,22 @@ def do_plot(sessionpath, info=None, pages=None):
                 logger.debug('creating representative kin-EMG plots')
                 # FIXME: the plotter logic is a bit weird here - it works
                 # but old axes get recreated
-                pl.layout = (cfg.layouts.lb_kinetics_emg_r if side == 'R' else
-                             cfg.layouts.lb_kinetics_emg_l)
+                for side in pl.trial.fp_events['valid']:
+                    side_str = {'R': 'right', 'L': 'left'}[side]
+                    pl.layout = (cfg.layouts.lb_kinetics_emg_r if side == 'R'
+                                 else cfg.layouts.lb_kinetics_emg_l)
 
-                maintitle = ('Kinetics-EMG '
-                             '(%s) for %s' % (side_str,
-                                              pl.title_with_eclipse_info()))
-                fig = pl.plot_trial(maintitle=maintitle, show=False)
-                tagged_figs.append(fig)
-                eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
+                    maintitle = ('Kinetics-EMG (%s) for %s' % (side_str, pl.title_with_eclipse_info()))
+                    fig = pl.plot_trial(maintitle=maintitle, show=False)
+                    tagged_figs.append(fig)
+                    eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
 
-                # save individual pdf
-                if representative and make_separate_pdfs:
-                    pdf_name = 'kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname,
-                                                           side_str)
-                    logger.debug('creating %s' % pdf_name)
-                    pl.create_pdf(pdf_name=pdf_name)
+                    # save individual pdf
+                    if representative and make_separate_pdfs:
+                        pdf_name = 'kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname,
+                                                               side_str)
+                        logger.debug('creating %s' % pdf_name)
+                        pl.create_pdf(pdf_name=pdf_name)
 
             if pages['EMGMarked']:
                 logger.debug('creating representative EMG plots')

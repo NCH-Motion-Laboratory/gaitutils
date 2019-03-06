@@ -11,6 +11,7 @@ Note: specific to the Helsinki gait lab.
 from __future__ import absolute_import
 
 import logging
+import argparse
 import os.path as op
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
@@ -56,14 +57,16 @@ def _savefig(pdf, fig, header=None, footer=None):
     pdf.savefig(fig)
 
 
-def do_plot(sessionpath, info, pages=None):
+def do_plot(sessionpath, info=None, pages=None):
     """Create the pdf report and save in session directory"""
 
+    if info is None:
+        info = defaultdict(lambda: '')
     fullname = info['fullname'] or ''
     hetu = info['hetu'] or ''
     session_description = info['session_description'] or ''
     if pages is None:
-        pages = defaultdict(lambda: True)  # do all plots
+        pages = defaultdict(lambda: True)  # default: do all plots
     elif not any(pages.values()):
         raise ValueError('No pages to print')
 
@@ -80,7 +83,7 @@ def do_plot(sessionpath, info, pages=None):
     tagged_trials = sessionutils.get_c3ds(sessionpath, tags=cfg.eclipse.tags,
                                           trial_type='dynamic')
     if not tagged_trials:
-        raise GaitDataError('No marked trials found in session directory')
+        raise GaitDataError('No tagged trials found in %s' % sessiondir)
     session_t = sessionutils.get_session_date(sessionpath)
     logger.debug('session timestamp: %s', session_t)
     age = numutils.age_from_hetu(hetu, session_t) if hetu else None
@@ -185,50 +188,42 @@ def do_plot(sessionpath, info, pages=None):
     tagged_figs.sort(key=lambda fig: eclipse_tags[fig])
 
     # trial velocity plot
+    fig_vel = None
     if pages['TrialVelocity']:
         logger.debug('creating velocity plot')
         fig_vel = nexus_trials_velocity.do_plot(show=False, make_pdf=False)
-    else:
-        fig_vel = None
 
     # time-distance average
+    fig_timedist_avg = None
     if pages['TimeDistAverage']:
         logger.debug('creating time-distance plot')
         fig_timedist_avg = (nexus_time_distance_vars.
                             do_session_average_plot(show=False,
                                                     make_pdf=False))
-    else:
-        fig_timedist_avg = None
-
     # consistency plots
+    fig_kin_cons = None
     if pages['KinCons']:
         logger.debug('creating kin consistency plot')
         fig_kin_cons = nexus_kin_consistency.do_plot(show=False,
                                                      make_pdf=make_separate_pdfs,
                                                      backend='matplotlib')
-    else:
-        fig_kin_cons = None
-
+    fig_musclelen_cons = None
     if pages['MuscleLenCons']:
         logger.debug('creating muscle length consistency plot')
         fig_musclelen_cons = nexus_musclelen_consistency.do_plot(show=False,
                                                                  age=age,
                                                                  make_pdf=make_separate_pdfs)
-    else:
-        fig_musclelen_cons = None
-
+    fig_emg_cons = None
     if do_emg_consistency:
         logger.debug('creating EMG consistency plot')        
-        fig_emg_cons = nexus_emg_consistency.do_plot(show=False, make_pdf=make_separate_pdfs,
+        fig_emg_cons = nexus_emg_consistency.do_plot(show=False,
+                                                     make_pdf=make_separate_pdfs,
                                                      backend='matplotlib')
-    else:
-        fig_emg_cons = None
 
     # average plots
+    figs_kin_avg = list()
     if pages['KinAverage']:
         figs_kin_avg = nexus_kin_average.do_plot(show=False, make_pdf=False)
-    else:
-        figs_kin_avg = list()
 
     logger.debug('creating multipage pdf %s' % pdfpath)
     with PdfPages(pdfpath) as pdf:
@@ -254,4 +249,12 @@ if __name__ == '__main__':
     logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
     logging.getLogger('gaitutils.utils').setLevel(logging.WARNING)
     register_gui_exception_handler()
-    do_plot()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--session', type=str)
+    args = parser.parse_args()
+
+    if not args.session:
+        session = nexus.get_sessionpath()
+
+    do_plot(session)

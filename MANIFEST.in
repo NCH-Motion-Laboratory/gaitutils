@@ -1,7 +1,9 @@
 include README.md
+include LICENSE
 include gaitutils/default.cfg
-recursive-include gaitutils/gui *.ui
-recursive-include gaitutils/scripts *
-recursive-include gaitutils/assets *
-recursive-include gaitutils/data *
-recursive-include gaitutils/thirdparty *
+graft gaitutils/gui
+graft gaitutils/assets
+graft gaitutils/data
+graft gaitutils/thirdparty
+global-exclude *.py[co]
+global-exclude __pycache__

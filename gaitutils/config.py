@@ -29,7 +29,7 @@ if (sys.platform.find('win') != -1 and sys.executable.find('pythonw') != -1 and
     sys.stdout = sys.stderr = blackhole
 
 # default config
-cfg_template = resource_filename(__name__, 'default.cfg')
+cfg_template = resource_filename(__name__, 'data/default.cfg')
 # user specific config
 # On Windows, this typically puts the config at C:\Users\Username, since the
 # USERPROFILE environment variable points there. Putting the config in a

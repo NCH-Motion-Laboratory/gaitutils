@@ -41,11 +41,11 @@ def do_plot(layout_name=None, backend=None, model_cycles=None, emg_cycles=None,
         backend = cfg.plot.backend
 
     if backend == 'matplotlib':
-        pl = Plotter()
+        pl = Plotter(interactive=False)
         pl.layout = layout
         pl.plot_trial(tr, model_cycles=model_cycles, emg_cycles=emg_cycles,
                       show=False)
-        pl.show()
+        return pl.fig
 
     elif backend == 'plotly':
         plot_plotly.plot_trials_browser([tr], layout, model_cycles=model_cycles,

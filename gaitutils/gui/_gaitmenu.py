@@ -634,10 +634,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
                 # create the report
                 if comparison:
-                    # FIXME
-                    qt_message_dialog('Cannot create comparison yet')
-                    return
                     self._execute(nexus_make_comparison_report.do_plot,
+                                  thread=True,
+                                  finished_func=self._enable_op_buttons,
                                   sessions=sessions)
                 else:
                     self._execute(nexus_make_pdf_report.do_plot, thread=True,

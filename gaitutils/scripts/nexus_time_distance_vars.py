@@ -22,16 +22,18 @@ from gaitutils.plot import time_dist_barchart
 logger = logging.getLogger(__name__)
 
 
-def do_session_average_plot(tags=None, show=True, make_pdf=True):
+def do_session_average_plot(sessionpath=None, tags=None, show=True,
+                            make_pdf=True):
     """Find tagged trials from current session dir and plot average"""
 
-    sessionpath = nexus.get_sessionpath()
+    if sessionpath is None:
+        sessionpath = nexus.get_sessionpath()
     tags = tags or cfg.eclipse.tags
     trials = sessionutils.get_c3ds(sessionpath, tags=tags,
                                    trial_type='dynamic')
     if not trials:
-        raise GaitDataError('No marked trials found for current Nexus session')
-    sessionpath = nexus.get_sessionpath()
+        raise GaitDataError('No marked trials found for session %s'
+                            % sessionpath)
     fig = _plot_trials([trials])
     session = op.split(sessionpath)[-1]
     fig.suptitle('Time-distance average, session %s' % session)
@@ -48,19 +50,17 @@ def do_session_average_plot(tags=None, show=True, make_pdf=True):
 
 
 def do_single_trial_plot(c3dfile, show=True, make_pdf=True):
-    """Plot a single trial time-distance. PDF goes into Nexus session dir"""
+    """Plot a single trial time-distance."""
 
     fig = _plot_trials([[c3dfile]])
-    fn = op.split(c3dfile)[1]
-    fig.suptitle('Time-distance variables, %s' % fn)
+    c3dpath, c3dfile_ = op.split(c3dfile)
+    fig.suptitle('Time-distance variables, %s' % c3dfile_)
 
     if make_pdf:
-        fn = op.split(c3dfile)[1]
-        fn_ = op.splitext(fn)[0]
-        pdf_name = op.join(nexus.get_sessionpath(),
-                           'time_distance_%s.pdf' % fn_)
+        c3dfile_root = op.splitext(c3dfile_)[0]
+        pdf_name = op.join(c3dpath, 'time_distance_%s.pdf' % c3dfile_root)
         with PdfPages(pdf_name) as pdf:
-                pdf.savefig(fig)
+            pdf.savefig(fig)
 
     if show:
         plt.show()
@@ -79,7 +79,7 @@ def do_multitrial_plot(c3dfiles, show=True, make_pdf=True):
         pdf_name = op.join(nexus.get_sessionpath(),
                            '%representative_time_distance.pdf')
         with PdfPages(pdf_name) as pdf:
-                pdf.savefig(fig)
+            pdf.savefig(fig)
 
     if show:
         plt.show()

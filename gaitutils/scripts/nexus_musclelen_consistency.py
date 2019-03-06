@@ -19,10 +19,12 @@ from gaitutils import (Plotter, cfg, register_gui_exception_handler,
 logger = logging.getLogger(__name__)
 
 
-def do_plot(tags=None, age=None, show=True, make_pdf=True):
+def do_plot(sessionpath=None, tags=None, age=None, show=True, make_pdf=True):
+
+    if sessionpath is None:
+        sessionpath = nexus.get_sessionpath()
 
     tags = tags or cfg.eclipse.tags
-    sessionpath = nexus.get_sessionpath()
     tagged_trials = sessionutils.get_c3ds(sessionpath, tags=tags,
                                           trial_type='dynamic')
 

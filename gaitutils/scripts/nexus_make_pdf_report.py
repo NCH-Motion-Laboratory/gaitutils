@@ -177,39 +177,45 @@ def do_plot(sessionpath, info=None, pages=None):
     fig_vel = None
     if pages['TrialVelocity']:
         logger.debug('creating velocity plot')
-        fig_vel = nexus_trials_velocity.do_plot(show=False, make_pdf=False)
+        fig_vel = nexus_trials_velocity.do_plot(sessionpath, show=False,
+                                                make_pdf=False)
 
     # time-distance average
     fig_timedist_avg = None
     if pages['TimeDistAverage']:
         logger.debug('creating time-distance plot')
         fig_timedist_avg = (nexus_time_distance_vars.
-                            do_session_average_plot(show=False,
+                            do_session_average_plot(sessionpath=sessionpath,
+                                                    show=False,
                                                     make_pdf=False))
     # consistency plots
     fig_kin_cons = None
     if pages['KinCons']:
         logger.debug('creating kin consistency plot')
-        fig_kin_cons = nexus_kin_consistency.do_plot(show=False,
+        fig_kin_cons = nexus_kin_consistency.do_plot(sessions=[sessionpath],
+                                                     show=False,
                                                      make_pdf=make_separate_pdfs,
                                                      backend='matplotlib')
     fig_musclelen_cons = None
     if pages['MuscleLenCons']:
         logger.debug('creating muscle length consistency plot')
-        fig_musclelen_cons = nexus_musclelen_consistency.do_plot(show=False,
+        fig_musclelen_cons = nexus_musclelen_consistency.do_plot(sessionpath=sessionpath,
+                                                                 show=False,
                                                                  age=age,
                                                                  make_pdf=make_separate_pdfs)
     fig_emg_cons = None
     if do_emg_consistency:
         logger.debug('creating EMG consistency plot')        
-        fig_emg_cons = nexus_emg_consistency.do_plot(show=False,
+        fig_emg_cons = nexus_emg_consistency.do_plot(sessionpath=sessionpath,
+                                                     show=False,
                                                      make_pdf=make_separate_pdfs,
                                                      backend='matplotlib')
 
     # average plots
     figs_kin_avg = list()
     if pages['KinAverage']:
-        figs_kin_avg = nexus_kin_average.do_plot(show=False, make_pdf=False)
+        figs_kin_avg = nexus_kin_average.do_plot(sessionpath=sessionpath,
+                                                 show=False, make_pdf=False)
 
     logger.debug('creating multipage pdf %s' % pdfpath)
     with PdfPages(pdfpath) as pdf:
@@ -240,7 +246,5 @@ if __name__ == '__main__':
     parser.add_argument('--session', type=str)
     args = parser.parse_args()
 
-    if not args.session:
-        session = nexus.get_sessionpath()
-
+    session = args.session or nexus.get_sessionpath()
     do_plot(session)

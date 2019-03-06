@@ -14,10 +14,11 @@ from gaitutils import (cfg, nexus, layouts, GaitDataError,
                        register_gui_exception_handler, sessionutils)
 
 
-def do_plot(show=True, make_pdf=True):
+def do_plot(sessionpath=None, show=True, make_pdf=True):
 
     figs = []
-    sessionpath = nexus.get_sessionpath()
+    if sessionpath is None:
+        sessionpath = nexus.get_sessionpath()
     c3ds = sessionutils.get_c3ds(sessionpath, trial_type='dynamic')
     if not c3ds:
         raise GaitDataError('No dynamic trials found for current session')
@@ -39,11 +40,9 @@ def do_plot(show=True, make_pdf=True):
                                   model_stddev=atrial.stddev_data,
                                   maintitle=maintitle,
                                   show=False))
-
         if make_pdf:
             pl.create_pdf(pdf_name='kin_average_%s.pdf' % side,
                           sessionpath=sessionpath)
-
     if show:
         pl.show()
 

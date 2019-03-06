@@ -21,12 +21,15 @@ from gaitutils.layouts import rm_dead_channels_multitrial
 logger = logging.getLogger(__name__)
 
 
-def do_plot(tags=None, show=True, make_pdf=True, backend=None):
+def do_plot(sessionpath=None, tags=None, show=True, make_pdf=True,
+            backend=None):
+
+    if sessionpath is None:
+        sessionpath = nexus.get_sessionpath()
 
     if backend is None:
         backend = cfg.plot.backend
 
-    sessionpath = nexus.get_sessionpath()
     c3dfiles = sessionutils.get_c3ds(sessionpath, tags=cfg.eclipse.tags,
                                      trial_type='dynamic')
 

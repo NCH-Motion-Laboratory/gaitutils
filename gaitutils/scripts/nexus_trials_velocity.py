@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jun 21 13:48:27 2017
+Plot trial velocities.
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -23,9 +23,10 @@ from gaitutils import (nexus, utils, sessionutils,
 logger = logging.getLogger(__name__)
 
 
-def _plot_vel_curves():
-    """Plot time-dependent velocity for each dynamic trial in Nexus session."""
-    sessionpath = nexus.get_sessionpath()
+def _plot_vel_curves(sessionpath=None):
+    """Plot time-dependent velocity for each dynamic trial in session."""
+    if sessionpath is None:
+        sessionpath = nexus.get_sessionpath()
     c3ds = sessionutils.get_c3ds(sessionpath, trial_type='dynamic')
     if len(c3ds) == 0:
         raise Exception('Did not find any dynamic trials in current '
@@ -40,9 +41,10 @@ def _plot_vel_curves():
     plotly.offline.plot(traces)
 
 
-def do_plot(show=True, make_pdf=True):
+def do_plot(sessionpath=None, show=True, make_pdf=True):
     """Plot median velocities for each dynamic trial in Nexus session."""
-    sessionpath = nexus.get_sessionpath()
+    if sessionpath is None:
+        sessionpath = nexus.get_sessionpath()
     c3ds = sessionutils.get_c3ds(sessionpath, trial_type='dynamic')
 
     if len(c3ds) == 0:

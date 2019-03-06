@@ -10,6 +10,8 @@ from __future__ import print_function
 from builtins import str
 from PyQt5 import QtGui, QtCore, uic, QtWidgets
 from PyQt5.QtCore import QRunnable, QThreadPool, pyqtSignal, QObject
+from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
+                                                FigureCanvas)
 from pkg_resources import resource_filename
 from functools import partial
 import sys
@@ -460,6 +462,20 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # we need a thread for each web server plus one worker thread
         self.threadpool.setMaxThreadCount(cfg.web_report.max_reports + 1)
         self._tardieuwin = None
+        self._mpl_windows = list()
+
+    def _open_mpl_window(self, fig):
+        """Show matplotlib figure fig in new window"""
+        _mpl_win = QtWidgets.QDialog()
+        _mpl_win._canvas = FigureCanvas(fig)
+        _mpl_win._canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                       QtWidgets.QSizePolicy.Expanding)
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(_mpl_win._canvas)
+        _mpl_win.setLayout(layout)
+        _mpl_win._canvas.draw()
+        self._mpl_windows.append(_mpl_win)  # keep ref and prevent gc
+        _mpl_win.show()
 
     def _autoproc_session(self):
         """Wrapper to run autoprocess for Nexus session"""

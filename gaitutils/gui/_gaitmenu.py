@@ -504,10 +504,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
         cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
         model_cycles = emg_cycles = cycs
         from_c3d = self.xbPlotFromC3D.checkState()
+        fig = nexus_plot.do_plot(layout_name=lout_name, model_cycles=model_cycles,
+                                 emg_cycles=emg_cycles, from_c3d=from_c3d,
+                                 backend='matplotlib')
+        self._open_mpl_window(fig)
+        """        
         self._execute(nexus_plot.do_plot, thread=True,
                       finished_func=self._enable_op_buttons,
                       layout_name=lout_name, model_cycles=model_cycles,
                       emg_cycles=emg_cycles, from_c3d=from_c3d)
+        """
 
     def _widget_connect_task(self, widget, fun, thread=False):
         """Helper to connect widget with task. Use lambda to consume unused

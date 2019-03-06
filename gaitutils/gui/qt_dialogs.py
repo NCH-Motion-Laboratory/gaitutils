@@ -242,6 +242,7 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
                 return
         else:
             dirs = qt_dir_chooser()
+        dirs = [op.normpath(d) for d in dirs]
         if dirs:
             for dir_ in dirs:
                 if dir_ in self.sessions:

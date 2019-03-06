@@ -610,6 +610,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         sessions = dlg.sessions
         comparison = len(sessions) > 1
+        if comparison:
+            qt_message_dialog('PDF comparison report not supported right now')
+            return
 
         session_infos, info = sessionutils._merge_session_info(sessions)
         if info is None:
@@ -625,24 +628,24 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                 report_notes=dlg_info.session_description)
                 info.update(new_info)
 
-                # update all info files (except for session specific keys)
+                # update info files according to user input
                 for session in sessions:
                     update_dict = dict(fullname=dlg_info.fullname,
                                        hetu=dlg_info.hetu)
                     session_infos[session].update(update_dict)
                     sessionutils.save_info(session, session_infos[session])
 
-                # create the report
-                if comparison:
-                    self._execute(nexus_make_comparison_report.do_plot,
-                                  thread=True,
-                                  finished_func=self._enable_op_buttons,
-                                  sessions=sessions)
-                else:
-                    self._execute(nexus_make_pdf_report.do_plot, thread=True,
-                                  finished_func=self._enable_op_buttons,
-                                  sessionpath=sessions[0], info=info,
-                                  pages=dlg_info.pages)
+        # create the report
+        if comparison:
+            self._execute(nexus_make_comparison_report.do_plot,
+                          thread=True,
+                          finished_func=self._enable_op_buttons,
+                          sessions=sessions)
+        else:
+            self._execute(nexus_make_pdf_report.do_plot, thread=True,
+                          finished_func=self._enable_op_buttons,
+                          sessionpath=sessions[0], info=info,
+                          pages=dlg_info.pages)
 
     def _log_message(self, msg):
         c = self.txtOutput.textCursor()

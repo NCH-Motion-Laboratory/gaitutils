@@ -403,7 +403,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         # modal dialogs etc. (simple signal->slot connection)
         self.actionCreate_PDF_report.triggered.connect(self._create_pdf_report)
-        self.actionCreate_comparison_PDF_report.triggered.connect(self._create_comparison)
         self.actionWeb_reports.triggered.connect(self._web_report_dialog.show)
         self.actionQuit.triggered.connect(self.close)
         self.actionOpts.triggered.connect(self._options_dialog)
@@ -603,36 +602,48 @@ class Gaitmenu(QtWidgets.QMainWindow):
         dlg = OptionsDialog(self)
         dlg.exec_()
 
-    def _create_comparison(self):
-        dlg = ChooseSessionsDialog(min_sessions=2, max_sessions=2)
-        if dlg.exec_():
-            self._sessions = dlg.sessions
-            self._execute(nexus_make_comparison_report.do_plot,
-                          sessions=dlg.sessions)
-
     def _create_pdf_report(self):
-        """Creates the full pdf report"""
-        try:
-            subj = nexus.get_subjectnames()
-        except GaitDataError as e:
-            qt_message_dialog(_exception_msg(e))
-            return
+        """Create comparison or single session pdf report"""
 
-        # ask for patient info, update saved info accordingly
-        session = nexus.get_sessionpath()
-        info = sessionutils.load_info(session) or sessionutils.default_info()
-        prompt_ = 'Please give additional subject information for %s:' % subj
-        dlg = PdfReportDialog(info, prompt=prompt_)
-        if dlg.exec_():
-            new_info = dict(hetu=dlg.hetu, fullname=dlg.fullname,
-                            session_description=dlg.session_description)
-            self._execute(nexus_make_pdf_report.do_plot, thread=True,
-                          finished_func=self._enable_op_buttons,
-                          fullname=dlg.fullname, hetu=dlg.hetu,
-                          session_description=dlg.session_description,
-                          pages=dlg.pages)
-            info.update(new_info)
-            sessionutils.save_info(session, info)
+        dlg = ChooseSessionsDialog()
+        if not dlg.exec_():
+            return
+        sessions = dlg.sessions
+        comparison = len(sessions) > 1
+
+        session_infos, info = sessionutils._merge_session_info(sessions)
+        if info is None:
+            qt_message_dialog('Patient files do not match. Sessions may be '
+                              'from different patients. Continuing without '
+                              'patient info.')
+            info = sessionutils.default_info()
+        else:
+            prompt_ = 'Please give additional subject information:'
+            dlg_info = PdfReportDialog(info, prompt=prompt_)
+            if dlg_info.exec_():
+                new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,
+                                report_notes=dlg_info.session_description)
+                info.update(new_info)
+
+                # update all info files (except for session specific keys)
+                for session in sessions:
+                    update_dict = dict(fullname=dlg_info.fullname,
+                                       hetu=dlg_info.hetu)
+                    session_infos[session].update(update_dict)
+                    sessionutils.save_info(session, session_infos[session])
+
+                # create the report
+                if comparison:
+                    # FIXME
+                    qt_message_dialog('Cannot create comparison yet')
+                    return
+                    self._execute(nexus_make_comparison_report.do_plot,
+                                  sessions=sessions)
+                else:
+                    self._execute(nexus_make_pdf_report.do_plot, thread=True,
+                                  finished_func=self._enable_op_buttons,
+                                  sessionpath=sessions[0], info=info,
+                                  pages=dlg_info.pages)
 
     def _log_message(self, msg):
         c = self.txtOutput.textCursor()

@@ -246,7 +246,6 @@
     </property>
     <addaction name="actionWeb_reports"/>
     <addaction name="actionCreate_PDF_report"/>
-    <addaction name="actionCreate_comparison_PDF_report"/>
    </widget>
    <widget class="QMenu" name="menuPlotting">
     <property name="title">

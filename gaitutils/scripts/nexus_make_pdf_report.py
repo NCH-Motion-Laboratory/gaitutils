@@ -17,8 +17,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 from collections import defaultdict
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
-                       numutils, normaldata, sessionutils, nexus,
-                       GaitDataError)
+                       numutils, normaldata, sessionutils, GaitDataError,
+                       nexus)
 
 from gaitutils.scripts import (nexus_kin_consistency,
                                nexus_emg_consistency,
@@ -56,30 +56,26 @@ def _savefig(pdf, fig, header=None, footer=None):
     pdf.savefig(fig)
 
 
-def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
+def do_plot(sessionpath, info, pages=None):
+    """Create the pdf report and save in session directory"""
 
-    if fullname is None:
-        fullname = ''
-    if hetu is None:
-        hetu = ''
+    fullname = info['fullname'] or ''
+    hetu = info['hetu'] or ''
+    session_description = info['session_description'] or ''
     if pages is None:
-        # if no pages specified, do everything
-        pages = defaultdict(lambda: True)
-    else:
-        if not any(pages.values()):
-            raise Exception('No pages to print')
+        pages = defaultdict(lambda: True)  # do all plots
+    elif not any(pages.values()):
+        raise ValueError('No pages to print')
 
-    tagged_figs = []
-    repr_figs = []
+    tagged_figs = list()
+    repr_figs = list()
     eclipse_tags = dict()
     do_emg_consistency = False
 
-    sessionpath = nexus.get_sessionpath()
-    session = op.split(sessionpath)[-1]
-    session_root = op.split(sessionpath)[0]
+    session_root, sessiondir = op.split(sessionpath)
     patient_code = op.split(session_root)[1]
-    pdfname = session + '.pdf'
-    pdf_all = op.join(sessionpath, pdfname)
+    pdfname = sessiondir + '.pdf'
+    pdfpath = op.join(sessionpath, pdfname)
 
     tagged_trials = sessionutils.get_c3ds(sessionpath, tags=cfg.eclipse.tags,
                                           trial_type='dynamic')
@@ -101,7 +97,7 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
     title_txt += u'Henkilötunnus: %s\n' % (hetu if hetu else 'ei tiedossa')
     title_txt += u'Ikä mittaushetkellä: %s\n' % ('%d vuotta' % age if age
                                                    else 'ei tiedossa')
-    title_txt += u'Mittaus: %s\n' % session
+    title_txt += u'Mittaus: %s\n' % sessiondir
     if session_description:
         title_txt += u'Kuvaus: %s\n' % session_description
     title_txt += u'Mittauksen pvm: %s\n' % session_t.strftime('%d.%m.%Y')
@@ -234,8 +230,8 @@ def do_plot(fullname=None, hetu=None, pages=None, session_description=None):
     else:
         figs_kin_avg = list()
 
-    logger.debug('creating multipage pdf %s' % pdf_all)
-    with PdfPages(pdf_all) as pdf:
+    logger.debug('creating multipage pdf %s' % pdfpath)
+    with PdfPages(pdfpath) as pdf:
         _savefig(pdf, fig_hdr)
         _savefig(pdf, fig_vel, header)
         _savefig(pdf, fig_timedist_avg, header)

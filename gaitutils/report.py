@@ -106,6 +106,14 @@ def _shutdown_server():
     func()
 
 
+def _report_name(sessions):
+    """Create a title for the dash report"""
+    sessions_str = ' / '.join([op.split(s)[-1] for s in sessions])
+    report_type = ('Single session report:' if len(sessions) == 1
+                   else 'Comparison report:')
+    return '%s %s' % (report_type, sessions_str)
+
+
 def dash_report(info=None, sessions=None, tags=None, signals=None):
     """Returns dash app for web report.
     info: patient info
@@ -131,11 +139,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
 
     is_comparison = len(sessions) > 1
 
-    sessions_str = ' / '.join([op.split(s)[-1] for s in sessions])
-    report_type = ('Single session report:' if len(sessions) == 1
-                   else 'Comparison report:')
-    report_name = '%s %s' % (report_type, sessions_str)
-
+    report_name = _report_name(sessions)
     info = info or sessionutils.default_info()
 
     # tags for dynamic trials
@@ -570,5 +574,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
         logger.debug('Received shutdown request...')
         _shutdown_server()
         return 'Server shutting down...'
+
+    # inject some info of our own
+    app._gaitutils_report_name = report_name
 
     return app

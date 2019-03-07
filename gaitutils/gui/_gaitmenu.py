@@ -177,12 +177,9 @@ class WebReportDialog(QtWidgets.QDialog):
         dlg = ChooseSessionsDialog()
         if not dlg.exec_():
             return
-        sessions = dlg.sessions
 
-        sessions_str = '/'.join([op.split(s)[-1] for s in sessions])
-        report_type = ('single session' if len(sessions) == 1
-                       else 'comparison')
-        report_name = '%s: %s' % (report_type, sessions_str)
+        sessions = dlg.sessions
+        report_name = report._report_name(sessions)
         existing_names = [item.text for item in self.listActiveReports.items]
         if report_name in existing_names:
             qt_message_dialog('There is already a report for %s' %
@@ -212,10 +209,10 @@ class WebReportDialog(QtWidgets.QDialog):
             else:
                 return
 
-        prog = ProgressBar('Creating web report...')
-        prog.update('Collecting session information...', 0)
+        self.prog = ProgressBar('Creating web report...')
+        self.prog.update('Collecting session information...', 0)
         signals = ProgressSignals()
-        signals.progress.connect(lambda text, p: prog.update(text, p))
+        signals.progress.connect(lambda text, p: self.prog.update(text, p))
 
         # for comparison between sessions, get representative trials only
         tags = (cfg.eclipse.repr_tags if len(sessions) > 1 else
@@ -231,42 +228,12 @@ class WebReportDialog(QtWidgets.QDialog):
         if not report.convert_videos(vidfiles, check_only=True):
             self.parent._convert_vidfiles(vidfiles, signals)
 
-        self._report_creation_status = None
+        # launch the report creation thread
         self.parent._execute(report.dash_report, thread=True, block_ui=True,
-                             finished_func=self.parent._enable_op_buttons,
-                             result_func=self._web_report_finished,
+                             finished_func=self._web_report_finished,
+                             result_func=self._web_report_ready,
                              info=info, sessions=sessions, tags=tags,
                              signals=signals)
-
-        # wait for report creation thread to complete
-        while self._report_creation_status is None:
-            time.sleep(.05)
-            QtWidgets.QApplication.processEvents()
-        prog.close()
-
-        if self._report_creation_status is False:
-            qt_message_dialog('Could not create report, check that session is '
-                              'valid')
-            return
-        app = self._report_creation_status
-
-        # figure out first free TCP port
-        ports_taken = [item.userdata for item in self.listActiveReports.items]
-        port = cfg.web_report.tcp_port
-        while port in ports_taken:  # find first port not taken by us
-            port += 1
-
-        # report ok - start server in a thread
-        # also enable the threaded mode of the server. serving is a bit flaky
-        # in Python 2 (multiple requests cause exceptions)
-        self.parent._execute(app.server.run, thread=True, block_ui=False,
-                             debug=False, port=port, threaded=True)
-        # double clicking on the list item will browse to corresponding port
-        self.listActiveReports.add_item(report_name, data=port)
-        # enable delete buttons etc.
-        self._set_report_button_status()
-        logger.debug('starting web browser')
-        self._browse_localhost(port)
 
     @property
     def active_reports(self):
@@ -330,12 +297,35 @@ class WebReportDialog(QtWidgets.QDialog):
         for widget in self.reportWidgets:
             widget.setEnabled(True if n_reports else False)
 
-    def _web_report_finished(self, app):
-        """Gets called when web report creation is finished"""
-        logger.debug('report creation finished')
-        self._report_creation_status = app
-        # this enables controls on all windows
+    def _web_report_finished(self):
+        """Web report creation thread has finished"""
+        self.prog.reset()
         self.parent._enable_op_buttons()
+
+    def _web_report_ready(self, app):
+        """Gets called when web report creation is successful. Open report in
+        browser"""
+        logger.debug('report creation finished')
+#        if self._report_creation_status is False:
+#            qt_message_dialog('Could not create report, check that session is '
+#                              'valid')
+#            return
+        # figure out first free TCP port
+        ports_taken = [item.userdata for item in self.listActiveReports.items]
+        port = cfg.web_report.tcp_port
+        while port in ports_taken:  # find first port not taken by us
+            port += 1
+        # report ok - start server in a thread
+        # also enable the threaded mode of the server. serving is a bit flaky
+        # in Python 2 (multiple requests cause exceptions)
+        self.parent._execute(app.server.run, thread=True, block_ui=False,
+                             debug=False, port=port, threaded=True)
+        # double clicking on the list item will browse to corresponding port
+        self.listActiveReports.add_item(app._gaitutils_report_name, data=port)
+        # enable delete buttons etc.
+        self._set_report_button_status()
+        logger.debug('starting web browser')
+        self._browse_localhost(port)
 
     def _browse_localhost(self, port):
         """Open configured browser on localhost:port"""
@@ -509,16 +499,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
         cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
         model_cycles = emg_cycles = cycs
         from_c3d = self.xbPlotFromC3D.checkState()
-        fig = nexus_plot.do_plot(layout_name=lout_name, model_cycles=model_cycles,
-                                 emg_cycles=emg_cycles, from_c3d=from_c3d,
-                                 backend='matplotlib')
-        self._open_mpl_window(fig)
-        """        
         self._execute(nexus_plot.do_plot, thread=True,
                       finished_func=self._enable_op_buttons,
+                      result_func=self._nexus_plot_done,
                       layout_name=lout_name, model_cycles=model_cycles,
                       emg_cycles=emg_cycles, from_c3d=from_c3d)
-        """
+
+    def _nexus_plot_done(self, fig):
+        """Called after Nexus plot is ready"""
+        if cfg.plot.backend == 'matplotlib':
+            self._open_mpl_window(fig)
 
     def _widget_connect_task(self, widget, fun, thread=False):
         """Helper to connect widget with task. Use lambda to consume unused
@@ -579,7 +569,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         signals = ProgressSignals()
         signals.progress.connect(lambda text, p: prog.update(text, p))
         self._convert_vidfiles(vidfiles, signals)
-        prog.close()
 
     def _postprocess_session(self):
         """Run additional postprocessing pipelines for tagged trials"""
@@ -739,7 +728,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
 class RunnerSignals(QObject):
     """Need a separate class since QRunnable cannot emit signals"""
-    finished = pyqtSignal(object)
+    finished = pyqtSignal()
     result = pyqtSignal(object)
     error = pyqtSignal(Exception)
 

@@ -13,10 +13,11 @@ import argparse
 
 from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
                        trial, plot_plotly, GaitDataError)
+from gaitutils.plot_common import show_fig
 
 
-def do_plot(layout_name=None, backend=None, model_cycles=None, emg_cycles=None,
-            maintitle=None, from_c3d=True):
+def make_plot(layout_name=None, backend=None, model_cycles=None,
+              emg_cycles=None, maintitle=None, from_c3d=True):
 
     if layout_name is None:
         layout_name = 'lb_kinematics'
@@ -45,15 +46,16 @@ def do_plot(layout_name=None, backend=None, model_cycles=None, emg_cycles=None,
         pl.layout = layout
         pl.plot_trial(tr, model_cycles=model_cycles, emg_cycles=emg_cycles,
                       show=False)
-        return pl.fig
+        fig = pl.fig
 
     elif backend == 'plotly':
-        plot_plotly.plot_trials_browser([tr], layout, model_cycles=model_cycles,
-                                        emg_cycles=emg_cycles,
-                                        legend_type='short_name_with_cyclename')
-
+        fig = plot_plotly.plot_trials([tr], layout, model_cycles=model_cycles,
+                                      emg_cycles=emg_cycles,
+                                      legend_type='short_name_with_cyclename')
     else:
         raise ValueError('Invalid plotting backend %s' % cfg.plot.backend)
+
+    return fig
 
 
 if __name__ == '__main__':
@@ -71,5 +73,6 @@ if __name__ == '__main__':
     if args.unnorm:
         args.model_cycles = args.emg_cycles = 'unnormalized'
 
-    do_plot(layout_name=args.layout, backend=args.backend,
-            model_cycles=args.model_cycles, emg_cycles=args.emg_cycles)
+    fig = make_plot(layout_name=args.layout, backend=args.backend,
+                    model_cycles=args.model_cycles, emg_cycles=args.emg_cycles)
+    show_fig(fig, args.backend)

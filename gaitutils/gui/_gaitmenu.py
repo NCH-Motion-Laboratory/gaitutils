@@ -299,32 +299,33 @@ class WebReportDialog(QtWidgets.QDialog):
 
     def _web_report_finished(self):
         """Web report creation thread has finished"""
-        self.prog.reset()
+        self.prog.reset()  # closes the progress bar in case of errors
         self.parent._enable_op_buttons()
 
     def _web_report_ready(self, app):
         """Gets called when web report creation is successful. Open report in
         browser"""
-        logger.debug('report creation finished')
-#        if self._report_creation_status is False:
-#            qt_message_dialog('Could not create report, check that session is '
-#                              'valid')
-#            return
         # figure out first free TCP port
         ports_taken = [item.userdata for item in self.listActiveReports.items]
         port = cfg.web_report.tcp_port
         while port in ports_taken:  # find first port not taken by us
             port += 1
-        # report ok - start server in a thread
-        # also enable the threaded mode of the server. serving is a bit flaky
-        # in Python 2 (multiple requests cause exceptions)
+        """
+        Web servers need to go into separate threads/processes so that the rest
+        of the app can continue running. It's hard to use processes because of
+        problems with multiprocessing/pickle, so the Qt threadpool is used to
+        launch the servers. However since each running server occupies a
+        thread, this means that we need to increase the threadpool max threads
+        limit; otherwise new servers will get queued by the threadpool and will
+        not run.
+        Serving is a bit flaky in py2 (multiple requests cause exceptions)
+        """
         self.parent._execute(app.server.run, thread=True, block_ui=False,
                              debug=False, port=port, threaded=True)
         # double clicking on the list item will browse to corresponding port
         self.listActiveReports.add_item(app._gaitutils_report_name, data=port)
         # enable delete buttons etc.
         self._set_report_button_status()
-        logger.debug('starting web browser')
         self._browse_localhost(port)
 
     def _browse_localhost(self, port):
@@ -346,33 +347,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # load user interface made with designer
         uifile = resource_filename('gaitutils', 'gui/gaitmenu.ui')
         uic.loadUi(uifile, self)
-        """
-        matplotlib and threads:
-        -----------------------
-        Stuff that shows matplotlib plots cannot be run in directly in
-        worker threads. To put plotting stuff into a worker thread, we need to:
-        -make the plotting function return a figure (and not invoke the qt
-        event loop)
-        -put the plotting function into a worker thread
-        -call plotting function
-        -create a qt dialog and canvas in GUI thread
-        -draw resulting figure onto canvas
-        So far this has not been done since the plotting functions return
-        rather quickly.
-        Running the plotting functions directly from the GUI thread is also a
-        bit ugly since the Qt event loop gets called twice, but this does not
-        seem to do any harm.
-
-        launching web servers:
-        ----------------------
-        Web servers need to go into separate threads/processes so that the rest
-        of the app can continue running. It's hard to use processes because of
-        problems with multiprocessing/pickle, so the Qt threadpool is used to
-        launch the servers. However since each running server occupies a
-        thread, this means that we need to increase the threadpool max threads
-        limit; otherwise new servers will get queued by the threadpool and will
-        not run.
-        """
 
         if not cfg.general.allow_multiple_menu_instances:
             sname = op.split(__file__)[1]
@@ -692,16 +666,15 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _execute(self, fun, thread=False, block_ui=True, finished_func=None,
                  result_func=None, **kwargs):
-        """ Run function fun. If thread==True, run it in a separate worker
-        thread. If block_ui, disable the ui until worker thread is finished
-        (except for messages!) Returns function return value if not threaded.
-        FIXME:
-        If threaded and finished_func is given, the latter is called with the
-        function return value as single argument when thread completes
-        execution.
-        If block_ui, finished_func should re-enable UI buttons.
-        kwargs are passed to function.
-        """
+        """Run function fun with args kwargs. If thread==True, run in a
+        separate worker thread. If block_ui==True, disable ui until worker
+        thread is finished.
+        If not thread:
+        Returns function return value.
+        If thread:
+        finished_func will be called when thread is finished. result_func
+        will be called with the function return value as its single argument,
+        unless an exception is raised during thread execution."""
         fun_ = partial(fun, **kwargs)
         if block_ui:
             self._disable_op_buttons()
@@ -713,8 +686,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 self.runner.signals.result.connect(lambda r: result_func(r))
             self.runner.signals.error.connect(lambda e: self._exception(e))
             self.threadpool.start(self.runner)
-            retval = None
-        else:  # nonthreaded execute
+        else:
             try:
                 retval = fun_()
             except Exception as e:
@@ -723,7 +695,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             finally:
                 if block_ui:
                     self._enable_op_buttons()
-        return retval
+                return retval
 
 
 class RunnerSignals(QObject):

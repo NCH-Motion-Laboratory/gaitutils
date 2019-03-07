@@ -6,11 +6,35 @@ Created on Fri Mar  1 11:11:33 2019
 """
 
 from PyQt5 import QtCore, uic, QtWidgets
+from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
+                                                FigureCanvas)
+from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
+                                                NavigationToolbar)
 from pkg_resources import resource_filename
 import os.path as op
 import ast
 
 from .. import nexus, GaitDataError, cfg
+
+
+def qt_matplotlib_window(fig):
+    """Show matplotlib figure fig in new window"""
+    _mpl_win = QtWidgets.QDialog()
+    _mpl_win.setGeometry(100, 100, 1500, 1000)
+    _mpl_win._canvas = FigureCanvas(fig)
+    _mpl_win._canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                   QtWidgets.QSizePolicy.Expanding)
+    toolbar = NavigationToolbar(_mpl_win._canvas, _mpl_win)
+    layout = QtWidgets.QVBoxLayout()
+    layout.addWidget(toolbar)
+    layout.addWidget(_mpl_win._canvas)
+    layout.setSpacing(0)
+    _mpl_win.setLayout(layout)
+    _mpl_win._canvas.draw()
+    fig.tight_layout()
+    #_mpl_win._canvas.updateGeometry()
+    _mpl_win.show()
+    return _mpl_win
 
 
 def qt_message_dialog(msg):

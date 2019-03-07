@@ -10,10 +10,6 @@ from __future__ import print_function
 from builtins import str
 from PyQt5 import QtGui, QtCore, uic, QtWidgets
 from PyQt5.QtCore import QRunnable, QThreadPool, pyqtSignal, QObject
-from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
-                                                FigureCanvas)
-from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
-                                                NavigationToolbar)
 from pkg_resources import resource_filename
 from functools import partial
 import sys
@@ -25,9 +21,10 @@ import requests
 import logging
 import traceback
 import itertools
+import plotly
 
 from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
-                         ChooseSessionsDialog)
+                         ChooseSessionsDialog, qt_matplotlib_window)
 from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ..numutils import check_hetu
 from .. import (GaitDataError, nexus, cfg, report, sessionutils, videos,
@@ -378,6 +375,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionTardieu_analysis.triggered.connect(self._tardieu)
         self.actionAutoprocess_session.triggered.connect(self._autoproc_session)
         self.btnPlotNexusTrial.clicked.connect(self._plot_nexus_trial)
+        self.actionKinematics_consistency.triggered.connect(lambda: self._plot_wrapper(nexus_kin_consistency.do_plot))
 
         # consistency menu
         self._widget_connect_task(self.actionTrial_velocity,
@@ -387,9 +385,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   do_session_average_plot)
         self._widget_connect_task(self.actionKin_average,
                                   nexus_kin_average.do_plot)
-        self._widget_connect_task(self.actionKinematics_consistency,
-                                  nexus_kin_consistency.do_plot,
-                                  thread=thread_plotters)
+#        self._widget_connect_task(self.actionKinematics_consistency,
+#                                  nexus_kin_consistency.do_plot,
+#                                  thread=thread_plotters)
         self._widget_connect_task(self.actionEMG_consistency,
                                   nexus_emg_consistency.do_plot,
                                   thread=thread_plotters)
@@ -432,25 +430,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._tardieuwin = None
         self._mpl_windows = list()
 
-    def _open_mpl_window(self, fig):
-        """Show matplotlib figure fig in new window"""
-        _mpl_win = QtWidgets.QDialog()
-        _mpl_win.setGeometry(100, 100, 1500, 1000)
-        _mpl_win._canvas = FigureCanvas(fig)
-        _mpl_win._canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                       QtWidgets.QSizePolicy.Expanding)
-        toolbar = NavigationToolbar(_mpl_win._canvas, _mpl_win)
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(toolbar)
-        layout.addWidget(_mpl_win._canvas)
-        layout.setSpacing(0)
-        _mpl_win.setLayout(layout)
-        _mpl_win._canvas.draw()
-        self._mpl_windows.append(_mpl_win)
-        fig.tight_layout()
-        #_mpl_win._canvas.updateGeometry()
-        _mpl_win.show()
-
     def _autoproc_session(self):
         """Wrapper to run autoprocess for Nexus session"""
         try:
@@ -478,16 +457,24 @@ class Gaitmenu(QtWidgets.QMainWindow):
         cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
         model_cycles = emg_cycles = cycs
         from_c3d = self.xbPlotFromC3D.checkState()
-        self._execute(nexus_plot.do_plot, thread=True,
+        self._execute(nexus_plot.make_plot, thread=True,
                       finished_func=self._enable_op_buttons,
-                      result_func=self._nexus_plot_done,
+                      result_func=self._show_plot,
                       layout_name=lout_name, model_cycles=model_cycles,
                       emg_cycles=emg_cycles, from_c3d=from_c3d)
 
-    def _nexus_plot_done(self, fig):
-        """Called after Nexus plot is ready"""
+    def _plot_wrapper(self, plotfun):
+        """Wrapper for plotting function callbacks."""
+        self._execute(plotfun, thread=True, result_func=self._show_plot,
+                      finished_func=self._enable_op_buttons)
+
+    def _show_plot(self, fig):
+        """Shows a plot"""
         if cfg.plot.backend == 'matplotlib':
-            self._open_mpl_window(fig)
+            _mpl_win = qt_matplotlib_window(fig)
+            self._mpl_windows.append(_mpl_win)
+        elif cfg.plot.backend == 'plotly':
+            plotly.offline.plot(fig)
 
     def _widget_connect_task(self, widget, fun, thread=False):
         """Helper to connect widget with task. Use lambda to consume unused

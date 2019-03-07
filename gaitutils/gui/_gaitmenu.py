@@ -12,6 +12,8 @@ from PyQt5 import QtGui, QtCore, uic, QtWidgets
 from PyQt5.QtCore import QRunnable, QThreadPool, pyqtSignal, QObject
 from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
                                                 FigureCanvas)
+from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
+                                                NavigationToolbar)
 from pkg_resources import resource_filename
 from functools import partial
 import sys
@@ -426,6 +428,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.threadpool = QThreadPool()
         # we need a thread for each web server plus one worker thread
         self.threadpool.setMaxThreadCount(cfg.web_report.max_reports + 1)
+        # keep refs to tardieu+mpl windows so they don't get garbage collected
         self._tardieuwin = None
         self._mpl_windows = list()
 
@@ -436,12 +439,14 @@ class Gaitmenu(QtWidgets.QMainWindow):
         _mpl_win._canvas = FigureCanvas(fig)
         _mpl_win._canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                        QtWidgets.QSizePolicy.Expanding)
+        toolbar = NavigationToolbar(_mpl_win._canvas, _mpl_win)
         layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(toolbar)
         layout.addWidget(_mpl_win._canvas)
         layout.setSpacing(0)
         _mpl_win.setLayout(layout)
         _mpl_win._canvas.draw()
-        self._mpl_windows.append(_mpl_win)  # keep ref and prevent gc
+        self._mpl_windows.append(_mpl_win)
         fig.tight_layout()
         #_mpl_win._canvas.updateGeometry()
         _mpl_win.show()
@@ -567,7 +572,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 vicon.OpenTrial(trbase, cfg.autoproc.nexus_timeout)
                 nexus.run_pipelines(vicon, cfg.autoproc.postproc_pipelines)
                 prog.update('Running postprocessing pipelines: %s for %d '
-                            'trials' % (cfg.autoproc.postproc_pipelines, len(trials)), 100*k/len(trials))
+                            'trials' % (cfg.autoproc.postproc_pipelines,
+                                        len(trials)), 100*k/len(trials))
         elif not trials:
             qt_message_dialog('No trials in session to run postprocessing for')
 

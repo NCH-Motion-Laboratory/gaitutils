@@ -21,12 +21,12 @@ import os.path as op
 import numpy as np
 import logging
 
-from . import models
-from . import numutils
-from . import normaldata
-from .trial import Trial, nexus_trial, Gaitcycle
-from .stats import AvgTrial
-from .config import cfg
+from .. import models
+from .. import numutils
+from .. import normaldata
+from ..trial import Trial, nexus_trial, Gaitcycle
+from ..stats import AvgTrial
+from ..config import cfg
 
 
 logger = logging.getLogger(__name__)

@@ -1,9 +1,7 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Created on Tue Apr 28 11:37:51 2015
 
-Plot currently loaded Nexus trial.
+misc plotting related stuff
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -11,8 +9,8 @@ Plot currently loaded Nexus trial.
 from PyQt5 import QtWidgets
 import plotly
 
-from .gui import qt_dialogs
-from .config import cfg
+from ..gui import qt_dialogs
+from ..config import cfg
 
 
 def show_fig(fig, backend=None):

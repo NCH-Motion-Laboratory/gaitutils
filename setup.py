@@ -5,32 +5,28 @@
 
 from setuptools import setup, find_packages
 
+# entry points for console scripts
+c_entries = ['gaitmenu=gaitutils.gui._gaitmenu:main',
+             'tardieu=gaitutils.gui._tardieu:main',
+             'plotter_gui=gaitutils.gui._plotter_gui:main',
+             'nexus_autoproc_session=gaitutils.autoprocess:autoproc_session',
+             'nexus_autoproc_trial=gaitutils.autoprocess:autoproc_trial',
+             'nexus_automark_trial=gaitutils.autoprocess:automark_trial',
+             'nexus_plot_trial=gaitutils.viz.console:plot_nexus_trial',
+             'nexus_plot_session=gaitutils.viz.console:plot_nexus_session']
+
+# FIXME: add launch_menu
+scripts = ['gaitutils/scripts/launch_menu.bat']
 
 setup(name='gaitutils',
-      version='0.11.31',
+      version='0.11.32',
       description='Utilities for processing and plotting gait data',
       author='Jussi Nurminen',
       author_email='jnu@iki.fi',
       license='GPLv3',
       url='https://github.com/jjnurminen/gaitutils',
       packages=find_packages(),
-      entry_points={
-              'console_scripts': ['gaitmenu=gaitutils.gui._gaitmenu:main',
-                                  'tardieu=gaitutils.gui._tardieu:main',
-                                  'plotter_gui=gaitutils.gui._plotter_gui:main']
-              },
-      scripts=['gaitutils/scripts/nexus_plot.py',
-               'gaitutils/scripts/nexus_kin_consistency.py',
-               'gaitutils/scripts/nexus_emg_consistency.py',
-               'gaitutils/scripts/nexus_musclelen_consistency.py',
-               'gaitutils/scripts/nexus_automark_trial.py',
-               'gaitutils/scripts/nexus_autoprocess_session.py',
-               'gaitutils/scripts/nexus_autoprocess_trial.py',
-               'gaitutils/scripts/nexus_copy_trial_videos.py',
-               'gaitutils/scripts/nexus_trials_velocity.py',
-               'gaitutils/scripts/nexus_make_pdf_report.py',
-               'gaitutils/scripts/nexus_make_comparison_report.py',
-               'gaitutils/scripts/nexus_kin_average.py',
-               'gaitutils/scripts/nexus_time_distance_vars.py'],
+      entry_points={'console_scripts': c_entries},
+      scripts=scripts,
       include_package_data=True,
       )

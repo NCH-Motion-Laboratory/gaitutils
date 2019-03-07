@@ -28,7 +28,6 @@ from builtins import zip
 import os
 import os.path as op
 import numpy as np
-import argparse
 import time
 import logging
 import itertools
@@ -370,7 +369,6 @@ def _delete_c3ds(enffiles):
 
 
 def autoproc_session(patterns=None, update_eclipse=True):
-
     sessionpath = nexus.get_sessionpath()
     enffiles = list(sessionutils.get_session_enfs(sessionpath))
 
@@ -386,15 +384,49 @@ def autoproc_session(patterns=None, update_eclipse=True):
         _do_autoproc(enffiles, update_eclipse=update_eclipse)
 
 
-if __name__ == '__main__':
+def autoproc_trial():
+    fn = nexus.get_trialname()
+    if not fn:
+        raise GaitDataError('No trial open in Nexus')
+    fn += '.Trial.enf'
+    enffiles = [op.join(nexus.get_sessionpath(), fn)]  # listify single enf
+    _delete_c3ds(enffiles)
+    _do_autoproc(enffiles)
 
-    logging.basicConfig(level=logging.DEBUG)
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--include', metavar='p', type=str, nargs='+',
-                        help='strings that must appear in trial name')
-    parser.add_argument('--no_eclipse', action='store_true',
-                        help='disable writing of Eclipse entries')
+def automark_trial(plot=False):
 
-    args = parser.parse_args()
-    autoproc_session(args.include, update_eclipse=not args.no_eclipse)
+    vicon = nexus.viconnexus()
+    roi = vicon.GetTrialRegionOfInterest()
+    vicon.ClearAllEvents()
+
+    foot_markers = (cfg.autoproc.left_foot_markers +
+                    cfg.autoproc.right_foot_markers)
+    mkrs = foot_markers + utils._pig_pelvis_markers()
+    mkrdata = read_data.get_marker_data(vicon, mkrs, ignore_missing=True)
+    fpe = utils.detect_forceplate_events(vicon, mkrdata, roi=roi)
+    vel = utils.get_foot_contact_velocity(mkrdata, fpe, roi=roi)
+    utils.automark_events(vicon, vel_thresholds=vel, fp_events=fpe, roi=roi,
+                          plot=plot)
+
+
+def copy_session_videos():
+    """Copy Nexus session videos to desktop"""
+    nexus.check_nexus()
+
+    dest_dir = op.join(op.expanduser('~'), 'Desktop', 'nexus_videos')
+    if not op.isdir(dest_dir):
+        os.mkdir(dest_dir)
+
+    sessionpath = nexus.get_sessionpath()
+    c3dfiles = sessionutils.get_c3ds(sessionpath, tags=cfg.eclipse.repr_tags,
+                                     trial_type='dynamic')
+    vidfiles = itertools.chain.from_iterable(sessionutils.get_trial_videos(c3d)
+                                             for c3d in c3dfiles)
+    vidfiles = list(vidfiles)
+    if not vidfiles:
+        raise GaitDataError('No video files found for representative trials')
+
+    for vidfile in vidfiles:
+        logger.debug('copying %s -> %s' % (vidfile, dest_dir))
+        shutil.copy2(vidfile, dest_dir)

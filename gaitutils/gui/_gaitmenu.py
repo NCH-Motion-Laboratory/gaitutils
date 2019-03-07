@@ -30,18 +30,17 @@ from ..numutils import check_hetu
 from .. import (GaitDataError, nexus, cfg, report, sessionutils, videos,
                 envutils)
 from . import _tardieu
+from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
+                           copy_session_videos)
+
 from ..scripts import (nexus_plot,
                        nexus_emg_consistency,
                        nexus_kin_consistency,
                        nexus_musclelen_consistency,
-                       nexus_autoprocess_trial,
-                       nexus_autoprocess_session,
-                       nexus_copy_trial_videos,
                        nexus_trials_velocity,
                        nexus_make_pdf_report,
                        nexus_make_comparison_report,
                        nexus_kin_average,
-                       nexus_automark_trial,
                        nexus_time_distance_vars)
 
 
@@ -402,17 +401,17 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         # processing menu
         self._widget_connect_task(self.actionAutoprocess_single_trial,
-                                  nexus_autoprocess_trial.autoproc_single,
+                                  autoproc_trial,
                                   thread=True)
         self._widget_connect_task(self.actionAutomark_events,
-                                  nexus_automark_trial.automark_single,
+                                  automark_trial,
                                   thread=True)
         self._widget_connect_task(self.actionRun_postprocessing_pipelines,
                                   self._postprocess_session)
         self._widget_connect_task(self.actionConvert_session_videos_to_web_format,
                                   self._convert_session_videos)
         self._widget_connect_task(self.actionCopy_session_videos_to_desktop,
-                                  nexus_copy_trial_videos.do_copy)
+                                  copy_session_videos)
 
         # add predefined plot layouts to combobox
         cb_items = sorted(cfg.layouts.menu_layouts.keys())
@@ -451,7 +450,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             if reply == QtWidgets.QMessageBox.NoRole:
                 return
 
-        self._execute(nexus_autoprocess_session.autoproc_session,
+        self._execute(autoproc_session,
                       thread=True,
                       finished_func=self._enable_op_buttons)
 

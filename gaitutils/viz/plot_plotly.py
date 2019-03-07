@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-plotly plotting functions
+plotly based plotting functions
 
 @author: Jussi (jnu@iki.fi)
 """

@@ -48,6 +48,11 @@ from ..scripts import (nexus_plot,
 logger = logging.getLogger(__name__)
 
 
+def _exception(e):
+    logger.debug('caught exception when running task')
+    qt_message_dialog(_exception_msg(e))
+
+
 def _exception_msg(e):
     """Return text representation of exception e"""
     # for our own error class, we know that a neat message is there
@@ -435,7 +440,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         try:
             sessionpath = nexus.get_sessionpath()
         except GaitDataError as e:
-            self._exception(e)
+            _exception(e)
             return
         c3ds = sessionutils.get_c3ds(sessionpath, trial_type='DYNAMIC',
                                      check_if_exists=True)
@@ -464,7 +469,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
                       emg_cycles=emg_cycles, from_c3d=from_c3d)
 
     def _plot_wrapper(self, plotfun):
-        """Wrapper for plotting function callbacks."""
+        """Wrapper for plotting functions. Runs the function in a thread and
+        shows the plot when ready."""
         self._execute(plotfun, thread=True, result_func=self._show_plot,
                       finished_func=self._enable_op_buttons)
 
@@ -635,9 +641,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.txtOutput.insertPlainText(msg)
         self.txtOutput.ensureCursorVisible()
 
-    def _exception(self, e):
-        logger.debug('caught exception while running task')
-        qt_message_dialog(_exception_msg(e))
 
     def _disable_op_buttons(self):
         """ Disable all operation buttons """
@@ -677,14 +680,14 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 self.runner.signals.finished.connect(finished_func)
             if result_func:
                 self.runner.signals.result.connect(lambda r: result_func(r))
-            self.runner.signals.error.connect(lambda e: self._exception(e))
+            self.runner.signals.error.connect(lambda e: _exception(e))
             self.threadpool.start(self.runner)
         else:
             try:
                 retval = fun_()
             except Exception as e:
                 retval = None
-                self._exception(e)
+                _exception(e)
             finally:
                 if block_ui:
                     self._enable_op_buttons()

@@ -477,7 +477,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         _mpl_win.setLayout(layout)
         _mpl_win._canvas.draw()
         self._mpl_windows.append(_mpl_win)  # keep ref and prevent gc
-
+        fig.tight_layout()
+        #_mpl_win._canvas.updateGeometry()
         _mpl_win.show()
 
     def _autoproc_session(self):

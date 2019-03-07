@@ -140,7 +140,7 @@ class ProgressBar(QtWidgets.QProgressDialog):
         self.setMinimum(0)
         self.setMaximum(100)
         self.setGeometry(500, 300, 500, 100)
-        self.setAutoClose(False)
+        #self.setAutoClose(False)
         self.setAutoReset(False)
         self.show()
 

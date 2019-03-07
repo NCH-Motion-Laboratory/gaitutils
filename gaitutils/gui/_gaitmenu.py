@@ -233,7 +233,8 @@ class WebReportDialog(QtWidgets.QDialog):
 
         self._report_creation_status = None
         self.parent._execute(report.dash_report, thread=True, block_ui=True,
-                             finished_func=self._web_report_finished,
+                             finished_func=self.parent._enable_op_buttons,
+                             result_func=self._web_report_finished,
                              info=info, sessions=sessions, tags=tags,
                              signals=signals)
 
@@ -334,7 +335,7 @@ class WebReportDialog(QtWidgets.QDialog):
         logger.debug('report creation finished')
         self._report_creation_status = app
         # this enables controls on all windows
-        self.parent._enable_op_buttons(None)
+        self.parent._enable_op_buttons()
 
     def _browse_localhost(self, port):
         """Open configured browser on localhost:port"""
@@ -551,7 +552,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             signals.progress.emit(prog_txt, prog_p)
             time.sleep(.25)
             completed = n_complete == len(procs)
-        self._enable_op_buttons(None)
+        self._enable_op_buttons()
 
     def _convert_session_videos(self):
         """Convert current Nexus session videos to web format."""
@@ -689,9 +690,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # update display immediately in case thread gets blocked
         QtWidgets.QApplication.processEvents()
 
-    def _enable_op_buttons(self, r):
-        """Enable all operation buttons and restore cursor. Takes single
-        argument to fit the _finished_func call signature (see _execute) """
+    def _enable_op_buttons(self):
+        """Enable all operation buttons and restore cursor."""
         QtWidgets.QApplication.restoreOverrideCursor()
         self.setEnabled(True)
 
@@ -702,10 +702,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._tardieuwin.show()
 
     def _execute(self, fun, thread=False, block_ui=True, finished_func=None,
-                 **kwargs):
+                 result_func=None, **kwargs):
         """ Run function fun. If thread==True, run it in a separate worker
         thread. If block_ui, disable the ui until worker thread is finished
         (except for messages!) Returns function return value if not threaded.
+        FIXME:
         If threaded and finished_func is given, the latter is called with the
         function return value as single argument when thread completes
         execution.
@@ -718,8 +719,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if thread:
             self.runner = Runner(fun_)
             if finished_func:
-                self.runner.signals.finished.connect(lambda r:
-                                                     finished_func(r))
+                self.runner.signals.finished.connect(finished_func)
+            if result_func:
+                self.runner.signals.result.connect(lambda r: result_func(r))
             self.runner.signals.error.connect(lambda e: self._exception(e))
             self.threadpool.start(self.runner)
             retval = None
@@ -731,13 +733,14 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 self._exception(e)
             finally:
                 if block_ui:
-                    self._enable_op_buttons(None)
+                    self._enable_op_buttons()
         return retval
 
 
 class RunnerSignals(QObject):
     """Need a separate class since QRunnable cannot emit signals"""
     finished = pyqtSignal(object)
+    result = pyqtSignal(object)
     error = pyqtSignal(Exception)
 
 
@@ -748,15 +751,16 @@ class Runner(QRunnable):
         super(Runner, self).__init__()
         self.fun = fun
         self.signals = RunnerSignals()
-        self.retval = False  # default "return value" when exception is thrown
 
     def run(self):
         try:
-            self.retval = self.fun()
+            retval = self.fun()
         except Exception as e:
             self.signals.error.emit(e)
+        else:
+            self.signals.result.emit(retval)
         finally:
-            self.signals.finished.emit(self.retval)
+            self.signals.finished.emit()
 
 
 def main():

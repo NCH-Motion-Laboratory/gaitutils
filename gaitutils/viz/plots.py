@@ -9,11 +9,11 @@ Higher level plotting functions
 import os.path as op
 from itertools import cycle
 import logging
+import plotly.graph_objs as go
 
 from .. import (cfg, layouts, trial, GaitDataError, sessionutils, Trial, EMG,
-                normaldata)
+                normaldata, stats, utils)
 from . import plot_matplotlib, plot_plotly
-from ..layouts import rm_dead_channels_multitrial
 
 
 logger = logging.getLogger(__name__)
@@ -170,7 +170,7 @@ def plot_session_emg(session, tags=None, show=True, make_pdf=True,
 
     layout = cfg.layouts.overlay_std_emg
     emgs = [EMG(tr) for tr in c3dfiles]
-    layout = rm_dead_channels_multitrial(emgs, layout)
+    layout = layouts.rm_dead_channels_multitrial(emgs, layout)
 
     if backend == 'matplotlib':
         pl = plot_matplotlib.Plotter()
@@ -265,6 +265,86 @@ def plot_session_musclelen(session, tags=None, age=None, show=True,
         pl.create_pdf('musclelen_consistency.pdf')
 
     return pl.fig
+
+
+def plot_session_average(session, show=True, make_pdf=True):
+
+    figs = []
+    c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
+    if not c3ds:
+        raise GaitDataError('No dynamic trials found for current session')
+
+    atrial = stats.AvgTrial(c3ds)
+
+    pl = plot_matplotlib.Plotter()
+    pl.trial = atrial
+
+    layout = cfg.layouts.lb_kin
+
+    maintitle_ = '%d trial average from %s' % (atrial.nfiles, session)
+
+    for side in ['R', 'L']:
+        side_str = 'right' if side == 'R' else 'left'
+        maintitle = maintitle_ + ' (%s)' % side_str
+        pl.layout = layouts.onesided_layout(layout, side)
+        figs.append(pl.plot_trial(split_model_vars=False,
+                                  model_stddev=atrial.stddev_data,
+                                  maintitle=maintitle,
+                                  show=False))
+        if make_pdf:
+            pl.create_pdf(pdf_name='kin_average_%s.pdf' % side,
+                          sessionpath=session)
+    if show:
+        pl.show()
+
+    return figs
+
+
+def _plot_vel_curves(session):
+    """Plot time-dependent velocity for each dynamic trial in session."""
+    c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
+    if not c3ds:
+        raise GaitDataError('No dynamic trials found for current session')
+    traces = list()
+    for c3d in c3ds:
+        v, vel = utils._trial_median_velocity(c3d, return_curve=True)
+        # vel = signal.medfilt(vel, 3)  # if spikes
+        tname = op.split(c3d)[-1]
+        trace = go.Scatter(y=vel, text=tname, name=tname, hoverinfo='x+y+text')
+        traces.append(trace)
+    return traces
+
+# FIXME: do not import plt
+def plot_trial_velocities(session, show=True, make_pdf=True):
+    """Plot median velocities for each dynamic trial in Nexus session."""
+    c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
+
+    if len(c3ds) == 0:
+        raise Exception('Did not find any dynamic trials in current '
+                        'session directory')
+
+    labels = [op.splitext(op.split(f)[1])[0] for f in c3ds]
+    vels = np.array([utils._trial_median_velocity(trial) for trial in c3ds])
+    vavg = np.nanmean(vels)
+
+    fig = plt.figure()
+    plt.stem(vels)
+    plt.xticks(range(len(vels)), labels, rotation='vertical')
+    plt.ylabel('Speed (m/s)')
+    plt.tick_params(axis='both', which='major', labelsize=8)
+    plt.title('Walking speed for dynamic trials (average %.2f m/s)' % vavg)
+    plt.tight_layout()
+
+    if make_pdf:
+        pdf_name = op.join(nexus.get_sessionpath(), 'trial_velocity.pdf')
+        with PdfPages(pdf_name) as pdf:
+            pdf.savefig(fig)
+
+    if show:
+        plt.show()
+
+    return fig
+
 
 
 

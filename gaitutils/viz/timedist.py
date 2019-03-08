@@ -9,15 +9,13 @@ Plot time-distance vars from single trial or as average of tagged trials
 from builtins import zip
 from builtins import range
 import logging
-import argparse
 import os.path as op
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 
-from gaitutils import (nexus, register_gui_exception_handler, analysis,
-                       GaitDataError, sessionutils, cfg)
-from gaitutils.plot import time_dist_barchart
+from gaitutils import nexus, analysis, GaitDataError, sessionutils, cfg
+from plot_matplotlib import time_dist_barchart
 
 logger = logging.getLogger(__name__)
 
@@ -144,14 +142,3 @@ def _plot_trials(trials, cond_labels=None, interactive=True):
                               stddev_bars=False, plotvars=plotvars,
                               interactive=interactive)
 
-
-if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--tags', metavar='p', type=str, nargs='+',
-                        help='strings that must appear in trial '
-                        'description or notes')
-    args = parser.parse_args()
-    logging.basicConfig(level=logging.DEBUG)
-    register_gui_exception_handler()
-    do_session_average_plot(tags=args.tags)

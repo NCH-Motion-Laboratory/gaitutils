@@ -11,22 +11,13 @@ Note: specific to the Helsinki gait lab.
 from __future__ import absolute_import
 
 import logging
-import argparse
 import os.path as op
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from collections import defaultdict
 
-from gaitutils import (Plotter, cfg, register_gui_exception_handler, layouts,
-                       numutils, normaldata, sessionutils, GaitDataError,
-                       nexus)
-
-from gaitutils.scripts import (nexus_kin_consistency,
-                               nexus_emg_consistency,
-                               nexus_musclelen_consistency,
-                               nexus_kin_average,
-                               nexus_trials_velocity,
-                               nexus_time_distance_vars)
+from .. import (cfg, layouts, numutils, normaldata, sessionutils,
+                GaitDataError)
 
 
 logger = logging.getLogger(__name__)
@@ -57,7 +48,7 @@ def _savefig(pdf, fig, header=None, footer=None):
     pdf.savefig(fig)
 
 
-def do_plot(sessionpath, info=None, pages=None):
+def create_report(sessionpath, info=None, pages=None):
     """Create the pdf report and save in session directory"""
 
     if info is None:
@@ -236,15 +227,51 @@ def do_plot(sessionpath, info=None, pages=None):
     plt.close('all')
 
 
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
-    logging.getLogger('gaitutils.utils').setLevel(logging.WARNING)
-    register_gui_exception_handler()
+def create_comparison_report(sessions, pdfpath=None, pages=None):
+    """ Do a quick comparison report between sessions """
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--session', type=str)
-    args = parser.parse_args()
+    if pages is None:
+        # if no pages specified, do them all
+        pages = defaultdict(lambda: True)
+    else:
+        if not any(pages.values()):
+            raise Exception('No pages to print')
 
-    session = args.session or nexus.get_sessionpath()
-    do_plot(session)
+    sessions_str = u' vs. '.join([op.split(s)[-1] for s in sessions])
+
+    # make header page
+    fig_hdr = plt.figure()
+    ax = plt.subplot(111)
+    plt.axis('off')
+    title_txt = 'HUS Liikelaboratorio\n'
+    title_txt += u'Kävelyanalyysin vertailuraportti\n'
+    title_txt += '\n'
+    title_txt += sessions_str
+    ax.text(.5, .8, title_txt, ha='center', va='center', weight='bold',
+            fontsize=14)
+
+    fig_timedist_cmp = (nexus_time_distance_vars.
+                        do_comparison_plot(sessions, tags=repr_tags,
+                                           show=False))
+
+    fig_kin_cmp = nexus_kin_consistency.do_plot(sessions, tags=repr_tags,
+                                                session_styles=True,
+                                                show=False)
+
+    if pdfpath is None:
+        pdfpath = QtWidgets.QFileDialog.getSaveFileName(None,
+                                                        'Save PDF',
+                                                        sessions[0],
+                                                        '*.pdf')[0]
+    if pdfpath:
+
+        header = u'Comparison %s' % sessions_str
+        logger.debug('creating multipage comparison pdf %s' % pdfpath)
+        with PdfPages(pdfpath) as pdf:
+            _savefig(pdf, fig_hdr)
+            _savefig(pdf, fig_timedist_cmp, header)
+            _savefig(pdf, fig_kin_cmp, header)
+
+    # close all created figures, otherwise they'll pop up on next show() call
+    plt.close('all')
+

@@ -16,9 +16,7 @@ import glob
 import logging
 
 from .numutils import change_coords
-from .envutils import GaitDataError
-
-from .config import cfg
+from . import GaitDataError, cfg
 
 
 logger = logging.getLogger(__name__)

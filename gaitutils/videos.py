@@ -12,7 +12,7 @@ import os.path as op
 import glob
 import itertools
 
-from gaitutils import cfg
+from . import cfg
 
 logger = logging.getLogger(__name__)
 

@@ -10,8 +10,7 @@ import logging
 import numpy as np
 
 from .trial import Trial, Gaitcycle
-from .envutils import GaitDataError
-from . import models
+from . import models, GaitDataError
 
 logger = logging.getLogger(__name__)
 

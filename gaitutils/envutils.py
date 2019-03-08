@@ -14,7 +14,7 @@ import psutil
 import os.path as op
 from pkg_resources import resource_filename
 
-from .guiutils import error_exit
+from .gui._windows import error_exit
 
 
 class GaitDataError(Exception):

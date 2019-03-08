@@ -32,8 +32,8 @@ import time
 import logging
 import itertools
 
-from gaitutils import (nexus, eclipse, utils, GaitDataError, sessionutils,
-                       read_data, cfg)
+from . import (nexus, eclipse, utils, GaitDataError, sessionutils,
+               read_data, cfg)
 
 
 logger = logging.getLogger(__name__)

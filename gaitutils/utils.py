@@ -16,10 +16,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import logging
 
-from .envutils import GaitDataError
+from . import GaitDataError, cfg
 from .numutils import (rising_zerocross, best_match, falling_zerocross,
                        _baseline)
-from .config import cfg
 
 logger = logging.getLogger(__name__)
 

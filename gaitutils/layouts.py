@@ -9,8 +9,7 @@ from builtins import str
 from builtins import zip
 import logging
 
-from .config import cfg
-from .envutils import GaitDataError
+from . import cfg, GaitDataError
 
 logger = logging.getLogger(__name__)
 

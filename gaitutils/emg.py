@@ -14,8 +14,7 @@ import numpy as np
 from scipy import signal
 import logging
 
-from . import read_data
-from .config import cfg
+from . import read_data, cfg
 
 logger = logging.getLogger(__name__)
 

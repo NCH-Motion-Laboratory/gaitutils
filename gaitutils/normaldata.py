@@ -12,9 +12,9 @@ import openpyxl
 import os.path as op
 import logging
 
+from . import cfg
 from .numutils import isfloat
 from .models import models_all
-from .config import cfg
 
 logger = logging.getLogger(__name__)
 

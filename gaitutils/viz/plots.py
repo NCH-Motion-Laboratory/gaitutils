@@ -11,8 +11,8 @@ from itertools import cycle
 import logging
 import plotly.graph_objs as go
 
-from .. import (cfg, layouts, trial, GaitDataError, sessionutils, Trial, EMG,
-                normaldata, stats, utils)
+from .. import (cfg, layouts, trial, GaitDataError, sessionutils,
+                normaldata, stats, utils, emg)
 from . import plot_matplotlib, plot_plotly
 
 
@@ -140,7 +140,7 @@ def plot_sessions(sessions, tags=None, show=True, make_pdf=True,
                 raise GaitDataError('No marked trials found for session %s'
                                     % session)
             c3ds_all.extend(c3ds)
-        trials = [Trial(c3d) for c3d in c3ds]
+        trials = [trial.Trial(c3d) for c3d in c3ds]
         maintitle = ('Kinematics consistency plot, session %s' %
                      op.split(sessions[0])[-1])
         plot_plotly.plot_trials_browser(trials, layout,
@@ -169,7 +169,7 @@ def plot_session_emg(session, tags=None, show=True, make_pdf=True,
     ccolors = cycle(linecolors)
 
     layout = cfg.layouts.overlay_std_emg
-    emgs = [EMG(tr) for tr in c3dfiles]
+    emgs = [emg.EMG(tr) for tr in c3dfiles]
     layout = layouts.rm_dead_channels_multitrial(emgs, layout)
 
     if backend == 'matplotlib':
@@ -210,7 +210,7 @@ def plot_session_emg(session, tags=None, show=True, make_pdf=True,
 
     elif backend == 'plotly':
 
-        trials = [Trial(c3d) for c3d in c3dfiles]
+        trials = [trial.Trial(c3d) for c3d in c3dfiles]
         maintitle = ('EMG consistency plot, session %s' %
                      op.split(session)[-1])
         plot_plotly.plot_trials_browser(trials, layout,

@@ -18,16 +18,9 @@ import os.path as op
 import glob
 import logging
 
-from . import read_data
-from . import nexus
-from . import utils
-from . import eclipse
-from . import models
-from . import videos
 from .emg import EMG
-from .config import cfg
-from .envutils import GaitDataError
-
+from . import (cfg, GaitDataError, read_data, nexus, utils, eclipse, models,
+               videos)
 
 logger = logging.getLogger(__name__)
 

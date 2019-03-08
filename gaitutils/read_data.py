@@ -10,8 +10,7 @@ a path to a c3d file.
 
 """
 
-from . import nexus
-from . import c3d
+from . import nexus, c3d
 
 
 def _reader_module(source):

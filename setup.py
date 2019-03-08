@@ -13,9 +13,9 @@ c_entries = ['gaitmenu=gaitutils.gui._gaitmenu:main',
              'nexus_autoproc_trial=gaitutils.autoprocess:autoproc_trial',
              'nexus_automark_trial=gaitutils.autoprocess:automark_trial',
              'nexus_plot_trial=gaitutils.viz.console:plot_nexus_trial',
-             'nexus_plot_session=gaitutils.viz.console:plot_nexus_session']
+             'nexus_plot_session=gaitutils.viz.console:plot_nexus_session',
+             'nexus_plot_session_emg=gaitutils.viz.console:plot_nexus_session_emg']
 
-# FIXME: add launch_menu
 scripts = ['gaitutils/scripts/launch_menu.bat']
 
 setup(name='gaitutils',

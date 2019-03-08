@@ -10,8 +10,10 @@ import os.path as op
 from itertools import cycle
 import logging
 
-from .. import cfg, layouts, trial, GaitDataError, sessionutils, Trial
+from .. import (cfg, layouts, trial, GaitDataError, sessionutils, Trial, EMG,
+                normaldata)
 from . import plot_matplotlib, plot_plotly
+from ..layouts import rm_dead_channels_multitrial
 
 
 logger = logging.getLogger(__name__)
@@ -147,4 +149,125 @@ def plot_sessions(sessions, tags=None, show=True, make_pdf=True,
 
     else:
         raise ValueError('Invalid backend')
+
+
+def plot_session_emg(session, tags=None, show=True, make_pdf=True,
+                     backend=None):
+    """Plot EMG for tagged trials from session.
+    FIXME: should be merged with plot_sessions"""
+
+    if backend is None:
+        backend = cfg.plot.backend
+
+    c3dfiles = sessionutils.get_c3ds(session, tags=cfg.eclipse.tags,
+                                     trial_type='dynamic')
+
+    if not c3dfiles:
+        raise GaitDataError('No marked trials found for current session')
+
+    linecolors = cfg.plot.overlay_colors
+    ccolors = cycle(linecolors)
+
+    layout = cfg.layouts.overlay_std_emg
+    emgs = [EMG(tr) for tr in c3dfiles]
+    layout = rm_dead_channels_multitrial(emgs, layout)
+
+    if backend == 'matplotlib':
+        pl = plot_matplotlib.Plotter()
+        pl.layout = layout
+
+        for i, trialpath in enumerate(c3dfiles):
+            if i > len(linecolors):
+                logger.warning('not enough colors for plot!')
+            pl.open_trial(c3dfiles[i])
+
+            emg_active = any([pl.trial.emg.status_ok(ch) for ch in
+                              cfg.emg.channel_labels])
+            if not emg_active:
+                continue
+
+            plot_emg_normaldata = (trialpath == c3dfiles[-1])
+
+            pl.plot_trial(emg_tracecolor=next(ccolors),
+                          maintitle='', annotate_emg=False,
+                          superpose=True, show=False,
+                          plot_emg_normaldata=plot_emg_normaldata)
+
+        if not pl.fig:
+            raise GaitDataError('None of the trials have valid EMG data')
+
+        maintitle = ('EMG consistency plot, '
+                     'session %s' % pl.trial.sessiondir)
+        pl.set_title(maintitle)
+
+        if show:
+            pl.show()
+
+        if make_pdf:
+            pl.create_pdf('emg_consistency.pdf')
+
+        return pl.fig
+
+    elif backend == 'plotly':
+
+        trials = [Trial(c3d) for c3d in c3dfiles]
+        maintitle = ('EMG consistency plot, session %s' %
+                     op.split(session)[-1])
+        plot_plotly.plot_trials_browser(trials, layout,
+                                        legend_type='short_name_with_tag',
+                                        maintitle=None)
+
+
+def plot_session_musclelen(session, tags=None, age=None, show=True,
+                           make_pdf=True):
+    """Plot muscle length for tagged trials from session.
+    FIXME: should be merged with plot_sessions"""
+
+    tags = tags or cfg.eclipse.tags
+    tagged_trials = sessionutils.get_c3ds(session, tags=tags,
+                                          trial_type='dynamic')
+
+    if not tagged_trials:
+        raise GaitDataError('No marked trials found for current session')
+
+    pl = plot_matplotlib.Plotter()
+
+    if age is not None:
+        ndata = normaldata.normaldata_age(age)
+        if ndata:
+            pl.add_normaldata(ndata)
+
+    pl.layout = cfg.layouts.overlay_musclelen
+
+    linecolors = cfg.plot.overlay_colors
+    ccolors = cycle(linecolors)
+
+    for i, trialpath in enumerate(tagged_trials):
+        logger.debug('plotting %s' % tagged_trials[i])
+        pl.open_trial(tagged_trials[i])
+        if i > len(linecolors):
+            logger.warning('not enough colors for plot!')
+        # only plot normaldata for last trial to speed up things
+        plot_model_normaldata = (trialpath == tagged_trials[-1])
+        pl.plot_trial(model_tracecolor=next(ccolors), linestyles_context=True,
+                      toeoff_markers=False, add_zeroline=False, show=False,
+                      maintitle='', superpose=True, sharex=False,
+                      plot_model_normaldata=plot_model_normaldata)
+
+    maintitle = ('Muscle length consistency plot, '
+                 'session %s' % pl.trial.sessiondir)
+    pl.set_title(maintitle)
+
+    if show:
+        pl.show()
+
+    if make_pdf:
+        pl.create_pdf('musclelen_consistency.pdf')
+
+    return pl.fig
+
+
+
+
+
 

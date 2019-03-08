@@ -17,10 +17,15 @@ from ..envutils import register_gui_exception_handler
 from .. import nexus
 
 
-def plot_nexus_trial():
-    """Plot currently loaded Nexus trial"""
+def _console_init():
+    """Set up some things for console scripts"""
     logging.basicConfig(level=logging.DEBUG)
     register_gui_exception_handler()
+
+
+def plot_nexus_trial():
+    """Plot currently loaded Nexus trial"""
+    _console_init()
     parser = argparse.ArgumentParser()
     parser.add_argument('--layout', type=str)
     parser.add_argument('--backend', type=str)
@@ -39,13 +44,28 @@ def plot_nexus_trial():
 
 
 def plot_nexus_session():
-    """Overlay tagged dynamic trials from current Nexus session"""
+    """Kin plot for tagged dynamic trials from current Nexus session"""
+    _console_init()
     parser = argparse.ArgumentParser()
     parser.add_argument('--tags', metavar='p', type=str, nargs='+',
                         help='strings that must appear in trial '
                         'description or notes')
     args = parser.parse_args()
-    logging.basicConfig(level=logging.DEBUG)
-    register_gui_exception_handler()
     sessions = [nexus.get_sessionpath()]
     plots.plot_sessions(sessions, tags=args.tags)
+
+
+def plot_nexus_session_emg():
+    """EMG plot for tagged dynamic trials from current Nexus session"""
+    _console_init()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--tags', metavar='p', type=str, nargs='+',
+                        help='strings that must appear in trial '
+                        'description or notes')
+    args = parser.parse_args()
+    sessions = [nexus.get_sessionpath()]
+    plots.plot_session_emg(sessions, tags=args.tags)
+
+
+
+

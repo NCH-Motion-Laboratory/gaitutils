@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Plot time-distance vars from single trial or as average of tagged trials
+Various time-distance statistics plots
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 
-from gaitutils import nexus, analysis, GaitDataError, sessionutils, cfg
-from plot_matplotlib import time_dist_barchart
+from .. import nexus, analysis, GaitDataError, sessionutils, cfg
+from .plot_matplotlib import time_dist_barchart
 
 logger = logging.getLogger(__name__)
 

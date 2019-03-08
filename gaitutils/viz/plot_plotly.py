@@ -14,9 +14,8 @@ from itertools import cycle
 import datetime
 import logging
 
-from gaitutils import models, cfg, normaldata
-from gaitutils.envutils import GaitDataError
-from gaitutils.trial import Gaitcycle, Noncycle
+from .. import models, cfg, normaldata, GaitDataError
+from ..trial import Gaitcycle
 
 
 logger = logging.getLogger(__name__)

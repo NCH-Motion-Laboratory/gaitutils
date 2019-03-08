@@ -27,21 +27,15 @@ from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
                          ChooseSessionsDialog, qt_matplotlib_window)
 from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ..numutils import check_hetu
+from ..videos import _collect_session_videos
 from .. import (GaitDataError, nexus, cfg, report, sessionutils, videos,
                 envutils)
 from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
                            copy_session_videos)
-
-from ..scripts import (nexus_plot,
-                       nexus_emg_consistency,
-                       nexus_kin_consistency,
-                       nexus_musclelen_consistency,
-                       nexus_trials_velocity,
-                       nexus_make_pdf_report,
-                       nexus_make_comparison_report,
-                       nexus_kin_average,
-                       nexus_time_distance_vars)
+from ..viz.plots import (plot_nexus_trial, plot_sessions, plot_session_emg,
+                         plot_session_musclelen, plot_trial_velocities,
+                         plot_session_average)
 
 
 logger = logging.getLogger(__name__)
@@ -60,18 +54,6 @@ def _exception_msg(e):
     else:  # otherwise, we have no idea, so use generic repr()
         err_msg = repr(e)
     return 'There was an error running the operation. Details:\n%s' % err_msg
-
-
-def _collect_videos_to_convert(session, tags):
-    """Collect session AVI files for conversion to web format"""
-    c3ds = sessionutils.get_c3ds(session, tags=tags,
-                                 trial_type='dynamic')
-    c3ds += sessionutils.get_c3ds(session, tags=cfg.eclipse.video_tags,
-                                  trial_type='dynamic')
-    c3ds += sessionutils.get_c3ds(session, trial_type='static')
-    vids_it = (videos.get_trial_videos(c3d, vid_ext='.avi')
-               for c3d in c3ds)
-    return list(itertools.chain.from_iterable(vids_it))
 
 
 class PdfReportDialog(QtWidgets.QDialog):
@@ -225,7 +207,7 @@ class WebReportDialog(QtWidgets.QDialog):
         # includes tagged dynamic, video-only tagged, and static trials
         vidfiles = list()
         for session in sessions:
-            vids = _collect_videos_to_convert(session, tags=tags)
+            vids = _collect_session_videos(session, tags=tags)
             vidfiles.extend(vids)
 
         if not report.convert_videos(vidfiles, check_only=True):
@@ -383,20 +365,19 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         # consistency menu
         self._widget_connect_task(self.actionTrial_velocity,
-                                  nexus_trials_velocity.do_plot)
+                                  plot_trial_velocities)
         self._widget_connect_task(self.actionTime_distance_average,
-                                  nexus_time_distance_vars.
-                                  do_session_average_plot)
+                                  lambda)
         self._widget_connect_task(self.actionKin_average,
-                                  nexus_kin_average.do_plot)
+                                  plot_session_average)
 #        self._widget_connect_task(self.actionKinematics_consistency,
 #                                  nexus_kin_consistency.do_plot,
 #                                  thread=thread_plotters)
         self._widget_connect_task(self.actionEMG_consistency,
-                                  nexus_emg_consistency.do_plot,
+                                  plot_session_emg,
                                   thread=thread_plotters)
         self._widget_connect_task(self.actionMuscle_length_consistency,
-                                  nexus_musclelen_consistency.do_plot,
+                                  plot_session_musclelen,
                                   thread=thread_plotters)
 
         # processing menu
@@ -461,7 +442,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
         model_cycles = emg_cycles = cycs
         from_c3d = self.xbPlotFromC3D.checkState()
-        self._execute(nexus_plot.make_plot, thread=True,
+        self._execute(plot_nexus_trial, thread=True,
                       finished_func=self._enable_op_buttons,
                       result_func=self._show_plot,
                       layout_name=lout_name, model_cycles=model_cycles,
@@ -523,8 +504,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog(_exception_msg(e))
             return
         try:
-            vidfiles = _collect_videos_to_convert(session,
-                                                  tags=cfg.eclipse.tags)
+            vidfiles = _collect_session_videos(session,
+                                               tags=cfg.eclipse.tags)
         except GaitDataError as e:
             qt_message_dialog(_exception_msg(e))
             return

@@ -5,16 +5,27 @@ Video file related code.
 @author: Jussi (jnu@iki.fi)
 """
 
-from builtins import str
 from builtins import zip
 import logging
 import os.path as op
 import glob
 import itertools
 
-from . import cfg
+from . import cfg, sessionutils
 
 logger = logging.getLogger(__name__)
+
+
+def _collect_session_videos(session, tags):
+    """Collect session AVI files"""
+    c3ds = sessionutils.get_c3ds(session, tags=tags,
+                                 trial_type='dynamic')
+    c3ds += sessionutils.get_c3ds(session, tags=cfg.eclipse.video_tags,
+                                  trial_type='dynamic')
+    c3ds += sessionutils.get_c3ds(session, trial_type='static')
+    vids_it = (get_trial_videos(c3d, vid_ext='.avi')
+               for c3d in c3ds)
+    return list(itertools.chain.from_iterable(vids_it))
 
 
 def get_trial_videos(trialfile, camera_label=None, vid_ext=None, overlay=None):

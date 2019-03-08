@@ -41,9 +41,8 @@ from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg,
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
-from .. import (EMG, nexus, cfg, read_data, trial, eclipse, models,
-                Trial, Plotter, layouts, utils, GaitDataError,
-                register_gui_exception_handler)
+from .. import nexus, cfg, read_data
+from ..trial import Trial
 from ..numutils import segment_angles, rms
 from .qt_dialogs import qt_message_dialog, qt_yesno_dialog
 

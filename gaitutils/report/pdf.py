@@ -18,7 +18,7 @@ from collections import defaultdict
 
 from .. import (cfg, layouts, numutils, normaldata, sessionutils,
                 GaitDataError)
-
+from ..viz.plot_matplotlib import Plotter
 
 logger = logging.getLogger(__name__)
 

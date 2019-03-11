@@ -19,7 +19,7 @@ def show_fig(fig, backend=None):
         backend = cfg.plot.backend
     if backend == 'matplotlib':
         app = QtWidgets.QApplication([])
-        _mpl_win = qt_dialogs.qt_matplotlib_window(fig)
+        qt_dialogs.qt_matplotlib_window(fig)
         app.exec_()
     elif backend == 'plotly':
         plotly.offline.plot(fig)

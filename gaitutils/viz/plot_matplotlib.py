@@ -189,9 +189,7 @@ class Plotter(object):
         self.nrows = 0
         self.ncols = 0
         self.interactive = interactive
-        # if in interactive mode, create the figure later - otherwise we
-        # can create it now, as the size does not matter
-        self.fig = None if interactive else Figure()
+        self.fig = None
 
     def add_normaldata(self, filename):
         """ Read the given normal data file if not already read. Take the
@@ -247,6 +245,15 @@ class Plotter(object):
         self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                           height_ratios=plotheightratios,
                                           width_ratios=plotwidthratios)
+        if not self.interactive:
+            # spacing adjustments for the plot, see Figure.tight_layout()
+            # pad == plot margins
+            # w_pad, h_pad == horizontal and vertical subplot padding
+            # rect leaves extra space for maintitle
+            auto_spacing_params = dict(pad=.2, w_pad=.3, h_pad=.3,
+                                       rect=(0, 0, 1, .95))
+            self.fig = Figure(figsize=(self.figw, self.figh),
+                              tight_layout=auto_spacing_params)
 
     def _create_interactive_figure(self):
         """ Create pyplot controlled figure """
@@ -295,8 +302,8 @@ class Plotter(object):
         self._footer = self.fig.text(0, 0, txt, fontsize=8, color='black',
                                      ha='left', va='bottom')
 
-    def tight_layout(self):
-        """ Customized tight layout """
+    def do_autospacing(self):
+        """Automatically space plot elements (tight_layout)"""
         if self.gridspec is None:
             return
         logger.debug('setting tight layout')
@@ -305,8 +312,6 @@ class Plotter(object):
         top = (self.figh - cfg.plot.titlespace) / self.figh
         # decrease vertical spacing
         hspace = .6
-        # self.gridspec.update(hspace=hspace)
-        # self.gridspec.update(top=top)
         self.gridspec.update(top=top, hspace=hspace)
 
     def plot_trial(self, trial=None,
@@ -815,8 +820,6 @@ class Plotter(object):
             plotaxes.append(ax)
 
         self.set_title(maintitle)
-        #self.fig.tight_layout()
-        #self.fig.subplots_adjust(left=0, bottom=0, right=1, top=1)
 
         if show and self.interactive:
             self.show()
@@ -824,9 +827,9 @@ class Plotter(object):
         return self.fig
 
     def set_title(self, title):
+        """Set plot title and update spacing"""
         self.fig.suptitle(title, fontsize=cfg.plot.maintitle_fontsize,
                           fontweight="bold")
-        self.tight_layout()  # update plot spacing
 
     def title_with_eclipse_info(self, trial=None, prefix=''):
         """ Create title: prefix + trial name + Eclipse description and

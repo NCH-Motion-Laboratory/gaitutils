@@ -52,7 +52,8 @@ def plot_nexus_session():
                         'description or notes')
     args = parser.parse_args()
     sessions = [nexus.get_sessionpath()]
-    plots.plot_sessions(sessions, tags=args.tags)
+    fig = plots.plot_sessions(sessions, tags=args.tags)
+    show_fig(fig)
 
 
 def plot_nexus_session_emg():
@@ -65,7 +66,3 @@ def plot_nexus_session_emg():
     args = parser.parse_args()
     sessions = [nexus.get_sessionpath()]
     plots.plot_session_emg(sessions, tags=args.tags)
-
-
-
-

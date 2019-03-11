@@ -16,7 +16,6 @@ import re
 import logging
 
 from .eclipse import get_eclipse_keys
-from .videos import get_trial_videos
 from . import cfg, GaitDataError
 
 

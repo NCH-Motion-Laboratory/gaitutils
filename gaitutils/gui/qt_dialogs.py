@@ -20,7 +20,7 @@ from .. import nexus, GaitDataError, cfg
 def qt_matplotlib_window(fig):
     """Show matplotlib figure fig in new Qt window. Window is returned"""
     _mpl_win = QtWidgets.QDialog()
-    _mpl_win.setGeometry(100, 100, 1500, 1000)
+    #_mpl_win.setGeometry(100, 100, 1500, 1000)
     _mpl_win._canvas = FigureCanvas(fig)
     _mpl_win._canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                    QtWidgets.QSizePolicy.Expanding)
@@ -32,7 +32,6 @@ def qt_matplotlib_window(fig):
     layout.setSpacing(0)
     _mpl_win.setLayout(layout)
     _mpl_win._canvas.draw()
-    fig.tight_layout()
     _mpl_win.show()
     return _mpl_win
 

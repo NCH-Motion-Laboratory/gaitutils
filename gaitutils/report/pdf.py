@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 
-Script to create the full pdf gait report.
+Create single session pdf gait report.
 Note: specific to the Helsinki gait lab.
 
 

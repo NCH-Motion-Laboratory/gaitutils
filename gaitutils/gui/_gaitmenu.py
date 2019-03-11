@@ -366,13 +366,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # consistency menu
         self._widget_connect_task(self.actionTrial_velocity,
                                   plot_trial_velocities)
-        self._widget_connect_task(self.actionTime_distance_average,
-                                  lambda)
+        #self._widget_connect_task(self.actionTime_distance_average,
+        #                          lambda)
         self._widget_connect_task(self.actionKin_average,
                                   plot_session_average)
-#        self._widget_connect_task(self.actionKinematics_consistency,
-#                                  nexus_kin_consistency.do_plot,
-#                                  thread=thread_plotters)
+        self._widget_connect_task(self.actionKinematics_consistency,
+                                  plot_sessions,
+                                  thread=thread_plotters)
         self._widget_connect_task(self.actionEMG_consistency,
                                   plot_session_emg,
                                   thread=thread_plotters)

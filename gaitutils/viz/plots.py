@@ -64,9 +64,10 @@ def plot_nexus_trial(layout_name=None, backend=None, model_cycles=None,
     return fig
 
 
-def plot_sessions(sessions, tags=None, show=True, make_pdf=True,
+def plot_sessions(sessions, tags=None, make_pdf=True,
                   session_styles=False, backend=None):
-    """Plot kinematics for given sessions"""
+    """Plot kinematics for given sessions. FIXME: should take layout as
+    parameter"""
     if backend is None:
         backend = cfg.plot.backend
 
@@ -76,7 +77,7 @@ def plot_sessions(sessions, tags=None, show=True, make_pdf=True,
         tags = cfg.eclipse.tags
 
     if backend == 'matplotlib':
-        pl = plot_matplotlib.Plotter()
+        pl = plot_matplotlib.Plotter(interactive=False)
         pl.layout = layout
 
         linecolors = cfg.plot.overlay_colors
@@ -124,14 +125,11 @@ def plot_sessions(sessions, tags=None, show=True, make_pdf=True,
                          op.split(sessions[0])[-1])
         pl.set_title(maintitle)
 
-        if show:
-            pl.show()
-
         # to recreate old behavior...
         if make_pdf and len(sessions) == 1:
             pl.create_pdf(pdf_name=op.join(sessions[0], 'kin_consistency.pdf'))
 
-        return pl.fig
+        fig = pl.fig
 
     elif backend == 'plotly':
         c3ds_all = list()
@@ -145,12 +143,13 @@ def plot_sessions(sessions, tags=None, show=True, make_pdf=True,
         trials = [trial.Trial(c3d) for c3d in c3ds]
         maintitle = ('Kinematics consistency plot, session %s' %
                      op.split(sessions[0])[-1])
-        plot_plotly.plot_trials_browser(trials, layout,
-                                        legend_type='short_name_with_tag',
-                                        maintitle=None)
-
+        fig = plot_plotly.plot_trials(trials, layout,
+                                      legend_type='short_name_with_tag',
+                                      maintitle=None)
     else:
         raise ValueError('Invalid backend')
+
+    return fig
 
 
 def plot_session_emg(session, tags=None, show=True, make_pdf=True,

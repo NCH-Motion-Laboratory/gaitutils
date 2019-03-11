@@ -21,12 +21,9 @@ import os.path as op
 import numpy as np
 import logging
 
-from .. import models
-from .. import numutils
-from .. import normaldata
+from .. import models, numutils, normaldata, layouts, cfg
 from ..trial import Trial, nexus_trial, Gaitcycle
 from ..stats import AvgTrial
-from ..config import cfg
 
 
 logger = logging.getLogger(__name__)
@@ -207,7 +204,6 @@ class Plotter(object):
     @layout.setter
     def layout(self, layout, plotheightratios=None, plotwidthratios=None):
         """ Set plot layout.
-
         plotheightratios: list
             Height ratios for the plots. Length must equal number of rows in
             the layout. If None, will be automatically computed.
@@ -215,17 +211,10 @@ class Plotter(object):
             Width ratios for the plots. Length must equal number of columns in
             the layout. If None, will be equal.
         """
-        if (not isinstance(layout, list) or not all([isinstance(item, list)
-           for item in layout])):
-            raise ValueError('Layout must be a list of lists')
-
+        self.nrows, self.ncols = layouts.check_layout(layout)
         self._layout = layout
         self.allvars = [item for row in layout for item in row]
         self.n_proper_vars = len([v for v in self.allvars if v is not None])
-        self.nrows = len(layout)
-        if self.nrows == 0:
-            raise ValueError('No data to plot')
-        self.ncols = len(layout[0])
 
         # compute figure width and height - only used for interactive figures
         self.figh = min(self.nrows*cfg.plot.inch_per_row + 1,

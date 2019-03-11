@@ -14,7 +14,7 @@ from itertools import cycle
 import datetime
 import logging
 
-from .. import models, cfg, normaldata, GaitDataError
+from .. import models, cfg, normaldata, GaitDataError, layouts
 from ..trial import Gaitcycle
 
 
@@ -91,12 +91,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     label_fontsize = 16  # x, y labels
     subtitle_fontsize = 20  # subplot titles
 
-    nrows = len(layout)
-    if nrows == 0:
-        raise GaitDataError('Empty layout')
-    ncols = len(layout[0])
-    if ncols == 0:
-        raise GaitDataError('Empty layout')
+    nrows, ncols = layouts.check_layout(layout)
 
     if len(trials) > len(plotly.colors.DEFAULT_PLOTLY_COLORS):
         logger.warning('Not enough colors for plot')

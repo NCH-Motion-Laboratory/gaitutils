@@ -24,6 +24,22 @@ def add_mpl_legend(layout):
         last_row[last_row.index(None)] = 'model_legend'
 
 
+def check_layout(layout):
+    """Check layout consistency. Return tuple (n_of_rows, n_of_cols)"""
+    if not layout or not isinstance(layout, list):
+        raise ValueError('Invalid layout')
+    if not isinstance(layout[0], list):
+        raise ValueError('Invalid layout')
+    nrows = len(layout)
+    ncols = len(layout[0])
+    if ncols < 1:
+        raise ValueError('Invalid layout')
+    for col in layout:
+        if not isinstance(col, list) or len(col) != ncols:
+            raise ValueError('Inconsistent layout')
+    return nrows, ncols
+
+
 def rm_dead_channels(emg, layout):
     """ From EMG layout, remove rows with no valid EMG data """
     layout_ = list()

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 
-Higher level plotting functions
+Higher level plotting functions. Plots should:
+    -take backend argument
+    -return created figure object
 
 @author: Jussi (jnu@iki.fi)
 """

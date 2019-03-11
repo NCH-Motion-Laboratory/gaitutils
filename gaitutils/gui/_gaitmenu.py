@@ -27,7 +27,7 @@ from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
                          ChooseSessionsDialog, qt_matplotlib_window)
 from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ..numutils import check_hetu
-from ..videos import _collect_session_videos
+from ..videos import _collect_session_videos, convert_videos
 from .. import (GaitDataError, nexus, cfg, report, sessionutils, videos,
                 envutils)
 from . import _tardieu
@@ -210,7 +210,7 @@ class WebReportDialog(QtWidgets.QDialog):
             vids = _collect_session_videos(session, tags=tags)
             vidfiles.extend(vids)
 
-        if not report.convert_videos(vidfiles, check_only=True):
+        if not convert_videos(vidfiles, check_only=True):
             self.parent._convert_vidfiles(vidfiles, signals)
 
         # launch the report creation thread
@@ -480,7 +480,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         """Convert given list of video files to web format. Uses non-blocking
         Popen() calls"""
         self._disable_op_buttons()
-        procs = self._execute(report.convert_videos, thread=False,
+        procs = self._execute(convert_videos, thread=False,
                               block_ui=False, vidfiles=vidfiles)
         if not procs:
             return
@@ -513,7 +513,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog('Cannot find any video files for session %s'
                               % session)
             return
-        if report.convert_videos(vidfiles, check_only=True):
+        if convert_videos(vidfiles, check_only=True):
             qt_message_dialog('It looks like the session videos have already '
                               'been converted.')
             return

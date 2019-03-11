@@ -19,57 +19,15 @@ from flask import request
 from collections import OrderedDict
 import logging
 import os.path as op
-import os
-import subprocess
-import ctypes
 import base64
 import io
 
-import gaitutils
-from gaitutils import (cfg, normaldata, models, layouts, GaitDataError,
-                       sessionutils, numutils, videos)
+from .. import (cfg, normaldata, models, layouts, GaitDataError,
+                sessionutils, numutils, videos)
 from gaitutils.plot_plotly import plot_trials
 from gaitutils.scripts import nexus_time_distance_vars
 
 logger = logging.getLogger(__name__)
-
-
-def convert_videos(vidfiles, check_only=False):
-    """Convert video files using command and options defined in cfg.
-    If check_only, return whether files were already converted.
-    Instantly starts as many converter processes as there are files and
-    returns. This has the disadvantage of potentially starting dozens of
-    processes, causing slowdown.
-    """
-    CONV_EXT = '.ogv'  # extension for converted files
-    if not isinstance(vidfiles, list):
-        vidfiles = [vidfiles]
-    convfiles = {vidfile: op.splitext(vidfile)[0] + CONV_EXT for vidfile
-                 in vidfiles}
-    converted = [op.isfile(fn) for fn in convfiles.values()]  # already done
-    if check_only:
-        return all(converted)
-
-    # XXX: this disables Windows protection fault dialogs
-    # needed since ffmpeg2theora may crash after conversion is complete (?)
-    SEM_NOGPFAULTERRORBOX = 0x0002  # From MSDN
-    ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX)
-
-    vidconv_bin = cfg.general.videoconv_path
-    vidconv_opts = cfg.general.videoconv_opts
-    if not (op.isfile(vidconv_bin) and os.access(vidconv_bin, os.X_OK)):
-        raise ValueError('Invalid video converter executable: %s'
-                         % vidconv_bin)
-    procs = []
-    for vidfile, convfile in convfiles.items():
-        if not op.isfile(convfile):
-            # supply NO_WINDOW flag to prevent opening of consoles
-            cmd = [vidconv_bin]+vidconv_opts.split()+[vidfile]
-            cmd = [s.encode('iso-8859-1') for s in cmd]
-            p = subprocess.Popen(cmd,
-                                 stdout=None, creationflags=0x08000000)
-            procs.append(p)
-    return procs
 
 
 def _make_dropdown_lists(options):

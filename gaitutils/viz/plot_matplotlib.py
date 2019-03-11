@@ -161,10 +161,6 @@ class Plotter(object):
         normaldata_files: list
             Normal data files to read (.xlsx or .gcd). If None, read the files
             specified from config.
-        interactive: bool
-            If True, start the pyplot event loop to show the figure
-            in a GUI. If False, do not import pyplot (this is needed for
-            e.g. embedding in Qt).
         """
         matplotlib.style.use(cfg.plot.mpl_style)
 
@@ -245,21 +241,14 @@ class Plotter(object):
         self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
                                           height_ratios=plotheightratios,
                                           width_ratios=plotwidthratios)
-        if not self.interactive:
-            # spacing adjustments for the plot, see Figure.tight_layout()
-            # pad == plot margins
-            # w_pad, h_pad == horizontal and vertical subplot padding
-            # rect leaves extra space for maintitle
-            auto_spacing_params = dict(pad=.2, w_pad=.3, h_pad=.3,
-                                       rect=(0, 0, 1, .95))
-            self.fig = Figure(figsize=(self.figw, self.figh),
-                              tight_layout=auto_spacing_params)
-
-    def _create_interactive_figure(self):
-        """ Create pyplot controlled figure """
-        import matplotlib.pylab as plt
-        # auto size fig according to n of subplots w, limit size
-        self.fig = plt.figure(figsize=(self.figw, self.figh))
+        # spacing adjustments for the plot, see Figure.tight_layout()
+        # pad == plot margins
+        # w_pad, h_pad == horizontal and vertical subplot padding
+        # rect leaves extra space for maintitle
+        auto_spacing_params = dict(pad=.2, w_pad=.3, h_pad=.3,
+                                   rect=(0, 0, 1, .95))
+        self.fig = Figure(figsize=(self.figw, self.figh),
+                          tight_layout=auto_spacing_params)
 
     def open_nexus_trial(self):
         self.trial = nexus_trial()
@@ -337,7 +326,6 @@ class Plotter(object):
                    plot_emg_normaldata=True,
                    plot_emg_rms=False,
                    sharex=True,
-                   show=True,
                    superpose=False,
                    maintitle=None,
                    maintitleprefix=None,
@@ -419,10 +407,6 @@ class Plotter(object):
         superpose : bool
                 If superpose=False, create new figure. Otherwise superpose
                 on existing figure.
-        show : bool
-                Whether to show the plot after plotting is finished. Use
-                show=False if overlaying multiple trials and call show()
-                after finished. If interactive=False, this has no effect.
         add_zeroline : bool
                 Add line on y=0
 
@@ -435,25 +419,9 @@ class Plotter(object):
         if self._layout is None:
             raise ValueError('Please set layout before plotting')
 
-        # figure creation
-        # TODO: simplify
-        if self.interactive:
-            if superpose:
-                if self.fig is None:
-                    logger.debug('no figure to superpose on, creating new one')
-                    self._create_interactive_figure()
-                else:
-                    logger.debug('using existing figure for superpose')
-            else:
-                # interactive, new figure
-                logger.debug('creating new figure')
-                self._create_interactive_figure()
-        else:  # non interactive - figure should exist already
-            if superpose:
-                pass  # superposing on existing figure
-            else:
-                # reusing the existing figure - no superpose
-                self.fig.clear()
+        # if not superposing data, make sure that the figure is cleared
+        if not superpose:
+            self.fig.clear()
 
         # automatically set title if in interactive mode
         if maintitle is None and self.interactive:
@@ -820,10 +788,6 @@ class Plotter(object):
             plotaxes.append(ax)
 
         self.set_title(maintitle)
-
-        if show and self.interactive:
-            self.show()
-
         return self.fig
 
     def set_title(self, title):
@@ -843,13 +807,6 @@ class Plotter(object):
         maintitle += ' (%s)' % desc if desc else ''
         maintitle += ' (%s)' % notes if notes else ''
         return maintitle
-
-    def show(self):
-        # start the pyplot event loop to show the figure
-        if self.interactive and self.fig is not None:
-            logger.debug('starting pyplot event loop')
-            import matplotlib.pyplot as plt
-            plt.show()
 
     def create_pdf(self, pdf_name=None, trial=None, pdf_prefix='Nexus_plot',
                    sessionpath=None):

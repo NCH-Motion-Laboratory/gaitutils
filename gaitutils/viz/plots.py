@@ -77,7 +77,7 @@ def plot_sessions(sessions, tags=None, make_pdf=True,
         tags = cfg.eclipse.tags
 
     if backend == 'matplotlib':
-        pl = plot_matplotlib.Plotter(interactive=False)
+        pl = plot_matplotlib.Plotter()
         pl.layout = layout
 
         linecolors = cfg.plot.overlay_colors
@@ -113,7 +113,7 @@ def plot_sessions(sessions, tags=None, make_pdf=True,
                               model_linestyle=model_linestyle,
                               linestyles_context=linestyles_context,
                               toeoff_markers=False, legend_maxlen=10,
-                              maintitle='', superpose=True, show=False,
+                              maintitle='', superpose=True,
                               plot_model_normaldata=plot_model_normaldata)
 
         # auto set title

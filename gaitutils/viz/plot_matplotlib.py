@@ -489,20 +489,6 @@ class Plotter(object):
         if not (model_cycles or emg_cycles):
             raise ValueError('No matching gait cycles found in data')
 
-        """
-        if self.fig is None or not superpose:
-            # auto size fig according to n of subplots w, limit size
-            self.figh = min(self.nrows*cfg.plot.inch_per_row + 1,
-                            cfg.plot.maxh)
-            self.figw = min(self.ncols*cfg.plot.inch_per_col,
-                            cfg.plot.maxw)
-            logger.debug('new figure: width %.2f, height %.2f'
-                         % (self.figw, self.figh))
-            self.fig = plt.figure(figsize=(self.figw, self.figh))
-            self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
-                                              height_ratios=plotheightratios)
-        """
-
         is_avg_trial = isinstance(trial, AvgTrial)
 
         for i, var in enumerate(self.allvars):

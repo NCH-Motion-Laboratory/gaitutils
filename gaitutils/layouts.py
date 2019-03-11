@@ -14,6 +14,16 @@ from . import cfg, GaitDataError
 logger = logging.getLogger(__name__)
 
 
+def add_mpl_legend(layout):
+    """WIP
+    Adds matplotlib legend to layout. If layout has empty entries or 1st or
+    last row, these can be used for the legend. Otherwise, a new row will be
+    added."""
+    last_row = layout[-1]
+    if None in last_row:
+        last_row[last_row.index(None)] = 'model_legend'
+
+
 def rm_dead_channels(emg, layout):
     """ From EMG layout, remove rows with no valid EMG data """
     layout_ = list()

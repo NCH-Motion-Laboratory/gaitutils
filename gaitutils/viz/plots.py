@@ -14,7 +14,7 @@ import logging
 import plotly.graph_objs as go
 
 from .. import (cfg, layouts, trial, GaitDataError, sessionutils,
-                normaldata, stats, utils, emg)
+                normaldata, stats, utils, emg, nexus)
 from . import plot_matplotlib, plot_plotly
 
 
@@ -64,7 +64,19 @@ def plot_nexus_trial(layout_name=None, backend=None, model_cycles=None,
     return fig
 
 
-def plot_sessions(sessions, tags=None, make_pdf=True,
+def plot_nexus_session(tags=None):
+    """Plot tagged trials from Nexus session"""
+    sessions = [nexus.get_sessionpath()]
+    return plot_sessions(sessions, tags=tags)
+
+
+def plot_nexus_session_average(tags=None):
+    """Plot tagged trials from Nexus session"""
+    session = nexus.get_sessionpath()
+    return plot_session_average(session)
+
+
+def plot_sessions(sessions, tags=None, make_pdf=False,
                   session_styles=False, backend=None):
     """Plot kinematics for given sessions. FIXME: should take layout as
     parameter"""
@@ -109,12 +121,12 @@ def plot_sessions(sessions, tags=None, make_pdf=True,
                     model_linestyle = None
                     linestyles_context = True
 
-                pl.plot_trial(model_tracecolor=model_tracecolor,
-                              model_linestyle=model_linestyle,
-                              linestyles_context=linestyles_context,
-                              toeoff_markers=False, legend_maxlen=10,
-                              maintitle='', superpose=True,
-                              plot_model_normaldata=plot_model_normaldata)
+                fig = pl.plot_trial(model_tracecolor=model_tracecolor,
+                                    model_linestyle=model_linestyle,
+                                    linestyles_context=linestyles_context,
+                                    toeoff_markers=False, legend_maxlen=10,
+                                    maintitle='', superpose=True,
+                                    plot_model_normaldata=plot_model_normaldata)
 
         # auto set title
         if len(sessions) > 1:
@@ -128,8 +140,6 @@ def plot_sessions(sessions, tags=None, make_pdf=True,
         # to recreate old behavior...
         if make_pdf and len(sessions) == 1:
             pl.create_pdf(pdf_name=op.join(sessions[0], 'kin_consistency.pdf'))
-
-        fig = pl.fig
 
     elif backend == 'plotly':
         c3ds_all = list()
@@ -268,7 +278,7 @@ def plot_session_musclelen(session, tags=None, age=None, show=True,
     return pl.fig
 
 
-def plot_session_average(session, show=True, make_pdf=True):
+def plot_session_average(session, make_pdf=False):
 
     figs = []
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
@@ -290,14 +300,10 @@ def plot_session_average(session, show=True, make_pdf=True):
         pl.layout = layouts.onesided_layout(layout, side)
         figs.append(pl.plot_trial(split_model_vars=False,
                                   model_stddev=atrial.stddev_data,
-                                  maintitle=maintitle,
-                                  show=False))
+                                  maintitle=maintitle))
         if make_pdf:
             pl.create_pdf(pdf_name='kin_average_%s.pdf' % side,
                           sessionpath=session)
-    if show:
-        pl.show()
-
     return figs
 
 

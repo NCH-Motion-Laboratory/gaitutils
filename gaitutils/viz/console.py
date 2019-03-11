@@ -51,9 +51,16 @@ def plot_nexus_session():
                         help='strings that must appear in trial '
                         'description or notes')
     args = parser.parse_args()
-    sessions = [nexus.get_sessionpath()]
-    fig = plots.plot_sessions(sessions, tags=args.tags)
+    fig = plots.plot_nexus_session(tags=args.tags)
     show_fig(fig)
+
+
+def plot_nexus_session_average():
+    """Kin average plot for session"""
+    _console_init()
+    figs = plots.plot_nexus_session_average()
+    for fig in figs:
+        show_fig(fig)
 
 
 def plot_nexus_session_emg():

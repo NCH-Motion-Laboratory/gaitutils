@@ -33,9 +33,10 @@ from .. import (GaitDataError, nexus, cfg, report, sessionutils, videos,
 from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
                            copy_session_videos)
-from ..viz.plots import (plot_nexus_trial, plot_sessions, plot_session_emg,
+from ..viz.plots import (plot_nexus_trial, plot_nexus_session,
+                         plot_session_emg,
                          plot_session_musclelen, plot_trial_velocities,
-                         plot_session_average)
+                         plot_nexus_session_average)
 
 
 logger = logging.getLogger(__name__)
@@ -361,21 +362,15 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionTardieu_analysis.triggered.connect(self._tardieu)
         self.actionAutoprocess_session.triggered.connect(self._autoproc_session)
         self.btnPlotNexusTrial.clicked.connect(self._plot_nexus_trial)
-        self.actionKinematics_consistency.triggered.connect(lambda: self._plot_wrapper(nexus_kin_consistency.do_plot))
+        self.actionKinematics_consistency.triggered.connect(lambda: self._plot_wrapper(plot_nexus_session))
+        self.actionKin_average.triggered.connect(lambda: self._plot_wrapper(plot_nexus_session_average))
+        self.actionEMG_consistency.triggered.connect(lambda: self._plot_wrapper(plot_sessions_emg))
 
         # consistency menu
         self._widget_connect_task(self.actionTrial_velocity,
                                   plot_trial_velocities)
         #self._widget_connect_task(self.actionTime_distance_average,
         #                          lambda)
-        self._widget_connect_task(self.actionKin_average,
-                                  plot_session_average)
-        self._widget_connect_task(self.actionKinematics_consistency,
-                                  plot_sessions,
-                                  thread=thread_plotters)
-        self._widget_connect_task(self.actionEMG_consistency,
-                                  plot_session_emg,
-                                  thread=thread_plotters)
         self._widget_connect_task(self.actionMuscle_length_consistency,
                                   plot_session_musclelen,
                                   thread=thread_plotters)
@@ -451,16 +446,19 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _plot_wrapper(self, plotfun):
         """Wrapper for plotting functions. Runs the function in a thread and
         shows the plot when ready."""
-        self._execute(plotfun, thread=True, result_func=self._show_plot,
+        self._execute(plotfun, thread=True, result_func=self._show_plots,
                       finished_func=self._enable_op_buttons)
 
-    def _show_plot(self, fig):
-        """Shows a plot"""
-        if cfg.plot.backend == 'matplotlib':
-            _mpl_win = qt_matplotlib_window(fig)
-            self._mpl_windows.append(_mpl_win)
-        elif cfg.plot.backend == 'plotly':
-            plotly.offline.plot(fig)
+    def _show_plots(self, figs):
+        """Shows created plot(s)"""
+        if not isinstance(figs, list):
+            figs = [figs]
+        for fig in figs:
+            if cfg.plot.backend == 'matplotlib':
+                _mpl_win = qt_matplotlib_window(fig)
+                self._mpl_windows.append(_mpl_win)
+            elif cfg.plot.backend == 'plotly':
+                plotly.offline.plot(fig)
 
     def _widget_connect_task(self, widget, fun, thread=False):
         """Helper to connect widget with task. Use lambda to consume unused

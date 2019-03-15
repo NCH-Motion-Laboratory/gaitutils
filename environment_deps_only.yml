@@ -28,5 +28,4 @@ dependencies:
     - dash-renderer
     - plotly
     - pytest
-prefix: C:\Anaconda2
 

@@ -28,5 +28,4 @@ dependencies:
     - gaitutils
     - plotly
     - pytest
-prefix: C:\Anaconda2
 

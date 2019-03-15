@@ -19,7 +19,7 @@ envdir = os.environ['CONDA_PREFIX']
 pythonw = op.join(anaconda_root, 'pythonw.exe')
 cwp = op.join(anaconda_root, 'cwp.py')
 pythonw_env = op.join(envdir, 'pythonw.exe')
-script = op.join(envdir, 'Scripts\gaitmenu-script.py')
+script = op.join(envdir, r'Scripts\gaitmenu-script.py')
 
 assert op.isfile(cwp)
 assert op.isdir(envdir)

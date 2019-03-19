@@ -21,6 +21,8 @@ def check_hetu(hetu):
     chrs = "0123456789ABCDEFHJKLMNPRSTUVWXY"
     if len(hetu) != 11:
         return False
+    if hetu[6] not in '+-A':
+        return False
     # check day and month
     pp, kk = int(hetu[:2]), int(hetu[2:4])
     if not (0 <= pp <= 31 and 1 <= kk <= 12):

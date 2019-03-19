@@ -18,16 +18,16 @@ from numpy.lib.stride_tricks import as_strided
 
 def check_hetu(hetu):
     """ This checks validity of a Finnish social security number (hetu) """
-    chrs = "0123456789ABCDEFHJKLMNPRSTUVWXY"
-    if len(hetu) != 11:
+    if len(hetu) != 11 or hetu[6] not in '+-A':
         return False
-    if hetu[6] not in '+-A':
+    try:
+        dd, mm = int(hetu[:2]), int(hetu[2:4])
+    except ValueError:
         return False
-    # check day and month
-    pp, kk = int(hetu[:2]), int(hetu[2:4])
-    if not (0 <= pp <= 31 and 1 <= kk <= 12):
+    if not (0 <= dd <= 31 and 1 <= mm <= 12):
         return False
     # check 'checksum'
+    chrs = "0123456789ABCDEFHJKLMNPRSTUVWXY"
     chk = chrs[(int(hetu[:6] + hetu[7:10])) % 31]
     if hetu[-1] != chk:
         return False

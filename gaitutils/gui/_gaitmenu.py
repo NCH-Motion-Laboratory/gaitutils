@@ -647,17 +647,18 @@ class Gaitmenu(QtWidgets.QMainWindow):
         else:
             prompt_ = 'Please give additional subject information:'
             dlg_info = PdfReportDialog(info, prompt=prompt_)
-            if dlg_info.exec_():
-                new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,
-                                report_notes=dlg_info.session_description)
-                info.update(new_info)
+            if not dlg_info.exec_():
+                return
+            new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,
+                            report_notes=dlg_info.session_description)
+            info.update(new_info)
 
-                # update info files according to user input
-                for session in sessions:
-                    update_dict = dict(fullname=dlg_info.fullname,
-                                       hetu=dlg_info.hetu)
-                    session_infos[session].update(update_dict)
-                    sessionutils.save_info(session, session_infos[session])
+            # update info files according to user input
+            for session in sessions:
+                update_dict = dict(fullname=dlg_info.fullname,
+                                   hetu=dlg_info.hetu)
+                session_infos[session].update(update_dict)
+                sessionutils.save_info(session, session_infos[session])
 
         # create the report
         if comparison:

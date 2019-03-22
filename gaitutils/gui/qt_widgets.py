@@ -113,7 +113,7 @@ class XStream(QtCore.QObject):
 
     def write(self, msg):
         if not self.signalsBlocked():
-            self.messageWritten.emit(str(msg))
+            self.messageWritten.emit(msg)
 
     @staticmethod
     def stdout():

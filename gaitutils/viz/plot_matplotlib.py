@@ -21,12 +21,91 @@ import os.path as op
 import numpy as np
 import logging
 
-from .. import models, numutils, normaldata, layouts, cfg
+from .. import models, numutils, normaldata, layouts, cfg, GaitDataError
 from ..trial import Trial, nexus_trial, Gaitcycle
 from ..stats import AvgTrial
 
 
 logger = logging.getLogger(__name__)
+
+
+
+def _plot_height_ratios(layout):
+    """ Automatically adjust height ratios, if they are not specified """
+    plotheightratios = []
+    for row in layout:
+        if all([models.model_from_var(var) for var in row]):
+            plotheightratios.append(1)
+        else:
+            plotheightratios.append(cfg.plot.analog_plotheight)
+    return plotheightratios
+
+
+
+def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
+                emg_cycles=None, legend_type='full', trial_linestyles='same',
+                supplementary_data=None, maintitle=None):
+
+    if not trials:
+        raise GaitDataError('No trials')
+
+    nrows, ncols = layouts.check_layout(layout)
+    allvars = [item for row in layout for item in row]
+
+    # compute figure width and height - only used for interactive figures
+    figh = min(nrows*cfg.plot.inch_per_row + 1, cfg.plot.maxh)
+    figw = min(ncols*cfg.plot.inch_per_col, cfg.plot.maxw)
+
+    plotheightratios = _plot_height_ratios(layout)
+    # if plotheightratios is None:
+    #     plotheightratios = _plot_height_ratios()
+    # elif len(plotheightratios) != len(nrows):
+    #     raise ValueError('n of height ratios must match n of rows')
+
+    gridspec_ = gridspec.GridSpec(nrows, ncols,
+                                  height_ratios=plotheightratios,
+                                  width_ratios=None)
+    # spacing adjustments for the plot, see Figure.tight_layout()
+    # pad == plot margins
+    # w_pad, h_pad == horizontal and vertical subplot padding
+    # rect leaves extra space for maintitle
+    auto_spacing_params = dict(pad=.2, w_pad=.3, h_pad=.3,
+                               rect=(0, 0, 1, .95))
+    fig = Figure(figsize=(figw, figh),
+                 tight_layout=auto_spacing_params)
+
+    model_cyclespec = (cfg.plot.default_model_cycles if model_cycles is None
+                       else model_cycles)
+    emg_cyclespec = (cfg.plot.default_emg_cycles if emg_cycles is None else
+                     emg_cycles)
+
+    for trial in trials:
+
+        model_cycles = trial.get_cycles(model_cyclespec)
+        emg_cycles = trial.get_cycles(emg_cyclespec)
+        allcycles = list(set.union(set(model_cycles), set(emg_cycles)))
+        if not allcycles:
+            raise GaitDataError('Trial %s has no cycles of specified type' %
+                                trial.trialname)
+
+        logger.debug('plotting total of %d cycles for %s (%d model, %d EMG)'
+                     % (len(allcycles), trial.trialname, len(model_cycles),
+                        len(emg_cycles)))
+
+        cycs_unnorm = [cyc.start is None for cyc in allcycles]
+        is_unnormalized = any(cycs_unnorm)
+        if is_unnormalized and not all(cycs_unnorm):
+            raise GaitDataError('Cannot mix normalized and unnormalized data')
+
+        for cyc_ind, cyc in enumerate(allcycles):
+            #logger.debug('trial %s, cycle: %s' % (trial.trialname, cyc))
+            trial.set_norm_cycle(cyc)
+            context = cyc.context
+
+            for i, row in enumerate(layout):
+                for j, var in enumerate(row):
+                    print(i, j)
+
 
 
 def save_pdf(filename, fig):

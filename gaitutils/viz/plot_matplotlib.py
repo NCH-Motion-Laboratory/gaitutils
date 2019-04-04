@@ -11,6 +11,7 @@ from __future__ import division
 from builtins import zip
 from builtins import range
 from builtins import object
+from itertools import cycle
 import matplotlib
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -21,6 +22,7 @@ import os.path as op
 import numpy as np
 import logging
 
+from .plot_common import _truncate_trialname, _get_legend_entry, _var_title
 from .. import models, numutils, normaldata, layouts, cfg, GaitDataError
 from ..trial import Trial, nexus_trial, Gaitcycle
 from ..stats import AvgTrial
@@ -41,16 +43,37 @@ def _plot_height_ratios(layout):
     return plotheightratios
 
 
+def _set_subplot_title(ax, var):
+    title = _var_title(var)
+    if title:
+        ax.set_title(title)
+        ax.title.set_fontsize(cfg.plot.title_fontsize)
+
+
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                 emg_cycles=None, legend_type='full', trial_linestyles='same',
                 supplementary_data=None, maintitle=None):
+    """plot trials and return Figure instance"""
 
     if not trials:
         raise GaitDataError('No trials')
 
+    if supplementary_data is None:
+        supplementary_data = dict()
+
+    if model_normaldata is None:
+        model_normaldata = normaldata.read_all_normaldata()
+    logger.debug('done')
     nrows, ncols = layouts.check_layout(layout)
-    allvars = [item for row in layout for item in row]
+
+    # mpl default colors as a cycle
+    colors = matplotlib.rcParams['axes.prop_cycle']()
+    #if len(trials) > len(colors_list):
+    #    logger.warning('Not enough colors for plot')
+
+    session_linestyles = dict()
+    linestyles = cycle(['solid', 'dash', 'dot', 'dashdot'])
 
     # compute figure width and height - only used for interactive figures
     figh = min(nrows*cfg.plot.inch_per_row + 1, cfg.plot.maxh)
@@ -79,7 +102,10 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     emg_cyclespec = (cfg.plot.default_emg_cycles if emg_cycles is None else
                      emg_cycles)
 
+    tracegroups = set()
+
     for trial in trials:
+        trial_color = next(colors)
 
         model_cycles = trial.get_cycles(model_cyclespec)
         emg_cycles = trial.get_cycles(emg_cyclespec)
@@ -98,14 +124,214 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
             raise GaitDataError('Cannot mix normalized and unnormalized data')
 
         for cyc_ind, cyc in enumerate(allcycles):
-            #logger.debug('trial %s, cycle: %s' % (trial.trialname, cyc))
             trial.set_norm_cycle(cyc)
             context = cyc.context
 
             for i, row in enumerate(layout):
                 for j, var in enumerate(row):
-                    print(i, j)
 
+                    ax = fig.add_subplot(gridspec_[i, j])  #  sharex=plotaxes[-1])
+
+                    if var is None:
+                        ax.axis('off')
+                        continue
+
+                    tracegroup = _get_legend_entry(trial, cyc, legend_type)
+                    tracename_full = '%s (%s) / %s' % (trial.trialname,
+                                                       trial.eclipse_tag,
+                                                       cyc.name)
+
+                    # only show the legend for the first trace in the
+                    # tracegroup, so we do not repeat legends
+                    show_legend = tracegroup not in tracegroups
+
+                    mod = models.model_from_var(var)
+
+                    if mod:
+                        do_plot = True
+
+                        if cyc not in model_cycles:
+                            do_plot = False
+
+                        if var in mod.varnames_noside:
+                            # var context was unspecified, so choose it
+                            # according to cycle context
+                            var = context + var
+                        elif var[0] != context:
+                            # var context was specified, and has to match cycle
+                            do_plot = False
+
+                        if mod.is_kinetic_var(var):
+                            # kinetic var cycles are required to have valid
+                            # forceplate data
+                            if not is_unnormalized and not cyc.on_forceplate:
+                                do_plot = False
+
+                        # plot normaldata before other data so that its z order
+                        # is lowest (otherwise normaldata will mask other
+                        # traces on hover) and it gets the 1st legend entry
+                        if (model_normaldata is not None and trial == trials[0]
+                            and cyc == allcycles[0] and not is_unnormalized):
+                            nvar = var[1:]  # normal vars are without context
+                            key = nvar if nvar in model_normaldata else None
+                            ndata = (model_normaldata[key] if key in
+                                     model_normaldata else None)
+                            if ndata is not None:
+                                normalx = np.linspace(0, 100, ndata.shape[0])
+                                ax.fill_between(normalx, ndata[:, 0],
+                                                ndata[:, 1],
+                                                color=cfg.plot.
+                                                model_normals_color,
+                                                alpha=cfg.plot.
+                                                model_normals_alpha)
+                                model_normaldata_legend = False
+
+                        if do_plot:
+                            t, y = trial.get_model_data(var)
+
+                            if trial_linestyles == 'trial':
+                                # trial specific color, left side dashed
+                                linecolor = trial_color['color']
+                                if context == 'L':
+                                    linestyle = '--'
+                            elif trial_linestyles == 'same':
+                                # identical color for all trials
+                                linecolor = cfg.plot.model_tracecolors[context]
+                                linestyle = '-'
+                            elif trial_linestyles == 'session':
+                                # session specific line style
+                                linecolor = cfg.plot.model_tracecolors[context]
+                                if trial.sessiondir in session_linestyles:
+                                    linestyle = session_linestyles[trial.sessiondir]
+                                else:
+                                    linestyle = next(linestyles)
+                                    session_linestyles[trial.sessiondir] = linestyle
+
+                            lines_ = ax.plot(t, y, linecolor, linestyle=linestyle,
+                                             linewidth=cfg.plot.model_linewidth)
+                           
+                            # add toeoff marker
+                            if cyc.toeoffn is not None:
+                                toeoff = int(cyc.toeoffn)
+                                toeoff_marker = ax.plot(t[toeoff:toeoff+1],
+                                                        y[toeoff:toeoff+1],
+                                                        'black',
+                                                        marker='^')
+
+                            # add supplementary data
+                            # if cyc in supplementary_data:
+                            #     supdata = supplementary_data[cyc]
+                            #     if var in supdata:
+                            #         logger.debug('plotting supplementary data '
+                            #                      'for var %s' % var)
+                            #         t_sup = supdata[var]['t']
+                            #         data_sup = supdata[var]['data']
+                            #         label_sup = supdata[var]['label']
+                            #         strace = go.Scatter(x=t_sup, y=data_sup,
+                            #                             name=label_sup,
+                            #                             text=label_sup,
+                            #                             line=line,
+                            #                             legendgroup=tracegroup,
+                            #                             hoverinfo='x+y+text',
+                            #                             showlegend=False)
+                            #         fig.append_trace(strace, i+1, j+1)
+
+
+                            # axis adjustments
+                            if not ax.get_ylabel():
+                                yunit = mod.units[var]
+                                if yunit == 'deg':
+                                    yunit = u'\u00B0'  # degree sign
+                                ydesc = [s[:3] for s in mod.ydesc[var]]  # shorten
+                                ylabel_ = '%s %s %s' % (ydesc[0], yunit, ydesc[1])
+                                ax.set(ylabel=ylabel_)
+                                ax.xaxis.label.set_fontsize(cfg.
+                                                            plot.label_fontsize)
+                                ax.yaxis.label.set_fontsize(cfg.
+                                                            plot.label_fontsize)
+                                title = _var_title(var)
+                                if title:
+                                    ax.set_title(title)
+                                    ax.title.set_fontsize(cfg.plot.title_fontsize)
+
+                                # FIXME: add n of averages for AvgTrial
+                                is_avg_trial = False
+                                if is_avg_trial:
+                                    subplot_title += (' (avg of %d cycles)' %
+                                                    trial.n_ok[var])
+
+                                ax.locator_params(axis='y', nbins=6)  # less tick marks
+                                ax.tick_params(axis='both', which='major',
+                                               labelsize=cfg.plot.ticks_fontsize)
+
+                                # only set x labels for the bottom row of plot
+                                if row == layout[-1]:
+                                    xlabel = 'frame' if is_unnormalized else '% of gait cycle'
+                                    ax.set(xlabel=xlabel)
+                                    ax.xaxis.label.set_fontsize(cfg.plot.label_fontsize)
+
+                    # plot EMG variable
+                    elif (trial.emg.is_channel(var) or var in
+                          cfg.emg.channel_labels):
+                        do_plot = True
+                        # plot only if EMG channel context matches cycle ctxt
+                        # FIXME: this assumes that EMG names begin with context
+                        if (var[0] != context or not trial.emg.status_ok(var)
+                            or cyc not in emg_cycles):
+                            do_plot = False
+                            # FIXME: maybe annotate disconnected chans
+                            # _no_ticks_or_labels(ax)
+                            # _axis_annotate(ax, 'disconnected')
+                        if do_plot:
+                            t_, y = trial.get_emg_data(var)
+                            t = (t_ / trial.samplesperframe if is_unnormalized
+                                 else t_)
+                            ax.plot(t, y*cfg.plot.emg_multiplier,
+                                    linewidth=cfg.plot.emg_linewidth,
+                                    **trial_color)
+
+                        # do normal data & plot adjustments for last EMG cycle
+                        remaining = allcycles[cyc_ind+1:]
+                        last_emg = (trial == trials[-1] and not
+                                    any(c in remaining for c in emg_cycles))
+                        if last_emg:
+
+                            ax.set(ylabel=cfg.plot.emg_ylabel)
+                            ax.yaxis.label.set_fontsize(cfg.
+                                                        plot.label_fontsize)
+                            ax.locator_params(axis='y', nbins=4)
+                            # tick font size
+                            ax.tick_params(axis='both', which='major',
+                                           labelsize=cfg.plot.ticks_fontsize)
+                            ax.set_xlim(min(t), max(t))
+                            ysc = [-cfg.plot.emg_yscale, cfg.plot.emg_yscale]
+                            ax.set_ylim(ysc[0]*cfg.plot.emg_multiplier,
+                                        ysc[1]*cfg.plot.emg_multiplier)
+
+                            title = _var_title(var)
+                            if title:
+                                ax.set_title(title)
+                                ax.title.set_fontsize(cfg.plot.title_fontsize)
+
+                            if not is_unnormalized and var in cfg.emg.channel_normaldata:
+                                emgbar_ind = cfg.emg.channel_normaldata[var]
+                                for inds in emgbar_ind:
+                                    ax.axvspan(inds[0], inds[1], alpha=cfg.
+                                               plot.emg_normals_alpha,
+                                               color=cfg.plot.
+                                               emg_normals_color)
+                                    emg_normaldata_legend = False  # add to legend only once
+
+                    elif var is None:
+                        continue
+
+                    elif 'legend' in var:  # 'legend' is for mpl plotter only
+                        continue
+
+                    else:
+                        raise Exception('Unknown variable %s' % var)
+
+    return fig
 
 
 def save_pdf(filename, fig):

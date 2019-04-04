@@ -12,14 +12,15 @@ import plotly
 from ..gui import qt_dialogs
 from ..config import cfg
 
+from matplotlib.figure import Figure
 
-def show_fig(fig, backend=None):
-    """Simple interactive show fig thing, intended for command line scripts"""
-    if backend is None:
-        backend = cfg.plot.backend
-    if backend == 'matplotlib':
+
+def show_fig(fig):
+    if not fig:
+        raise ValueError('No figure to show')
+    if isinstance(fig, Figure):  # matplotlib
         app = QtWidgets.QApplication([])
         win = qt_dialogs.qt_matplotlib_window(fig)
         app.exec_()
-    elif backend == 'plotly':
+    else:  # hopefully plotly
         plotly.offline.plot(fig)

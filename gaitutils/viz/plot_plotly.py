@@ -5,18 +5,17 @@ plotly based plotting functions
 @author: Jussi (jnu@iki.fi)
 """
 
+import logging
 from builtins import range
+from itertools import cycle
+
+import numpy as np
 import plotly
 import plotly.graph_objs as go
 import plotly.tools
-import numpy as np
-from itertools import cycle
-import datetime
-import logging
 
-from .. import models, cfg, normaldata, GaitDataError, layouts
-from ..trial import Gaitcycle
-
+from .. import GaitDataError, cfg, layouts, models, normaldata
+from .plot_common import _get_legend_entry, _truncate_trialname, _var_title
 
 logger = logging.getLogger(__name__)
 
@@ -28,44 +27,17 @@ def _plotly_fill_between(x, ylow, yhigh, **kwargs):
     return go.Scatter(x=x_, y=y_, fill='toself', hoverinfo='none', **kwargs)
 
 
-def _var_title(var):
-    """Get proper title for variable"""
-    mod = models.model_from_var(var)
-    if mod:
-        if var in mod.varlabels_noside:
-            return mod.varlabels_noside[var]
-        elif var in mod.varlabels:
-            return mod.varlabels[var]
-    elif var in cfg.emg.channel_labels:
-        return cfg.emg.channel_labels[var]
-    else:
-        return ''
-
-
-def _truncate_trialname(trialname):
-    """Shorten trial name."""
-    try:
-        # try to truncate date string of the form yyyy_mm_dd
-        tn_split = trialname.split('_')
-        datetxt = '-'.join(tn_split[:3])
-        d = datetime.datetime.strptime(datetxt, '%Y-%m-%d')
-        return '%d..%s' % (d.year, '_'.join(tn_split[3:]))
-    except ValueError:  # trial was not named as expected
-        return trialname
-
-
 def plot_trials_browser(trials, layout, **kwargs):
     """ Convenience plotter, uses plotly.offline to plot directly to browser"""
     fig = plot_trials(trials, layout, **kwargs)
     plotly.offline.plot(fig)
-
 
 _plot_cache = dict()  # global for plot_trials
 
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                 emg_cycles=None, legend_type='full', trial_linestyles='same',
-                supplementary_data=None, maintitle=None):
+                supplementary_data=None, maintitle=None, small_fonts=True):
     """Make a plotly plot of layout, including given trials.
 
     trials: list of gaitutils.Trial instances
@@ -88,14 +60,22 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
         model_normaldata = normaldata.read_all_normaldata()
 
     # configurabe opts (here for now)
-    label_fontsize = 16  # x, y labels
-    subtitle_fontsize = 20  # subplot titles
+    if small_fonts:
+        label_fontsize = 12  # x, y labels
+        subtitle_fontsize = 16  # subplot titles
+    else:
+        label_fontsize = 16  # x, y labels
+        subtitle_fontsize = 20  # subplot titles
 
     nrows, ncols = layouts.check_layout(layout)
 
-    if len(trials) > len(plotly.colors.DEFAULT_PLOTLY_COLORS):
+    colors_list = plotly.colors.DEFAULT_PLOTLY_COLORS
+    colors = cycle(colors_list)
+    if len(trials) > len(colors_list):
         logger.warning('Not enough colors for plot')
-    colors = cycle(plotly.colors.DEFAULT_PLOTLY_COLORS)
+
+    session_linestyles = dict()
+    linestyles = cycle(['solid', 'dash', 'dot', 'dashdot'])
 
     allvars = [item for row in layout for item in row]
     titles = [_var_title(var) for var in allvars]
@@ -104,9 +84,6 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     tracegroups = set()
     model_normaldata_legend = True
     emg_normaldata_legend = True
-
-    session_linestyles = dict()
-    dash_styles = cycle(['solid', 'dash', 'dot', 'dashdot'])
 
     # these are the cycle specifications, e.g. 'forceplate'
     # the cycles
@@ -147,27 +124,10 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                     xaxis = 'xaxis%d' % plot_ind  # name of plotly xaxis
                     yaxis = 'yaxis%d' % plot_ind  # name of plotly yaxis
 
-                    # in legend, traces will be grouped according to tracegroup
-                    # (which is also the label)
-                    if legend_type == 'name_with_tag':
-                        tracegroup = '%s / %s' % (trial.trialname,
-                                                  trial.eclipse_tag)
-                    elif legend_type == 'short_name_with_tag':
-                        tracegroup = '%s / %s' % (_truncate_trialname(trial.trialname),
-                                                  trial.eclipse_tag)
-                    elif legend_type == 'tag_only':
-                        tracegroup = trial.eclipse_tag
-                    elif legend_type == 'tag_with_cycle':
-                        tracegroup = '%s / %s' % (trial.eclipse_tag,
-                                                  cyc.name)
-                    elif legend_type == 'full':
-                        tracegroup = '%s / %s' % (trial.name_with_description,
-                                                  cyc.name)
-                    elif legend_type == 'short_name_with_cyclename':
-                        tracegroup = '%s / %s' % (_truncate_trialname(trial.trialname),
-                                                  cyc.name)
-                    else:
-                        raise ValueError('Invalid legend type')
+                    if var is None:
+                        continue
+
+                    tracegroup = _get_legend_entry(trial, cyc, legend_type)
                     tracename_full = '%s (%s) / %s' % (trial.trialname,
                                                        trial.eclipse_tag,
                                                        cyc.name)
@@ -181,7 +141,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
                     mod = models.model_from_var(var)
                     if mod:
-                        do_plot = True  # FIXME: control flow is clumsy here
+                        do_plot = True
 
                         if cyc not in model_cycles:
                             do_plot = False
@@ -205,12 +165,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         # traces on hover) and it gets the 1st legend entry
                         if (model_normaldata is not None and trial == trials[0]
                             and cyc == allcycles[0] and not is_unnormalized):
-                            if var[0].upper() in ['L', 'R']:
-                                nvar = var[1:]
-                            if nvar in model_normaldata:
-                                key = nvar
-                            else:
-                                key = None
+                            nvar = var[1:]  # normal vars are without context
+                            key = nvar if nvar in model_normaldata else None
                             ndata = (model_normaldata[key] if key in
                                      model_normaldata else None)
                             if ndata is not None:
@@ -227,7 +183,6 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 fig.append_trace(ntrace, i+1, j+1)
                                 # add to legend only once
                                 model_normaldata_legend = False
-                                new_subplot = False
 
                         if do_plot:
                             t, y = trial.get_model_data(var)
@@ -249,7 +204,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     dash_style = session_linestyles[trial.
                                                                     sessiondir]
                                 else:
-                                    dash_style = next(dash_styles)
+                                    dash_style = next(linestyles)
                                     session_linestyles[trial.sessiondir] = dash_style
                                 line['dash'] = dash_style
 
@@ -314,19 +269,17 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                                         showlegend=False)
                                     fig.append_trace(strace, i+1, j+1)
 
-                            # rm x tick labels, plot too crowded
-                            fig['layout'][xaxis].update(showticklabels=False)
-                            yunit = mod.units[var]
-                            if yunit == 'deg':
-                                # plotly supports neither unicode (bug) or
-                                # latex; anyway, y axes are crowded
-                                yunit = ''
-                                #yunit = u'\u00B0'  # Unicode degree sign
-                            ydesc = [s[:3] for s in mod.ydesc[var]]  # shorten
-                            ylabel = u'%s  %s  %s' % (ydesc[0], yunit, ydesc[1])
-                            fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize})
-                            # less decimals on hover label
-                            fig['layout'][yaxis].update(hoverformat='.2f')
+                            # set subplot params if not already done
+                            if not fig['layout'][yaxis]['title']:
+                                fig['layout'][xaxis].update(showticklabels=False)
+                                yunit = mod.units[var]
+                                if yunit == 'deg':
+                                    yunit = u'\u00B0'  # Unicode degree sign
+                                ydesc = [s[:3] for s in mod.ydesc[var]]  # shorten
+                                ylabel = (u'%s %s %s' % (ydesc[0], yunit, ydesc[1])).encode('utf-8')
+                                fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize})
+                                # less decimals on hover label
+                                fig['layout'][yaxis].update(hoverformat='.2f')
 
                     # plot EMG variable
                     elif (trial.emg.is_channel(var) or var in
@@ -348,12 +301,12 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             if (trial in _plot_cache and cyc in
                                 _plot_cache[trial] and var in
                                 _plot_cache[trial][cyc]):
-                                        #logger.debug('cache hit for: %s / %s / %s' %
-                                        #             (trial.trialname, cyc.name, var))
-                                        trace = _plot_cache[trial][cyc][var]
-                                        trace['name'] = tracegroup
-                                        trace['legendgroup'] = tracegroup
-                                        trace['showlegend'] = show_legend
+                                    #logger.debug('cache hit for: %s / %s / %s' %
+                                    #             (trial.trialname, cyc.name, var))
+                                    trace = _plot_cache[trial][cyc][var]
+                                    trace['name'] = tracegroup
+                                    trace['legendgroup'] = tracegroup
+                                    trace['showlegend'] = show_legend
                             else:
                                 #logger.debug('calling Scatter for: %s / %s / %s' %
                                 #             (trial.trialname, cyc.name, var))
@@ -402,9 +355,6 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             # rm x tick labels, plot too crowded
                             fig['layout'][xaxis].update(showticklabels=False)
 
-                    elif var is None:
-                        continue
-
                     elif 'legend' in var:  # 'legend' is for mpl plotter only
                         continue
 
@@ -418,9 +368,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     # put x labels on last row only, re-enable tick labels for last row
     inds_last = range((nrows-1)*ncols, nrows*ncols)
     axes_last = ['xaxis%d' % (ind+1) for ind in inds_last]
-    xtitle = 'frame' if is_unnormalized else '% of gait cycle'
+    xlabel = 'frame' if is_unnormalized else '% of gait cycle'
     for ax in axes_last:
-        fig['layout'][ax].update(title=xtitle,
+        fig['layout'][ax].update(title=xlabel,
                                  titlefont={'size': label_fontsize},
                                  showticklabels=True)
 

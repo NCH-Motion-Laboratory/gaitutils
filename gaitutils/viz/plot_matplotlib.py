@@ -43,11 +43,16 @@ def _plot_height_ratios(layout):
     return plotheightratios
 
 
-def _set_subplot_title(ax, var):
-    title = _var_title(var)
-    if title:
-        ax.set_title(title)
-        ax.title.set_fontsize(cfg.plot.title_fontsize)
+def _annotate_axis(ax, text):
+    """Annotate at center of mpl axis"""
+    ax.annotate(text, xy=(.5, .5), xycoords='axes fraction',
+                ha="center", va="center", fontsize=cfg.plot.title_fontsize)
+
+
+def _remove_ticks_and_labels(ax):
+    ax.tick_params(axis='both', which='both', bottom=False,
+                   top=False, labelbottom=False, right=False,
+                   left=False, labelleft=False)
 
 
 
@@ -64,7 +69,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     if model_normaldata is None:
         model_normaldata = normaldata.read_all_normaldata()
-    logger.debug('done')
+
     nrows, ncols = layouts.check_layout(layout)
 
     # mpl default colors as a cycle
@@ -85,24 +90,27 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     # elif len(plotheightratios) != len(nrows):
     #     raise ValueError('n of height ratios must match n of rows')
 
-    gridspec_ = gridspec.GridSpec(nrows, ncols,
-                                  height_ratios=plotheightratios,
-                                  width_ratios=None)
+    fig = Figure(figsize=(figw, figh), constrained_layout=True)
+    gridspec_ = gridspec.GridSpec(nrows+1, ncols, figure=fig)
+                                  #height_ratios=plotheightratios,
+                                  #width_ratios=None)
     # spacing adjustments for the plot, see Figure.tight_layout()
     # pad == plot margins
     # w_pad, h_pad == horizontal and vertical subplot padding
     # rect leaves extra space for maintitle
-    auto_spacing_params = dict(pad=.2, w_pad=.3, h_pad=.3,
-                               rect=(0, 0, 1, .95))
-    fig = Figure(figsize=(figw, figh),
-                 tight_layout=auto_spacing_params)
+    # auto_spacing_params = dict(pad=.2, w_pad=.3, h_pad=.3,
+    #                            rect=(0, 0, 1, .95))
+    # fig = Figure(figsize=(figw, figh),
+    #              tight_layout=auto_spacing_params)
+    #fig = Figure(figsize=(figw, figh))
 
     model_cyclespec = (cfg.plot.default_model_cycles if model_cycles is None
                        else model_cycles)
     emg_cyclespec = (cfg.plot.default_emg_cycles if emg_cycles is None else
                      emg_cycles)
 
-    tracegroups = set()
+    axes = dict()
+    leg_entries = dict()
 
     for trial in trials:
         trial_color = next(colors)
@@ -128,9 +136,17 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
             context = cyc.context
 
             for i, row in enumerate(layout):
+                if i not in axes:
+                    axes[i] = dict()
                 for j, var in enumerate(row):
 
-                    ax = fig.add_subplot(gridspec_[i, j])  #  sharex=plotaxes[-1])
+                    # create axis or get existing axis to use
+                    if j not in axes[i]:
+                        sharex = axes[0][0] if i > 0 or j > 0 else None
+                        ax = fig.add_subplot(gridspec_[i, j], sharex=sharex)
+                        axes[i][j] = ax
+                    else:
+                        ax = axes[i][j]
 
                     if var is None:
                         ax.axis('off')
@@ -140,10 +156,6 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                     tracename_full = '%s (%s) / %s' % (trial.trialname,
                                                        trial.eclipse_tag,
                                                        cyc.name)
-
-                    # only show the legend for the first trace in the
-                    # tracegroup, so we do not repeat legends
-                    show_legend = tracegroup not in tracegroups
 
                     mod = models.model_from_var(var)
 
@@ -185,6 +197,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                                 alpha=cfg.plot.
                                                 model_normals_alpha)
                                 model_normaldata_legend = False
+                            ax.set_xlim(normalx[0], normalx[-1])
 
                         if do_plot:
                             t, y = trial.get_model_data(var)
@@ -207,8 +220,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     linestyle = next(linestyles)
                                     session_linestyles[trial.sessiondir] = linestyle
 
-                            lines_ = ax.plot(t, y, linecolor, linestyle=linestyle,
-                                             linewidth=cfg.plot.model_linewidth)
+                            line_ = ax.plot(t, y, linecolor, linestyle=linestyle,
+                                            linewidth=cfg.plot.model_linewidth)[0]
+                            leg_entries[tracegroup] = line_                            
                            
                             # add toeoff marker
                             if cyc.toeoffn is not None:
@@ -279,16 +293,15 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         if (var[0] != context or not trial.emg.status_ok(var)
                             or cyc not in emg_cycles):
                             do_plot = False
-                            # FIXME: maybe annotate disconnected chans
-                            # _no_ticks_or_labels(ax)
-                            # _axis_annotate(ax, 'disconnected')
+
                         if do_plot:
                             t_, y = trial.get_emg_data(var)
                             t = (t_ / trial.samplesperframe if is_unnormalized
                                  else t_)
-                            ax.plot(t, y*cfg.plot.emg_multiplier,
-                                    linewidth=cfg.plot.emg_linewidth,
-                                    **trial_color)
+                            line_ = ax.plot(t, y*cfg.plot.emg_multiplier,
+                                            linewidth=cfg.plot.emg_linewidth,
+                                            **trial_color)[0]
+                            leg_entries[tracegroup] = line_
 
                         # do normal data & plot adjustments for last EMG cycle
                         remaining = allcycles[cyc_ind+1:]
@@ -296,41 +309,46 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     any(c in remaining for c in emg_cycles))
                         if last_emg:
 
-                            ax.set(ylabel=cfg.plot.emg_ylabel)
-                            ax.yaxis.label.set_fontsize(cfg.
-                                                        plot.label_fontsize)
-                            ax.locator_params(axis='y', nbins=4)
-                            # tick font size
-                            ax.tick_params(axis='both', which='major',
-                                           labelsize=cfg.plot.ticks_fontsize)
-                            ax.set_xlim(min(t), max(t))
-                            ysc = [-cfg.plot.emg_yscale, cfg.plot.emg_yscale]
-                            ax.set_ylim(ysc[0]*cfg.plot.emg_multiplier,
-                                        ysc[1]*cfg.plot.emg_multiplier)
-
                             title = _var_title(var)
-                            if title:
-                                ax.set_title(title)
-                                ax.title.set_fontsize(cfg.plot.title_fontsize)
 
-                            if not is_unnormalized and var in cfg.emg.channel_normaldata:
-                                emgbar_ind = cfg.emg.channel_normaldata[var]
-                                for inds in emgbar_ind:
-                                    ax.axvspan(inds[0], inds[1], alpha=cfg.
-                                               plot.emg_normals_alpha,
-                                               color=cfg.plot.
-                                               emg_normals_color)
-                                    emg_normaldata_legend = False  # add to legend only once
+                            if not trial.emg.status_ok(var):
+                                _remove_ticks_and_labels(ax)
+                                _annotate_axis(ax, '%s disconnected' % title)
+                            else:
+                                if title:
+                                    ax.set_title(title)
+                                    ax.title.set_fontsize(cfg.plot.title_fontsize)
+                                ax.set(ylabel=cfg.plot.emg_ylabel)
+                                ax.yaxis.label.set_fontsize(cfg.
+                                                            plot.label_fontsize)
+                                ax.locator_params(axis='y', nbins=4)
+                                # tick font size
+                                ax.tick_params(axis='both', which='major',
+                                            labelsize=cfg.plot.ticks_fontsize)
+                                ax.set_xlim(min(t), max(t))
+                                ysc = [-cfg.plot.emg_yscale, cfg.plot.emg_yscale]
+                                ax.set_ylim(ysc[0]*cfg.plot.emg_multiplier,
+                                            ysc[1]*cfg.plot.emg_multiplier)
+
+                                if not is_unnormalized and var in cfg.emg.channel_normaldata:
+                                    emgbar_ind = cfg.emg.channel_normaldata[var]
+                                    for inds in emgbar_ind:
+                                        ax.axvspan(inds[0], inds[1], alpha=cfg.
+                                                plot.emg_normals_alpha,
+                                                color=cfg.plot.
+                                                emg_normals_color)
+                                        emg_normaldata_legend = False  # add to legend only once
 
                     elif var is None:
-                        continue
-
-                    elif 'legend' in var:  # 'legend' is for mpl plotter only
                         continue
 
                     else:
                         raise Exception('Unknown variable %s' % var)
 
+    axleg = fig.add_subplot(gridspec_[8, :])
+    axleg.axis('off')
+    axleg.legend(leg_entries.values(), leg_entries.keys(), fontsize=cfg.plot.legend_fontsize,
+                      loc='upper center', bbox_to_anchor=(.5, 1.05), ncol=2)
     return fig
 
 

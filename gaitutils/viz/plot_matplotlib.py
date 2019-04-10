@@ -31,9 +31,8 @@ from ..stats import AvgTrial
 logger = logging.getLogger(__name__)
 
 
-
 def _plot_height_ratios(layout):
-    """ Automatically adjust height ratios, if they are not specified """
+    """Calculate height ratios for mpl plot"""
     plotheightratios = []
     for row in layout:
         if all([models.model_from_var(var) for var in row]):
@@ -53,7 +52,6 @@ def _remove_ticks_and_labels(ax):
     ax.tick_params(axis='both', which='both', bottom=False,
                    top=False, labelbottom=False, right=False,
                    left=False, labelleft=False)
-
 
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
@@ -83,17 +81,13 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     # compute figure width and height - only used for interactive figures
     figh = min(nrows*cfg.plot.inch_per_row + 1, cfg.plot.maxh)
     figw = min(ncols*cfg.plot.inch_per_col, cfg.plot.maxw)
+    fig = Figure(figsize=(figw, figh), constrained_layout=True)
 
     plotheightratios = _plot_height_ratios(layout)
-    # if plotheightratios is None:
-    #     plotheightratios = _plot_height_ratios()
-    # elif len(plotheightratios) != len(nrows):
-    #     raise ValueError('n of height ratios must match n of rows')
-
-    fig = Figure(figsize=(figw, figh), constrained_layout=True)
-    gridspec_ = gridspec.GridSpec(nrows+1, ncols, figure=fig)
-                                  #height_ratios=plotheightratios,
-                                  #width_ratios=None)
+    plotheightratios.append(1)  # for legend
+    gridspec_ = gridspec.GridSpec(nrows+1, ncols, figure=fig,
+                                  height_ratios=plotheightratios,
+                                  width_ratios=None)
     # spacing adjustments for the plot, see Figure.tight_layout()
     # pad == plot margins
     # w_pad, h_pad == horizontal and vertical subplot padding
@@ -343,12 +337,18 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         continue
 
                     else:
-                        raise Exception('Unknown variable %s' % var)
-
-    axleg = fig.add_subplot(gridspec_[8, :])
+                        raise GaitDataError('Unknown variable %s' % var)
+    if maintitle is not None:
+        # constrained_layout does not work well with suptitle
+        # (https://github.com/matplotlib/matplotlib/issues/13672)
+        # add extra \n to create whitespace
+        fig.suptitle('%s\n' % maintitle, fontsize=10)
+    # put legend into its own axis, since constrained_layout does not handle fig.legend yet
+    axleg = fig.add_subplot(gridspec_[i+1, :])
     axleg.axis('off')
     axleg.legend(leg_entries.values(), leg_entries.keys(), fontsize=cfg.plot.legend_fontsize,
-                      loc='upper center', bbox_to_anchor=(.5, 1.05), ncol=2)
+                 loc='upper center', bbox_to_anchor=(.5, 1.05), ncol=2)
+
     return fig
 
 

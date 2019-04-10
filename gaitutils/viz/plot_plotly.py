@@ -136,7 +136,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         tracegroup = tracegroup.encode('utf-8')
 
                     # only show the legend for the first trace in the
-                    # tracegroup, so we do not repeat legends
+                    # tracegroup, so we do not repeat legends.
                     show_legend = tracegroup not in tracegroups
 
                     mod = models.model_from_var(var)
@@ -294,6 +294,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             # _no_ticks_or_labels(ax)
                             # _axis_annotate(ax, 'disconnected')
                         if do_plot:
+                            logger.debug('plotting %s/%s' % (cyc, var))
                             t_, y = trial.get_emg_data(var)
                             t = (t_ / trial.samplesperframe if is_unnormalized
                                  else t_)
@@ -325,12 +326,15 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             tracegroups.add(tracegroup)
                             fig.append_trace(trace, i+1, j+1)
 
-                        # check whether this is the last EMG cycle and plot
-                        # normals if so
+
+                        # check whether this is the last EMG cycle for this subplot
                         remaining = allcycles[cyc_ind+1:]
                         last_emg = (trial == trials[-1] and not
                                     any(c in remaining for c in emg_cycles))
                         if last_emg:
+                            # plot normals on last cycle. unfortunately the normal data still does not
+                            # always end up as the last legend item, since only a subset of trials may 
+                            # be plotted for a particular subplot
                             if not is_unnormalized and var in cfg.emg.channel_normaldata:
                                 emgbar_ind = cfg.emg.channel_normaldata[var]
                                 for inds in emgbar_ind:
@@ -345,10 +349,10 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                                                   line=dict(width=0))  # no border lines                                                               
                                     fig.append_trace(ntrace, i+1, j+1)
                                     emg_normaldata_legend = False  # add to legend only once
-                        
+                            # do plot adjustments after last cycle
                             emg_yrange = np.array([-cfg.plot.emg_yscale, cfg.plot.emg_yscale]) * cfg.plot.emg_multiplier
                             fig['layout'][yaxis].update(title=cfg.plot.emg_ylabel, titlefont={'size': label_fontsize},
-                                                        range=emg_yrange)  # FIXME: cfg
+                                                        range=emg_yrange)
                             # prevent changes due to legend clicks etc.
                             if not is_unnormalized:
                                 fig['layout'][xaxis].update(range=[0, 100])

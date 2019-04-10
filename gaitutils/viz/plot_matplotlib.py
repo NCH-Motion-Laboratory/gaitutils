@@ -98,20 +98,25 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     #              tight_layout=auto_spacing_params)
     #fig = Figure(figsize=(figw, figh))
 
-    model_cyclespec = (cfg.plot.default_model_cycles if model_cycles is None
-                       else model_cycles)
-    emg_cyclespec = (cfg.plot.default_emg_cycles if emg_cycles is None else
-                     emg_cycles)
+    model_cycles = (cfg.plot.default_model_cycles if model_cycles is None
+                    else model_cycles)
+    emg_cycles = (cfg.plot.default_emg_cycles if emg_cycles is None else
+                  emg_cycles)
+    if model_cycles == 'unnormalized' or emg_cycles == 'unnormalized':
+        normalized = False
+        model_cycles = emg_cycles = 'unnormalized'
+    else:
+        normalized = True
 
     axes = dict()
     leg_entries = dict()
 
-    for trial in trials:
+    for trial_ind, trial in enumerate(trials):
         trial_color = next(colors)
-
-        model_cycles = trial.get_cycles(model_cyclespec)
-        emg_cycles = trial.get_cycles(emg_cyclespec)
-        allcycles = list(set.union(set(model_cycles), set(emg_cycles)))
+        # these are the actual Gaitcycle instances
+        model_cycles_ = trial.get_cycles(model_cycles)
+        emg_cycles_ = trial.get_cycles(emg_cycles)
+        allcycles = list(set.union(set(model_cycles_), set(emg_cycles_)))
         if not allcycles:
             raise GaitDataError('Trial %s has no cycles of specified type' %
                                 trial.trialname)
@@ -120,12 +125,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                      % (len(allcycles), trial.trialname, len(model_cycles),
                         len(emg_cycles)))
 
-        cycs_unnorm = [cyc.start is None for cyc in allcycles]
-        is_unnormalized = any(cycs_unnorm)
-        if is_unnormalized and not all(cycs_unnorm):
-            raise GaitDataError('Cannot mix normalized and unnormalized data')
-
         for cyc_ind, cyc in enumerate(allcycles):
+            first_cyc = trial_ind == 0 and cyc_ind == 0
             trial.set_norm_cycle(cyc)
             context = cyc.context
 
@@ -156,7 +157,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                     if mod:
                         do_plot = True
 
-                        if cyc not in model_cycles:
+                        if cyc not in model_cycles_:
                             do_plot = False
 
                         if var in mod.varnames_noside:
@@ -170,14 +171,11 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         if mod.is_kinetic_var(var):
                             # kinetic var cycles are required to have valid
                             # forceplate data
-                            if not is_unnormalized and not cyc.on_forceplate:
+                            if normalized and not cyc.on_forceplate:
                                 do_plot = False
 
-                        # plot normaldata before other data so that its z order
-                        # is lowest (otherwise normaldata will mask other
-                        # traces on hover) and it gets the 1st legend entry
-                        if (model_normaldata is not None and trial == trials[0]
-                            and cyc == allcycles[0] and not is_unnormalized):
+                        if (model_normaldata is not None and first_cyc and
+                            normalized):
                             nvar = var[1:]  # normal vars are without context
                             key = nvar if nvar in model_normaldata else None
                             ndata = (model_normaldata[key] if key in
@@ -274,7 +272,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
                                 # only set x labels for the bottom row of plot
                                 if row == layout[-1]:
-                                    xlabel = 'frame' if is_unnormalized else '% of gait cycle'
+                                    xlabel = '% of gait cycle' if normalized else 'frame'
                                     ax.set(xlabel=xlabel)
                                     ax.xaxis.label.set_fontsize(cfg.plot.label_fontsize)
 
@@ -285,13 +283,12 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         # plot only if EMG channel context matches cycle ctxt
                         # FIXME: this assumes that EMG names begin with context
                         if (var[0] != context or not trial.emg.status_ok(var)
-                            or cyc not in emg_cycles):
+                            or cyc not in emg_cycles_):
                             do_plot = False
 
                         if do_plot:
                             t_, y = trial.get_emg_data(var)
-                            t = (t_ / trial.samplesperframe if is_unnormalized
-                                 else t_)
+                            t = t_ if normalized else t_ / trial.samplesperframe
                             line_ = ax.plot(t, y*cfg.plot.emg_multiplier,
                                             linewidth=cfg.plot.emg_linewidth,
                                             **trial_color)[0]
@@ -300,7 +297,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         # do normal data & plot adjustments for last EMG cycle
                         remaining = allcycles[cyc_ind+1:]
                         last_emg = (trial == trials[-1] and not
-                                    any(c in remaining for c in emg_cycles))
+                                    any(c in remaining for c in emg_cycles_))
                         if last_emg:
 
                             title = _var_title(var)
@@ -324,7 +321,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 ax.set_ylim(ysc[0]*cfg.plot.emg_multiplier,
                                             ysc[1]*cfg.plot.emg_multiplier)
 
-                                if not is_unnormalized and var in cfg.emg.channel_normaldata:
+                                if normalized and var in cfg.emg.channel_normaldata:
                                     emgbar_ind = cfg.emg.channel_normaldata[var]
                                     for inds in emgbar_ind:
                                         ax.axvspan(inds[0], inds[1], alpha=cfg.
@@ -469,677 +466,3 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     return fig
 
 
-class Plotter(object):
-
-    def __init__(self, layout=None, normaldata_files=None, interactive=True):
-        """ Plot gait data.
-
-        layout: list of lists
-            Variables to be plotted. Each list is a row of variables.
-            If None, must be set before plotting (use plotter.layout = layout,
-            where plotter is a Plotter instance)
-        normaldata_files: list
-            Normal data files to read (.xlsx or .gcd). If None, read the files
-            specified from config.
-        """
-        matplotlib.style.use(cfg.plot.mpl_style)
-
-        self.gridspec = None
-        if layout:
-            self.layout = layout
-        else:
-            self._layout = None
-
-        self._normaldata_files = dict()
-        self._normaldata = dict()
-        if normaldata_files is None:
-            for fn in cfg.general.normaldata_files:
-                self.add_normaldata(fn)
-
-        self.trial = None
-        self.fig = None
-        self._footer = None
-        self.legendnames = list()
-        self.modelartists = list()
-        self.emgartists = list()
-        self.nrows = 0
-        self.ncols = 0
-        self.interactive = interactive
-        self.fig = None
-
-    def add_normaldata(self, filename):
-        """ Read the given normal data file if not already read. Take the
-        data from the file into use (i.e. it will be used as the default
-        normaldata for the plots) """
-        if filename in self._normaldata_files:
-            ndata = self._normaldata_files[filename]
-        else:
-            logger.debug('reading new normal data from %s' % filename)
-            ndata = normaldata.read_normaldata(filename)
-            self._normaldata_files[filename] = ndata
-        logger.debug('updating normal data from %s' % filename)
-        self._normaldata.update(ndata)
-
-    @property
-    def layout(self):
-        return self._layout
-
-    @layout.setter
-    def layout(self, layout, plotheightratios=None, plotwidthratios=None):
-        """ Set plot layout.
-        plotheightratios: list
-            Height ratios for the plots. Length must equal number of rows in
-            the layout. If None, will be automatically computed.
-        plotwidthratios: list
-            Width ratios for the plots. Length must equal number of columns in
-            the layout. If None, will be equal.
-        """
-        self.nrows, self.ncols = layouts.check_layout(layout)
-        self._layout = layout
-        self.allvars = [item for row in layout for item in row]
-        self.n_proper_vars = len([v for v in self.allvars if v is not None])
-
-        # compute figure width and height - only used for interactive figures
-        self.figh = min(self.nrows*cfg.plot.inch_per_row + 1,
-                        cfg.plot.maxh)
-        self.figw = min(self.ncols*cfg.plot.inch_per_col,
-                        cfg.plot.maxw)
-
-        if plotheightratios is None:
-            plotheightratios = self._plot_height_ratios()
-        elif len(plotheightratios) != len(self.nrows):
-            raise ValueError('n of height ratios must match n of rows')
-
-        self.gridspec = gridspec.GridSpec(self.nrows, self.ncols,
-                                          height_ratios=plotheightratios,
-                                          width_ratios=plotwidthratios)
-        # spacing adjustments for the plot, see Figure.tight_layout()
-        # pad == plot margins
-        # w_pad, h_pad == horizontal and vertical subplot padding
-        # rect leaves extra space for maintitle
-        auto_spacing_params = dict(pad=.2, w_pad=.3, h_pad=.3,
-                                   rect=(0, 0, 1, .95))
-        self.fig = Figure(figsize=(self.figw, self.figh),
-                          tight_layout=auto_spacing_params)
-
-    def open_nexus_trial(self):
-        self.trial = nexus_trial()
-
-    def open_trial(self, source):
-        self.trial = Trial(source)
-
-    def _var_type(self, var):
-        """ Helper to return variable type """
-        # FIXME: better checks for analog vars
-        if var is None:
-            return None
-        elif models.model_from_var(var):
-            return 'model'
-        elif var in ('model_legend', 'emg_legend'):
-            return var
-        # check whether it's a configured EMG channel or exists in the data
-        # source (both are ok)
-        elif (self.trial and self.trial.emg.is_channel(var) or var in
-              cfg.emg.channel_labels):
-            return 'emg'
-        else:
-            raise ValueError('Unknown variable %s' % var)
-
-    def _plot_height_ratios(self):
-        """ Automatically adjust height ratios, if they are not specified """
-        plotheightratios = []
-        for row in self._layout:
-            # this should take into account any analog variable
-            if all([self._var_type(var) == 'emg' for var in row]):
-                plotheightratios.append(cfg.plot.analog_plotheight)
-            else:
-                plotheightratios.append(1)
-        return plotheightratios
-
-    def set_footer(self, txt):
-        """ Set footer text for figure """
-        if self._footer:
-            self._footer.remove()
-        self._footer = self.fig.text(0, 0, txt, fontsize=8, color='black',
-                                     ha='left', va='bottom')
-
-    def do_autospacing(self):
-        """Automatically space plot elements (tight_layout)"""
-        if self.gridspec is None:
-            return
-        logger.debug('setting tight layout')
-        self.gridspec.tight_layout(self.fig)
-        # space for main title
-        top = (self.figh - cfg.plot.titlespace) / self.figh
-        # decrease vertical spacing
-        hspace = .6
-        self.gridspec.update(top=top, hspace=hspace)
-
-    def plot_trial(self, trial=None,
-                   model_cycles=None,
-                   emg_cycles=None,
-                   plotheightratios=None,
-                   plotwidthratios=None,  # FIXME: not used?
-                   model_tracecolor=None,
-                   model_linestyle='-',
-                   model_alpha=1.0,
-                   split_model_vars=True,
-                   auto_match_model_cycle=True,
-                   model_stddev=None,
-                   x_axis_is_time=False,
-                   match_pig_kinetics=True,
-                   auto_match_emg_cycle=True,
-                   linestyles_context=False,
-                   toeoff_markers=None,
-                   annotate_emg=True,
-                   emg_tracecolor=None,
-                   emg_alpha=None,
-                   plot_model_normaldata=True,
-                   plot_emg_normaldata=True,
-                   plot_emg_rms=False,
-                   sharex=True,
-                   superpose=False,
-                   maintitle=None,
-                   maintitleprefix=None,
-                   add_zeroline=False,
-                   legend_maxlen=10):
-
-        """ Create plot of variables. Parameters:
-
-            trial : Trial
-                Trial to plot. If None, plot self.trial.
-        model_cycles : list | dict of int |  dict of list | 'all' | None |
-                       'forceplate'
-                Gait cycles to plot. See trial.get_cycle() for options.
-        emg_cycles : list | dict of int | int | dict of list | 'all' | None
-                Same as above, applied to EMG variables.
-        plotheightratios : list
-                Force height ratios of subplot rows, e.g. [1 2 2 2] would
-                make first row half the height of others.
-        plotheightratios : list
-                Force width ratios of subplot columns.
-        model_tracecolor : Matplotlib colorspec
-                Line color for model variables. If None, will be
-                taken from config.
-        model_linestyle : Matplotlib line style
-                Line style for model variables. If None, will be
-                taken from config.
-        model_alpha : float
-                Alpha value for model variable traces (0.0 - 1.0)
-        split_model_vars: bool
-                If model var does not have a leading context 'L' or 'R', a side
-                will be prepended according to the gait cycle context.
-                E.g. 'HipMoment' -> 'LHipMoment'.
-                This allows convenient L/R overlay of e.g. kinematics variables
-                by specifying the variable without context.
-        auto_match_model_cycle: bool
-                If True, the model variable will be plotted only for cycles
-                whose context matches the context of the variable. E.g.
-                'LHipMomentX' will be plotted only for left side cycles.
-                If False, the variable will be plotted for all cycles.
-        auto_match_emg_cycle: bool
-                If True, the EMG channel will be plotted only for cycles
-                whose context matches the context of the channel name. E.g.
-                'LRec' will be plotted only for left side cycles.
-                If False, the channel will be plotted for all cycles.
-        model_stddev : None or dict
-                Specifies 'standard deviation' for model variables. Can be
-                used to plot e.g. confidence intervals, or stddev if plotting
-                averaged data.
-        x_axis_is_time: bool
-                For unnormalized variables, whether to plot x axis in seconds
-                (default) or in frames.
-        match_pig_kinetics: bool
-                If True, Plug-in Gait kinetics variables will be plotted only
-                for cycles that begin with a valid forceplate strike.
-        linestyles_context:
-                Automatically select line style for model variables according
-                to context (defined in config)
-        emg_tracecolor : Matplotlib color
-                Select line color for EMG variables. If None, will be
-                automatically selected (defined in config)
-        emg_alpha : float
-                Alpha value for EMG traces (0.0 - 1.0)
-        plot_model_normaldata : bool
-                Whether to plot normal data for model variables.
-        plot_emg_normaldata : bool
-                Whether to plot normal data. Uses either default normal data
-                (in site_defs) or the data given when creating the plotter
-                instance.
-        plot_emg_rms : bool | string
-                Whether to plot EMG RMS superposed on the EMG signal.
-                If 'rms_only', plot only RMS.
-        maintitle : str
-                Main title for the plot.
-        maintitleprefix : str
-                If maintitle is not set, title will be set to
-                maintitleprefix + trial name.
-        sharex : bool
-                Link the x axes together (will affect zooming)
-        superpose : bool
-                If superpose=False, create new figure. Otherwise superpose
-                on existing figure.
-        add_zeroline : bool
-                Add line on y=0
-
-        """
-        if trial is None and self.trial is None:
-            raise ValueError('No trial, specify one or call open_trial()')
-        elif trial is None:
-            trial = self.trial
-
-        if self._layout is None:
-            raise ValueError('Please set layout before plotting')
-
-        # if not superposing data, make sure that the figure is cleared
-        if not superpose:
-            self.fig.clear()
-
-        # automatically set title if in interactive mode
-        if maintitle is None and self.interactive:
-            if maintitleprefix is None:
-                maintitleprefix = ''
-            maintitle = maintitleprefix + trial.trialname
-
-        # auto adjust plot heights
-        if plotheightratios is None:
-            plotheightratios = self._plot_height_ratios()
-        elif len(plotheightratios) != len(self.nrows):
-            raise ValueError('n of height ratios must match n of rows')
-        plotaxes = []
-
-        def _empty_artist():
-            return matplotlib.patches.Rectangle((0, 0), 1, 1, fc="w",
-                                                fill=False, edgecolor='none',
-                                                linewidth=0)
-
-        def _axis_annotate(ax, text):
-            """ Annotate at center of axis """
-            ax.annotate(text, xy=(.5, .5), xycoords='axes fraction',
-                        ha="center", va="center")
-
-        def _no_ticks_or_labels(ax):
-            ax.tick_params(axis='both', which='both', bottom=False,
-                           top=False, labelbottom=False, right=False,
-                           left=False, labelleft=False)
-
-        def _shorten_name(name, max_len=10):
-            """Shorten overlong names for legend etc."""
-            return name if len(name) <= max_len else '..'+name[-max_len+2:]
-
-        def _handle_cycle_arg(cycles):
-            """Process the cycle argument"""
-            if isinstance(cycles, Gaitcycle):
-                return [cycles]
-            elif cycles is None or cycles == [None]:
-                return [None]
-            elif (isinstance(cycles, list) and all([isinstance(c, Gaitcycle)
-                  for c in cycles])):
-                    return cycles
-            else:
-                return trial.get_cycles(cycles)
-
-        # set default values for vars
-        if toeoff_markers is None:
-            toeoff_markers = cfg.plot.toeoff_markers
-
-        if emg_tracecolor is None:
-            emg_tracecolor = cfg.plot.emg_tracecolor
-
-        if emg_alpha is None:
-            emg_alpha = cfg.plot.emg_alpha
-
-        if model_cycles is None:
-            model_cycles = cfg.plot.default_model_cycles
-
-        if emg_cycles is None:
-            emg_cycles = cfg.plot.default_emg_cycles
-
-        model_cycles = _handle_cycle_arg(model_cycles)
-        emg_cycles = _handle_cycle_arg(emg_cycles)
-
-        if not (model_cycles or emg_cycles):
-            raise ValueError('No matching gait cycles found in data')
-
-        is_avg_trial = isinstance(trial, AvgTrial)
-
-        for i, var in enumerate(self.allvars):
-
-            if len(self.fig.axes) == len(self.allvars):
-                # looks like all axes were created already (superpose)
-                ax = self.fig.axes[i]
-            else:
-                if sharex and len(plotaxes) > 0:
-                    ax = self.fig.add_subplot(self.gridspec[i],
-                                              sharex=plotaxes[-1])
-                else:
-                    ax = self.fig.add_subplot(self.gridspec[i])
-
-            var_type = self._var_type(var)
-            if var_type is None:
-                ax.axis('off')
-                continue
-
-            if var_type == 'model':
-                model = models.model_from_var(var)
-                for cycle in model_cycles:
-                    # logger.debug('cycle %d-%d' % (cycle.start, cycle.end))
-                    is_unnormalized = cycle.start is None
-                    trial.set_norm_cycle(cycle)
-
-                    if (split_model_vars and cycle.context + var
-                       in model.varnames):
-                        varname = cycle.context + var
-                    else:
-                        varname = var
-
-                    # check for kinetics variable
-                    kin_ok = True
-                    if match_pig_kinetics and model.is_kinetic_var(var):
-                        kin_ok = cycle.on_forceplate
-
-                    # whether to plot or not
-                    x_, data = trial.get_model_data(varname)
-                    # FIXME: varname[0] == cycle.context may not apply to
-                    # all model vars
-                    if (data is not None and kin_ok and (is_unnormalized or
-                        varname[0] == cycle.context or not
-                         auto_match_model_cycle)):
-
-                        # logger.debug('plotting data for %s' % varname)
-                        x = (x_ / trial.framerate if is_unnormalized and
-                             x_axis_is_time else x_)
-                        # FIXME: cycle may not have context?
-                        tcolor = (model_tracecolor if model_tracecolor
-                                  else cfg.plot.model_tracecolors
-                                  [cycle.context])
-                        lstyle = (cfg.plot.model_linestyles
-                                  [cycle.context] if linestyles_context else
-                                  model_linestyle)
-                        lines_ = ax.plot(x, data, tcolor, linestyle=lstyle,
-                                         linewidth=cfg.plot.model_linewidth,
-                                         alpha=model_alpha)
-                        # generate picker events for line artist
-                        # FIXME: also for other vars
-                        for line_ in lines_:
-                            line_.set_picker(1)
-                            line_._trialname = trial.trialname
-                            line_._cycle = cycle
-                        # add toeoff marker for this cycle
-                        if (not is_unnormalized and not is_avg_trial and
-                           toeoff_markers):
-                            toeoff = cycle.toeoffn
-                            ax.axvline(toeoff, color=tcolor, linewidth=.5)
-                        # tighten x limits
-                        ax.set_xlim(x[0], x[-1])
-                    else:
-                        # logger.debug('not plotting data for %s' % varname)
-                        if data is None:
-                            logger.debug('(no data)')
-
-                    # each cycle gets its own stddev plot (if data was found)
-                    if (model_stddev is not None and not is_unnormalized and
-                       data is not None):
-                        if varname in model_stddev:
-                            sdata = model_stddev[varname]
-                            stdx = np.linspace(0, 100, sdata.shape[0])
-                            ax.fill_between(stdx, data-sdata,
-                                            data+sdata,
-                                            color=cfg.plot.
-                                            model_stddev_colors[cycle.context],
-                                            alpha=cfg.plot.
-                                            model_stddev_alpha)
-                            # tighten x limits
-                            ax.set_xlim(stdx[0], stdx[-1])
-
-                    # set labels, ticks, etc. after plotting last cycle
-                    if cycle == model_cycles[-1]:
-
-                        yunit = model.units[varname]
-                        if yunit == 'deg':
-                            yunit = u'\u00B0'  # degree sign
-                        ydesc = [s[:3] for s in model.ydesc[varname]]  # shorten
-                        ylabel_ = '%s  %s  %s' % (ydesc[0], yunit, ydesc[1])
-                        ax.set(ylabel=ylabel_)
-                        ax.xaxis.label.set_fontsize(cfg.
-                                                    plot.label_fontsize)
-                        ax.yaxis.label.set_fontsize(cfg.
-                                                    plot.label_fontsize)
-                        subplot_title = model.varlabels[varname]
-
-                        # add n of averages for AvgTrial
-                        if is_avg_trial:
-                            subplot_title += (' (avg of %d cycles)' %
-                                              trial.n_ok[varname])
-
-                        prev_title = ax.get_title()
-                        if prev_title and prev_title != subplot_title:
-                            subplot_title = prev_title + ' / ' + subplot_title
-                        ax.set_title(subplot_title)
-                        ax.title.set_fontsize(cfg.plot.title_fontsize)
-
-
-                        ax.locator_params(axis='y', nbins=6)  # less tick marks
-                        ax.tick_params(axis='both', which='major',
-                                       labelsize=cfg.plot.ticks_fontsize)
-
-                        if is_unnormalized and var in self.layout[-1]:
-                            xlabel = 'Time (s)' if x_axis_is_time else 'Frame'
-                            ax.set(xlabel=xlabel)
-                            ax.xaxis.label.set_fontsize(cfg.
-                                                        plot.label_fontsize)
-
-                        if plot_model_normaldata and not is_unnormalized:
-                            # normaldata vars are without preceding side
-                            # this is a bit hackish
-                            if varname[0].upper() in ['L', 'R']:
-                                nvarname = varname[1:]
-                            if nvarname in self._normaldata:
-                                key = nvarname
-                            else:
-                                key = None
-                            ndata = (self._normaldata[key] if key in
-                                     self._normaldata else None)
-                            if ndata is not None:
-                                logger.debug('plotting model normaldata for %s'
-                                             % varname)
-                                normalx = np.linspace(0, 100, ndata.shape[0])
-                                ax.fill_between(normalx, ndata[:, 0],
-                                                ndata[:, 1],
-                                                color=cfg.plot.
-                                                model_normals_color,
-                                                alpha=cfg.plot.
-                                                model_normals_alpha)
-                                # tighten x limits
-                                ax.set_xlim(normalx[0], normalx[-1])
-
-                        if add_zeroline:
-                            ax.axhline(0, color='black', linewidth=.5)
-
-            elif var_type == 'emg':
-                # set title first, since we may end up not plotting the emg at
-                # all (i.e for missing / disconnected channels)
-                subplot_title = (cfg.emg.channel_labels[var] if
-                                 var in cfg.emg.channel_labels
-                                 else var)
-                prev_title = ax.get_title()
-                if prev_title and prev_title != subplot_title:
-                    subplot_title = prev_title + ' / ' + subplot_title
-                ax.set_title(subplot_title)
-                ax.title.set_fontsize(cfg.plot.title_fontsize)
-
-                for cycle in emg_cycles:
-                    trial.set_norm_cycle(cycle)
-                    is_unnormalized = cycle.start is None
-                    try:
-                        x_, data = trial.get_emg_data(var)
-                    except KeyError:  # channel not found
-                        _no_ticks_or_labels(ax)
-                        if annotate_emg:
-                            _axis_annotate(ax, 'not found')
-                        break  # skip all cycles
-                    if not trial.emg.status_ok(var):
-                        _no_ticks_or_labels(ax)
-                        if annotate_emg:
-                            _axis_annotate(ax, 'disconnected')
-                        break  # data no good - skip all cycles
-                    x = (x_ / trial.analograte if is_unnormalized and
-                         x_axis_is_time else x_ / 1.)
-
-                    if is_unnormalized and not x_axis_is_time:
-                        # analog -> frames
-                        x /= trial.samplesperframe
-
-                    if (is_unnormalized or var[0] == cycle.context or not
-                       auto_match_emg_cycle):
-                        # plot data and/or rms
-                        if plot_emg_rms != 'rms_only':
-                            ax.plot(x, data*cfg.plot.emg_multiplier,
-                                    emg_tracecolor,
-                                    linewidth=cfg.plot.emg_linewidth,
-                                    alpha=emg_alpha)
-
-                        if plot_emg_rms:
-                            rms = numutils.rms(data, cfg.emg.rms_win)
-                            ax.plot(x, rms*cfg.plot.emg_multiplier,
-                                    emg_tracecolor,
-                                    linewidth=cfg.plot.emg_rms_linewidth,
-                                    alpha=emg_alpha)
-
-                    if cycle == emg_cycles[-1]:
-                        # last cycle; plot scales, titles etc.
-                        ax.set(ylabel=cfg.plot.emg_ylabel)
-                        ax.yaxis.label.set_fontsize(cfg.
-                                                    plot.label_fontsize)
-                        ax.locator_params(axis='y', nbins=4)
-                        # tick font size
-                        ax.tick_params(axis='both', which='major',
-                                       labelsize=cfg.plot.ticks_fontsize)
-                        ax.set_xlim(min(x), max(x))
-                        ysc = [-cfg.plot.emg_yscale, cfg.plot.emg_yscale]
-                        ax.set_ylim(ysc[0]*cfg.plot.emg_multiplier,
-                                    ysc[1]*cfg.plot.emg_multiplier)
-
-                        if (plot_emg_normaldata and not is_unnormalized and
-                           var in cfg.emg.channel_normaldata):
-                            # plot EMG normal bars
-                            emgbar_ind = cfg.emg.channel_normaldata[var]
-                            for k in range(len(emgbar_ind)):
-                                inds = emgbar_ind[k]
-                                ax.axvspan(inds[0], inds[1], alpha=cfg.
-                                           plot.emg_normals_alpha,
-                                           color=cfg.plot.
-                                           emg_normals_color)
-
-                        if is_unnormalized and var in self.layout[-1]:
-                            xlabel = 'Time (s)' if x_axis_is_time else 'Frame'
-                            ax.set(xlabel=xlabel)
-                            ax.xaxis.label.set_fontsize(cfg.
-                                                        plot.label_fontsize)
-
-            elif var_type in ('model_legend', 'emg_legend'):
-                # add current trial name to legend and update legend
-                ax.set_axis_off()
-                tr_name = _shorten_name(trial.trialname, legend_maxlen)
-                leg_entry = (tr_name, trial.eclipse_data['DESCRIPTION'],
-                             trial.eclipse_data['NOTES'])
-                self.legendnames.append('%s   %s   %s' % leg_entry)
-
-                if var_type == 'model_legend':
-                    if linestyles_context:
-                        # indicate line styles in legend if they are used
-                        leg_ctxt_titles = ['line style for right foot',
-                                           'line style for left foot']
-                        leg_ctxt_artists = [Line2D((0, 1), (0, 0),
-                                                   color='black',
-                                                   linewidth=1,
-                                                   linestyle=cfg.plot.
-                                                   model_linestyles[ctxt])
-                                            for ctxt in ['R', 'L']]
-                    else:
-                        leg_ctxt_titles = []
-                        leg_ctxt_artists = []
-                    # FIXME: model tracecolor arg is mandatory here
-                    self.modelartists.append(Line2D((0, 1), (0, 0),
-                                                    color=model_tracecolor,
-                                                    linewidth=2))
-                    ncol = (1 if len(self.legendnames) + len(leg_ctxt_titles)
-                            < 5 else 2)
-                    self.fig.legends = []
-                    self.fig.legend(self.modelartists + leg_ctxt_artists,
-                                    self.legendnames + leg_ctxt_titles,
-                                    loc='lower left', ncol=ncol,
-                                    prop={'size': cfg.plot.legend_fontsize},
-                                    bbox_to_anchor=[.02, .02])
-
-                else:  # emg_legend
-                    self.emgartists.append(Line2D((0, 1), (0, 0),
-                                           linewidth=2,
-                                           color=emg_tracecolor))
-                    ncol = 1 if len(self.legendnames) < 5 else 2
-                    self.fig.legends = []
-                    self.fig.legend(self.emgartists, self.legendnames,
-                                    loc='lower left', ncol=ncol,
-                                    prop={'size': cfg.plot.legend_fontsize},
-                                    bbox_to_anchor=[.02, .02])
-
-            plotaxes.append(ax)
-
-        self.set_title(maintitle)
-        return self.fig
-
-    def set_title(self, title):
-        """Set plot title and update spacing"""
-        self.fig.suptitle(title, fontsize=cfg.plot.maintitle_fontsize,
-                          fontweight="bold")
-
-    def title_with_eclipse_info(self, trial=None, prefix=''):
-        """ Create title: prefix + trial name + Eclipse description and
-        notes """
-        if trial is None:
-            trial = self.trial
-        desc = self.trial.eclipse_data['DESCRIPTION']
-        notes = self.trial.eclipse_data['NOTES']
-        maintitle = ('%s %s' % (prefix, self.trial.trialname) if prefix else
-                     self.trial.trialname)
-        maintitle += ' (%s)' % desc if desc else ''
-        maintitle += ' (%s)' % notes if notes else ''
-        return maintitle
-
-    def create_pdf(self, pdf_name=None, trial=None, pdf_prefix='Nexus_plot',
-                   sessionpath=None):
-        """ Make a pdf out of the created figure.
-
-        pdf_name: string
-            Name of pdf file to create, without path. If not specified, Nexus
-            trial name will be used.
-        pdf_prefix: string
-            Optional prefix for the name
-        sessionpath: string
-            Where to write the pdf. If not specified, written into the
-            session directory of currently loaded trial.
-        """
-        if trial is None:
-            trial = self.trial
-        if not self.fig:
-            raise ValueError('No figure to save!')
-        if sessionpath is None:
-            sessionpath = self.trial.sessionpath
-        if not sessionpath:
-            raise ValueError('Cannot get session path')
-        # resize to A4
-        # self.fig.set_size_inches([8.27, 11.69])
-        if pdf_name:
-            pdf_name = op.join(sessionpath, pdf_name)
-        else:
-            pdf_name = pdf_prefix + self.trial.trialname + '.pdf'
-            pdf_name = op.join(sessionpath, pdf_name)
-        if op.isfile(pdf_name):
-            pass  # can prevent overwriting here
-        try:
-            logger.debug('writing %s' % pdf_name)
-            with PdfPages(pdf_name) as pdf:
-                pdf.savefig(self.fig)
-        except IOError:
-            raise IOError('Error writing %s, '
-                          'check that file is not already open.' % pdf_name)

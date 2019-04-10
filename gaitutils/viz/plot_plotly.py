@@ -43,8 +43,9 @@ _plot_cache = dict()  # global for plot_trials
 
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
-                emg_cycles=None, legend_type='full', trial_linestyles='same',
-                supplementary_data=None, maintitle=None, small_fonts=True):
+                emg_cycles=None, legend_type='full',
+                trial_linestyles='same', supplementary_data=None,
+                maintitle=None, small_fonts=True):
     """Make a plotly plot of layout, including given trials.
 
     trials: list of gaitutils.Trial instances
@@ -92,76 +93,80 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     model_normaldata_legend = True
     emg_normaldata_legend = True
 
-    # these are the cycle specifications, e.g. 'forceplate'
-    # the cycles
-    model_cyclespec = (cfg.plot.default_model_cycles if model_cycles is None
-                       else model_cycles)
-    emg_cyclespec = (cfg.plot.default_emg_cycles if emg_cycles is None else
-                     emg_cycles)
+    model_cycles = (cfg.plot.default_model_cycles if model_cycles is None
+                    else model_cycles)
+    emg_cycles = (cfg.plot.default_emg_cycles if emg_cycles is None else
+                  emg_cycles)
+    if model_cycles == 'unnormalized' or emg_cycles == 'unnormalized':
+        normalized = False
+        model_cycles = emg_cycles = 'unnormalized'
+    else:
+        normalized = True
 
     trials = sorted(trials, key=lambda tr: _truncate_trialname(tr.trialname))
 
-    # plot normal data for all subplots
-    for i, row in enumerate(layout):
-        for j, var in enumerate(row):
-            mod = models.model_from_var(var)
-            if mod:
-                nvar = var[1:]  # FIXME: normal vars are without context
-                key = nvar if nvar in model_normaldata else None
-                ndata = (model_normaldata[key] if key in
-                         model_normaldata else None)
-                if ndata is not None:
-                    # FIXME: hardcoded color
-                    normalx = np.linspace(0, 100, ndata.shape[0])
-                    ntrace = _plotly_fill_between(normalx,
-                                                  ndata[:, 0],
-                                                  ndata[:, 1],
-                                                  fillcolor='rgba(100, 100, 100, 0.2)',
-                                                  name='Norm.',
-                                                  legendgroup='Norm.',
-                                                  showlegend=model_normaldata_legend,
-                                                  line=dict(width=0))  # no border lines
-                    fig.append_trace(ntrace, i+1, j+1)
-                    model_normaldata_legend = False
-            elif var in cfg.emg.channel_labels:
-                emgbar_ind = cfg.emg.channel_normaldata[var]
-                for inds in emgbar_ind:
-                    # FIXME: hardcoded color
-                    # simulate x range fill by high y values
-                    # NOTE: using big values (>~1e3) for the normal bar height triggers a plotly bug
-                    # and screws up the normal bars (https://github.com/plotly/plotly.py/issues/1008)
-                    ntrace = _plotly_fill_between(inds,
-                                                  [-1e1]*2,
-                                                  [1e1]*2,
-                                                  name='EMG norm.',
-                                                  legendgroup='EMG norm.',
-                                                  showlegend=emg_normaldata_legend,
-                                                  fillcolor='rgba(255, 0, 0, 0.1)',
-                                                  line=dict(width=0))  # no border lines                                                               
-                    fig.append_trace(ntrace, i+1, j+1)
-                    emg_normaldata_legend = False
+    # plot normaldata first to ensure that its z order is lowest
+    # and it gets the 1st legend entries
+    if normalized:
+        for i, row in enumerate(layout):
+            for j, var in enumerate(row):
+                mod = models.model_from_var(var)
+                if mod and model_normaldata:
+                    if var in mod.varlabels_noside:
+                        nvar = var
+                    else:
+                        nvar = var[1:]
+                    key = nvar if nvar in model_normaldata else None
+                    ndata = (model_normaldata[key] if key in
+                            model_normaldata else None)
+                    if ndata is not None:
+                        # FIXME: hardcoded color
+                        normalx = np.linspace(0, 100, ndata.shape[0])
+                        ntrace = _plotly_fill_between(normalx,
+                                                    ndata[:, 0],
+                                                    ndata[:, 1],
+                                                    fillcolor='rgba(100, 100, 100, 0.2)',
+                                                    name='Norm.',
+                                                    legendgroup='Norm.',
+                                                    showlegend=model_normaldata_legend,
+                                                    line=dict(width=0))  # no border lines
+                        fig.append_trace(ntrace, i+1, j+1)
+                        model_normaldata_legend = False
+                elif var in cfg.emg.channel_labels and var in cfg.emg.channel_normaldata:
+                    emgbar_ind = cfg.emg.channel_normaldata[var]
+                    for inds in emgbar_ind:
+                        # FIXME: hardcoded color
+                        # simulate x range fill by high y values
+                        # NOTE: using big values (>~1e3) for the normal bar height triggers a plotly bug
+                        # and screws up the normal bars (https://github.com/plotly/plotly.py/issues/1008)
+                        ntrace = _plotly_fill_between(inds,
+                                                    [-1e1]*2,
+                                                    [1e1]*2,
+                                                    name='EMG norm.',
+                                                    legendgroup='EMG norm.',
+                                                    showlegend=emg_normaldata_legend,
+                                                    fillcolor='rgba(255, 0, 0, 0.1)',
+                                                    line=dict(width=0))  # no border lines                                           
+                        fig.append_trace(ntrace, i+1, j+1)
+                        emg_normaldata_legend = False
 
+    # plot actual data
     for trial in trials:
         trial_color = next(colors)
 
-        model_cycles = trial.get_cycles(model_cyclespec)
-        emg_cycles = trial.get_cycles(emg_cyclespec)
-        allcycles = list(set.union(set(model_cycles), set(emg_cycles)))
+        model_cycles_ = trial.get_cycles(model_cycles)
+        emg_cycles_ = trial.get_cycles(emg_cycles)
+        allcycles = list(set.union(set(model_cycles_), set(emg_cycles_)))
         if not allcycles:
-            raise GaitDataError('Trial %s has no cycles of specified type' %
-                                trial.trialname)
+            logger.debug('trial %s has no cycles of specified type' %
+                         trial.trialname)
 
         logger.debug('plotting total of %d cycles for %s (%d model, %d EMG)'
-                     % (len(allcycles), trial.trialname, len(model_cycles),
-                        len(emg_cycles)))
-
-        cycs_unnorm = [cyc.start is None for cyc in allcycles]
-        is_unnormalized = any(cycs_unnorm)
-        if is_unnormalized and not all(cycs_unnorm):
-            raise GaitDataError('Cannot mix normalized and unnormalized data')
+                     % (len(allcycles), trial.trialname, len(model_cycles_),
+                        len(emg_cycles_)))
 
         for cyc_ind, cyc in enumerate(allcycles):
-            #logger.debug('trial %s, cycle: %s' % (trial.trialname, cyc))
+
             trial.set_norm_cycle(cyc)
             context = cyc.context
 
@@ -189,7 +194,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                     if mod:
                         do_plot = True
 
-                        if cyc not in model_cycles:
+                        if cyc not in model_cycles_:
                             do_plot = False
 
                         if var in mod.varnames_noside:
@@ -203,7 +208,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         if mod.is_kinetic_var(var):
                             # kinetic var cycles are required to have valid
                             # forceplate data
-                            if not is_unnormalized and not cyc.on_forceplate:
+                            if normalized and not cyc.on_forceplate:
                                 do_plot = False
 
                         if do_plot:
@@ -310,7 +315,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         # plot only if EMG channel context matches cycle ctxt
                         # FIXME: this assumes that EMG names begin with context
                         if (var[0] != context or not trial.emg.status_ok(var)
-                            or cyc not in emg_cycles):
+                            or cyc not in emg_cycles_):
                             do_plot = False
                             # FIXME: maybe annotate disconnected chans
                             # _no_ticks_or_labels(ax)
@@ -318,7 +323,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         if do_plot:
                             logger.debug('plotting %s/%s' % (cyc, var))
                             t_, y = trial.get_emg_data(var)
-                            t = (t_ / trial.samplesperframe if is_unnormalized
+                            t = (t_ / trial.samplesperframe if not normalized
                                  else t_)
                             line = {'width': 1, 'color': trial_color}
                             if (trial in _plot_cache and cyc in
@@ -354,7 +359,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             fig['layout'][yaxis].update(title=cfg.plot.emg_ylabel, titlefont={'size': label_fontsize},
                                                         range=emg_yrange)
                             # prevent changes due to legend clicks etc.
-                            if not is_unnormalized:
+                            if normalized:
                                 fig['layout'][xaxis].update(range=[0, 100])
                             # rm x tick labels, plot too crowded
                             #fig['layout'][xaxis].update(showticklabels=False)
@@ -372,7 +377,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     # put x labels on last row only, re-enable tick labels for last row
     inds_last = range((nrows-1)*ncols, nrows*ncols)
     axes_last = ['xaxis%d' % (ind+1) for ind in inds_last]
-    xlabel = 'frame' if is_unnormalized else '% of gait cycle'
+    xlabel = 'frame' if not normalized else '% of gait cycle'
     for ax in axes_last:
         fig['layout'][ax].update(title=xlabel,
                                  titlefont={'size': label_fontsize},

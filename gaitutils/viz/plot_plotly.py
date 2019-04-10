@@ -43,9 +43,8 @@ _plot_cache = dict()  # global for plot_trials
 
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
-                emg_cycles=None, legend_type='full',
-                trial_linestyles='same', supplementary_data=None,
-                maintitle=None, small_fonts=True):
+                emg_cycles=None, legend_type='full', trial_linestyles='same',
+                supplementary_data=None, maintitle=None):
     """Make a plotly plot of layout, including given trials.
 
     trials: list of gaitutils.Trial instances
@@ -69,14 +68,6 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     if model_normaldata is None:
         model_normaldata = normaldata.read_all_normaldata()
-
-    # configurabe opts (here for now)
-    if small_fonts:
-        label_fontsize = 12  # x, y labels
-        subtitle_fontsize = 16  # subplot titles
-    else:
-        label_fontsize = 16  # x, y labels
-        subtitle_fontsize = 20  # subplot titles
 
     nrows, ncols = layouts.check_layout(layout)
 
@@ -118,12 +109,11 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                     ndata = (model_normaldata[key] if key in
                              model_normaldata else None)
                     if ndata is not None:
-                        # FIXME: hardcoded color
                         normalx = np.linspace(0, 100, ndata.shape[0])
                         ntrace = _plotly_fill_between(normalx,
                                                     ndata[:, 0],
                                                     ndata[:, 1],
-                                                    fillcolor='rgba(100, 100, 100, 0.2)',
+                                                    fillcolor=cfg.plot_plotly.model_normals_color,
                                                     name='Norm.',
                                                     legendgroup='Norm.',
                                                     showlegend=model_normaldata_legend,
@@ -133,7 +123,6 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                 elif var in cfg.emg.channel_labels and var in cfg.emg.channel_normaldata:
                     emgbar_ind = cfg.emg.channel_normaldata[var]
                     for inds in emgbar_ind:
-                        # FIXME: hardcoded color
                         # simulate x range fill by high y values
                         # NOTE: using big values (>~1e3) for the normal bar height triggers a plotly bug
                         # and screws up the normal bars (https://github.com/plotly/plotly.py/issues/1008)
@@ -143,7 +132,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                                     name='EMG norm.',
                                                     legendgroup='EMG norm.',
                                                     showlegend=emg_normaldata_legend,
-                                                    fillcolor='rgba(255, 0, 0, 0.1)',
+                                                    fillcolor=cfg.plot_plotly.emg_normals_color,
                                                     line=dict(width=0))  # no border lines                                           
                         fig.append_trace(ntrace, i+1, j+1)
                         emg_normaldata_legend = False
@@ -304,7 +293,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     yunit = u'\u00B0'  # Unicode degree sign
                                 ydesc = [s[:3] for s in mod.ydesc[var]]  # shorten
                                 ylabel = (u'%s %s %s' % (ydesc[0], yunit, ydesc[1])).encode('utf-8')
-                                fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize})
+                                fig['layout'][yaxis].update(title=ylabel, titlefont={'size': cfg.plot_plotly.label_fontsize})
                                 # less decimals on hover label
                                 fig['layout'][yaxis].update(hoverformat='.2f')
 
@@ -356,7 +345,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         if not fig['layout'][yaxis]['title'].text:
                             logger.debug('setting EMG title')
                             emg_yrange = np.array([-cfg.plot.emg_yscale, cfg.plot.emg_yscale]) * cfg.plot.emg_multiplier
-                            fig['layout'][yaxis].update(title=cfg.plot.emg_ylabel, titlefont={'size': label_fontsize},
+                            fig['layout'][yaxis].update(title=cfg.plot.emg_ylabel, titlefont={'size': cfg.plot_plotly.label_fontsize},
                                                         range=emg_yrange)
                             # prevent changes due to legend clicks etc.
                             if normalized:
@@ -365,11 +354,11 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             #fig['layout'][xaxis].update(showticklabels=False)
 
                     else:
-                        raise Exception('Unknown variable %s' % var)
+                        raise GaitDataError('Unknown variable %s' % var)
 
     # reduce subplot title font size
     for anno in fig['layout']['annotations']:
-        anno['font']['size'] = subtitle_fontsize
+        anno['font']['size'] = cfg.plot_plotly.subtitle_fontsize
 
     # put x labels on last row only, re-enable tick labels for last row
     inds_last = range((nrows-1)*ncols, nrows*ncols)
@@ -377,11 +366,11 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     xlabel = '% of gait cycle' if normalized else 'frame'
     for ax in axes_last:
         fig['layout'][ax].update(title=xlabel,
-                                 titlefont={'size': label_fontsize},
+                                 titlefont={'size': cfg.plot_plotly.label_fontsize},
                                  showticklabels=True)
 
     margin = go.layout.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
-    layout = go.Layout(margin=margin, font={'size': label_fontsize},
+    layout = go.Layout(margin=margin, font={'size': cfg.plot_plotly.label_fontsize},
                        hovermode='closest', title=maintitle)
 
     fig['layout'].update(layout)

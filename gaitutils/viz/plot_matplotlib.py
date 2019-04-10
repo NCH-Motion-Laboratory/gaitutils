@@ -46,7 +46,7 @@ def _plot_height_ratios(layout):
 def _annotate_axis(ax, text):
     """Annotate at center of mpl axis"""
     ax.annotate(text, xy=(.5, .5), xycoords='axes fraction',
-                ha="center", va="center", fontsize=cfg.plot.title_fontsize)
+                ha="center", va="center", fontsize=cfg.plot_matplotlib.title_fontsize)
 
 
 def _remove_ticks_and_labels(ax):
@@ -83,8 +83,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     linestyles = cycle(['-', '--', '..', '-.'])
 
     # compute figure width and height - only used for interactive figures
-    figh = min(nrows*cfg.plot.inch_per_row + 1, cfg.plot.maxh)
-    figw = min(ncols*cfg.plot.inch_per_col, cfg.plot.maxw)
+    figh = min(nrows*cfg.plot_matplotlib.inch_per_row + 1, cfg.plot_matplotlib.maxh)
+    figw = min(ncols*cfg.plot_matplotlib.inch_per_col, cfg.plot_matplotlib.maxw)
     fig = Figure(figsize=(figw, figh), constrained_layout=True)
 
     plotheightratios = _plot_height_ratios(layout)
@@ -192,9 +192,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 normalx = np.linspace(0, 100, ndata.shape[0])
                                 mod_normal_lines_ = ax.fill_between(normalx, ndata[:, 0],
                                                 ndata[:, 1],
-                                                color=cfg.plot.
+                                                color=cfg.plot_matplotlib.
                                                 model_normals_color,
-                                                alpha=cfg.plot.
+                                                alpha=cfg.plot_matplotlib.
                                                 model_normals_alpha)
                             ax.set_xlim(normalx[0], normalx[-1])
 
@@ -222,7 +222,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     session_linestyles[trial.sessiondir] = linestyle
 
                             line_ = ax.plot(t, y, linecolor, linestyle=linestyle,
-                                            linewidth=cfg.plot.model_linewidth)[0]
+                                            linewidth=cfg.plot_matplotlib.model_linewidth)[0]
                             leg_entries[tracegroup] = line_
 
                             # add toeoff marker
@@ -261,14 +261,14 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 ylabel_ = '%s %s %s' % (ydesc[0], yunit, ydesc[1])
                                 ax.set(ylabel=ylabel_)
 
-                                ax.xaxis.label.set_fontsize(cfg. plot.label_fontsize)
-                                ax.yaxis.label.set_fontsize(cfg. plot.label_fontsize)
+                                ax.xaxis.label.set_fontsize(cfg.plot_matplotlib.label_fontsize)
+                                ax.yaxis.label.set_fontsize(cfg.plot_matplotlib.label_fontsize)
                                 title = _var_title(var)
                                 if title:
                                     ax.set_title(title)
-                                    ax.title.set_fontsize(cfg.plot.title_fontsize)
+                                    ax.title.set_fontsize(cfg.plot_matplotlib.title_fontsize)
                                 ax.tick_params(axis='both', which='major',
-                                            labelsize=cfg.plot.ticks_fontsize)
+                                            labelsize=cfg.plot_matplotlib.ticks_fontsize)
                                 ax.locator_params(axis='y', nbins=6)  # less tick marks
 
                                 # FIXME: add n of averages for AvgTrial
@@ -291,7 +291,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             t_, y = trial.get_emg_data(var)
                             t = t_ if normalized else t_ / trial.samplesperframe
                             line_ = ax.plot(t, y*cfg.plot.emg_multiplier,
-                                            linewidth=cfg.plot.emg_linewidth,
+                                            linewidth=cfg.plot_matplotlib.emg_linewidth,
                                             **trial_color)[0]
                             leg_entries['EMG: '+tracegroup] = line_
 
@@ -307,14 +307,14 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             else:
                                 if title:
                                     ax.set_title(title)
-                                    ax.title.set_fontsize(cfg.plot.title_fontsize)
+                                    ax.title.set_fontsize(cfg.plot_matplotlib.title_fontsize)
                                 ax.set(ylabel=cfg.plot.emg_ylabel)
                                 ax.yaxis.label.set_fontsize(cfg.
                                                             plot.label_fontsize)
                                 ax.locator_params(axis='y', nbins=4)
                                 # tick font size
                                 ax.tick_params(axis='both', which='major',
-                                            labelsize=cfg.plot.ticks_fontsize)
+                                            labelsize=cfg.plot_matplotlib.ticks_fontsize)
                                 ax.set_xlim(min(t), max(t))
                                 ysc = [-cfg.plot.emg_yscale, cfg.plot.emg_yscale]
                                 ax.set_ylim(ysc[0]*cfg.plot.emg_multiplier,
@@ -325,7 +325,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     for inds in emgbar_ind:
                                         emg_normal_lines_=ax.axvspan(inds[0], inds[1], alpha=cfg.
                                                 plot.emg_normals_alpha,
-                                                color=cfg.plot.
+                                                color=cfg.plot_matplotlib.
                                                 emg_normals_color)
 
                     elif var is None:
@@ -339,7 +339,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                     if row == layout[-1]:
                         xlabel = '% of gait cycle' if normalized else 'frame'
                         ax.set(xlabel=xlabel)
-                        ax.xaxis.label.set_fontsize(cfg.plot.label_fontsize)
+                        ax.xaxis.label.set_fontsize(cfg.plot_matplotlib.label_fontsize)
 
     if maintitle is not None:
         # constrained_layout does not work well with suptitle
@@ -356,7 +356,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
         leg_entries_['EMG norm.'] = emg_normal_lines_
     leg_entries_.update(leg_entries)
     leg = axleg.legend(leg_entries_.values(), leg_entries_.keys(),
-                 fontsize=cfg.plot.legend_fontsize,
+                 fontsize=cfg.plot_matplotlib.legend_fontsize,
                  loc='upper center', bbox_to_anchor=(.5, 1.05), ncol=2)
     for li in leg.get_lines():
         li.set_linewidth(2.0)

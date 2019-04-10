@@ -24,13 +24,20 @@ def _plotly_fill_between(x, ylow, yhigh, **kwargs):
     """Fill area between ylow and yhigh"""
     x_ = np.concatenate([x, x[::-1]])  # construct a closed curve
     y_ = np.concatenate([yhigh, ylow[::-1]])
-    return go.Scatter(x=x_, y=y_, fill='toself', hoverinfo='none', **kwargs)
+    return go.Scatter(x=x_, y=y_, fill='toself', mode='none', hoverinfo='none', **kwargs)
 
 
 def plot_trials_browser(trials, layout, **kwargs):
     """ Convenience plotter, uses plotly.offline to plot directly to browser"""
     fig = plot_trials(trials, layout, **kwargs)
     plotly.offline.plot(fig)
+
+
+def _get_plotly_axis_labels(i, j, ncols):
+    """Gets plotly axis labels from subplot indices i, j"""
+    plot_ind = i * ncols + j + 1  # plotly subplot index
+    return 'xaxis%d' % plot_ind, 'yaxis%d' % plot_ind
+
 
 _plot_cache = dict()  # global for plot_trials
 
@@ -94,6 +101,46 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     trials = sorted(trials, key=lambda tr: _truncate_trialname(tr.trialname))
 
+    # plot normal data for all subplots
+    for i, row in enumerate(layout):
+        for j, var in enumerate(row):
+            mod = models.model_from_var(var)
+            if mod:
+                nvar = var[1:]  # FIXME: normal vars are without context
+                key = nvar if nvar in model_normaldata else None
+                ndata = (model_normaldata[key] if key in
+                         model_normaldata else None)
+                if ndata is not None:
+                    # FIXME: hardcoded color
+                    normalx = np.linspace(0, 100, ndata.shape[0])
+                    ntrace = _plotly_fill_between(normalx,
+                                                  ndata[:, 0],
+                                                  ndata[:, 1],
+                                                  fillcolor='rgba(100, 100, 100, 0.2)',
+                                                  name='Norm.',
+                                                  legendgroup='Norm.',
+                                                  showlegend=model_normaldata_legend,
+                                                  line=dict(width=0))  # no border lines
+                    fig.append_trace(ntrace, i+1, j+1)
+                    model_normaldata_legend = False
+            elif var in cfg.emg.channel_labels:
+                emgbar_ind = cfg.emg.channel_normaldata[var]
+                for inds in emgbar_ind:
+                    # FIXME: hardcoded color
+                    # simulate x range fill by high y values
+                    # NOTE: using big values (>~1e3) for the normal bar height triggers a plotly bug
+                    # and screws up the normal bars (https://github.com/plotly/plotly.py/issues/1008)
+                    ntrace = _plotly_fill_between(inds,
+                                                  [-1e1]*2,
+                                                  [1e1]*2,
+                                                  name='EMG norm.',
+                                                  legendgroup='EMG norm.',
+                                                  showlegend=emg_normaldata_legend,
+                                                  fillcolor='rgba(255, 0, 0, 0.1)',
+                                                  line=dict(width=0))  # no border lines                                                               
+                    fig.append_trace(ntrace, i+1, j+1)
+                    emg_normaldata_legend = False
+
     for trial in trials:
         trial_color = next(colors)
 
@@ -120,12 +167,11 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
             for i, row in enumerate(layout):
                 for j, var in enumerate(row):
-                    plot_ind = i * ncols + j + 1  # plotly subplot index
-                    xaxis = 'xaxis%d' % plot_ind  # name of plotly xaxis
-                    yaxis = 'yaxis%d' % plot_ind  # name of plotly yaxis
 
                     if var is None:
                         continue
+
+                    xaxis, yaxis = _get_plotly_axis_labels(i, j, ncols)
 
                     tracegroup = _get_legend_entry(trial, cyc, legend_type)
                     tracename_full = '%s (%s) / %s' % (trial.trialname,
@@ -159,30 +205,6 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             # forceplate data
                             if not is_unnormalized and not cyc.on_forceplate:
                                 do_plot = False
-
-                        # plot normaldata before other data so that its z order
-                        # is lowest (otherwise normaldata will mask other
-                        # traces on hover) and it gets the 1st legend entry
-                        if (model_normaldata is not None and trial == trials[0]
-                            and cyc == allcycles[0] and not is_unnormalized):
-                            nvar = var[1:]  # normal vars are without context
-                            key = nvar if nvar in model_normaldata else None
-                            ndata = (model_normaldata[key] if key in
-                                     model_normaldata else None)
-                            if ndata is not None:
-                                # FIXME: hardcoded color
-                                normalx = np.linspace(0, 100, ndata.shape[0])
-                                ntrace = _plotly_fill_between(normalx,
-                                                              ndata[:, 0],
-                                                              ndata[:, 1],
-                                                              fillcolor='rgba(100, 100, 100, 0.2)',
-                                                              name='Norm.',
-                                                              legendgroup='Norm.',
-                                                              showlegend=model_normaldata_legend,
-                                                              line=dict(width=0))  # no border lines
-                                fig.append_trace(ntrace, i+1, j+1)
-                                # add to legend only once
-                                model_normaldata_legend = False
 
                         if do_plot:
                             t, y = trial.get_model_data(var)
@@ -270,7 +292,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     fig.append_trace(strace, i+1, j+1)
 
                             # set subplot params if not already done
-                            if not fig['layout'][yaxis]['title']:
+                            if not fig['layout'][yaxis]['title'].text:
                                 fig['layout'][xaxis].update(showticklabels=False)
                                 yunit = mod.units[var]
                                 if yunit == 'deg':
@@ -326,30 +348,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             tracegroups.add(tracegroup)
                             fig.append_trace(trace, i+1, j+1)
 
-
-                        # check whether this is the last EMG cycle for this subplot
-                        remaining = allcycles[cyc_ind+1:]
-                        last_emg = (trial == trials[-1] and not
-                                    any(c in remaining for c in emg_cycles))
-                        if last_emg:
-                            # plot normals on last cycle. unfortunately the normal data still does not
-                            # always end up as the last legend item, since only a subset of trials may 
-                            # be plotted for a particular subplot
-                            if not is_unnormalized and var in cfg.emg.channel_normaldata:
-                                emgbar_ind = cfg.emg.channel_normaldata[var]
-                                for inds in emgbar_ind:
-                                    # FIXME: hardcoded color
-                                    # NOTE: using big values (>~1e3) for the normal bar height triggers a plotly bug
-                                    # and screws up the normal bars (https://github.com/plotly/plotly.py/issues/1008)
-                                    ntrace = _plotly_fill_between(inds, [-1e1]*2, [1e1]*2,  # simulate x range fill by high y values
-                                                                  name='EMG norm.',
-                                                                  legendgroup='EMG norm.',
-                                                                  showlegend=emg_normaldata_legend,
-                                                                  fillcolor='rgba(255, 0, 0, 0.1)',
-                                                                  line=dict(width=0))  # no border lines                                                               
-                                    fig.append_trace(ntrace, i+1, j+1)
-                                    emg_normaldata_legend = False  # add to legend only once
-                            # do plot adjustments after last cycle
+                        if not fig['layout'][yaxis]['title'].text:
+                            logger.debug('setting EMG title')
                             emg_yrange = np.array([-cfg.plot.emg_yscale, cfg.plot.emg_yscale]) * cfg.plot.emg_multiplier
                             fig['layout'][yaxis].update(title=cfg.plot.emg_ylabel, titlefont={'size': label_fontsize},
                                                         range=emg_yrange)
@@ -357,7 +357,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             if not is_unnormalized:
                                 fig['layout'][xaxis].update(range=[0, 100])
                             # rm x tick labels, plot too crowded
-                            fig['layout'][xaxis].update(showticklabels=False)
+                            #fig['layout'][xaxis].update(showticklabels=False)
 
                     elif 'legend' in var:  # 'legend' is for mpl plotter only
                         continue

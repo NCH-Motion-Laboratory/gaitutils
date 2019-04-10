@@ -112,13 +112,10 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
             for j, var in enumerate(row):
                 mod = models.model_from_var(var)
                 if mod and model_normaldata:
-                    if var in mod.varlabels_noside:
-                        nvar = var
-                    else:
-                        nvar = var[1:]
+                    nvar = var if var in mod.varlabels_noside else var[1:]                    
                     key = nvar if nvar in model_normaldata else None
                     ndata = (model_normaldata[key] if key in
-                            model_normaldata else None)
+                             model_normaldata else None)
                     if ndata is not None:
                         # FIXME: hardcoded color
                         normalx = np.linspace(0, 100, ndata.shape[0])
@@ -153,7 +150,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     # plot actual data
     for trial in trials:
         trial_color = next(colors)
-
+        # these are the actual Gaitcycle instances
         model_cycles_ = trial.get_cycles(model_cycles)
         emg_cycles_ = trial.get_cycles(emg_cycles)
         allcycles = list(set.union(set(model_cycles_), set(emg_cycles_)))
@@ -202,7 +199,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             # according to cycle context
                             var = context + var
                         elif var[0] != context:
-                            # var context was specified, and has to match cycle
+                            # var context was specified and does not match cycle
                             do_plot = False
 
                         if mod.is_kinetic_var(var):
@@ -215,16 +212,18 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             t, y = trial.get_model_data(var)
 
                             if trial_linestyles == 'trial':
-                                # trial specific color, left side dashed
+                                # color unique to trial, left side indicated by
+                                # dashed line
                                 line = {'color': trial_color}
                                 if context == 'L':
                                     line['dash'] = 'dash'
                             elif trial_linestyles == 'same':
-                                # identical color for all trials
+                                # identical color for all trials; typically separate
+                                # for L/R (depending on config)
                                 line = {'color':
                                         cfg.plot.model_tracecolors[context]}
                             elif trial_linestyles == 'session':
-                                # session specific line style
+                                # identical colors, line style according to session
                                 line = {'color':
                                         cfg.plot.model_tracecolors[context]}
                                 if trial.sessiondir in session_linestyles:
@@ -363,9 +362,6 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 fig['layout'][xaxis].update(range=[0, 100])
                             # rm x tick labels, plot too crowded
                             #fig['layout'][xaxis].update(showticklabels=False)
-
-                    elif 'legend' in var:  # 'legend' is for mpl plotter only
-                        continue
 
                     else:
                         raise Exception('Unknown variable %s' % var)

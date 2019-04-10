@@ -2,7 +2,7 @@
 """
 
 Higher level plotting functions. Plots should:
-    -take backend argument
+    -take backend argument (in case default backend is not ok)
     -return created figure object
 
 @author: Jussi (jnu@iki.fi)
@@ -16,6 +16,7 @@ import plotly.graph_objs as go
 from .. import (cfg, layouts, trial, GaitDataError, sessionutils,
                 normaldata, stats, utils, emg, nexus)
 from . import plot_matplotlib, plot_plotly
+from .plot_misc import backend_selector
 
 
 logger = logging.getLogger(__name__)
@@ -28,40 +29,18 @@ def plot_nexus_trial(layout_name=None, backend=None, model_cycles=None,
     if layout_name is None:
         layout_name = 'lb_kinematics'
 
-    try:
-        layout = getattr(cfg.layouts, layout_name)
-    except AttributeError:
-        raise GaitDataError('No such layout %s' % layout_name)
-
-    tr = trial.nexus_trial(from_c3d=from_c3d)
-    model_cycles = ('unnormalized' if tr.is_static else
-                    model_cycles)
-    emg_cycles = ('unnormalized' if tr.is_static else
-                  emg_cycles)
-
-    # remove dead EMG channel
-    # should be a no-op for non-EMG layouts, but restrict it to '*EMG*' anyway
-    if 'EMG' in layout_name.upper():
-        layout = layouts.rm_dead_channels(tr.emg, layout)
-
     if backend is None:
         backend = cfg.plot.backend
+    
+    backend_lib = backend_selector(backend)
+    layout = layouts.get_layout(layout_name)
 
-    if backend == 'matplotlib':
-        pl = plot_matplotlib.Plotter(interactive=False)
-        pl.layout = layout
-        pl.plot_trial(tr, model_cycles=model_cycles, emg_cycles=emg_cycles,
-                      show=False)
-        fig = pl.fig
+    tr = trial.nexus_trial(from_c3d=from_c3d)
+    # force unnormalized plot for static trial
+    model_cycles = 'unnormalized' if tr.is_static else model_cycles
 
-    elif backend == 'plotly':
-        fig = plot_plotly.plot_trials([tr], layout, model_cycles=model_cycles,
-                                      emg_cycles=emg_cycles,
-                                      legend_type='short_name_with_cyclename')
-    else:
-        raise ValueError('Invalid plotting backend %s' % cfg.plot.backend)
-
-    return fig
+    return backend_lib.plot_trials([tr], layout, model_cycles=model_cycles, emg_cycles=emg_cycles,
+                                   legend_type='short_name_with_cyclename')
 
 
 def plot_nexus_session(tags=None):
@@ -76,90 +55,36 @@ def plot_nexus_session_average(tags=None):
     return plot_session_average(session)
 
 
-def plot_sessions(sessions, tags=None, make_pdf=False,
+def plot_sessions(sessions, layout_name=None, tags=None, make_pdf=False,
                   session_styles=False, backend=None):
-    """Plot kinematics for given sessions. FIXME: should take layout as
-    parameter"""
+    """Plot given sessions."""
+
+    if layout_name is None:
+        layout_name = 'lb_kinematics'
+
     if backend is None:
         backend = cfg.plot.backend
 
-    layout = cfg.layouts.overlay_lb_kin
+    backend_lib = backend_selector(backend)
+    layout = layouts.get_layout(layout_name)
 
     if tags is None:
         tags = cfg.eclipse.tags
 
-    if backend == 'matplotlib':
-        pl = plot_matplotlib.Plotter()
-        pl.layout = layout
-
-        linecolors = cfg.plot.overlay_colors
-        ccolors = cycle(linecolors)
-        linestyles = [':', '--', '-']
-
-        ind = 0
-        for session in sessions:
-            c3ds = sessionutils.get_c3ds(session, tags=tags,
-                                         trial_type='dynamic')
-            if not c3ds:
-                raise GaitDataError('No marked trials found for session %s'
-                                    % session)
-            session_style = linestyles.pop()
-            for c3d in c3ds:
-                pl.open_trial(c3d)
-                ind += 1
-                if ind > len(linecolors):
-                    logger.warning('not enough colors for plot!')
-                # only plot normaldata for last trial to speed up things
-                plot_model_normaldata = (c3d == c3ds[-1] and
-                                         session == sessions[-1])
-                # select style/color according to either session or trial
-                model_tracecolor = next(ccolors)
-                if session_styles:
-                    model_linestyle = session_style
-                    linestyles_context = False
-                else:
-                    model_linestyle = None
-                    linestyles_context = True
-
-                fig = pl.plot_trial(model_tracecolor=model_tracecolor,
-                                    model_linestyle=model_linestyle,
-                                    linestyles_context=linestyles_context,
-                                    toeoff_markers=False, legend_maxlen=10,
-                                    maintitle='', superpose=True,
-                                    plot_model_normaldata=plot_model_normaldata)
-
-        # auto set title
-        if len(sessions) > 1:
-            maintitle = 'Kinematics comparison '
-            maintitle += ' vs. '.join([op.split(s)[-1] for s in sessions])
-        else:
-            maintitle = ('Kinematics consistency plot, session %s' %
-                         op.split(sessions[0])[-1])
-        pl.set_title(maintitle)
-
-        # to recreate old behavior...
-        if make_pdf and len(sessions) == 1:
-            pl.create_pdf(pdf_name=op.join(sessions[0], 'kin_consistency.pdf'))
-
-    elif backend == 'plotly':
-        c3ds_all = list()
-        for session in sessions:
-            c3ds = sessionutils.get_c3ds(session, tags=tags,
-                                         trial_type='dynamic')
-            if not c3ds:
-                raise GaitDataError('No marked trials found for session %s'
-                                    % session)
-            c3ds_all.extend(c3ds)
-        trials = [trial.Trial(c3d) for c3d in c3ds]
-        maintitle = ('Kinematics consistency plot, session %s' %
-                     op.split(sessions[0])[-1])
-        fig = plot_plotly.plot_trials(trials, layout,
-                                      legend_type='short_name_with_tag',
-                                      maintitle=None)
-    else:
-        raise ValueError('Invalid backend')
-
-    return fig
+    c3ds_all = list()
+    for session in sessions:
+        c3ds = sessionutils.get_c3ds(session, tags=tags,
+                                     trial_type='dynamic')
+        if not c3ds:
+            raise GaitDataError('No marked trials found for session %s'
+                                % session)
+        c3ds_all.extend(c3ds)
+    trials = [trial.Trial(c3d) for c3d in c3ds]
+    maintitle = ('Kinematics consistency plot, session %s' %
+                    op.split(sessions[0])[-1])
+    return backend_lib.plot_trials(trials, layout,
+                                   legend_type='short_name_with_tag',
+                                   maintitle=maintitle)
 
 
 def plot_session_emg(session, tags=None, show=True, make_pdf=True,

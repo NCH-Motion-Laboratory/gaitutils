@@ -6,13 +6,18 @@ misc plotting related stuff
 @author: Jussi (jnu@iki.fi)
 """
 
-from PyQt5 import QtWidgets
 import plotly
-
-from ..gui import qt_dialogs
-from ..config import cfg
-
 from matplotlib.figure import Figure
+from PyQt5 import QtWidgets
+
+from . import plot_matplotlib, plot_plotly
+from ..config import cfg
+from ..gui import qt_dialogs
+
+
+def backend_selector(backend_name):
+    backends = {'plotly': plot_plotly, 'matplotlib': plot_matplotlib}
+    return backends[backend_name]
 
 
 def show_fig(fig):

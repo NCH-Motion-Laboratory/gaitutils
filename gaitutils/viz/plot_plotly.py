@@ -61,6 +61,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     if not trials:
         raise GaitDataError('No trials')
 
+    if not isinstance(trials, list):
+        trials = [trials]
+
     if supplementary_data is None:
         supplementary_data = dict()
 
@@ -102,8 +105,6 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
         model_cycles = emg_cycles = 'unnormalized'
     else:
         normalized = True
-
-    trials = sorted(trials, key=lambda tr: _truncate_trialname(tr.trialname))
 
     # plot normaldata first to ensure that its z order is lowest
     # and it gets the 1st legend entries
@@ -297,7 +298,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
                             # set subplot params if not already done
                             if not fig['layout'][yaxis]['title'].text:
-                                fig['layout'][xaxis].update(showticklabels=False)
+                                #fig['layout'][xaxis].update(showticklabels=False)
                                 yunit = mod.units[var]
                                 if yunit == 'deg':
                                     yunit = u'\u00B0'  # Unicode degree sign
@@ -373,7 +374,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     # put x labels on last row only, re-enable tick labels for last row
     inds_last = range((nrows-1)*ncols, nrows*ncols)
     axes_last = ['xaxis%d' % (ind+1) for ind in inds_last]
-    xlabel = 'frame' if not normalized else '% of gait cycle'
+    xlabel = '% of gait cycle' if normalized else 'frame'
     for ax in axes_last:
         fig['layout'][ax].update(title=xlabel,
                                  titlefont={'size': label_fontsize},

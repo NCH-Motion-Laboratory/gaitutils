@@ -14,14 +14,17 @@ from . import cfg, GaitDataError
 logger = logging.getLogger(__name__)
 
 
-def add_mpl_legend(layout):
-    """WIP
-    Adds matplotlib legend to layout. If layout has empty entries or 1st or
-    last row, these can be used for the legend. Otherwise, a new row will be
-    added."""
-    last_row = layout[-1]
-    if None in last_row:
-        last_row[last_row.index(None)] = 'model_legend'
+def get_layout(layout_name):
+    """Gets layout from config by name. Automatically removes dead EMG channels"""
+    try:
+        layout = getattr(cfg.layouts, layout_name)
+    except AttributeError:
+        raise GaitDataError('No such layout %s' % layout_name)
+    # remove dead EMG channels from layout
+    # should be a no-op for non-EMG layouts, but restrict it to '*EMG*' anyway
+    if 'EMG' in layout_name.upper():
+        layout = rm_dead_channels(tr.emg, layout)
+    return layout
 
 
 def check_layout(layout):

@@ -63,6 +63,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     if not trials:
         raise GaitDataError('No trials')
 
+    if not isinstance(trials, list):
+        trials = [trials]
+
     if supplementary_data is None:
         supplementary_data = dict()
 
@@ -111,6 +114,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     axes = dict()
     leg_entries = dict()
+    lines_plotted = dict()
     mod_normal_lines_ = None
     emg_normal_lines_ = None    
 
@@ -192,7 +196,6 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                                 model_normals_color,
                                                 alpha=cfg.plot.
                                                 model_normals_alpha)
-                                model_normaldata_legend = False
                             ax.set_xlim(normalx[0], normalx[-1])
 
                         if do_plot:
@@ -220,8 +223,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
                             line_ = ax.plot(t, y, linecolor, linestyle=linestyle,
                                             linewidth=cfg.plot.model_linewidth)[0]
-                            leg_entries[tracegroup] = line_                            
-                           
+                            leg_entries[tracegroup] = line_
+
                             # add toeoff marker
                             if cyc.toeoffn is not None:
                                 toeoff = int(cyc.toeoffn)
@@ -290,14 +293,14 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             line_ = ax.plot(t, y*cfg.plot.emg_multiplier,
                                             linewidth=cfg.plot.emg_linewidth,
                                             **trial_color)[0]
-                            leg_entries[tracegroup] = line_
+                            leg_entries['EMG: '+tracegroup] = line_
 
                         # do normal data & plot adjustments for last EMG cycle
                         remaining = allcycles[cyc_ind+1:]
                         last_emg = (trial == trials[-1] and not
                                     any(c in remaining for c in emg_cycles_))
                         if last_emg:
-
+                            title = _var_title(var)
                             if not trial.emg.status_ok(var):
                                 _remove_ticks_and_labels(ax)
                                 _annotate_axis(ax, '%s disconnected' % title)
@@ -324,7 +327,6 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                                 plot.emg_normals_alpha,
                                                 color=cfg.plot.
                                                 emg_normals_color)
-                                        emg_normaldata_legend = False  # add to legend only once
 
                     elif var is None:
                         continue
@@ -353,10 +355,11 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     if emg_normal_lines_:
         leg_entries_['EMG norm.'] = emg_normal_lines_
     leg_entries_.update(leg_entries)
-    axleg.legend(leg_entries_.values(), leg_entries_.keys(),
+    leg = axleg.legend(leg_entries_.values(), leg_entries_.keys(),
                  fontsize=cfg.plot.legend_fontsize,
                  loc='upper center', bbox_to_anchor=(.5, 1.05), ncol=2)
-
+    for li in leg.get_lines():
+        li.set_linewidth(2.0)
     return fig
 
 

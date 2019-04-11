@@ -43,7 +43,7 @@ _plot_cache = dict()  # global for plot_trials
 
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
-                emg_cycles=None, legend_type='full', trial_linestyles='same',
+                emg_cycles=None, legend_type='full', cycle_linestyles=None,
                 supplementary_data=None, maintitle=None):
     """Make a plotly plot of layout, including given trials.
 
@@ -51,7 +51,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     layout: list of lists defining plot layout (see plot.py)
     model_normaldata: dict of normal data for model variables
     legend_type: 'tag_only' for Eclipse tag, 'name_with_tag' or 'full'
-    trial_linestyles: 'same' for all identical, 'trial' for trial specific
+    cycle_linestyles: 'same' for all identical, 'trial' for trial specific
                       style, 'session' for session specific style
     supplementary_data: dict of additional data for each cycle and variable
     """
@@ -62,6 +62,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     if not isinstance(trials, list):
         trials = [trials]
+
+    if cycle_linestyles is None:
+        cycle_linestyles = 'trial'
 
     if supplementary_data is None:
         supplementary_data = dict()
@@ -201,19 +204,13 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         if do_plot:
                             t, y = trial.get_model_data(var)
 
-                            if trial_linestyles == 'trial':
+                            if cycle_linestyles == 'by_context':
                                 # color unique to trial, left side indicated by
                                 # dashed line
                                 line = {'color': trial_color}
                                 if context == 'L':
                                     line['dash'] = 'dash'
-                            elif trial_linestyles == 'same':
-                                # identical color for all trials; typically separate
-                                # for L/R (depending on config)
-                                line = {'color':
-                                        cfg.plot.model_tracecolors[context]}
-                            elif trial_linestyles == 'session':
-                                # identical colors, line style according to session
+                            elif cycle_linestyles == 'by_session':
                                 line = {'color':
                                         cfg.plot.model_tracecolors[context]}
                                 if trial.sessiondir in session_linestyles:
@@ -223,6 +220,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     dash_style = next(linestyles)
                                     session_linestyles[trial.sessiondir] = dash_style
                                 line['dash'] = dash_style
+                            else:
+                                raise ValueError('Invalid cycle style specified')
 
                             # check whether trace was already created
                             if (trial in _plot_cache and cyc in

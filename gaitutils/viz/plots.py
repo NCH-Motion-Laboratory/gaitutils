@@ -56,7 +56,7 @@ def plot_nexus_session_average(tags=None):
 
 
 def plot_sessions(sessions, layout_name=None, tags=None, make_pdf=False,
-                  session_styles=False, backend=None):
+                  cycle_linestyles=None, backend=None):
     """Plot given sessions."""
 
     if layout_name is None:
@@ -79,12 +79,10 @@ def plot_sessions(sessions, layout_name=None, tags=None, make_pdf=False,
             raise GaitDataError('No marked trials found for session %s'
                                 % session)
         c3ds_all.extend(c3ds)
-    trials = [trial.Trial(c3d) for c3d in c3ds]
-    maintitle = ('Kinematics consistency plot, session %s' %
-                    op.split(sessions[0])[-1])
+    trials = [trial.Trial(c3d) for c3d in c3ds_all]
     return backend_lib.plot_trials(trials, layout,
                                    legend_type='short_name_with_tag',
-                                   maintitle=maintitle)
+                                   cycle_linestyles=cycle_linestyles)
 
 
 def plot_session_emg(session, tags=None, show=True, make_pdf=True,

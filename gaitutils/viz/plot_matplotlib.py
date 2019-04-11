@@ -56,7 +56,7 @@ def _remove_ticks_and_labels(ax):
 
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
-                emg_cycles=None, legend_type='full', trial_linestyles='same',
+                emg_cycles=None, legend_type='full', cycle_linestyles=None,
                 supplementary_data=None, maintitle=None):
     """plot trials and return Figure instance"""
 
@@ -65,6 +65,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     if not isinstance(trials, list):
         trials = [trials]
+
+    if cycle_linestyles is None:
+        cycle_linestyles = 'by_session'
 
     if supplementary_data is None:
         supplementary_data = dict()
@@ -201,29 +204,26 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         if do_plot:
                             t, y = trial.get_model_data(var)
 
-                            if trial_linestyles == 'trial':
-                                # trial specific color, left side indicated by
+                            if cycle_linestyles == 'by_context':
+                                # cycle specific color, left side indicated by
                                 # dashed line
                                 linecolor = trial_color['color']
-                                if context == 'L':
-                                    linestyle = '--'
-                            elif trial_linestyles == 'same':
-                                # identical color for all trials; typically separate
-                                # for L/R (depending on config)
-                                linecolor = cfg.plot.model_tracecolors[context]
-                                linestyle = '-'
-                            elif trial_linestyles == 'session':
-                                # identical colors, line style according to session
+                                linestyle = '-' if context == 'R' else '--'
+                            elif cycle_linestyles == 'by_session':
+                                # identical color for all cycles, depending on
+                                # config; style per session
                                 linecolor = cfg.plot.model_tracecolors[context]
                                 if trial.sessiondir in session_linestyles:
                                     linestyle = session_linestyles[trial.sessiondir]
                                 else:
                                     linestyle = next(linestyles)
                                     session_linestyles[trial.sessiondir] = linestyle
+                            else:
+                                raise ValueError('Invalid cycle style specified')
 
                             line_ = ax.plot(t, y, linecolor, linestyle=linestyle,
                                             linewidth=cfg.plot_matplotlib.model_linewidth)[0]
-                            leg_entries[tracegroup] = line_
+                            leg_entries[tracename_full] = line_
 
                             # add toeoff marker
                             if cyc.toeoffn is not None:
@@ -275,7 +275,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 is_avg_trial = False
                                 if is_avg_trial:
                                     subplot_title += (' (avg of %d cycles)' %
-                                                    trial.n_ok[var])
+                                                      trial.n_ok[var])
 
                     # plot EMG variable
                     elif (trial.emg.is_channel(var) or var in
@@ -355,9 +355,11 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     if emg_normal_lines_:
         leg_entries_['EMG norm.'] = emg_normal_lines_
     leg_entries_.update(leg_entries)
+    leg_ncols = ncols
     leg = axleg.legend(leg_entries_.values(), leg_entries_.keys(),
                  fontsize=cfg.plot_matplotlib.legend_fontsize,
-                 loc='upper center', bbox_to_anchor=(.5, 1.05), ncol=2)
+                 loc='upper center', bbox_to_anchor=(.5, 1.05), ncol=leg_ncols)
+    # legend lines may be too thin to see
     for li in leg.get_lines():
         li.set_linewidth(2.0)
     return fig

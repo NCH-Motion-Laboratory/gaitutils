@@ -309,8 +309,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     ax.set_title(title)
                                     ax.title.set_fontsize(cfg.plot_matplotlib.title_fontsize)
                                 ax.set(ylabel=cfg.plot.emg_ylabel)
-                                ax.yaxis.label.set_fontsize(cfg.
-                                                            plot.label_fontsize)
+                                ax.yaxis.label.set_fontsize(cfg.plot_matplotlib.label_fontsize)
                                 ax.locator_params(axis='y', nbins=4)
                                 # tick font size
                                 ax.tick_params(axis='both', which='major',
@@ -324,7 +323,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     emgbar_ind = cfg.emg.channel_normaldata[var]
                                     for inds in emgbar_ind:
                                         emg_normal_lines_=ax.axvspan(inds[0], inds[1], alpha=cfg.
-                                                plot.emg_normals_alpha,
+                                                plot_matplotlib.emg_normals_alpha,
                                                 color=cfg.plot_matplotlib.
                                                 emg_normals_color)
 

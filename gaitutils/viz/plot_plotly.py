@@ -64,7 +64,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
         trials = [trials]
 
     if cycle_linestyles is None:
-        cycle_linestyles = 'trial'
+        cycle_linestyles = 'by_session'
 
     if supplementary_data is None:
         supplementary_data = dict()

@@ -33,9 +33,11 @@ def plot_nexus_trial(layout_name=None, backend=None, model_cycles=None,
         backend = cfg.plot.backend
     
     backend_lib = backend_selector(backend)
-    layout = layouts.get_layout(layout_name)
 
     tr = trial.nexus_trial(from_c3d=from_c3d)
+    layout = layouts.get_layout(layout_name)
+    layout = layouts.rm_dead_channels(tr.emg, layout)
+
     # force unnormalized plot for static trial
     model_cycles = 'unnormalized' if tr.is_static else model_cycles
 
@@ -80,6 +82,9 @@ def plot_sessions(sessions, layout_name=None, tags=None, make_pdf=False,
                                 % session)
         c3ds_all.extend(c3ds)
     trials = [trial.Trial(c3d) for c3d in c3ds_all]
+    if 'EMG' in layout_name.upper():
+        emgs = [tr.emg for tr in trials]
+        layout = layouts.rm_dead_channels_multitrial(emgs, layout)
     return backend_lib.plot_trials(trials, layout,
                                    legend_type='short_name_with_tag',
                                    cycle_linestyles=cycle_linestyles)

@@ -17,14 +17,9 @@ logger = logging.getLogger(__name__)
 def get_layout(layout_name):
     """Gets layout from config by name. Automatically removes dead EMG channels"""
     try:
-        layout = getattr(cfg.layouts, layout_name)
+        return getattr(cfg.layouts, layout_name)
     except AttributeError:
         raise GaitDataError('No such layout %s' % layout_name)
-    # remove dead EMG channels from layout
-    # should be a no-op for non-EMG layouts, but restrict it to '*EMG*' anyway
-    if 'EMG' in layout_name.upper():
-        layout = rm_dead_channels(tr.emg, layout)
-    return layout
 
 
 def check_layout(layout):

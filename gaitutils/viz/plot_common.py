@@ -8,8 +8,35 @@ plotting functionality shared between backends
 
 
 import datetime
+import logging
+import copy
 
 from gaitutils import models, cfg
+
+
+logger = logging.getLogger(__name__)
+
+
+class IteratorMapper(object):
+    """Map iterator values to keys. If key has been seen, previously mapped
+    value is reused. Otherwise new value is taken from the iterator."""
+
+    def __init__(self, iterator):
+        self._iterator = iterator
+        self._prop_dict = dict()
+
+    def get_prop(self, key):
+        if key in self._prop_dict:
+            return self._prop_dict[key]
+        else:
+            prop = next(self._iterator)
+            self._prop_dict[key] = prop
+            return prop
+
+
+def _style_mpl_to_plotly(style):
+    """Style mapper between plotly and matplotlib"""
+    return {'-': 'solid', '--': '5px', '-.': 'dashdot', '..': '2px'}[style]
 
 
 def _var_title(var):

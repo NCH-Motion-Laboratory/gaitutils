@@ -23,7 +23,8 @@ import os.path as op
 import numpy as np
 import logging
 
-from .plot_common import _truncate_trialname, _get_cycle_name, _var_title
+from .plot_common import (_truncate_trialname, _get_cycle_name, _var_title,
+                          IteratorMapper)
 from .. import models, numutils, normaldata, layouts, cfg, GaitDataError
 from ..trial import Trial, nexus_trial, Gaitcycle
 from ..stats import AvgTrial
@@ -81,12 +82,11 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     nrows, ncols = layouts.check_layout(layout)
 
     # mpl default colors as a cycle
-    colors = matplotlib.rcParams['axes.prop_cycle']()
-    #if len(trials) > len(colors_list):
-    #    logger.warning('Not enough colors for plot')
+    tracecolors = IteratorMapper(matplotlib.rcParams['axes.prop_cycle']())
+    tracestyles = IteratorMapper(cycle(cfg.plot.linestyles))
+    tracestyles = IteratorMapper(cycle(['-', '--', '..', '-.']))
 
-    session_linestyles = dict()
-    linestyles = cycle(['-', '--', '..', '-.'])
+
 
     # compute figure width and height - only used for interactive figures
     figh = min(nrows*cfg.plot_matplotlib.inch_per_row + 1, cfg.plot_matplotlib.maxh)

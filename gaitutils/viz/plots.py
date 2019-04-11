@@ -58,7 +58,7 @@ def plot_nexus_session_average(tags=None):
 
 
 def plot_sessions(sessions, layout_name=None, tags=None, make_pdf=False,
-                  cycle_linestyles=None, backend=None):
+                  cycle_linestyles=None, legend_type=None, backend=None):
     """Plot given sessions."""
 
     if layout_name is None:
@@ -86,7 +86,7 @@ def plot_sessions(sessions, layout_name=None, tags=None, make_pdf=False,
         emgs = [tr.emg for tr in trials]
         layout = layouts.rm_dead_channels_multitrial(emgs, layout)
     return backend_lib.plot_trials(trials, layout,
-                                   legend_type='short_name_with_tag',
+                                   legend_type=legend_type,
                                    cycle_linestyles=cycle_linestyles)
 
 

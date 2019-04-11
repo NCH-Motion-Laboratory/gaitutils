@@ -38,24 +38,25 @@ def _truncate_trialname(trialname):
         return trialname
 
 
-def _get_legend_entry(trial, cycle, legend_type):
-    if legend_type == 'name_with_tag':
-        tracegroup = '%s / %s' % (trial.trialname,
-                                  trial.eclipse_tag)
-    elif legend_type == 'short_name_with_tag':
-        tracegroup = '%s / %s' % (_truncate_trialname(trial.trialname),
-                                  trial.eclipse_tag)
-    elif legend_type == 'tag_only':
-        tracegroup = trial.eclipse_tag
-    elif legend_type == 'tag_with_cycle':
-        tracegroup = '%s / %s' % (trial.eclipse_tag,
-                                  cycle.name)
-    elif legend_type == 'full':
-        tracegroup = '%s / %s' % (trial.name_with_description,
-                                  cycle.name)
-    elif legend_type == 'short_name_with_cyclename':
-        tracegroup = '%s / %s' % (_truncate_trialname(trial.trialname),
-                                  cycle.name)
+def _get_cycle_name(trial, cycle, name_type):
+    """Return descriptive name for a gait cycle"""
+    if name_type == 'name_with_tag':
+        cyclename = '%s / %s' % (trial.trialname,
+                                 trial.eclipse_tag)
+    elif name_type == 'short_name_with_tag':
+        cyclename = '%s / %s' % (_truncate_trialname(trial.trialname),
+                                 trial.eclipse_tag)
+    elif name_type == 'tag_only':
+        cyclename = trial.eclipse_tag
+    elif name_type == 'tag_with_cycle':
+        cyclename = '%s / %s' % (trial.eclipse_tag,
+                                 cycle.name)
+    elif name_type == 'full':
+        cyclename = '%s / %s' % (trial.name_with_description,
+                                 cycle.name)
+    elif name_type == 'short_name_with_cyclename':
+        cyclename = '%s / %s' % (_truncate_trialname(trial.trialname),
+                                 cycle.name)
     else:
-        raise ValueError('Invalid legend type')
-    return tracegroup
+        raise ValueError('Invalid name_type')
+    return cyclename

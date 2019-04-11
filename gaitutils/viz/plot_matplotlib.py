@@ -23,7 +23,7 @@ import os.path as op
 import numpy as np
 import logging
 
-from .plot_common import _truncate_trialname, _get_legend_entry, _var_title
+from .plot_common import _truncate_trialname, _get_cycle_name, _var_title
 from .. import models, numutils, normaldata, layouts, cfg, GaitDataError
 from ..trial import Trial, nexus_trial, Gaitcycle
 from ..stats import AvgTrial
@@ -56,7 +56,7 @@ def _remove_ticks_and_labels(ax):
 
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
-                emg_cycles=None, legend_type='full', cycle_linestyles=None,
+                emg_cycles=None, legend_type=None, cycle_linestyles=None,
                 supplementary_data=None, maintitle=None):
     """plot trials and return Figure instance"""
 
@@ -68,6 +68,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     if cycle_linestyles is None:
         cycle_linestyles = 'by_session'
+
+    if legend_type is None:
+        legend_type = 'short_name_with_cyclename'
 
     if supplementary_data is None:
         supplementary_data = dict()
@@ -117,7 +120,6 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     axes = dict()
     leg_entries = dict()
-    lines_plotted = dict()
     mod_normal_lines_ = None
     emg_normal_lines_ = None    
 
@@ -158,10 +160,14 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         ax.axis('off')
                         continue
 
-                    tracegroup = _get_legend_entry(trial, cyc, legend_type)
-                    tracename_full = '%s (%s) / %s' % (trial.trialname,
-                                                       trial.eclipse_tag,
-                                                       cyc.name)
+                    # tracegroup is the legend entry for this cycle
+                    # depending on name_type, one tracegroup may end up
+                    # holding several cycles, which will be under the same
+                    # legend entry.
+                    tracegroup = _get_cycle_name(trial, cyc, 
+                                                 name_type=legend_type)
+                    cyclename_full = _get_cycle_name(trial, cyc,
+                                                     name_type='full')
 
                     mod = models.model_from_var(var)
                     if mod:
@@ -223,7 +229,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
                             line_ = ax.plot(t, y, linecolor, linestyle=linestyle,
                                             linewidth=cfg.plot_matplotlib.model_linewidth)[0]
-                            leg_entries[tracename_full] = line_
+                            leg_entries[tracegroup] = line_
 
                             # add toeoff marker
                             if cyc.toeoffn is not None:
@@ -284,7 +290,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         # plot only if EMG channel context matches cycle ctxt
                         # FIXME: this assumes that EMG names begin with context
                         if (var[0] != context or not trial.emg.status_ok(var)
-                            or cyc not in emg_cycles_):
+                           or cyc not in emg_cycles_):
                             do_plot = False
 
                         if do_plot:

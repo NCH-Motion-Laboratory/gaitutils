@@ -15,7 +15,7 @@ import plotly.graph_objs as go
 import plotly.tools
 
 from .. import GaitDataError, cfg, layouts, models, normaldata
-from .plot_common import _get_legend_entry, _truncate_trialname, _var_title
+from .plot_common import _get_cycle_name, _truncate_trialname, _var_title
 
 logger = logging.getLogger(__name__)
 
@@ -43,16 +43,15 @@ _plot_cache = dict()  # global for plot_trials
 
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
-                emg_cycles=None, legend_type='full', cycle_linestyles=None,
+                emg_cycles=None, legend_type=None, cycle_linestyles=None,
                 supplementary_data=None, maintitle=None):
     """Make a plotly plot of layout, including given trials.
 
     trials: list of gaitutils.Trial instances
     layout: list of lists defining plot layout (see plot.py)
     model_normaldata: dict of normal data for model variables
-    legend_type: 'tag_only' for Eclipse tag, 'name_with_tag' or 'full'
-    cycle_linestyles: 'same' for all identical, 'trial' for trial specific
-                      style, 'session' for session specific style
+    legend_type: 
+    cycle_linestyles: 
     supplementary_data: dict of additional data for each cycle and variable
     """
     global _plot_cache
@@ -65,6 +64,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     if cycle_linestyles is None:
         cycle_linestyles = 'by_session'
+
+    if legend_type is None:
+        legend_type = 'short_name_with_cyclename'
 
     if supplementary_data is None:
         supplementary_data = dict()
@@ -79,7 +81,10 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     if len(trials) > len(colors_list):
         logger.warning('Not enough colors for plot')
 
+    # keep track of per-session colors/styles
+    session_linecolors = dict()
     session_linestyles = dict()
+    # available linestyles
     linestyles = cycle(['solid', 'dash', 'dot', 'dashdot'])
 
     allvars = [item for row in layout for item in row]
@@ -167,17 +172,20 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         continue
 
                     xaxis, yaxis = _get_plotly_axis_labels(i, j, ncols)
-
-                    tracegroup = _get_legend_entry(trial, cyc, legend_type)
-                    tracename_full = '%s (%s) / %s' % (trial.trialname,
-                                                       trial.eclipse_tag,
-                                                       cyc.name)
+                    # tracegroup is the legend entry for this cycle
+                    # depending on name_type, one tracegroup may end up
+                    # holding several cycles, which will be under the same
+                    # legend entry.
+                    tracegroup = _get_cycle_name(trial, cyc, 
+                                                 name_type=legend_type)
+                    cyclename_full = _get_cycle_name(trial, cyc,
+                                                     name_type='full')
                     # plotly cannot directly handle unicode objects
                     if isinstance(tracegroup, unicode):
                         tracegroup = tracegroup.encode('utf-8')
 
-                    # only show the legend for the first trace in the
-                    # tracegroup, so we do not repeat legends.
+                    # only create a legend entry for the first trace in the
+                    # tracegroup, so we do not repeat legends
                     show_legend = tracegroup not in tracegroups
 
                     mod = models.model_from_var(var)
@@ -205,8 +213,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             t, y = trial.get_model_data(var)
 
                             if cycle_linestyles == 'by_context':
-                                # color unique to trial, left side indicated by
-                                # dashed line
+                                # indicate context by style (L dashed)
+                                # colors vary per cycle
                                 line = {'color': trial_color}
                                 if context == 'L':
                                     line['dash'] = 'dash'
@@ -234,7 +242,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                         trace['showlegend'] = show_legend
                             else:  # need to create trace
                                 trace = go.Scatter(x=t, y=y, name=tracegroup,
-                                                   text=tracename_full,
+                                                   text=cyclename_full,
                                                    legendgroup=tracegroup,
                                                    showlegend=show_legend,
                                                    hoverlabel=dict(namelength=-1),

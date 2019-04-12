@@ -105,7 +105,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     titles = [_var_title(var) for var in allvars]
     fig = plotly.tools.make_subplots(rows=nrows, cols=ncols, print_grid=False,
                                      subplot_titles=titles)
-    tracegroups = set()
+    legendgroups = set()
     model_normaldata_legend = True
     emg_normaldata_legend = True
 
@@ -185,21 +185,18 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         continue
 
                     xaxis, yaxis = _get_plotly_axis_labels(i, j, ncols)
-                    # tracegroup is the legend entry for this cycle
-                    # depending on name_type, one tracegroup may end up
-                    # holding several cycles, which will be under the same
-                    # legend entry.
-                    tracegroup = _get_cycle_name(trial, cyc, 
-                                                 name_type=legend_type)
+                    tracename = _get_cycle_name(trial, cyc, 
+                                                name_type=legend_type)
                     cyclename_full = _get_cycle_name(trial, cyc,
                                                      name_type='full')
                     # plotly cannot directly handle unicode objects
-                    if isinstance(tracegroup, unicode):
-                        tracegroup = tracegroup.encode('utf-8')
+                    if isinstance(tracename, unicode):
+                        tracename = tracename.encode('utf-8')
 
+                    # tracename determines the legend group
                     # only create a legend entry for the first trace in the
                     # tracegroup, so we do not repeat legends
-                    show_legend = tracegroup not in tracegroups
+                    show_legend = tracename not in legendgroups
 
                     mod = models.model_from_var(var)
                     if mod:
@@ -252,13 +249,13 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 _plot_cache[trial][cyc]):
                                         trace = _plot_cache[trial][cyc][var]
                                         # update some of the properties
-                                        trace['name'] = tracegroup
-                                        trace['legendgroup'] = tracegroup
+                                        trace['name'] = tracename
+                                        trace['legendgroup'] = tracename
                                         trace['showlegend'] = show_legend
                             else:  # need to create trace
-                                trace = go.Scatter(x=t, y=y, name=tracegroup,
+                                trace = go.Scatter(x=t, y=y, name=tracename,
                                                    text=cyclename_full,
-                                                   legendgroup=tracegroup,
+                                                   legendgroup=tracename,
                                                    showlegend=show_legend,
                                                    hoverlabel=dict(namelength=-1),
                                                    hoverinfo='x+y+text',
@@ -279,7 +276,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 toeoff_marker = go.Scatter(x=t[toeoff:toeoff+1],
                                                            y=y[toeoff:toeoff+1],
                                                            showlegend=False,
-                                                           legendgroup=tracegroup,
+                                                           legendgroup=tracename,
                                                            hoverinfo='skip',
                                                            mode='markers',
                                                            marker=marker)
@@ -287,7 +284,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
                             # add trace to figure
                             fig.append_trace(trace, i+1, j+1)
-                            tracegroups.add(tracegroup)
+                            legendgroups.add(tracename)
 
                             # add supplementary data
                             if cyc in supplementary_data:
@@ -302,10 +299,11 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                                         name=label_sup,
                                                         text=label_sup,
                                                         line=line,
-                                                        legendgroup=tracegroup,
+                                                        legendgroup=tracename,
                                                         hoverinfo='x+y+text',
                                                         showlegend=False)
                                     fig.append_trace(strace, i+1, j+1)
+                                    legendgroups.add(tracename)
 
                             # set subplot params if not already done
                             if not fig['layout'][yaxis]['title'].text:
@@ -333,8 +331,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             # _axis_annotate(ax, 'disconnected')
                         if do_plot:
                             logger.debug('plotting %s/%s' % (cyc, var))
-                            emg_tracegroup = 'EMG:' + tracegroup
-                            show_legend = emg_tracegroup not in tracegroups
+                            tracename_emg = 'EMG:' + tracename
+
                             t_, y = trial.get_emg_data(var)
                             t = (t_ / trial.samplesperframe if not normalized
                                  else t_)
@@ -347,23 +345,24 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 col = emg_trace_colors.get_prop(cyc)
                             line = {'width': 1, 'color': col}
 
+                            # use the original trace name for legendgroup. For mixed
+                            # plots (EMG/model), this groups EMG/model traces of the
+                            # same cycle
+                            show_legend = tracename not in legendgroups
+
                             if (trial in _plot_cache and cyc in
                                 _plot_cache[trial] and var in
                                 _plot_cache[trial][cyc]):
-                                    #logger.debug('cache hit for: %s / %s / %s' %
-                                    #             (trial.trialname, cyc.name, var))
                                     trace = _plot_cache[trial][cyc][var]
-                                    trace['name'] = emg_tracegroup
-                                    trace['legendgroup'] = emg_tracegroup
+                                    trace['name'] = tracename_emg
+                                    trace['legendgroup'] = tracename
                                     trace['showlegend'] = show_legend
                             else:
-                                #logger.debug('calling Scatter for: %s / %s / %s' %
-                                #             (trial.trialname, cyc.name, var))
                                 trace = go.Scatter(x=t,
                                                    y=y*cfg.plot.emg_multiplier,
-                                                   name=emg_tracegroup,
-                                                   legendgroup=emg_tracegroup,
-                                                   showlegend=show_legend,
+                                                   name=tracename_emg,
+                                                   legendgroup=tracename,
+                                                   showlegend=True,
                                                    line=line)
                                 if trial not in _plot_cache:
                                     _plot_cache[trial] = dict()
@@ -371,7 +370,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     _plot_cache[trial][cyc] = dict()
                                 _plot_cache[trial][cyc][var] = trace
 
-                            tracegroups.add(emg_tracegroup)
+                            legendgroups.add(tracename)
                             fig.append_trace(trace, i+1, j+1)
 
                         if not fig['layout'][yaxis]['title'].text:

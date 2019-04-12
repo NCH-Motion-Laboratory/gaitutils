@@ -347,8 +347,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
                             # the tracename_emg legend group does not actually exist
                             # in plotly, it's only used to keep track of whether the
-                            # EMG trace legend was already shown. EMG traces get 
-                            # grouped together with model traces of the same cycle.
+                            # EMG trace legend was already shown. In the legend,
+                            # EMG traces get grouped with model traces of the
+                            # same cycle.
                             show_legend = tracename_emg not in legendgroups
 
                             if (trial in _plot_cache and cyc in

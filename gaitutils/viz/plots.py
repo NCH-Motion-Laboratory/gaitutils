@@ -59,7 +59,7 @@ def plot_nexus_session_average(tags=None):
 
 def plot_sessions(sessions, layout_name=None, tags=None, make_pdf=False,
                   style_by=None, color_by=None, legend_type=None,
-                  backend=None):
+                  backend=None, figtitle=None):
     """Plot given sessions."""
 
     if layout_name is None:
@@ -68,12 +68,13 @@ def plot_sessions(sessions, layout_name=None, tags=None, make_pdf=False,
     if backend is None:
         backend = cfg.plot.backend
 
-    backend_lib = backend_selector(backend)
-    layout = layouts.get_layout(layout_name)
-
     if tags is None:
         tags = cfg.eclipse.tags
 
+    backend_lib = backend_selector(backend)
+    layout = layouts.get_layout(layout_name)
+
+    # collect c3d files across sessions
     c3ds_all = list()
     for session in sessions:
         c3ds = sessionutils.get_c3ds(session, tags=tags,
@@ -83,12 +84,13 @@ def plot_sessions(sessions, layout_name=None, tags=None, make_pdf=False,
                                 % session)
         c3ds_all.extend(c3ds)
     trials = [trial.Trial(c3d) for c3d in c3ds_all]
+    # remove dead channels from EMG layout
     if 'EMG' in layout_name.upper():
         emgs = [tr.emg for tr in trials]
         layout = layouts.rm_dead_channels_multitrial(emgs, layout)
-    return backend_lib.plot_trials(trials, layout,
-                                   legend_type=legend_type,
-                                   style_by=style_by, color_by=color_by)
+    return backend_lib.plot_trials(trials, layout, legend_type=legend_type,
+                                   style_by=style_by, color_by=color_by,
+                                   figtitle=figtitle)
 
 
 def plot_session_emg(session, tags=None, show=True, make_pdf=True,

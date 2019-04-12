@@ -12,7 +12,7 @@ from builtins import zip
 from builtins import range
 from builtins import object
 from itertools import cycle
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 import matplotlib
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -58,7 +58,7 @@ def _remove_ticks_and_labels(ax):
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                 emg_cycles=None, legend_type=None, style_by=None,
-                color_by=None, supplementary_data=None, maintitle=None):
+                color_by=None, supplementary_data=None, figtitle=None):
     """plot trials and return Figure instance"""
 
     if not trials:
@@ -67,11 +67,25 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     if not isinstance(trials, list):
         trials = [trials]
 
+    style_by_defaults = {'model': 'session'}
     if style_by is None:
-        style_by = 'session'
+        style_by = dict()
+    elif isinstance(style_by, basestring):
+        style_by = {'model': style_by}
+    elif not isinstance(style_by, dict):
+        raise ValueError('style_by must be str or dict')
+    for k in style_by_defaults.viewkeys() - style_by.viewkeys():
+        style_by[k] = style_by_defaults[k]  # update missing values
 
+    color_by_defaults = {'model': 'trial', 'EMG': 'trial'}
     if color_by is None:
-        color_by = 'trial'
+        color_by = dict()
+    elif isinstance(color_by, basestring):
+        color_by = {'model': color_by, 'EMG': color_by}
+    elif not isinstance(color_by, dict):
+        raise ValueError('color_by must be str or dict')
+    for k in color_by_defaults.viewkeys() - color_by.viewkeys():
+        color_by[k] = color_by_defaults[k]  # update missing values
 
     if legend_type is None:
         legend_type = 'short_name_with_cyclename'
@@ -87,6 +101,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     # IteratorMappers generate and keep track of key -> linestyle mappings
     mpl_color_cycle = (x['color'] for x in matplotlib.rcParams['axes.prop_cycle']())
     trace_colors = IteratorMapper(mpl_color_cycle)
+    emg_trace_colors = IteratorMapper(mpl_color_cycle)
     trace_styles = IteratorMapper(cycle(cfg.plot.linestyles))
 
     # compute figure width and height
@@ -103,7 +118,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     # spacing adjustments for the plot, see Figure.tight_layout()
     # pad == plot margins
     # w_pad, h_pad == horizontal and vertical subplot padding
-    # rect leaves extra space for maintitle
+    # rect leaves extra space for figtitle
     # auto_spacing_params = dict(pad=.2, w_pad=.3, h_pad=.3,
     #                            rect=(0, 0, 1, .95))
     # fig = Figure(figsize=(figw, figh),
@@ -123,7 +138,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     axes = dict()
     leg_entries = dict()
     mod_normal_lines_ = None
-    emg_normal_lines_ = None    
+    emg_normal_lines_ = None
+    emg_any_ok = defaultdict(lambda: False)
 
     # plot actual data
     for trial_ind, trial in enumerate(trials):
@@ -212,22 +228,22 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             t, y = trial.get_model_data(var)
 
                             # decide style and color 
-                            if style_by == 'context':
+                            if style_by['model'] == 'context':
                                 sty = cfg.plot.context_styles[context]
-                            elif style_by == 'session':
+                            elif style_by['model'] == 'session':
                                 sty = trace_styles.get_prop(trial.sessiondir)
-                            elif style_by == 'trial':
+                            elif style_by['model'] == 'trial':
                                 sty = trace_styles.get_prop(trial)
-                            elif style_by == 'cycle':
+                            elif style_by['model'] == 'cycle':
                                 sty = trace_styles.get_prop(cyc)
 
-                            if color_by == 'context':
+                            if color_by['model'] == 'context':
                                 col = cfg.plot.context_colors[context]
-                            elif color_by == 'session':
+                            elif color_by['model'] == 'session':
                                 col = trace_colors.get_prop(trial.sessiondir)
-                            elif color_by == 'trial':
+                            elif color_by['model'] == 'trial':
                                 col = trace_colors.get_prop(trial)
-                            elif color_by == 'cycle':
+                            elif color_by['model'] == 'cycle':
                                 col = trace_colors.get_prop(cyc)
 
                             line_ = ax.plot(t, y, color=col, linestyle=sty,
@@ -299,18 +315,29 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         if do_plot:
                             t_, y = trial.get_emg_data(var)
                             t = t_ if normalized else t_ / trial.samplesperframe
-                            line_ = ax.plot(t, y*cfg.plot.emg_multiplier,
-                                            linewidth=cfg.plot_matplotlib.emg_linewidth,
-                                            **trial_color)[0]
+
+                            if color_by['EMG'] == 'session':
+                                col = emg_trace_colors.get_prop(trial.sessiondir)
+                            elif color_by['EMG'] == 'trial':
+                                col = emg_trace_colors.get_prop(trial)
+                            elif color_by['EMG'] == 'cycle':
+                                col = emg_trace_colors.get_prop(cyc)
+
+                            line_ = ax.plot(t, y*cfg.plot.emg_multiplier, color=col,
+                                            linewidth=cfg.plot_matplotlib.
+                                            emg_linewidth)[0]
                             leg_entries['EMG: '+tracegroup] = line_
 
                         # do normal data & plot adjustments for last EMG cycle
+                        # keeps track of whether any trials have valid EMG data for this
+                        # variable; otherwise, we annotatate channel as disconnected
+                        emg_any_ok[var] |= trial.emg.status_ok(var)
                         remaining = allcycles[cyc_ind+1:]
                         last_emg = (trial == trials[-1] and not
                                     any(c in remaining for c in emg_cycles_))
                         if last_emg:
                             title = _var_title(var)
-                            if not trial.emg.status_ok(var):
+                            if not emg_any_ok[var]:
                                 _remove_ticks_and_labels(ax)
                                 _annotate_axis(ax, '%s disconnected' % title)
                             else:
@@ -349,11 +376,11 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         ax.set(xlabel=xlabel)
                         ax.xaxis.label.set_fontsize(cfg.plot_matplotlib.label_fontsize)
 
-    if maintitle is not None:
+    if figtitle is not None:
         # constrained_layout does not work well with suptitle
         # (https://github.com/matplotlib/matplotlib/issues/13672)
         # add extra \n to create whitespace
-        fig.suptitle('%s\n' % maintitle, fontsize=10)
+        fig.suptitle('%s\n' % figtitle, fontsize=10)
     # put legend into its own axis, since constrained_layout does not handle fig.legend yet
     axleg = fig.add_subplot(gridspec_[i+1, :])
     axleg.axis('off')

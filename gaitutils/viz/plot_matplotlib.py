@@ -57,8 +57,8 @@ def _remove_ticks_and_labels(ax):
 
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
-                emg_cycles=None, legend_type=None, cycle_linestyles=None,
-                supplementary_data=None, maintitle=None):
+                emg_cycles=None, legend_type=None, style_by=None,
+                color_by=None, supplementary_data=None, maintitle=None):
     """plot trials and return Figure instance"""
 
     if not trials:
@@ -67,8 +67,11 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     if not isinstance(trials, list):
         trials = [trials]
 
-    if cycle_linestyles is None:
-        cycle_linestyles = 'by_session'
+    if style_by is None:
+        style_by = 'session'
+
+    if color_by is None:
+        color_by = 'trial'
 
     if legend_type is None:
         legend_type = 'short_name_with_cyclename'
@@ -81,16 +84,15 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     nrows, ncols = layouts.check_layout(layout)
 
-    # mpl default colors as a cycle
-    tracecolors = IteratorMapper(matplotlib.rcParams['axes.prop_cycle']())
-    tracestyles = IteratorMapper(cycle(cfg.plot.linestyles))
-    tracestyles = IteratorMapper(cycle(['-', '--', '..', '-.']))
+    # IteratorMappers generate and keep track of key -> linestyle mappings
+    mpl_color_cycle = (x['color'] for x in matplotlib.rcParams['axes.prop_cycle']())
+    trace_colors = IteratorMapper(mpl_color_cycle)
+    trace_styles = IteratorMapper(cycle(cfg.plot.linestyles))
 
-
-
-    # compute figure width and height - only used for interactive figures
+    # compute figure width and height
     figh = min(nrows*cfg.plot_matplotlib.inch_per_row + 1, cfg.plot_matplotlib.maxh)
     figw = min(ncols*cfg.plot_matplotlib.inch_per_col, cfg.plot_matplotlib.maxw)
+    figw, figh = (20, 10)
     fig = Figure(figsize=(figw, figh), constrained_layout=True)
 
     plotheightratios = _plot_height_ratios(layout)
@@ -125,7 +127,6 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     # plot actual data
     for trial_ind, trial in enumerate(trials):
-        trial_color = next(colors)
         # these are the actual Gaitcycle instances
         model_cycles_ = trial.get_cycles(model_cycles)
         emg_cycles_ = trial.get_cycles(emg_cycles)
@@ -210,24 +211,26 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         if do_plot:
                             t, y = trial.get_model_data(var)
 
-                            if cycle_linestyles == 'by_context':
-                                # cycle specific color, left side indicated by
-                                # dashed line
-                                linecolor = trial_color['color']
-                                linestyle = '-' if context == 'R' else '--'
-                            elif cycle_linestyles == 'by_session':
-                                # identical color for all cycles, depending on
-                                # config; style per session
-                                linecolor = cfg.plot.model_tracecolors[context]
-                                if trial.sessiondir in session_linestyles:
-                                    linestyle = session_linestyles[trial.sessiondir]
-                                else:
-                                    linestyle = next(linestyles)
-                                    session_linestyles[trial.sessiondir] = linestyle
-                            else:
-                                raise ValueError('Invalid cycle style specified')
+                            # decide style and color 
+                            if style_by == 'context':
+                                sty = cfg.plot.context_styles[context]
+                            elif style_by == 'session':
+                                sty = trace_styles.get_prop(trial.sessiondir)
+                            elif style_by == 'trial':
+                                sty = trace_styles.get_prop(trial)
+                            elif style_by == 'cycle':
+                                sty = trace_styles.get_prop(cyc)
 
-                            line_ = ax.plot(t, y, linecolor, linestyle=linestyle,
+                            if color_by == 'context':
+                                col = cfg.plot.context_colors[context]
+                            elif color_by == 'session':
+                                col = trace_colors.get_prop(trial.sessiondir)
+                            elif color_by == 'trial':
+                                col = trace_colors.get_prop(trial)
+                            elif color_by == 'cycle':
+                                col = trace_colors.get_prop(cyc)
+
+                            line_ = ax.plot(t, y, color=col, linestyle=sty,
                                             linewidth=cfg.plot_matplotlib.model_linewidth)[0]
                             leg_entries[tracegroup] = line_
 

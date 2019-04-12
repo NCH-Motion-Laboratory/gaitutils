@@ -82,6 +82,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     nrows, ncols = layouts.check_layout(layout)
 
     colors_list = plotly.colors.DEFAULT_PLOTLY_COLORS
+    # IteratorMappers generate and keep track of key -> linestyle mappings
     trace_colors = IteratorMapper(cycle(colors_list))
     trace_styles = IteratorMapper(cycle(cfg.plot.linestyles))
 

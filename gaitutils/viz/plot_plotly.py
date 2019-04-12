@@ -46,7 +46,7 @@ _plot_cache = dict()  # global for plot_trials
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                 emg_cycles=None, legend_type=None, style_by=None,
                 color_by=None, supplementary_data=None,
-                maintitle=None):
+                figtitle=None):
     """Make a plotly plot of layout, including given trials.
 
     trials: list of gaitutils.Trial instances
@@ -404,7 +404,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     margin = go.layout.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
     layout = go.Layout(margin=margin, font={'size': cfg.plot_plotly.label_fontsize},
-                       hovermode='closest', title=maintitle)
+                       hovermode='closest', title=figtitle)
 
     fig['layout'].update(layout)
     return fig

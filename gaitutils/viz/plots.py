@@ -78,7 +78,7 @@ def plot_sessions(sessions, layout_name=None, tags=None, make_pdf=False,
     c3ds_all = list()
     for session in sessions:
         c3ds = sessionutils.get_c3ds(session, tags=tags,
-                                     trial_type='dynamic')
+                                        trial_type='dynamic')
         if not c3ds:
             raise GaitDataError('No marked trials found for session %s'
                                 % session)

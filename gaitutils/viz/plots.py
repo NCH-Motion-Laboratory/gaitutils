@@ -58,7 +58,8 @@ def plot_nexus_session_average(tags=None):
 
 
 def plot_sessions(sessions, layout_name=None, tags=None, make_pdf=False,
-                  style_by=None, color_by=None, legend_type=None, backend=None):
+                  style_by=None, color_by=None, legend_type=None,
+                  backend=None):
     """Plot given sessions."""
 
     if layout_name is None:

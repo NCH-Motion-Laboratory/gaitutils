@@ -43,10 +43,10 @@ def _get_plotly_axis_labels(i, j, ncols):
 _plot_cache = dict()  # global for plot_trials
 
 
-
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                 emg_cycles=None, legend_type=None, style_by=None,
-                color_by=None, supplementary_data=None, maintitle=None):
+                color_by=None, supplementary_data=None,
+                maintitle=None):
     """Make a plotly plot of layout, including given trials.
 
     trials: list of gaitutils.Trial instances
@@ -64,11 +64,25 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     if not isinstance(trials, list):
         trials = [trials]
 
+    style_by_defaults = {'model': 'session'}
     if style_by is None:
-        style_by = 'session'
+        style_by = dict()
+    elif isinstance(style_by, basestring):
+        style_by = {'model': style_by}
+    elif not isinstance(style_by, dict):
+        raise ValueError('style_by must be str or dict')
+    for k in style_by_defaults.viewkeys() - style_by.viewkeys():
+        style_by[k] = style_by_defaults[k]  # update missing values
 
+    color_by_defaults = {'model': 'trial', 'EMG': 'trial'}
     if color_by is None:
-        color_by = 'trial'
+        color_by = dict()
+    elif isinstance(color_by, basestring):
+        color_by = {'model': color_by, 'EMG': color_by}
+    elif not isinstance(color_by, dict):
+        raise ValueError('color_by must be str or dict')
+    for k in color_by_defaults.viewkeys() - color_by.viewkeys():
+        color_by[k] = color_by_defaults[k]  # update missing values
 
     if legend_type is None:
         legend_type = 'short_name_with_cyclename'
@@ -84,6 +98,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     colors_list = plotly.colors.DEFAULT_PLOTLY_COLORS
     # IteratorMappers generate and keep track of key -> linestyle mappings
     trace_colors = IteratorMapper(cycle(colors_list))
+    emg_trace_colors = IteratorMapper(cycle(colors_list))
     trace_styles = IteratorMapper(cycle(cfg.plot.linestyles))
 
     allvars = [item for row in layout for item in row]
@@ -211,23 +226,23 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             t, y = trial.get_model_data(var)
 
                             # decide style and color 
-                            if style_by == 'context':
+                            if style_by['model'] == 'context':
                                 sty = cfg.plot.context_styles[context]
-                            elif style_by == 'session':
+                            elif style_by['model'] == 'session':
                                 sty = trace_styles.get_prop(trial.sessiondir)
-                            elif style_by == 'trial':
+                            elif style_by['model'] == 'trial':
                                 sty = trace_styles.get_prop(trial)
-                            elif style_by == 'cycle':
+                            elif style_by['model'] == 'cycle':
                                 sty = trace_styles.get_prop(cyc)
                             sty = _style_mpl_to_plotly(sty)
 
-                            if color_by == 'context':
+                            if color_by['model'] == 'context':
                                 col = cfg.plot.context_colors[context]
-                            elif color_by == 'session':
+                            elif color_by['model'] == 'session':
                                 col = trace_colors.get_prop(trial.sessiondir)
-                            elif color_by == 'trial':
+                            elif color_by['model'] == 'trial':
                                 col = trace_colors.get_prop(trial)
-                            elif color_by == 'cycle':
+                            elif color_by['model'] == 'cycle':
                                 col = trace_colors.get_prop(cyc)
                             line = dict(dash=sty, color=col)
 
@@ -318,26 +333,36 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             # _axis_annotate(ax, 'disconnected')
                         if do_plot:
                             logger.debug('plotting %s/%s' % (cyc, var))
+                            emg_tracegroup = 'EMG:' + tracegroup
+                            show_legend = emg_tracegroup not in tracegroups
                             t_, y = trial.get_emg_data(var)
                             t = (t_ / trial.samplesperframe if not normalized
                                  else t_)
-                            line = {'width': 1, 'color': trial_color}
+
+                            if color_by['EMG'] == 'session':
+                                col = emg_trace_colors.get_prop(trial.sessiondir)
+                            elif color_by['EMG'] == 'trial':
+                                col = emg_trace_colors.get_prop(trial)
+                            elif color_by['EMG'] == 'cycle':
+                                col = emg_trace_colors.get_prop(cyc)
+                            line = {'width': 1, 'color': col}
+
                             if (trial in _plot_cache and cyc in
                                 _plot_cache[trial] and var in
                                 _plot_cache[trial][cyc]):
                                     #logger.debug('cache hit for: %s / %s / %s' %
                                     #             (trial.trialname, cyc.name, var))
                                     trace = _plot_cache[trial][cyc][var]
-                                    trace['name'] = tracegroup
-                                    trace['legendgroup'] = tracegroup
+                                    trace['name'] = emg_tracegroup
+                                    trace['legendgroup'] = emg_tracegroup
                                     trace['showlegend'] = show_legend
                             else:
                                 #logger.debug('calling Scatter for: %s / %s / %s' %
                                 #             (trial.trialname, cyc.name, var))
                                 trace = go.Scatter(x=t,
                                                    y=y*cfg.plot.emg_multiplier,
-                                                   name=tracegroup,
-                                                   legendgroup=tracegroup,
+                                                   name=emg_tracegroup,
+                                                   legendgroup=emg_tracegroup,
                                                    showlegend=show_legend,
                                                    line=line)
                                 if trial not in _plot_cache:
@@ -346,7 +371,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     _plot_cache[trial][cyc] = dict()
                                 _plot_cache[trial][cyc][var] = trace
 
-                            tracegroups.add(tracegroup)
+                            tracegroups.add(emg_tracegroup)
                             fig.append_trace(trace, i+1, j+1)
 
                         if not fig['layout'][yaxis]['title'].text:

@@ -345,10 +345,11 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 col = emg_trace_colors.get_prop(cyc)
                             line = {'width': 1, 'color': col}
 
-                            # use the original trace name for legendgroup. For mixed
-                            # plots (EMG/model), this groups EMG/model traces of the
-                            # same cycle
-                            show_legend = tracename not in legendgroups
+                            # the tracename_emg legend group does not actually exist
+                            # in plotly, it's only used to keep track of whether the
+                            # EMG trace legend was already shown. EMG traces get 
+                            # grouped together with model traces of the same cycle.
+                            show_legend = tracename_emg not in legendgroups
 
                             if (trial in _plot_cache and cyc in
                                 _plot_cache[trial] and var in
@@ -362,7 +363,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                                    y=y*cfg.plot.emg_multiplier,
                                                    name=tracename_emg,
                                                    legendgroup=tracename,
-                                                   showlegend=True,
+                                                   showlegend=show_legend,
                                                    line=line)
                                 if trial not in _plot_cache:
                                     _plot_cache[trial] = dict()
@@ -370,7 +371,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     _plot_cache[trial][cyc] = dict()
                                 _plot_cache[trial][cyc][var] = trace
 
-                            legendgroups.add(tracename)
+                            legendgroups.add(tracename_emg)
                             fig.append_trace(trace, i+1, j+1)
 
                         if not fig['layout'][yaxis]['title'].text:

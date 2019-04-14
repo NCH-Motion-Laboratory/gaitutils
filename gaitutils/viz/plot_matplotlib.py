@@ -99,9 +99,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     nrows, ncols = layouts.check_layout(layout)
 
     # IteratorMappers generate and keep track of key -> linestyle mappings
-    mpl_color_cycle = (x['color'] for x in matplotlib.rcParams['axes.prop_cycle']())
-    trace_colors = IteratorMapper(mpl_color_cycle)
-    emg_trace_colors = IteratorMapper(mpl_color_cycle)
+    trace_colors = IteratorMapper(cycle(cfg.plot.colors))
+    emg_trace_colors = IteratorMapper(cycle(cfg.plot.colors))
     trace_styles = IteratorMapper(cycle(cfg.plot.linestyles))
 
     # compute figure width and height

@@ -217,9 +217,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 normalx = np.linspace(0, 100, ndata.shape[0])
                                 mod_normal_lines_ = ax.fill_between(normalx, ndata[:, 0],
                                                 ndata[:, 1],
-                                                color=cfg.plot_matplotlib.
+                                                color=cfg.plot.
                                                 model_normals_color,
-                                                alpha=cfg.plot_matplotlib.
+                                                alpha=cfg.plot.
                                                 model_normals_alpha)
                             ax.set_xlim(normalx[0], normalx[-1])
 
@@ -246,7 +246,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 col = trace_colors.get_prop(cyc)
 
                             line_ = ax.plot(t, y, color=col, linestyle=sty,
-                                            linewidth=cfg.plot_matplotlib.model_linewidth)[0]
+                                            linewidth=cfg.plot_matplotlib.model_linewidth,
+                                            alpha=cfg.plot.model_alpha)[0]
                             leg_entries[tracegroup] = line_
 
                             # add toeoff marker
@@ -358,8 +359,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     emgbar_ind = cfg.emg.channel_normaldata[var]
                                     for inds in emgbar_ind:
                                         emg_normal_lines_=ax.axvspan(inds[0], inds[1], alpha=cfg.
-                                                plot_matplotlib.emg_normals_alpha,
-                                                color=cfg.plot_matplotlib.
+                                                plot.emg_normals_alpha,
+                                                color=cfg.plot.
                                                 emg_normals_color)
 
                     elif var is None:

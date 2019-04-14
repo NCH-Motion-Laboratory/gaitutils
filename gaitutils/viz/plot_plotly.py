@@ -148,13 +148,14 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         # simulate x range fill by high y values
                         # NOTE: using big values (>~1e3) for the normal bar height triggers a plotly bug
                         # and screws up the normal bars (https://github.com/plotly/plotly.py/issues/1008)
+                        fillcolor = merge_color_and_opacity(cfg.plot.emg_normals_color, cfg.plot.emg_normals_alpha)
                         ntrace = _plotly_fill_between(inds,
                                                     [-1e1]*2,
                                                     [1e1]*2,
                                                     name='EMG norm.',
                                                     legendgroup='EMG norm.',
                                                     showlegend=emg_normaldata_legend,
-                                                    fillcolor=cfg.plot_plotly.emg_normals_color,
+                                                    fillcolor=fillcolor,
                                                     line=dict(width=0))  # no border lines                                           
                         fig.append_trace(ntrace, i+1, j+1)
                         emg_normaldata_legend = False
@@ -241,7 +242,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 col = trace_colors.get_prop(trial)
                             elif color_by['model'] == 'cycle':
                                 col = trace_colors.get_prop(cyc)
-                            line = dict(dash=sty, color=col)
+                            line = dict(width=cfg.plot_plotly.model_linewidth,
+                                        dash=sty, color=col)
 
                             # check whether trace was already created
                             if (trial in _plot_cache and cyc in

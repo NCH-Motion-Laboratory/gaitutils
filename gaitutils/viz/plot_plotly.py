@@ -12,6 +12,7 @@ from itertools import cycle
 import numpy as np
 import plotly
 import plotly.graph_objs as go
+from plotly.matplotlylib.mpltools import merge_color_and_opacity
 import plotly.tools
 
 from .. import GaitDataError, cfg, layouts, models, normaldata
@@ -342,7 +343,10 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 col = emg_trace_colors.get_prop(trial)
                             elif color_by['EMG'] == 'cycle':
                                 col = emg_trace_colors.get_prop(cyc)
-                            line = {'width': 1, 'color': col}
+
+                            col = merge_color_and_opacity(col, cfg.plot.emg_alpha)
+                            line = {'width': cfg.plot_plotly.emg_linewidth,
+                                    'color': col}
 
                             # the tracename_emg legend group does not actually exist
                             # in plotly, it's only used to keep track of whether the

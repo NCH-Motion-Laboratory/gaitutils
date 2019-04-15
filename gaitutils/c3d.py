@@ -202,7 +202,10 @@ def get_metadata(c3dfile):
     n_forceplates = len(list(btk.Iterate(fpe.GetOutput())))
 
     # get markers
-    markers = _get_c3d_metadata_field(acq, 'POINT', 'LABELS')
+    try:
+        markers = _get_c3d_metadata_field(acq, 'POINT', 'LABELS')
+    except ValueError:
+        markers = list()
     # not sure what the '*xx' markers are, but delete them for now
     markers = [m for m in markers if m[0] != '*']
 

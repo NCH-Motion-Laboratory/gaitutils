@@ -14,7 +14,7 @@ import itertools
 import ctypes
 import subprocess
 
-from . import cfg, sessionutils
+from . import cfg, sessionutils, numutils
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +122,9 @@ def _filter_by_overlay(vids, overlay=True):
 
 def _camera_id(fname):
     """ Returns camera id for a video file """
+    # camera id should be the second component of dot-separated filename
     fn_split = op.split(fname)[-1].split('.')
-    if len(fn_split) < 3:
-        raise ValueError('Unexpected video file name %s' % fname)
-    return fn_split[-3]
+    id = fn_split[1]
+    if not numutils.isint(id):
+        raise ValueError('Cannot parse video id from filename %s' % fname)
+    return id

@@ -8,6 +8,7 @@ Compute statistics across/within trials
 
 import logging
 import numpy as np
+from collections import defaultdict
 
 from .trial import Trial, Gaitcycle
 from . import models, GaitDataError
@@ -39,6 +40,9 @@ class AvgTrial(Trial):
                                      name='Left average', trial=self))
         self.ncycles = 2
         self.sessionpath = None
+        self.sessiondir = None
+        self.eclipse_data = defaultdict(lambda: '', {})
+        self.emg = None
 
     def get_model_data(self, var):
         return self.t, self._model_data[var]

@@ -10,8 +10,6 @@ from builtins import zip
 from builtins import range
 import logging
 import os.path as op
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 
 from .. import nexus, analysis, GaitDataError, sessionutils, cfg
@@ -20,13 +18,14 @@ from .plot_matplotlib import time_dist_barchart
 logger = logging.getLogger(__name__)
 
 
-def do_session_average_plot(sessionpath=None, tags=None, show=True,
-                            make_pdf=True):
+def do_session_average_plot(sessionpath=None, tags=None):
     """Find tagged trials from current session dir and plot average"""
 
     if sessionpath is None:
         sessionpath = nexus.get_sessionpath()
-    tags = tags or cfg.eclipse.tags
+    if tags is None:
+        tags = cfg.eclipse.tags
+
     trials = sessionutils.get_c3ds(sessionpath, tags=tags,
                                    trial_type='dynamic')
     if not trials:
@@ -36,32 +35,15 @@ def do_session_average_plot(sessionpath=None, tags=None, show=True,
     session = op.split(sessionpath)[-1]
     fig.suptitle('Time-distance average, session %s' % session)
 
-    if make_pdf:
-        pdf_name = op.join(sessionpath, 'time_distance_average.pdf')
-        with PdfPages(pdf_name) as pdf:
-            pdf.savefig(fig)
-
-    if show:
-        plt.show()
-
     return fig
 
 
-def do_single_trial_plot(c3dfile, show=True, make_pdf=True):
+def do_single_trial_plot(c3dfile):
     """Plot a single trial time-distance."""
 
     fig = _plot_trials([[c3dfile]])
     c3dpath, c3dfile_ = op.split(c3dfile)
     fig.suptitle('Time-distance variables, %s' % c3dfile_)
-
-    if make_pdf:
-        c3dfile_root = op.splitext(c3dfile_)[0]
-        pdf_name = op.join(c3dpath, 'time_distance_%s.pdf' % c3dfile_root)
-        with PdfPages(pdf_name) as pdf:
-            pdf.savefig(fig)
-
-    if show:
-        plt.show()
 
     return fig
 
@@ -73,21 +55,15 @@ def do_multitrial_plot(c3dfiles, show=True, make_pdf=True):
     cond_labels = [op.split(c3d)[-1] for c3d in c3dfiles]
     fig = _plot_trials([[c3d] for c3d in c3dfiles], cond_labels)
 
-    if make_pdf:
-        pdf_name = op.join(nexus.get_sessionpath(),
-                           '%representative_time_distance.pdf')
-        with PdfPages(pdf_name) as pdf:
-            pdf.savefig(fig)
-
-    if show:
-        plt.show()
-
     return fig
 
 
-def do_comparison_plot(sessions, tags, show=True):
+def do_comparison_plot(sessions, tags=None, show=True):
     """Time-dist comparison of multiple sessions. Tagged trials from each
     session will be picked."""
+
+    if tags is None:
+        tags = cfg.eclipse.tags
 
     trials = list()
     for session in sessions:
@@ -98,9 +74,6 @@ def do_comparison_plot(sessions, tags, show=True):
 
     cond_labels = [op.split(session)[-1] for session in sessions]
     fig = _plot_trials(trials, cond_labels)
-
-    if show:
-        plt.show()
 
     return fig
 

@@ -34,9 +34,9 @@ from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
                            copy_session_videos)
 from ..viz.plots import (plot_nexus_trial, plot_nexus_session,
-                         plot_session_emg, plot_sessions,
-                         plot_session_musclelen, plot_trial_velocities,
+                         plot_sessions, plot_trial_velocities,
                          plot_nexus_session_average)
+
 
 
 logger = logging.getLogger(__name__)

@@ -34,7 +34,7 @@ from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
                            copy_session_videos)
 from ..viz.plots import (plot_nexus_trial, plot_nexus_session,
-                         plot_session_emg,
+                         plot_session_emg, plot_sessions,
                          plot_session_musclelen, plot_trial_velocities,
                          plot_nexus_session_average)
 
@@ -349,9 +349,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   'Restarting...')
                 os.execv(sys.executable, ['python'] + sys.argv)
 
-        # if using the plotly backend, we can run plotters in worker threads
-        thread_plotters = cfg.plot.backend == 'plotly'
-
         self._web_report_dialog = WebReportDialog(self)
 
         # modal dialogs etc. (simple signal->slot connection)
@@ -362,18 +359,14 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionTardieu_analysis.triggered.connect(self._tardieu)
         self.actionAutoprocess_session.triggered.connect(self._autoproc_session)
         self.btnPlotNexusTrial.clicked.connect(self._plot_nexus_trial)
-        self.actionKinematics_consistency.triggered.connect(lambda: self._plot_wrapper(plot_nexus_session))
+        self.btnPlotNexusSession.clicked.connect(self._plot_nexus_session)
         self.actionKin_average.triggered.connect(lambda: self._plot_wrapper(plot_nexus_session_average))
-        self.actionEMG_consistency.triggered.connect(lambda: self._plot_wrapper(plot_sessions_emg))
 
         # consistency menu
         self._widget_connect_task(self.actionTrial_velocity,
                                   plot_trial_velocities)
         #self._widget_connect_task(self.actionTime_distance_average,
         #                          lambda)
-        self._widget_connect_task(self.actionMuscle_length_consistency,
-                                  plot_session_musclelen,
-                                  thread=thread_plotters)
 
         # processing menu
         self._widget_connect_task(self.actionAutoprocess_single_trial,
@@ -388,6 +381,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   self._convert_session_videos)
         self._widget_connect_task(self.actionCopy_session_videos_to_desktop,
                                   copy_session_videos)
+
+        # set backend radio buttons according to choice in cfg
+        self.rb_map = {'plotly': self.rbPlotly, 'matplotlib': self.rbMatplotlib}
+        rb_active = self.rb_map[cfg.plot.backend]
+        rb_active.setChecked(True)
 
         # add predefined plot layouts to combobox
         cb_items = sorted(cfg.layouts.menu_layouts.keys())
@@ -410,6 +408,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._tardieuwin = None
         self._mpl_windows = list()
 
+    def _get_plotting_backend_ui(self):
+        """Return backend as selected in main menu"""
+        for backend, rb in self.rb_map.items():
+            if rb.isChecked():
+                return backend
+
     def _autoproc_session(self):
         """Wrapper to run autoprocess for Nexus session"""
         try:
@@ -431,7 +435,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                       finished_func=self._enable_op_buttons)
 
     def _plot_nexus_trial(self):
-        """Plot the current Nexus trial"""
+        """Plot the current Nexus trial according to UI choices"""
         lout_desc = self.cbNexusTrialLayout.currentText()
         lout_name = cfg.layouts.menu_layouts[lout_desc]
         cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
@@ -439,25 +443,43 @@ class Gaitmenu(QtWidgets.QMainWindow):
         from_c3d = self.xbPlotFromC3D.checkState()
         self._execute(plot_nexus_trial, thread=True,
                       finished_func=self._enable_op_buttons,
-                      result_func=self._show_plot,
+                      result_func=self._show_plots,
                       layout_name=lout_name, model_cycles=model_cycles,
                       emg_cycles=emg_cycles, from_c3d=from_c3d)
 
+    def _plot_nexus_session(self):
+        """Plot the current Nexus session according to UI choices"""
+        lout_desc = self.cbNexusTrialLayout.currentText()
+        lout_name = cfg.layouts.menu_layouts[lout_desc]
+        backend = self._get_plotting_backend_ui()
+        sessions = [nexus.get_sessionpath()]
+        cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
+        model_cycles = emg_cycles = cycs
+        self._execute(plot_sessions, thread=True,
+                      finished_func=self._enable_op_buttons,
+                      result_func=self._show_plots,
+                      sessions=sessions,
+                      style_by='context',
+                      color_by='trial',
+                      layout_name=lout_name, model_cycles=model_cycles,
+                      emg_cycles=emg_cycles, backend=backend)
+
     def _plot_wrapper(self, plotfun):
-        """Wrapper for plotting functions. Runs the function in a thread and
+        """Wrapper for misc plotting functions. Runs the function in a thread and
         shows the plot when ready."""
         self._execute(plotfun, thread=True, result_func=self._show_plots,
                       finished_func=self._enable_op_buttons)
 
     def _show_plots(self, figs):
         """Shows created plot(s)"""
+        backend = self._get_plotting_backend_ui()
         if not isinstance(figs, list):
             figs = [figs]
         for fig in figs:
-            if cfg.plot.backend == 'matplotlib':
+            if backend == 'matplotlib':
                 _mpl_win = qt_matplotlib_window(fig)
                 self._mpl_windows.append(_mpl_win)
-            elif cfg.plot.backend == 'plotly':
+            elif backend == 'plotly':
                 plotly.offline.plot(fig)
 
     def _widget_connect_task(self, widget, fun, thread=False):

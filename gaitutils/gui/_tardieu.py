@@ -47,7 +47,7 @@ from ..numutils import segment_angles, rms
 from .qt_dialogs import qt_message_dialog, qt_yesno_dialog
 
 
-matplotlib.style.use(cfg.plot.mpl_style)
+matplotlib.style.use(cfg.plot_matplotlib.mpl_style)
 
 logger = logging.getLogger(__name__)
 

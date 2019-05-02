@@ -45,10 +45,11 @@ def plot_nexus_trial(layout_name=None, backend=None, model_cycles=None,
                                    legend_type='short_name_with_cyclename')
 
 
-def plot_nexus_session(tags=None):
+def plot_nexus_session(tags=None, model_cycles=None, emg_cycles=None):
     """Plot tagged trials from Nexus session"""
     sessions = [nexus.get_sessionpath()]
-    return plot_sessions(sessions, tags=tags)
+    return plot_sessions(sessions, tags=tags, model_cycles=model_cycles,
+                         emg_cycles=emg_cycles)
 
 
 def plot_nexus_session_average(tags=None):
@@ -59,6 +60,7 @@ def plot_nexus_session_average(tags=None):
 
 def plot_sessions(sessions, layout_name=None, tags=None, make_pdf=False,
                   style_by=None, color_by=None, legend_type=None,
+                  model_cycles=None, emg_cycles=None,
                   backend=None, figtitle=None):
     """Plot given sessions."""
 
@@ -90,6 +92,7 @@ def plot_sessions(sessions, layout_name=None, tags=None, make_pdf=False,
         layout = layouts.rm_dead_channels_multitrial(emgs, layout)
     return backend_lib.plot_trials(trials, layout, legend_type=legend_type,
                                    style_by=style_by, color_by=color_by,
+                                   model_cycles=model_cycles, emg_cycles=emg_cycles,
                                    figtitle=figtitle)
 
 

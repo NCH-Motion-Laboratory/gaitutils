@@ -44,32 +44,28 @@ def plot_nexus_trial():
 
 
 def plot_nexus_session():
-    """Kin plot for tagged dynamic trials from current Nexus session"""
+    """Plot tagged dynamic trials from current Nexus session"""
     _console_init()
     parser = argparse.ArgumentParser()
-    parser.add_argument('--tags', metavar='p', type=str, nargs='+',
-                        help='strings that must appear in trial '
-                        'description or notes')
+    parser.add_argument('--layout', type=str)
+    parser.add_argument('--backend', type=str)
+    parser.add_argument('--unnorm', action='store_true')
+    parser.add_argument('--model_cycles', type=str)
+    parser.add_argument('--emg_cycles', type=str)
     args = parser.parse_args()
-    fig = plots.plot_nexus_session(tags=args.tags)
+
+    sessions = [nexus.get_sessionpath()]
+    fig = plots.plot_sessions(sessions, tags=tags,
+                              model_cycles=args.model_cycles,
+                              emg_cycles=args.emg_cycles)
     show_fig(fig)
 
 
 def plot_nexus_session_average():
     """Kin average plot for session"""
     _console_init()
-    figs = plots.plot_nexus_session_average()
+    session = nexus.get_sessionpath()
+    figs = plots.plot_session_average(session)
     for fig in figs:
         show_fig(fig)
 
-
-def plot_nexus_session_emg():
-    """EMG plot for tagged dynamic trials from current Nexus session"""
-    _console_init()
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--tags', metavar='p', type=str, nargs='+',
-                        help='strings that must appear in trial '
-                        'description or notes')
-    args = parser.parse_args()
-    sessions = [nexus.get_sessionpath()]
-    plots.plot_session_emg(sessions, tags=args.tags)

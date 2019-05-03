@@ -15,7 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 def get_layout(layout_name):
-    """Gets layout from config by name. Automatically removes dead EMG channels"""
+    """Gets layout from config by name."""
+    # default layout is lower body kinematics
+    if layout_name is None:
+        layout_name = 'lb_kinematics'
     try:
         return getattr(cfg.layouts, layout_name)
     except AttributeError:

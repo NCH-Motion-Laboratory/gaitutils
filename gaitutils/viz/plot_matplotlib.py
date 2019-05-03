@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-
 matplotlib based plotting functions
 
 @author: Jussi (jnu@iki.fi)
@@ -10,14 +9,10 @@ from __future__ import division
 
 from builtins import zip
 from builtins import range
-from builtins import object
 from itertools import cycle
 from collections import OrderedDict, defaultdict
-import matplotlib
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_pdf import PdfPages
-from matplotlib.lines import Line2D
 import matplotlib.gridspec as gridspec
 import os.path as op
 import numpy as np
@@ -25,9 +20,8 @@ import logging
 
 from .plot_common import (_truncate_trialname, _get_cycle_name, _var_title,
                           IteratorMapper)
-from .. import models, numutils, normaldata, layouts, cfg, GaitDataError
-from ..trial import Trial, nexus_trial, Gaitcycle
-from ..stats import AvgTrial
+from .. import (models, normaldata, layouts, cfg, GaitDataError, sessionutils,
+                utils)
 
 
 logger = logging.getLogger(__name__)
@@ -428,7 +422,7 @@ def save_pdf(filename, fig):
 
 
 def time_dist_barchart(values, stddev=None, thickness=.5,
-                       color=None, interactive=True, stddev_bars=True,
+                       color=None, stddev_bars=True,
                        plotvars=None):
     """ Multi-variable and multi-condition barchart plot.
     values dict is keyed as values[condition][var][context],
@@ -437,13 +431,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     If no stddev for a given condition, set stddev[condition] = None
     plotvars gives variables to plot (if not all) and their order.
     """
-
-    if interactive:
-        import matplotlib.pyplot as plt
-        fig = plt.figure()
-    else:
-        fig = Figure()
-        canvas = FigureCanvasAgg(fig)
+    fig = Figure()
 
     def _plot_label(ax, rects, texts):
         """Plot a label inside each rect"""
@@ -532,4 +520,29 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
 
     return fig
 
+
+def plot_trial_velocities(session):
+    """Plot median velocities for each dynamic trial in Nexus session."""
+    c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
+
+    if len(c3ds) == 0:
+        raise Exception('Did not find any dynamic trials in current '
+                        'session directory')
+
+    labels = [op.splitext(op.split(f)[1])[0] for f in c3ds]
+    vels = np.array([utils._trial_median_velocity(trial) for trial in c3ds])
+    vavg = np.nanmean(vels)
+
+    fig = Figure()
+    ax = fig.add_subplot(111)
+
+    ax.stem(vels)
+    ax.set_xticks(range(len(vels)))
+    ax.set_xticklabels(labels, rotation='vertical')
+    ax.set_ylabel('Speed (m/s)')
+    ax.tick_params(axis='both', which='major', labelsize=8)
+    ax.set_title('Walking speed for dynamic trials (average %.2f m/s)' % vavg)
+    fig.tight_layout()
+
+    return fig
 

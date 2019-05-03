@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-Create single session pdf gait report.
-Note: specific to the Helsinki gait lab.
-
+Create pdf gait report.
+Note: specific to the Helsinki gait lab!
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -12,13 +10,16 @@ from __future__ import absolute_import
 
 import logging
 import os.path as op
-import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.figure import Figure
 from collections import defaultdict
 
 from .. import (cfg, layouts, numutils, normaldata, sessionutils,
                 GaitDataError)
-from ..viz.plot_matplotlib import plot_trials
+from ..viz.plot_matplotlib import plot_trials, plot_trial_velocities
+from ..viz.timedist import do_session_average_plot
+from ..viz.plots import plot_sessions
+
 
 logger = logging.getLogger(__name__)
 
@@ -83,9 +84,9 @@ def create_report(sessionpath, info=None, pages=None):
 
     # make header page
     # timestr = time.strftime('%d.%m.%Y')  # current time, not currently used
-    fig_hdr = plt.figure()
-    ax = plt.subplot(111)
-    plt.axis('off')
+    fig_hdr = Figure()
+    ax = fig_hdr.add_subplot(111)
+    ax.set_axis('off')
     title_txt = 'HUS Liikelaboratorio\n'
     title_txt += u'Kävelyanalyysin tulokset\n'
     title_txt += '\n'
@@ -162,45 +163,35 @@ def create_report(sessionpath, info=None, pages=None):
     fig_vel = None
     if pages['TrialVelocity']:
         logger.debug('creating velocity plot')
-        fig_vel = nexus_trials_velocity.do_plot(sessionpath, show=False,
-                                                make_pdf=False)
+        fig_vel = plot_trial_velocities(sessionpath)
 
     # time-distance average
     fig_timedist_avg = None
     if pages['TimeDistAverage']:
         logger.debug('creating time-distance plot')
-        fig_timedist_avg = (nexus_time_distance_vars.
-                            do_session_average_plot(sessionpath=sessionpath,
-                                                    show=False,
-                                                    make_pdf=False))
+        fig_timedist_avg = do_session_average_plot(sessionpath=sessionpath)
+
     # consistency plots
     fig_kin_cons = None
     if pages['KinCons']:
         logger.debug('creating kin consistency plot')
-        fig_kin_cons = nexus_kin_consistency.do_plot(sessions=[sessionpath],
-                                                     show=False,
-                                                     make_pdf=make_separate_pdfs,
-                                                     backend='matplotlib')
+        fig_kin_cons = plot_sessions(sessions=[sessionpath], backend='matplotlib')
+
     fig_musclelen_cons = None
     if pages['MuscleLenCons']:
         logger.debug('creating muscle length consistency plot')
-        fig_musclelen_cons = nexus_musclelen_consistency.do_plot(sessionpath=sessionpath,
-                                                                 show=False,
-                                                                 age=age,
-                                                                 make_pdf=make_separate_pdfs)
+        fig_kin_cons = plot_sessions(sessions=[sessionpath], layout_name='musclelen',
+                                     backend='matplotlib')
     fig_emg_cons = None
     if do_emg_consistency:
         logger.debug('creating EMG consistency plot')        
-        fig_emg_cons = nexus_emg_consistency.do_plot(sessionpath=sessionpath,
-                                                     show=False,
-                                                     make_pdf=make_separate_pdfs,
-                                                     backend='matplotlib')
+        fig_emg_cons = plot_sessions(sessions=[sessionpath], layout_name='std_emg',
+                                     backend='matplotlib')
 
-    # average plots
+    # average plots, R/L
     figs_kin_avg = list()
     if pages['KinAverage']:
-        figs_kin_avg = nexus_kin_average.do_plot(sessionpath=sessionpath,
-                                                 show=False, make_pdf=False)
+        figs_kin_avg = plot_session_average(sessionpath=sessionpath)
 
     logger.debug('creating multipage pdf %s' % pdfpath)
     with PdfPages(pdfpath) as pdf:
@@ -217,9 +208,6 @@ def create_report(sessionpath, info=None, pages=None):
         for fig in tagged_figs:
             _savefig(pdf, fig, header)
 
-    # close all created figures, otherwise they'll pop up on next show() call
-    plt.close('all')
-
 
 def create_comparison_report(sessions, pdfpath=None, pages=None):
     """ Do a quick comparison report between sessions """
@@ -234,9 +222,9 @@ def create_comparison_report(sessions, pdfpath=None, pages=None):
     sessions_str = u' vs. '.join([op.split(s)[-1] for s in sessions])
 
     # make header page
-    fig_hdr = plt.figure()
-    ax = plt.subplot(111)
-    plt.axis('off')
+    fig_hdr = Figure()
+    ax = fig_hdr.add_subplot(111)
+    ax.set_axis('off')
     title_txt = 'HUS Liikelaboratorio\n'
     title_txt += u'Kävelyanalyysin vertailuraportti\n'
     title_txt += '\n'
@@ -266,6 +254,4 @@ def create_comparison_report(sessions, pdfpath=None, pages=None):
             _savefig(pdf, fig_timedist_cmp, header)
             _savefig(pdf, fig_kin_cmp, header)
 
-    # close all created figures, otherwise they'll pop up on next show() call
-    plt.close('all')
 

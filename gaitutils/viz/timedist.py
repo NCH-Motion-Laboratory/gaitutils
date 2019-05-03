@@ -78,7 +78,7 @@ def do_comparison_plot(sessions, tags=None, show=True):
     return fig
 
 
-def _plot_trials(trials, cond_labels=None, interactive=True):
+def _plot_trials(trials, cond_labels=None):
     """Make a time-distance variable barchart from given trials (.c3d files).
     trials: list of lists, where inner lists represent conditions
     and list elements represent trials.
@@ -112,6 +112,5 @@ def _plot_trials(trials, cond_labels=None, interactive=True):
         res_std_all.update(res_std)
 
     return time_dist_barchart(res_avg_all, stddev=res_std_all,
-                              stddev_bars=False, plotvars=plotvars,
-                              interactive=interactive)
+                              stddev_bars=False, plotvars=plotvars)
 

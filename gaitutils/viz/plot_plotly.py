@@ -15,11 +15,26 @@ import plotly.graph_objs as go
 from plotly.matplotlylib.mpltools import merge_color_and_opacity
 import plotly.tools
 
-from .. import GaitDataError, cfg, layouts, models, normaldata
+from .. import GaitDataError, cfg, layouts, models, normaldata, sessionutils, utils
 from .plot_common import (_get_cycle_name, _truncate_trialname, _var_title,
                           IteratorMapper, _style_mpl_to_plotly)
 
 logger = logging.getLogger(__name__)
+
+
+def _plot_vel_curves(session):
+    """Plot time-dependent velocity for each dynamic trial in session."""
+    c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
+    if not c3ds:
+        raise GaitDataError('No dynamic trials found for current session')
+    traces = list()
+    for c3d in c3ds:
+        v, vel = utils._trial_median_velocity(c3d, return_curve=True)
+        # vel = signal.medfilt(vel, 3)  # if spikes
+        tname = op.split(c3d)[-1]
+        trace = go.Scatter(y=vel, text=tname, name=tname, hoverinfo='x+y+text')
+        traces.append(trace)
+    return traces
 
 
 def _plotly_fill_between(x, ylow, yhigh, **kwargs):

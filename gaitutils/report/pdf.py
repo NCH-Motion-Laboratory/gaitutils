@@ -75,6 +75,8 @@ def create_report(sessionpath, info=None, pages=None):
                                           trial_type='dynamic')
     if not tagged_trials:
         raise GaitDataError('No tagged trials found in %s' % sessiondir)
+    repr_trials = sessionutils.get_c3ds(sessionpath, tags=cfg.eclipse.repr_tags,
+                                        trial_type='dynamic')
     session_t = sessionutils.get_session_date(sessionpath)
     logger.debug('session timestamp: %s', session_t)
     age = numutils.age_from_hetu(hetu, session_t) if hetu else None
@@ -104,58 +106,50 @@ def create_report(sessionpath, info=None, pages=None):
     footer_musclelen = (u' Normaalidata: %s' % musclelen_ndata if
                         musclelen_ndata else u'')
 
-    pl = Plotter()
-
     for c3d in tagged_trials:
 
-        pl.open_trial(c3d)
-        representative = pl.trial.eclipse_tag in cfg.eclipse.repr_tags
+        representative = c3d in repr_trials
 
         # representative single trial plots
-        if representative:
-            if pages['TimeDistRepresentative']:
-                fig = nexus_time_distance_vars.do_single_trial_plot(c3d,
-                                                                    show=False)
-                repr_figs.append(fig)
+        if representative and pages['TimeDistRepresentative']:
+            fig = timedist.do_single_trial_plot(c3d)
+            repr_figs.append(fig)
 
-        # try to figure out whether we have any valid EMG signals
-        emg_active = any([pl.trial.emg.status_ok(ch) for ch in
-                          cfg.emg.channel_labels])
+        # WIP: try to figure out whether we have any valid EMG signals
+        #if emg_active:
 
-        if emg_active:
+        if pages['EMGCons']:
+            do_emg_consistency = True
 
-            if pages['EMGCons']:
-                do_emg_consistency = True
+        if pages['KinEMGMarked']:
+            logger.debug('creating representative kin-EMG plots')
+            # FIXME: the plotter logic is a bit weird here - it works
+            # but old axes get recreated
+            for side in pl.trial.fp_events['valid']:
+                side_str = {'R': 'right', 'L': 'left'}[side]
+                pl.layout = (cfg.layouts.lb_kinetics_emg_r if side == 'R'
+                                else cfg.layouts.lb_kinetics_emg_l)
 
-            if pages['KinEMGMarked']:
-                logger.debug('creating representative kin-EMG plots')
-                # FIXME: the plotter logic is a bit weird here - it works
-                # but old axes get recreated
-                for side in pl.trial.fp_events['valid']:
-                    side_str = {'R': 'right', 'L': 'left'}[side]
-                    pl.layout = (cfg.layouts.lb_kinetics_emg_r if side == 'R'
-                                 else cfg.layouts.lb_kinetics_emg_l)
-
-                    maintitle = ('Kinetics-EMG (%s) for %s' % (side_str, pl.title_with_eclipse_info()))
-                    fig = pl.plot_trial(maintitle=maintitle, show=False)
-                    tagged_figs.append(fig)
-                    eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
-
-                    # save individual pdf
-                    if representative and make_separate_pdfs:
-                        pdf_name = 'kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname,
-                                                               side_str)
-                        logger.debug('creating %s' % pdf_name)
-                        pl.create_pdf(pdf_name=pdf_name)
-
-            if pages['EMGMarked']:
-                logger.debug('creating representative EMG plots')
-                maintitle = pl.title_with_eclipse_info('EMG plot for')
-                layout = cfg.layouts.std_emg
-                pl.layout = layouts.rm_dead_channels(pl.trial.emg, layout)
+                maintitle = ('Kinetics-EMG (%s) for %s' % (side_str, pl.title_with_eclipse_info()))
                 fig = pl.plot_trial(maintitle=maintitle, show=False)
                 tagged_figs.append(fig)
                 eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
+
+                # save individual pdf
+                if representative and make_separate_pdfs:
+                    pdf_name = 'kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname,
+                                                            side_str)
+                    logger.debug('creating %s' % pdf_name)
+                    pl.create_pdf(pdf_name=pdf_name)
+
+        if pages['EMGMarked']:
+            logger.debug('creating representative EMG plots')
+            maintitle = pl.title_with_eclipse_info('EMG plot for')
+            layout = cfg.layouts.std_emg
+            pl.layout = layouts.rm_dead_channels(pl.trial.emg, layout)
+            fig = pl.plot_trial(maintitle=maintitle, show=False)
+            tagged_figs.append(fig)
+            eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
 
                 #  save individual pdf
                 if representative and make_separate_pdfs:

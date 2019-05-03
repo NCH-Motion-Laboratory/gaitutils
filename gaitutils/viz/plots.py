@@ -2,7 +2,7 @@
 """
 
 Higher level plotting functions. Plots should:
-    -take backend argument (in case default backend is not ok)
+    -take backend argument
     -return created figure object
 
 @author: Jussi (jnu@iki.fi)
@@ -28,9 +28,6 @@ def plot_nexus_trial(layout_name=None, backend=None, model_cycles=None,
     if layout_name is None:
         layout_name = 'lb_kinematics'
 
-    if backend is None:
-        backend = cfg.plot.backend
-    
     backend_lib = backend_selector(backend)
 
     tr = trial.nexus_trial(from_c3d=from_c3d)
@@ -69,9 +66,6 @@ def plot_sessions(sessions, layout_name=None, tags=None, make_pdf=False,
     if layout_name is None:
         layout_name = 'lb_kinematics'
 
-    if backend is None:
-        backend = cfg.plot.backend
-
     if tags is None:
         tags = cfg.eclipse.tags
 
@@ -102,9 +96,6 @@ def plot_session_average(session, layout_name, make_pdf=False,
                          backend=None):
     """Plot average of all session trials"""
 
-    if backend is None:
-        backend = cfg.plot.backend
-
     layout = layouts.get_layout(layout_name)
     backend_lib = backend_selector(backend)
 
@@ -127,7 +118,7 @@ def plot_session_average(session, layout_name, make_pdf=False,
 
     return figs
 
-
+# XXX: plotly only; into web report?
 def _plot_vel_curves(session):
     """Plot time-dependent velocity for each dynamic trial in session."""
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')

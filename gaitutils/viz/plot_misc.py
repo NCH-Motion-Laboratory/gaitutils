@@ -16,7 +16,9 @@ from ..gui import qt_dialogs
 
 
 def backend_selector(backend_name):
-    backends = {'plotly': plot_plotly, 'matplotlib': plot_matplotlib}
+    """Returns plotting backend module according to name, default for None"""
+    backends = {'plotly': plot_plotly, 'matplotlib': plot_matplotlib,
+                'None': cfg.plot.backend}
     return backends[backend_name]
 
 
@@ -27,5 +29,7 @@ def show_fig(fig):
         app = QtWidgets.QApplication([])
         win = qt_dialogs.qt_matplotlib_window(fig)
         app.exec_()
-    else:  # hopefully plotly
+    else:
+        # plotly figures may be of different types (list of traces etc.)
+        # so just lazily hope that it's actually a plotly figure
         plotly.offline.plot(fig)

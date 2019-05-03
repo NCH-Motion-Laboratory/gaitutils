@@ -80,17 +80,11 @@ def plot_session_average(session, layout_name=None, make_pdf=False,
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
     if not c3ds:
         raise GaitDataError('No dynamic trials found for current session')
+
     atrial = stats.AvgTrial(c3ds)
-
     maintitle_ = '%d trial average from %s' % (atrial.nfiles, session)
-    figs = []
 
-    for side, side_str in zip(['R', 'L'], ['right', 'left']):
-        maintitle = maintitle_ + ' (%s)' % side_str
-        layout_ = layouts.onesided_layout(layout, side)
-        fig = backend_lib.plot_trials(atrial, layout_, 
-                                      model_stddev=atrial.stddev_data,
-                                      figtitle=maintitle)
-        figs.append(fig)
-
-    return figs
+    fig = backend_lib.plot_trials(atrial, layout, 
+                                  model_stddev=atrial.stddev_data,
+                                  figtitle=maintitle_)
+    return fig

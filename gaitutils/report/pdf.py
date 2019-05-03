@@ -147,8 +147,7 @@ def create_report(sessionpath, info=None, pages=None):
         _savefig(pdf, fig_kin_cons, header)
         _savefig(pdf, fig_musclelen_cons, header, footer_musclelen)
         _savefig(pdf, fig_emg_cons, header)
-        for fig in figs_kin_avg:
-            _savefig(pdf, fig, header)
+        _savefig(pdf, figs_kin_avg, header)
 
 
 def create_comparison_report(sessions, pdfpath=None, pages=None):

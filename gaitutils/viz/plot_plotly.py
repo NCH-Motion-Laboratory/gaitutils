@@ -46,7 +46,7 @@ _plot_cache = dict()  # global for plot_trials
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                 emg_cycles=None, legend_type=None, style_by=None,
-                color_by=None, supplementary_data=None,
+                color_by=None, supplementary_data=None, model_stddev=None,
                 figtitle=None):
     """Make a plotly plot of layout, including given trials.
 
@@ -132,16 +132,18 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                              model_normaldata else None)
                     if ndata is not None:
                         normalx = np.linspace(0, 100, ndata.shape[0])
+                        fillcolor = merge_color_and_opacity(cfg.plot.model_normals_color, cfg.plot.model_normals_alpha)
                         ntrace = _plotly_fill_between(normalx,
                                                     ndata[:, 0],
                                                     ndata[:, 1],
-                                                    fillcolor=cfg.plot_plotly.model_normals_color,
+                                                    fillcolor=fillcolor,
                                                     name='Norm.',
                                                     legendgroup='Norm.',
                                                     showlegend=model_normaldata_legend,
                                                     line=dict(width=0))  # no border lines
                         fig.append_trace(ntrace, i+1, j+1)
                         model_normaldata_legend = False
+
                 elif var in cfg.emg.channel_labels and var in cfg.emg.channel_normaldata:
                     emgbar_ind = cfg.emg.channel_normaldata[var]
                     for inds in emgbar_ind:
@@ -283,6 +285,23 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                                            mode='markers',
                                                            marker=marker)
                                 fig.append_trace(toeoff_marker, i+1, j+1)
+
+                            # each cycle gets its own stddev plot
+                            if (model_stddev is not None and normalized and
+                               y is not None and var in model_stddev):
+                                sdata = model_stddev[var]
+                                stdx = np.linspace(0, 100, sdata.shape[0])
+                                fillcolor_ = cfg.plot.model_stddev_colors[cyc.context]
+                                fillcolor = merge_color_and_opacity(fillcolor_, cfg.plot.model_stddev_alpha)
+                                ntrace = _plotly_fill_between(stdx,
+                                                            y-sdata,
+                                                            y+sdata,
+                                                            fillcolor=fillcolor,
+                                                            name='Stddev for %s' % tracename,
+                                                            legendgroup='Stddev for %s' % tracename,
+                                                            showlegend=show_legend,
+                                                            line=dict(width=0))  # no border lines
+                                fig.append_trace(ntrace, i+1, j+1)
 
                             # add trace to figure
                             fig.append_trace(trace, i+1, j+1)

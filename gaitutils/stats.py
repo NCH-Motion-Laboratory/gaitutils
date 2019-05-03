@@ -25,7 +25,7 @@ class AvgTrial(Trial):
                                                    fp_cycles_only=fp_cycles_only)
         # nfiles may be misleading since not all trials may contain valid data
         self.nfiles = len(c3dfiles)
-        self.trialname = 'Averages from %d trials' % self.nfiles
+        self.trialname = '%d trial average' % self.nfiles
         self.source = 'averaged data'
         self.name = 'Unknown'
         self._model_data = avgdata
@@ -35,9 +35,9 @@ class AvgTrial(Trial):
         # fake 2 gait cycles, L/R
         self.cycles = list()
         self.cycles.append(Gaitcycle(0, 101, 60, 'R', True, 1, 1000,
-                                     name='Right average', trial=self))
+                                     name='right', trial=self))
         self.cycles.append(Gaitcycle(0, 101, 60, 'L', True, 1, 1000,
-                                     name='Left average', trial=self))
+                                     name='left', trial=self))
         self.ncycles = 2
         self.sessionpath = None
         self.sessiondir = None

@@ -261,18 +261,18 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
                             # each cycle gets its own stddev plot
                             if (model_stddev is not None and normalized and
-                               y is not None):
-                                if var in model_stddev:
-                                    sdata = model_stddev[var]
-                                    stdx = np.linspace(0, 100, sdata.shape[0])
-                                    ax.fill_between(stdx, y-sdata,
-                                                    y+sdata,
-                                                    color=cfg.plot.
-                                                    model_stddev_colors[cyc.context],
-                                                    alpha=cfg.plot.
-                                                    model_stddev_alpha)
-                                    # tighten x limits
-                                    ax.set_xlim(stdx[0], stdx[-1])
+                               y is not None and var in model_stddev):
+                                sdata = model_stddev[var]
+                                stdx = np.linspace(0, 100, sdata.shape[0])
+                                stddev_ = ax.fill_between(stdx, y-sdata,
+                                                y+sdata,
+                                                color=cfg.plot.
+                                                model_stddev_colors[cyc.context],
+                                                alpha=cfg.plot.
+                                                model_stddev_alpha)
+                                # tighten x limits
+                                ax.set_xlim(stdx[0], stdx[-1])
+                                leg_entries['Stddev for %s' % tracegroup] = stddev_
 
                             # add supplementary data
                             # if cyc in supplementary_data:

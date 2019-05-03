@@ -216,7 +216,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                                 model_normals_color,
                                                 alpha=cfg.plot.
                                                 model_normals_alpha)
-                            ax.set_xlim(normalx[0], normalx[-1])
+                                ax.set_xlim(normalx[0], normalx[-1])
 
                         if do_plot:
                             t, y = trial.get_model_data(var)

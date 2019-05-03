@@ -14,19 +14,16 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from collections import defaultdict
 
-from .. import (cfg, layouts, numutils, normaldata, sessionutils,
+from .. import (cfg, numutils, normaldata, sessionutils,
                 GaitDataError)
-from ..viz.plot_matplotlib import plot_trials, plot_trial_velocities
+from ..viz.plot_matplotlib import plot_trial_velocities
 from ..viz.timedist import do_session_average_plot
-from ..viz.plots import plot_sessions
+from ..viz.plots import plot_sessions, plot_session_average
 
 
 logger = logging.getLogger(__name__)
 
-sort_field = 'NOTES'  # sort trials by the given Eclipse key
-page_size = (11.69, 8.27)  # report page size
-# create some separate PDFs for inclusion in Polygon report etc.
-make_separate_pdfs = False
+page_size = (11.69, 8.27)  # report page size = landscape A4
 
 
 def _add_footer(fig, txt):
@@ -62,10 +59,7 @@ def create_report(sessionpath, info=None, pages=None):
     elif not any(pages.values()):
         raise ValueError('No pages to print')
 
-    tagged_figs = list()
-    repr_figs = list()
-    eclipse_tags = dict()
-    do_emg_consistency = False
+    do_emg_consistency = True
 
     session_root, sessiondir = op.split(sessionpath)
     patient_code = op.split(session_root)[1]
@@ -76,8 +70,6 @@ def create_report(sessionpath, info=None, pages=None):
                                           trial_type='dynamic')
     if not tagged_trials:
         raise GaitDataError('No tagged trials found in %s' % sessiondir)
-    repr_trials = sessionutils.get_c3ds(sessionpath, tags=cfg.eclipse.repr_tags,
-                                        trial_type='dynamic')
     session_t = sessionutils.get_session_date(sessionpath)
     logger.debug('session timestamp: %s', session_t)
     age = numutils.age_from_hetu(hetu, session_t) if hetu else None
@@ -86,7 +78,7 @@ def create_report(sessionpath, info=None, pages=None):
     # timestr = time.strftime('%d.%m.%Y')  # current time, not currently used
     fig_hdr = Figure()
     ax = fig_hdr.add_subplot(111)
-    ax.set_axis('off')
+    ax.set_axis_off()
     title_txt = 'HUS Liikelaboratorio\n'
     title_txt += u'Kävelyanalyysin tulokset\n'
     title_txt += '\n'
@@ -107,58 +99,6 @@ def create_report(sessionpath, info=None, pages=None):
     footer_musclelen = (u' Normaalidata: %s' % musclelen_ndata if
                         musclelen_ndata else u'')
 
-    for c3d in tagged_trials:
-
-        representative = c3d in repr_trials
-
-        # representative single trial plots
-        if representative and pages['TimeDistRepresentative']:
-            fig = timedist.do_single_trial_plot(c3d)
-            repr_figs.append(fig)
-
-        # WIP: try to figure out whether we have any valid EMG signals
-        #if emg_active:
-
-        if pages['EMGCons']:
-            do_emg_consistency = True
-
-        if pages['KinEMGMarked']:
-            logger.debug('creating representative kin-EMG plots')
-            # FIXME: the plotter logic is a bit weird here - it works
-            # but old axes get recreated
-            for side in pl.trial.fp_events['valid']:
-                side_str = {'R': 'right', 'L': 'left'}[side]
-                pl.layout = (cfg.layouts.lb_kinetics_emg_r if side == 'R'
-                                else cfg.layouts.lb_kinetics_emg_l)
-
-                maintitle = ('Kinetics-EMG (%s) for %s' % (side_str, pl.title_with_eclipse_info()))
-                fig = pl.plot_trial(maintitle=maintitle, show=False)
-                tagged_figs.append(fig)
-                eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
-
-                # save individual pdf
-                if representative and make_separate_pdfs:
-                    pdf_name = 'kinetics_EMG_%s_%s.pdf' % (pl.trial.trialname,
-                                                            side_str)
-                    logger.debug('creating %s' % pdf_name)
-                    pl.create_pdf(pdf_name=pdf_name)
-
-        if pages['EMGMarked']:
-            logger.debug('creating representative EMG plots')
-            maintitle = pl.title_with_eclipse_info('EMG plot for')
-            layout = cfg.layouts.std_emg
-            pl.layout = layouts.rm_dead_channels(pl.trial.emg, layout)
-            fig = pl.plot_trial(maintitle=maintitle, show=False)
-            tagged_figs.append(fig)
-            eclipse_tags[fig] = (pl.trial.eclipse_data[sort_field])
-
-                #  save individual pdf
-                if representative and make_separate_pdfs:
-                    pdf_prefix = 'EMG_'
-                    pl.create_pdf(pdf_prefix=pdf_prefix)
-
-    tagged_figs.sort(key=lambda fig: eclipse_tags[fig])
-
     # trial velocity plot
     fig_vel = None
     if pages['TrialVelocity']:
@@ -171,27 +111,33 @@ def create_report(sessionpath, info=None, pages=None):
         logger.debug('creating time-distance plot')
         fig_timedist_avg = do_session_average_plot(sessionpath=sessionpath)
 
-    # consistency plots
+    # kin consistency
     fig_kin_cons = None
     if pages['KinCons']:
         logger.debug('creating kin consistency plot')
-        fig_kin_cons = plot_sessions(sessions=[sessionpath], backend='matplotlib')
+        fig_kin_cons = plot_sessions(sessions=[sessionpath], style_by='context',
+                                     backend='matplotlib')
 
+    # musclelen consistency
     fig_musclelen_cons = None
     if pages['MuscleLenCons']:
         logger.debug('creating muscle length consistency plot')
-        fig_kin_cons = plot_sessions(sessions=[sessionpath], layout_name='musclelen',
-                                     backend='matplotlib')
+        fig_musclelen_cons = plot_sessions(sessions=[sessionpath], layout_name='musclelen',
+                                           style_by='context',
+                                           backend='matplotlib')
+    
+    # EMG consistency
     fig_emg_cons = None
     if do_emg_consistency:
         logger.debug('creating EMG consistency plot')        
-        fig_emg_cons = plot_sessions(sessions=[sessionpath], layout_name='std_emg',
+        fig_emg_cons = plot_sessions(sessions=[sessionpath],
+                                     layout_name='std_emg',
                                      backend='matplotlib')
 
     # average plots, R/L
     figs_kin_avg = list()
     if pages['KinAverage']:
-        figs_kin_avg = plot_session_average(sessionpath=sessionpath)
+        figs_kin_avg = plot_session_average(sessionpath, backend='matplotlib')
 
     logger.debug('creating multipage pdf %s' % pdfpath)
     with PdfPages(pdfpath) as pdf:
@@ -202,10 +148,6 @@ def create_report(sessionpath, info=None, pages=None):
         _savefig(pdf, fig_musclelen_cons, header, footer_musclelen)
         _savefig(pdf, fig_emg_cons, header)
         for fig in figs_kin_avg:
-            _savefig(pdf, fig, header)
-        for fig in repr_figs:
-            _savefig(pdf, fig, header)
-        for fig in tagged_figs:
             _savefig(pdf, fig, header)
 
 

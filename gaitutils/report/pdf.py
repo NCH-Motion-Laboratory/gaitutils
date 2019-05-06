@@ -17,7 +17,7 @@ from collections import defaultdict
 from .. import (cfg, numutils, normaldata, sessionutils,
                 GaitDataError)
 from ..viz.plot_matplotlib import plot_trial_velocities
-from ..viz.timedist import do_session_average_plot
+from ..viz.timedist import do_session_average_plot, do_comparison_plot
 from ..viz.plots import plot_sessions, plot_session_average
 
 
@@ -150,8 +150,8 @@ def create_report(sessionpath, info=None, pages=None):
         _savefig(pdf, figs_kin_avg, header)
 
 
-def create_comparison_report(sessions, pdfpath=None, pages=None):
-    """ Do a quick comparison report between sessions """
+def create_comparison_report(sessions, pdfpath, pages=None):
+    """Do a simple comparison report between sessions"""
 
     if pages is None:
         # if no pages specified, do them all
@@ -165,7 +165,7 @@ def create_comparison_report(sessions, pdfpath=None, pages=None):
     # make header page
     fig_hdr = Figure()
     ax = fig_hdr.add_subplot(111)
-    ax.set_axis('off')
+    ax.set_axis_off()
     title_txt = 'HUS Liikelaboratorio\n'
     title_txt += u'Kävelyanalyysin vertailuraportti\n'
     title_txt += '\n'
@@ -173,26 +173,20 @@ def create_comparison_report(sessions, pdfpath=None, pages=None):
     ax.text(.5, .8, title_txt, ha='center', va='center', weight='bold',
             fontsize=14)
 
-    fig_timedist_cmp = (nexus_time_distance_vars.
-                        do_comparison_plot(sessions, tags=repr_tags,
-                                           show=False))
+    fig_timedist_cmp = None
+    if pages['TimeDistCmp']:
+        fig_timedist_cmp = do_comparison_plot(sessions)
 
-    fig_kin_cmp = nexus_kin_consistency.do_plot(sessions, tags=repr_tags,
-                                                session_styles=True,
-                                                show=False)
+    fig_kin_cmp = None
+    if pages['KinCmp']:
+        fig_kin_cmp = plot_sessions(sessions, tags=cfg.eclipse.repr_tags,
+                                    style_by='session', color_by='trial',
+                                    backend='matplotlib')
 
-    if pdfpath is None:
-        pdfpath = QtWidgets.QFileDialog.getSaveFileName(None,
-                                                        'Save PDF',
-                                                        sessions[0],
-                                                        '*.pdf')[0]
-    if pdfpath:
-
-        header = u'Comparison %s' % sessions_str
-        logger.debug('creating multipage comparison pdf %s' % pdfpath)
-        with PdfPages(pdfpath) as pdf:
-            _savefig(pdf, fig_hdr)
-            _savefig(pdf, fig_timedist_cmp, header)
-            _savefig(pdf, fig_kin_cmp, header)
-
+    header = u'Comparison %s' % sessions_str
+    logger.debug('creating multipage comparison pdf %s' % pdfpath)
+    with PdfPages(pdfpath) as pdf:
+        _savefig(pdf, fig_hdr)
+        _savefig(pdf, fig_timedist_cmp, header)
+        _savefig(pdf, fig_kin_cmp, header)
 

@@ -5,6 +5,7 @@ Higher level plotting functions (backend agnostic).
 @author: Jussi (jnu@iki.fi)
 """
 
+import os.path as op
 import logging
 
 from .. import (cfg, layouts, trial, GaitDataError, sessionutils,
@@ -70,8 +71,7 @@ def plot_sessions(sessions, layout_name=None, tags=None, make_pdf=False,
                                    figtitle=figtitle)
 
 
-def plot_session_average(session, layout_name=None, make_pdf=False,
-                         backend=None):
+def plot_session_average(session, layout_name=None, backend=None):
     """Plot average of all session trials"""
 
     layout = layouts.get_layout(layout_name)
@@ -82,9 +82,10 @@ def plot_session_average(session, layout_name=None, make_pdf=False,
         raise GaitDataError('No dynamic trials found for current session')
 
     atrial = stats.AvgTrial(c3ds)
-    maintitle_ = '%d trial average from %s' % (atrial.nfiles, session)
+    maintitle_ = '%s (%d trial average)' % (op.split(session)[-1], atrial.nfiles)
 
     fig = backend_lib.plot_trials(atrial, layout, 
                                   model_stddev=atrial.stddev_data,
+                                  color_by='context',
                                   figtitle=maintitle_)
     return fig

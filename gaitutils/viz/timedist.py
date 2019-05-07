@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Various time-distance statistics plots
+Currently matplotlib only
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -18,21 +19,19 @@ from .plot_matplotlib import time_dist_barchart
 logger = logging.getLogger(__name__)
 
 
-def do_session_average_plot(sessionpath=None, tags=None):
+def do_session_average_plot(session, tags=None):
     """Find tagged trials from current session dir and plot average"""
 
-    if sessionpath is None:
-        sessionpath = nexus.get_sessionpath()
     if tags is None:
         tags = cfg.eclipse.tags
 
-    trials = sessionutils.get_c3ds(sessionpath, tags=tags,
+    trials = sessionutils.get_c3ds(session, tags=tags,
                                    trial_type='dynamic')
     if not trials:
         raise GaitDataError('No marked trials found for session %s'
-                            % sessionpath)
+                            % session)
     fig = _plot_trials([trials])
-    session = op.split(sessionpath)[-1]
+    session = op.split(session)[-1]
     fig.suptitle('Time-distance average, session %s' % session)
 
     return fig

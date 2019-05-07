@@ -109,7 +109,7 @@ def create_report(sessionpath, info=None, pages=None):
     fig_timedist_avg = None
     if pages['TimeDistAverage']:
         logger.debug('creating time-distance plot')
-        fig_timedist_avg = do_session_average_plot(sessionpath=sessionpath)
+        fig_timedist_avg = do_session_average_plot(sessionpath)
 
     # kin consistency
     fig_kin_cons = None

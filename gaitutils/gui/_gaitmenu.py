@@ -35,6 +35,7 @@ from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
 from ..viz.plots import (plot_nexus_trial, plot_sessions,
                          plot_trial_timedep_velocities,
                          plot_trial_velocities, plot_session_average)
+from ..viz.timedist import do_session_average_plot                         
 
 
 logger = logging.getLogger(__name__)
@@ -365,9 +366,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   self._plot_trial_median_velocities)
         self._widget_connect_task(self.actionTrial_timedep_velocities,
                                   self._plot_trial_timedep_velocities)
-        #self._widget_connect_task(self.actionTime_distance_average,
-        #                          lambda)
-
+        self._widget_connect_task(self.actionTime_distance_average,
+                                  self._plot_timedist_average)
+        
         # processing menu
         self._widget_connect_task(self.actionAutoprocess_single_trial,
                                   autoproc_trial,
@@ -435,6 +436,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
                       thread=True,
                       finished_func=self._enable_op_buttons)
 
+    def _plot_timedist_average(self):
+        """Plot time-distance average"""
+        session = nexus.get_sessionpath()
+        # we need to force backend here, since plotly is not yet supported
+        result_func = lambda fig: self._show_plots(fig, backend='matplotlib')
+        self._execute(do_session_average_plot, thread=True,
+                      finished_func=self._enable_op_buttons,
+                      result_func=result_func,
+                      session=session)
+
     def _plot_trial_median_velocities(self):
         """Trial velocity plot from current Nexus session"""
         session = nexus.get_sessionpath()
@@ -498,9 +509,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
                       layout_name=lout_name, model_cycles=model_cycles,
                       emg_cycles=emg_cycles, backend=backend)
 
-    def _show_plots(self, fig):
+    def _show_plots(self, fig, backend=None):
         """Shows fig"""
-        backend = self._get_plotting_backend_ui()
+        if backend is None:
+            backend = self._get_plotting_backend_ui()
         if backend == 'matplotlib':
             _mpl_win = qt_matplotlib_window(fig)
             self._mpl_windows.append(_mpl_win)

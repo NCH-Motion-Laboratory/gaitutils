@@ -5,6 +5,7 @@ Higher level plotting functions (backend agnostic).
 @author: Jussi (jnu@iki.fi)
 """
 
+import numpy as np
 import os.path as op
 import logging
 
@@ -88,4 +89,20 @@ def plot_session_average(session, layout_name=None, backend=None):
                                   model_stddev=atrial.stddev_data,
                                   color_by='context',
                                   figtitle=maintitle_)
+    return fig
+
+
+def plot_trial_velocities(session, backend):
+    """Plot median velocities for each dynamic trial in Nexus session."""
+    c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
+
+    if len(c3ds) == 0:
+        raise Exception('Did not find any dynamic trials in current '
+                        'session directory')
+
+    labels = [op.splitext(op.split(f)[1])[0] for f in c3ds]
+    vels = np.array([utils._trial_median_velocity(trial) for trial in c3ds])
+
+    backend_lib = get_backend(backend)
+    fig = backend_lib._plot_vels(vels, labels)
     return fig

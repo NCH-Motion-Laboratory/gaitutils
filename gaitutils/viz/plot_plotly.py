@@ -22,6 +22,12 @@ from .plot_common import (_get_cycle_name, _truncate_trialname, _var_title,
 logger = logging.getLogger(__name__)
 
 
+def _plot_vels(vels, labels):
+    """Plot trial velocities"""
+    raise NotImplemented('not implemented yet')
+
+
+# FIXME: refactor
 def _plot_vel_curves(session):
     """Plot time-dependent velocity for each dynamic trial in session."""
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')

@@ -521,18 +521,8 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     return fig
 
 
-def plot_trial_velocities(session):
-    """Plot median velocities for each dynamic trial in Nexus session."""
-    c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
-
-    if len(c3ds) == 0:
-        raise Exception('Did not find any dynamic trials in current '
-                        'session directory')
-
-    labels = [op.splitext(op.split(f)[1])[0] for f in c3ds]
-    vels = np.array([utils._trial_median_velocity(trial) for trial in c3ds])
-    vavg = np.nanmean(vels)
-
+def _plot_vels(vels, labels):
+    """Stem plot of trial velocities"""
     fig = Figure()
     ax = fig.add_subplot(111)
 
@@ -541,8 +531,8 @@ def plot_trial_velocities(session):
     ax.set_xticklabels(labels, rotation='vertical')
     ax.set_ylabel('Speed (m/s)')
     ax.tick_params(axis='both', which='major', labelsize=8)
+    vavg = np.nanmean(vels)    
     ax.set_title('Walking speed for dynamic trials (average %.2f m/s)' % vavg)
     fig.tight_layout()
 
     return fig
-

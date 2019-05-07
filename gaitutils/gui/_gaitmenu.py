@@ -20,7 +20,6 @@ import time
 import requests
 import logging
 import traceback
-import itertools
 import plotly
 
 from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
@@ -28,15 +27,13 @@ from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
 from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ..numutils import check_hetu
 from ..videos import _collect_session_videos, convert_videos
-from .. import (GaitDataError, nexus, cfg, report, sessionutils, videos,
+from .. import (GaitDataError, nexus, cfg, report, sessionutils,
                 envutils)
 from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
                            copy_session_videos)
-from ..viz.plots import (plot_nexus_trial, plot_nexus_session,
-                         plot_sessions, plot_trial_velocities,
-                         plot_nexus_session_average)
-
+from ..viz.plots import (plot_nexus_trial, plot_sessions, plot_trial_velocities,
+                         plot_session_average)
 
 
 logger = logging.getLogger(__name__)
@@ -360,7 +357,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionAutoprocess_session.triggered.connect(self._autoproc_session)
         self.btnPlotNexusTrial.clicked.connect(self._plot_nexus_trial)
         self.btnPlotNexusSession.clicked.connect(self._plot_nexus_session)
-        self.actionKin_average.triggered.connect(lambda: self._plot_wrapper(plot_nexus_session_average))
+        self.actionKin_average.triggered.connect(lambda: self._plot_wrapper(plot_session_average))
 
         # consistency menu
         self._widget_connect_task(self.actionTrial_velocity,
@@ -383,7 +380,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   copy_session_videos)
 
         # set backend radio buttons according to choice in cfg
-        self.rb_map = {'plotly': self.rbPlotly, 'matplotlib': self.rbMatplotlib}
+        self.rb_map = {'plotly': self.rbPlotly,
+                       'matplotlib': self.rbMatplotlib}
         rb_active = self.rb_map[cfg.plot.backend]
         rb_active.setChecked(True)
 
@@ -440,12 +438,14 @@ class Gaitmenu(QtWidgets.QMainWindow):
         lout_name = cfg.layouts.menu_layouts[lout_desc]
         cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
         model_cycles = emg_cycles = cycs
+        backend = self._get_plotting_backend_ui()
         from_c3d = self.xbPlotFromC3D.checkState()
         self._execute(plot_nexus_trial, thread=True,
                       finished_func=self._enable_op_buttons,
                       result_func=self._show_plots,
                       layout_name=lout_name, model_cycles=model_cycles,
-                      emg_cycles=emg_cycles, from_c3d=from_c3d)
+                      emg_cycles=emg_cycles, from_c3d=from_c3d,
+                      backend=backend)
 
     def _plot_nexus_session(self):
         """Plot the current Nexus session according to UI choices"""
@@ -471,7 +471,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                       finished_func=self._enable_op_buttons)
 
     def _show_plots(self, figs):
-        """Shows created plot(s)"""
+        """Shows created plot(s) in figs"""
         backend = self._get_plotting_backend_ui()
         if not isinstance(figs, list):
             figs = [figs]

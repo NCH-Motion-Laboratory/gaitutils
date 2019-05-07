@@ -27,6 +27,36 @@ from .. import (models, normaldata, layouts, cfg, GaitDataError, sessionutils,
 logger = logging.getLogger(__name__)
 
 
+def _plot_vels(vels, labels):
+    """Stem plot of trial velocities"""
+    fig = Figure()
+    ax = fig.add_subplot(111)
+
+    ax.stem(vels)
+    ax.set_xticks(range(len(vels)))
+    ax.set_xticklabels(labels, rotation='vertical')
+    ax.set_ylabel('Speed (m/s)')
+    ax.tick_params(axis='both', which='major', labelsize=8)
+    vavg = np.nanmean(vels)    
+    ax.set_title('Walking speed for dynamic trials (average %.2f m/s)' % vavg)
+    fig.tight_layout()
+
+    return fig
+
+
+def _plot_timedep_vels(vels, labels):
+    """Time-dependent velocity curves"""
+    fig = Figure()
+    ax = fig.add_subplot(111)
+    ax.set_ylabel('Speed (m/s)')
+    ax.set_xlabel('Time (s)')
+    for vel in vels:
+        ax.plot(vels)
+    fig.tight_layout()
+
+    return fig
+
+
 def _plot_height_ratios(layout):
     """Calculate height ratios for mpl plot"""
     plotheightratios = []
@@ -36,6 +66,106 @@ def _plot_height_ratios(layout):
         else:
             plotheightratios.append(cfg.plot.analog_plotheight)
     return plotheightratios
+
+
+def time_dist_barchart(values, stddev=None, thickness=.5,
+                       color=None, stddev_bars=True,
+                       plotvars=None):
+    """ Multi-variable and multi-condition barchart plot.
+    values dict is keyed as values[condition][var][context],
+    given by e.g. get_c3d_analysis()
+    stddev can be None or a dict keyed as stddev[condition][var][context].
+    If no stddev for a given condition, set stddev[condition] = None
+    plotvars gives variables to plot (if not all) and their order.
+    """
+    fig = Figure()
+
+    def _plot_label(ax, rects, texts):
+        """Plot a label inside each rect"""
+        # FIXME: just a rough heuristic for font size
+        fontsize = 6 if len(rects) >= 3 else 8
+        for rect, txt in zip(rects, texts):
+            ax.text(rect.get_width() * .0, rect.get_y() + rect.get_height()/2.,
+                    txt, ha='left', va='center', size=fontsize)
+
+    def _plot_oneside(vars_, context, col):
+        """ Do the bar plots for given context and column """
+        for ind, var in enumerate(vars_):
+            # FIXME: adding subplot here is unnnecessary and triggers mpl
+            # depreciation
+            ax = fig.add_subplot(gs[ind, col])
+            ax.axis('off')
+            # may have several bars (conditions) per variable
+            vals_this = [values[cond][var][context] for cond in conds]
+            if not np.count_nonzero(~np.isnan(vals_this)):
+                continue
+            stddevs_this = ([stddev[cond][var][context] if stddev[cond]
+                             else None for cond in conds])
+            units_this = len(conds) * [units[ind]]
+            ypos = np.arange(len(vals_this) * thickness, 0, -thickness)
+            xerr = stddevs_this if stddev_bars else None
+            rects = ax.barh(ypos, vals_this, thickness, align='edge',
+                            color=color, xerr=xerr)
+            # FIXME: set axis scale according to var normal values
+            ax.set_xlim([0, 1.5 * max(vals_this)])
+            texts = list()
+            for val, std, unit in zip(vals_this, stddevs_this, units_this):
+                if val == 0:
+                    texts += ['']
+                elif std:
+                    texts += [u'%.2f ± %.2f %s' % (val, std, unit)]
+                else:
+                    texts += [u'%.2f %s' % (val, unit)]
+            _plot_label(ax, rects, texts)
+        # return the last set of rects for legend
+        return rects
+
+    if color is None:
+        color = ['tab:orange', 'tab:green', 'tab:red', 'tab:brown',
+                 'tab:pink', 'tab:gray', 'tab:olive']
+
+    conds = values.keys()
+    vals_1 = values[conds[0]]
+    varsets = [set(values[cond].keys()) for cond in conds]
+    # vars common to all conditions
+    vars_common = set.intersection(*varsets)
+
+    if plotvars is not None:
+        # pick specified vars that appear in all of the conditions
+        plotvars_set = set(plotvars)
+        vars_ok = set.intersection(plotvars_set, vars_common)
+        if plotvars_set - vars_ok:
+            logger.warning('some conditions are missing variables: %s'
+                           % (plotvars_set - vars_ok))
+        # to preserve original order
+        vars_ = [var for var in plotvars if var in vars_ok]
+    else:
+        vars_ = vars_common
+
+    units = [vals_1[var]['unit'] for var in vars_]
+
+    # 3 columns: bar, labels, bar
+    gs = gridspec.GridSpec(len(vars_), 3, width_ratios=[1, 1/3., 1])
+
+    # variable names into the center column
+    for ind, (var, unit) in enumerate(zip(vars_, units)):
+        textax = fig.add_subplot(gs[ind, 1])
+        textax.axis('off')
+        label = '%s (%s)' % (var, unit)
+        textax.text(0, .5, label, ha='center', va='center')
+
+    rects = _plot_oneside(vars_, 'Left', 0)
+    rects = _plot_oneside(vars_, 'Right', 2)
+
+    if len(conds) > 1:
+        fig.legend(rects, conds, fontsize=7,
+                   bbox_to_anchor=(.5, 0), loc="lower right",
+                   bbox_transform=fig.transFigure)
+
+    fig.add_subplot(gs[0, 0]).set_title('Left')
+    fig.add_subplot(gs[0, 2]).set_title('Right')
+
+    return fig
 
 
 def _annotate_axis(ax, text):
@@ -420,119 +550,3 @@ def save_pdf(filename, fig):
         raise IOError('Error writing %s, '
                       'check that file is not already open.' % filename)
 
-
-def time_dist_barchart(values, stddev=None, thickness=.5,
-                       color=None, stddev_bars=True,
-                       plotvars=None):
-    """ Multi-variable and multi-condition barchart plot.
-    values dict is keyed as values[condition][var][context],
-    given by e.g. get_c3d_analysis()
-    stddev can be None or a dict keyed as stddev[condition][var][context].
-    If no stddev for a given condition, set stddev[condition] = None
-    plotvars gives variables to plot (if not all) and their order.
-    """
-    fig = Figure()
-
-    def _plot_label(ax, rects, texts):
-        """Plot a label inside each rect"""
-        # FIXME: just a rough heuristic for font size
-        fontsize = 6 if len(rects) >= 3 else 8
-        for rect, txt in zip(rects, texts):
-            ax.text(rect.get_width() * .0, rect.get_y() + rect.get_height()/2.,
-                    txt, ha='left', va='center', size=fontsize)
-
-    def _plot_oneside(vars_, context, col):
-        """ Do the bar plots for given context and column """
-        for ind, var in enumerate(vars_):
-            # FIXME: adding subplot here is unnnecessary and triggers mpl
-            # depreciation
-            ax = fig.add_subplot(gs[ind, col])
-            ax.axis('off')
-            # may have several bars (conditions) per variable
-            vals_this = [values[cond][var][context] for cond in conds]
-            if not np.count_nonzero(~np.isnan(vals_this)):
-                continue
-            stddevs_this = ([stddev[cond][var][context] if stddev[cond]
-                             else None for cond in conds])
-            units_this = len(conds) * [units[ind]]
-            ypos = np.arange(len(vals_this) * thickness, 0, -thickness)
-            xerr = stddevs_this if stddev_bars else None
-            rects = ax.barh(ypos, vals_this, thickness, align='edge',
-                            color=color, xerr=xerr)
-            # FIXME: set axis scale according to var normal values
-            ax.set_xlim([0, 1.5 * max(vals_this)])
-            texts = list()
-            for val, std, unit in zip(vals_this, stddevs_this, units_this):
-                if val == 0:
-                    texts += ['']
-                elif std:
-                    texts += [u'%.2f ± %.2f %s' % (val, std, unit)]
-                else:
-                    texts += [u'%.2f %s' % (val, unit)]
-            _plot_label(ax, rects, texts)
-        # return the last set of rects for legend
-        return rects
-
-    if color is None:
-        color = ['tab:orange', 'tab:green', 'tab:red', 'tab:brown',
-                 'tab:pink', 'tab:gray', 'tab:olive']
-
-    conds = values.keys()
-    vals_1 = values[conds[0]]
-    varsets = [set(values[cond].keys()) for cond in conds]
-    # vars common to all conditions
-    vars_common = set.intersection(*varsets)
-
-    if plotvars is not None:
-        # pick specified vars that appear in all of the conditions
-        plotvars_set = set(plotvars)
-        vars_ok = set.intersection(plotvars_set, vars_common)
-        if plotvars_set - vars_ok:
-            logger.warning('some conditions are missing variables: %s'
-                           % (plotvars_set - vars_ok))
-        # to preserve original order
-        vars_ = [var for var in plotvars if var in vars_ok]
-    else:
-        vars_ = vars_common
-
-    units = [vals_1[var]['unit'] for var in vars_]
-
-    # 3 columns: bar, labels, bar
-    gs = gridspec.GridSpec(len(vars_), 3, width_ratios=[1, 1/3., 1])
-
-    # variable names into the center column
-    for ind, (var, unit) in enumerate(zip(vars_, units)):
-        textax = fig.add_subplot(gs[ind, 1])
-        textax.axis('off')
-        label = '%s (%s)' % (var, unit)
-        textax.text(0, .5, label, ha='center', va='center')
-
-    rects = _plot_oneside(vars_, 'Left', 0)
-    rects = _plot_oneside(vars_, 'Right', 2)
-
-    if len(conds) > 1:
-        fig.legend(rects, conds, fontsize=7,
-                   bbox_to_anchor=(.5, 0), loc="lower right",
-                   bbox_transform=fig.transFigure)
-
-    fig.add_subplot(gs[0, 0]).set_title('Left')
-    fig.add_subplot(gs[0, 2]).set_title('Right')
-
-    return fig
-
-
-def _plot_vels(vels, labels):
-    """Stem plot of trial velocities"""
-    fig = Figure()
-    ax = fig.add_subplot(111)
-
-    ax.stem(vels)
-    ax.set_xticks(range(len(vels)))
-    ax.set_xticklabels(labels, rotation='vertical')
-    ax.set_ylabel('Speed (m/s)')
-    ax.tick_params(axis='both', which='major', labelsize=8)
-    vavg = np.nanmean(vels)    
-    ax.set_title('Walking speed for dynamic trials (average %.2f m/s)' % vavg)
-    fig.tight_layout()
-
-    return fig

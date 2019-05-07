@@ -24,6 +24,7 @@ def get_backend(backend_name):
 
 
 def show_fig(fig):
+    """Show the created figures"""
     if not fig:
         raise ValueError('No figure to show')
     if isinstance(fig, Figure):  # matplotlib

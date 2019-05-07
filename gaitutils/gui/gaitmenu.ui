@@ -292,7 +292,8 @@
     <property name="title">
      <string>Session plots</string>
     </property>
-    <addaction name="actionTrial_velocity"/>
+    <addaction name="actionTrial_median_velocities"/>
+    <addaction name="actionTrial_timedep_velocities"/>
     <addaction name="actionTime_distance_average"/>
    </widget>
    <addaction name="menuFile"/>
@@ -382,9 +383,9 @@
     <string>Web reports...</string>
    </property>
   </action>
-  <action name="actionTrial_velocity">
+  <action name="actionTrial_median_velocities">
    <property name="text">
-    <string>Trial velocity</string>
+    <string>Median trial velocities</string>
    </property>
   </action>
   <action name="actionKinematics_average">
@@ -415,6 +416,11 @@
   <action name="actionKin_average">
    <property name="text">
     <string>Kinematics average</string>
+   </property>
+  </action>
+  <action name="actionTrial_timedep_velocities">
+   <property name="text">
+    <string>Time-dependent trial velocities</string>
    </property>
   </action>
  </widget>

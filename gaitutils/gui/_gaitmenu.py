@@ -32,8 +32,9 @@ from .. import (GaitDataError, nexus, cfg, report, sessionutils,
 from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
                            copy_session_videos)
-from ..viz.plots import (plot_nexus_trial, plot_sessions, plot_trial_velocities,
-                         plot_session_average)
+from ..viz.plots import (plot_nexus_trial, plot_sessions,
+                         plot_trial_timedep_velocities,
+                         plot_trial_velocities, plot_session_average)
 
 
 logger = logging.getLogger(__name__)
@@ -360,8 +361,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnPlotNexusAverage.clicked.connect(self._plot_nexus_average)
 
         # consistency menu
-        self._widget_connect_task(self.actionTrial_velocity,
-                                  plot_trial_velocities)
+        self._widget_connect_task(self.actionTrial_median_velocities,
+                                  self._plot_trial_median_velocities)
+        self._widget_connect_task(self.actionTrial_timedep_velocities,
+                                  self._plot_trial_timedep_velocities)
         #self._widget_connect_task(self.actionTime_distance_average,
         #                          lambda)
 
@@ -431,6 +434,24 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._execute(autoproc_session,
                       thread=True,
                       finished_func=self._enable_op_buttons)
+
+    def _plot_trial_median_velocities(self):
+        """Trial velocity plot from current Nexus session"""
+        session = nexus.get_sessionpath()
+        backend = self._get_plotting_backend_ui()
+        self._execute(plot_trial_velocities, thread=True,
+                      finished_func=self._enable_op_buttons,
+                      result_func=self._show_plots,
+                      session=session, backend=backend)
+
+    def _plot_trial_timedep_velocities(self):
+        """Trial velocity plot from current Nexus session"""
+        session = nexus.get_sessionpath()
+        backend = self._get_plotting_backend_ui()
+        self._execute(plot_trial_timedep_velocities, thread=True,
+                      finished_func=self._enable_op_buttons,
+                      result_func=self._show_plots,
+                      session=session, backend=backend)
 
     def _plot_nexus_average(self):
         """Plot average from current Nexus session"""

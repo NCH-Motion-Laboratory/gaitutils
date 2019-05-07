@@ -23,22 +23,15 @@ logger = logging.getLogger(__name__)
 
 
 def _plot_vels(vels, labels):
-    """Plot trial velocities"""
+    """Plot trial velocities as a stem plot"""
     raise NotImplemented('not implemented yet')
 
 
-# FIXME: refactor
-def _plot_vel_curves(session):
-    """Plot time-dependent velocity for each dynamic trial in session."""
-    c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
-    if not c3ds:
-        raise GaitDataError('No dynamic trials found for current session')
+def _plot_timedep_vels(vels, labels):
+    """Plot trial time-dependent velocities"""
     traces = list()
-    for c3d in c3ds:
-        v, vel = utils._trial_median_velocity(c3d, return_curve=True)
-        # vel = signal.medfilt(vel, 3)  # if spikes
-        tname = op.split(c3d)[-1]
-        trace = go.Scatter(y=vel, text=tname, name=tname, hoverinfo='x+y+text')
+    for vel, label in zip(vels, labels):
+        trace = go.Scatter(y=vel, text=label, name=label, hoverinfo='x+y+text')
         traces.append(trace)
     return traces
 

@@ -10,7 +10,7 @@ import os.path as op
 import logging
 
 from .. import (cfg, layouts, trial, GaitDataError, sessionutils,
-                stats)
+                stats, utils)
 from .plot_misc import get_backend
 
 
@@ -95,8 +95,7 @@ def plot_session_average(session, layout_name=None, backend=None):
 def plot_trial_velocities(session, backend):
     """Plot median velocities for each dynamic trial in Nexus session."""
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
-
-    if len(c3ds) == 0:
+    if not c3ds:
         raise Exception('Did not find any dynamic trials in current '
                         'session directory')
 
@@ -105,4 +104,24 @@ def plot_trial_velocities(session, backend):
 
     backend_lib = get_backend(backend)
     fig = backend_lib._plot_vels(vels, labels)
+    return fig
+
+
+def plot_trial_timedep_velocities(session, backend):
+    """Plot time-dependent velocity for each dynamic trial in session."""
+    backend_lib = get_backend(backend)
+    c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
+    if not c3ds:
+        raise GaitDataError('No dynamic trials found for current session')
+
+    vels = list()
+    labels = list()
+    for c3d in c3ds:
+        v, vel = utils._trial_median_velocity(c3d, return_curve=True)
+        # vel = signal.medfilt(vel, 3)  # if spikes
+        tname = op.split(c3d)[-1]
+        vels.append(vel)
+        labels.append(tname)
+    
+    fig = backend_lib._plot_timedep_vels(vels, labels)
     return fig

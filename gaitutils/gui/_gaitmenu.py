@@ -498,17 +498,14 @@ class Gaitmenu(QtWidgets.QMainWindow):
                       layout_name=lout_name, model_cycles=model_cycles,
                       emg_cycles=emg_cycles, backend=backend)
 
-    def _show_plots(self, figs):
-        """Shows created plot(s) in figs"""
+    def _show_plots(self, fig):
+        """Shows fig"""
         backend = self._get_plotting_backend_ui()
-        if not isinstance(figs, list):
-            figs = [figs]
-        for fig in figs:
-            if backend == 'matplotlib':
-                _mpl_win = qt_matplotlib_window(fig)
-                self._mpl_windows.append(_mpl_win)
-            elif backend == 'plotly':
-                plotly.offline.plot(fig)
+        if backend == 'matplotlib':
+            _mpl_win = qt_matplotlib_window(fig)
+            self._mpl_windows.append(_mpl_win)
+        elif backend == 'plotly':
+            plotly.offline.plot(fig)
 
     def _widget_connect_task(self, widget, fun, thread=False):
         """Helper to connect widget with task. Use lambda to consume unused

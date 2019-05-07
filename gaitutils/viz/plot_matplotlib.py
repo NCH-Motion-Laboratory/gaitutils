@@ -49,9 +49,9 @@ def _plot_timedep_vels(vels, labels):
     fig = Figure()
     ax = fig.add_subplot(111)
     ax.set_ylabel('Speed (m/s)')
-    ax.set_xlabel('Time (s)')
+    ax.set_xlabel('% of trial')
     for vel in vels:
-        ax.plot(vels)
+        ax.plot(vel)
     fig.tight_layout()
 
     return fig

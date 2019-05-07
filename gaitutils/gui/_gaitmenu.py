@@ -357,7 +357,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionAutoprocess_session.triggered.connect(self._autoproc_session)
         self.btnPlotNexusTrial.clicked.connect(self._plot_nexus_trial)
         self.btnPlotNexusSession.clicked.connect(self._plot_nexus_session)
-        self.actionKin_average.triggered.connect(lambda: self._plot_wrapper(plot_session_average))
+        self.btnPlotNexusAverage.clicked.connect(self._plot_nexus_average)
 
         # consistency menu
         self._widget_connect_task(self.actionTrial_velocity,
@@ -432,6 +432,19 @@ class Gaitmenu(QtWidgets.QMainWindow):
                       thread=True,
                       finished_func=self._enable_op_buttons)
 
+    def _plot_nexus_average(self):
+        """Plot average from current Nexus session"""
+        lout_desc = self.cbNexusTrialLayout.currentText()
+        lout_name = cfg.layouts.menu_layouts[lout_desc]
+        backend = self._get_plotting_backend_ui()
+        session = nexus.get_sessionpath()
+        self._execute(plot_session_average, thread=True,
+                      finished_func=self._enable_op_buttons,
+                      result_func=self._show_plots,
+                      session=session,
+                      layout_name=lout_name, 
+                      backend=backend)
+
     def _plot_nexus_trial(self):
         """Plot the current Nexus trial according to UI choices"""
         lout_desc = self.cbNexusTrialLayout.currentText()
@@ -463,12 +476,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
                       color_by='trial',
                       layout_name=lout_name, model_cycles=model_cycles,
                       emg_cycles=emg_cycles, backend=backend)
-
-    def _plot_wrapper(self, plotfun):
-        """Wrapper for misc plotting functions. Runs the function in a thread and
-        shows the plot when ready."""
-        self._execute(plotfun, thread=True, result_func=self._show_plots,
-                      finished_func=self._enable_op_buttons)
 
     def _show_plots(self, figs):
         """Shows created plot(s) in figs"""

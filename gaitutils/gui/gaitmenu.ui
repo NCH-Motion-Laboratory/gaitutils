@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>574</width>
+    <width>608</width>
     <height>747</height>
    </rect>
   </property>
@@ -75,6 +75,40 @@
         </property>
        </spacer>
       </item>
+      <item row="5" column="1">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="3">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2" colspan="2">
+       <widget class="QComboBox" name="cbNexusTrialLayout">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="3">
+       <widget class="QCheckBox" name="xbPlotFromC3D">
+        <property name="text">
+         <string>Plot from C3D file</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
       <item row="2" column="9">
        <spacer name="horizontalSpacer_4">
         <property name="orientation">
@@ -90,6 +124,73 @@
          </size>
         </property>
        </spacer>
+      </item>
+      <item row="7" column="1">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Backend:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="7">
+       <widget class="QPushButton" name="btnPlotNexusAverage">
+        <property name="text">
+         <string>Plot session average</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="1">
+       <widget class="QLabel" name="label_7">
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Reports from Nexus session</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1" colspan="3">
+       <widget class="QLabel" name="label_6">
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Plot from Nexus session</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="2">
+       <widget class="QRadioButton" name="rbPlotly">
+        <property name="text">
+         <string>plotly (web browser)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="2">
+       <widget class="QCheckBox" name="xbPlotUnnorm">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Plot unnormalized data</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Select layout:</string>
+        </property>
+       </widget>
       </item>
       <item row="2" column="0">
        <spacer name="horizontalSpacer_3">
@@ -107,77 +208,6 @@
         </property>
        </spacer>
       </item>
-      <item row="5" column="1">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="2">
-       <widget class="QCheckBox" name="xbPlotUnnorm">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Plot unnormalized data</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2" colspan="2">
-       <widget class="QComboBox" name="cbNexusTrialLayout">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="3">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1" colspan="3">
-       <widget class="QLabel" name="label_6">
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>Plot from Nexus</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Select layout:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="2">
-       <widget class="QRadioButton" name="rbPlotly">
-        <property name="text">
-         <string>plotly (web browser)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="1">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Backend:</string>
-        </property>
-       </widget>
-      </item>
       <item row="7" column="3">
        <widget class="QRadioButton" name="rbMatplotlib">
         <property name="text">
@@ -185,20 +215,33 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="3">
-       <widget class="QCheckBox" name="xbPlotFromC3D">
-        <property name="text">
-         <string>Plot from C3D file</string>
+      <item row="8" column="1">
+       <spacer name="verticalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
         </property>
-        <property name="checked">
-         <bool>true</bool>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="10" column="1">
+       <widget class="QPushButton" name="btnWebReportNexus">
+        <property name="text">
+         <string>Web report...</string>
         </property>
        </widget>
       </item>
-      <item row="7" column="7">
-       <widget class="QPushButton" name="btnPlotNexusAverage">
+      <item row="10" column="2">
+       <widget class="QPushButton" name="btnPDFReportNexus">
         <property name="text">
-         <string>Plot session average</string>
+         <string>PDF report...</string>
         </property>
        </widget>
       </item>
@@ -253,7 +296,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>574</width>
+     <width>608</width>
      <height>21</height>
     </rect>
    </property>

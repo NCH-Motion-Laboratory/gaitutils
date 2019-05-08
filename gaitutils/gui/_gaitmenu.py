@@ -355,7 +355,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionCreate_PDF_report.triggered.connect(lambda ev: self._create_pdf_report())
         self.actionCreate_PDF_report_Nexus.triggered.connect(self._create_pdf_report_nexus)
         self.actionWeb_reports.triggered.connect(self._web_report_dialog.show)
-        self.actionWeb_report_from_Nexus_session.triggered.connect(self._web_report_from_nexus_session)
+        self.actionWeb_report_from_Nexus_session.triggered.connect(self._create_web_report_nexus)
         self.actionQuit.triggered.connect(self.close)
         self.actionOpts.triggered.connect(self._options_dialog)
         self.actionTardieu_analysis.triggered.connect(self._tardieu)
@@ -363,6 +363,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnPlotNexusTrial.clicked.connect(self._plot_nexus_trial)
         self.btnPlotNexusSession.clicked.connect(self._plot_nexus_session)
         self.btnPlotNexusAverage.clicked.connect(self._plot_nexus_average)
+        self.btnPDFReportNexus.clicked.connect(self._create_pdf_report_nexus)
+        self.btnWebReportNexus.clicked.connect(self._create_web_report_nexus)
 
         # consistency menu
         self._widget_connect_task(self.actionTrial_median_velocities,
@@ -495,7 +497,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                       emg_cycles=emg_cycles, from_c3d=from_c3d,
                       backend=backend)
 
-    def _web_report_from_nexus_session(self):
+    def _create_web_report_nexus(self):
         """Create web report based on current Nexus session"""
         sessions = [nexus.get_sessionpath()]
         self._web_report_dialog._create_web_report(sessions=sessions)
@@ -807,6 +809,8 @@ def main():
     # quiet down some noisy loggers
     logging.getLogger('PyQt5.uic').setLevel(logging.WARNING)
     logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
+    logging.getLogger('matplotlib.figure').setLevel(logging.WARNING)    
+    logging.getLogger('matplotlib._constrained_layout').setLevel(logging.WARNING)
     logging.getLogger('matplotlib.backends.backend_pdf').setLevel(logging.WARNING)
     logging.getLogger('werkzeug').setLevel(logging.WARNING)
 

@@ -302,7 +302,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             # add toeoff marker
                             if cyc.toeoffn is not None:
                                 toeoff = int(cyc.toeoffn)
-                                marker = dict(color='black',
+                                marker = dict(color=col,
                                               symbol='triangle-up',
                                               size=8)
                                 toeoff_marker = go.Scatter(x=t[toeoff:toeoff+1],

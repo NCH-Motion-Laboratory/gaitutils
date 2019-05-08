@@ -379,7 +379,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 toeoff = int(cyc.toeoffn)
                                 toeoff_marker = ax.plot(t[toeoff:toeoff+1],
                                                         y[toeoff:toeoff+1],
-                                                        'black',
+                                                        col,
                                                         marker='^')
 
                             # each cycle gets its own stddev plot

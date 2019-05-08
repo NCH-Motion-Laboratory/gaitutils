@@ -73,6 +73,9 @@ def _get_cycle_name(trial, cycle, name_type):
     elif name_type == 'short_name_with_tag':
         cyclename = '%s / %s' % (_truncate_trialname(trial.trialname),
                                  trial.eclipse_tag)
+    elif name_type == 'short_name_with_tag_and_cycle':
+        cyclename = '%s / %s %s' % (_truncate_trialname(trial.trialname),
+                                    trial.eclipse_tag, cycle.name)
     elif name_type == 'tag_only':
         cyclename = trial.eclipse_tag
     elif name_type == 'tag_with_cycle':

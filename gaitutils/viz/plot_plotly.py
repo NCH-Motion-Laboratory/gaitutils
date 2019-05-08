@@ -67,7 +67,7 @@ _plot_cache = dict()  # global for plot_trials
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                 emg_cycles=None, legend_type=None, style_by=None,
                 color_by=None, supplementary_data=None, model_stddev=None,
-                figtitle=None):
+                figtitle=None, big_fonts=False):
     """Make a plotly plot of layout, including given trials.
 
     trials: list of gaitutils.Trial instances
@@ -138,6 +138,14 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
         model_cycles = emg_cycles = 'unnormalized'
     else:
         normalized = True
+
+    legend_fontsize = cfg.plot_plotly.legend_fontsize
+    label_fontsize = cfg.plot_plotly.label_fontsize
+    subtitle_fontsize = cfg.plot_plotly.subtitle_fontsize
+    if big_fonts:
+        legend_fontsize += 2
+        label_fontsize += 2
+        subtitle_fontsize += 2
 
     # plot normaldata first to ensure that its z order is lowest
     # and it gets the 1st legend entries
@@ -354,7 +362,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     yunit = u'\u00B0'  # Unicode degree sign
                                 ydesc = [s[:3] for s in mod.ydesc[var]]  # shorten
                                 ylabel = (u'%s %s %s' % (ydesc[0], yunit, ydesc[1])).encode('utf-8')
-                                fig['layout'][yaxis].update(title=ylabel, titlefont={'size': cfg.plot_plotly.label_fontsize})
+                                fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize})
                                 # less decimals on hover label
                                 fig['layout'][yaxis].update(hoverformat='.2f')
 
@@ -422,7 +430,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         if not fig['layout'][yaxis]['title'].text:
                             logger.debug('setting EMG title')
                             emg_yrange = np.array([-cfg.plot.emg_yscale, cfg.plot.emg_yscale]) * cfg.plot.emg_multiplier
-                            fig['layout'][yaxis].update(title=cfg.plot.emg_ylabel, titlefont={'size': cfg.plot_plotly.label_fontsize},
+                            fig['layout'][yaxis].update(title=cfg.plot.emg_ylabel, titlefont={'size': label_fontsize},
                                                         range=emg_yrange)
                             # prevent changes due to legend clicks etc.
                             if normalized:
@@ -433,9 +441,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                     else:
                         raise GaitDataError('Unknown variable %s' % var)
 
-    # reduce subplot title font size
+    # set subplot title font size
     for anno in fig['layout']['annotations']:
-        anno['font']['size'] = cfg.plot_plotly.subtitle_fontsize
+        anno['font']['size'] = subtitle_fontsize
 
     # put x labels on last row only, re-enable tick labels for last row
     inds_last = range((nrows-1)*ncols, nrows*ncols)
@@ -443,11 +451,14 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     xlabel = '% of gait cycle' if normalized else 'frame'
     for ax in axes_last:
         fig['layout'][ax].update(title=xlabel,
-                                 titlefont={'size': cfg.plot_plotly.label_fontsize},
+                                 titlefont={'size': label_fontsize},
                                  showticklabels=True)
 
     margin = go.layout.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
-    layout = go.Layout(margin=margin, font={'size': cfg.plot_plotly.label_fontsize},
+    legend = dict(font=dict(size=legend_fontsize))
+    layout = go.Layout(margin=margin,
+                       legend=legend,
+                       font={'size': label_fontsize},
                        hovermode='closest', title=figtitle)
 
     fig['layout'].update(layout)

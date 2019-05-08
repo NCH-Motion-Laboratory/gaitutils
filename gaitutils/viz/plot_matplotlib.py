@@ -14,7 +14,6 @@ from collections import OrderedDict, defaultdict
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.gridspec as gridspec
-import os.path as op
 import numpy as np
 import logging
 
@@ -171,7 +170,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
 def _annotate_axis(ax, text):
     """Annotate at center of mpl axis"""
     ax.annotate(text, xy=(.5, .5), xycoords='axes fraction',
-                ha="center", va="center", fontsize=cfg.plot_matplotlib.title_fontsize)
+                ha="center", va="center", fontsize=cfg.plot_matplotlib.subtitle_fontsize)
 
 
 def _remove_ticks_and_labels(ax):
@@ -431,7 +430,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 title = _var_title(var)
                                 if title:
                                     ax.set_title(title)
-                                    ax.title.set_fontsize(cfg.plot_matplotlib.title_fontsize)
+                                    ax.title.set_fontsize(cfg.plot_matplotlib.subtitle_fontsize)
                                 ax.tick_params(axis='both', which='major',
                                             labelsize=cfg.plot_matplotlib.ticks_fontsize)
                                 ax.locator_params(axis='y', nbins=6)  # less tick marks
@@ -483,7 +482,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             else:
                                 if title:
                                     ax.set_title(title)
-                                    ax.title.set_fontsize(cfg.plot_matplotlib.title_fontsize)
+                                    ax.title.set_fontsize(cfg.plot_matplotlib.subtitle_fontsize)
                                 ax.set(ylabel=cfg.plot.emg_ylabel)
                                 ax.yaxis.label.set_fontsize(cfg.plot_matplotlib.label_fontsize)
                                 ax.locator_params(axis='y', nbins=4)

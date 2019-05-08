@@ -323,7 +323,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             style_by['model'] = 'context'
             color_by['model'] = 'trial'
             color_by['emg'] = 'trial'
-        legend_type = ('short_name_with_tag' if is_comparison else
+        legend_type = ('short_name_with_tag_and_cycle' if is_comparison else
                        'tag_with_cycle')
         try:
             # special layout
@@ -356,7 +356,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                                        model_cycles='unnormalized',
                                        emg_cycles=[],
                                        legend_type='short_name_with_cyclename',
-                                       style_by=style_by, color_by=color_by)
+                                       style_by=style_by, color_by=color_by,
+                                       big_fonts=True)
                     graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
                                             style={'height': '100%'})
                     graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
@@ -370,7 +371,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                                        model_cycles=[],
                                        emg_cycles='unnormalized',
                                        legend_type='short_name_with_cyclename',
-                                       style_by=style_by, color_by=color_by)
+                                       style_by=style_by, color_by=color_by,
+                                       big_fonts=True)
                     graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
                                             style={'height': '100%'})
                     graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
@@ -389,7 +391,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                 fig_ = plot_trials(trials_dyn, layout, model_normaldata,
                                    legend_type=legend_type,
                                    style_by=style_by, color_by=color_by,
-                                   supplementary_data=supplementary_default)
+                                   supplementary_data=supplementary_default,
+                                   big_fonts=True)
                 graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
                                         style={'height': '100%'})
                 graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'

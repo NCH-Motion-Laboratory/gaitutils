@@ -36,7 +36,7 @@ from ..viz.plots import (plot_nexus_trial, plot_sessions,
                          plot_trial_timedep_velocities,
                          plot_trial_velocities, plot_session_average)
 from ..viz.timedist import do_session_average_plot                         
-
+from ..report import web, pdf
 
 logger = logging.getLogger(__name__)
 
@@ -164,7 +164,7 @@ class WebReportDialog(QtWidgets.QDialog):
             return
 
         sessions = dlg.sessions
-        report_name = report._report_name(sessions)
+        report_name = web._report_name(sessions)
         existing_names = [item.text for item in self.listActiveReports.items]
         if report_name in existing_names:
             qt_message_dialog('There is already a report for %s' %
@@ -214,7 +214,7 @@ class WebReportDialog(QtWidgets.QDialog):
             self.parent._convert_vidfiles(vidfiles, signals)
 
         # launch the report creation thread
-        self.parent._execute(report.dash_report, thread=True, block_ui=True,
+        self.parent._execute(web.dash_report, thread=True, block_ui=True,
                              finished_func=self._web_report_finished,
                              result_func=self._web_report_ready,
                              info=info, sessions=sessions, tags=tags,

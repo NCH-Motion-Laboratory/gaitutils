@@ -16,9 +16,8 @@ from collections import defaultdict
 
 from .. import (cfg, numutils, normaldata, sessionutils,
                 GaitDataError)
-from ..viz.plot_matplotlib import plot_trial_velocities
 from ..viz.timedist import do_session_average_plot, do_comparison_plot
-from ..viz.plots import plot_sessions, plot_session_average
+from ..viz.plots import plot_sessions, plot_session_average, plot_trial_velocities
 
 
 logger = logging.getLogger(__name__)

@@ -7,6 +7,9 @@ Report related functions
 
 
 from __future__ import division
+from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
+                                                FigureCanvas)
+
 from builtins import str
 from past.builtins import basestring
 import numpy as np
@@ -24,8 +27,9 @@ import io
 
 from .. import (cfg, normaldata, models, layouts, GaitDataError,
                 sessionutils, numutils, videos)
-from gaitutils.plot_plotly import plot_trials
-from gaitutils.scripts import nexus_time_distance_vars
+from ..trial import Trial
+from ..viz.plot_plotly import plot_trials
+from ..viz import timedist
 
 logger = logging.getLogger(__name__)
 
@@ -47,9 +51,11 @@ def _make_dropdown_lists(options):
 
 
 def _time_dist_plot(c3ds, sessions):
+    """Return time-dist plot in SVG format"""
     cond_labels = [op.split(session)[-1] for session in sessions]
-    fig = nexus_time_distance_vars._plot_trials(c3ds, cond_labels,
-                                                interactive=False)
+    fig = timedist._plot_trials(c3ds, cond_labels)
+    # savefig requires a canvas
+    _canvas = FigureCanvas(fig)    
     buf = io.BytesIO()
     fig.savefig(buf, format='svg', bbox_inches='tight')
     buf.seek(0)
@@ -174,10 +180,10 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     for session in sessions:
         for tag in dyn_tags:
             if c3ds[session]['dynamic'][tag]:
-                tri = gaitutils.Trial(c3ds[session]['dynamic'][tag][0])
+                tri = Trial(c3ds[session]['dynamic'][tag][0])
                 trials_dyn.append(tri)
         if c3ds[session]['static'][static_tag]:
-            tri = gaitutils.Trial(c3ds[session]['static']['Static'][0])
+            tri = Trial(c3ds[session]['static']['Static'][0])
             trials_static.append(tri)
 
     # read some extra data from trials and create supplementary data
@@ -307,10 +313,18 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
         signals.progress.emit('Creating plot: %s' % label, 100*k/len(_layouts))
         # for comparison report, include session info in plot legends and
         # use session specific line style
-        trial_linestyles = 'session' if is_comparison else 'same'
+        style_by = dict()
+        color_by = dict()
+        if is_comparison:
+            style_by['model'] = 'session'
+            color_by['model'] = 'context'
+            color_by['emg'] = 'trial'
+        else:
+            style_by['model'] = 'context'
+            color_by['model'] = 'trial'
+            color_by['emg'] = 'trial'
         legend_type = ('short_name_with_tag' if is_comparison else
                        'tag_with_cycle')
-
         try:
             # special layout
             if isinstance(layout, basestring):
@@ -342,7 +356,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                                        model_cycles='unnormalized',
                                        emg_cycles=[],
                                        legend_type='short_name_with_cyclename',
-                                       trial_linestyles=trial_linestyles)
+                                       style_by=style_by, color_by=color_by)
                     graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
                                             style={'height': '100%'})
                     graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
@@ -356,7 +370,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                                        model_cycles=[],
                                        emg_cycles='unnormalized',
                                        legend_type='short_name_with_cyclename',
-                                       trial_linestyles=trial_linestyles)
+                                       style_by=style_by, color_by=color_by)
                     graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
                                             style={'height': '100%'})
                     graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
@@ -374,7 +388,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             else:
                 fig_ = plot_trials(trials_dyn, layout, model_normaldata,
                                    legend_type=legend_type,
-                                   trial_linestyles=trial_linestyles,
+                                   style_by=style_by, color_by=color_by,
                                    supplementary_data=supplementary_default)
                 graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
                                         style={'height': '100%'})
@@ -425,7 +439,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
         return html.Div(items, style={'height': '80vh'})
 
     # create the app
-    app = dash.Dash(__name__)
+    app = dash.Dash('gaitutils')
     # use local packaged versions of JavaScript libs etc. (no internet needed)
     app.css.config.serve_locally = True
     app.scripts.config.serve_locally = True

@@ -287,6 +287,8 @@
     </property>
     <addaction name="actionWeb_report_from_Nexus_session"/>
     <addaction name="actionWeb_reports"/>
+    <addaction name="separator"/>
+    <addaction name="actionCreate_PDF_report_Nexus"/>
     <addaction name="actionCreate_PDF_report"/>
    </widget>
    <widget class="QMenu" name="menuPlotting">
@@ -427,6 +429,11 @@
   <action name="actionWeb_report_from_Nexus_session">
    <property name="text">
     <string>Web report from Nexus session...</string>
+   </property>
+  </action>
+  <action name="actionCreate_PDF_report_Nexus">
+   <property name="text">
+    <string>PDF report from Nexus session...</string>
    </property>
   </action>
  </widget>

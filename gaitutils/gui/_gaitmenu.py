@@ -352,7 +352,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._web_report_dialog = WebReportDialog(self)
 
         # modal dialogs etc. (simple signal->slot connection)
-        self.actionCreate_PDF_report.triggered.connect(self._create_pdf_report)
+        self.actionCreate_PDF_report.triggered.connect(lambda ev: self._create_pdf_report())
+        self.actionCreate_PDF_report_Nexus.triggered.connect(self._create_pdf_report_nexus)
         self.actionWeb_reports.triggered.connect(self._web_report_dialog.show)
         self.actionWeb_report_from_Nexus_session.triggered.connect(self._web_report_from_nexus_session)
         self.actionQuit.triggered.connect(self.close)
@@ -633,14 +634,21 @@ class Gaitmenu(QtWidgets.QMainWindow):
         dlg = OptionsDialog(self)
         dlg.exec_()
 
-    def _create_pdf_report(self):
+    def _create_pdf_report_nexus(self):
+        sessions = [nexus.get_sessionpath()]
+        self._create_pdf_report(sessions)
+
+    def _create_pdf_report(self, sessions=None):
         """Create comparison or single session pdf report"""
 
-        dlg = ChooseSessionsDialog()
-        if not dlg.exec_():
-            return
-        sessions = dlg.sessions
+        if sessions is None:
+            dlg = ChooseSessionsDialog()
+            if not dlg.exec_():
+                return
+            sessions = dlg.sessions
+
         comparison = len(sessions) > 1
+        # fixme: should be OK
         if comparison:
             qt_message_dialog('PDF comparison report not supported right now')
             return

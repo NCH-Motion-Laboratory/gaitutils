@@ -16,7 +16,7 @@ from collections import defaultdict
 
 from .. import (cfg, numutils, normaldata, sessionutils,
                 GaitDataError)
-from ..viz.timedist import do_session_average_plot, do_comparison_plot
+from ..viz.timedist import do_session_average_plot, do_comparison_plot, session_analysis_text
 from ..viz.plots import plot_sessions, plot_session_average, plot_trial_velocities
 
 
@@ -26,11 +26,27 @@ page_size = (11.69, 8.27)  # report page size = landscape A4
 
 
 def _add_footer(fig, txt):
+    """Add footer text to mpl Figure"""
     fig.text(0, 0, txt, fontsize=8, color='black', ha='left', va='bottom')
 
 
 def _add_header(fig, txt):
+    """Add header text to mpl Figure"""
     fig.text(0, 1, txt, fontsize=8, color='black', ha='left', va='top')
+
+
+def _make_text_fig(txt, titlepage=True):
+    """Make a Figure from text"""
+    fig = Figure()
+    ax = fig.add_subplot(111)
+    ax.set_axis_off()
+    if titlepage:
+        ax.text(.5, .8, txt, ha='center', va='center', weight='bold',
+                fontsize=14)
+    else:
+        ax.text(.5, .8, txt, ha='center', va='center',
+                fontsize=12)
+    return fig
 
 
 def _savefig(pdf, fig, header=None, footer=None):
@@ -77,9 +93,6 @@ def create_report(sessionpath, info=None, pages=None):
 
     # make header page
     # timestr = time.strftime('%d.%m.%Y')  # current time, not currently used
-    fig_hdr = Figure()
-    ax = fig_hdr.add_subplot(111)
-    ax.set_axis_off()
     title_txt = 'HUS Liikelaboratorio\n'
     title_txt += u'Kävelyanalyysin tulokset\n'
     title_txt += '\n'
@@ -92,8 +105,7 @@ def create_report(sessionpath, info=None, pages=None):
         title_txt += u'Kuvaus: %s\n' % session_description
     title_txt += u'Mittauksen pvm: %s\n' % session_t.strftime('%d.%m.%Y')
     title_txt += u'Liikelaboratorion potilaskoodi: %s\n' % patient_code
-    ax.text(.5, .8, title_txt, ha='center', va='center', weight='bold',
-            fontsize=14)
+    fig_title = _make_text_fig(title_txt)
 
     header = u'Nimi: %s Henkilötunnus: %s' % (fullname, hetu)
     musclelen_ndata = normaldata.normaldata_age(age)
@@ -111,6 +123,10 @@ def create_report(sessionpath, info=None, pages=None):
     if pages['TimeDistAverage']:
         logger.debug('creating time-distance plot')
         fig_timedist_avg = do_session_average_plot(sessionpath)
+
+    # time-dist text
+    _timedist_txt = session_analysis_text(sessionpath)
+    fig_timedist_txt = _make_text_fig(_timedist_txt, titlepage=False)
 
     # kin consistency
     fig_kin_cons = None
@@ -134,20 +150,20 @@ def create_report(sessionpath, info=None, pages=None):
                                      layout_name='std_emg',
                                      backend='matplotlib')
     # average plots, R/L
-    figs_kin_avg = None
+    fig_kin_avg = None
     if pages['KinAverage']:
-        figs_kin_avg = plot_session_average(sessionpath, backend='matplotlib')
+        fig_kin_avg = plot_session_average(sessionpath, backend='matplotlib')
 
     logger.debug('creating multipage pdf %s' % pdfpath)
     with PdfPages(pdfpath) as pdf:
-        _savefig(pdf, fig_hdr)
+        _savefig(pdf, fig_title)
         _savefig(pdf, fig_vel, header)
         _savefig(pdf, fig_timedist_avg, header)
         _savefig(pdf, fig_kin_cons, header)
         _savefig(pdf, fig_musclelen_cons, header, footer_musclelen)
         _savefig(pdf, fig_emg_cons, header)
-        _savefig(pdf, figs_kin_avg, header)
-
+        _savefig(pdf, fig_kin_avg, header)
+        _savefig(pdf, fig_timedist_txt)
 
 def create_comparison_report(sessions, pdfpath, pages=None):
     """Do a simple comparison report between sessions"""
@@ -162,15 +178,11 @@ def create_comparison_report(sessions, pdfpath, pages=None):
     sessions_str = u' vs. '.join([op.split(s)[-1] for s in sessions])
 
     # make header page
-    fig_hdr = Figure()
-    ax = fig_hdr.add_subplot(111)
-    ax.set_axis_off()
     title_txt = 'HUS Liikelaboratorio\n'
     title_txt += u'Kävelyanalyysin vertailuraportti\n'
     title_txt += '\n'
     title_txt += sessions_str
-    ax.text(.5, .8, title_txt, ha='center', va='center', weight='bold',
-            fontsize=14)
+    fig_title = _make_text_fig(title_txt)
 
     fig_timedist_cmp = None
     if pages['TimeDistCmp']:
@@ -185,7 +197,7 @@ def create_comparison_report(sessions, pdfpath, pages=None):
     header = u'Comparison %s' % sessions_str
     logger.debug('creating multipage comparison pdf %s' % pdfpath)
     with PdfPages(pdfpath) as pdf:
-        _savefig(pdf, fig_hdr)
+        _savefig(pdf, fig_title)
         _savefig(pdf, fig_timedist_cmp, header)
         _savefig(pdf, fig_kin_cmp, header)
 

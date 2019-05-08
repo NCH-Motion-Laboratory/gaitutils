@@ -285,6 +285,7 @@
     <property name="title">
      <string>Reports</string>
     </property>
+    <addaction name="actionWeb_report_from_Nexus_session"/>
     <addaction name="actionWeb_reports"/>
     <addaction name="actionCreate_PDF_report"/>
    </widget>
@@ -421,6 +422,11 @@
   <action name="actionTrial_timedep_velocities">
    <property name="text">
     <string>Time-dependent trial velocities</string>
+   </property>
+  </action>
+  <action name="actionWeb_report_from_Nexus_session">
+   <property name="text">
+    <string>Web report from Nexus session...</string>
    </property>
   </action>
  </widget>

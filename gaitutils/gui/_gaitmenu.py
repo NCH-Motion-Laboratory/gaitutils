@@ -137,7 +137,7 @@ class WebReportDialog(QtWidgets.QDialog):
         # load user interface made with designer
         uifile = resource_filename('gaitutils', 'gui/web_report_dialog.ui')
         uic.loadUi(uifile, self)
-        self.btnCreateReport.clicked.connect(self._create_web_report)
+        self.btnCreateReport.clicked.connect(lambda ev: self._create_web_report())
         self.btnDeleteReport.clicked.connect(self._delete_current_report)
         self.btnDeleteAllReports.clicked.connect(self._delete_all_reports)
         self.btnViewReport.clicked.connect(self._view_current_report)
@@ -150,7 +150,7 @@ class WebReportDialog(QtWidgets.QDialog):
         self._set_report_button_status()
         self._browser_procs = list()
 
-    def _create_web_report(self):
+    def _create_web_report(self, sessions=None):
         """Collect sessions, create the dash app, start it and launch a
         web browser on localhost on the correct port"""
 
@@ -159,11 +159,12 @@ class WebReportDialog(QtWidgets.QDialog):
                               'Please delete some reports first.')
             return
 
-        dlg = ChooseSessionsDialog()
-        if not dlg.exec_():
-            return
+        if sessions is None:
+            dlg = ChooseSessionsDialog()
+            if not dlg.exec_():
+                return
+            sessions = dlg.sessions
 
-        sessions = dlg.sessions
         report_name = web._report_name(sessions)
         existing_names = [item.text for item in self.listActiveReports.items]
         if report_name in existing_names:
@@ -353,6 +354,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # modal dialogs etc. (simple signal->slot connection)
         self.actionCreate_PDF_report.triggered.connect(self._create_pdf_report)
         self.actionWeb_reports.triggered.connect(self._web_report_dialog.show)
+        self.actionWeb_report_from_Nexus_session.triggered.connect(self._web_report_from_nexus_session)
         self.actionQuit.triggered.connect(self.close)
         self.actionOpts.triggered.connect(self._options_dialog)
         self.actionTardieu_analysis.triggered.connect(self._tardieu)
@@ -491,6 +493,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
                       layout_name=lout_name, model_cycles=model_cycles,
                       emg_cycles=emg_cycles, from_c3d=from_c3d,
                       backend=backend)
+
+    def _web_report_from_nexus_session(self):
+        """Create web report based on current Nexus session"""
+        sessions = [nexus.get_sessionpath()]
+        self._web_report_dialog._create_web_report(sessions=sessions)
 
     def _plot_nexus_session(self):
         """Plot the current Nexus session according to UI choices"""

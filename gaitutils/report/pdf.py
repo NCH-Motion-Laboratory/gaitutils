@@ -37,6 +37,8 @@ def _savefig(pdf, fig, header=None, footer=None):
     """add header/footer into page and save as A4"""
     if fig is None:
         return
+    elif not isinstance(fig, Figure):
+        raise ValueError('fig must be matplotlib Figure, got %s' % fig)
     if header is not None:
         _add_header(fig, header)
     if footer is not None:
@@ -102,7 +104,7 @@ def create_report(sessionpath, info=None, pages=None):
     fig_vel = None
     if pages['TrialVelocity']:
         logger.debug('creating velocity plot')
-        fig_vel = plot_trial_velocities(sessionpath)
+        fig_vel = plot_trial_velocities(sessionpath, backend='matplotlib')
 
     # time-distance average
     fig_timedist_avg = None
@@ -124,7 +126,6 @@ def create_report(sessionpath, info=None, pages=None):
         fig_musclelen_cons = plot_sessions(sessions=[sessionpath], layout_name='musclelen',
                                            style_by='context',
                                            backend='matplotlib')
-    
     # EMG consistency
     fig_emg_cons = None
     if do_emg_consistency:
@@ -132,9 +133,8 @@ def create_report(sessionpath, info=None, pages=None):
         fig_emg_cons = plot_sessions(sessions=[sessionpath],
                                      layout_name='std_emg',
                                      backend='matplotlib')
-
     # average plots, R/L
-    figs_kin_avg = list()
+    figs_kin_avg = None
     if pages['KinAverage']:
         figs_kin_avg = plot_session_average(sessionpath, backend='matplotlib')
 

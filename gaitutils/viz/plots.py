@@ -91,7 +91,7 @@ def plot_session_average(session, layout_name=None, backend=None):
                                    figtitle=maintitle_)
 
 
-def plot_trial_velocities(session, backend):
+def plot_trial_velocities(session, backend=None):
     """Plot median velocities for each dynamic trial in Nexus session."""
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
     if not c3ds:
@@ -103,7 +103,7 @@ def plot_trial_velocities(session, backend):
     return get_backend(backend)._plot_vels(vels, labels)
 
 
-def plot_trial_timedep_velocities(session, backend):
+def plot_trial_timedep_velocities(session, backend=None):
     """Plot time-dependent velocity for each dynamic trial in session."""
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
     if not c3ds:

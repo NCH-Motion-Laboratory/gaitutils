@@ -669,12 +669,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         # create the report
         if comparison:
-            self._execute(nexus_make_comparison_report.do_plot,
+            self._execute(pdf.create_comparison_report,
                           thread=True,
                           finished_func=self._enable_op_buttons,
                           sessions=sessions)
         else:
-            self._execute(nexus_make_pdf_report.do_plot, thread=True,
+            self._execute(pdf.create_report, thread=True,
                           finished_func=self._enable_op_buttons,
                           sessionpath=sessions[0], info=info,
                           pages=dlg_info.pages)
@@ -685,7 +685,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.txtOutput.setTextCursor(c)
         self.txtOutput.insertPlainText(msg)
         self.txtOutput.ensureCursorVisible()
-
 
     def _disable_op_buttons(self):
         """ Disable all operation buttons """
@@ -763,7 +762,6 @@ class Runner(QRunnable):
             self.signals.result.emit(retval)
         finally:
             self.signals.finished.emit()
-
 
 def main():
 

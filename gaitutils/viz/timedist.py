@@ -82,7 +82,7 @@ def _print_analysis_text_finnish(trials, cond_labels=None, vars=None,
             unit = val['unit']
             unit_ = unit_translations[unit] if unit in unit_translations else unit
             li = u'%s: %.2f ±%.2f / %.2f ±%.2f %s' % (var_, val['Right'], val_std['Right'],
-                                                       val['Left'], val_std['Left'], unit_)
+                                                        val['Left'], val_std['Left'], unit_)
             yield li
     yield ''
 

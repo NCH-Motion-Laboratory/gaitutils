@@ -27,18 +27,27 @@ from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
 from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ..numutils import check_hetu
 from ..videos import _collect_session_videos, convert_videos
-from .. import (GaitDataError, nexus, cfg, report, sessionutils,
-                envutils)
+from .. import GaitDataError, nexus, cfg, sessionutils, envutils
 from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
                            copy_session_videos)
 from ..viz.plots import (plot_nexus_trial, plot_sessions,
                          plot_trial_timedep_velocities,
                          plot_trial_velocities, plot_session_average)
-from ..viz.timedist import do_session_average_plot                         
+from ..viz.timedist import do_session_average_plot
 from ..report import web, pdf
 
 logger = logging.getLogger(__name__)
+
+
+def _get_nexus_sessionpath():
+    """Get Nexus sessionpath, handle exceptions for use outside _execute"""
+    try:
+        sessionpath = nexus.get_sessionpath()
+        return sessionpath
+    except GaitDataError as e:
+        _exception(e)
+        return None
 
 
 def _exception(e):
@@ -423,12 +432,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _autoproc_session(self):
         """Wrapper to run autoprocess for Nexus session"""
-        try:
-            sessionpath = nexus.get_sessionpath()
-        except GaitDataError as e:
-            _exception(e)
+        session = _get_nexus_sessionpath()
+        if session is None:
             return
-        c3ds = sessionutils.get_c3ds(sessionpath, trial_type='DYNAMIC',
+        c3ds = sessionutils.get_c3ds(session, trial_type='DYNAMIC',
                                      check_if_exists=True)
         if c3ds:
             reply = qt_yesno_dialog('Some of the dynamic trials have been '
@@ -443,7 +450,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _plot_timedist_average(self):
         """Plot time-distance average"""
-        session = nexus.get_sessionpath()
+        session = _get_nexus_sessionpath()
+        if session is None:
+            return
         # we need to force backend here, since plotly is not yet supported
         result_func = lambda fig: self._show_plots(fig, backend='matplotlib')
         self._execute(do_session_average_plot, thread=True,
@@ -453,7 +462,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _plot_trial_median_velocities(self):
         """Trial velocity plot from current Nexus session"""
-        session = nexus.get_sessionpath()
+        session = _get_nexus_sessionpath()
+        if session is None:
+            return
         backend = self._get_plotting_backend_ui()
         self._execute(plot_trial_velocities, thread=True,
                       finished_func=self._enable_op_buttons,
@@ -462,7 +473,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _plot_trial_timedep_velocities(self):
         """Trial velocity plot from current Nexus session"""
-        session = nexus.get_sessionpath()
+        session = _get_nexus_sessionpath()
+        if session is None:
+            return
         backend = self._get_plotting_backend_ui()
         self._execute(plot_trial_timedep_velocities, thread=True,
                       finished_func=self._enable_op_buttons,
@@ -471,10 +484,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _plot_nexus_average(self):
         """Plot average from current Nexus session"""
+        session = _get_nexus_sessionpath()
+        if session is None:
+            return
         lout_desc = self.cbNexusTrialLayout.currentText()
         lout_name = cfg.layouts.menu_layouts[lout_desc]
         backend = self._get_plotting_backend_ui()
-        session = nexus.get_sessionpath()
         self._execute(plot_session_average, thread=True,
                       finished_func=self._enable_op_buttons,
                       result_func=self._show_plots,
@@ -499,21 +514,25 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _create_web_report_nexus(self):
         """Create web report based on current Nexus session"""
-        sessions = [nexus.get_sessionpath()]
-        self._web_report_dialog._create_web_report(sessions=sessions)
+        session = _get_nexus_sessionpath()
+        if session:
+            self._web_report_dialog._create_web_report(sessions=[session])
 
     def _plot_nexus_session(self):
         """Plot the current Nexus session according to UI choices"""
+        session = _get_nexus_sessionpath()
+        if session is None:
+            return
         lout_desc = self.cbNexusTrialLayout.currentText()
         lout_name = cfg.layouts.menu_layouts[lout_desc]
         backend = self._get_plotting_backend_ui()
-        sessions = [nexus.get_sessionpath()]
+
         cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
         model_cycles = emg_cycles = cycs
         self._execute(plot_sessions, thread=True,
                       finished_func=self._enable_op_buttons,
                       result_func=self._show_plots,
-                      sessions=sessions,
+                      sessions=[session],
                       style_by='context',
                       color_by='trial',
                       layout_name=lout_name, model_cycles=model_cycles,
@@ -565,10 +584,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _convert_session_videos(self):
         """Convert current Nexus session videos to web format."""
-        try:
-            session = nexus.get_sessionpath()
-        except GaitDataError as e:
-            qt_message_dialog(_exception_msg(e))
+        session = _get_nexus_sessionpath()
+        if session is None:
             return
         try:
             vidfiles = _collect_session_videos(session,
@@ -591,10 +608,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _postprocess_session(self):
         """Run additional postprocessing pipelines for tagged trials"""
-        try:
-            session = nexus.get_sessionpath()
-        except GaitDataError as e:
-            qt_message_dialog(_exception_msg(e))
+        session = _get_nexus_sessionpath()
+        if session is None:
             return
         # XXX: run for tagged + static - maybe this should be configurable
         trials = sessionutils.get_c3ds(session, tags=cfg.eclipse.tags,
@@ -637,8 +652,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
         dlg.exec_()
 
     def _create_pdf_report_nexus(self):
-        sessions = [nexus.get_sessionpath()]
-        self._create_pdf_report(sessions)
+        session = _get_nexus_sessionpath()
+        if session is None:
+            return
+        self._create_pdf_report([session])
 
     def _create_pdf_report(self, sessions=None):
         """Create comparison or single session pdf report"""

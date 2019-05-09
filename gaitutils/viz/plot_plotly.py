@@ -67,7 +67,7 @@ _plot_cache = dict()  # global for plot_trials
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                 emg_cycles=None, legend_type=None, style_by=None,
                 color_by=None, supplementary_data=None, model_stddev=None,
-                figtitle=None, big_fonts=False):
+                figtitle=None, big_fonts=False, age=None):
     """Make a plotly plot of layout, including given trials.
 
     trials: list of gaitutils.Trial instances
@@ -112,7 +112,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
         supplementary_data = dict()
 
     if model_normaldata is None:
-        model_normaldata = normaldata.read_all_normaldata()
+        model_normaldata = normaldata.read_all_normaldata(age)
 
     nrows, ncols = layouts.check_layout(layout)
 

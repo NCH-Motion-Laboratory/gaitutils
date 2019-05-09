@@ -59,7 +59,6 @@ def normaldata_age(age):
             logger.debug('found normaldata file %s for age %d' %
                          (filename, age))
             return filename
-    return None  # no matches
 
 
 def _check_normaldata(ndata):

@@ -231,10 +231,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
                     mod = models.model_from_var(var)
                     if mod:
-                        do_plot = True
-
-                        if cyc not in model_cycles_:
-                            do_plot = False
+                        do_plot = cyc in model_cycles_
 
                         if var in mod.varnames_noside:
                             # var context was unspecified, so choose it
@@ -244,11 +241,11 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             # var context was specified and does not match cycle
                             do_plot = False
 
-                        if mod.is_kinetic_var(var):
-                            # kinetic var cycles are required to have valid
-                            # forceplate data
-                            if normalized and not cyc.on_forceplate:
-                                do_plot = False
+                        # kinetic var cycles are required to have valid
+                        # forceplate data
+                        if (normalized and mod.is_kinetic_var(var) and
+                           not cyc.on_forceplate):
+                            do_plot = False
 
                         if do_plot:
                             t, y = trial.get_model_data(var)
@@ -369,15 +366,13 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                     # plot EMG variable
                     elif (trial.emg.is_channel(var) or var in
                           cfg.emg.channel_labels):
-                        do_plot = True
                         # plot only if EMG channel context matches cycle ctxt
                         # FIXME: this assumes that EMG names begin with context
-                        if (var[0] != context or not trial.emg.status_ok(var)
-                            or cyc not in emg_cycles_):
-                            do_plot = False
-                            # FIXME: maybe annotate disconnected chans
-                            # _no_ticks_or_labels(ax)
-                            # _axis_annotate(ax, 'disconnected')
+                        do_plot = (var[0] == context and trial.emg.status_ok(var)
+                                   and cyc in emg_cycles_)
+                        # FIXME: maybe annotate disconnected chans
+                        # _no_ticks_or_labels(ax)
+                        # _axis_annotate(ax, 'disconnected')
                         if do_plot:
                             logger.debug('plotting %s/%s' % (cyc, var))
                             tracename_emg = 'EMG:' + tracename

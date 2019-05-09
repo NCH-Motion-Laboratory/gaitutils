@@ -292,6 +292,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                     if j not in axes[i]:
                         sharex = axes[0][0] if i > 0 or j > 0 else None
                         ax = fig.add_subplot(gridspec_[i, j], sharex=sharex)
+                        ax.autoscale(enable=True, axis='x', tight=True)
                         axes[i][j] = ax
                     else:
                         ax = axes[i][j]
@@ -311,10 +312,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
                     mod = models.model_from_var(var)
                     if mod:
-                        do_plot = True
-
-                        if cyc not in model_cycles_:
-                            do_plot = False
+                        do_plot = cyc in model_cycles_
 
                         if var in mod.varnames_noside:
                             # var context was unspecified, so choose it
@@ -324,15 +322,14 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             # var context was specified and does not match cycle
                             do_plot = False
 
-                        if mod.is_kinetic_var(var):
-                            # kinetic var cycles are required to have valid
-                            # forceplate data
-                            if normalized and not cyc.on_forceplate:
-                                do_plot = False
+                        # kinetic var cycles are required to have valid
+                        # forceplate data
+                        if normalized and mod.is_kinetic_var(var) and not cyc.on_forceplate:
+                            do_plot = False
 
-                        # plot normal data
+                        # plot normal data before first cycle
                         if (model_normaldata is not None and first_cyc and
-                            normalized):
+                           normalized):
                             nvar = var if var in mod.varlabels_noside else var[1:]
                             key = nvar if nvar in model_normaldata else None
                             ndata = (model_normaldata[key] if key in
@@ -345,7 +342,6 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                                 model_normals_color,
                                                 alpha=cfg.plot.
                                                 model_normals_alpha)
-                                ax.set_xlim(normalx[0], normalx[-1])
 
                         if do_plot:
                             t, y = trial.get_model_data(var)
@@ -393,8 +389,6 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                                 model_stddev_colors[cyc.context],
                                                 alpha=cfg.plot.
                                                 model_stddev_alpha)
-                                # tighten x limits
-                                ax.set_xlim(stdx[0], stdx[-1])
                                 leg_entries['Stddev for %s' % tracegroup] = stddev_
 
                             # add supplementary data
@@ -444,13 +438,13 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                     # plot EMG variable
                     elif (trial.emg is not None and trial.emg.is_channel(var) or var in
                           cfg.emg.channel_labels):
-                        do_plot = True
                         # plot only if EMG channel context matches cycle ctxt
                         # FIXME: this assumes that EMG names begin with context
-                        if (var[0] != context or not trial.emg.status_ok(var)
-                           or cyc not in emg_cycles_):
-                            do_plot = False
-
+                        do_plot = (var[0] == context and trial.emg.status_ok(var)
+                                   and cyc in emg_cycles_)
+                        # FIXME: maybe annotate disconnected chans
+                        # _no_ticks_or_labels(ax)
+                        # _axis_annotate(ax, 'disconnected')
                         if do_plot:
                             t_, y = trial.get_emg_data(var)
                             t = t_ if normalized else t_ / trial.samplesperframe
@@ -489,7 +483,6 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 # tick font size
                                 ax.tick_params(axis='both', which='major',
                                             labelsize=cfg.plot_matplotlib.ticks_fontsize)
-                                ax.set_xlim(min(t), max(t))
                                 ysc = [-cfg.plot.emg_yscale, cfg.plot.emg_yscale]
                                 ax.set_ylim(ysc[0]*cfg.plot.emg_multiplier,
                                             ysc[1]*cfg.plot.emg_multiplier)

@@ -165,15 +165,15 @@ def create_report(sessionpath, info=None, pages=None):
         _savefig(pdf, fig_kin_avg, header)
         _savefig(pdf, fig_timedist_txt)
 
+
 def create_comparison_report(sessions, pdfpath, pages=None):
     """Do a simple comparison report between sessions"""
 
     if pages is None:
         # if no pages specified, do them all
         pages = defaultdict(lambda: True)
-    else:
-        if not any(pages.values()):
-            raise Exception('No pages to print')
+    elif not any(pages.values()):
+        raise GaitDataError('No pages to print')
 
     sessions_str = u' vs. '.join([op.split(s)[-1] for s in sessions])
 

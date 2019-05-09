@@ -360,7 +360,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         self._web_report_dialog = WebReportDialog(self)
 
-        # modal dialogs etc. (simple signal->slot connection)
+        # simple signal->slot connections
+        # mostly for stuff that finishes instantly, modal dialogs and
+        # things that themselves call _execute
         self.actionCreate_PDF_report.triggered.connect(lambda ev: self._create_pdf_report())
         self.actionCreate_PDF_report_Nexus.triggered.connect(self._create_pdf_report_nexus)
         self.actionWeb_reports.triggered.connect(self._web_report_dialog.show)

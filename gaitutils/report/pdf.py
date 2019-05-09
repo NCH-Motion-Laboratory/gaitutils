@@ -14,7 +14,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from collections import defaultdict
 
-from .. import (cfg, numutils, normaldata, sessionutils,
+from .. import (cfg, numutils, normaldata, sessionutils, normaldata,
                 GaitDataError)
 from ..viz.timedist import do_session_average_plot, do_comparison_plot, session_analysis_text
 from ..viz.plots import plot_sessions, plot_session_average, plot_trial_velocities
@@ -91,6 +91,8 @@ def create_report(sessionpath, info=None, pages=None):
     logger.debug('session timestamp: %s', session_t)
     age = numutils.age_from_hetu(hetu, session_t) if hetu else None
 
+    model_normaldata = normaldata.read_session_normaldata(sessionpath)
+
     # make header page
     # timestr = time.strftime('%d.%m.%Y')  # current time, not currently used
     title_txt = 'HUS Liikelaboratorio\n'
@@ -132,14 +134,18 @@ def create_report(sessionpath, info=None, pages=None):
     fig_kin_cons = None
     if pages['KinCons']:
         logger.debug('creating kin consistency plot')
-        fig_kin_cons = plot_sessions(sessions=[sessionpath], style_by='context',
+        fig_kin_cons = plot_sessions(sessions=[sessionpath],
+                                     model_normaldata=model_normaldata,
+                                     style_by='context',
                                      backend='matplotlib')
 
     # musclelen consistency
     fig_musclelen_cons = None
     if pages['MuscleLenCons']:
         logger.debug('creating muscle length consistency plot')
-        fig_musclelen_cons = plot_sessions(sessions=[sessionpath], layout_name='musclelen',
+        fig_musclelen_cons = plot_sessions(sessions=[sessionpath],
+                                           layout_name='musclelen',
+                                           model_normaldata=model_normaldata,
                                            style_by='context',
                                            backend='matplotlib')
     # EMG consistency
@@ -152,7 +158,9 @@ def create_report(sessionpath, info=None, pages=None):
     # average plots, R/L
     fig_kin_avg = None
     if pages['KinAverage']:
-        fig_kin_avg = plot_session_average(sessionpath, backend='matplotlib')
+        fig_kin_avg = plot_session_average(sessionpath,
+                                           model_normaldata=model_normaldata,
+                                           backend='matplotlib')
 
     logger.debug('creating multipage pdf %s' % pdfpath)
     with PdfPages(pdfpath) as pdf:
@@ -177,6 +185,10 @@ def create_comparison_report(sessions, pdfpath, pages=None):
 
     sessions_str = u' vs. '.join([op.split(s)[-1] for s in sessions])
 
+    # XXX: read model normaldata according to 1st session in list
+    # age may be different for different sessions
+    model_normaldata = normaldata.read_session_normaldata(sessions[0])
+
     # make header page
     title_txt = 'HUS Liikelaboratorio\n'
     title_txt += u'Kävelyanalyysin vertailuraportti\n'
@@ -191,6 +203,7 @@ def create_comparison_report(sessions, pdfpath, pages=None):
     fig_kin_cmp = None
     if pages['KinCmp']:
         fig_kin_cmp = plot_sessions(sessions, tags=cfg.eclipse.repr_tags,
+                                    model_normaldata=model_normaldata,
                                     style_by='session', color_by='trial',
                                     backend='matplotlib')
 

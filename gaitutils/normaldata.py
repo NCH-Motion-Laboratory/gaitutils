@@ -12,8 +12,8 @@ import openpyxl
 import os.path as op
 import logging
 
-from . import cfg
-from .numutils import isfloat
+from . import cfg, sessionutils
+from .numutils import isfloat, age_from_hetu
 from .models import models_all
 
 logger = logging.getLogger(__name__)
@@ -34,6 +34,13 @@ def read_all_normaldata(age=None):
     return model_normaldata
 
 
+def read_session_normaldata(session):
+    """Reads normal data according to patient info in current session"""
+    info = sessionutils.load_info(session)
+    age = age_from_hetu(info['hetu']) if 'hetu' in info else None
+    return read_all_normaldata(age)
+
+
 def read_normaldata(filename):
     """ Read normal data into dict. Dict keys are variables and values
     are Numpy arrays of shape (n, 2). n is either 1 (scalar variable)
@@ -41,6 +48,7 @@ def read_normaldata(filename):
     The first and second columns are min and max values, respectively.
     (May be e.g. mean-stddev and mean+stddev)
     """
+    logger.debug('reading normal data from %s' % filename)
     if not op.isfile(filename):
         raise ValueError('No such file %s' % filename)
     type_ = op.splitext(filename)[1].lower()
@@ -56,7 +64,7 @@ def normaldata_age(age):
     """ Return age specific normal data file """
     for age_range, filename in cfg.general.normaldata_age.items():
         if age_range[0] <= age <= age_range[1]:
-            logger.debug('found normaldata file %s for age %d' %
+            logger.debug('found normal data file %s for age %d' %
                          (filename, age))
             return filename
 

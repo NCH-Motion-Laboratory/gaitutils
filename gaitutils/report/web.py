@@ -352,7 +352,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                 elif layout == 'static_kinematics':
                     layout_ = cfg.layouts.lb_kinematics
                     fig_ = plot_trials(trials_static, layout_,
-                                       model_normaldata,
+                                       model_normaldata=model_normaldata,
                                        model_cycles='unnormalized',
                                        emg_cycles=[],
                                        legend_type='short_name_with_cyclename',
@@ -367,7 +367,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                 elif layout == 'static_emg':
                     layout_ = cfg.layouts.std_emg
                     fig_ = plot_trials(trials_static, layout_,
-                                       model_normaldata,
+                                       model_normaldata=model_normaldata,
                                        model_cycles=[],
                                        emg_cycles='unnormalized',
                                        legend_type='short_name_with_cyclename',
@@ -388,7 +388,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
 
             # regular gaitutils layout
             else:
-                fig_ = plot_trials(trials_dyn, layout, model_normaldata,
+                fig_ = plot_trials(trials_dyn, layout,
+                                   model_normaldata=model_normaldata,
                                    legend_type=legend_type,
                                    style_by=style_by, color_by=color_by,
                                    supplementary_data=supplementary_default,

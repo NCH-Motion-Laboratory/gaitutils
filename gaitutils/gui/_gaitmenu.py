@@ -26,6 +26,7 @@ from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
                          ChooseSessionsDialog, qt_matplotlib_window)
 from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ..numutils import check_hetu
+from ..normaldata import read_session_normaldata
 from ..videos import _collect_session_videos, convert_videos
 from .. import GaitDataError, nexus, cfg, sessionutils, envutils
 from . import _tardieu
@@ -455,6 +456,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         session = _get_nexus_sessionpath()
         if session is None:
             return
+
         # we need to force backend here, since plotly is not yet supported
         result_func = lambda fig: self._show_plots(fig, backend='matplotlib')
         self._execute(do_session_average_plot, thread=True,
@@ -489,18 +491,22 @@ class Gaitmenu(QtWidgets.QMainWindow):
         session = _get_nexus_sessionpath()
         if session is None:
             return
+        model_normaldata = read_session_normaldata(session)
         lout_desc = self.cbNexusTrialLayout.currentText()
         lout_name = cfg.layouts.menu_layouts[lout_desc]
         backend = self._get_plotting_backend_ui()
         self._execute(plot_session_average, thread=True,
                       finished_func=self._enable_op_buttons,
                       result_func=self._show_plots,
-                      session=session,
-                      layout_name=lout_name, 
-                      backend=backend)
+                      session=session, model_normaldata=model_normaldata,
+                      layout_name=lout_name, backend=backend)
 
     def _plot_nexus_trial(self):
         """Plot the current Nexus trial according to UI choices"""
+        session = _get_nexus_sessionpath()
+        if session is None:
+            return
+        model_normaldata = read_session_normaldata(session)
         lout_desc = self.cbNexusTrialLayout.currentText()
         lout_name = cfg.layouts.menu_layouts[lout_desc]
         cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
@@ -510,7 +516,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._execute(plot_nexus_trial, thread=True,
                       finished_func=self._enable_op_buttons,
                       result_func=self._show_plots,
-                      layout_name=lout_name, model_cycles=model_cycles,
+                      layout_name=lout_name, model_normaldata=model_normaldata,
+                      model_cycles=model_cycles,
                       emg_cycles=emg_cycles, from_c3d=from_c3d,
                       backend=backend)
 
@@ -525,10 +532,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
         session = _get_nexus_sessionpath()
         if session is None:
             return
+        model_normaldata = read_session_normaldata(session)
         lout_desc = self.cbNexusTrialLayout.currentText()
         lout_name = cfg.layouts.menu_layouts[lout_desc]
         backend = self._get_plotting_backend_ui()
-
         cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
         model_cycles = emg_cycles = cycs
         self._execute(plot_sessions, thread=True,
@@ -537,7 +544,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
                       sessions=[session],
                       style_by='context',
                       color_by='trial',
-                      layout_name=lout_name, model_cycles=model_cycles,
+                      layout_name=lout_name, model_normaldata=model_normaldata,
+                      model_cycles=model_cycles,
                       emg_cycles=emg_cycles, backend=backend)
 
     def _show_plots(self, fig, backend=None):

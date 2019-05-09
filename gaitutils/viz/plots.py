@@ -18,7 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 def plot_nexus_trial(layout_name=None, backend=None, model_cycles=None,
-                     emg_cycles=None, maintitle=None, from_c3d=True):
+                     emg_cycles=None, maintitle=None, from_c3d=True,
+                     model_normaldata=None):
     """Plot the currently loaded trial from Vicon Nexus"""
 
     backend_lib = get_backend(backend)
@@ -30,12 +31,15 @@ def plot_nexus_trial(layout_name=None, backend=None, model_cycles=None,
     # force unnormalized plot for static trial
     model_cycles = 'unnormalized' if tr.is_static else model_cycles
 
-    return backend_lib.plot_trials([tr], layout, model_cycles=model_cycles,
+    return backend_lib.plot_trials([tr], layout,
+                                   model_normaldata=model_normaldata,
+                                   model_cycles=model_cycles,
                                    emg_cycles=emg_cycles,
                                    legend_type='short_name_with_cyclename')
 
 
-def plot_sessions(sessions, layout_name=None, tags=None, make_pdf=False,
+def plot_sessions(sessions, layout_name=None, model_normaldata=None,
+                  tags=None, make_pdf=False,
                   style_by=None, color_by=None, legend_type=None,
                   model_cycles=None, emg_cycles=None,
                   backend=None, figtitle=None):
@@ -65,14 +69,17 @@ def plot_sessions(sessions, layout_name=None, tags=None, make_pdf=False,
     #emgs = [tr.emg for tr in trials]
     #layout = layouts.rm_dead_channels_multitrial(emgs, layout)
 
-    return backend_lib.plot_trials(trials, layout, legend_type=legend_type,
+    return backend_lib.plot_trials(trials, layout,
+                                   model_normaldata=model_normaldata,
+                                   legend_type=legend_type,
                                    style_by=style_by, color_by=color_by,
                                    model_cycles=model_cycles,
                                    emg_cycles=emg_cycles,
                                    figtitle=figtitle)
 
 
-def plot_session_average(session, layout_name=None, backend=None):
+def plot_session_average(session, layout_name=None, model_normaldata=None,
+                         backend=None):
     """Plot average of all session trials"""
 
     layout = layouts.get_layout(layout_name)
@@ -85,7 +92,8 @@ def plot_session_average(session, layout_name=None, backend=None):
     atrial = stats.AvgTrial(c3ds)
     maintitle_ = '%s (%d trial average)' % (op.split(session)[-1], atrial.nfiles)
 
-    return backend_lib.plot_trials(atrial, layout, 
+    return backend_lib.plot_trials(atrial, layout,
+                                   model_normaldata=model_normaldata,
                                    model_stddev=atrial.stddev_data,
                                    color_by='context',
                                    figtitle=maintitle_)

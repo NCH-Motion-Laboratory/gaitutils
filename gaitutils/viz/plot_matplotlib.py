@@ -292,6 +292,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                     if j not in axes[i]:
                         sharex = axes[0][0] if i > 0 or j > 0 else None
                         ax = fig.add_subplot(gridspec_[i, j], sharex=sharex)
+                        # set x axis to tightly match data boundaries
                         ax.autoscale(enable=True, axis='x', tight=True)
                         axes[i][j] = ax
                     else:

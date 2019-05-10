@@ -98,10 +98,8 @@ def session_analysis_text(sessionpath):
 
 def do_session_average_plot(session, tags=None):
     """Find tagged trials from current session dir and plot average"""
-
     if tags is None:
         tags = cfg.eclipse.tags
-
     trials = sessionutils.get_c3ds(session, tags=tags,
                                    trial_type='dynamic')
     if not trials:
@@ -110,38 +108,31 @@ def do_session_average_plot(session, tags=None):
     fig = _plot_trials([trials])
     session = op.split(session)[-1]
     fig.suptitle('Time-distance average, session %s' % session)
-
     return fig
 
 
 def do_single_trial_plot(c3dfile):
     """Plot a single trial time-distance."""
-
     fig = _plot_trials([[c3dfile]])
     c3dpath, c3dfile_ = op.split(c3dfile)
     fig.suptitle('Time-distance variables, %s' % c3dfile_)
-
     return fig
 
 
-def do_multitrial_plot(c3dfiles, show=True, make_pdf=True):
+def do_multitrial_plot(c3dfiles, show=True):
     """Plot multiple trial comparison time-distance.
     PDF goes into Nexus session dir"""
-
     cond_labels = [op.split(c3d)[-1] for c3d in c3dfiles]
-    fig = _plot_trials([[c3d] for c3d in c3dfiles], cond_labels)
-
-    return fig
+    return _plot_trials([[c3d] for c3d in c3dfiles], cond_labels)
 
 
-def do_comparison_plot(sessions, tags=None, show=True):
+def do_comparison_plot(sessions, tags=None):
     """Time-dist comparison of multiple sessions. Tagged trials from each
     session will be picked."""
-
     if tags is None:
         tags = cfg.eclipse.tags
-
     trials = list()
+
     for session in sessions:
         c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
         if not c3ds:
@@ -149,9 +140,7 @@ def do_comparison_plot(sessions, tags=None, show=True):
         trials.append(c3ds)
 
     cond_labels = [op.split(session)[-1] for session in sessions]
-    fig = _plot_trials(trials, cond_labels)
-
-    return fig
+    return  _plot_trials(trials, cond_labels)
 
 
 def _multitrial_analysis(trials, cond_labels=None):
@@ -195,10 +184,8 @@ def _plot_trials(trials, cond_labels=None, plotvars=None, interactive=True):
     """
     if plotvars is None:
         plotvars = _timedist_vars
-
     res_avg_all, res_std_all = _multitrial_analysis(trials,
                                                     cond_labels=cond_labels)
-
     return time_dist_barchart(res_avg_all, stddev=res_std_all,
                               stddev_bars=False, plotvars=plotvars)
 

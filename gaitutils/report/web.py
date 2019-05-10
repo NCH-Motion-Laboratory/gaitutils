@@ -53,9 +53,8 @@ def _make_dropdown_lists(options):
 def _time_dist_plot(c3ds, sessions):
     """Return time-dist plot in SVG format"""
     cond_labels = [op.split(session)[-1] for session in sessions]
-    fig = timedist._plot_trials(c3ds, cond_labels)
-    # savefig requires a canvas
-    _canvas = FigureCanvas(fig)    
+    fig = timedist.do_comparison_plot(sessions)
+    _canvas = FigureCanvas(fig)  # savefig requires a canvas
     buf = io.BytesIO()
     fig.savefig(buf, format='svg', bbox_inches='tight')
     buf.seek(0)
@@ -329,11 +328,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             # special layout
             if isinstance(layout, basestring):
                 if layout == 'time_dist':
-                    # need c3ds in lists, one list for each session
-                    c3ds_dyn = [[c3d for tag in dyn_tags for c3d in
-                                 c3ds[session]['dynamic'][tag]]
-                                for session in sessions]
-                    buf = _time_dist_plot(c3ds_dyn, sessions)
+                    buf = _time_dist_plot(sessions)
                     encoded_image = base64.b64encode(buf.read())
                     graph_upper = html.Img(src='data:image/svg+xml;base64,{}'.
                                            format(encoded_image),

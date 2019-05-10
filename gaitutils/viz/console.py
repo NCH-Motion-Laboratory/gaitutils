@@ -23,6 +23,7 @@ def _console_init():
     register_gui_exception_handler()
 
 
+# FIXME: need to load normal data for all plotters
 def plot_nexus_trial():
     """Plot currently loaded Nexus trial"""
     _console_init()

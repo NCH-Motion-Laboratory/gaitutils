@@ -204,7 +204,7 @@ def create_comparison_report(sessions, pdfpath, pages=None):
     if pages['KinCmp']:
         fig_kin_cmp = plot_sessions(sessions, tags=cfg.eclipse.repr_tags,
                                     model_normaldata=model_normaldata,
-                                    style_by='session', color_by='trial',
+                                    style_by='session', color_by='context',
                                     backend='matplotlib')
 
     header = u'Comparison %s' % sessions_str

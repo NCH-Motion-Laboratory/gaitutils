@@ -44,45 +44,53 @@ def not_whitespace(s):
     return bool(p.match(s))
 
 
-from enum import Enum
-class datatypes(Enum):
-    comments = 0
-    def_lines = 1
-    varlist = 2
+
+
+class Var:
+    """Holds data for a config variable"""
+    def __init__(self, comments=None, def_lines=None):
+        self.comments = comments or list()
+        self.def_lines = def_lines or list()
+
+
+class Section:
+    """Holds data for a config section"""
+    def __init__(self, comments=None, sectvars=None):
+        self.comments = comments or list()
+        self.sectvars = sectvars or dict()
+        
+        
 
 
 def cfg_di(lines):
-
+    """Parse cfg lines into a dict"""
     _comments = list()  # comments for current variable
-    di = dict()
+    this_section = None
+    cfg_di = dict()
     for li in lines:
         if is_section_header(li):
             this_section = li
-            di[this_section] = dict()
-            di[this_section][datatypes.varlist] = list()
-            di[this_section][datatypes.comments] = _comments
+            cfg_di[this_section] = Section(comments=_comments)
             _comments = list()
         elif is_comment(li):
             # collect comments until we encounter next section header or variable
             _comments.append(li)
         elif is_var_def(li):
+            if this_section is None:
+                raise ValueError('definition outside a section')
             var = li.split('=')[0]
-            di[this_section][datatypes.varlist].append(var)
-            di[this_section][var] = dict()
-            di[this_section][var][datatypes.comments] = _comments
-            di[this_section][var][datatypes.def_lines] = list()
-            di[this_section][var][datatypes.def_lines].append(li)
+            cfg_di[this_section].sectvars[var] = Var(comments=_comments,
+                                                     def_lines=[li])
             _comments = list()
             # get indentation for list-type defs so it can be preserved
             if is_list_def(li):
                 idnt = max(li.find('['), li.find('{'))
         elif not_whitespace(li):  # continuation line
-            if var in di[this_section][datatypes.varlist]:
+            if var in cfg_di[this_section].sectvars:
                 if idnt is not None and idnt > 0:  # indent also def continuation lines
                     li = (idnt + 1) * ' ' + li.strip()
-                di[this_section][var][datatypes.def_lines].append(li)
-
-    return di
+                cfg_di[this_section].sectvars[var].def_lines.append(li)
+    return cfg_di
 
 
 def clean_cfg(lines):
@@ -115,8 +123,8 @@ with open(r"C:\Users\hus20664877\gaitutils\gaitutils\data\default.cfg", 'r') as 
 
 di = cfg_di(lines)
 
-for li in clean_cfg(lines):
-    print(li)
+#for li in clean_cfg(lines):
+#    print(li)
 
 # lic = list(clean_cfg(lines))
 

@@ -51,9 +51,8 @@ class datatypes(Enum):
     varlist = 2
 
 
-def clean_cfg(lines):
-    
-    # parse file
+def cfg_di(lines):
+
     _comments = list()  # comments for current variable
     di = dict()
     for li in lines:
@@ -82,10 +81,20 @@ def clean_cfg(lines):
                 if idnt is not None and idnt > 0:  # indent also def continuation lines
                     li = (idnt + 1) * ' ' + li.strip()
                 di[this_section][var][datatypes.def_lines].append(li)
+
+    return di
+
+
+def clean_cfg(lines):
+
+    di = cfg_di(lines)
             
     # compose output
-    for sect in sorted(di.keys()):
-        yield ''
+    for i, sect in enumerate(sorted(di.keys())):
+        if i > 0:
+            yield ''
+        if di[sect][datatypes.comments]:
+            yield '\n'.join(di[sect][datatypes.comments])
         yield sect
         # whether section has var definitions spanning multiple lines
         has_multiline_defs = any(len(di[sect][var][datatypes.def_lines]) > 1
@@ -100,12 +109,14 @@ def clean_cfg(lines):
             if has_multiline_defs:
                 yield ''
             
-        
+
 with open(r"C:\Users\hus20664877\gaitutils\gaitutils\data\default.cfg", 'r') as f:
     lines = f.read().splitlines()
+
+di = cfg_di(lines)
 
 for li in clean_cfg(lines):
     print(li)
 
-lic = list(clean_cfg(lines))
+# lic = list(clean_cfg(lines))
 

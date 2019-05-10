@@ -20,77 +20,148 @@ def is_comment(s):
     return bool(p.match(s))        
 
 
-def is_var_def(s):
-    """Match var definition"""
-    p = re.compile('[\s]*[\S]+[\s]*=[\s]*[\S]+[\s]*')
-    return bool(p.match(s))
+def is_proper_varname(s):
+    """Checks for valid identifier"""
+    p = re.compile('^[\w]+$')  # accept only alphanumeric chars, no whitespace
+    return bool(p.match(s))        
+    
+
+def parse_var_def(s):
+    """Match var definition. Return varname, val if successful"""
+    p = re.compile('^([^=]+)=([^=]+)$')
+    m = p.match(s)
+    if m:
+        varname, val = m.group(1).strip(), m.group(2).strip()
+        if is_proper_varname(varname):
+            return varname, val
+    return None, None
 
 
 def is_list_def(s):
-    """Match list or dict definition"""
-    p = re.compile('[\s]*[\S]+[\s]*=[\s]*[\[,\{][\S]+[\s]*')
-    return bool(p.match(s))
+    """Match (start of) list or dict definition"""
+    varname, val = parse_var_def(s)
+    if val is None:
+        return False
+    else:
+        # do not include closing ] or }, as it may be a multiline def
+        p = re.compile('[\s]*[\[,\{][\S]+[\s]*')
+        return bool(p.match(val))
 
 
-def is_section_header(s):
-    """Match section headers of form [string]"""
-    p = re.compile('^\[[\w]*\]$')
-    return bool(p.match(s))
+def parse_section_header(s):
+    """Match section headers of form [header] and return header as str"""
+    p = re.compile('^\[([\w]*)\]$')
+    m = p.match(s)
+    return m.group(1) if m else None
+    
 
 
 def not_whitespace(s):
     """Non-whitespace line, should be a continuation of definition"""
-    p = re.compile('[\s]*[\S]+')  # match whitespace-only lines
+    p = re.compile('[\s]*[\S]+')  # match non whitespace-only lines
     return bool(p.match(s))
 
 
 
+class ConfigItem:
+    """Holds data for a config item"""
+    # FIXME: this should not hold def lines, but a complete def
 
-class Var:
-    """Holds data for a config variable"""
     def __init__(self, comments=None, def_lines=None):
         self.comments = comments or list()
         self.def_lines = def_lines or list()
 
+    @property
+    def comment(self):
+        return '\n'.join(self.comments)
+    
+    @property
+    def value(self):
+        _, val = parse_var_def(''.join(self.def_lines))
+        return val
 
-class Section:
+    def __repr__(self):
+        return self.value or '<malformed config item>'
+
+
+class Section(object):
     """Holds data for a config section"""
-    def __init__(self, comments=None, sectvars=None):
-        self.comments = comments or list()
-        self.sectvars = sectvars or dict()
-        
-        
+    def __init__(self, comments=None, items=None):
+        self.__dict__['_configitems'] = items or dict()
+        self.__dict__['_comments'] = comments or dict()
 
+    def __getattr__(self, item):
+        """Returns the value for a config item"""
+        return self._configitems[item]
 
-def cfg_di(lines):
-    """Parse cfg lines into a dict"""
+    def __setattr__(self, item, value):
+        if not isinstance(value, ConfigItem):
+            raise ValueError('value must be a ConfigItem instance')
+        self.__dict__['_configitems'][item] = value
+        
+    @property
+    def configitems(self):
+        return self._configitems
+
+    def __repr__(self):
+        s = '<Section|'
+        s += ' items: %s' % str(self._configitems.keys())
+        s += '>'
+        return s
+    
+
+class Config:
+    """Main config object that holds sections and config items. Sections can be
+    accessed and set by the syntax config.section"""
+    def __init__(self, sections=None):
+        self.__dict__['_sections'] = sections or dict()
+        
+    def __getattr__(self, section):
+        return self._sections[section]
+    
+    def __setattr__(self, item, value):
+        if not isinstance(value, Section):
+            raise ValueError('value must be a Section instance')
+        self.__dict__['_sections'][item] = value
+        
+    def __repr__(self):
+        s = '<Config|'
+        s += ' sections: %s' % str(self._sections.keys())
+        s += '>'
+        return s
+    
+    def sections(self):
+        return self._sections
+        
+       
+def parse_config(lines):
+    """Parse cfg lines (ConfigParser format) into a Config instance"""
     _comments = list()  # comments for current variable
-    this_section = None
-    cfg_di = dict()
+    current_section = None
+    current_var = None
+    config = Config()
     for li in lines:
-        if is_section_header(li):
-            this_section = li
-            cfg_di[this_section] = Section(comments=_comments)
+        secname = parse_section_header(li)
+        varname, val = parse_var_def(li)
+        if secname:
+            current_section = Section(comments=_comments)
+            setattr(config, secname, current_section)
             _comments = list()
+            current_var = None
         elif is_comment(li):
             # collect comments until we encounter next section header or variable
             _comments.append(li)
-        elif is_var_def(li):
-            if this_section is None:
-                raise ValueError('definition outside a section')
-            var = li.split('=')[0]
-            cfg_di[this_section].sectvars[var] = Var(comments=_comments,
-                                                     def_lines=[li])
+        elif varname is not None:
+            if current_section is None:
+                raise ValueError('variable definition outside a section')
+            current_var = ConfigItem(comments=_comments, def_lines=[li])
+            setattr(current_section, varname, current_var)
             _comments = list()
-            # get indentation for list-type defs so it can be preserved
-            if is_list_def(li):
-                idnt = max(li.find('['), li.find('{'))
-        elif not_whitespace(li):  # continuation line
-            if var in cfg_di[this_section].sectvars:
-                if idnt is not None and idnt > 0:  # indent also def continuation lines
-                    li = (idnt + 1) * ' ' + li.strip()
-                cfg_di[this_section].sectvars[var].def_lines.append(li)
-    return cfg_di
+        elif not_whitespace(li):  # (hopefully) continuation of var definition
+            if current_var is None:
+                raise ValueError('continuation outside of variable definition')
+            current_var.def_lines.append(li.strip())
+    return config
 
 
 def clean_cfg(lines):
@@ -118,10 +189,10 @@ def clean_cfg(lines):
                 yield ''
             
 
-with open(r"C:\Users\hus20664877\gaitutils\gaitutils\data\default.cfg", 'r') as f:
-    lines = f.read().splitlines()
+#with open(r"C:\Users\hus20664877\gaitutils\gaitutils\data\default.cfg", 'r') as f:
+#    lines = f.read().splitlines()
 
-di = cfg_di(lines)
+#cfg = cfg_di(lines)
 
 #for li in clean_cfg(lines):
 #    print(li)

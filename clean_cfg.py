@@ -48,22 +48,23 @@ def not_whitespace(s):
 def clean_cfg(lines):
     
     # parse file
-    var_comments = list()
+    _comments = list()  # comments for current variable
     di = dict()
     for li in lines:
         if is_section_header(li):
             this_section = li
             di[this_section] = dict()
         elif is_comment(li):
-            var_comments.append(li)
+            # collect comments until we encounter next section header or variable
+            _comments.append(li)
         elif is_var_def(li):
             var = li.split('=')[0]
             di[this_section][var] = dict()
-            di[this_section][var]['comments'] = var_comments
+            di[this_section][var]['comments'] = _comments
             di[this_section][var]['def_lines'] = list()
             di[this_section][var]['def_lines'].append(li)
-            var_comments = list()
-            # figure out indentation for list-type defs
+            _comments = list()
+            # get indentation for list-type defs so it can be preserved
             if is_list_def(li):
                 idnt = max(li.find('['), li.find('{'))
         elif not_whitespace(li):  # continuation line

@@ -50,7 +50,7 @@ def _make_dropdown_lists(options):
     return identity, mapper
 
 
-def _time_dist_plot(c3ds, sessions):
+def _time_dist_plot_svg(c3ds, sessions):
     """Return time-dist plot in SVG format"""
     cond_labels = [op.split(session)[-1] for session in sessions]
     fig = timedist.do_comparison_plot(sessions)
@@ -328,7 +328,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             # special layout
             if isinstance(layout, basestring):
                 if layout == 'time_dist':
-                    buf = _time_dist_plot(sessions)
+                    # get plot in svg format and encode to base64 for html.Img
+                    buf = _time_dist_plot_svg(sessions)
                     encoded_image = base64.b64encode(buf.read())
                     graph_upper = html.Img(src='data:image/svg+xml;base64,{}'.
                                            format(encoded_image),

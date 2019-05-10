@@ -269,7 +269,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 col = trace_colors.get_prop(trial)
                             elif color_by['model'] == 'cycle':
                                 col = trace_colors.get_prop(cyc)
-                            line = dict(width=cfg.plot_plotly.model_linewidth,
+                            line = dict(width=cfg.plot.model_linewidth,
                                         dash=sty, color=col)
 
                             # check whether trace was already created
@@ -389,7 +389,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 col = emg_trace_colors.get_prop(cyc)
 
                             col = merge_color_and_opacity(col, cfg.plot.emg_alpha)
-                            line = {'width': cfg.plot_plotly.emg_linewidth,
+                            line = {'width': cfg.plot.emg_linewidth,
                                     'color': col}
 
                             # the tracename_emg legend group does not actually exist

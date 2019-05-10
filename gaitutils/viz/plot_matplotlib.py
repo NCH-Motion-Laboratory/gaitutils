@@ -63,7 +63,7 @@ def _plot_height_ratios(layout):
         if all([models.model_from_var(var) for var in row]):
             plotheightratios.append(1)
         else:
-            plotheightratios.append(cfg.plot.analog_plotheight)
+            plotheightratios.append(cfg.plot_matplotlib.analog_plotheight)
     return plotheightratios
 
 
@@ -367,7 +367,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 col = trace_colors.get_prop(cyc)
 
                             line_ = ax.plot(t, y, color=col, linestyle=sty,
-                                            linewidth=cfg.plot_matplotlib.model_linewidth,
+                                            linewidth=cfg.plot.model_linewidth,
                                             alpha=cfg.plot.model_alpha)[0]
                             leg_entries[tracegroup] = line_
 
@@ -458,8 +458,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 col = emg_trace_colors.get_prop(cyc)
 
                             line_ = ax.plot(t, y*cfg.plot.emg_multiplier, color=col,
-                                            linewidth=cfg.plot_matplotlib.
-                                            emg_linewidth)[0]
+                                            linewidth=cfg.plot.emg_linewidth)[0]
                             leg_entries['EMG: '+tracegroup] = line_
 
                         # do normal data & plot adjustments for last EMG cycle

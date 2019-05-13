@@ -8,9 +8,14 @@ Clean up configparser cfg file:
 
 """
 
+
 from __future__ import print_function
+
+import logging
 import re
 
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -53,7 +58,7 @@ def parse_section_header(s):
     p = re.compile('^\[([\w]*)\]$')
     m = p.match(s)
     return m.group(1) if m else None
-    
+
 
 
 def not_whitespace(s):
@@ -65,47 +70,53 @@ def not_whitespace(s):
 
 class ConfigItem:
     """Holds data for a config item"""
-    # FIXME: this should not hold def lines, but a complete def
-
     def __init__(self, comments=None, def_lines=None):
-        self.comments = comments or list()
-        self.def_lines = def_lines or list()
+        self._comments = comments or list()
+        self._def_lines = def_lines or list()
 
-    @property
-    def comment(self):
-        return '\n'.join(self.comments)
+    def get_comment(self):
+        return '\n'.join(self._comments)
     
-    @property
-    def value(self):
-        _, val = parse_var_def(''.join(self.def_lines))
+    def get_value(self):
+        _, val = parse_var_def(''.join(self._def_lines))
         return val
 
     def __repr__(self):
-        return self.value or '<malformed config item>'
+        return self.get_value() or '<malformed config item>'
 
 
 class Section(object):
     """Holds data for a config section"""
     def __init__(self, comments=None, items=None):
-        self.__dict__['_configitems'] = items or dict()
+        # need to modify __dict__ directly to avoid infinite __setattr__ loop
+        self.__dict__['_items'] = items or dict()
         self.__dict__['_comments'] = comments or dict()
 
     def __getattr__(self, item):
         """Returns the value for a config item"""
-        return self._configitems[item]
+        return self._items[item]
 
     def __setattr__(self, item, value):
         if not isinstance(value, ConfigItem):
             raise ValueError('value must be a ConfigItem instance')
-        self.__dict__['_configitems'][item] = value
+        self.__dict__['_items'][item] = value
         
-    @property
-    def configitems(self):
-        return self._configitems
+    def get_comment(self):
+        return '\n'.join(self._comments)
+    
+    def get_description(self):
+        """Parse section comment into a descriptive section name"""
+        p = re.compile('^[\s]*#[\s]*(.+)')
+        m = p.match(self.get_comment())             
+        if m:
+            return m.group(1).strip()
+
+    def get_items(self):
+        return self._items
 
     def __repr__(self):
         s = '<Section|'
-        s += ' items: %s' % str(self._configitems.keys())
+        s += ' items: %s' % str(self._items.keys())
         s += '>'
         return s
     
@@ -130,7 +141,7 @@ class Config:
         s += '>'
         return s
     
-    def sections(self):
+    def get_sections(self):
         return self._sections
         
        
@@ -148,20 +159,37 @@ def parse_config(lines):
             setattr(config, secname, current_section)
             _comments = list()
             current_var = None
-        elif is_comment(li):
-            # collect comments until we encounter next section header or variable
-            _comments.append(li)
         elif varname is not None:
             if current_section is None:
                 raise ValueError('variable definition outside a section')
             current_var = ConfigItem(comments=_comments, def_lines=[li])
             setattr(current_section, varname, current_var)
             _comments = list()
+        elif is_comment(li):
+            # collect comments until we encounter next section header or variable
+            _comments.append(li)
         elif not_whitespace(li):  # (hopefully) continuation of var definition
             if current_var is None:
                 raise ValueError('continuation outside of variable definition')
-            current_var.def_lines.append(li.strip())
+            current_var._def_lines.append(li.strip())
     return config
+
+
+def update_config(cfg, lines):
+    """Update existing Config from lines"""
+    cfg_new = parse_config(lines)
+    for secname, sec in cfg_new.get_sections().items():
+        sec_old = getattr(cfg, secname)
+        for itname, it in sec.get_items().items():
+            setattr(sec_old, itname, it)
+                   
+        
+    
+        
+        
+    
+    
+    
 
 
 def clean_cfg(lines):
@@ -187,6 +215,15 @@ def clean_cfg(lines):
             # output extra whitespace for sections that have multiline defs
             if has_multiline_defs:
                 yield ''
+
+
+with open(r"C:\Users\hus20664877\gaitutils\gaitutils\data\default.cfg", 'r') as f:
+    lines = f.read().splitlines()
+cfg = parse_config(lines)
+
+with open(r"C:\Users\hus20664877\.gaitutils.cfg", 'r') as f:
+    lines = f.read().splitlines()
+update_config(cfg, lines)
             
 
 #with open(r"C:\Users\hus20664877\gaitutils\gaitutils\data\default.cfg", 'r') as f:

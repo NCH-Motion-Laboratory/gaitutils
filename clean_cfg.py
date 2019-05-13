@@ -80,6 +80,20 @@ class ConfigItem:
     def get_value(self):
         _, val = parse_var_def(''.join(self._def_lines))
         return val
+    
+    def _format_def(self):
+        """Output printable version of item definition"""
+        def _gen_format(def_lines):
+            for n, li in enumerate(def_lines):
+                if n == 0:
+                    # nicely indents (at least) multiline list/dict defs
+                    indent = li.find('=') + 3
+                    yield li
+                else:
+                    # yield indented version of continued definition line
+                    tab = ' ' * indent
+                    yield '%s%s' % (tab, li)
+        return '\n'.join(_gen_format(self._def_lines))
 
     def __repr__(self):
         return self.get_value() or '<malformed config item>'
@@ -180,41 +194,36 @@ def update_config(cfg, lines):
     cfg_new = parse_config(lines)
     for secname, sec in cfg_new.get_sections().items():
         sec_old = getattr(cfg, secname)
-        for itname, it in sec.get_items().items():
-            setattr(sec_old, itname, it)
-                   
-        
-    
-        
-        
-    
-    
-    
+        items_old = sec_old.get_items()
+        for itname, item in sec.get_items().items():
+            if itname not in items_old:
+                logger.warning('unknown item %s' % itname)
+            else:
+                # only modify definition, not comments
+                items_old[itname]._def_lines = item._def_lines
+                  
 
-
-def clean_cfg(lines):
-
-    di = cfg_di(lines)
-            
-    # compose output
-    for i, sect in enumerate(sorted(di.keys())):
-        if i > 0:
-            yield ''
-        if di[sect][datatypes.comments]:
-            yield '\n'.join(di[sect][datatypes.comments])
-        yield sect
-        # whether section has var definitions spanning multiple lines
-        has_multiline_defs = any(len(di[sect][var][datatypes.def_lines]) > 1
-                                 for var in di[sect][datatypes.varlist])
-        for var in sorted(di[sect][datatypes.varlist]):
-            # print comments and definition for this var
-            if di[sect][var][datatypes.comments]:
-                yield '\n'.join(di[sect][var][datatypes.comments])
-            def_this = di[sect][var][datatypes.def_lines]
-            yield '\n'.join(def_this)
-            # output extra whitespace for sections that have multiline defs
-            if has_multiline_defs:
+def dump_config(cfg):
+    """Produce text version of Config instance that can be read back"""
+    def _gen_dump(cfg):
+        sectnames = sorted(cfg.get_sections().keys())
+        for k, sectname in enumerate(sectnames):
+            if k > 0:
                 yield ''
+            sect = getattr(cfg, sectname)
+            sect_comment = sect.get_comment()
+            if sect_comment:
+                yield sect_comment
+            yield '[%s]' % sectname
+            for itemname, item in sect.get_items().items():
+                yield item.get_comment()
+                yield item._format_def()
+    return '\n'.join(_gen_dump(cfg))
+
+            
+            
+        
+            
 
 
 with open(r"C:\Users\hus20664877\gaitutils\gaitutils\data\default.cfg", 'r') as f:
@@ -224,7 +233,8 @@ cfg = parse_config(lines)
 with open(r"C:\Users\hus20664877\.gaitutils.cfg", 'r') as f:
     lines = f.read().splitlines()
 update_config(cfg, lines)
-            
+
+print(dump_config(cfg))
 
 #with open(r"C:\Users\hus20664877\gaitutils\gaitutils\data\default.cfg", 'r') as f:
 #    lines = f.read().splitlines()

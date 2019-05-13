@@ -5,7 +5,7 @@ Created on Fri Mar  1 11:11:33 2019
 @author: hus20664877
 """
 
-from PyQt5 import QtCore, uic, QtWidgets
+from PyQt5 import QtCore, uic, QtWidgets, QtGui
 from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
                                                 FigureCanvas)
 from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
@@ -13,8 +13,10 @@ from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
 from pkg_resources import resource_filename
 import os.path as op
 import ast
+import io
+from collections import defaultdict
 
-from .. import nexus, GaitDataError, cfg
+from .. import nexus, GaitDataError, cfg, parse_config
 
 
 def qt_matplotlib_window(fig):
@@ -82,157 +84,127 @@ def qt_dir_chooser():
 class OptionsDialog(QtWidgets.QDialog):
     """ Display a tabbed dialog for changing gaitutils options """
 
-    def __init__(self, parent, default_tab=0):
-        super(self.__class__, self).__init__(parent)
-        # load user interface made with designer
-        uifile = resource_filename('gaitutils', 'gui/options_dialog.ui')
-        uic.loadUi(uifile, self)
-        #self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+    def _create_tab(self, section, secname):
+        """Create a tab for the tab widget, according to config items"""
+        tab = QtWidgets.QWidget()
+        lout = QtWidgets.QFormLayout()
+        tab.setLayout(lout)
+        items = sorted(section.get_items(), key=lambda it: it.get_description())
+        for item in items:
+            desc = item.get_description()
+            input_widget = QtWidgets.QLineEdit()
+            input_widget.setText(item._get_literal_value())
+            input_widget.setCursorPosition(0)  # show beginning of line
+            lout.addRow(desc, input_widget)
+            self._input_widgets[secname][item_name] = input_widget
+        return tab
 
-        # add some buttons to the standard button box
+    def __init__(self, parent, default_tab=0):
+        global cfg
+        super(self.__class__, self).__init__(parent)
+        _main_layout = QtWidgets.QVBoxLayout(self)
+        self._input_widgets = defaultdict(lambda: dict())
+
+        # build button box
+        std_buttons = (QtWidgets.QDialogButtonBox.Ok |
+                       QtWidgets.QDialogButtonBox.Cancel)
+        self.buttonBox = QtWidgets.QDialogButtonBox(std_buttons)
         loadButton = QtWidgets.QPushButton('Load...')
+        saveButton = QtWidgets.QPushButton('Save...')
         self.buttonBox.addButton(loadButton,
                                  QtWidgets.QDialogButtonBox.ActionRole)
-        loadButton.clicked.connect(self.load_config_dialog)
-        saveButton = QtWidgets.QPushButton('Save...')
         self.buttonBox.addButton(saveButton,
                                  QtWidgets.QDialogButtonBox.ActionRole)
+        loadButton.clicked.connect(self.load_config_dialog)
         saveButton.clicked.connect(self.save_config_dialog)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
 
-        # show page
-        self.tabWidget.setCurrentIndex(default_tab)
+        # build tabs according to cfg
+        self.tabWidget = QtWidgets.QTabWidget()
+        for secname, sec in cfg.get_sections().items():
+            desc = sec.get_description() or secname
+            tab = self._create_tab(sec, secname)
+            self.tabWidget.addTab(tab, desc)
 
-        """ Collect config widgets into a dict of dict. First key is tab
-        (same as config category, e.g. autoproc), second key is widget name """
-        self.cfg_widgets = dict()
-        for page in [self.tabWidget.widget(n) for n in
-                     range(self.tabWidget.count())]:
-            pname = page.objectName()
-            self.cfg_widgets[pname] = dict()
-            for w in page.findChildren(QtWidgets.QWidget):
-                wname = w.objectName()
-                if wname[:4] == 'cfg_':  # config widgets are specially named
-                    self.cfg_widgets[pname][wname] = w
-        self._update_widgets()
-        self.homedir = op.expanduser('~')
+        _main_layout.addWidget(self.tabWidget)
+        _main_layout.addWidget(self.buttonBox)
+        self.setLayout(_main_layout)
 
     def load_config_dialog(self):
         """ Bring up load dialog and load selected file. """
         global cfg
         fout = QtWidgets.QFileDialog.getOpenFileName(self,
                                                      'Load config file',
-                                                     self.homedir,
+                                                     op.expanduser('~'),
                                                      'Config files (*.cfg)')
-        # TODO : filedialog set filter -> PyQt5.QtCore.QDir.Hidden?
         fname = fout[0]
         if fname:
-            # TODO: check for errors on config read
-            # cfg.load_default()  TODO: load defaults before loading cfg file?
-            cfg.read(fname)
-            self._update_widgets()
+            try:
+                parse_config.update_config(cfg, fname)
+            except ValueError:
+                qt_message_dialog('Could not parse %s' % fname)
+            else:
+                self._update_inputs()
 
     def save_config_dialog(self):
-        """ Bring up save dialog and save data. """
+        """Bring up save dialog and save data."""
         global cfg
-        res, txt = self._check_widget_inputs()
-        if not res:
-            qt_message_dialog('Invalid input: %s\nPlease fix before saving'
-                              % txt)
+        wname, txt = self._input_errors()
+        if wname is not None:
+            qt_message_dialog('Invalid input for item %s: %s\n'
+                              'Please fix before saving' % (wname, txt))
         else:
             fout = QtWidgets.QFileDialog.getSaveFileName(self,
                                                          'Save config file',
-                                                         self.homedir,
+                                                         op.expanduser('~'),
                                                          'Config files '
                                                          '(*.cfg)')
             fname = fout[0]
             if fname:
-                self.update_cfg()
-                cfg.write_file(fname)
+                self._update_cfg()
+                with io.open(fname, 'w', encoding='utf8') as f:
+                    txt = parse_config.dump_config(cfg)
+                    f.writelines(txt)
 
-    def _update_widgets(self):
-        """ Update config widgets according to current cfg """
-        for section in self.cfg_widgets:
-            for wname, widget in self.cfg_widgets[section].items():
-                item = wname[4:]
-                cfgval = getattr(getattr(cfg, section), item)
-                if str(cfgval) != str(self._getval(widget)):
-                    self._setval(widget, cfgval)  # set using native type
-                if isinstance(widget, QtWidgets.QLineEdit):
-                    widget.setCursorPosition(0)  # show beginning of line
+    def _update_inputs(self):
+        """Update input widgets according to current cfg"""
+        for secname, sec in cfg.get_sections().items():
+            for itemname, item in sec.get_items().items():
+                _widget = self._input_widgets[secname][itemname]
+                val = item._get_literal_value()
+                _widget.setText(val)
+                _widget.setCursorPosition(0)
 
-    def _check_widget_inputs(self):
-        """ Check widget inputs. Currently only QLineEdits are checked for
-        eval - ability """
-        for section in self.cfg_widgets:
-            for widget in self.cfg_widgets[section].values():
-                if isinstance(widget, QtWidgets.QLineEdit):
-                    txt = widget.text()
-                    try:
-                        ast.literal_eval(txt)
-                    except (SyntaxError, ValueError):
-                        return (False, txt)
-        return (True, '')
+    def _input_errors(self):
+        """Check input widgets for errors"""
+        for secname, sec in cfg.get_sections().items():
+            for itemname, item in sec.get_items().items():
+                _widget = self._input_widgets[secname][itemname]
+                try:
+                    ast.literal_eval(_widget.text())
+                except SyntaxError:
+                    return itemname, _widget.text()
+        return None, None
 
-    def _getval(self, widget):
-        """ Universal value getter that takes any type of config widget.
-        Returns native types, except QLineEdit input is auto-evaluated """
-        if (isinstance(widget, QtWidgets.QSpinBox) or
-           isinstance(widget, QtWidgets.QDoubleSpinBox)):
-            return widget.value()
-        elif isinstance(widget, QtWidgets.QCheckBox):
-            return bool(widget.checkState())
-        elif isinstance(widget, QtWidgets.QComboBox):
-            # convert to str to avoid writing out unicode repr() into config
-            # files unnecessarily
-            return str(widget.currentText())
-        elif isinstance(widget, QtWidgets.QLineEdit):
-            # Directly eval lineEdit contents. This means that string vars
-            # must be quoted in the lineEdit.
-            txt = widget.text()
-            return ast.literal_eval(txt) if txt else None
-        else:
-            raise Exception('Unhandled type of config widget')
-
-    def _setval(self, widget, val):
-        """ Universal value setter that takes any type of config widget.
-        val must match widget type, except for QLineEdit that can take
-        any type, which will be converted to its repr """
-        if (isinstance(widget, QtWidgets.QSpinBox) or
-           isinstance(widget, QtWidgets.QDoubleSpinBox)):
-            widget.setValue(val)
-        elif isinstance(widget, QtWidgets.QCheckBox):
-            widget.setCheckState(2 if val else 0)
-        elif isinstance(widget, QtWidgets.QComboBox):
-            idx = widget.findText(val)
-            if idx >= 0:
-                widget.setCurrentIndex(idx)
-            else:
-                raise ValueError('Tried to set combobox to invalid value.')
-        elif isinstance(widget, QtWidgets.QLineEdit):
-            widget.setText(repr(val))
-        else:
-            raise Exception('Unhandled type of config widget')
-
-    def update_cfg(self):
-        """ Update cfg according to current dialog settings """
-        global cfg
-        for section in self.cfg_widgets.keys():
-            for wname, widget in self.cfg_widgets[section].items():
-                item = wname[4:]
-                widgetval = self._getval(widget)
-                cfgval = getattr(getattr(cfg, section), item)
-                if widgetval != cfgval:
-                    cfg[section][item] = repr(widgetval)
+    def _update_cfg(self):
+        """Update cfg according to input widgets"""
+        for secname, sec in cfg.get_sections().items():
+            for itemname, item in sec.get_items().items():
+                _widget = self._input_widgets[secname][itemname]
+                val = ast.literal_eval(_widget.text())
+                item.update_value(val)
 
     def accept(self):
         """ Update config and close dialog, if widget inputs are ok. Otherwise
         show an error dialog """
-        res, txt = self._check_widget_inputs()
-        if res:
-            self.update_cfg()
-            self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
+        wname, txt = self._input_errors()
+        if wname is not None:
+            qt_message_dialog('Invalid input for item %s: %s\n'
+                              'Please fix before closing' % (wname, txt))
         else:
-            qt_message_dialog("Invalid input: %s" % txt)
+            self._update_cfg()
+            self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
 
 
 class ChooseSessionsDialog(QtWidgets.QDialog):
@@ -243,7 +215,7 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
         # load user interface made with designer
         uifile = resource_filename('gaitutils', 'gui/web_report_sessions.ui')
         uic.loadUi(uifile, self)
-        #self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.btnBrowseSession.clicked.connect(self.add_session)
         self.btnAddNexusSession.clicked.connect(lambda: self.
                                                 add_session(from_nexus=True))

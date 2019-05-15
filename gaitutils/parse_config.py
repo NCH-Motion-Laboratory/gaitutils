@@ -29,7 +29,8 @@ def is_proper_varname(s):
 
 
 def parse_var_def(s):
-    """Match var definition. Return varname, val if successful"""
+    """Match (possibly partial) var definition. Return varname,
+    val tuple if successful"""
     p = re.compile(r'^([^=]+)=([^=]+)$')
     m = p.match(s)
     if m:
@@ -37,6 +38,11 @@ def parse_var_def(s):
         if is_proper_varname(varname):
             return varname, val
     return None, None
+
+
+def is_var_def(s):
+    varname, val = parse_var_def(s)
+    return varname is not None
 
 
 def is_list_def(s):
@@ -57,92 +63,72 @@ def parse_section_header(s):
     return m.group(1) if m else None
 
 
-def not_whitespace(s):
-    """Non-whitespace line, should be a continuation of definition"""
-    p = re.compile(r'[\s]*[\S]+')  # match non whitespace-only lines
+def is_whitespace(s):
+    p = re.compile(r'^\s*$')
     return bool(p.match(s))
 
 
 class ConfigItem:
     """Holds data for a config item"""
-    def __init__(self, comments=None, def_lines=None):
-        if comments is None:
-            comments = list()
-        elif not isinstance(comments, list):
-            comments = [comments]
-        self._comments = comments
-        if def_lines is not None:
-            self._def_lines = def_lines
-            
-    def get_comment(self):
-        return '\n'.join(self._comments)
 
-    def get_description(self):
-        p = re.compile('^[\s]*#[\s]*(.+)')
-        m = p.match(self.get_comment())             
+    def __init__(self, def_lines, comment=None):
+        self.comment = comment if comment else ''
+        if not isinstance(def_lines, list):
+            def_lines = [def_lines]
+        self.def_lines = def_lines
+        item_def = ''.join(self.def_lines)
+        self._name, _val_literal = parse_var_def(item_def)
+        if self._name is None:
+            raise ValueError('invalid definition')
+        try:
+            self._val = ast.literal_eval(_val_literal)
+        except SyntaxError:
+            raise ValueError('invalid definition: %s' % item_def)
+
+    @property
+    def description(self):
+        """Format item comment into description"""
+        p = re.compile(r'^[\s]*#[\s]*(.+)')
+        m = p.match(self.comment)
         if m:
             desc = m.group(1)
             return desc[0].upper() + desc[1:]
-        
-    def _format_def(self):
-        """Output printable version of item definition"""
-        def _gen_format(def_lines):
-            for n, li in enumerate(def_lines):
-                if n == 0:
-                    # nicely indents (at least) multiline list/dict defs
-                    indent = li.find('=') + 3
-                    yield li
-                else:
-                    # yield indented version of continued definition line
-                    tab = ' ' * indent
-                    yield '%s%s' % (tab, li)
-        return '\n'.join(_gen_format(self._def_lines))
-    
-    def _get_literal_value(self):
-        _, val = parse_var_def(''.join(self._def_lines))
-        return val
-        
-    def get_value(self):
-        val = self._get_literal_value()
-        return ast.literal_eval(val)
-    
-    def update_value(self, value):
-        varname, _ = parse_var_def(''.join(self._def_lines))
-        defline = '%s = %s' % (varname, repr(value))
-        self._def_lines = [defline]
+
+    @property
+    def print_item_def(self):
+        """Pretty-print item definition with indentation"""
+        return '\n'.join(self.def_lines)
 
     def __repr__(self):
-        return self._get_literal_value() or '<malformed config item>'
+        return repr(self._val)
 
 
 class Section(object):
     """Holds data for a config section"""
-    def __init__(self, comments=None, items=None):
+
+    def __init__(self, items=None, comment=None):
         # need to modify __dict__ directly to avoid infinite __setattr__ loop
         self.__dict__['_items'] = items or dict()
-        self.__dict__['_comments'] = comments or dict()
+        self.__dict__['_comment'] = comment or ''
 
     def __getattr__(self, attr):
-        """Returns the value for a config item. This allows syntax of 
-        cfg.section.item"""
-        return self._items[attr].get_value()
-    
+        """Returns the value for a config item. This allows syntax of
+        cfg.section.item to get the value"""
+        return self._items[attr]._val
+
     def __getitem__(self, item):
-        """Returns a config item"""
+        """Returns a config item as ConfigItem instance"""
         return self._items[item]
-        
+
     def __setattr__(self, item, value):
         if not isinstance(value, ConfigItem):
             raise ValueError('value must be a ConfigItem instance')
         self.__dict__['_items'][item] = value
-        
-    def get_comment(self):
-        return '\n'.join(self._comments)
-    
+
     def get_description(self):
-        """Parse section comment into a descriptive section name"""
-        p = re.compile('^[\s]*#[\s]*(.+)')
-        m = p.match(self.get_comment())             
+        """Format comment into section description"""
+        p = re.compile(r'^[\s]*#[\s]*(.+)')
+        m = p.match(self._comment)
         if m:
             return m.group(1).strip()
 
@@ -154,61 +140,83 @@ class Section(object):
         s += ' items: %s' % str(self._items.keys())
         s += '>'
         return s
-    
+
 
 class Config:
     """Main config object that holds sections and config items. Sections can be
     accessed and set by the syntax config.section"""
     def __init__(self, sections=None):
         self.__dict__['_sections'] = sections or dict()
-        
+
     def __getattr__(self, section):
         return self._sections[section]
-    
+
     def __setattr__(self, item, value):
         if not isinstance(value, Section):
             raise ValueError('value must be a Section instance')
         self.__dict__['_sections'][item] = value
-        
+
     def __repr__(self):
         s = '<Config|'
         s += ' sections: %s' % str(self._sections.keys())
         s += '>'
         return s
-    
+
     def get_sections(self):
         return self._sections
-        
-       
+
+
 def parse_config(filename):
     """Parse cfg lines (ConfigParser format) into a Config instance"""
+
     with open(filename, 'r') as f:
         lines = f.read().splitlines()
+
     _comments = list()  # comments for current variable
+    _def_lines = list()
     current_section = None
-    current_var = None
+    collecting_def = False
     config = Config()
+
     for li in lines:
+
+        print('parsing: %s' % li)
         secname = parse_section_header(li)
-        varname, val = parse_var_def(li)
+        item_name, val = parse_var_def(li)
+
+        # whether to finish an item def
+        if collecting_def and (secname or item_name is not None or
+                               is_comment(li) or is_whitespace(li)):
+            comment = '\n'.join(_comments)
+            item = ConfigItem(comment=comment, def_lines=_def_lines)
+            setattr(current_section, collecting_def, item)
+            print('finished def for %s' % collecting_def)
+            _comments = list()
+            collecting_def = None
+            _def_lines = list()
+
         if secname:
-            current_section = Section(comments=_comments)
+            comment = '\n'.join(_comments)
+            current_section = Section(comment=comment)
             setattr(config, secname, current_section)
             _comments = list()
-            current_var = None
-        elif varname is not None:
-            if current_section is None:
-                raise ValueError('variable definition outside a section')
-            current_var = ConfigItem(comments=_comments, def_lines=[li])
-            setattr(current_section, varname, current_var)
-            _comments = list()
+
+        elif item_name is not None:  # start of item definition
+            if not current_section:
+                raise ValueError('item definition outside of section')
+            collecting_def = item_name
+            _def_lines.append(li)
+
         elif is_comment(li):
-            # collect comments until we encounter next section header or variable
+            print('collected comment %s' % li)
             _comments.append(li)
-        elif not_whitespace(li):  # (hopefully) continuation of var definition
-            if current_var is None:
-                raise ValueError('continuation outside of variable definition')
-            current_var._def_lines.append(li.strip())
+
+        elif not is_whitespace(li):  # continuation of item definition
+            if collecting_def is None:
+                # continuation outside of item def
+                raise ValueError('invalid input line: %s' % li)
+            _def_lines.append(li)
+
     return config
 
 
@@ -239,11 +247,11 @@ def dump_config(cfg):
             if k > 0:
                 yield ''
             sect = getattr(cfg, sectname)
-            sect_comment = sect.get_comment()
+            sect_comment = sect._comment
             if sect_comment:
                 yield sect_comment
             yield '[%s]' % sectname
             for itemname, item in sect.get_items().items():
-                yield item.get_comment()
-                yield item._format_def()
+                yield item.comment
+                yield item.print_item_def
     return u'\n'.join(_gen_dump(cfg))

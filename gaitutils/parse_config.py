@@ -82,14 +82,21 @@ def get_description(item_or_section):
 class ConfigItem(object):
     """Holds data for a config item"""
 
-    def __init__(self, def_lines, comment=None):
-        self._comment = comment if comment else ''
-        if not isinstance(def_lines, list):
-            def_lines = [def_lines]
-        self.def_lines = def_lines
+    def __init__(self, value=None, def_lines=None, comment=None):
+        if comment is None:
+            comment = ''
+        if def_lines is None:
+            if value is None:
+                raise ValueError('need either definition line or value')
+            else:
+                self.value = value
+        else:
+            if not isinstance(def_lines, list):
+                def_lines = [def_lines]
+            self.def_lines = def_lines
 
     def __repr__(self):
-        return '<ConfigItem| %s = %s>' % (self._name, self.value)
+        return '<ConfigItem| %s = %r>' % (self._name, self.value)
 
     @property
     def def_lines(self):
@@ -129,16 +136,20 @@ class ConfigItem(object):
         return '\n'.join(self.def_lines)
 
 
-class Section(object):
-    """Holds data for a config section"""
+class ConfigContainer(object):
+    """Holds config items (ConfigContainer or ConfigItem instances)"""
 
     def __init__(self, items=None, comment=None):
         # need to modify __dict__ directly to avoid infinite __setattr__ loop
-        self.__dict__['_items'] = items or dict()
-        self.__dict__['_comment'] = comment or ''
+        if items is None:
+            items = dict()
+        if comment is None:
+            comment = ''
+        self.__dict__['_items'] = items
+        self.__dict__['_comment'] = comment
 
     def __contains__(self, item):
-        """Operates on item names"""
+        """Checks items by name"""
         return item in self._items
 
     def __iter__(self):
@@ -147,63 +158,33 @@ class Section(object):
             yield val
 
     def __getattr__(self, attr):
-        """Returns the value for a config item. This allows the syntax of
-        cfg.section.item"""
-        return self._items[attr].value
+        """Returns an item. For ConfigItem instances, the item value is
+        returned. This gets the value directly by the syntax section.item"""
+        item = self._items[attr]
+        return item.value if isinstance(item, ConfigItem) else item
 
     def __getitem__(self, item):
-        """Returns a config item as ConfigItem instance"""
+        """Returns an item"""
         return self._items[item]
 
-    def __setattr__(self, item, value):
-        if not isinstance(value, ConfigItem):
-            raise ValueError('value must be a ConfigItem instance')
-        self.__dict__['_items'][item] = value
+    def __setattr__(self, attr, value):
+        """Set attribute"""
+        if (isinstance(value, ConfigItem) or
+           isinstance(value, ConfigContainer)):
+            # replace existing section/item
+            self.__dict__['_items'][attr] = value
+        elif attr in self._items:
+            # update value of existing item (by syntax sec.item = value)
+            self.__dict__['_items'][attr].value = value
+        else:
+            # implicitly create a new ConfigItem
+            self.__dict__['_items'][attr] = ConfigItem(value=value)
 
     def __repr__(self):
-        s = '<Section|'
+        s = '<ConfigContainer|'
         s += ' items: %s' % str(self._items.keys())
         s += '>'
         return s
-
-
-class Config:
-    """Main config object that holds Section instances. Sections may be
-    accessed by the syntax config.section_name"""
-
-    def __init__(self, sections=None):
-        self.__dict__['_sections'] = sections or dict()
-
-    def __repr__(self):
-        s = '<Config|'
-        s += ' sections: %s' % str(self._sections.keys())
-        s += '>'
-        return s
-
-    def __getattr__(self, section):
-        """Returns a section instance by name"""
-        return self._sections[section]
-
-    def __setattr__(self, item, value):
-        """Allows setting Section instances as attributes"""
-        if not isinstance(value, Section):
-            raise ValueError('value must be a Section instance')
-        self.__dict__['_sections'][item] = value
-
-    def __contains__(self, section):
-        """Operates on section names"""
-        return section in self._sections
-
-    def __len__(self):
-        """Returns number of sections"""
-        return len(self._sections)
-
-    def __iter__(self):
-        """Yields tuples of (section_name, section)"""
-        for val in self._sections.items():
-            yield val
-
-
 
 
 def parse_config(filename):
@@ -216,7 +197,7 @@ def parse_config(filename):
     _def_lines = list()
     current_section = None
     collecting_def = False
-    config = Config()
+    config = ConfigContainer()
 
     for li in lines:
 
@@ -237,7 +218,7 @@ def parse_config(filename):
 
         if secname:
             comment = '\n'.join(_comments)
-            current_section = Section(comment=comment)
+            current_section = ConfigContainer(comment=comment)
             setattr(config, secname, current_section)
             _comments = list()
 

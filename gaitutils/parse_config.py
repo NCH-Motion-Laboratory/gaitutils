@@ -114,7 +114,7 @@ class ConfigItem(object):
             return desc[0].upper() + desc[1:]
 
     @property
-    def print_item_def(self):
+    def item_def(self):
         """Pretty-print item definition with indentation"""
         return '\n'.join(self.def_lines)
 
@@ -129,6 +129,15 @@ class Section(object):
         # need to modify __dict__ directly to avoid infinite __setattr__ loop
         self.__dict__['_items'] = items or dict()
         self.__dict__['_comment'] = comment or ''
+
+    def __contains__(self, item):
+        """Operates on item names"""
+        return item in self._items
+
+    def __iter__(self):
+        """Yields tuples of (item_name, item)"""
+        for val in self._items.items():
+            yield val
 
     def __getattr__(self, attr):
         """Returns the value for a config item. This allows syntax of
@@ -151,9 +160,6 @@ class Section(object):
         if m:
             return m.group(1).strip()
 
-    def get_items(self):
-        return self._items
-
     def __repr__(self):
         s = '<Section|'
         s += ' items: %s' % str(self._items.keys())
@@ -172,6 +178,7 @@ class Config:
         return self._sections[section]
 
     def __contains__(self, section):
+        """Operates on section names"""
         return section in self._sections
 
     def __iter__(self):
@@ -255,13 +262,12 @@ def update_config(cfg, filename):
         except KeyError:
             logger.warning('section does not exist: %s' % secname)
         else:
-            items_old = sec_old.get_items()
-            for itname, item in sec.get_items().items():
-                if itname not in items_old:
+            for itname, item in sec:
+                if itname not in sec_old:
                     logger.warning('item does not exist: %s' % itname)
                 else:
-                    # only modify definition, not comments
-                    items_old[itname].def_lines = item.def_lines
+                    item_old = sec_old[itname]
+                    item_old.def_lines = item.def_lines
 
 
 def dump_config(cfg):
@@ -276,7 +282,7 @@ def dump_config(cfg):
             if sect_comment:
                 yield sect_comment
             yield '[%s]' % sectname
-            for itemname, item in sect.get_items().items():
+            for itemname, item in sect:
                 yield item.comment
-                yield item.print_item_def
+                yield item.item_def
     return u'\n'.join(_gen_dump(cfg))

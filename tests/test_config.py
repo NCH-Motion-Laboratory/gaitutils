@@ -25,6 +25,13 @@ def test_config():
     fn = _file_path('valid.cfg')
     cfg_ = parse_config(fn)
     assert 'section1' in cfg_
+    assert 'section2' in cfg_
+    secs = sorted(secname for (secname, sec) in cfg_)
+    assert secs == ['section1', 'section2']
+    assert cfg_.section1.var1 == 1
+    assert 'list' in cfg_.section1.var2
+    assert cfg_.section1['var1'].comment == '# this is var1'
+    assert cfg_.section1['var1'].description == 'This is var1'
 
 
 def test_config_update():

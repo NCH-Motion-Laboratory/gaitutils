@@ -9,6 +9,7 @@ from __future__ import print_function
 from builtins import str
 import os.path as op
 import os
+import io
 import sys
 import logging
 from pkg_resources import resource_filename
@@ -46,7 +47,7 @@ if op.isfile(cfg_user):
 else:
     print('no config file, trying to create %s' % cfg_user)
     cfg_txt = dump_config(cfg)
-    with open(cfg_user, 'w', encoding='utf8') as f:
+    with io.open(cfg_user, 'w', encoding='utf8') as f:
         f.writelines(cfg_txt)
 
 # handle some deprecated/changed types for user convenience
@@ -56,11 +57,10 @@ if not isinstance(cfg.plot.emg_yscale, float):
     cfg.plot.emg_yscale = str(cfg.plot.emg_yscale[1])
 if cfg.general.normaldata_files == 'default':
     fn = resource_filename('gaitutils', 'data/normal.gcd')
-    cfg.general['normaldata_files'].update_value(fn)
+    cfg.general['normaldata_files'].value = fn
 if cfg.general.videoconv_path == 'default':
     fn = resource_filename('gaitutils', 'thirdparty/ffmpeg2theora.exe')
-    cfg.general['videoconv_path'].update_value(fn)
-
+    cfg.general['videoconv_path'].value = fn
 
 
 sys.stdout.flush()  # make sure that warnings are printed out

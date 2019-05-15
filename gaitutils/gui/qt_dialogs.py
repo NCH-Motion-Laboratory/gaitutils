@@ -122,7 +122,7 @@ class OptionsDialog(QtWidgets.QDialog):
 
         # build tabs according to cfg
         self.tabWidget = QtWidgets.QTabWidget()
-        for secname, sec in cfg.get_sections().items():
+        for secname, sec in cfg:
             desc = sec.get_description() or secname
             tab = self._create_tab(sec, secname)
             self.tabWidget.addTab(tab, desc)
@@ -169,7 +169,7 @@ class OptionsDialog(QtWidgets.QDialog):
 
     def _update_inputs(self):
         """Update input widgets according to current cfg"""
-        for secname, sec in cfg.get_sections().items():
+        for secname, sec in cfg:
             for itemname, item in sec.get_items().items():
                 _widget = self._input_widgets[secname][itemname]
                 val = item._get_literal_value()
@@ -178,7 +178,7 @@ class OptionsDialog(QtWidgets.QDialog):
 
     def _input_errors(self):
         """Check input widgets for errors"""
-        for secname, sec in cfg.get_sections().items():
+        for secname, sec in cfg:
             for itemname, item in sec.get_items().items():
                 _widget = self._input_widgets[secname][itemname]
                 try:
@@ -189,7 +189,7 @@ class OptionsDialog(QtWidgets.QDialog):
 
     def _update_cfg(self):
         """Update cfg according to input widgets"""
-        for secname, sec in cfg.get_sections().items():
+        for secname, sec in cfg:
             for itemname, item in sec.get_items().items():
                 _widget = self._input_widgets[secname][itemname]
                 val = ast.literal_eval(_widget.text())

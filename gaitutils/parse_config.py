@@ -68,7 +68,7 @@ def is_whitespace(s):
     return bool(p.match(s))
 
 
-class ConfigItem:
+class ConfigItem(object):
     """Holds data for a config item"""
 
     def __init__(self, def_lines, comment=None):
@@ -76,7 +76,15 @@ class ConfigItem:
         if not isinstance(def_lines, list):
             def_lines = [def_lines]
         self.def_lines = def_lines
-        item_def = ''.join(self.def_lines)
+
+    @property
+    def def_lines(self):
+        return self._def_lines
+
+    @def_lines.setter
+    def def_lines(self, _lines):
+        """Evaluate def lines"""
+        item_def = ''.join(_lines)
         self._name, _val_literal = parse_var_def(item_def)
         if self._name is None:
             raise ValueError('invalid definition')
@@ -84,6 +92,17 @@ class ConfigItem:
             self._val = ast.literal_eval(_val_literal)
         except SyntaxError:
             raise ValueError('invalid definition: %s' % item_def)
+        self._def_lines = _lines
+
+    @property
+    def value(self):
+        return self._val
+
+    @value.setter
+    def value(self, _val):
+        """Set value and update def lines accordingly"""
+        self._val = _val
+        self._def_lines = ['%s = %s' % (self._name, _val)]
 
     @property
     def description(self):
@@ -145,11 +164,20 @@ class Section(object):
 class Config:
     """Main config object that holds sections and config items. Sections can be
     accessed and set by the syntax config.section"""
+
     def __init__(self, sections=None):
         self.__dict__['_sections'] = sections or dict()
 
     def __getattr__(self, section):
         return self._sections[section]
+
+    def __contains__(self, section):
+        return section in self._sections
+
+    def __iter__(self):
+        """Yields tuples of (section_name, section)"""
+        for val in self._sections.items():
+            yield val
 
     def __setattr__(self, item, value):
         if not isinstance(value, Section):
@@ -161,9 +189,6 @@ class Config:
         s += ' sections: %s' % str(self._sections.keys())
         s += '>'
         return s
-
-    def get_sections(self):
-        return self._sections
 
 
 def parse_config(filename):
@@ -224,7 +249,7 @@ def update_config(cfg, filename):
     """Update existing Config from filename. Will not create new sections or
     keys"""
     cfg_new = parse_config(filename)
-    for secname, sec in cfg_new.get_sections().items():
+    for secname, sec in cfg_new:
         try:
             sec_old = getattr(cfg, secname)
         except KeyError:
@@ -236,13 +261,13 @@ def update_config(cfg, filename):
                     logger.warning('item does not exist: %s' % itname)
                 else:
                     # only modify definition, not comments
-                    items_old[itname]._def_lines = item._def_lines
+                    items_old[itname].def_lines = item.def_lines
 
 
 def dump_config(cfg):
     """Produce text version of Config instance that can be read back"""
     def _gen_dump(cfg):
-        sectnames = sorted(cfg.get_sections().keys())
+        sectnames = sorted(sname for (sname, sec) in cfg)
         for k, sectname in enumerate(sectnames):
             if k > 0:
                 yield ''

@@ -68,14 +68,28 @@ def is_whitespace(s):
     return bool(p.match(s))
 
 
+def get_description(item_or_section):
+    """Returns a nice description based on section or item comment. This is not
+    implemented as an instance method to avoid polluting the class namespaces
+    (since instance variables have a special purpose"""
+    p = re.compile(r'^[\s]*#[\s]*(.+)')
+    m = p.match(item_or_section._comment)
+    if m:
+        desc = m.group(1)
+        return desc[0].upper() + desc[1:]
+
+
 class ConfigItem(object):
     """Holds data for a config item"""
 
     def __init__(self, def_lines, comment=None):
-        self.comment = comment if comment else ''
+        self._comment = comment if comment else ''
         if not isinstance(def_lines, list):
             def_lines = [def_lines]
         self.def_lines = def_lines
+
+    def __repr__(self):
+        return '<ConfigItem| %s = %s>' % (self._name, self.value)
 
     @property
     def def_lines(self):
@@ -105,21 +119,14 @@ class ConfigItem(object):
         self._def_lines = ['%s = %s' % (self._name, _val)]
 
     @property
-    def description(self):
-        """Format item comment into description"""
-        p = re.compile(r'^[\s]*#[\s]*(.+)')
-        m = p.match(self.comment)
-        if m:
-            desc = m.group(1)
-            return desc[0].upper() + desc[1:]
+    def literal_value(self):
+        """Returns a string that is supposed to evaluate to the value"""
+        return repr(self.value)
 
     @property
     def item_def(self):
         """Pretty-print item definition with indentation"""
         return '\n'.join(self.def_lines)
-
-    def __repr__(self):
-        return repr(self._val)
 
 
 class Section(object):
@@ -140,9 +147,9 @@ class Section(object):
             yield val
 
     def __getattr__(self, attr):
-        """Returns the value for a config item. This allows syntax of
-        cfg.section.item to get the value"""
-        return self._items[attr]._val
+        """Returns the value for a config item. This allows the syntax of
+        cfg.section.item"""
+        return self._items[attr].value
 
     def __getitem__(self, item):
         """Returns a config item as ConfigItem instance"""
@@ -153,13 +160,6 @@ class Section(object):
             raise ValueError('value must be a ConfigItem instance')
         self.__dict__['_items'][item] = value
 
-    def get_description(self):
-        """Format comment into section description"""
-        p = re.compile(r'^[\s]*#[\s]*(.+)')
-        m = p.match(self._comment)
-        if m:
-            return m.group(1).strip()
-
     def __repr__(self):
         s = '<Section|'
         s += ' items: %s' % str(self._items.keys())
@@ -168,34 +168,42 @@ class Section(object):
 
 
 class Config:
-    """Main config object that holds sections and config items. Sections can be
-    accessed and set by the syntax config.section"""
+    """Main config object that holds Section instances. Sections may be
+    accessed by the syntax config.section_name"""
 
     def __init__(self, sections=None):
         self.__dict__['_sections'] = sections or dict()
-
-    def __getattr__(self, section):
-        return self._sections[section]
-
-    def __contains__(self, section):
-        """Operates on section names"""
-        return section in self._sections
-
-    def __iter__(self):
-        """Yields tuples of (section_name, section)"""
-        for val in self._sections.items():
-            yield val
-
-    def __setattr__(self, item, value):
-        if not isinstance(value, Section):
-            raise ValueError('value must be a Section instance')
-        self.__dict__['_sections'][item] = value
 
     def __repr__(self):
         s = '<Config|'
         s += ' sections: %s' % str(self._sections.keys())
         s += '>'
         return s
+
+    def __getattr__(self, section):
+        """Returns a section instance by name"""
+        return self._sections[section]
+
+    def __setattr__(self, item, value):
+        """Allows setting Section instances as attributes"""
+        if not isinstance(value, Section):
+            raise ValueError('value must be a Section instance')
+        self.__dict__['_sections'][item] = value
+
+    def __contains__(self, section):
+        """Operates on section names"""
+        return section in self._sections
+
+    def __len__(self):
+        """Returns number of sections"""
+        return len(self._sections)
+
+    def __iter__(self):
+        """Yields tuples of (section_name, section)"""
+        for val in self._sections.items():
+            yield val
+
+
 
 
 def parse_config(filename):

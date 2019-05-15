@@ -89,14 +89,16 @@ class OptionsDialog(QtWidgets.QDialog):
         tab = QtWidgets.QWidget()
         lout = QtWidgets.QFormLayout()
         tab.setLayout(lout)
-        items = sorted(section.get_items(), key=lambda it: it.get_description())
+        # get items sorted by comment
+        items = sorted((item for (itname, item) in section),
+                       key=lambda it: parse_config.get_description(it))
         for item in items:
-            desc = item.get_description()
+            desc = parse_config.get_description(item)
             input_widget = QtWidgets.QLineEdit()
-            input_widget.setText(item._get_literal_value())
+            input_widget.setText(item.literal_value)
             input_widget.setCursorPosition(0)  # show beginning of line
             lout.addRow(desc, input_widget)
-            self._input_widgets[secname][item_name] = input_widget
+            self._input_widgets[secname][item._name] = input_widget
         return tab
 
     def __init__(self, parent, default_tab=0):
@@ -123,7 +125,7 @@ class OptionsDialog(QtWidgets.QDialog):
         # build tabs according to cfg
         self.tabWidget = QtWidgets.QTabWidget()
         for secname, sec in cfg:
-            desc = sec.get_description() or secname
+            desc = parse_config.get_description(sec) or secname
             tab = self._create_tab(sec, secname)
             self.tabWidget.addTab(tab, desc)
 

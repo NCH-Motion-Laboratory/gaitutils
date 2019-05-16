@@ -22,9 +22,10 @@ RE_WHITESPACE = r'\s*$'  # empty or whitespace
 # match line comment; group 1 will be the comment
 RE_COMMENT = r'\s*[#;]\s*(.*)'
 # match item def; groups 1 and 2 are the item and the (possibly empty) value
-RE_VAR_DEF = r'\s*([^=\s]+)\s*=\s*(.*)\s*$'
+RE_VAR_DEF = r'\s*([^=\s]+)\s*=\s*(.*?)\s*$'
 # match section header of form [section]; group 1 is the section
-RE_SECTION_HEADER = r'\s*\[([\w]+)\]\s*'
+# section names can include alphanumeric chars, _ and -
+RE_SECTION_HEADER = r'\s*\[([\w-]+)\]\s*'
 
 
 def _simple_match(r, s):

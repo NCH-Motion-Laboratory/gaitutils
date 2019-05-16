@@ -63,9 +63,11 @@ def test_re_section_header():
         assert re.match(RE_SECTION_HEADER, s)
     s = '[ foo]'
     assert not re.match(RE_SECTION_HEADER, s)
-    s = '[some-invalid-chars]'
+    s = '[some/invalid/chars]'
     assert not re.match(RE_SECTION_HEADER, s)
     s = '[nice_chars_only]'
+    assert re.match(RE_SECTION_HEADER, s)
+    s = '[nice-chars-only]'
     assert re.match(RE_SECTION_HEADER, s)
 
 
@@ -80,8 +82,6 @@ def test_config():
     assert cfg_.section1.var1 == 1
     assert 'list' in cfg_.section1.var2
     assert cfg_.section1['var1']._comment == '# this is var1'
-
-
 
 
 def test_config_update():
@@ -105,7 +105,6 @@ def test_invalid_def():
         parse_config(fn)
 
 
-# FIXME: fix me
 def _test_def_last_line():
     """Test cfg with multiline def terminating on last line"""
     fn = _file_path('def_last_line.cfg')

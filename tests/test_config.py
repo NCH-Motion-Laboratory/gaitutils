@@ -54,6 +54,13 @@ def test_invalid_def():
         parse_config(fn)
 
 
+def test_def_last_line():
+    """Test cfg with multiline def terminating on last line"""
+    fn = _file_path('def_last_line.cfg')
+    cfg = parse_config(fn)
+    assert 'foo' in cfg.section2
+
+
 def test_dump_config():
     fn = _file_path('valid.cfg')
     cfg_ = parse_config(fn)

@@ -30,8 +30,7 @@ def test_config():
     assert secs == ['section1', 'section2']
     assert cfg_.section1.var1 == 1
     assert 'list' in cfg_.section1.var2
-    assert cfg_.section1['var1'].comment == '# this is var1'
-    assert cfg_.section1['var1'].description == 'This is var1'
+    assert cfg_.section1['var1']._comment == '# this is var1'
 
 
 def test_config_update():

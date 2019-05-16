@@ -17,14 +17,14 @@ logger = logging.getLogger(__name__)
 
 
 # regexes
-RE_ALPHANUMERIC = r'^[\w]+$'
-RE_WHITESPACE = r'^\s*$'
+RE_ALPHANUMERIC = r'\w+$'  # at least 1 alphanumeric char
+RE_WHITESPACE = r'\s*$'  # empty or whitespace
 # match line comment; group 1 will be the comment
-RE_COMMENT = r'^[\s]*[#;][\s]*(.*)'
-# match item def; group 1 and 2 are the variable and the definition
-RE_VAR_DEF = r'^([^=]+)=([^=]+)$'
+RE_COMMENT = r'\s*[#;]\s*(.*)'
+# match item def; groups 1 and 2 are the item and the (possibly empty) value
+RE_VAR_DEF = r'\s*([^=\s]+)\s*=\s*(.*)\s*$'
 # match section header of form [section]; group 1 is the section
-RE_SECTION_HEADER = r'^\[([\w]*)\]$'
+RE_SECTION_HEADER = r'\s*\[([\w]+)\]\s*'
 
 
 def _simple_match(r, s):
@@ -80,6 +80,7 @@ class ConfigItem(object):
     def __init__(self, value=None, def_lines=None, comment=None):
         if comment is None:
             comment = ''
+        self._comment = comment
         if def_lines is None:
             if value is None:
                 raise ValueError('need either definition line or value')
@@ -217,6 +218,7 @@ def parse_config(filename):
             _comments = list()
 
         elif item_name is not None:  # start of item definition
+            print('parsed: %s=%s' % (item_name, val))
             if not current_section:
                 raise ValueError('item definition outside of section')
             collecting_def = item_name
@@ -266,6 +268,6 @@ def dump_config(cfg):
                 yield sect_comment
             yield '[%s]' % sectname
             for itemname, item in sect:
-                yield item.comment
+                yield item._comment
                 yield item.item_def
     return u'\n'.join(_gen_dump(cfg))

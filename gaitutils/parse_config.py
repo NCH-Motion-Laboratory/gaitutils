@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Handles gaitutils config files.
+Parse INI files into nested config objects
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -16,23 +16,37 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# regexes
+RE_ALPHANUMERIC = r'^[\w]+$'
+RE_WHITESPACE = r'^\s*$'
+# match line comment; group 1 will be the comment
+RE_COMMENT = r'^[\s]*[#;][\s]*(.*)'
+# match item def; group 1 and 2 are the variable and the definition
+RE_VAR_DEF = r'^([^=]+)=([^=]+)$'
+# match section header of form [section]; group 1 is the section
+RE_SECTION_HEADER = r'^\[([\w]*)\]$'
+
+
+def _simple_match(r, s):
+    return bool(re.match(r, s))
+
+
 def is_comment(s):
-    """Match line comment starting with # or ;"""
-    p = re.compile(r'[\s]*[#;].*')
-    return bool(p.match(s))
+    return _simple_match(RE_COMMENT, s)
 
 
 def is_proper_varname(s):
-    """Checks for valid identifier"""
-    p = re.compile(r'^[\w]+$')  # accept only alphanumeric chars, no whitespace
-    return bool(p.match(s))
+    return _simple_match(RE_ALPHANUMERIC, s)
+
+
+def is_whitespace(s):
+    return _simple_match(RE_WHITESPACE, s)
 
 
 def parse_var_def(s):
     """Match (possibly partial) var definition. Return varname,
     val tuple if successful"""
-    p = re.compile(r'^([^=]+)=([^=]+)$')
-    m = p.match(s)
+    m = re.match(RE_VAR_DEF, s)
     if m:
         varname, val = m.group(1).strip(), m.group(2).strip()
         if is_proper_varname(varname):
@@ -45,38 +59,19 @@ def is_var_def(s):
     return varname is not None
 
 
-def is_list_def(s):
-    """Match (start of) list or dict definition"""
-    varname, val = parse_var_def(s)
-    if val is None:
-        return False
-    else:
-        # do not include closing ] or }, as it may be a multiline def
-        p = re.compile(r'[\s]*[\[,\{][\S]+[\s]*')
-        return bool(p.match(val))
-
-
 def parse_section_header(s):
     """Match section headers of form [header] and return header as str"""
-    p = re.compile(r'^\[([\w]*)\]$')
-    m = p.match(s)
+    m = re.match(RE_SECTION_HEADER, s)
     return m.group(1) if m else None
-
-
-def is_whitespace(s):
-    p = re.compile(r'^\s*$')
-    return bool(p.match(s))
 
 
 def get_description(item_or_section):
     """Returns a nice description based on section or item comment. This is not
-    implemented as an instance method to avoid polluting the class namespaces
-    (since instance variables have a special purpose"""
-    p = re.compile(r'^[\s]*#[\s]*(.+)')
-    m = p.match(item_or_section._comment)
+    implemented as an instance method to avoid polluting the class namespace"""
+    m = re.match(RE_COMMENT, item_or_section._comment)
     if m:
         desc = m.group(1)
-        return desc[0].upper() + desc[1:]
+        return desc[:1].upper() + desc[1:]
 
 
 class ConfigItem(object):
@@ -169,8 +164,7 @@ class ConfigContainer(object):
 
     def __setattr__(self, attr, value):
         """Set attribute"""
-        if (isinstance(value, ConfigItem) or
-           isinstance(value, ConfigContainer)):
+        if isinstance(value, ConfigItem) or isinstance(value, ConfigContainer):
             # replace existing section/item
             self.__dict__['_items'][attr] = value
         elif attr in self._items:

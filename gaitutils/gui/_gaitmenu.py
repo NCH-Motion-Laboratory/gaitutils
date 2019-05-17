@@ -15,12 +15,10 @@ from functools import partial
 import sys
 import os.path as op
 import os
-import subprocess
 import time
 import requests
 import logging
 import traceback
-import plotly
 
 from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
                          ChooseSessionsDialog, qt_matplotlib_window)
@@ -36,6 +34,7 @@ from ..viz.plots import (plot_nexus_trial, plot_sessions,
                          plot_trial_timedep_velocities,
                          plot_trial_velocities, plot_session_average)
 from ..viz.timedist import do_session_average_plot
+from ..viz.plot_misc import _browse_localhost, _show_plotly_fig
 from ..report import web, pdf
 
 logger = logging.getLogger(__name__)
@@ -73,7 +72,7 @@ class PdfReportDialog(QtWidgets.QDialog):
         super(self.__class__, self).__init__()
         uifile = resource_filename('gaitutils', 'gui/pdf_report_dialog.ui')
         uic.loadUi(uifile, self)
-        #self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.prompt.setText(prompt)
         if info is not None:
             if info['fullname'] is not None:
@@ -108,7 +107,7 @@ class WebReportInfoDialog(QtWidgets.QDialog):
         super(self.__class__, self).__init__()
         uifile = resource_filename('gaitutils', 'gui/web_report_info.ui')
         uic.loadUi(uifile, self)
-        #self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.check_info = check_info
         if info is not None:
             if info['fullname'] is not None:
@@ -153,12 +152,11 @@ class WebReportDialog(QtWidgets.QDialog):
         self.btnViewReport.clicked.connect(self._view_current_report)
         # add double click action to browse current report
         (self.listActiveReports.itemDoubleClicked.
-         connect(lambda item: self._browse_localhost(item.userdata)))
+         connect(lambda item: _browse_localhost(port=item.userdata)))
         # these require active reports to be enabled
         self.reportWidgets = [self.btnDeleteReport, self.btnDeleteAllReports,
                               self.btnViewReport]
         self._set_report_button_status()
-        self._browser_procs = list()
 
     def _create_web_report(self, sessions=None):
         """Collect sessions, create the dash app, start it and launch a
@@ -237,9 +235,7 @@ class WebReportDialog(QtWidgets.QDialog):
         return self.listActiveReports.count()
 
     def shutdown(self):
-        """Try to shutdown browser processes and web servers"""
-        for proc in self._browser_procs:
-            proc.kill()
+        """Try to shutdown web servers"""
         # cannot use generator here since the loop changes the items
         for item in list(self.listActiveReports.items):
             self._delete_report(item)
@@ -285,7 +281,7 @@ class WebReportDialog(QtWidgets.QDialog):
         if item is None:
             return
         port = item.userdata
-        self._browse_localhost(port)
+        self._browse_localhost(port=port)
 
     def _set_report_button_status(self):
         """Enable report buttons if reports exist, otherwise disable them"""
@@ -322,18 +318,7 @@ class WebReportDialog(QtWidgets.QDialog):
         self.listActiveReports.add_item(app._gaitutils_report_name, data=port)
         # enable delete buttons etc.
         self._set_report_button_status()
-        self._browse_localhost(port)
-
-    def _browse_localhost(self, port):
-        """Open configured browser on localhost:port"""
-        url = '127.0.0.1:%d' % port
-        try:
-            proc = subprocess.Popen([cfg.general.browser_path, url])
-            self._browser_procs.append(proc)
-            logger.debug('new browser pid %d' % proc.pid)
-        except Exception:
-            qt_message_dialog('Cannot start configured web browser: %s'
-                              % cfg.general.browser_path)
+        self._browse_localhost(port=port)
 
 
 class Gaitmenu(QtWidgets.QMainWindow):
@@ -556,7 +541,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             _mpl_win = qt_matplotlib_window(fig)
             self._mpl_windows.append(_mpl_win)
         elif backend == 'plotly':
-            plotly.offline.plot(fig)
+            _show_plotly_fig(fig)
 
     def _widget_connect_task(self, widget, fun, thread=False):
         """Helper to connect widget with task. Use lambda to consume unused
@@ -799,6 +784,7 @@ class Runner(QRunnable):
             self.signals.result.emit(retval)
         finally:
             self.signals.finished.emit()
+
 
 def main():
 

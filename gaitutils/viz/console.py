@@ -14,7 +14,7 @@ import argparse
 from . import plots
 from .plot_misc import show_fig
 from ..envutils import register_gui_exception_handler
-from .. import nexus
+from .. import nexus, cfg
 
 
 def _console_init():
@@ -53,7 +53,10 @@ def plot_nexus_session():
     parser.add_argument('--unnorm', action='store_true')
     parser.add_argument('--model_cycles', type=str)
     parser.add_argument('--emg_cycles', type=str)
+    parser.add_argument('--tags', type=list)
     args = parser.parse_args()
+
+    tags = args.tags or cfg.eclipse.tags
 
     sessions = [nexus.get_sessionpath()]
     fig = plots.plot_sessions(sessions, tags=tags,
@@ -69,4 +72,3 @@ def plot_nexus_session_average():
     figs = plots.plot_session_average(session)
     for fig in figs:
         show_fig(fig)
-

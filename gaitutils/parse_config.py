@@ -80,6 +80,7 @@ class ConfigItem(object):
     def __init__(self, value=None, def_lines=None, comment=None):
         if comment is None:
             comment = ''
+        self._comment = comment
         if def_lines is None:
             if value is None:
                 raise ValueError('need either definition line or value')
@@ -272,6 +273,6 @@ def dump_config(cfg):
                 yield sect_comment
             yield '[%s]' % sectname
             for itemname, item in sect:
-                yield item.comment
+                yield item._comment
                 yield item.item_def
     return u'\n'.join(_gen_dump(cfg))

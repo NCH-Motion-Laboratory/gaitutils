@@ -391,16 +391,20 @@ class Gaitmenu(QtWidgets.QMainWindow):
         rb_active = self.rb_map[cfg.plot.backend]
         rb_active.setChecked(True)
 
-        # add predefined plot layouts to combobox
-        cb_items = sorted(cfg.layouts.menu_layouts.keys())
+        # add plot layouts to combobox
+        from .. import parse_config
+        cb_items = sorted(parse_config.get_description(lo) or loname
+                          for loname, lo in cfg['layouts'])
         self.cbNexusTrialLayout.addItems(cb_items)
         # set default option to PiG lower body (if it's on the list)
         try:
-            default_index = cb_items.index('PiG lower body kinematics+'
-                                           'kinetics')
+            default_index = cb_items.index('PiG lower body kinematics')
         except ValueError:
             default_index = 0
         self.cbNexusTrialLayout.setCurrentIndex(default_index)
+        # map descriptions to layout names
+        self.layouts_map = {(parse_config.get_description(lo) or loname): loname
+                            for loname, lo in cfg['layouts']}
 
         XStream.stdout().messageWritten.connect(self._log_message)
         XStream.stderr().messageWritten.connect(self._log_message)
@@ -478,7 +482,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         model_normaldata = read_session_normaldata(session)
         lout_desc = self.cbNexusTrialLayout.currentText()
-        lout_name = cfg.layouts.menu_layouts[lout_desc]
+        lout_name = self.layouts_map[lout_desc]
         backend = self._get_plotting_backend_ui()
         self._execute(plot_session_average, thread=True,
                       finished_func=self._enable_op_buttons,
@@ -493,7 +497,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         model_normaldata = read_session_normaldata(session)
         lout_desc = self.cbNexusTrialLayout.currentText()
-        lout_name = cfg.layouts.menu_layouts[lout_desc]
+        lout_name = self.layouts_map[lout_desc]
         cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
         model_cycles = emg_cycles = cycs
         backend = self._get_plotting_backend_ui()
@@ -519,7 +523,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         model_normaldata = read_session_normaldata(session)
         lout_desc = self.cbNexusTrialLayout.currentText()
-        lout_name = cfg.layouts.menu_layouts[lout_desc]
+        lout_name = self.layouts_map[lout_desc]
         backend = self._get_plotting_backend_ui()
         cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
         model_cycles = emg_cycles = cycs

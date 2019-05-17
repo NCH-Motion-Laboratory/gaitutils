@@ -368,6 +368,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     legendgroups.add(tracename)
 
                             # set subplot params if not already done
+                            #FIXME: not clear if we can rely on title dict here
                             if not fig['layout'][yaxis]['title']:
                                 #fig['layout'][xaxis].update(showticklabels=False)
                                 yunit = mod.units[var]

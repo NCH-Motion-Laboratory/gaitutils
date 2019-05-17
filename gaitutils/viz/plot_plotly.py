@@ -451,10 +451,10 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     margin = go.layout.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
     legend = dict(font=dict(size=legend_fontsize))
-    layout = go.Layout(margin=margin,
-                       legend=legend,
-                       font={'size': label_fontsize},
-                       hovermode='closest', title=figtitle)
+    plotly_layout = go.Layout(margin=margin,
+                              legend=legend,
+                              font={'size': label_fontsize},
+                              hovermode='closest', title=figtitle)
 
-    fig['layout'].update(layout)
+    fig['layout'].update(plotly_layout)
     return fig

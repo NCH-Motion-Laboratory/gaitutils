@@ -34,10 +34,10 @@ def check_layout(layout):
     nrows = len(layout)
     ncols = len(layout[0])
     if ncols < 1:
-        raise ValueError('Invalid layout')
+        raise ValueError('Invalid layout: %s' % layout)
     for col in layout:
         if not isinstance(col, list) or len(col) != ncols:
-            raise ValueError('Inconsistent layout')
+            raise ValueError('Inconsistent layout: %s' % layout)
     return nrows, ncols
 
 

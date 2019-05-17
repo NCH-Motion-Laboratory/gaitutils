@@ -14,12 +14,28 @@ import plotly
 import plotly.graph_objs as go
 from plotly.matplotlylib.mpltools import merge_color_and_opacity
 import plotly.tools
+import subprocess
 
 from .. import GaitDataError, cfg, layouts, models, normaldata, sessionutils, utils
 from .plot_common import (_get_cycle_name, _truncate_trialname, _var_title,
                           IteratorMapper, _style_mpl_to_plotly)
 
 logger = logging.getLogger(__name__)
+
+
+def _browse_localhost(url=None, port=None):
+    """Open configured browser on url or localhost:port"""
+    if not url:
+        if port:
+            url = '127.0.0.1:%d' % port
+        else:
+            raise ValueError('neither url nor valid localhost port specified')
+    try:
+        proc = subprocess.Popen([cfg.general.browser_path, url])
+        logger.debug('new browser pid %d' % proc.pid)
+    except Exception:
+        raise ValueError('Cannot start configured web browser: %s'
+                         % cfg.general.browser_path)
 
 
 def _plot_vels(vels, labels):
@@ -451,10 +467,10 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     margin = go.layout.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
     legend = dict(font=dict(size=legend_fontsize))
-    layout = go.Layout(margin=margin,
-                       legend=legend,
-                       font={'size': label_fontsize},
-                       hovermode='closest', title=figtitle)
+    plotly_layout = go.Layout(margin=margin,
+                              legend=legend,
+                              font={'size': label_fontsize},
+                              hovermode='closest', title=figtitle)
 
-    fig['layout'].update(layout)
+    fig['layout'].update(plotly_layout)
     return fig

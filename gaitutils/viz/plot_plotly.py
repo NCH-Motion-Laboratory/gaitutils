@@ -368,7 +368,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     legendgroups.add(tracename)
 
                             # set subplot params if not already done
-                            if not fig['layout'][yaxis]['title'].text:
+                            if not fig['layout'][yaxis]['title']:
                                 #fig['layout'][xaxis].update(showticklabels=False)
                                 yunit = mod.units[var]
                                 if yunit == 'deg':
@@ -390,7 +390,6 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         # _no_ticks_or_labels(ax)
                         # _axis_annotate(ax, 'disconnected')
                         if do_plot:
-                            logger.debug('plotting %s/%s' % (cyc, var))
                             tracename_emg = 'EMG:' + tracename
 
                             t_, y = trial.get_emg_data(var)
@@ -438,7 +437,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             legendgroups.add(tracename_emg)
                             fig.append_trace(trace, i+1, j+1)
 
-                        if not fig['layout'][yaxis]['title'].text:
+                        if not fig['layout'][yaxis]['title']:
                             logger.debug('setting EMG title')
                             emg_yrange = np.array([-cfg.plot.emg_yscale, cfg.plot.emg_yscale]) * cfg.plot.emg_multiplier
                             fig['layout'][yaxis].update(title=cfg.plot.emg_ylabel, titlefont={'size': label_fontsize},

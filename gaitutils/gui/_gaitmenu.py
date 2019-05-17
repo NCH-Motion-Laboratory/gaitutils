@@ -281,7 +281,7 @@ class WebReportDialog(QtWidgets.QDialog):
         if item is None:
             return
         port = item.userdata
-        self._browse_localhost(port=port)
+        _browse_localhost(port=port)
 
     def _set_report_button_status(self):
         """Enable report buttons if reports exist, otherwise disable them"""
@@ -318,7 +318,7 @@ class WebReportDialog(QtWidgets.QDialog):
         self.listActiveReports.add_item(app._gaitutils_report_name, data=port)
         # enable delete buttons etc.
         self._set_report_button_status()
-        self._browse_localhost(port=port)
+        _browse_localhost(port=port)
 
 
 class Gaitmenu(QtWidgets.QMainWindow):

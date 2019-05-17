@@ -50,9 +50,8 @@ def _make_dropdown_lists(options):
     return identity, mapper
 
 
-def _time_dist_plot_svg(c3ds, sessions):
+def _time_dist_plot_svg(sessions):
     """Return time-dist plot in SVG format"""
-    cond_labels = [op.split(session)[-1] for session in sessions]
     fig = timedist.do_comparison_plot(sessions)
     _canvas = FigureCanvas(fig)  # savefig requires a canvas
     buf = io.BytesIO()

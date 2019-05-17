@@ -232,6 +232,12 @@ def parse_config(filename):
                 raise ValueError('invalid input line: %s' % li)
             _def_lines.append(li)
 
+    if collecting_def:
+        comment = '\n'.join(_comments)
+        item = ConfigItem(comment=comment, def_lines=_def_lines)
+        setattr(current_section, collecting_def, item)
+        print('finished def for %s' % collecting_def)
+
     return config
 
 

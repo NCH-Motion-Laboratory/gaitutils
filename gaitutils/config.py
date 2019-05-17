@@ -57,7 +57,7 @@ if not isinstance(cfg.plot.emg_yscale, float):
     cfg.plot.emg_yscale = str(cfg.plot.emg_yscale[1])
 if cfg.general.normaldata_files == 'default':
     fn = resource_filename('gaitutils', 'data/normal.gcd')
-    cfg.general['normaldata_files'].value = fn
+    cfg.general['normaldata_files'].value = [fn]
 if cfg.general.videoconv_path == 'default':
     fn = resource_filename('gaitutils', 'thirdparty/ffmpeg2theora.exe')
     cfg.general['videoconv_path'].value = fn

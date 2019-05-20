@@ -281,7 +281,7 @@ class WebReportDialog(QtWidgets.QDialog):
         if item is None:
             return
         port = item.userdata
-        self._browse_localhost(port=port)
+        _browse_localhost(port=port)
 
     def _set_report_button_status(self):
         """Enable report buttons if reports exist, otherwise disable them"""
@@ -318,7 +318,7 @@ class WebReportDialog(QtWidgets.QDialog):
         self.listActiveReports.add_item(app._gaitutils_report_name, data=port)
         # enable delete buttons etc.
         self._set_report_button_status()
-        self._browse_localhost(port=port)
+        _browse_localhost(port=port)
 
 
 class Gaitmenu(QtWidgets.QMainWindow):
@@ -826,7 +826,7 @@ def main():
     # quiet down some noisy loggers
     logging.getLogger('PyQt5.uic').setLevel(logging.WARNING)
     logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
-    logging.getLogger('matplotlib.figure').setLevel(logging.WARNING)    
+    logging.getLogger('matplotlib.figure').setLevel(logging.WARNING)
     logging.getLogger('matplotlib._constrained_layout').setLevel(logging.WARNING)
     logging.getLogger('matplotlib.backends.backend_pdf').setLevel(logging.WARNING)
     logging.getLogger('werkzeug').setLevel(logging.WARNING)

@@ -26,7 +26,7 @@ from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ..numutils import check_hetu
 from ..normaldata import read_session_normaldata
 from ..videos import _collect_session_videos, convert_videos
-from .. import GaitDataError, nexus, cfg, sessionutils, envutils
+from .. import GaitDataError, nexus, cfg, sessionutils, envutils, configdot
 from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
                            copy_session_videos)
@@ -392,8 +392,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         rb_active.setChecked(True)
 
         # add plot layouts to combobox
-        from .. import parse_config
-        cb_items = sorted(parse_config.get_description(lo) or loname
+
+        cb_items = sorted(configdot.get_description(lo) or loname
                           for loname, lo in cfg['layouts'])
         self.cbNexusTrialLayout.addItems(cb_items)
         # set default option to PiG lower body (if it's on the list)
@@ -403,7 +403,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             default_index = 0
         self.cbNexusTrialLayout.setCurrentIndex(default_index)
         # map descriptions to layout names
-        self.layouts_map = {(parse_config.get_description(lo) or loname): loname
+        self.layouts_map = {(configdot.get_description(lo) or loname): loname
                             for loname, lo in cfg['layouts']}
 
         XStream.stdout().messageWritten.connect(self._log_message)

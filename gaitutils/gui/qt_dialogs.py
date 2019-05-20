@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Mar  1 11:11:33 2019
+PyQt dialogs etc.
 
-@author: hus20664877
+@author: Jussi (jnu@iki.fi)
 """
 
 from PyQt5 import uic, QtWidgets
@@ -16,7 +16,7 @@ import ast
 import io
 from collections import defaultdict
 
-from .. import nexus, GaitDataError, cfg, parse_config
+from .. import nexus, GaitDataError, cfg, configdot
 
 
 def qt_matplotlib_window(fig):
@@ -91,9 +91,9 @@ class OptionsDialog(QtWidgets.QDialog):
         tab.setLayout(lout)
         # get items sorted by comment
         items = sorted((item for (itname, item) in section),
-                       key=lambda it: parse_config.get_description(it))
+                       key=lambda it: configdot.get_description(it))
         for item in items:
-            desc = parse_config.get_description(item)
+            desc = configdot.get_description(item)
             input_widget = QtWidgets.QLineEdit()
             input_widget.setText(item.literal_value)
             input_widget.setCursorPosition(0)  # show beginning of line
@@ -125,7 +125,7 @@ class OptionsDialog(QtWidgets.QDialog):
         # build tabs according to cfg
         self.tabWidget = QtWidgets.QTabWidget()
         for secname, sec in cfg:
-            desc = parse_config.get_description(sec) or secname
+            desc = configdot.get_description(sec) or secname
             tab = self._create_tab(sec, secname)
             self.tabWidget.addTab(tab, desc)
 
@@ -143,7 +143,7 @@ class OptionsDialog(QtWidgets.QDialog):
         fname = fout[0]
         if fname:
             try:
-                parse_config.update_config(cfg, fname)
+                configdot.update_config(cfg, fname)
             except ValueError:
                 qt_message_dialog('Could not parse %s' % fname)
             else:
@@ -165,7 +165,7 @@ class OptionsDialog(QtWidgets.QDialog):
             fname = fout[0]
             if fname:
                 with io.open(fname, 'w', encoding='utf8') as f:
-                    txt = parse_config.dump_config(cfg)
+                    txt = configdot.dump_config(cfg)
                     f.writelines(txt)
 
     def _update_inputs(self):

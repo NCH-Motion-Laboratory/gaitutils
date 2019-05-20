@@ -15,7 +15,7 @@ import logging
 from pkg_resources import resource_filename
 
 from . import envutils
-from .parse_config import parse_config, update_config, dump_config
+from .configdot import parse_config, update_config, dump_config
 
 logger = logging.getLogger(__name__)
 

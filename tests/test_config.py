@@ -10,8 +10,8 @@ import pytest
 import logging
 import re
 
-from gaitutils.parse_config import (parse_config, update_config, dump_config,
-                                    RE_COMMENT, RE_SECTION_HEADER, RE_VAR_DEF)
+from gaitutils.configdot import (parse_config, update_config, dump_config,
+                                 RE_COMMENT, RE_SECTION_HEADER, RE_VAR_DEF)
 from utils import run_tests_if_main, _file_path
 
 

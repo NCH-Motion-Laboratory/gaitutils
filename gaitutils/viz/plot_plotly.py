@@ -14,28 +14,12 @@ import plotly
 import plotly.graph_objs as go
 from plotly.matplotlylib.mpltools import merge_color_and_opacity
 import plotly.tools
-import subprocess
 
 from .. import GaitDataError, cfg, layouts, models, normaldata, sessionutils, utils
 from .plot_common import (_get_cycle_name, _truncate_trialname, _var_title,
                           IteratorMapper, _style_mpl_to_plotly)
 
 logger = logging.getLogger(__name__)
-
-
-def _browse_localhost(url=None, port=None):
-    """Open configured browser on url or localhost:port"""
-    if not url:
-        if port:
-            url = '127.0.0.1:%d' % port
-        else:
-            raise ValueError('neither url nor valid localhost port specified')
-    try:
-        proc = subprocess.Popen([cfg.general.browser_path, url])
-        logger.debug('new browser pid %d' % proc.pid)
-    except Exception:
-        raise ValueError('Cannot start configured web browser: %s'
-                         % cfg.general.browser_path)
 
 
 def _plot_vels(vels, labels):
@@ -62,7 +46,8 @@ def _plotly_fill_between(x, ylow, yhigh, **kwargs):
     """Fill area between ylow and yhigh"""
     x_ = np.concatenate([x, x[::-1]])  # construct a closed curve
     y_ = np.concatenate([yhigh, ylow[::-1]])
-    return go.Scatter(x=x_, y=y_, fill='toself', mode='none', hoverinfo='none', **kwargs)
+    return go.Scatter(x=x_, y=y_, fill='toself', mode='none',
+                      hoverinfo='none', **kwargs)
 
 
 def plot_trials_browser(trials, layout, **kwargs):
@@ -266,7 +251,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         if do_plot:
                             t, y = trial.get_model_data(var)
 
-                            # decide style and color 
+                            # decide style and color
                             if style_by['model'] == 'context':
                                 sty = cfg.plot.context_styles[context]
                             elif style_by['model'] == 'session':
@@ -275,6 +260,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 sty = trace_styles.get_prop(trial)
                             elif style_by['model'] == 'cycle':
                                 sty = trace_styles.get_prop(cyc)
+                            elif style_by['model'] == '':
+                                sty = '-'
                             sty = _style_mpl_to_plotly(sty)
 
                             if color_by['model'] == 'context':

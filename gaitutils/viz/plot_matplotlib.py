@@ -17,10 +17,9 @@ import matplotlib.gridspec as gridspec
 import numpy as np
 import logging
 
-from .plot_common import (_truncate_trialname, _get_cycle_name, _var_title,
+from .plot_common import (_get_cycle_name, _var_title,
                           IteratorMapper, _handle_style_and_color_args)
-from .. import (models, normaldata, layouts, cfg, GaitDataError, sessionutils,
-                utils)
+from .. import models, normaldata, layouts, cfg, GaitDataError
 
 
 logger = logging.getLogger(__name__)
@@ -36,7 +35,7 @@ def _plot_vels(vels, labels):
     ax.set_xticklabels(labels, rotation='vertical')
     ax.set_ylabel('Speed (m/s)')
     ax.tick_params(axis='both', which='major', labelsize=8)
-    vavg = np.nanmean(vels)    
+    vavg = np.nanmean(vels)
     ax.set_title('Walking speed for dynamic trials (average %.2f m/s)' % vavg)
     fig.tight_layout()
 
@@ -170,7 +169,8 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
 def _annotate_axis(ax, text):
     """Annotate at center of mpl axis"""
     ax.annotate(text, xy=(.5, .5), xycoords='axes fraction',
-                ha="center", va="center", fontsize=cfg.plot_matplotlib.subtitle_fontsize)
+                ha="center", va="center",
+                fontsize=cfg.plot_matplotlib.subtitle_fontsize)
 
 
 def _remove_ticks_and_labels(ax):
@@ -210,8 +210,10 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     trace_styles = IteratorMapper(cycle(cfg.plot.linestyles))
 
     # compute figure width and height
-    figh = min(nrows*cfg.plot_matplotlib.inch_per_row + 1, cfg.plot_matplotlib.maxh)
-    figw = min(ncols*cfg.plot_matplotlib.inch_per_col, cfg.plot_matplotlib.maxw)
+    figh = min(nrows*cfg.plot_matplotlib.inch_per_row + 1,
+               cfg.plot_matplotlib.maxh)
+    figw = min(ncols*cfg.plot_matplotlib.inch_per_col,
+               cfg.plot_matplotlib.maxw)
     figw, figh = (20, 10)
     fig = Figure(figsize=(figw, figh), constrained_layout=True)
 
@@ -228,7 +230,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     #                            rect=(0, 0, 1, .95))
     # fig = Figure(figsize=(figw, figh),
     #              tight_layout=auto_spacing_params)
-    #fig = Figure(figsize=(figw, figh))
+    # fig = Figure(figsize=(figw, figh))
 
     model_cycles = (cfg.plot.default_model_cycles if model_cycles is None
                     else model_cycles)
@@ -288,7 +290,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                     # depending on name_type, one tracegroup may end up
                     # holding several cycles, which will be under the same
                     # legend entry.
-                    tracegroup = _get_cycle_name(trial, cyc, 
+                    tracegroup = _get_cycle_name(trial, cyc,
                                                  name_type=legend_type)
                     cyclename_full = _get_cycle_name(trial, cyc,
                                                      name_type='full')
@@ -302,12 +304,13 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             # according to cycle context
                             var = context + var
                         elif var[0] != context:
-                            # var context was specified and does not match cycle
+                            # specified var context does not match cycle
                             do_plot = False
 
                         # kinetic var cycles are required to have valid
                         # forceplate data
-                        if normalized and mod.is_kinetic_var(var) and not cyc.on_forceplate:
+                        if (normalized and mod.is_kinetic_var(var) and
+                           not cyc.on_forceplate):
                             do_plot = False
 
                         # plot normal data before first cycle

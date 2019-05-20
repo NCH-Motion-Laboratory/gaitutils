@@ -18,7 +18,7 @@ import numpy as np
 import logging
 
 from .plot_common import (_truncate_trialname, _get_cycle_name, _var_title,
-                          IteratorMapper)
+                          IteratorMapper, _handle_style_and_color_args)
 from .. import (models, normaldata, layouts, cfg, GaitDataError, sessionutils,
                 utils)
 
@@ -191,25 +191,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     if not isinstance(trials, list):
         trials = [trials]
 
-    style_by_defaults = {'model': 'session'}
-    if style_by is None:
-        style_by = dict()
-    elif isinstance(style_by, basestring):
-        style_by = {'model': style_by}
-    elif not isinstance(style_by, dict):
-        raise ValueError('style_by must be str or dict')
-    for k in style_by_defaults.viewkeys() - style_by.viewkeys():
-        style_by[k] = style_by_defaults[k]  # update missing values
-
-    color_by_defaults = {'model': 'trial', 'EMG': 'trial'}
-    if color_by is None:
-        color_by = dict()
-    elif isinstance(color_by, basestring):
-        color_by = {'model': color_by, 'EMG': color_by}
-    elif not isinstance(color_by, dict):
-        raise ValueError('color_by must be str or dict')
-    for k in color_by_defaults.viewkeys() - color_by.viewkeys():
-        color_by[k] = color_by_defaults[k]  # update missing values
+    style_by, color_by = _handle_style_and_color_args(style_by, color_by)
 
     if legend_type is None:
         legend_type = 'short_name_with_cyclename'

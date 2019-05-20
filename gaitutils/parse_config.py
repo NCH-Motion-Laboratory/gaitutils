@@ -270,9 +270,8 @@ def dump_config(cfg):
             if k > 0:
                 yield ''
             sect = getattr(cfg, sectname)
-            sect_comment = sect._comment
-            if sect_comment:
-                yield sect_comment
+            if sect._comment:
+                yield sect._comment
             yield '[%s]' % sectname
             for itemname, item in sect:
                 yield item._comment

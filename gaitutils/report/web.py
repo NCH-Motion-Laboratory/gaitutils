@@ -314,15 +314,15 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
         style_by = dict()
         color_by = dict()
         if is_comparison:
-            style_by['model'] = 'session'
-            color_by['model'] = 'context'
-            color_by['emg'] = 'trial'
+            style_by['model'] = cfg.web_report.comparison_model_style_by
+            color_by['model'] = cfg.web_report.comparison_model_color_by
+            color_by['emg'] = cfg.web_report.comparison_emg_color_by
         else:
-            style_by['model'] = ''
-            color_by['model'] = 'trial'
-            color_by['emg'] = 'trial'
-        legend_type = ('short_name_with_tag_and_cycle' if is_comparison else
-                       'tag_with_cycle')
+            style_by['model'] = cfg.web_report.model_style_by
+            color_by['model'] = cfg.web_report.model_color_by
+            color_by['emg'] = cfg.web_report.emg_color_by
+        legend_type = (cfg.web_report.comparison_legend_type if is_comparison
+                       else cfg.web_report.legend_type)
         try:
             # special layout
             if isinstance(layout, basestring):

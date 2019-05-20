@@ -328,10 +328,7 @@
     <property name="title">
      <string>Reports</string>
     </property>
-    <addaction name="actionWeb_report_from_Nexus_session"/>
     <addaction name="actionWeb_reports"/>
-    <addaction name="separator"/>
-    <addaction name="actionCreate_PDF_report_Nexus"/>
     <addaction name="actionCreate_PDF_report"/>
    </widget>
    <widget class="QMenu" name="menuPlotting">

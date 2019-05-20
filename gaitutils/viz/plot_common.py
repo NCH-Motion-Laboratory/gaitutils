@@ -34,8 +34,32 @@ class IteratorMapper(object):
             return prop
 
 
+def _handle_style_and_color_args(style_by, color_by):
+    """Handle style and color choice"""
+    style_by_defaults = {'model': 'session'}
+    if style_by is None:
+        style_by = dict()
+    elif isinstance(style_by, basestring):
+        style_by = {'model': style_by}
+    elif not isinstance(style_by, dict):
+        raise ValueError('style_by must be str or dict')
+    for k in style_by_defaults.viewkeys() - style_by.viewkeys():
+        style_by[k] = style_by_defaults[k]  # update missing values
+
+    color_by_defaults = {'model': 'trial', 'EMG': 'trial'}
+    if color_by is None:
+        color_by = dict()
+    elif isinstance(color_by, basestring):
+        color_by = {'model': color_by, 'EMG': color_by}
+    elif not isinstance(color_by, dict):
+        raise ValueError('color_by must be str or dict')
+    for k in color_by_defaults.viewkeys() - color_by.viewkeys():
+        color_by[k] = color_by_defaults[k]  # update missing values
+    return style_by, color_by
+
+
 def _style_mpl_to_plotly(style):
-    """Style mapper between plotly and matplotlib"""
+    """Style mapper matplotlib -> plotly"""
     return {'-': 'solid', '--': '5px', '-.': 'dashdot', '..': '2px'}[style]
 
 

@@ -120,7 +120,8 @@ class ConfigItem(object):
     def value(self, _val):
         """Set value and update def lines accordingly"""
         self._val = _val
-        self._def_lines = ['%s = %s' % (self._name, _val)]
+        # use repr formatter %r to get strings in quoted form
+        self._def_lines = ['%s = %r' % (self._name, _val)]
 
     @property
     def literal_value(self):
@@ -252,11 +253,11 @@ def update_config(cfg, filename):
         try:
             sec_old = getattr(cfg, secname)
         except KeyError:
-            logger.warning('section does not exist: %s' % secname)
+            logger.warning('not updating nonexistent section: %s' % secname)
         else:
             for itname, item in sec:
                 if itname not in sec_old:
-                    logger.warning('item does not exist: %s' % itname)
+                    logger.warning('not updating nonexistent item: %s' % itname)
                 else:
                     item_old = sec_old[itname]
                     item_old.def_lines = item.def_lines

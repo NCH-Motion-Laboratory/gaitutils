@@ -46,7 +46,8 @@ def _plotly_fill_between(x, ylow, yhigh, **kwargs):
     """Fill area between ylow and yhigh"""
     x_ = np.concatenate([x, x[::-1]])  # construct a closed curve
     y_ = np.concatenate([yhigh, ylow[::-1]])
-    return go.Scatter(x=x_, y=y_, fill='toself', mode='none', hoverinfo='none', **kwargs)
+    return go.Scatter(x=x_, y=y_, fill='toself', mode='none',
+                      hoverinfo='none', **kwargs)
 
 
 def plot_trials_browser(trials, layout, **kwargs):
@@ -250,7 +251,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         if do_plot:
                             t, y = trial.get_model_data(var)
 
-                            # decide style and color 
+                            # decide style and color
                             if style_by['model'] == 'context':
                                 sty = cfg.plot.context_styles[context]
                             elif style_by['model'] == 'session':
@@ -259,6 +260,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 sty = trace_styles.get_prop(trial)
                             elif style_by['model'] == 'cycle':
                                 sty = trace_styles.get_prop(cyc)
+                            elif style_by['model'] == '':
+                                sty = '-'
                             sty = _style_mpl_to_plotly(sty)
 
                             if color_by['model'] == 'context':

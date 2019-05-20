@@ -318,7 +318,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             color_by['model'] = 'context'
             color_by['emg'] = 'trial'
         else:
-            style_by['model'] = 'context'
+            style_by['model'] = ''
             color_by['model'] = 'trial'
             color_by['emg'] = 'trial'
         legend_type = ('short_name_with_tag_and_cycle' if is_comparison else

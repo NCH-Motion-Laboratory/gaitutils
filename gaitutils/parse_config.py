@@ -196,7 +196,7 @@ def parse_config(filename):
 
     for li in lines:
 
-        print('parsing: %s' % li)
+        # print('parsing: %s' % li)
         secname = parse_section_header(li)
         item_name, val = parse_var_def(li)
 
@@ -206,7 +206,7 @@ def parse_config(filename):
             comment = '\n'.join(_comments)
             item = ConfigItem(comment=comment, def_lines=_def_lines)
             setattr(current_section, collecting_def, item)
-            print('finished def for %s' % collecting_def)
+            # print('finished def for %s' % collecting_def)
             _comments = list()
             collecting_def = None
             _def_lines = list()
@@ -224,7 +224,7 @@ def parse_config(filename):
             _def_lines.append(li)
 
         elif is_comment(li):
-            print('collected comment %s' % li)
+            # print('collected comment %s' % li)
             _comments.append(li)
 
         elif not is_whitespace(li):  # continuation of item definition
@@ -237,7 +237,7 @@ def parse_config(filename):
         comment = '\n'.join(_comments)
         item = ConfigItem(comment=comment, def_lines=_def_lines)
         setattr(current_section, collecting_def, item)
-        print('finished def for %s' % collecting_def)
+        # print('finished def for %s' % collecting_def)
 
     return config
 

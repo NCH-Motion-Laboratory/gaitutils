@@ -219,7 +219,7 @@ def parse_config(filename):
             _comments = list()
 
         elif item_name is not None:  # start of item definition
-            print('parsed: %s=%s' % (item_name, val))
+            # print('parsed: %s=%s' % (item_name, val))
             if not current_section:
                 raise ValueError('item definition outside of section')
             collecting_def = item_name

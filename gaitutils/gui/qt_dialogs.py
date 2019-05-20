@@ -17,6 +17,7 @@ import io
 from collections import defaultdict
 
 from .. import nexus, GaitDataError, cfg, configdot
+from ..config import _handle_cfg_defaults
 
 
 def qt_matplotlib_window(fig):
@@ -102,7 +103,6 @@ class OptionsDialog(QtWidgets.QDialog):
         return tab
 
     def __init__(self, parent, default_tab=0):
-        global cfg
         super(self.__class__, self).__init__(parent)
         _main_layout = QtWidgets.QVBoxLayout(self)
         self._input_widgets = defaultdict(lambda: dict())
@@ -135,7 +135,6 @@ class OptionsDialog(QtWidgets.QDialog):
 
     def load_config_dialog(self):
         """ Bring up load dialog and load selected file. """
-        global cfg
         fout = QtWidgets.QFileDialog.getOpenFileName(self,
                                                      'Load config file',
                                                      op.expanduser('~'),
@@ -151,7 +150,6 @@ class OptionsDialog(QtWidgets.QDialog):
 
     def save_config_dialog(self):
         """Bring up save dialog and save data."""
-        global cfg
         wname, txt = self._update_cfg()
         if wname is not None:
             qt_message_dialog('Invalid input for item %s: %s\n'
@@ -186,6 +184,7 @@ class OptionsDialog(QtWidgets.QDialog):
                     item.value = ast.literal_eval(_widget.text())
                 except SyntaxError:
                     return itemname, _widget.text()
+        _handle_cfg_defaults(cfg)
         return None, None
 
     def accept(self):

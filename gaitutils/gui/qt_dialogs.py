@@ -5,7 +5,7 @@ Created on Fri Mar  1 11:11:33 2019
 @author: hus20664877
 """
 
-from PyQt5 import QtCore, uic, QtWidgets, QtGui
+from PyQt5 import uic, QtWidgets
 from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
                                                 FigureCanvas)
 from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
@@ -22,7 +22,7 @@ from .. import nexus, GaitDataError, cfg, parse_config
 def qt_matplotlib_window(fig):
     """Show matplotlib figure fig in new Qt window. Window is returned"""
     _mpl_win = QtWidgets.QDialog()
-    #_mpl_win.setGeometry(100, 100, 1500, 1000)
+    # _mpl_win.setGeometry(100, 100, 1500, 1000)
     _mpl_win._canvas = FigureCanvas(fig)
     _mpl_win._canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                    QtWidgets.QSizePolicy.Expanding)
@@ -152,7 +152,7 @@ class OptionsDialog(QtWidgets.QDialog):
     def save_config_dialog(self):
         """Bring up save dialog and save data."""
         global cfg
-        wname, txt = self._input_errors()
+        wname, txt = self._update_cfg()
         if wname is not None:
             qt_message_dialog('Invalid input for item %s: %s\n'
                               'Please fix before saving' % (wname, txt))
@@ -164,7 +164,6 @@ class OptionsDialog(QtWidgets.QDialog):
                                                          '(*.cfg)')
             fname = fout[0]
             if fname:
-                self._update_cfg()
                 with io.open(fname, 'w', encoding='utf8') as f:
                     txt = parse_config.dump_config(cfg)
                     f.writelines(txt)
@@ -178,34 +177,25 @@ class OptionsDialog(QtWidgets.QDialog):
                 _widget.setText(val)
                 _widget.setCursorPosition(0)
 
-    def _input_errors(self):
-        """Check input widgets for errors"""
-        for secname, sec in cfg:
-            for itemname, item in sec:
-                _widget = self._input_widgets[secname][itemname]
-                try:
-                    ast.literal_eval(_widget.text())
-                except SyntaxError:
-                    return itemname, _widget.text()
-        return None, None
-
     def _update_cfg(self):
         """Update cfg according to input widgets"""
         for secname, sec in cfg:
             for itemname, item in sec:
                 _widget = self._input_widgets[secname][itemname]
-                val = ast.literal_eval(_widget.text())
-                item.update_value(val)
+                try:
+                    item.value = ast.literal_eval(_widget.text())
+                except SyntaxError:
+                    return itemname, _widget.text()
+        return None, None
 
     def accept(self):
         """ Update config and close dialog, if widget inputs are ok. Otherwise
         show an error dialog """
-        wname, txt = self._input_errors()
+        wname, txt = self._update_cfg()
         if wname is not None:
             qt_message_dialog('Invalid input for item %s: %s\n'
-                              'Please fix before closing' % (wname, txt))
+                              'Please fix before closing or cancel dialog' % (wname, txt))
         else:
-            self._update_cfg()
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
 
 

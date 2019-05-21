@@ -37,7 +37,10 @@ def read_all_normaldata(age=None):
 def read_session_normaldata(session):
     """Reads normal data according to patient info in current session"""
     info = sessionutils.load_info(session)
-    age = age_from_hetu(info['hetu']) if 'hetu' in info else None
+    if info is not None and 'hetu' in info:
+        age = age_from_hetu(info['hetu'])
+    else:
+        age = None
     return read_all_normaldata(age)
 
 

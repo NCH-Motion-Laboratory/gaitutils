@@ -41,7 +41,7 @@ from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg,
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
-from .. import nexus, cfg, read_data
+from .. import nexus, cfg, read_data, GaitDataError
 from ..trial import Trial
 from ..numutils import segment_angles, rms
 from .qt_dialogs import qt_message_dialog, qt_yesno_dialog
@@ -423,7 +423,7 @@ class Markers(object):
                                                    color=col))
             legtxts.append(u'%.3f s: %s' % (mkr, anno))
         ax.legend(artists, legtxts, loc='upper left', ncol=ncol,
-                  prop={'size': cfg.plot.label_fontsize})
+                  prop={'size': cfg.plot_matplotlib.label_fontsize})
 
     @property
     def marker_info(self):
@@ -696,11 +696,11 @@ class TardieuPlot(object):
     @staticmethod
     def _adj_fonts(ax):
         """Adjust font sizes on an axis"""
-        ax.xaxis.label.set_fontsize(cfg.plot.label_fontsize)
-        ax.yaxis.label.set_fontsize(cfg.plot.label_fontsize)
-        ax.title.set_fontsize(cfg.plot.title_fontsize)
+        ax.xaxis.label.set_fontsize(cfg.plot_matplotlib.label_fontsize)
+        ax.yaxis.label.set_fontsize(cfg.plot_matplotlib.label_fontsize)
+        ax.title.set_fontsize(cfg.plot_matplotlib.subtitle_fontsize)
         ax.tick_params(axis='both', which='major',
-                       labelsize=cfg.plot.ticks_fontsize)
+                       labelsize=cfg.plot_matplotlib.ticks_fontsize)
 
     @staticmethod
     def _time_to_frame(times, rate):

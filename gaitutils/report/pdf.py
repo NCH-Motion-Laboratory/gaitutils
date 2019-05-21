@@ -167,11 +167,11 @@ def create_report(sessionpath, info=None, pages=None):
         _savefig(pdf, fig_title)
         _savefig(pdf, fig_vel, header)
         _savefig(pdf, fig_timedist_avg, header)
+        _savefig(pdf, fig_timedist_txt)
         _savefig(pdf, fig_kin_cons, header)
         _savefig(pdf, fig_musclelen_cons, header, footer_musclelen)
         _savefig(pdf, fig_emg_cons, header)
         _savefig(pdf, fig_kin_avg, header)
-        _savefig(pdf, fig_timedist_txt)
 
 
 def create_comparison_report(sessions, pdfpath, pages=None):

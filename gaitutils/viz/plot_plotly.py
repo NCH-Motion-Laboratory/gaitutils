@@ -69,9 +69,9 @@ _plot_cache = dict()  # global for plot_trials
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                 emg_cycles=None, legend_type=None, style_by=None,
                 color_by=None, supplementary_data=None, model_stddev=None,
-                figtitle=None, big_fonts=False):
+                legend=True, figtitle=None, big_fonts=False):
     """Make a plotly plot of layout, including given trials.
-
+    FIXME: legend is currently ignored
     trials: list of gaitutils.Trial instances
     layout: list of lists defining plot layout (see plot.py)
     model_normaldata: dict of normal data for model variables

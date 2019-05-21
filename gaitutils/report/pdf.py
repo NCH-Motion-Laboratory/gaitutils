@@ -27,16 +27,18 @@ page_size = (11.69, 8.27)  # report page size = landscape A4
 
 def _add_footer(fig, txt):
     """Add footer text to mpl Figure"""
-    fig.text(0, 0, txt, fontsize=8, color='black', ha='left', va='bottom')
+    #XXX: currently puts text in right bottom corner    
+    fig.text(1, 0, txt, fontsize=8, color='black', ha='right', va='bottom')
 
 
 def _add_header(fig, txt):
     """Add header text to mpl Figure"""
-    fig.text(0, 1, txt, fontsize=8, color='black', ha='left', va='top')
+    #XXX: currently puts text in left bottom corner
+    fig.text(0, 0, txt, fontsize=8, color='black', ha='left', va='bottom')
 
 
 def _make_text_fig(txt, titlepage=True):
-    """Make a Figure from text"""
+    """Make a Figure from txt"""
     fig = Figure()
     ax = fig.add_subplot(111)
     ax.set_axis_off()
@@ -114,6 +116,9 @@ def create_report(sessionpath, info=None, pages=None):
     footer_musclelen = (u' Normaalidata: %s' % musclelen_ndata if
                         musclelen_ndata else u'')
 
+    color_by = {'model': 'context', 'EMG': 'trial'}
+    style_by = {'model': None}
+
     # trial velocity plot
     fig_vel = None
     if pages['TrialVelocity']:
@@ -130,14 +135,18 @@ def create_report(sessionpath, info=None, pages=None):
     _timedist_txt = session_analysis_text(sessionpath)
     fig_timedist_txt = _make_text_fig(_timedist_txt, titlepage=False)
 
+    # for next 2 plots, disable the legends (too many cycles)
     # kin consistency
     fig_kin_cons = None
     if pages['KinCons']:
         logger.debug('creating kin consistency plot')
         fig_kin_cons = plot_sessions(sessions=[sessionpath],
                                      model_normaldata=model_normaldata,
-                                     style_by='context',
-                                     backend='matplotlib')
+                                     color_by=color_by,
+                                     style_by=style_by,
+                                     backend='matplotlib',
+                                     figtitle='Kinematics/kinetics consistency for %s' % sessiondir,
+                                     legend=False)
 
     # musclelen consistency
     fig_musclelen_cons = None
@@ -145,15 +154,22 @@ def create_report(sessionpath, info=None, pages=None):
         logger.debug('creating muscle length consistency plot')
         fig_musclelen_cons = plot_sessions(sessions=[sessionpath],
                                            layout_name='musclelen',
+                                           color_by=color_by,
+                                           style_by=style_by,
                                            model_normaldata=model_normaldata,
-                                           style_by='context',
-                                           backend='matplotlib')
+                                           backend='matplotlib',
+                                           figtitle='Muscle length consistency for %s' % sessiondir,
+                                           legend=False)
     # EMG consistency
     fig_emg_cons = None
     if do_emg_consistency:
         logger.debug('creating EMG consistency plot')        
         fig_emg_cons = plot_sessions(sessions=[sessionpath],
                                      layout_name='std_emg',
+                                     color_by=color_by,
+                                     style_by=style_by,
+                                     figtitle='EMG consistency for %s' % sessiondir,
+                                     legend=False,
                                      backend='matplotlib')
     # average plots, R/L
     fig_kin_avg = None

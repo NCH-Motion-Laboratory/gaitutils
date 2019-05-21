@@ -182,7 +182,7 @@ def _remove_ticks_and_labels(ax):
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                 emg_cycles=None, legend_type=None, style_by=None,
                 color_by=None, supplementary_data=None, model_stddev=None,
-                figtitle=None):
+                legend=True, figtitle=None):
     """plot trials and return Figure instance"""
 
     if not trials:
@@ -502,24 +502,28 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     if figtitle is not None:
         # constrained_layout does not work well with suptitle
         # (https://github.com/matplotlib/matplotlib/issues/13672)
-        # add extra \n to create whitespace
-        fig.suptitle('%s\n' % figtitle, fontsize=10)
-    # put legend into its own axis, since constrained_layout does not handle fig.legend yet
-    axleg = fig.add_subplot(gridspec_[i+1, :])
-    axleg.axis('off')
-    leg_entries_ = OrderedDict()
-    if mod_normal_lines_:
-        leg_entries_['Norm.'] = mod_normal_lines_
-    if emg_normal_lines_:
-        leg_entries_['EMG norm.'] = emg_normal_lines_
-    leg_entries_.update(leg_entries)
-    leg_ncols = ncols
-    leg = axleg.legend(leg_entries_.values(), leg_entries_.keys(),
-                 fontsize=cfg.plot_matplotlib.legend_fontsize,
-                 loc='upper center', bbox_to_anchor=(.5, 1.05), ncol=leg_ncols)
-    # legend lines may be too thin to see
-    for li in leg.get_lines():
-        li.set_linewidth(2.0)
+        # hack: add extra \n to create whitespace
+        if figtitle and figtitle[-1] != '\n':
+            figtitle = figtitle + '\n'
+        fig.suptitle(figtitle, fontsize=10)
+
+    if legend:
+        # put legend into its own axis, since constrained_layout does not handle fig.legend yet
+        axleg = fig.add_subplot(gridspec_[i+1, :])
+        axleg.axis('off')
+        leg_entries_ = OrderedDict()
+        if mod_normal_lines_:
+            leg_entries_['Norm.'] = mod_normal_lines_
+        if emg_normal_lines_:
+            leg_entries_['EMG norm.'] = emg_normal_lines_
+        leg_entries_.update(leg_entries)
+        leg_ncols = ncols
+        leg = axleg.legend(leg_entries_.values(), leg_entries_.keys(),
+                    fontsize=cfg.plot_matplotlib.legend_fontsize,
+                    loc='upper center', bbox_to_anchor=(.5, 1.05), ncol=leg_ncols)
+        # legend lines may be too thin to see
+        for li in leg.get_lines():
+            li.set_linewidth(2.0)
     return fig
 
 

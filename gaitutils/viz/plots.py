@@ -42,7 +42,7 @@ def plot_sessions(sessions, layout_name=None, model_normaldata=None,
                   tags=None, make_pdf=False,
                   style_by=None, color_by=None, legend_type=None,
                   model_cycles=None, emg_cycles=None,
-                  backend=None, figtitle=None):
+                  backend=None, figtitle=None, legend=True):
     """Plot tagged trials from given session(s)."""
 
     if not isinstance(sessions, list):
@@ -75,7 +75,7 @@ def plot_sessions(sessions, layout_name=None, model_normaldata=None,
                                    style_by=style_by, color_by=color_by,
                                    model_cycles=model_cycles,
                                    emg_cycles=emg_cycles,
-                                   figtitle=figtitle)
+                                   figtitle=figtitle, legend=legend)
 
 
 def plot_session_average(session, layout_name=None, model_normaldata=None,

@@ -23,7 +23,6 @@ def _console_init():
     register_gui_exception_handler()
 
 
-# FIXME: need to load normal data for all plotters
 def plot_nexus_trial():
     """Plot currently loaded Nexus trial"""
     _console_init()
@@ -72,7 +71,12 @@ def plot_nexus_session():
 def plot_nexus_session_average():
     """Kin average plot for session"""
     _console_init()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--layout', type=str)
+    parser.add_argument('--backend', type=str)
+    args = parser.parse_args()
+
     session = nexus.get_sessionpath()
-    figs = plots.plot_session_average(session)
-    for fig in figs:
-        show_fig(fig)
+    fig = plots.plot_session_average(session, layout_name=args.layout,
+                                     backend=args.backend)
+    show_fig(fig)

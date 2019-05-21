@@ -341,6 +341,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 sty = trace_styles.get_prop(trial)
                             elif style_by['model'] == 'cycle':
                                 sty = trace_styles.get_prop(cyc)
+                            elif style_by['model'] is None:
+                                sty = '-'
 
                             if color_by['model'] == 'context':
                                 col = cfg.plot.context_colors[context]
@@ -350,6 +352,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 col = trace_colors.get_prop(trial)
                             elif color_by['model'] == 'cycle':
                                 col = trace_colors.get_prop(cyc)
+                            elif color_by['model'] is None:
+                                col = '#000000'
 
                             line_ = ax.plot(t, y, color=col, linestyle=sty,
                                             linewidth=cfg.plot.model_linewidth,
@@ -441,6 +445,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 col = emg_trace_colors.get_prop(trial)
                             elif color_by['EMG'] == 'cycle':
                                 col = emg_trace_colors.get_prop(cyc)
+                            elif color_by['EMG'] is None:
+                                col = '#000000'
 
                             line_ = ax.plot(t, y*cfg.plot.emg_multiplier, color=col,
                                             linewidth=cfg.plot.emg_linewidth)[0]

@@ -531,8 +531,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
                       finished_func=self._enable_op_buttons,
                       result_func=self._show_plots,
                       sessions=[session],
-                      style_by='context',
-                      color_by='trial',
                       layout_name=lout_name, model_normaldata=model_normaldata,
                       model_cycles=model_cycles,
                       emg_cycles=emg_cycles, backend=backend)

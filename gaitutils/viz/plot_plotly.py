@@ -243,7 +243,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 sty = trace_styles.get_prop(trial)
                             elif style_by['model'] == 'cycle':
                                 sty = trace_styles.get_prop(cyc)
-                            elif style_by['model'] == '':
+                            elif style_by['model'] is None:
                                 sty = '-'
                             sty = _style_mpl_to_plotly(sty)
 
@@ -255,6 +255,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 col = trace_colors.get_prop(trial)
                             elif color_by['model'] == 'cycle':
                                 col = trace_colors.get_prop(cyc)
+                            elif color_by['model'] is None:
+                                col = '#000000'
                             line = dict(width=cfg.plot.model_linewidth,
                                         dash=sty, color=col)
 
@@ -373,6 +375,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 col = emg_trace_colors.get_prop(trial)
                             elif color_by['EMG'] == 'cycle':
                                 col = emg_trace_colors.get_prop(cyc)
+                            elif color_by['EMG'] is None:
+                                col = '#000000'
 
                             col = merge_color_and_opacity(col, cfg.plot.emg_alpha)
                             line = {'width': cfg.plot.emg_linewidth,

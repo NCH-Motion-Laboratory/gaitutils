@@ -8,7 +8,6 @@ from setuptools import setup, find_packages
 # entry points for console scripts
 console_entries = ['gaitmenu=gaitutils.gui._gaitmenu:main',
              'tardieu=gaitutils.gui._tardieu:main',
-             'plotter_gui=gaitutils.gui._plotter_gui:main',
              'nexus_autoproc_session=gaitutils.autoprocess:autoproc_session',
              'nexus_autoproc_trial=gaitutils.autoprocess:autoproc_trial',
              'nexus_automark_trial=gaitutils.autoprocess:automark_trial',

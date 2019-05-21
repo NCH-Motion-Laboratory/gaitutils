@@ -124,7 +124,8 @@ class OptionsDialog(QtWidgets.QDialog):
 
         # build tabs according to cfg
         self.tabWidget = QtWidgets.QTabWidget()
-        for secname, sec in cfg:
+        secs = sorted(((secname, sec) for secname, sec in cfg), key=lambda tup: tup[0])
+        for secname, sec in secs:
             desc = configdot.get_description(sec) or secname
             tab = self._create_tab(sec, secname)
             self.tabWidget.addTab(tab, desc)

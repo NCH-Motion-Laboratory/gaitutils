@@ -53,13 +53,16 @@ def plot_nexus_session():
     parser.add_argument('--unnorm', action='store_true')
     parser.add_argument('--model_cycles', type=str)
     parser.add_argument('--emg_cycles', type=str)
-    parser.add_argument('--tags', type=list)
+    parser.add_argument('--tags', nargs='+')
     args = parser.parse_args()
 
-    tags = args.tags or cfg.eclipse.tags
+    if args.unnorm:
+        args.model_cycles = args.emg_cycles = 'unnormalized'
 
     sessions = [nexus.get_sessionpath()]
-    fig = plots.plot_sessions(sessions, tags=tags,
+    fig = plots.plot_sessions(sessions, tags=args.tags,
+                              backend=args.backend,
+                              layout_name=args.layout,
                               model_cycles=args.model_cycles,
                               emg_cycles=args.emg_cycles)
     show_fig(fig)

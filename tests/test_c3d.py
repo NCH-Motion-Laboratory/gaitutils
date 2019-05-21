@@ -19,14 +19,13 @@ import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 import logging
 
-from gaitutils.config import cfg
-from gaitutils import Trial, read_data, utils
+from gaitutils import read_data, utils, cfg
+from gaitutils.trial import Trial
 from gaitutils.utils import detect_forceplate_events
 from utils import run_tests_if_main, _trial_path, _c3d_path, _file_path
 
 
-# load default cfg so that user settings will not affect testing
-cfg.load_default()
+# FIXME: load default cfg so that user settings will not affect testing
 logger = logging.getLogger(__name__)
 
 

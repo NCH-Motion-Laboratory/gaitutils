@@ -38,10 +38,11 @@ def plot_nexus_trial():
     if args.unnorm:
         args.model_cycles = args.emg_cycles = 'unnormalized'
 
-    fig = plots.plot_nexus_trial(layout_name=args.layout, backend=args.backend,
+    fig = plots.plot_nexus_trial(layout_name=args.layout,
+                                 backend=args.backend,
                                  model_cycles=args.model_cycles,
                                  emg_cycles=args.emg_cycles)
-    show_fig(fig, args.backend)
+    show_fig(fig)
 
 
 def plot_nexus_session():

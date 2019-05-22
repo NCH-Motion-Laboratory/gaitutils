@@ -48,7 +48,7 @@ def _handle_style_and_color_args(style_by, color_by):
     for k in style_by_defaults.viewkeys() - style_by.viewkeys():
         style_by[k] = style_by_defaults[k]  # update missing values
     if not set(style_by.values()).issubset(vals_ok):
-        raise ValueError('invalid style_by argument in' % style_by.values())
+        raise ValueError('invalid style_by argument in %s' % style_by.items())
     
     color_by_defaults = {'model': cfg.plot.model_color_by, 'EMG': cfg.plot.emg_color_by}
     if color_by is None:
@@ -60,7 +60,7 @@ def _handle_style_and_color_args(style_by, color_by):
     for k in color_by_defaults.viewkeys() - color_by.viewkeys():
         color_by[k] = color_by_defaults[k]  # update missing values
     if not set(color_by.values()).issubset(vals_ok):
-        raise ValueError('invalid color_by argument in' % color_by.values())
+        raise ValueError('invalid color_by argument in %s' % color_by.items())
 
     return style_by, color_by
 

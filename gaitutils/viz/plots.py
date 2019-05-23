@@ -78,14 +78,18 @@ def plot_sessions(sessions, layout_name=None, model_normaldata=None,
                                    figtitle=figtitle, legend=legend)
 
 
-def plot_session_average(session, layout_name=None, model_normaldata=None,
-                         backend=None):
+def plot_session_average(session, layout_name=None, tags=None,
+                         model_normaldata=None, backend=None):
     """Plot average of all session trials"""
 
     layout = layouts.get_layout(layout_name)
     backend_lib = get_backend(backend)
 
-    c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
+    if tags is None:
+        tags = cfg.eclipse.tags
+
+    c3ds = sessionutils.get_c3ds(session, tags=tags,
+                                 trial_type='dynamic')
     if not c3ds:
         raise GaitDataError('No dynamic trials found for current session')
 

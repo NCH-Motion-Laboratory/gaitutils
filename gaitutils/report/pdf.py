@@ -137,16 +137,30 @@ def create_report(sessionpath, info=None, pages=None):
 
     # for next 2 plots, disable the legends (too many cycles)
     # kin consistency
-    fig_kin_cons = None
-    if pages['KinCons']:
-        logger.debug('creating kin consistency plot')
-        fig_kin_cons = plot_sessions(sessions=[sessionpath],
-                                     model_normaldata=model_normaldata,
-                                     color_by=color_by,
-                                     style_by=style_by,
-                                     backend='matplotlib',
-                                     figtitle='Kinematics/kinetics consistency for %s' % sessiondir,
-                                     legend=False)
+    fig_kinematics_cons = None
+    if pages['KinematicsCons']:
+        logger.debug('creating kinematics consistency plot')
+        fig_kinematics_cons = plot_sessions(sessions=[sessionpath],
+                                            layout_name='lb_kinematics',
+                                            model_normaldata=model_normaldata,
+                                            color_by=color_by,
+                                            style_by=style_by,
+                                            backend='matplotlib',
+                                            figtitle='Kinematics consistency for %s' % sessiondir,
+                                            legend=False)
+
+    # kinetics consistency
+    fig_kinetics_cons = None
+    if pages['KineticsCons']:
+        logger.debug('creating kinetics consistency plot')
+        fig_kinetics_cons = plot_sessions(sessions=[sessionpath],
+                                          layout_name='lb_kinetics',
+                                          model_normaldata=model_normaldata,
+                                          color_by=color_by,
+                                          style_by=style_by,
+                                          backend='matplotlib',
+                                          figtitle='Kinetics consistency for %s' % sessiondir,
+                                          legend=False)
 
     # musclelen consistency
     fig_musclelen_cons = None
@@ -184,7 +198,8 @@ def create_report(sessionpath, info=None, pages=None):
         _savefig(pdf, fig_vel, header)
         _savefig(pdf, fig_timedist_avg, header)
         _savefig(pdf, fig_timedist_txt)
-        _savefig(pdf, fig_kin_cons, header)
+        _savefig(pdf, fig_kinematics_cons, header)
+        _savefig(pdf, fig_kinetics_cons, header)        
         _savefig(pdf, fig_musclelen_cons, header, footer_musclelen)
         _savefig(pdf, fig_emg_cons, header)
         _savefig(pdf, fig_kin_avg, header)

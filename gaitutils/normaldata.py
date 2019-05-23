@@ -23,7 +23,12 @@ def read_all_normaldata(age=None):
     """ Read all normal data defined in config. If age is specified, include
     age specific normaldata. """
     model_normaldata = dict()
-    for fn in cfg.general.normaldata_files:
+    # we generously accept both list and string
+    if isinstance(cfg.general.normaldata_files, list):
+        normaldata_files = cfg.general.normaldata_files
+    else:
+        normaldata_files = [cfg.general.normaldata_files]
+    for fn in normaldata_files:
         ndata = read_normaldata(fn)
         model_normaldata.update(ndata)
     if age is not None:

@@ -74,7 +74,7 @@ class Noncycle(object):
     def __init__(self, context, trial=None):
         self.context = context
         self.trial = trial
-        self.name = 'unnormalized (%s)' % context
+        self.name = 'unnorm. (%s)' % context
         self.toeoffn = None
         self.on_forceplate = False
         self.start = None

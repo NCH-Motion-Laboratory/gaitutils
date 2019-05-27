@@ -340,15 +340,14 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     legendgroups.add(tracename)
 
                             # set subplot params if not already done
-                            #FIXME: not clear if we can rely on title dict here
-                            if not fig['layout'][yaxis]['title']:
+                            if not fig['layout'][yaxis]['title']['text']:
                                 #fig['layout'][xaxis].update(showticklabels=False)
                                 yunit = mod.units[var]
                                 if yunit == 'deg':
                                     yunit = u'\u00B0'  # Unicode degree sign
                                 ydesc = [s[:3] for s in mod.ydesc[var]]  # shorten
                                 ylabel = (u'%s %s %s' % (ydesc[0], yunit, ydesc[1])).encode('utf-8')
-                                fig['layout'][yaxis].update(title=ylabel, titlefont={'size': label_fontsize})
+                                fig['layout'][yaxis].update(title={'text': ylabel, 'font': {'size': label_fontsize}})
                                 # less decimals on hover label
                                 fig['layout'][yaxis].update(hoverformat='.2f')
 
@@ -412,10 +411,10 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             legendgroups.add(tracename_emg)
                             fig.append_trace(trace, i+1, j+1)
 
-                        if not fig['layout'][yaxis]['title']:
-                            logger.debug('setting EMG title')
+                        if not fig['layout'][yaxis]['title']['text']:
                             emg_yrange = np.array([-cfg.plot.emg_yscale, cfg.plot.emg_yscale]) * cfg.plot.emg_multiplier
-                            fig['layout'][yaxis].update(title=cfg.plot.emg_ylabel, titlefont={'size': label_fontsize},
+                            fig['layout'][yaxis].update(title={'text': cfg.plot.emg_ylabel,
+                                                               'font': {'size': label_fontsize}},
                                                         range=emg_yrange)
                             # prevent changes due to legend clicks etc.
                             if normalized:
@@ -435,8 +434,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     axes_last = ['xaxis%d' % (ind+1) for ind in inds_last]
     xlabel = '% of gait cycle' if normalized else 'frame'
     for ax in axes_last:
-        fig['layout'][ax].update(title=xlabel,
-                                 titlefont={'size': label_fontsize},
+        fig['layout'][ax].update(title={'text': xlabel,
+                                        'font': {'size': label_fontsize}},
                                  showticklabels=True)
 
     margin = go.layout.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741

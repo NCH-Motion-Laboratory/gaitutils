@@ -40,7 +40,7 @@ def qt_matplotlib_window(fig):
 
 
 def qt_message_dialog(msg):
-    """ Show message with an 'OK' button. """
+    """Show message with 'OK' button"""
     dlg = QtWidgets.QMessageBox()
     dlg.setWindowTitle('Message')
     dlg.setText(msg)
@@ -50,7 +50,7 @@ def qt_message_dialog(msg):
 
 
 def qt_yesno_dialog(msg):
-    """ Show message with 'Yes' and 'No buttons, return role accordingly """
+    """Show message with Yes and No buttons, return role accordingly"""
     dlg = QtWidgets.QMessageBox()
     dlg.setWindowTitle('Confirm')
     dlg.setText(msg)
@@ -63,7 +63,7 @@ def qt_yesno_dialog(msg):
 
 
 def qt_dir_chooser():
-    """Selector dialog to select dir (or multiple dirs)."""
+    """Selector dialog to select dir (or multiple dirs)"""
     # native dialog - single dir only
     return [QtWidgets.QFileDialog.getExistingDirectory(None, 'Select session')]
     # non-native dialog - multiple dirs. a bit messy, currently not in use
@@ -83,7 +83,7 @@ def qt_dir_chooser():
 
 
 class OptionsDialog(QtWidgets.QDialog):
-    """ Display a tabbed dialog for changing gaitutils options """
+    """Dialog for changing gaitutils options"""
 
     def _create_tab(self, section, secname):
         """Create a tab for the tab widget, according to config items"""
@@ -135,7 +135,7 @@ class OptionsDialog(QtWidgets.QDialog):
         self.setLayout(_main_layout)
 
     def load_config_dialog(self):
-        """ Bring up load dialog and load selected file. """
+        """Bring up load dialog and load selected file"""
         fout = QtWidgets.QFileDialog.getOpenFileName(self,
                                                      'Load config file',
                                                      op.expanduser('~'),
@@ -150,7 +150,7 @@ class OptionsDialog(QtWidgets.QDialog):
                 self._update_inputs()
 
     def save_config_dialog(self):
-        """Bring up save dialog and save data."""
+        """Bring up save dialog and save data"""
         wname, txt = self._update_cfg()
         if wname is not None:
             qt_message_dialog('Invalid input for item %s: %s\n'
@@ -189,8 +189,7 @@ class OptionsDialog(QtWidgets.QDialog):
         return None, None
 
     def accept(self):
-        """ Update config and close dialog, if widget inputs are ok. Otherwise
-        show an error dialog """
+        """Update config and close dialog, if widget inputs are ok. Otherwise show error dialog"""
         wname, txt = self._update_cfg()
         if wname is not None:
             qt_message_dialog('Invalid input for item %s: %s\n'
@@ -200,7 +199,7 @@ class OptionsDialog(QtWidgets.QDialog):
 
 
 class ChooseSessionsDialog(QtWidgets.QDialog):
-    """Display a dialog for picking sessions"""
+    """A dialog for picking report sessions"""
 
     def __init__(self, min_sessions=1, max_sessions=3):
         super(self.__class__, self).__init__()

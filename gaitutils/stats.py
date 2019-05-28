@@ -8,6 +8,7 @@ Compute statistics across/within trials
 
 import logging
 import numpy as np
+import os.path as op
 from collections import defaultdict
 
 from .trial import Trial, Gaitcycle
@@ -17,15 +18,29 @@ logger = logging.getLogger(__name__)
 
 
 class AvgTrial(Trial):
-    """ Trial containing cycle-averaged data, for use with plotter
-    TODO: does not support legends yet """
+    """Trial containing cycle-averaged data"""
 
-    def __init__(self, c3dfiles, fp_cycles_only=False, max_dist=None):
-        avgdata, stddata, n_ok, _ = average_trials(c3dfiles, max_dist=max_dist,
+    def __repr__(self):
+        s = '<AvgTrial |'
+        s += ' trial name: %s' % self.trialname
+        s += ', trials: %s' % self.source
+        s += '>'
+        return s
+
+    def __init__(self, trials, sessionpath=None, fp_cycles_only=False, max_dist=None):
+        avgdata, stddata, n_ok, _ = average_trials(trials, max_dist=max_dist,
                                                    fp_cycles_only=fp_cycles_only)
         # nfiles may be misleading since not all trials may contain valid data
-        self.nfiles = len(c3dfiles)
-        self.trialname = '%d trial average' % self.nfiles
+        self.nfiles = len(trials)
+        self.trials = trials
+        if sessionpath:
+            self.sessionpath = sessionpath
+            self.sessiondir = op.split(sessionpath)[-1]
+            self.trialname = '%s avg.' % self.sessiondir
+        else:
+            self.trialname = '%d trial avg.' % self.nfiles
+            self.sessiondir = None
+            self.sessionpath = None
         self.source = 'averaged data'
         self.name = 'Unknown'
         self._model_data = avgdata
@@ -39,8 +54,6 @@ class AvgTrial(Trial):
         self.cycles.append(Gaitcycle(0, 101, 60, 'L', True, 1, 1000,
                                      name='left', trial=self))
         self.ncycles = 2
-        self.sessionpath = None
-        self.sessiondir = None
         self.eclipse_data = defaultdict(lambda: '', {})
         self.emg = None
 

@@ -30,6 +30,8 @@ from .. import (cfg, normaldata, models, layouts, GaitDataError,
 from ..trial import Trial
 from ..viz.plot_plotly import plot_trials
 from ..viz import timedist
+from ..stats import AvgTrial
+
 
 logger = logging.getLogger(__name__)
 
@@ -175,14 +177,20 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     # make Trial instances for all dynamic and static trials
     trials_dyn = list()
     trials_static = list()
+    _trials_avg = dict()
     for session in sessions:
+        _trials_avg[session] = list()
         for tag in dyn_tags:
             if c3ds[session]['dynamic'][tag]:
                 tri = Trial(c3ds[session]['dynamic'][tag][0])
                 trials_dyn.append(tri)
+                _trials_avg[session].append(tri)
         if c3ds[session]['static'][static_tag]:
             tri = Trial(c3ds[session]['static']['Static'][0])
             trials_static.append(tri)
+
+    # make average trials
+    avg_trials = [AvgTrial(_trials_avg[session], sessionpath=session) for session in sessions]
 
     # read some extra data from trials and create supplementary data
     tibial_torsion = dict()
@@ -280,6 +288,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     _layouts = OrderedDict([
             ('Patient info', 'patient_info'),
             ('Kinematics', cfg.layouts.lb_kinematics),
+            ('Kinematics average', 'kinematics_average'),
             ('Static kinematics', 'static_kinematics'),
             ('Static EMG', 'static_emg'),
             ('Kinematics + kinetics', cfg.layouts.lb_kin_web),
@@ -368,6 +377,19 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                                        legend_type='short_name_with_cyclename',
                                        style_by=style_by, color_by=color_by,
                                        big_fonts=True)
+                    graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
+                                            style={'height': '100%'})
+                    graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
+                                            % (len(_layouts)+k),
+                                            style={'height': '100%'})
+
+                elif layout == 'kinematics_average':
+                    layout_ = cfg.layouts.lb_kinematics
+                    fig_ = plot_trials(avg_trials, layout_,
+                                       style_by=style_by, color_by=color_by,                    
+                                       model_normaldata=model_normaldata,
+                                       big_fonts=True)
+                                       
                     graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
                                             style={'height': '100%'})
                     graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'

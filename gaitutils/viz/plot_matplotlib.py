@@ -20,7 +20,7 @@ import logging
 from .plot_common import (_get_cycle_name, _var_title,
                           IteratorMapper, _handle_style_and_color_args)
 from .. import models, normaldata, layouts, cfg, GaitDataError
-
+from ..stats import AvgTrial
 
 logger = logging.getLogger(__name__)
 
@@ -181,7 +181,7 @@ def _remove_ticks_and_labels(ax):
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                 emg_cycles=None, legend_type=None, style_by=None,
-                color_by=None, supplementary_data=None, model_stddev=None,
+                color_by=None, supplementary_data=None,
                 legend=True, figtitle=None):
     """plot trials and return Figure instance"""
 
@@ -369,17 +369,19 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                                         marker='^')
 
                             # each cycle gets its own stddev plot
-                            if (model_stddev is not None and normalized and
-                               y is not None and var in model_stddev):
-                                sdata = model_stddev[var]
-                                stdx = np.linspace(0, 100, sdata.shape[0])
-                                stddev_ = ax.fill_between(stdx, y-sdata,
-                                                y+sdata,
-                                                color=cfg.plot.
-                                                model_stddev_colors[cyc.context],
-                                                alpha=cfg.plot.
-                                                model_stddev_alpha)
-                                leg_entries['Stddev for %s' % tracegroup] = stddev_
+                            if isinstance(trial, AvgTrial):
+                                model_stddev = trial.stddev_data
+                                if (model_stddev is not None and normalized and
+                                y is not None and var in model_stddev):
+                                    sdata = model_stddev[var]
+                                    stdx = np.linspace(0, 100, sdata.shape[0])
+                                    stddev_ = ax.fill_between(stdx, y-sdata,
+                                                    y+sdata,
+                                                    color=cfg.plot.
+                                                    model_stddev_colors[cyc.context],
+                                                    alpha=cfg.plot.
+                                                    model_stddev_alpha)
+                                    leg_entries['Stddev for %s' % tracegroup] = stddev_
 
                             # add supplementary data
                             # if cyc in supplementary_data:

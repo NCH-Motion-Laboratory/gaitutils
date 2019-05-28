@@ -93,12 +93,11 @@ def plot_session_average(session, layout_name=None, tags=None,
     if not c3ds:
         raise GaitDataError('No dynamic trials found for current session')
 
-    atrial = stats.AvgTrial(c3ds)
-    maintitle_ = '%s (%d trial average)' % (op.split(session)[-1], atrial.nfiles)
+    atrial = stats.AvgTrial(c3ds, sessionpath=session)
+    maintitle_ = '%s (%d trial average)' % (atrial.sessiondir, atrial.nfiles)
 
     return backend_lib.plot_trials(atrial, layout,
                                    model_normaldata=model_normaldata,
-                                   model_stddev=atrial.stddev_data,
                                    color_by='context',
                                    figtitle=maintitle_)
 

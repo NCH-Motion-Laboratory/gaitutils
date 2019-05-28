@@ -16,9 +16,11 @@ from plotly.matplotlylib.mpltools import merge_color_and_opacity
 import plotly.tools
 
 from .. import GaitDataError, cfg, layouts, models, normaldata
+from ..stats import AvgTrial
 from .plot_common import (_get_cycle_name, _var_title, IteratorMapper,
                           _style_mpl_to_plotly,
                           _handle_style_and_color_args)
+
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +70,7 @@ _plot_cache = dict()  # global for plot_trials
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                 emg_cycles=None, legend_type=None, style_by=None,
-                color_by=None, supplementary_data=None, model_stddev=None,
+                color_by=None, supplementary_data=None,
                 legend=True, figtitle=None, big_fonts=False):
     """Make a plotly plot of layout, including given trials.
     FIXME: legend is currently ignored
@@ -176,6 +178,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     # plot actual data
     for trial in trials:
+
         # these are the actual Gaitcycle instances
         model_cycles_ = trial.get_cycles(model_cycles)
         emg_cycles_ = trial.get_cycles(emg_cycles)
@@ -299,26 +302,28 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                                            marker=marker)
                                 fig.append_trace(toeoff_marker, i+1, j+1)
 
-                            # each cycle gets its own stddev plot
-                            if (model_stddev is not None and normalized and
-                               y is not None and var in model_stddev):
-                                sdata = model_stddev[var]
-                                stdx = np.linspace(0, 100, sdata.shape[0])
-                                fillcolor_ = cfg.plot.model_stddev_colors[cyc.context]
-                                fillcolor = merge_color_and_opacity(fillcolor_, cfg.plot.model_stddev_alpha)
-                                ntrace = _plotly_fill_between(stdx,
-                                                            y-sdata,
-                                                            y+sdata,
-                                                            fillcolor=fillcolor,
-                                                            name='Stddev for %s' % tracename,
-                                                            legendgroup='Stddev for %s' % tracename,
-                                                            showlegend=show_legend,
-                                                            line=dict(width=0))  # no border lines
-                                fig.append_trace(ntrace, i+1, j+1)
-
                             # add trace to figure
                             fig.append_trace(trace, i+1, j+1)
                             legendgroups.add(tracename)
+
+                            # each cycle gets its own stddev plot
+                            if isinstance(trial, AvgTrial):
+                                model_stddev = trial.stddev_data
+                                if (model_stddev is not None and normalized and
+                                   y is not None and var in model_stddev):
+                                    sdata = model_stddev[var]
+                                    stdx = np.linspace(0, 100, sdata.shape[0])
+                                    fillcolor_ = cfg.plot.model_stddev_colors[cyc.context]
+                                    fillcolor = merge_color_and_opacity(fillcolor_, cfg.plot.model_stddev_alpha)
+                                    ntrace = _plotly_fill_between(stdx,
+                                                                y-sdata,
+                                                                y+sdata,
+                                                                fillcolor=fillcolor,
+                                                                name='Stddev, %s' % tracename,
+                                                                legendgroup='Stddev, %s' % tracename,
+                                                                showlegend=show_legend,
+                                                                line=dict(width=0))  # no border lines
+                                    fig.append_trace(ntrace, i+1, j+1)
 
                             # add supplementary data
                             if cyc in supplementary_data:

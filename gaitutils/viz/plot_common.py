@@ -25,6 +25,11 @@ class IteratorMapper(object):
         self._iterator = iterator
         self._prop_dict = dict()
 
+    def __repr__(self):
+        s = '<IteratorMapper|'
+        s += str(self._prop_dict)
+        return s
+
     def get_prop(self, key):
         if key in self._prop_dict:
             return self._prop_dict[key]

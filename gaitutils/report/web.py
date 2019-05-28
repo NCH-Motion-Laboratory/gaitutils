@@ -322,16 +322,20 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
         # use session specific line style
         style_by = dict()
         color_by = dict()
+        emg_mode = None
         if is_comparison:
             style_by['model'] = cfg.web_report.comparison_model_style_by
             color_by['model'] = cfg.web_report.comparison_model_color_by
             color_by['emg'] = cfg.web_report.comparison_emg_color_by
+            if cfg.web_report.comparison_emg_rms:
+                emg_mode = 'rms'
         else:
             style_by['model'] = cfg.web_report.model_style_by
             color_by['model'] = cfg.web_report.model_color_by
             color_by['emg'] = cfg.web_report.emg_color_by
         legend_type = (cfg.web_report.comparison_legend_type if is_comparison
                        else cfg.web_report.legend_type)
+
         try:
             # special layout
             if isinstance(layout, basestring):
@@ -407,6 +411,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             else:
                 fig_ = plot_trials(trials_dyn, layout,
                                    model_normaldata=model_normaldata,
+                                   emg_mode=emg_mode,
                                    legend_type=legend_type,
                                    style_by=style_by, color_by=color_by,
                                    supplementary_data=supplementary_default,

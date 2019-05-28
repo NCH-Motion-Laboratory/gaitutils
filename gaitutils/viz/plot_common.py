@@ -55,11 +55,11 @@ def _handle_style_and_color_args(style_by, color_by):
     if not set(style_by.values()).issubset(vals_ok):
         raise ValueError('invalid style_by argument in %s' % style_by.items())
     
-    color_by_defaults = {'model': cfg.plot.model_color_by, 'EMG': cfg.plot.emg_color_by}
+    color_by_defaults = {'model': cfg.plot.model_color_by, 'emg': cfg.plot.emg_color_by}
     if color_by is None:
         color_by = dict()
     elif isinstance(color_by, basestring):
-        color_by = {'model': color_by, 'EMG': color_by}
+        color_by = {'model': color_by, 'emg': color_by}
     elif not isinstance(color_by, dict):
         raise ValueError('color_by must be str or dict')
     for k in color_by_defaults.viewkeys() - color_by.viewkeys():

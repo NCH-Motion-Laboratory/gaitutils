@@ -15,7 +15,7 @@ import plotly.graph_objs as go
 from plotly.matplotlylib.mpltools import merge_color_and_opacity
 import plotly.tools
 
-from .. import GaitDataError, cfg, layouts, models, normaldata
+from .. import GaitDataError, cfg, layouts, models, normaldata, numutils
 from ..stats import AvgTrial
 from .plot_common import (_get_cycle_name, _var_title, IteratorMapper,
                           _style_mpl_to_plotly,
@@ -69,7 +69,7 @@ _plot_cache = dict()  # global for plot_trials
 
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
-                emg_cycles=None, legend_type=None, style_by=None,
+                emg_cycles=None, emg_mode=None, legend_type=None, style_by=None,
                 color_by=None, supplementary_data=None,
                 legend=True, figtitle=None, big_fonts=False):
     """Make a plotly plot of layout, including given trials.
@@ -90,6 +90,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
         trials = [trials]
 
     style_by, color_by = _handle_style_and_color_args(style_by, color_by)
+
+    logger.debug(style_by)
+    logger.debug(color_by)    
 
     if legend_type is None:
         legend_type = 'short_name_with_cyclename'
@@ -369,21 +372,24 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         if do_plot:
                             tracename_emg = 'EMG:' + tracename
 
-                            t_, y = trial.get_emg_data(var)
+                            t_, y_ = trial.get_emg_data(var)
                             t = (t_ / trial.samplesperframe if not normalized
                                  else t_)
+                            y = (numutils.rms(y_, cfg.emg.rms_win)
+                                 if emg_mode == 'rms' else y_)
 
-                            if color_by['EMG'] == 'session':
+                            if color_by['emg'] == 'session':
                                 col = emg_trace_colors.get_prop(trial.sessiondir)
-                            elif color_by['EMG'] == 'trial':
+                            elif color_by['emg'] == 'trial':
                                 col = emg_trace_colors.get_prop(trial)
-                            elif color_by['EMG'] == 'cycle':
+                            elif color_by['emg'] == 'cycle':
                                 col = emg_trace_colors.get_prop(cyc)
-                            elif color_by['EMG'] is None:
+                            elif color_by['emg'] is None:
                                 col = '#000000'
 
                             col = merge_color_and_opacity(col, cfg.plot.emg_alpha)
-                            line = {'width': cfg.plot.emg_linewidth,
+                            lw = cfg.plot.emg_rms_linewidth if emg_mode == 'rms' else cfg.plot.emg_linewidth
+                            line = {'width': lw,
                                     'color': col}
 
                             # the tracename_emg legend group does not actually exist

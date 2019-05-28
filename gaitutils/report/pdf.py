@@ -116,7 +116,7 @@ def create_report(sessionpath, info=None, pages=None):
     footer_musclelen = (u' Normaalidata: %s' % musclelen_ndata if
                         musclelen_ndata else u'')
 
-    color_by = {'model': 'context', 'EMG': 'trial'}
+    color_by = {'model': 'context', 'emg': 'trial'}
     style_by = {'model': None}
 
     # trial velocity plot

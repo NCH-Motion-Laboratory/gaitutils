@@ -441,13 +441,13 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             t_, y = trial.get_emg_data(var)
                             t = t_ if normalized else t_ / trial.samplesperframe
 
-                            if color_by['EMG'] == 'session':
+                            if color_by['emg'] == 'session':
                                 col = emg_trace_colors.get_prop(trial.sessiondir)
-                            elif color_by['EMG'] == 'trial':
+                            elif color_by['emg'] == 'trial':
                                 col = emg_trace_colors.get_prop(trial)
-                            elif color_by['EMG'] == 'cycle':
+                            elif color_by['emg'] == 'cycle':
                                 col = emg_trace_colors.get_prop(cyc)
-                            elif color_by['EMG'] is None:
+                            elif color_by['emg'] is None:
                                 col = '#000000'
 
                             line_ = ax.plot(t, y*cfg.plot.emg_multiplier, color=col,

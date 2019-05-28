@@ -339,8 +339,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     fig.append_trace(strace, i+1, j+1)
                                     legendgroups.add(tracename)
 
-                            # set subplot params if not already done
-                            if not fig['layout'][yaxis]['title']['text']:
+                            # adjust subplot once
+                            if cyc_ind == 0:
                                 #fig['layout'][xaxis].update(showticklabels=False)
                                 yunit = mod.units[var]
                                 if yunit == 'deg':
@@ -411,7 +411,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             legendgroups.add(tracename_emg)
                             fig.append_trace(trace, i+1, j+1)
 
-                        if not fig['layout'][yaxis]['title']['text']:
+                        # adjust subplot once
+                        if cyc_ind == 0:
                             emg_yrange = np.array([-cfg.plot.emg_yscale, cfg.plot.emg_yscale]) * cfg.plot.emg_multiplier
                             fig['layout'][yaxis].update(title={'text': cfg.plot.emg_ylabel,
                                                                'font': {'size': label_fontsize}},

@@ -12,6 +12,7 @@ dependencies:
   - scipy
   - python=2.7
   - openpyxl
+  - plotly
   - pyqt
   - spyder
   - jupyter
@@ -22,10 +23,7 @@ dependencies:
   - xlutils
   - pip:
     - dash
-    - dash-core-components
-    - dash-html-components
-    - dash-renderer
+    - dash-daq
     - gaitutils
-    - plotly
     - pytest
 

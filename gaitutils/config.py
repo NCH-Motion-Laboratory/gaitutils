@@ -43,20 +43,21 @@ if (sys.platform.find('win') != -1 and sys.executable.find('pythonw') != -1 and
     sys.stdout = sys.stderr = blackhole
 
 # default config
-cfg_template = resource_filename(__name__, 'data/default.cfg')
+cfg_template_fn = resource_filename(__name__, 'data/default.cfg')
 # user specific config
 # On Windows, this typically puts the config at C:\Users\Username, since the
 # USERPROFILE environment variable points there. Putting the config in a
 # networked home dir requires some tinkering with environment variables
 # (e.g. setting HOME)
 homedir = op.expanduser('~')
-cfg_user = op.join(homedir, '.gaitutils.cfg')
+cfg_user_fn = op.join(homedir, '.gaitutils.cfg')
 
 
 # provide the global cfg instance
 # read template config
-cfg = parse_config(cfg_template)
-if op.isfile(cfg_user):
+cfg = parse_config(cfg_template_fn)
+if op.isfile(cfg_user_fn):
+    cfg_user = parse_config(cfg_user_fn)
     update_config(cfg, cfg_user)
 else:
     print('no config file, trying to create %s' % cfg_user)

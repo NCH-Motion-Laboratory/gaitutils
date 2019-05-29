@@ -86,9 +86,25 @@ def test_config():
 
 def test_config_update():
     fn = _file_path('valid.cfg')
+    fn_new = _file_path('updates.cfg')
+    cfg_new = parse_config(fn_new)
     cfg_ = parse_config(fn)
-    fn = _file_path('updates.cfg')
-    cfg_ = update_config(cfg_, fn)
+    update_config(cfg_, cfg_new, update_comments=False)
+    assert 'section3' in cfg_
+    assert 'newvar' in cfg_.section2
+    assert cfg_.section1._comment == '# old section1 comment'
+    cfg_ = parse_config(fn)
+    update_config(cfg_, cfg_new, create_new_sections=False)
+    assert 'section3' not in cfg_
+    assert 'newvar' in cfg_.section2
+    cfg_ = parse_config(fn)
+    update_config(cfg_, cfg_new, create_new_sections=True,
+                  create_new_items=False)
+    assert 'section3' in cfg_
+    assert 'newvar' not in cfg_.section2
+    cfg_ = parse_config(fn)
+    update_config(cfg_, cfg_new, update_comments=True)
+
 
 
 def test_orphaned_def():

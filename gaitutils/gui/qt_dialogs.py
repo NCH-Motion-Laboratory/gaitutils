@@ -143,7 +143,11 @@ class OptionsDialog(QtWidgets.QDialog):
         fname = fout[0]
         if fname:
             try:
-                configdot.update_config(cfg, fname)
+                cfg_new = configdot.parse_config(fname)
+                configdot.update_config(cfg, cfg_new,
+                                        create_new_sections=False,
+                                        create_new_items=False,
+                                        update_comments=False)
             except ValueError:
                 qt_message_dialog('Could not parse %s' % fname)
             else:

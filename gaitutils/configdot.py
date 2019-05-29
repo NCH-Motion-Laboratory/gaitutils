@@ -196,7 +196,7 @@ def parse_config(filename):
     collecting_def = False
     config = ConfigContainer()
 
-    for li in lines:
+    for lnum, li in enumerate(lines):
 
         # print('parsing: %s' % li)
         secname = parse_section_header(li)
@@ -220,9 +220,12 @@ def parse_config(filename):
             _comments = list()
 
         elif item_name is not None:  # start of item definition
-            # print('parsed: %s=%s' % (item_name, val))
             if not current_section:
-                raise ValueError('item definition outside of section')
+                raise ValueError('item definition outside of section '
+                                 'on line %d' % lnum)
+            elif item_name in current_section:
+                raise ValueError('duplicate definition on line %d' % lnum)
+            # print('parsed: %s=%s' % (item_name, val))
             collecting_def = item_name
             _def_lines.append(li)
 
@@ -245,22 +248,28 @@ def parse_config(filename):
     return config
 
 
-def update_config(cfg, filename):
-    """Update existing Config from filename. Will not create new sections or
-    keys"""
-    cfg_new = parse_config(filename)
+def update_config(cfg, cfg_new, create_new_sections=True,
+                  create_new_items=True, update_comments=False):
+    """Update existing Config instance from another."""
     for secname, sec in cfg_new:
-        try:
-            sec_old = getattr(cfg, secname)
-        except KeyError:
-            logger.warning('not updating nonexistent section: %s' % secname)
-        else:
+        if secname not in cfg and create_new_sections:
+            # create nonexisting section anew
+            setattr(cfg, secname, sec)
+        elif secname in cfg:
+            # update items in existing section
+            sec_old = cfg[secname]
+            if update_comments:
+                sec_old._comment = sec._comment
             for itname, item in sec:
-                if itname not in sec_old:
-                    logger.warning('not updating nonexistent item: %s' % itname)
-                else:
-                    item_old = sec_old[itname]
-                    item_old.def_lines = item.def_lines
+                if itname in sec_old:
+                    if update_comments:
+                        setattr(sec_old, itname, item)
+                    else:
+                        # update definition only
+                        item_old = sec_old[itname]
+                        item_old.def_lines = item.def_lines
+                elif create_new_items:
+                    setattr(sec_old, itname, item)
 
 
 def dump_config(cfg):

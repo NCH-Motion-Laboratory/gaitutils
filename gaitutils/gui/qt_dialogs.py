@@ -99,7 +99,7 @@ class OptionsDialog(QtWidgets.QDialog):
             input_widget.setText(item.literal_value)
             input_widget.setCursorPosition(0)  # show beginning of line
             lout.addRow(desc, input_widget)
-            self._input_widgets[secname][item._name] = input_widget
+            self._input_widgets[secname][item.name] = input_widget
         return tab
 
     def __init__(self, parent, default_tab=0):

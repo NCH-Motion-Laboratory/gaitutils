@@ -11,7 +11,8 @@ import logging
 import re
 
 from gaitutils.configdot import (parse_config, update_config, dump_config,
-                                 RE_COMMENT, RE_SECTION_HEADER, RE_VAR_DEF)
+                                 RE_COMMENT, RE_SECTION_HEADER, RE_VAR_DEF,
+                                 get_description, _parse_config)
 from utils import run_tests_if_main, _file_path
 
 
@@ -81,7 +82,8 @@ def test_config():
     assert secs == ['section1', 'section2']
     assert cfg_.section1.var1 == 1
     assert 'list' in cfg_.section1.var2
-    assert cfg_.section1['var1']._comment == '# this is var1'
+    assert cfg_.section1['var1']._comment == 'this is var1'
+    assert cfg_.section2.mydict['c'] == 3
 
 
 def test_config_update():
@@ -92,7 +94,7 @@ def test_config_update():
     update_config(cfg_, cfg_new, update_comments=False)
     assert 'section3' in cfg_
     assert 'newvar' in cfg_.section2
-    assert cfg_.section1._comment == '# old section1 comment'
+    assert cfg_.section1._comment == 'old section1 comment'
     cfg_ = parse_config(fn)
     update_config(cfg_, cfg_new, create_new_sections=False)
     assert 'section3' not in cfg_
@@ -104,7 +106,6 @@ def test_config_update():
     assert 'newvar' not in cfg_.section2
     cfg_ = parse_config(fn)
     update_config(cfg_, cfg_new, update_comments=True)
-
 
 
 def test_orphaned_def():
@@ -121,18 +122,23 @@ def test_invalid_def():
         parse_config(fn)
 
 
-def _test_def_last_line():
+def test_def_last_line():
     """Test cfg with multiline def terminating on last line"""
     fn = _file_path('def_last_line.cfg')
     cfg = parse_config(fn)
     assert 'foo' in cfg.section2
 
 
-def test_dump_config():
+def test_write_read_cycle():
     fn = _file_path('valid.cfg')
     cfg_ = parse_config(fn)
     txt = dump_config(cfg_)
-    assert txt
+    txtlines = txt.split('\n')
+    cfg_back = _parse_config(txtlines)
+    for secname, sec in cfg_:
+        assert secname in cfg_back
+        for itemname, item in sec:
+            assert itemname in getattr(cfg_back, secname)
 
 
-run_tests_if_main()
+#run_tests_if_main()

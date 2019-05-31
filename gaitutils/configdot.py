@@ -69,59 +69,23 @@ def parse_section_header(s):
 def get_description(item_or_section):
     """Returns a nice description based on section or item comment. This is not
     implemented as an instance method to avoid polluting the class namespace"""
-    m = re.match(RE_COMMENT, item_or_section._comment)
-    if m:
-        desc = m.group(1)
-        return desc[:1].upper() + desc[1:]
+    desc = item_or_section._comment
+    # currently just capitalizes first letter of comment string
+    return desc[:1].upper() + desc[1:]
 
 
 class ConfigItem(object):
     """Holds data for a config item"""
 
-    def __init__(self, value=None, def_lines=None, comment=None):
+    def __init__(self, name=None, value=None, comment=None):
         if comment is None:
             comment = ''
         self._comment = comment
-        if def_lines is None:
-            if value is None:
-                raise ValueError('need either definition line or value')
-            else:
-                self.value = value
-        else:
-            if not isinstance(def_lines, list):
-                def_lines = [def_lines]
-            self.def_lines = def_lines
+        self.name = name
+        self.value = value
 
     def __repr__(self):
-        return '<ConfigItem| %s = %r>' % (self._name, self.value)
-
-    @property
-    def def_lines(self):
-        return self._def_lines
-
-    @def_lines.setter
-    def def_lines(self, _lines):
-        """Evaluate def lines"""
-        item_def = ''.join(_lines)
-        self._name, _val_literal = parse_var_def(item_def)
-        if self._name is None:
-            raise ValueError('invalid definition')
-        try:
-            self._val = ast.literal_eval(_val_literal)
-        except SyntaxError:
-            raise ValueError('invalid definition: %s' % item_def)
-        self._def_lines = _lines
-
-    @property
-    def value(self):
-        return self._val
-
-    @value.setter
-    def value(self, _val):
-        """Set value and update def lines accordingly"""
-        self._val = _val
-        # use repr formatter %r to get strings in quoted form
-        self._def_lines = ['%s = %r' % (self._name, _val)]
+        return '<ConfigItem| %s = %r>' % (self.name, self.value)
 
     @property
     def literal_value(self):
@@ -130,8 +94,8 @@ class ConfigItem(object):
 
     @property
     def item_def(self):
-        """Pretty-print item definition with indentation"""
-        return '\n'.join(self.def_lines)
+        """Print item definition"""
+        return '%s = %r' % (self.name, self.value)
 
 
 class ConfigContainer(object):
@@ -175,7 +139,7 @@ class ConfigContainer(object):
             self.__dict__['_items'][attr].value = value
         else:
             # implicitly create a new ConfigItem
-            self.__dict__['_items'][attr] = ConfigItem(value=value)
+            self.__dict__['_items'][attr] = ConfigItem(name=attr, value=value)
 
     def __repr__(self):
         s = '<ConfigContainer|'
@@ -185,65 +149,98 @@ class ConfigContainer(object):
 
 
 def parse_config(filename):
-    """Parse cfg lines (ConfigParser format) into a Config instance"""
-
     with open(filename, 'r') as f:
         lines = f.read().splitlines()
+    return _parse_config(lines)
+
+
+def _parse_config(lines):
+
+    """Parse INI files into a ConfigContainer instance.
+    Supports:
+        -multiline variable definitions
+    Does not support:
+        -inline comments (would be too confusing with multiline defs)
+        -nested sections (though possible with ConfigContainer)
+    """
 
     _comments = list()  # comments for current variable
-    _def_lines = list()
+    _def_lines = list()  # definition lines for current variable
     current_section = None
     collecting_def = False
     config = ConfigContainer()
 
-    for lnum, li in enumerate(lines):
+    for lnum, li in enumerate(lines, 1):
+        # every line is either: comment, section header, variable definition,
+        # continuation of variable definition, or whitespace
 
-        # print('parsing: %s' % li)
         secname = parse_section_header(li)
         item_name, val = parse_var_def(li)
 
-        # whether to finish an item def
-        if collecting_def and (secname or item_name is not None or
-                               is_comment(li) or is_whitespace(li)):
-            comment = '\n'.join(_comments)
-            item = ConfigItem(comment=comment, def_lines=_def_lines)
-            setattr(current_section, collecting_def, item)
-            # print('finished def for %s' % collecting_def)
-            _comments = list()
-            collecting_def = None
-            _def_lines = list()
-
+        # new section
         if secname:
-            comment = '\n'.join(_comments)
+            if collecting_def:  # did not finish definition
+                raise ValueError('unfinished definition at line %d' % lnum)
+            comment = ' '.join(_comments)
             current_section = ConfigContainer(comment=comment)
             setattr(config, secname, current_section)
             _comments = list()
 
-        elif item_name is not None:  # start of item definition
-            if not current_section:
+        # new item definition
+        elif item_name:
+            if collecting_def:  # did not finish previous definition
+                raise ValueError('unfinished definition at line %d' % lnum)
+            elif not current_section:
                 raise ValueError('item definition outside of section '
                                  'on line %d' % lnum)
             elif item_name in current_section:
                 raise ValueError('duplicate definition on line %d' % lnum)
-            # print('parsed: %s=%s' % (item_name, val))
-            collecting_def = item_name
-            _def_lines.append(li)
+            try:
+                val_eval = ast.literal_eval(val)
+                # if eval is successful, record the variable
+                comment = ' '.join(_comments)
+                item = ConfigItem(comment=comment, name=item_name,
+                                  value=val_eval)
+                setattr(current_section, item_name, item)
+                _comments = list()
+                _def_lines = list()
+                collecting_def = None
+            except (ValueError, SyntaxError):  # eval failed, continued def?
+                collecting_def = item_name
+                _def_lines.append(val)
+                continue
 
         elif is_comment(li):
-            # print('collected comment %s' % li)
-            _comments.append(li)
+            if collecting_def:  # did not finish definition
+                raise ValueError('unfinished definition at line %d' % lnum)
+            m = re.match(RE_COMMENT, li)
+            cmnt = m.group(1)
+            _comments.append(cmnt)
 
-        elif not is_whitespace(li):  # continuation of item definition
-            if collecting_def is None:
-                # continuation outside of item def
-                raise ValueError('invalid input line: %s' % li)
-            _def_lines.append(li)
+        elif is_whitespace(li):
+            if collecting_def:  # did not finish definition
+                raise ValueError('unfinished definition at line %d' % lnum)
 
-    if collecting_def:  # finish def if it ended on the last line
-        comment = '\n'.join(_comments)
-        item = ConfigItem(comment=comment, def_lines=_def_lines)
-        setattr(current_section, collecting_def, item)
-        # print('finished def for %s' % collecting_def)
+        # either a continued def or a syntax error
+        else:
+            if not collecting_def:
+                raise ValueError('syntax error at line %d: %s' % (lnum, li))
+            _def_lines.append(li.strip())
+            try:
+                val_new = ''.join(_def_lines)
+                val_eval = ast.literal_eval(val_new)
+                comment = ' '.join(_comments)
+                item = ConfigItem(comment=comment,
+                                  name=collecting_def, value=val_eval)
+                setattr(current_section, collecting_def, item)
+                _comments = list()
+                _def_lines = list()
+                collecting_def = None
+            except (ValueError, SyntaxError):  # cannot evaluate (yet)
+                continue
+
+    if collecting_def:  # did not finish definition
+        raise ValueError('unfinished definition at line %d: %s' % (lnum, li))
 
     return config
 
@@ -264,10 +261,9 @@ def update_config(cfg, cfg_new, create_new_sections=True,
                 if itname in sec_old:
                     if update_comments:
                         setattr(sec_old, itname, item)
-                    else:
-                        # update definition only
+                    else:  # update value only
                         item_old = sec_old[itname]
-                        item_old.def_lines = item.def_lines
+                        item_old.value = item.value
                 elif create_new_items:
                     setattr(sec_old, itname, item)
 
@@ -281,9 +277,9 @@ def dump_config(cfg):
                 yield ''
             sect = getattr(cfg, sectname)
             if sect._comment:
-                yield sect._comment
+                yield '# %s ' % sect._comment
             yield '[%s]' % sectname
-            for itemname, item in sect:
-                yield item._comment
+            for _, item in sect:
+                yield '# %s' % item._comment
                 yield item.item_def
     return u'\n'.join(_gen_dump(cfg))

@@ -76,10 +76,14 @@ def get_analysis(c3dfile, condition='unknown'):
     keyed by var and context. First key can optionally be a condition label."""
     logger.debug('getting analysis values from %s' % c3dfile)
     acq = _get_c3dacq(c3dfile)
-    vars_ = _get_c3d_metadata_field(acq, 'ANALYSIS', 'NAMES')
-    units = _get_c3d_metadata_field(acq, 'ANALYSIS', 'UNITS')
-    contexts = _get_c3d_metadata_field(acq, 'ANALYSIS', 'CONTEXTS')
-    vals = _get_c3d_metadata_field(acq, 'ANALYSIS', 'VALUES')
+    try:
+        vars_ = _get_c3d_metadata_field(acq, 'ANALYSIS', 'NAMES')
+        units = _get_c3d_metadata_field(acq, 'ANALYSIS', 'UNITS')
+        contexts = _get_c3d_metadata_field(acq, 'ANALYSIS', 'CONTEXTS')
+        vals = _get_c3d_metadata_field(acq, 'ANALYSIS', 'VALUES')
+    except ValueError:
+        raise GaitDataError('Cannot read time-distance parameters from %s'
+                            % c3dfile)
 
     # build a nice output dict
     di = dict()

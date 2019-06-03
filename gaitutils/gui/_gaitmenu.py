@@ -26,7 +26,7 @@ from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ..numutils import check_hetu
 from ..normaldata import read_session_normaldata
 from ..videos import _collect_session_videos, convert_videos
-from ..envutils import root_logger
+from .. import root_logger
 from .. import GaitDataError, nexus, cfg, sessionutils, envutils, configdot
 from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,

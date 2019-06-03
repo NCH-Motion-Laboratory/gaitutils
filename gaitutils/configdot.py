@@ -271,15 +271,15 @@ def update_config(cfg, cfg_new, create_new_sections=True,
 def dump_config(cfg):
     """Produce text version of Config instance that can be read back"""
     def _gen_dump(cfg):
-        sectnames = sorted(sname for (sname, sec) in cfg)
-        for k, sectname in enumerate(sectnames):
-            if k > 0:
-                yield ''
-            sect = getattr(cfg, sectname)
+        sects = sorted(cfg, key=lambda tup: tup[0])  # sort by name
+        for sectname, sect in sects:
+            if sectname != sects[0][0]:
+                yield ''  # empty line before each section (not the first)
             if sect._comment:
                 yield '# %s ' % sect._comment
             yield '[%s]' % sectname
-            for _, item in sect:
+            items = sorted(sect, key=lambda tup: tup[0])
+            for itemname, item in items:
                 yield '# %s' % item._comment
                 yield item.item_def
     return u'\n'.join(_gen_dump(cfg))

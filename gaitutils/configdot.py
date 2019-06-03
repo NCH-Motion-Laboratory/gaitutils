@@ -93,9 +93,29 @@ class ConfigItem(object):
         return repr(self.value)
 
     @property
-    def item_def(self):
-        """Print item definition"""
-        return '%s = %r' % (self.name, self.value)
+    def item_def(self, multiline=True):
+        """Prettyprint item definition"""
+        def _prettyprint_value():
+            MAX_LINE_LEN = 70
+            is_dict = isinstance(self.value, dict)
+            is_list = isinstance(self.value, list)
+            is_long = len(self.name) + 3 + len(self.literal_value) > MAX_LINE_LEN
+            if multiline and (is_list or is_dict) and is_long:
+                indent_str = ' ' * (len(self.name) + 4)
+                yield '[' if is_list else '{'
+                for k, it in enumerate(self.value):
+                    if k > 0:
+                        yield indent_str
+                    if is_list:
+                        yield repr(it)
+                    elif is_dict:
+                        yield '%r: %r' % (it, self.value[it])
+                    if k < len(self.value) - 1:
+                        yield ',\n'
+                yield ']' if is_list else '}'
+            else:
+                yield self.literal_value
+        return '%s = %s' % (self.name, ''.join(_prettyprint_value()))
 
 
 class ConfigContainer(object):

@@ -70,12 +70,15 @@ def _shutdown_server():
     func()
 
 
-def _report_name(sessions):
+def _report_name(sessions, long_name=True):
     """Create a title for the dash report"""
     sessions_str = ' / '.join([op.split(s)[-1] for s in sessions])
-    report_type = ('Single session report:' if len(sessions) == 1
-                   else 'Comparison report:')
-    return '%s %s' % (report_type, sessions_str)
+    if long_name:
+        report_type = ('Single session report' if len(sessions) == 1
+                       else 'Comparison report')
+    else:
+        report_type = 'Single' if len(sessions) == 1 else 'Comparison'
+    return '%s: %s' % (report_type, sessions_str)
 
 
 def dash_report(info=None, sessions=None, tags=None, signals=None):
@@ -469,6 +472,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     # use local packaged versions of JavaScript libs etc. (no internet needed)
     app.css.config.serve_locally = True
     app.scripts.config.serve_locally = True
+    app.title = _report_name(sessions, long_name=False)
 
     # this is for generating the classnames in the CSS
     num2words = {1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five',

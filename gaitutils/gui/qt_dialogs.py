@@ -146,7 +146,7 @@ class OptionsDialog(QtWidgets.QDialog):
                 cfg_new = configdot.parse_config(fname)
                 configdot.update_config(cfg, cfg_new,
                                         create_new_sections=False,
-                                        create_new_items=False,
+                                        create_new_items=['layouts'],
                                         update_comments=False)
             except ValueError:
                 qt_message_dialog('Could not parse %s' % fname)

@@ -60,9 +60,9 @@ if op.isfile(cfg_user_fn):
     cfg_user = parse_config(cfg_user_fn)
     update_config(cfg, cfg_user)
 else:
-    print('no config file, trying to create %s' % cfg_user)
+    print('no config file, trying to create %s' % cfg_user_fn)
     cfg_txt = dump_config(cfg)
-    with io.open(cfg_user, 'w', encoding='utf8') as f:
+    with io.open(cfg_user_fn, 'w', encoding='utf8') as f:
         f.writelines(cfg_txt)
 
 _handle_cfg_defaults(cfg)

@@ -14,7 +14,6 @@ import sys
 import logging
 from pkg_resources import resource_filename
 
-from . import envutils
 from .configdot import parse_config, update_config, dump_config
 
 logger = logging.getLogger(__name__)
@@ -24,7 +23,7 @@ def _handle_cfg_defaults(cfg):
     """Handle some deprecated/changed types for user convenience"""
     if not isinstance(cfg.plot.emg_yscale, float):
         ysc = cfg.plot.emg_yscale[1]
-        print('WARNING: emg_yscale was changed to float, using %g' % ysc)
+        logger.warning('emg_yscale was changed to float, using %g' % ysc)
         cfg.plot.emg_yscale = str(cfg.plot.emg_yscale[1])
     if cfg.general.normaldata_files == 'default':
         fn = resource_filename('gaitutils', 'data/normal.gcd')
@@ -32,15 +31,6 @@ def _handle_cfg_defaults(cfg):
     if cfg.general.videoconv_path == 'default':
         fn = resource_filename('gaitutils', 'thirdparty/ffmpeg2theora.exe')
         cfg.general['videoconv_path'].value = fn
-
-
-""" Work around stdout and stderr not being available, if we are run
-using pythonw.exe on Windows. Without this, exception will be raised
-e.g. on any print statement. """
-if (sys.platform.find('win') != -1 and sys.executable.find('pythonw') != -1 and
-   not envutils.run_from_ipython()):
-    blackhole = open(os.devnull, 'w')
-    sys.stdout = sys.stderr = blackhole
 
 # default config
 cfg_template_fn = resource_filename(__name__, 'data/default.cfg')
@@ -56,6 +46,7 @@ cfg_user_fn = op.join(homedir, '.gaitutils.cfg')
 # read template config
 cfg = parse_config(cfg_template_fn)
 if op.isfile(cfg_user_fn):
+    logger.debug('reading user config from %s' % cfg_user_fn)
     cfg_user = parse_config(cfg_user_fn)
     # update config from user file, but do not overwrite comments
     # new config items are only allowed in layouts section
@@ -64,7 +55,7 @@ if op.isfile(cfg_user_fn):
                   create_new_items=['layouts'],
                   update_comments=False)
 else:
-    print('no config file, trying to create %s' % cfg_user_fn)
+    logger.warning('no config file, trying to create %s' % cfg_user_fn)
     cfg_txt = dump_config(cfg)
     with io.open(cfg_user_fn, 'w', encoding='utf8') as f:
         f.writelines(cfg_txt)

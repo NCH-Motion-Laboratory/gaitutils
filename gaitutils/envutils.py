@@ -12,14 +12,38 @@ import traceback
 import subprocess
 import psutil
 import os.path as op
+import os
 from pkg_resources import resource_filename
+import logging
 
 from .gui._windows import error_exit
+
+# XXX: code below might rather belong to __init__.py
+# fake stdout and stderr not being available if run
+# under pythonw.exe on Windows
+if (sys.platform.find('win') != -1 and sys.executable.find('pythonw') != -1 and
+   not run_from_ipython()):
+    blackhole = open(os.devnull, 'w')
+    sys.stdout = sys.stderr = blackhole
+
+# create the root logger
+root_logger = logging.getLogger()
+handler = logging.StreamHandler()   # log to sys.stdout
+handler.setFormatter(logging.Formatter("%(name)s: %(message)s"))
+root_logger.addHandler(handler)
+root_logger.setLevel(logging.DEBUG)
+
+# quiet down some noisy loggers
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
+logging.getLogger('PyQt5.uic').setLevel(logging.WARNING)
+logging.getLogger('werkzeug').setLevel(logging.WARNING)
+
+# this is our module-specific logger
+logger = logging.getLogger(__name__)
 
 
 class GaitDataError(Exception):
     pass
-
 
 def _count_script_instances(scriptname):
     """Count running instances of Python script"""
@@ -42,17 +66,17 @@ def _git_autoupdate():
     mod_dir = resource_filename('gaitutils', '')
     repo_dir = op.abspath(op.join(mod_dir, op.pardir))
     if op.isdir(op.join(repo_dir, '.git')):
-        print('running git autoupdate')
+        logger.debug('running git autoupdate')
         o = subprocess.check_output(['git', 'pull'], cwd=repo_dir)
         updated = 'pdating' in o  # XXX: fragile as hell
         if updated:
-            print('autoupdate status: %s' % o)
+            logger.debug('autoupdate status: %s' % o)
             return True
         else:
-            print('package already up to date')
+            logger.debug('package already up to date')
             return False
     else:  # not a git repo
-        print('%s is a git repo, not running autoupdate' % repo_dir)
+        logger.debug('%s is a git repo, not running autoupdate' % repo_dir)
         return False
 
 

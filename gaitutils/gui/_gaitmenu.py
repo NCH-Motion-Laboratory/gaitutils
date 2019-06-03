@@ -26,6 +26,7 @@ from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ..numutils import check_hetu
 from ..normaldata import read_session_normaldata
 from ..videos import _collect_session_videos, convert_videos
+from ..envutils import root_logger
 from .. import GaitDataError, nexus, cfg, sessionutils, envutils, configdot
 from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
@@ -811,23 +812,11 @@ def main():
 
     sys.excepthook = my_excepthook
 
-    logger = logging.getLogger()
-    handler = QtHandler()  # log to Qt logging widget
-    # handler = logging.StreamHandler()   # log to sys.stdout
-
-    handler.setFormatter(logging.
-                         Formatter("%(name)s: %(levelname)s: %(message)s"))
+    # add the Qt logging handler to root logger
+    # it shows log messages in our QTextEdit widget
+    handler = QtHandler()
     handler.setFormatter(logging.Formatter("%(name)s: %(message)s"))
-    logger.addHandler(handler)
-    logger.setLevel(logging.DEBUG)
-
-    # quiet down some noisy loggers
-    logging.getLogger('PyQt5.uic').setLevel(logging.WARNING)
-    logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
-    logging.getLogger('matplotlib.figure').setLevel(logging.WARNING)
-    logging.getLogger('matplotlib._constrained_layout').setLevel(logging.WARNING)
-    logging.getLogger('matplotlib.backends.backend_pdf').setLevel(logging.WARNING)
-    logging.getLogger('werkzeug').setLevel(logging.WARNING)
+    root_logger.addHandler(handler)
 
     gaitmenu = Gaitmenu()
     gaitmenu.show()

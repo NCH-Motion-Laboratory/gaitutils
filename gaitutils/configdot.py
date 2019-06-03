@@ -257,10 +257,7 @@ def update_config(cfg, cfg_new, create_new_sections=True,
             _create_new_items = secname in create_new_items
         else:
             _create_new_items = create_new_items
-        if secname not in cfg and create_new_sections:
-            # create nonexisting section anew
-            setattr(cfg, secname, sec)
-        elif secname in cfg:
+        if secname in cfg:
             # section exists, update the items
             sec_old = cfg[secname]
             if update_comments:
@@ -276,6 +273,15 @@ def update_config(cfg, cfg_new, create_new_sections=True,
                 elif _create_new_items:
                     # item does not exist and can be created
                     setattr(sec_old, itname, item)
+                else:
+                    logger.warning('unknown config item: [%s]/%s'
+                                   % (secname, itname))
+        elif create_new_sections:
+            # create nonexisting section anew
+            setattr(cfg, secname, sec)
+        else:
+            logger.warning('unknown config section: %s' % secname)
+
 
 
 def dump_config(cfg):

@@ -45,7 +45,7 @@ def _add_nexus_path(vicon_path):
 
     nexus_path = _find_nexus_path(vicon_path)
     if nexus_path is None:
-        print('cannot locate Nexus installation directory under %s'
+        logger.debug('cannot locate Nexus installation directory under %s'
               % vicon_path)
         return
 
@@ -53,7 +53,7 @@ def _add_nexus_path(vicon_path):
     if sdk_path not in sys.path:
         sys.path.append(sdk_path)
     else:
-        print('%s already in sys.path' % sdk_path)
+        logger.debug('%s already in sys.path' % sdk_path)
 
     # import from Win32 or Win64 according to bitness of Python interpreter
     bitness = '64' if sys.maxsize > 2**32 else '32'
@@ -65,25 +65,25 @@ def _add_nexus_path(vicon_path):
     win_other = 'Win32' if win == 'Win64' else 'Win64'
     _win_sdk_other = op.join(nexus_path, 'SDK', win_other)
     if _win_sdk_other in sys.path:
-        print('%s already in sys.path, removing' % _win_sdk_other)
+        logger.debug('%s already in sys.path, removing' % _win_sdk_other)
         sys.path.remove(_win_sdk_other)
 
     if _win_sdk_path not in sys.path:
-        print('using Nexus SDK from %s' % _win_sdk_path)
+        logger.debug('using Nexus SDK from %s' % _win_sdk_path)
         sys.path.append(_win_sdk_path)
     else:
-        print('%s already in sys.path' % _win_sdk_path)
+        logger.debug('%s already in sys.path' % _win_sdk_path)
 
 
 if sys.version_info.major >= 3:
-    print('running on Python 3 or newer, cannot import Nexus API (yet)')
+    logger.debug('running on Python 3 or newer, cannot import Nexus API (yet)')
 else:
     vicon_path = op.normpath(cfg.general.vicon_path)
     _add_nexus_path(vicon_path)
     try:
         import ViconNexus
     except ImportError:
-        print('cannot import Vicon Nexus SDK')
+        logger.debug('cannot import Vicon Nexus SDK')
 
 sys.stdout.flush()  # make sure import warnings get printed
 

@@ -8,7 +8,6 @@ from __future__ import print_function
 
 from builtins import str
 import os.path as op
-import os
 import io
 import sys
 import logging

@@ -180,7 +180,7 @@ def _parse_config(lines):
         # new section
         if secname:
             if collecting_def:  # did not finish definition
-                raise ValueError('unfinished definition at line %d' % lnum)
+                raise ValueError('could not evaluate definition at line %d' % lnum)
             comment = ' '.join(_comments)
             current_section = ConfigContainer(comment=comment)
             setattr(config, secname, current_section)
@@ -189,7 +189,7 @@ def _parse_config(lines):
         # new item definition
         elif item_name:
             if collecting_def:  # did not finish previous definition
-                raise ValueError('unfinished definition at line %d' % lnum)
+                raise ValueError('could not evaluate definition at line %d' % lnum)
             elif not current_section:
                 raise ValueError('item definition outside of section '
                                  'on line %d' % lnum)
@@ -212,14 +212,14 @@ def _parse_config(lines):
 
         elif is_comment(li):
             if collecting_def:  # did not finish definition
-                raise ValueError('unfinished definition at line %d' % lnum)
+                raise ValueError('could not evaluate definition at line %d' % lnum)
             m = re.match(RE_COMMENT, li)
             cmnt = m.group(1)
             _comments.append(cmnt)
 
         elif is_whitespace(li):
             if collecting_def:  # did not finish definition
-                raise ValueError('unfinished definition at line %d' % lnum)
+                raise ValueError('could not evaluate definition at line %d' % lnum)
 
         # either a continued def or a syntax error
         else:
@@ -236,11 +236,11 @@ def _parse_config(lines):
                 _comments = list()
                 _def_lines = list()
                 collecting_def = None
-            except (ValueError, SyntaxError):  # cannot evaluate (yet)
+            except (ValueError, SyntaxError):  # cannot evaluate def (yet)
                 continue
 
     if collecting_def:  # did not finish definition
-        raise ValueError('unfinished definition at line %d: %s' % (lnum, li))
+        raise ValueError('could not evaluate definition at line %d: %s' % (lnum, li))
 
     return config
 

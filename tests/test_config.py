@@ -106,6 +106,15 @@ def test_config_update():
     assert 'newvar' not in cfg_.section2
     cfg_ = parse_config(fn)
     update_config(cfg_, cfg_new, update_comments=True)
+    assert cfg_.section1._comment == 'updated section1 comment'
+    cfg_ = parse_config(fn)
+    update_config(cfg_, cfg_new, create_new_items=['section2'])
+    assert 'newvar' in cfg_.section2
+    cfg_ = parse_config(fn)
+    update_config(cfg_, cfg_new, create_new_items=['section1'])
+    assert 'newvar' not in cfg_.section2
+
+
 
 
 def test_orphaned_def():

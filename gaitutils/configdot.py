@@ -135,6 +135,8 @@ class ConfigContainer(object):
         if isinstance(value, ConfigItem) or isinstance(value, ConfigContainer):
             # replace existing section/item
             self.__dict__['_items'][attr] = value
+        elif attr == '_comment':
+            self.__dict__['_comment'] = value
         elif attr in self._items:
             # update value of existing item (by syntax sec.item = value)
             self.__dict__['_items'][attr].value = value
@@ -156,7 +158,6 @@ def parse_config(filename):
 
 
 def _parse_config(lines):
-
     """Parse INI files into a ConfigContainer instance.
     Supports:
         -multiline variable definitions
@@ -248,24 +249,32 @@ def _parse_config(lines):
 
 def update_config(cfg, cfg_new, create_new_sections=True,
                   create_new_items=True, update_comments=False):
-    """Update existing Config instance from another."""
+    """Update existing Config instance from another.
+    create_new_items can be boolean OR a list of section names
+    into which new items are allowed to be created."""
     for secname, sec in cfg_new:
+        if isinstance(create_new_items, list):
+            _create_new_items = secname in create_new_items
+        else:
+            _create_new_items = create_new_items
         if secname not in cfg and create_new_sections:
             # create nonexisting section anew
             setattr(cfg, secname, sec)
         elif secname in cfg:
-            # update items in existing section
+            # section exists, update the items
             sec_old = cfg[secname]
             if update_comments:
                 sec_old._comment = sec._comment
             for itname, item in sec:
                 if itname in sec_old:
+                    # item exists, update
                     if update_comments:
                         setattr(sec_old, itname, item)
                     else:  # update value only
                         item_old = sec_old[itname]
                         item_old.value = item.value
-                elif create_new_items:
+                elif _create_new_items:
+                    # item does not exist and can be created
                     setattr(sec_old, itname, item)
 
 
@@ -273,9 +282,9 @@ def dump_config(cfg):
     """Produce text version of Config instance that can be read back"""
     def _gen_dump(cfg):
         sects = sorted(cfg, key=lambda tup: tup[0])  # sort by name
-        for sectname, sect in sects:
-            if sectname != sects[0][0]:
-                yield ''  # empty line before each section (not the first)
+        for k, (sectname, sect) in enumerate(sects):
+            if k > 0:
+                yield ''
             if sect._comment:
                 yield '# %s ' % sect._comment
             yield '[%s]' % sectname

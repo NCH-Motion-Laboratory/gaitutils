@@ -17,7 +17,7 @@ import io
 from collections import defaultdict
 
 from .. import nexus, GaitDataError, cfg, configdot
-from ..config import _handle_cfg_defaults
+from ..config import _handle_cfg_defaults, cfg_user_fn
 
 
 def qt_matplotlib_window(fig):
@@ -131,6 +131,10 @@ class OptionsDialog(QtWidgets.QDialog):
             self.tabWidget.addTab(tab, desc)
 
         _main_layout.addWidget(self.tabWidget)
+        helptext = QtWidgets.QLabel()
+        helptext.setText('Changes into options will stay in effect until the program is restarted. To make changes\n'
+                         'permanent and automatically loaded on startup, save them into\n%s' % cfg_user_fn)
+        _main_layout.addWidget(helptext)        
         _main_layout.addWidget(self.buttonBox)
         self.setLayout(_main_layout)
 

@@ -538,7 +538,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                       result_func=self._show_plots,
                       sessions=[session],
                       layout_name=lout_name,
-                      legend_type='full',
+                      legend_type='tag_with_cycle',
                       model_normaldata=model_normaldata,
                       model_cycles=model_cycles,
                       emg_cycles=emg_cycles,

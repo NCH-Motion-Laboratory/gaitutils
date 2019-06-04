@@ -829,7 +829,11 @@ def main():
 
     gaitmenu = Gaitmenu()
     gaitmenu.show()
-
+    # re-check btk here so it's more clear for the user
+    try:
+        import btk
+    except ImportError:
+        logger.warning('cannot find btk module; unable to read .c3d files')        
     nexus_status = 'Vicon Nexus is %srunning' % ('' if nexus.pid() else 'not ')
     logger.debug(nexus_status)
     app.exec_()

@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 try:
     import btk
 except ImportError:
-    print('Cannot find btk module; unable to read .c3d files')
+    logger.warning('cannot find btk module; unable to read .c3d files')
 
 
 def is_c3dfile(obj):

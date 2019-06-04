@@ -103,7 +103,7 @@ def do_session_average_plot(session, tags=None):
     trials = sessionutils.get_c3ds(session, tags=tags,
                                    trial_type='dynamic')
     if not trials:
-        raise GaitDataError('No marked trials found for session %s'
+        raise GaitDataError('No tagged trials found for session %s'
                             % session)
     fig = _plot_trials([trials])
     session = op.split(session)[-1]

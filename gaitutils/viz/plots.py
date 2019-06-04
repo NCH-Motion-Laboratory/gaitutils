@@ -60,7 +60,7 @@ def plot_sessions(sessions, layout_name=None, model_normaldata=None,
         c3ds = sessionutils.get_c3ds(session, tags=tags,
                                      trial_type='dynamic')
         if not c3ds:
-            raise GaitDataError('No marked trials found for session %s'
+            raise GaitDataError('No tagged trials found for session %s'
                                 % session)
         c3ds_all.extend(c3ds)
     trials = [trial.Trial(c3d) for c3d in c3ds_all]

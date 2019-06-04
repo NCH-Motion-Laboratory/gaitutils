@@ -292,7 +292,7 @@ def dump_config(cfg):
             if k > 0:
                 yield ''
             if sect._comment:
-                yield '# %s ' % sect._comment
+                yield '# %s' % sect._comment
             yield '[%s]' % sectname
             items = sorted(sect, key=lambda tup: tup[0])
             for itemname, item in items:

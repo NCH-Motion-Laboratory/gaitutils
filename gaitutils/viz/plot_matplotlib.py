@@ -19,7 +19,7 @@ import logging
 
 from .plot_common import (_get_cycle_name, _var_title,
                           IteratorMapper, _handle_style_and_color_args)
-from .. import models, normaldata, layouts, cfg, GaitDataError
+from .. import models, normaldata, layouts, cfg, GaitDataError, numutils
 from ..stats import AvgTrial
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,6 @@ def _plot_vels(vels, labels):
     """Stem plot of trial velocities"""
     fig = Figure()
     ax = fig.add_subplot(111)
-
     ax.stem(vels)
     ax.set_xticks(range(len(vels)))
     ax.set_xticklabels(labels, rotation='vertical')
@@ -38,7 +37,6 @@ def _plot_vels(vels, labels):
     vavg = np.nanmean(vels)
     ax.set_title('Walking speed for dynamic trials (average %.2f m/s)' % vavg)
     fig.tight_layout()
-
     return fig
 
 
@@ -51,7 +49,6 @@ def _plot_timedep_vels(vels, labels):
     for vel in vels:
         ax.plot(vel)
     fig.tight_layout()
-
     return fig
 
 
@@ -180,7 +177,7 @@ def _remove_ticks_and_labels(ax):
 
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
-                emg_cycles=None, legend_type=None, style_by=None,
+                emg_cycles=None, emg_mode=None, legend_type=None, style_by=None,
                 color_by=None, supplementary_data=None,
                 legend=True, figtitle=None):
     """plot trials and return Figure instance"""
@@ -438,8 +435,10 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         # _no_ticks_or_labels(ax)
                         # _axis_annotate(ax, 'disconnected')
                         if do_plot:
-                            t_, y = trial.get_emg_data(var)
+                            t_, y_ = trial.get_emg_data(var)
                             t = t_ if normalized else t_ / trial.samplesperframe
+                            y = (numutils.rms(y_, cfg.emg.rms_win)
+                                 if emg_mode == 'rms' else y_)
 
                             if color_by['emg'] == 'session':
                                 col = emg_trace_colors.get_prop(trial.sessiondir)
@@ -450,8 +449,10 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             elif color_by['emg'] is None:
                                 col = '#000000'
 
+                            lw = (cfg.plot.emg_rms_linewidth if emg_mode == 'rms'
+                                  else cfg.plot.emg_linewidth)
                             line_ = ax.plot(t, y*cfg.plot.emg_multiplier, color=col,
-                                            linewidth=cfg.plot.emg_linewidth)[0]
+                                            linewidth=lw)[0]
                             leg_entries['EMG: '+tracegroup] = line_
 
                         # do normal data & plot adjustments for last EMG cycle

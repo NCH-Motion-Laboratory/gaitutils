@@ -499,6 +499,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         model_normaldata = read_session_normaldata(session)
         lout_desc = self.cbNexusTrialLayout.currentText()
         lout_name = self.layouts_map[lout_desc]
+        emg_mode = 'rms' if self.xbEMGRMS.checkState() else None
         cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
         model_cycles = emg_cycles = cycs
         backend = self._get_plotting_backend_ui()
@@ -506,9 +507,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._execute(plot_nexus_trial, thread=True,
                       finished_func=self._enable_op_buttons,
                       result_func=self._show_plots,
-                      layout_name=lout_name, model_normaldata=model_normaldata,
+                      layout_name=lout_name,
+                      model_normaldata=model_normaldata,
                       model_cycles=model_cycles,
-                      emg_cycles=emg_cycles, from_c3d=from_c3d,
+                      emg_cycles=emg_cycles,
+                      emg_mode=emg_mode,
+                      from_c3d=from_c3d,
                       backend=backend)
 
     def _create_web_report_nexus(self):
@@ -527,14 +531,18 @@ class Gaitmenu(QtWidgets.QMainWindow):
         lout_name = self.layouts_map[lout_desc]
         backend = self._get_plotting_backend_ui()
         cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
+        emg_mode = 'rms' if self.xbEMGRMS.checkState() else None
         model_cycles = emg_cycles = cycs
         self._execute(plot_sessions, thread=True,
                       finished_func=self._enable_op_buttons,
                       result_func=self._show_plots,
                       sessions=[session],
-                      layout_name=lout_name, model_normaldata=model_normaldata,
+                      layout_name=lout_name,
+                      model_normaldata=model_normaldata,
                       model_cycles=model_cycles,
-                      emg_cycles=emg_cycles, backend=backend)
+                      emg_cycles=emg_cycles,
+                      emg_mode=emg_mode,
+                      backend=backend)
 
     def _show_plots(self, fig, backend=None):
         """Shows fig"""

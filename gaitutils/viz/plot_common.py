@@ -86,7 +86,7 @@ def _var_title(var):
     elif var in cfg.emg.channel_labels:
         return cfg.emg.channel_labels[var]
     else:
-        return ''
+        return var
 
 
 def _truncate_trialname(trialname):

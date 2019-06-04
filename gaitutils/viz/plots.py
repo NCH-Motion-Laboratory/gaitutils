@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 def plot_nexus_trial(layout_name=None, backend=None, model_cycles=None,
-                     emg_cycles=None, maintitle=None, from_c3d=True,
-                     model_normaldata=None):
+                     emg_cycles=None, emg_mode=None, maintitle=None,
+                     from_c3d=True, model_normaldata=None):
     """Plot the currently loaded trial from Vicon Nexus"""
 
     backend_lib = get_backend(backend)
@@ -34,14 +34,14 @@ def plot_nexus_trial(layout_name=None, backend=None, model_cycles=None,
     return backend_lib.plot_trials([tr], layout,
                                    model_normaldata=model_normaldata,
                                    model_cycles=model_cycles,
-                                   emg_cycles=emg_cycles,
+                                   emg_cycles=emg_cycles, emg_mode=emg_mode,
                                    legend_type='short_name_with_cyclename')
 
 
 def plot_sessions(sessions, layout_name=None, model_normaldata=None,
                   tags=None, make_pdf=False,
                   style_by=None, color_by=None, legend_type=None,
-                  model_cycles=None, emg_cycles=None,
+                  model_cycles=None, emg_cycles=None, emg_mode=None,
                   backend=None, figtitle=None, legend=True):
     """Plot tagged trials from given session(s)."""
 
@@ -74,7 +74,7 @@ def plot_sessions(sessions, layout_name=None, model_normaldata=None,
                                    legend_type=legend_type,
                                    style_by=style_by, color_by=color_by,
                                    model_cycles=model_cycles,
-                                   emg_cycles=emg_cycles,
+                                   emg_cycles=emg_cycles, emg_mode=emg_mode,
                                    figtitle=figtitle, legend=legend)
 
 

@@ -65,7 +65,7 @@ def _get_plotly_axis_labels(i, j, ncols):
     return 'xaxis%d' % plot_ind, 'yaxis%d' % plot_ind
 
 
-_plot_cache = dict()  # global for plot_trials
+_plot_cache = dict()  # cache for plot_trials
 
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,

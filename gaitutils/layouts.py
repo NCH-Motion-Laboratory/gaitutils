@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Handling layouts.
+layout handling
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_layout(layout_name):
-    """Gets layout from config by name."""
+    """Get layout from config"""
     # default layout is lower body kinematics
     if layout_name is None:
         layout_name = 'lb_kinematics'
@@ -42,7 +42,8 @@ def check_layout(layout):
 
 
 def rm_dead_channels(emg, layout):
-    """ From EMG layout, remove rows with no valid EMG data """
+    """From EMG layout, remove rows where none of the channels has valid data"""
+    # XXX: can deprecate in favor of _multitrial version?
     layout_ = list()
     for row in layout:
         # accept channels w/ status ok, or anything that is NOT a
@@ -75,17 +76,3 @@ def rm_dead_channels_multitrial(emgs, layout):
     rows_ok = [any(row) for row in lout]
     layout = [row for i, row in enumerate(layout) if rows_ok[i]]
     return layout
-
-
-def onesided_layout(layout, side):
-    """ Add 'R' or 'L' to layout variable names """
-    if side not in ['R', 'L']:
-        raise ValueError('Invalid side')
-    return [[(side + item) if item is not None else None for item in row]
-            for row in layout]
-
-
-def filter_layout(layout, key, repl):
-    """ Replace layout items """
-    return [[repl if (item and key in item) else item for item in row]
-            for row in layout]

@@ -846,11 +846,6 @@ class TardieuPlot(object):
 
 def main():
 
-    logging.basicConfig(level=logging.DEBUG)
-
-    # uiparser logger makes too much noise
-    logging.getLogger('PyQt5.uic').setLevel(logging.WARNING)
-
     app = QtWidgets.QApplication(sys.argv)
     win = TardieuWindow()
     win.show()

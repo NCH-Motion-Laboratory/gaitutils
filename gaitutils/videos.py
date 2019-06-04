@@ -115,9 +115,8 @@ def _filter_by_overlay(vids, overlay=True):
         if 'overlay' in vid:
             if overlay:
                 yield vid
-        else:
-            if not overlay:
-                yield vid
+        elif not overlay:
+            yield vid
 
 
 def _camera_id(fname):

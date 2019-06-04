@@ -197,7 +197,7 @@ def create_report(sessionpath, info=None, pages=None):
         _savefig(pdf, fig_title)
         _savefig(pdf, fig_vel, header)
         _savefig(pdf, fig_timedist_avg, header)
-        _savefig(pdf, fig_timedist_txt)
+        _savefig(pdf, fig_timedist_txt, header)
         _savefig(pdf, fig_kinematics_cons, header)
         _savefig(pdf, fig_kinetics_cons, header)        
         _savefig(pdf, fig_musclelen_cons, header, footer_musclelen)

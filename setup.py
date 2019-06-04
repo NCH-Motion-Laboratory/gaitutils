@@ -15,8 +15,6 @@ console_entries = ['gaitmenu=gaitutils.gui._gaitmenu:main',
              'nexus_plot_trial=gaitutils.viz.console:plot_nexus_trial',
              'nexus_plot_session=gaitutils.viz.console:plot_nexus_session']
 
-scripts = ['gaitutils/scripts/launch_menu.bat']
-
 setup(name='gaitutils',
       version='0.12',
       description='Utilities for processing and plotting gait data',
@@ -26,6 +24,5 @@ setup(name='gaitutils',
       url='https://github.com/jjnurminen/gaitutils',
       packages=find_packages(),
       entry_points={'console_scripts': console_entries},
-      scripts=scripts,
       include_package_data=True,
       )

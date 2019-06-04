@@ -608,7 +608,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog('It looks like the session videos have already '
                               'been converted.')
             return
-        prog = ProgressBar('')
+        prog = ProgressBar('Converting session videos...')
         signals = ProgressSignals()
         signals.progress.connect(lambda text, p: prog.update(text, p))
         self._convert_vidfiles(vidfiles, signals)
@@ -624,7 +624,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         trials += sessionutils.get_c3ds(session, trial_type='static')
         if trials and cfg.autoproc.postproc_pipelines:
             logger.debug('running postprocessing for %s' % trials)
-            prog = ProgressBar('')
+            prog = ProgressBar('Running postprocessing pipelines...')
             vicon = nexus.viconnexus()
             prog.update('Running postprocessing pipelines: %s for %d '
                         'trials' % (cfg.autoproc.postproc_pipelines,

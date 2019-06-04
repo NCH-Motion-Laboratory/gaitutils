@@ -26,7 +26,6 @@ from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ..numutils import check_hetu
 from ..normaldata import read_session_normaldata
 from ..videos import _collect_session_videos, convert_videos
-from .. import root_logger
 from .. import GaitDataError, nexus, cfg, sessionutils, envutils, configdot
 from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
@@ -823,6 +822,7 @@ def main():
 
     # add the Qt logging handler to root logger
     # it shows log messages in our QTextEdit widget
+    root_logger = logging.getLogger()
     handler = QtHandler()
     handler.setFormatter(logging.Formatter("%(name)s: %(message)s"))
     root_logger.addHandler(handler)

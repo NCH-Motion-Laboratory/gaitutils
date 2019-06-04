@@ -78,7 +78,10 @@ def _do_autoproc(enffiles, update_eclipse=True):
         dist_ok = np.where((subj_pos1 >= mov_range[0]) &
                            (subj_pos1 <= mov_range[1]) &
                            (subj_pos1 != 0.0))[0]
-        return min(dist_ok), max(dist_ok)
+        if dist_ok.size > 0:
+            return min(dist_ok), max(dist_ok)
+        else:
+            raise GaitDataError('no frames inside given range')
 
     # used to store stats about foot velocity
     foot_vel = {'L_strike': np.array([]), 'R_strike': np.array([]),
@@ -189,11 +192,15 @@ def _do_autoproc(enffiles, update_eclipse=True):
             _fail(trial, 'label_failure')
             continue
         gait_dim = utils.principal_movement_direction(subj_pos)
-        # our roi according to events_range
+        # our roi (in frames) according to events_range (which is in lab coords)
         # this is not the same as Nexus ROI, which is unset at this point
-        roi = _range_to_roi(subj_pos, gait_dim, cfg.autoproc.events_range)
-        logger.debug('events range corresponds to frames %d-%d' % roi)
-        trial['roi'] = roi
+        try:
+            roi = _range_to_roi(subj_pos, gait_dim, cfg.autoproc.events_range)
+            logger.debug('events range corresponds to frames %d-%d' % roi)
+            trial['roi'] = roi
+        except GaitDataError:
+            _fail(trial, 'no_frames_in_range')
+            continue
 
         # check forceplate data
         fp_info = (eclipse.eclipse_fp_keys(edata) if

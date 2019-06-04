@@ -55,7 +55,10 @@ class AvgTrial(Trial):
                                      name='left', trial=self))
         self.ncycles = 2
         self.eclipse_data = defaultdict(lambda: '', {})
-        self.emg = None
+
+    @property
+    def emg(self):
+        raise GaitDataError('EMG averaging not supported yet')
 
     def get_model_data(self, var):
         return self.t, self._model_data[var]

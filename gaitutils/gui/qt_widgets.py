@@ -133,16 +133,30 @@ class XStream(QtCore.QObject):
 class ProgressBar(QtWidgets.QProgressDialog):
     """ Qt progress bar with reasonable defaults """
 
+    # custom signal to indicate that the operation was canceled
+    _canceled = pyqtSignal()
+
     def __init__(self, title):
         super(self.__class__, self).__init__()
         self.setWindowTitle(title)
-        self.setCancelButton(None)
+        self.cancelbutton = QtWidgets.QPushButton('Cancel')
+        self.setCancelButton(self.cancelbutton)
+        # set a custom cancel signal, since the default one immediately
+        # close the progress bar
+        self.cancelbutton.disconnect()
+        self.cancelbutton.clicked.connect(self._cancel)
         self.setMinimum(0)
         self.setMaximum(100)
         self.setGeometry(500, 300, 500, 100)
         #self.setAutoClose(False)
         self.setAutoReset(False)
         self.show()
+
+    def _cancel(self):
+        """Custom cancel handler"""
+        self.cancelbutton.setText('Wait...')
+        self.cancelbutton.setEnabled(False)
+        self._canceled.emit()
 
     def update(self, text, p):
         """ Update bar, showing text and bar at p% """
@@ -153,5 +167,15 @@ class ProgressBar(QtWidgets.QProgressDialog):
 
 
 class ProgressSignals(QObject):
-    """Used to emit progress signals"""
+    """Used to emit progress signals across threads"""
     progress = pyqtSignal(object, object)
+
+    def __init__(self):
+        super(ProgressSignals, self).__init__()
+        # this flag can be checked to see whether the operation was canceled
+        self.canceled = False
+
+    def cancel(self):
+        """Raise the cancel flag"""
+        self.canceled = True
+

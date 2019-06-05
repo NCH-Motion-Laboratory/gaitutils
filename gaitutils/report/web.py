@@ -185,6 +185,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
         _trials_avg[session] = list()
         for tag in dyn_tags:
             if c3ds[session]['dynamic'][tag]:
+                if signals.canceled:
+                    return None
                 tri = Trial(c3ds[session]['dynamic'][tag][0])
                 trials_dyn.append(tri)
                 _trials_avg[session].append(tri)
@@ -287,6 +289,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     except GaitDataError:
         emg_layout = 'disabled'
 
+
     # FIXME: layouts into config?
     _layouts = OrderedDict([
             ('Patient info', 'patient_info'),
@@ -321,6 +324,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     for k, (label, layout) in enumerate(_layouts.items()):
         logger.debug('creating plot for %s' % label)
         signals.progress.emit('Creating plot: %s' % label, 100*k/len(_layouts))
+        if signals.canceled:
+            return None
         # for comparison report, include session info in plot legends and
         # use session specific line style
         style_by = dict()

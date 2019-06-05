@@ -207,6 +207,7 @@ class WebReportDialog(QtWidgets.QDialog):
         self.prog.update('Collecting session information...', 0)
         signals = ProgressSignals()
         signals.progress.connect(lambda text, p: self.prog.update(text, p))
+        self.prog._canceled.connect(signals.cancel)
 
         # for comparison between sessions, get representative trials only
         tags = (cfg.eclipse.repr_tags if len(sessions) > 1 else
@@ -297,6 +298,10 @@ class WebReportDialog(QtWidgets.QDialog):
     def _web_report_ready(self, app):
         """Gets called when web report creation is successful. Open report in
         browser"""
+        if app is None:
+            # this should only happen when the report was cancelled, so we
+            # exit quietly
+            return
         # figure out first free TCP port
         ports_taken = [item.userdata for item in self.listActiveReports.items]
         port = cfg.web_report.tcp_port

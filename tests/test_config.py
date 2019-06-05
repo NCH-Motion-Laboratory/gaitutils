@@ -115,8 +115,6 @@ def test_config_update():
     assert 'newvar' not in cfg_.section2
 
 
-
-
 def test_orphaned_def():
     """Test cfg with def outside section"""
     fn = _file_path('orphan.cfg')

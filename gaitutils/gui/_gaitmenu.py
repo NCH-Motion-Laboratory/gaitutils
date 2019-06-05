@@ -353,7 +353,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         # simple signal->slot connections
         # mostly for stuff that finishes instantly, modal dialogs and
-        # things that themselves call _execute
+        # functions that themselves call _execute
         self.actionCreate_PDF_report.triggered.connect(lambda ev: self._create_pdf_report())
         self.actionCreate_PDF_report_Nexus.triggered.connect(self._create_pdf_report_nexus)
         self.actionWeb_reports.triggered.connect(self._web_report_dialog.show)
@@ -362,6 +362,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionOpts.triggered.connect(self._options_dialog)
         self.actionTardieu_analysis.triggered.connect(self._tardieu)
         self.actionAutoprocess_session.triggered.connect(self._autoproc_session)
+        self.actionAutoprocess_single_trial.triggered.connect(self._autoproc_trial)
         self.btnPlotNexusTrial.clicked.connect(self._plot_nexus_trial)
         self.btnPlotNexusSession.clicked.connect(self._plot_nexus_session)
         self.btnPlotNexusAverage.clicked.connect(self._plot_nexus_average)
@@ -377,9 +378,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                   self._plot_timedist_average)
         
         # processing menu
-        self._widget_connect_task(self.actionAutoprocess_single_trial,
-                                  autoproc_trial,
-                                  thread=True)
         self._widget_connect_task(self.actionAutomark_events,
                                   automark_trial,
                                   thread=True)
@@ -427,6 +425,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
             if rb.isChecked():
                 return backend
 
+    def _autoproc_finished(self):
+        """Reset UI after autoproc"""
+        self._enable_op_buttons()
+        self.prog.reset()
+
     def _autoproc_session(self):
         """Wrapper to run autoprocess for Nexus session"""
         session = _get_nexus_sessionpath()
@@ -448,7 +451,20 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         self._execute(autoproc_session,
                       thread=True,
-                      finished_func=self._enable_op_buttons,
+                      finished_func=self._autoproc_finished,
+                      signals=signals)
+
+    def _autoproc_trial(self):
+        """Wrapper to run autoprocess for Nexus trial"""
+
+        self.prog = ProgressBar('Running autoprocessing...')
+        signals = ProgressSignals()
+        signals.progress.connect(lambda text, p: self.prog.update(text, p))
+        self.prog._canceled.connect(signals.cancel)
+
+        self._execute(autoproc_trial,
+                      thread=True,
+                      finished_func=self._autoproc_finished,
                       signals=signals)
 
     def _plot_timedist_average(self):

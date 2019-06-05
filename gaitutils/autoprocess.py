@@ -102,11 +102,14 @@ def _do_autoproc(enffiles, signals=None):
         logger.debug('force closing open trial')
         vicon.CloseTrial(5000)  # timeout in ms
 
-    for enffile in enffiles:
-        if signals.canceled:
-            return None
+    for ind, enffile in enumerate(enffiles):
         filepath = enffile[:enffile.find('.Trial')]  # rm .TrialXXX and .enf
         filename = os.path.split(filepath)[1]
+      
+        signals.progress.emit('Preprocessing: %s' % filename, 100*ind/len(enffiles))
+        if signals.canceled:
+            return None
+
         trial = dict()
         trials[filepath] = trial
         logger.debug('loading in Nexus: %s' % filename)
@@ -208,6 +211,9 @@ def _do_autoproc(enffiles, signals=None):
             _fail(trial, 'no_frames_in_range')
             continue
 
+        if signals.canceled:
+            return None
+
         # check forceplate data
         fp_info = (eclipse.eclipse_fp_keys(edata) if
                    cfg.autoproc.use_eclipse_fp_info else None)
@@ -237,6 +243,9 @@ def _do_autoproc(enffiles, signals=None):
         valid = fpev['valid']
         trial['valid'] = valid
         trial['fpev'] = fpev
+
+        if signals.canceled:
+            return None
 
         # save velocity data
         for context in valid:
@@ -288,12 +297,14 @@ def _do_autoproc(enffiles, signals=None):
                   if trial['recon_ok']}
     logger.debug('\n2nd pass - processing %d trials\n' % len(sel_trials))
 
-    for filepath, trial in sel_trials.items():
+    for ind, (filepath, trial) in enumerate(sel_trials.items()):
         filename = os.path.split(filepath)[1]
         logger.debug('loading in Nexus: %s' % filename)
         vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
         enf_file = filepath + '.Trial.enf'
 
+        signals.progress.emit('Marking events and running models: %s' % filename,
+                              100*ind/len(sel_trials))
         if signals.canceled:
             return None
 
@@ -314,6 +325,9 @@ def _do_autoproc(enffiles, signals=None):
             _save_trial()
             trial['description'] = eclipse_str
             continue  # next trial
+
+        if signals.canceled:
+            return None
 
         # crop trial around events
         if nexus_ver >= 2.5:
@@ -400,14 +414,14 @@ def autoproc_session(patterns=None, signals=None):
         _do_autoproc(enffiles, signals=signals)
 
 
-def autoproc_trial():
+def autoproc_trial(signals=None):
     fn = nexus.get_trialname()
     if not fn:
         raise GaitDataError('No trial open in Nexus')
     fn += '.Trial.enf'
     enffiles = [op.join(nexus.get_sessionpath(), fn)]  # listify single enf
     _delete_c3ds(enffiles)
-    _do_autoproc(enffiles)
+    _do_autoproc(enffiles, signals=signals)
 
 
 def automark_trial(plot=False):

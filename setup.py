@@ -16,7 +16,7 @@ console_entries = ['gaitmenu=gaitutils.gui._gaitmenu:main',
              'nexus_plot_session=gaitutils.viz.console:plot_nexus_session']
 
 setup(name='gaitutils',
-      version='0.12',
+      version='0.12.01',
       description='Utilities for processing and plotting gait data',
       author='Jussi Nurminen',
       author_email='jnu@iki.fi',

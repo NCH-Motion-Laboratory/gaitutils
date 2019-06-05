@@ -289,7 +289,6 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     except GaitDataError:
         emg_layout = 'disabled'
 
-
     # FIXME: layouts into config?
     _layouts = OrderedDict([
             ('Patient info', 'patient_info'),

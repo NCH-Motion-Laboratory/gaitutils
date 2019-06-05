@@ -441,9 +441,15 @@ class Gaitmenu(QtWidgets.QMainWindow):
             if reply == QtWidgets.QMessageBox.NoRole:
                 return
 
+        self.prog = ProgressBar('Running autoprocessing...')
+        signals = ProgressSignals()
+        signals.progress.connect(lambda text, p: self.prog.update(text, p))
+        self.prog._canceled.connect(signals.cancel)
+
         self._execute(autoproc_session,
                       thread=True,
-                      finished_func=self._enable_op_buttons)
+                      finished_func=self._enable_op_buttons,
+                      signals=signals)
 
     def _plot_timedist_average(self):
         """Plot time-distance average"""

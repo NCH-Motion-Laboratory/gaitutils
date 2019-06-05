@@ -34,15 +34,19 @@ import itertools
 
 from . import (nexus, eclipse, utils, GaitDataError, sessionutils,
                read_data, cfg)
-
+from gui.qt_widgets import ProgressSignals
 
 logger = logging.getLogger(__name__)
 
 
-def _do_autoproc(enffiles, update_eclipse=True):
-    """ Do autoprocessing for all trials listed in enffiles (list of
-    paths to .enf files).
+def _do_autoproc(enffiles, signals=None):
+    """Run autoprocessing for all enffiles (list of paths to .enf files).
     """
+
+    # signals is used to track progress across threads; if not given, just
+    # create a dummy one to simplify calls later
+    if signals is None:
+        signals = ProgressSignals()
 
     def _save_trial():
         """Save trial in Nexus"""
@@ -99,6 +103,8 @@ def _do_autoproc(enffiles, update_eclipse=True):
         vicon.CloseTrial(5000)  # timeout in ms
 
     for enffile in enffiles:
+        if signals.canceled:
+            return None
         filepath = enffile[:enffile.find('.Trial')]  # rm .TrialXXX and .enf
         filename = os.path.split(filepath)[1]
         trial = dict()
@@ -288,6 +294,9 @@ def _do_autoproc(enffiles, update_eclipse=True):
         vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
         enf_file = filepath + '.Trial.enf'
 
+        if signals.canceled:
+            return None
+
         # automark using global velocity thresholds
         try:
             vicon.ClearAllEvents()
@@ -325,7 +334,7 @@ def _do_autoproc(enffiles, update_eclipse=True):
         trial['description'] = eclipse_str
 
     # all done; update Eclipse descriptions
-    if cfg.autoproc.eclipse_write_key and update_eclipse:
+    if cfg.autoproc.eclipse_write_key:
         # try to avoid a possible race condition where Nexus is still
         # holding the .enf file open
         time.sleep(.5)
@@ -375,7 +384,7 @@ def _delete_c3ds(enffiles):
                          'data files .(x1d and .x2d) do not exist' % c3dfile)
 
 
-def autoproc_session(patterns=None, update_eclipse=True):
+def autoproc_session(patterns=None, signals=None):
     sessionpath = nexus.get_sessionpath()
     enffiles = list(sessionutils.get_session_enfs(sessionpath))
 
@@ -388,7 +397,7 @@ def autoproc_session(patterns=None, update_eclipse=True):
         # filter trial names according to patterns
         enffiles = [s for s in enffiles if any([p in s for p in patterns])]
     if enffiles:
-        _do_autoproc(enffiles, update_eclipse=update_eclipse)
+        _do_autoproc(enffiles, signals=signals)
 
 
 def autoproc_trial():

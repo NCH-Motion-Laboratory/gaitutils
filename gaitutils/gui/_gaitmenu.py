@@ -700,32 +700,20 @@ class Gaitmenu(QtWidgets.QMainWindow):
             sessions = dlg.sessions
 
         comparison = len(sessions) > 1
-        # fixme: should be OK
         if comparison:
             qt_message_dialog('PDF comparison report not supported right now')
             return
 
-        session_infos, info = sessionutils._merge_session_info(sessions)
-        if info is None:
-            qt_message_dialog('Patient files do not match. Sessions may be '
-                              'from different patients. Continuing without '
-                              'patient info.')
-            info = sessionutils.default_info()
-        else:
-            prompt_ = 'Please give additional subject information:'
-            dlg_info = PdfReportDialog(info, prompt=prompt_)
-            if not dlg_info.exec_():
-                return
-            new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,
-                            report_notes=dlg_info.session_description)
-            info.update(new_info)
-
-            # update info files according to user input
-            for session in sessions:
-                update_dict = dict(fullname=dlg_info.fullname,
-                                   hetu=dlg_info.hetu)
-                session_infos[session].update(update_dict)
-                sessionutils.save_info(session, session_infos[session])
+        session = sessions[0]
+        info = sessionutils.load_info(session)
+        prompt_ = 'Please give additional subject information:'
+        dlg_info = PdfReportDialog(info, prompt=prompt_)
+        if not dlg_info.exec_():
+            return
+        new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,
+                        session_description=dlg_info.session_description)
+        info.update(new_info)
+        sessionutils.save_info(session, info)
 
         # create the report
         if comparison:

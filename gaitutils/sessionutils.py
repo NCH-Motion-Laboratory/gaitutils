@@ -84,12 +84,12 @@ def save_info(session, patient_info):
 
 
 def _merge_session_info(sessions):
-    """merge patient info files across sessions. fullname and hetu must match.
-    Returns dict of individual session infos and the mergeD info"""
+    """Merge patient info files across sessions. fullname and hetu must match.
+    Returns dict of individual session infos and the merged info"""
     session_infos = {session: (load_info(session) or default_info())
                      for session in sessions}
     info = default_info()
-    # ignore the session description
+    # ignore the session description (does not make sense when merging)
     for key in ['fullname', 'hetu', 'report_notes']:
         allvals = set([session_infos[session][key] for session in sessions])
         if None in allvals:
@@ -109,7 +109,7 @@ def _merge_session_info(sessions):
 def _enf2other(fname, ext):
     """Converts name of trial .enf file to corresponding .c3d or other
     file type"""
-    enfre = '\.*.Trial\d*.enf'  # .Trial followed by zero or more digits
+    enfre = r'\.*.Trial\d*.enf'  # .Trial followed by zero or more digits
     res = re.search(enfre, fname)
     if res is None:
         raise GaitDataError('Filename %s is not a trial .enf' % fname)

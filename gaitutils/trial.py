@@ -20,7 +20,7 @@ import logging
 
 from .emg import EMG
 from . import (cfg, GaitDataError, read_data, nexus, utils, eclipse, models,
-               videos)
+               videos, sessionutils)
 
 logger = logging.getLogger(__name__)
 
@@ -226,8 +226,15 @@ class Trial(object):
             logger.debug('no .enf file found')
             self.eclipse_data = defaultdict(lambda: '', {})
         self.is_static = self.eclipse_data['TYPE'].upper() == 'STATIC'
+        # handle session quirks
+        quirks = sessionutils.load_quirks(self.sessionpath)
+        if 'emg_correction_factor' in quirks:
+            emg_correction_factor = quirks['emg_correction_factor']
+            logger.warning('using quirk: EMG correction factor = %g' % emg_correction_factor)
+        else:
+            emg_correction_factor = 1
         # data are lazily read
-        self.emg = EMG(self.source)
+        self.emg = EMG(self.source, correction_factor=emg_correction_factor)
         self._forceplate_data = None
         self._marker_data = None
         if not self.is_static:

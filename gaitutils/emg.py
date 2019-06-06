@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class EMG(object):
     """ Class for handling EMG data. """
 
-    def __init__(self, source):
+    def __init__(self, source, correction_factor=1):
         logger.debug('new EMG instance from %s' % source)
         self.source = source
         # order of Butterworth filter
@@ -30,6 +30,7 @@ class EMG(object):
         self.passband = cfg.emg.passband
         self.linefreq = cfg.emg.linefreq
         self.data = None
+        self.correction_factor = correction_factor
 
     def __getitem__(self, item):
         """ Return data for a channel (filtered if self.passband is set).
@@ -49,7 +50,9 @@ class EMG(object):
             logger.warning('multiple channel matches for %s: %s -> %s' %
                            (item, matches, ch))
         data = self.data[ch]
-        return self.filt(data, self.passband) if self.passband else data
+        data_ = self.filt(data, self.passband) if self.passband else data
+        data_ *= self.correction_factor
+        return data_
 
     def is_channel(self, item):
         """ Convenience to see whether a channel exists in the data """

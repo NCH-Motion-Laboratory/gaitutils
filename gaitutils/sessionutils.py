@@ -24,6 +24,21 @@ logger = logging.getLogger(__name__)
 json_keys = ['fullname', 'hetu', 'session_description', 'report_notes']
 
 
+def load_quirks(session):
+    """Load session quirks"""
+    fname = op.join(session, 'quirks.json')
+    if op.isfile(fname):
+        with io.open(fname, 'r', encoding='utf-8') as f:
+            try:
+                quirks = json.load(f)
+            except (UnicodeDecodeError, EOFError, IOError, TypeError,
+                    ValueError):
+                logger.warning('cannot load quirks file %s' % fname)
+                quirks = dict()
+    else:
+        quirks = dict()
+    return quirks
+
 def default_info():
     """Return info dict with placeholder values"""
     return {key: None for key in json_keys}

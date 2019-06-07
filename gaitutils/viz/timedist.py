@@ -7,8 +7,6 @@ Currently matplotlib only
 @author: Jussi (jnu@iki.fi)
 """
 
-from builtins import zip
-from builtins import range
 import logging
 import os.path as op
 import numpy as np
@@ -26,10 +24,9 @@ _timedist_vars = ['Walking Speed', 'Cadence', 'Foot Off', 'Opposite Foot Off',
                   'Stride Time', 'Stride Length', 'Step Width', 'Step Length']
 
 
-def _print_analysis_table(trials, cond_labels=None):
+def _print_analysis_table(trials):
     """Print analysis vars as text table"""
-    res_avg_all, res_std_all = _multitrial_analysis(trials,
-                                                    cond_labels=cond_labels)
+    res_avg_all, res_std_all = _multitrial_analysis(trials)
     hdr = '%-25s%-9s%-9s\n' % ('Variable', 'Right', 'Left')
     yield hdr
     for cond, cond_data in res_avg_all.items():
@@ -38,9 +35,9 @@ def _print_analysis_table(trials, cond_labels=None):
             yield li
 
 
-def _print_analysis_text(trials, cond_labels=None, main_label=None):
+def _print_analysis_text(trials, main_label=None):
     """Print analysis vars as text"""
-    res_avg_all, res_std_all = _multitrial_analysis(trials, cond_labels=cond_labels)
+    res_avg_all, res_std_all = _multitrial_analysis(trials)
     hdr = 'Time-distance variables (R/L)'
     hdr += ' for %s:\n' % main_label if main_label else ':\n'
     yield hdr
@@ -51,12 +48,11 @@ def _print_analysis_text(trials, cond_labels=None, main_label=None):
     yield ''
 
 
-def _print_analysis_text_finnish(trials, cond_labels=None, vars=None,
-                                 main_label=None):
-    """Print analysis vars as Finnish text"""
-    if vars is None:
-        vars = _timedist_vars
-    res_avg_all, res_std_all = _multitrial_analysis(trials, cond_labels=cond_labels)
+def _print_analysis_text_finnish(trials, vars_=None, main_label=None):
+    """Print analysis vars_ as Finnish text"""
+    if vars_ is None:
+        vars_ = _timedist_vars
+    res_avg_all, res_std_all = _multitrial_analysis(trials)
     hdr = 'Matka-aikamuuttujat (O/V)'
     hdr += ' (%s):\n' % main_label if main_label else ':\n'
     yield hdr
@@ -76,7 +72,7 @@ def _print_analysis_text_finnish(trials, cond_labels=None, vars=None,
     unit_translations = {'steps/min': u'askelta/min'}
 
     for cond, cond_data in res_avg_all.items():
-        for var in vars:
+        for var in vars_:
             val = cond_data[var]
             val_std = res_std_all[cond][var]
             var_ = translations[var] if var in translations else var
@@ -93,7 +89,7 @@ def session_analysis_text(sessionpath):
     sessiondir = op.split(sessionpath)[-1]
     tagged_trials = sessionutils.get_c3ds(sessionpath, tags=cfg.eclipse.tags,
                                           trial_type='dynamic')
-    return '\n'.join(_print_analysis_text_finnish([tagged_trials],
+    return '\n'.join(_print_analysis_text_finnish({sessiondir: tagged_trials},
                                                   main_label=sessiondir))
 
 
@@ -106,25 +102,24 @@ def do_session_average_plot(session, tags=None):
     if not trials:
         raise GaitDataError('No tagged trials found for session %s'
                             % session)
-    fig = _plot_trials([trials])
-    session = op.split(session)[-1]
-    fig.suptitle('Time-distance average, session %s' % session)
+    session_ = op.split(session)[-1]
+    fig = _plot_trials({session_: trials})
+    fig.suptitle('Time-distance average, session %s' % session_)
     return fig
 
 
 def do_single_trial_plot(c3dfile):
     """Plot a single trial time-distance."""
-    fig = _plot_trials([[c3dfile]])
+    fig = _plot_trials({c3dfile: [c3dfile]})
     c3dpath, c3dfile_ = op.split(c3dfile)
     fig.suptitle('Time-distance variables, %s' % c3dfile_)
     return fig
 
 
 def do_multitrial_plot(c3dfiles, show=True):
-    """Plot multiple trial comparison time-distance.
-    PDF goes into Nexus session dir"""
-    cond_labels = [op.split(c3d)[-1] for c3d in c3dfiles]
-    return _plot_trials([[c3d] for c3d in c3dfiles], cond_labels)
+    """Plot multiple trial comparison time-distance"""
+    trials = {op.split(c3d)[-1]: [c3d] for c3d in c3dfiles}
+    return _plot_trials(trials)
 
 
 def do_comparison_plot(sessions, tags=None):
@@ -132,60 +127,49 @@ def do_comparison_plot(sessions, tags=None):
     session will be picked."""
     if tags is None:
         tags = cfg.eclipse.tags
-    trials = list()
+    trials = dict()
 
     for session in sessions:
         c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
         if not c3ds:
             raise ValueError('No tagged trials found in session %s' % session)
-        trials.append(c3ds)
+        cond_label = op.split(session)[-1]
+        trials[cond_label] = c3ds
 
-    cond_labels = [op.split(session)[-1] for session in sessions]
-    return  _plot_trials(trials, cond_labels)
+    return  _plot_trials(trials)
 
 
-def _multitrial_analysis(trials, cond_labels=None):
+def _multitrial_analysis(trials):
     """Multitrial analysis from given trials (.c3d files).
-    trials: list of lists, where inner lists represent conditions
-    and list elements represent trials.
-    cond_labels: a matching list of condition labels. If not given,
-    defaults to 'Condition n' (n=1,2,3...)
+    trials: dict of lists keyed by condition name
     If there are multiple trials per condition, they will be averaged.
     """
-    if cond_labels is None:
-        cond_labels = ['Condition %d' % k for k in range(len(trials))]
-    res_avg_all = OrderedDict()
-    res_std_all = OrderedDict()
-    for cond_files, cond_label in zip(trials, cond_labels):
-        ans = list()
-        for c3dfile in cond_files:
-            an = analysis.get_analysis(c3dfile, condition=cond_label)
-            ans.append(an)
+    res_avg_all = OrderedDict()  # preserve condition ordering
+    res_std_all = OrderedDict()  # for plots etc.
+    for cond_label, cond_files in trials.items():
+        ans = [analysis.get_analysis(c3dfile, condition=cond_label)
+               for c3dfile in cond_files]
         if len(ans) > 1:  # do average for this condition
             res_avg = analysis.group_analysis(ans)
             res_std = analysis.group_analysis(ans, fun=np.std)
         else:  # do single-trial plot for this condition
             res_avg = ans[0]
-            res_std = OrderedDict()
-            res_std[cond_label] = None
+            res_std = {cond_label: None}
         res_avg_all.update(res_avg)
         res_std_all.update(res_std)
-
+ 
     return res_avg_all, res_std_all
 
 
-def _plot_trials(trials, cond_labels=None, plotvars=None, interactive=True):
+def _plot_trials(trials, plotvars=None, interactive=True):
     """Make a time-distance variable barchart from given trials (.c3d files).
-    trials: list of lists, where inner lists represent conditions
-    and list elements represent trials.
+    trials: dict of lists keyed by condition name
     If there are multiple trials per condition, they will be averaged.
-    cond_labels: a matching list of condition labels
     plotvars: variables to plot and their order
     """
     if plotvars is None:
         plotvars = _timedist_vars
-    res_avg_all, res_std_all = _multitrial_analysis(trials,
-                                                    cond_labels=cond_labels)
+    res_avg_all, res_std_all = _multitrial_analysis(trials)
     return time_dist_barchart(res_avg_all, stddev=res_std_all,
                               stddev_bars=False, plotvars=plotvars)
 

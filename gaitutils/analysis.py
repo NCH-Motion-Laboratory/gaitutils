@@ -12,6 +12,7 @@ from __future__ import division
 from builtins import zip
 import numpy as np
 import logging
+from collections import defaultdict
 
 from .trial import Trial
 from . import c3d
@@ -61,11 +62,9 @@ def group_analysis(an_list, fun=np.mean):
     if not_in_all:
         logger.warning('Some files are missing the following variables: %s'
                        % ' '.join(not_in_all))
-    res = dict()
+    res = defaultdict(lambda: defaultdict(dict))
     for cond in conds:
-        res[cond] = dict()
         for var in vars_:
-            res[cond][var] = dict()
             # this will fail if vars are not strictly matched between dicts
             res[cond][var]['unit'] = an_list[0][cond][var]['unit']
             for context in ['Right', 'Left']:

@@ -145,12 +145,12 @@ def do_comparison_plot(sessions, tags=None):
 
 
 def _multitrial_analysis(trials, cond_labels=None):
-    """Make a time-distance variable barchart from given trials (.c3d files).
+    """Multitrial analysis from given trials (.c3d files).
     trials: list of lists, where inner lists represent conditions
     and list elements represent trials.
-    Conditions is a matching list of condition labels.
+    cond_labels: a matching list of condition labels. If not given,
+    defaults to 'Condition n' (n=1,2,3...)
     If there are multiple trials per condition, they will be averaged.
-    plotvars specifies variables to plot (if not all) and their order
     """
     if cond_labels is None:
         cond_labels = ['Condition %d' % k for k in range(len(trials))]
@@ -178,9 +178,9 @@ def _plot_trials(trials, cond_labels=None, plotvars=None, interactive=True):
     """Make a time-distance variable barchart from given trials (.c3d files).
     trials: list of lists, where inner lists represent conditions
     and list elements represent trials.
-    Conditions is a matching list of condition labels.
     If there are multiple trials per condition, they will be averaged.
-    plotvars specifies variables to plot and their order
+    cond_labels: a matching list of condition labels
+    plotvars: variables to plot and their order
     """
     if plotvars is None:
         plotvars = _timedist_vars

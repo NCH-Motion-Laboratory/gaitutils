@@ -12,6 +12,7 @@ from builtins import range
 import logging
 import os.path as op
 import numpy as np
+from collections import OrderedDict
 
 from .. import analysis, GaitDataError, sessionutils, cfg
 from .plot_matplotlib import time_dist_barchart
@@ -151,11 +152,10 @@ def _multitrial_analysis(trials, cond_labels=None):
     If there are multiple trials per condition, they will be averaged.
     plotvars specifies variables to plot (if not all) and their order
     """
-
     if cond_labels is None:
         cond_labels = ['Condition %d' % k for k in range(len(trials))]
-    res_avg_all = dict()
-    res_std_all = dict()
+    res_avg_all = OrderedDict()
+    res_std_all = OrderedDict()
     for cond_files, cond_label in zip(trials, cond_labels):
         ans = list()
         for c3dfile in cond_files:
@@ -166,7 +166,7 @@ def _multitrial_analysis(trials, cond_labels=None):
             res_std = analysis.group_analysis(ans, fun=np.std)
         else:  # do single-trial plot for this condition
             res_avg = ans[0]
-            res_std = dict()
+            res_std = OrderedDict()
             res_std[cond_label] = None
         res_avg_all.update(res_avg)
         res_std_all.update(res_std)

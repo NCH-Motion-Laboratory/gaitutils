@@ -84,7 +84,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
                     txt, ha='left', va='center', size=fontsize)
 
     def _plot_oneside(vars_, context, col):
-        """ Do the bar plots for given context and column """
+        """Do the bar plots for given context and column"""
         for ind, var in enumerate(vars_):
             # FIXME: adding subplot here is unnnecessary and triggers mpl
             # depreciation

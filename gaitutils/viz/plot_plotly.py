@@ -91,9 +91,6 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     style_by, color_by = _handle_style_and_color_args(style_by, color_by)
 
-    logger.debug(style_by)
-    logger.debug(color_by)    
-
     if legend_type is None:
         legend_type = 'short_name_with_cyclename'
 

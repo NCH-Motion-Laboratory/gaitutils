@@ -127,7 +127,7 @@ def do_comparison_plot(sessions, tags=None):
     session will be picked."""
     if tags is None:
         tags = cfg.eclipse.tags
-    trials = dict()
+    trials = OrderedDict()
 
     for session in sessions:
         c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')

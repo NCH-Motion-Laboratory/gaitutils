@@ -116,7 +116,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
         return rects
 
     if color is None:
-        color = ['tab:orange', 'tab:green', 'tab:red', 'tab:brown',
+        color = ['tab:green', 'tab:orange', 'tab:red', 'tab:brown',
                  'tab:pink', 'tab:gray', 'tab:olive']
 
     conds = values.keys()

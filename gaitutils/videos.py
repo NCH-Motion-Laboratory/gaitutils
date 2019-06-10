@@ -47,7 +47,7 @@ def convert_videos(vidfiles, check_only=False):
         raise ValueError('Invalid video converter executable: %s'
                          % vidconv_bin)
     procs = []
-    for vidfile in convfiles():
+    for vidfile in convfiles:
         cmd = [vidconv_bin]+vidconv_opts.split()+[vidfile]
         cmd = [s.encode('iso-8859-1') for s in cmd]
         # supply NO_WINDOW flag to prevent opening of consoles

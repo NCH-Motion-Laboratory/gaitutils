@@ -706,6 +706,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         session = sessions[0]
         info = sessionutils.load_info(session)
+        if info is None:
+            info = sessionutils.default_info()
         prompt_ = 'Please give additional subject information:'
         dlg_info = PdfReportDialog(info, prompt=prompt_)
         if not dlg_info.exec_():

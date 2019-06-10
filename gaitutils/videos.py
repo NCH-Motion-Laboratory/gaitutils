@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 def convert_videos(vidfiles, check_only=False):
     """Convert video files using command and options defined in cfg.
-    If check_only, return whether files were already converted.
+    If check_only, return True if all files were already converted.
     Instantly starts as many converter processes as there are files and
     returns. This has the disadvantage of potentially starting dozens of
     processes, causing slowdown.
@@ -29,6 +29,7 @@ def convert_videos(vidfiles, check_only=False):
     CONV_EXT = '.ogv'  # extension for converted files
     if not isinstance(vidfiles, list):
         vidfiles = [vidfiles]
+    # result files
     convfiles = {vidfile: op.splitext(vidfile)[0] + CONV_EXT for vidfile
                  in vidfiles}
     converted = [op.isfile(fn) for fn in convfiles.values()]  # already done
@@ -46,14 +47,13 @@ def convert_videos(vidfiles, check_only=False):
         raise ValueError('Invalid video converter executable: %s'
                          % vidconv_bin)
     procs = []
-    for vidfile, convfile in convfiles.items():
-        if not op.isfile(convfile):
-            # supply NO_WINDOW flag to prevent opening of consoles
-            cmd = [vidconv_bin]+vidconv_opts.split()+[vidfile]
-            cmd = [s.encode('iso-8859-1') for s in cmd]
-            p = subprocess.Popen(cmd,
-                                 stdout=None, creationflags=0x08000000)
-            procs.append(p)
+    for vidfile in convfiles():
+        cmd = [vidconv_bin]+vidconv_opts.split()+[vidfile]
+        cmd = [s.encode('iso-8859-1') for s in cmd]
+        # supply NO_WINDOW flag to prevent opening of consoles
+        p = subprocess.Popen(cmd, stdout=None,
+                             creationflags=0x08000000)
+        procs.append(p)
     return procs
 
 

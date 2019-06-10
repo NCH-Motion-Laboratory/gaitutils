@@ -602,10 +602,17 @@ class Gaitmenu(QtWidgets.QMainWindow):
         procs = self._execute(convert_videos, thread=False,
                               block_ui=False, vidfiles=vidfiles)
         if not procs:
+            logger.warning('video converter processes could not be started')
+            self._enable_op_buttons()            
             return
 
         completed = False
         while not completed:
+            if signals.canceled:
+                logger.debug('canceled, killing video converter processes')
+                for p in procs:
+                    p.kill()
+                break
             n_complete = len([p for p in procs if p.poll() is not None])
             prog_txt = ('Converting videos: %d of %d files done'
                         % (n_complete, len(procs)))
@@ -631,13 +638,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
                               % session)
             return
         if convert_videos(vidfiles, check_only=True):
-            qt_message_dialog('It looks like the session videos have already '
-                              'been converted.')
-            return
-        prog = ProgressBar('Converting session videos...')
+            reply = qt_yesno_dialog('It looks like the session videos have already '
+                                    'been converted. Redo?')
+            if reply == QtWidgets.QMessageBox.NoRole:
+                return
+        self.prog = ProgressBar('Converting session videos...')
         signals = ProgressSignals()
-        signals.progress.connect(lambda text, p: prog.update(text, p))
+        signals.progress.connect(lambda text, p: self.prog.update(text, p))
+        self.prog._canceled.connect(signals.cancel)        
         self._convert_vidfiles(vidfiles, signals)
+        self.prog.reset()
 
     def _postprocess_session(self):
         """Run additional postprocessing pipelines for tagged trials"""
@@ -650,18 +660,18 @@ class Gaitmenu(QtWidgets.QMainWindow):
         trials += sessionutils.get_c3ds(session, trial_type='static')
         if trials and cfg.autoproc.postproc_pipelines:
             logger.debug('running postprocessing for %s' % trials)
-            prog = ProgressBar('Running postprocessing pipelines...')
+            self.prog = ProgressBar('Running postprocessing pipelines...')
             vicon = nexus.viconnexus()
-            prog.update('Running postprocessing pipelines: %s for %d '
+            self.prog.update('Running postprocessing pipelines: %s for %d '
                         'trials' % (cfg.autoproc.postproc_pipelines,
                                     len(trials)), 0)
             for k, tr in enumerate(trials):
                 trbase = op.splitext(tr)[0]
                 vicon.OpenTrial(trbase, cfg.autoproc.nexus_timeout)
                 nexus.run_pipelines(vicon, cfg.autoproc.postproc_pipelines)
-                prog.update('Running postprocessing pipelines: %s for %d '
-                            'trials' % (cfg.autoproc.postproc_pipelines,
-                                        len(trials)), 100*k/len(trials))
+                self.prog.update('Running postprocessing pipelines: %s for %d '
+                                 'trials' % (cfg.autoproc.postproc_pipelines,
+                                             len(trials)), 100*k/len(trials))
         elif not trials:
             qt_message_dialog('No trials in session to run postprocessing for')
 

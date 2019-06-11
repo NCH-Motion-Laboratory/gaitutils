@@ -7,6 +7,8 @@ PyQt graphical interface to gaitutils
 """
 
 from __future__ import print_function
+from __future__ import division
+
 from builtins import str
 from PyQt5 import QtGui, QtCore, uic, QtWidgets
 from PyQt5.QtCore import QRunnable, QThreadPool, pyqtSignal, QObject
@@ -19,6 +21,7 @@ import time
 import requests
 import logging
 import traceback
+import multiprocessing
 
 from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
                          ChooseSessionsDialog, qt_matplotlib_window)
@@ -225,7 +228,7 @@ class WebReportDialog(QtWidgets.QDialog):
 
         # launch the report creation thread
         self.parent._execute(web.dash_report, thread=True, block_ui=True,
-                             finished_func=self._web_report_finished,
+                             finished_func=self.parent._reset_main_ui,
                              result_func=self._web_report_ready,
                              info=info, sessions=sessions, tags=tags,
                              signals=signals)
@@ -290,11 +293,6 @@ class WebReportDialog(QtWidgets.QDialog):
         for widget in self.reportWidgets:
             widget.setEnabled(True if n_reports else False)
 
-    def _web_report_finished(self):
-        """Web report creation thread has finished"""
-        self.prog.reset()  # closes the progress bar in case of errors
-        self.parent._enable_op_buttons()
-
     def _web_report_ready(self, app):
         """Gets called when web report creation is successful. Open report in
         browser"""
@@ -351,8 +349,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         self._web_report_dialog = WebReportDialog(self)
 
-        # simple signal->slot connections
-        # mostly for stuff that finishes instantly, modal dialogs and
+        # simple signal->slot connections - ui is not blocked
+        # suitable for stuff that finishes instantly, modal dialogs and
         # functions that themselves call _execute
         self.actionCreate_PDF_report.triggered.connect(lambda ev: self._create_pdf_report())
         self.actionCreate_PDF_report_Nexus.triggered.connect(self._create_pdf_report_nexus)
@@ -368,6 +366,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnPlotNexusAverage.clicked.connect(self._plot_nexus_average)
         self.btnPDFReportNexus.clicked.connect(self._create_pdf_report_nexus)
         self.btnWebReportNexus.clicked.connect(self._create_web_report_nexus)
+        self.actionRun_postprocessing_pipelines.triggered.connect(self._postprocess_session)
 
         # consistency menu
         self._widget_connect_task(self.actionTrial_median_velocities,
@@ -381,8 +380,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._widget_connect_task(self.actionAutomark_events,
                                   automark_trial,
                                   thread=True)
-        self._widget_connect_task(self.actionRun_postprocessing_pipelines,
-                                  self._postprocess_session)
         self._widget_connect_task(self.actionConvert_session_videos_to_web_format,
                                   self._convert_session_videos)
         self._widget_connect_task(self.actionCopy_session_videos_to_desktop,
@@ -418,17 +415,14 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # keep refs to tardieu+mpl windows so they don't get garbage collected
         self._tardieuwin = None
         self._mpl_windows = list()
+        # progress bar
+        self.prog = None
 
     def _get_plotting_backend_ui(self):
         """Return backend as selected in main menu"""
         for backend, rb in self.rb_map.items():
             if rb.isChecked():
                 return backend
-
-    def _autoproc_finished(self):
-        """Reset UI after autoproc"""
-        self._enable_op_buttons()
-        self.prog.reset()
 
     def _autoproc_session(self):
         """Wrapper to run autoprocess for Nexus session"""
@@ -449,9 +443,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         signals.progress.connect(lambda text, p: self.prog.update(text, p))
         self.prog._canceled.connect(signals.cancel)
 
-        self._execute(autoproc_session,
-                      thread=True,
-                      finished_func=self._autoproc_finished,
+        self._execute(autoproc_session, thread=True,
+                      finished_func=self._reset_main_ui,
                       signals=signals)
 
     def _autoproc_trial(self):
@@ -462,9 +455,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         signals.progress.connect(lambda text, p: self.prog.update(text, p))
         self.prog._canceled.connect(signals.cancel)
 
-        self._execute(autoproc_trial,
-                      thread=True,
-                      finished_func=self._autoproc_finished,
+        self._execute(autoproc_trial, thread=True,
+                      finished_func=self._reset_main_ui,
                       signals=signals)
 
     def _plot_timedist_average(self):
@@ -476,7 +468,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # we need to force backend here, since plotly is not yet supported
         result_func = lambda fig: self._show_plots(fig, backend='matplotlib')
         self._execute(do_session_average_plot, thread=True,
-                      finished_func=self._enable_op_buttons,
+                      finished_func=self._reset_main_ui,
                       result_func=result_func,
                       session=session)
 
@@ -487,7 +479,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         backend = self._get_plotting_backend_ui()
         self._execute(plot_trial_velocities, thread=True,
-                      finished_func=self._enable_op_buttons,
+                      finished_func=self._reset_main_ui,
                       result_func=self._show_plots,
                       session=session, backend=backend)
 
@@ -498,7 +490,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         backend = self._get_plotting_backend_ui()
         self._execute(plot_trial_timedep_velocities, thread=True,
-                      finished_func=self._enable_op_buttons,
+                      finished_func=self._reset_main_ui,
                       result_func=self._show_plots,
                       session=session, backend=backend)
 
@@ -512,7 +504,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         lout_name = self.layouts_map[lout_desc]
         backend = self._get_plotting_backend_ui()
         self._execute(plot_session_average, thread=True,
-                      finished_func=self._enable_op_buttons,
+                      finished_func=self._reset_main_ui,
                       result_func=self._show_plots,
                       session=session, model_normaldata=model_normaldata,
                       layout_name=lout_name, backend=backend)
@@ -531,7 +523,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         backend = self._get_plotting_backend_ui()
         from_c3d = self.xbPlotFromC3D.checkState()
         self._execute(plot_nexus_trial, thread=True,
-                      finished_func=self._enable_op_buttons,
+                      finished_func=self._reset_main_ui,
                       result_func=self._show_plots,
                       layout_name=lout_name,
                       model_normaldata=model_normaldata,
@@ -560,7 +552,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         emg_mode = 'rms' if self.xbEMGRMS.checkState() else None
         model_cycles = emg_cycles = cycs
         self._execute(plot_sessions, thread=True,
-                      finished_func=self._enable_op_buttons,
+                      finished_func=self._reset_main_ui,
                       result_func=self._show_plots,
                       sessions=[session],
                       layout_name=lout_name,
@@ -585,7 +577,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         """Helper to connect widget with task. Use lambda to consume unused
         events argument. If thread=True, launch in a separate worker thread."""
         # by default, just enable UI buttons when thread finishes
-        finished_func = self._enable_op_buttons if thread else None
+        finished_func = self._reset_main_ui if thread else None
         if isinstance(widget, QtWidgets.QPushButton):
             sig = widget.clicked
         elif isinstance(widget, QtWidgets.QAction):
@@ -596,17 +588,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                              finished_func=finished_func))
 
     def _convert_vidfiles(self, vidfiles, signals):
-        """Convert given list of video files to web format. Uses non-blocking
-        Popen() calls"""
-        self._disable_op_buttons()
-        procs = self._execute(convert_videos, thread=False,
-                              block_ui=False, vidfiles=vidfiles)
+        """Convert given list of video files"""
+        self._disable_main_ui()
+        # get the converter processes
+        procs = convert_videos(vidfiles=vidfiles)
         if not procs:
             logger.warning('video converter processes could not be started')
-            self._enable_op_buttons()            
+            self._reset_main_ui()            
             return
-
         completed = False
+        # wait in sleep loop until all converter processes have finished
         while not completed:
             if signals.canceled:
                 logger.debug('canceled, killing video converter processes')
@@ -618,12 +609,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
                         % (n_complete, len(procs)))
             prog_p = 100 * n_complete / float(len(procs))
             signals.progress.emit(prog_txt, prog_p)
-            time.sleep(.25)
+            time.sleep(.1)
             completed = n_complete == len(procs)
-        self._enable_op_buttons()
+        self._reset_main_ui()
 
     def _convert_session_videos(self):
-        """Convert current Nexus session videos to web format."""
+        """Convert Nexus session videos to web format"""
         session = _get_nexus_sessionpath()
         if session is None:
             return
@@ -651,6 +642,21 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _postprocess_session(self):
         """Run additional postprocessing pipelines for tagged trials"""
+
+        def _run_postprocessing():
+            """Helper function that will be run in a separate thread"""
+            for k, tr in enumerate(trials, 1):
+                trbase = op.splitext(tr)[0]
+                vicon.OpenTrial(trbase, cfg.autoproc.nexus_timeout)
+                nexus.run_pipelines_multiprocessing(cfg.autoproc.postproc_pipelines)
+                prog_txt = ('Running postprocessing pipelines: %s for %d trials'
+                            % (cfg.autoproc.postproc_pipelines, len(trials)))
+                prog_p = 100 * k / float(len(trials))
+                signals.progress.emit(prog_txt, prog_p)
+                if signals.canceled:
+                    logger.debug('postprocessing pipelines were canceled')
+                    return
+
         session = _get_nexus_sessionpath()
         if session is None:
             return
@@ -660,26 +666,21 @@ class Gaitmenu(QtWidgets.QMainWindow):
         trials += sessionutils.get_c3ds(session, trial_type='static')
         if trials and cfg.autoproc.postproc_pipelines:
             logger.debug('running postprocessing for %s' % trials)
-            self.prog = ProgressBar('Running postprocessing pipelines...')
             vicon = nexus.viconnexus()
+            self.prog = ProgressBar('Running postprocessing pipelines...')
             self.prog.update('Running postprocessing pipelines: %s for %d '
                              'trials' % (cfg.autoproc.postproc_pipelines,
                                          len(trials)), 0)
             signals = ProgressSignals()
+            signals.progress.connect(lambda text, p: self.prog.update(text, p))
             self.prog._canceled.connect(signals.cancel)
-            for k, tr in enumerate(trials, 1):
-                if signals.canceled:
-                    logger.debug('operation canceled')
-                    break
-                trbase = op.splitext(tr)[0]
-                vicon.OpenTrial(trbase, cfg.autoproc.nexus_timeout)
-                nexus.run_pipelines(vicon, cfg.autoproc.postproc_pipelines)
-                self.prog.update('Running postprocessing pipelines: %s for %d '
-                                 'trials' % (cfg.autoproc.postproc_pipelines,
-                                             len(trials)), 100*k/len(trials))
-            self.prog.reset()
+            self._execute(_run_postprocessing, thread=True, block_ui=True,
+                          finished_func=self._reset_main_ui)
         elif not trials:
             qt_message_dialog('No trials in session to run postprocessing for')
+        elif not cfg.autoproc.postproc_pipelines:
+            qt_message_dialog('No postprocessing pipelines defined')
+
 
     def closeEvent(self, event):
         """ Confirm and close application. """
@@ -737,11 +738,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if comparison:
             self._execute(pdf.create_comparison_report,
                           thread=True,
-                          finished_func=self._enable_op_buttons,
+                          finished_func=self._reset_main_ui,
                           sessions=sessions)
         else:
             self._execute(pdf.create_report, thread=True,
-                          finished_func=self._enable_op_buttons,
+                          finished_func=self._reset_main_ui,
                           sessionpath=sessions[0], info=info,
                           pages=dlg_info.pages)
 
@@ -752,15 +753,17 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.txtOutput.insertPlainText(msg)
         self.txtOutput.ensureCursorVisible()
 
-    def _disable_op_buttons(self):
+    def _disable_main_ui(self):
         """ Disable all operation buttons """
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         self.setEnabled(False)  # disables whole main window
         # update display immediately in case thread gets blocked
         QtWidgets.QApplication.processEvents()
 
-    def _enable_op_buttons(self):
-        """Enable all operation buttons and restore cursor."""
+    def _reset_main_ui(self):
+        """Enable all operation buttons, close progress bar if any and restore cursor."""
+        if self.prog is not None:
+            self.prog.reset()
         QtWidgets.QApplication.restoreOverrideCursor()
         self.setEnabled(True)
 
@@ -783,7 +786,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         unless an exception is raised during thread execution."""
         fun_ = partial(fun, **kwargs)
         if block_ui:
-            self._disable_op_buttons()
+            self._disable_main_ui()
         if thread:
             self.runner = Runner(fun_)
             if finished_func:
@@ -800,7 +803,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 _exception(e)
             finally:
                 if block_ui:
-                    self._enable_op_buttons()
+                    self._reset_main_ui()
                 return retval
 
 
@@ -820,13 +823,17 @@ class Runner(QRunnable):
         self.signals = RunnerSignals()
 
     def run(self):
+        logger.debug('threaded runner starting for %s' % self.fun)
         try:
             retval = self.fun()
         except Exception as e:
+            logger.debug('exception on threaded runner')
             self.signals.error.emit(e)
         else:
+            logger.debug('threaded runner completed without exceptions')            
             self.signals.result.emit(retval)
         finally:
+            logger.debug('threaded runner finished')
             self.signals.finished.emit()
 
 

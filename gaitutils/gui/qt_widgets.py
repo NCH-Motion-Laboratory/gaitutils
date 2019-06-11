@@ -156,6 +156,7 @@ class ProgressBar(QtWidgets.QProgressDialog):
         """Custom cancel handler"""
         self.cancelbutton.setText('Wait...')
         self.cancelbutton.setEnabled(False)
+        QtWidgets.QApplication.processEvents()
         self._canceled.emit()
 
     def update(self, text, p):

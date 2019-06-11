@@ -14,6 +14,8 @@ import os.path as op
 import psutil
 import glob
 import logging
+import time
+import multiprocessing
 
 from .numutils import change_coords
 from . import GaitDataError, cfg
@@ -161,17 +163,38 @@ def get_sessionpath():
     return op.normpath(sessionpath)
 
 
-def run_pipelines(vicon, plines):
+def _run_pipeline(pipeline, foo, timeout):
+    """Wrapper needed for the multiprocessing module due to pickle limitations"""
+    vicon = viconnexus()
+    return vicon.Client.RunPipeline(pipeline, foo, timeout)
+
+def run_pipelines(pipelines):
     """Run given Nexus pipeline(s)"""
-    if type(plines) != list:
-        plines = [plines]
-    for pipeline in plines:
+    vicon = viconnexus()
+    if type(pipelines) != list:
+        pipelines = [pipelines]
+    for pipeline in pipelines:
         logger.debug('running pipeline: %s' % pipeline)
-        result = vicon.Client.RunPipeline(pipeline.encode('utf-8'), '',
-                                          cfg.autoproc.nexus_timeout)
+        result = _run_pipeline(pipeline.encode('utf-8'), '',
+                               cfg.autoproc.nexus_timeout)
         if result.Error():
             logger.warning('error while trying to run Nexus pipeline: %s'
                            % pipeline)
+
+def run_pipelines_multiprocessing(pipelines):
+    """Run given Nexus pipeline(s) via multiprocessing module. The idea
+    is to work around the GIL, since the Nexus API does not release it.
+    This version causes the invoking thread to sleep and thus release the GIL
+    while the pipeline is running"""
+    if type(pipelines) != list:
+        pipelines = [pipelines]
+    for pipeline in pipelines:
+        logger.debug('running pipeline: %s' % pipeline)
+        args = (pipeline.encode('utf-8'), '', cfg.autoproc.nexus_timeout)
+        p = multiprocessing.Process(target=_run_pipeline, args=args)
+        p.start()
+        while p.exitcode is None:
+            time.sleep(.05)
 
 
 def get_trialname():

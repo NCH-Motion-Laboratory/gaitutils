@@ -142,14 +142,14 @@ def _do_autoproc(enffiles, signals=None):
             # run preprocessing + save even for skipped trials, to mark
             # them as processed - mostly so that Eclipse export to Polygon
             # will work
-            nexus.run_pipelines(vicon, cfg.autoproc.pre_pipelines)
+            nexus.run_pipelines_multiprocessing(cfg.autoproc.pre_pipelines)
             _save_trial()
             trial['recon_ok'] = False
             trial['description'] = 'skipped'
             continue
 
         # try to run preprocessing pipelines
-        nexus.run_pipelines(vicon, cfg.autoproc.pre_pipelines)
+        nexus.run_pipelines_multiprocessing(cfg.autoproc.pre_pipelines)
 
         # check trial length
         trange = vicon.GetTrialRange()
@@ -343,7 +343,7 @@ def _do_autoproc(enffiles, signals=None):
         # run model pipeline and save
         eclipse_str = '%s,%s' % (cfg.autoproc.enf_descriptions['ok'],
                                  trial['description'])
-        nexus.run_pipelines(vicon, cfg.autoproc.model_pipelines)
+        nexus.run_pipelines_multiprocessing(cfg.autoproc.model_pipelines)
         _save_trial()
         trial['description'] = eclipse_str
 

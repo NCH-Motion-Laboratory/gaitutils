@@ -651,6 +651,19 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _postprocess_session(self):
         """Run additional postprocessing pipelines for tagged trials"""
+        def _pipelines_loop(vicon=None, trials=None, signals=None):
+            for k, tr in enumerate(trials, 1):
+                if signals.canceled:
+                    logger.debug('operation canceled')
+                    break
+                trbase = op.splitext(tr)[0]
+                vicon.OpenTrial(trbase, cfg.autoproc.nexus_timeout)
+                nexus.run_pipelines(vicon, cfg.autoproc.postproc_pipelines)
+                self.prog.update('Running postprocessing pipelines: %s for %d '
+                                 'trials' % (cfg.autoproc.postproc_pipelines,
+                                             len(trials)), 100*k/len(trials))
+            self.prog.reset()
+
         session = _get_nexus_sessionpath()
         if session is None:
             return
@@ -667,19 +680,14 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                          len(trials)), 0)
             signals = ProgressSignals()
             self.prog._canceled.connect(signals.cancel)
-            for k, tr in enumerate(trials, 1):
-                if signals.canceled:
-                    logger.debug('operation canceled')
-                    break
-                trbase = op.splitext(tr)[0]
-                vicon.OpenTrial(trbase, cfg.autoproc.nexus_timeout)
-                nexus.run_pipelines(vicon, cfg.autoproc.postproc_pipelines)
-                self.prog.update('Running postprocessing pipelines: %s for %d '
-                                 'trials' % (cfg.autoproc.postproc_pipelines,
-                                             len(trials)), 100*k/len(trials))
+            self._execute(_pipelines_loop, thread=True,
+                          vicon=vicon, trials=trials, signals=signals)
             self.prog.reset()
         elif not trials:
             qt_message_dialog('No trials in session to run postprocessing for')
+
+        
+
 
     def closeEvent(self, event):
         """ Confirm and close application. """

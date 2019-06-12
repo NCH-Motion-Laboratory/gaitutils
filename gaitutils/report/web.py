@@ -177,6 +177,30 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                                % (tag, session))
             c3ds[session]['vid_only'][tag] = dyn_vids[-1:]
 
+    # calculate digest
+    import hashlib
+    import dill
+    data_c3ds = list()
+    hash_c3ds = list()
+    for session in sessions:
+        for type in ['dynamic', 'static']:
+            for fnl in c3ds[session][type].values():
+                data_c3ds.extend(fnl)
+    for fn in data_c3ds: 
+        with open(fn, 'rb') as f:
+            data = f.read()
+            hash = hashlib.md5(data).hexdigest()
+            hash_c3ds.append(hash)
+    hash_c3ds = sorted(hash_c3ds)
+    hash_str = ''.join(hash_c3ds)
+    hash_total = hashlib.md5(hash_str).hexdigest()
+    report_filename = 'web_report_%s.dat' % hash_total
+
+    report_filename_ = op.join(sessions[0], report_filename)
+    if op.isfile(report_filename_):
+        with open(report_filename_, 'rb') as f:
+            allfigs = dill.load(f)
+
     # make Trial instances for all dynamic and static trials
     trials_dyn = list()
     trials_static = list()
@@ -195,7 +219,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             trials_static.append(tri)
 
     # make average trials
-    avg_trials = [AvgTrial(_trials_avg[session], sessionpath=session) for session in sessions]
+    avg_trials = [AvgTrial(_trials_avg[session], sessionpath=session)
+                  for session in sessions]
 
     # read some extra data from trials and create supplementary data
     tibial_torsion = dict()

@@ -23,7 +23,8 @@ import logging
 import traceback
 
 from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
-                         ChooseSessionsDialog, qt_matplotlib_window)
+                         ChooseSessionsDialog, ChooseSessionsDialogWeb,
+                         qt_matplotlib_window)
 from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ..numutils import check_hetu
 from ..normaldata import read_session_normaldata
@@ -170,10 +171,13 @@ class WebReportDialog(QtWidgets.QDialog):
             return
 
         if sessions is None:
-            dlg = ChooseSessionsDialog()
+            dlg = ChooseSessionsDialogWeb()
             if not dlg.exec_():
                 return
             sessions = dlg.sessions
+            recreate_plots = dlg.recreate_plots
+        else:
+            recreate_plots = False
 
         report_name = web._report_name(sessions)
         existing_names = [item.text for item in self.listActiveReports.items]
@@ -231,7 +235,8 @@ class WebReportDialog(QtWidgets.QDialog):
                                    finished_func=self.parent._reset_main_ui,
                                    result_func=self._web_report_ready,
                                    info=info, sessions=sessions, tags=tags,
-                                   signals=signals)
+                                   signals=signals,
+                                   recreate_plots=recreate_plots)
 
     @property
     def active_reports(self):

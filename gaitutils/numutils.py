@@ -11,9 +11,24 @@ from __future__ import division
 
 import datetime
 import numpy as np
+import hashlib
 from scipy.linalg import norm
 from scipy.signal import medfilt
 from numpy.lib.stride_tricks import as_strided
+
+
+def files_digest(files):
+    """Create total md5 digest for a list of files"""
+    hashes = list()
+    for fn in files: 
+        with open(fn, 'rb') as f:
+            data = f.read()
+            hash = hashlib.md5(data).hexdigest()
+            hashes.append(hash)
+    hashes = sorted(hashes)
+    hash_str = ''.join(hashes)
+    hash_total = hashlib.md5(hash_str).hexdigest()
+    return hash_total
 
 
 def check_hetu(hetu):

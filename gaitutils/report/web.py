@@ -24,6 +24,7 @@ import logging
 import os.path as op
 import base64
 import io
+import cPickle
 
 from .. import (cfg, normaldata, models, layouts, GaitDataError,
                 sessionutils, numutils, videos)
@@ -81,7 +82,8 @@ def _report_name(sessions, long_name=True):
     return '%s: %s' % (report_type, sessions_str)
 
 
-def dash_report(info=None, sessions=None, tags=None, signals=None):
+def dash_report(info=None, sessions=None, tags=None, signals=None,
+                recreate_plots=None):
     """Returns dash app for web report.
     info: patient info
     sessions: list of session dirs
@@ -89,6 +91,9 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     signals: instance of ProgressSignals, used to send progress updates across
     threads
     """
+
+    if recreate_plots is None:
+        recreate_plots = False
 
     signals.progress.emit('Collecting trials...', 0)
     # relative width of left panel (1-12)
@@ -177,6 +182,26 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                                % (tag, session))
             c3ds[session]['vid_only'][tag] = dyn_vids[-1:]
 
+    # collect data trials (static and dynamic) that affect the graphs
+    # report 'data digest' is based on these trials only
+    data_c3ds = list()
+    for session in sessions:
+        for type in ['dynamic', 'static']:
+            for fnl in c3ds[session][type].values():
+                data_c3ds.extend(fnl)
+    digest = numutils.files_digest(data_c3ds)
+    logger.debug('report data digest: %s' % digest)
+    data_dir = sorted(sessions)[0]
+    data_fn = op.join(data_dir, 'web_report_%s.dat' % digest)
+    if op.isfile(data_fn) and not recreate_plots:
+        logger.debug('loading saved report data from %s' % data_fn)
+        signals.progress.emit('Loading saved report...', 0)
+        with open(data_fn, 'rb') as f:
+            report_data = cPickle.load(f)
+    else:
+        report_data = dict()
+        logger.debug('no saved data found or recreate forced')
+
     # make Trial instances for all dynamic and static trials
     trials_dyn = list()
     trials_static = list()
@@ -194,37 +219,41 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             tri = Trial(c3ds[session]['static']['Static'][0])
             trials_static.append(tri)
 
-    # make average trials
-    avg_trials = [AvgTrial(_trials_avg[session], sessionpath=session) for session in sessions]
+    avg_trials = None
+    if not report_data or 'Kinematics average' not in report_data:
+        # make average trials
+        avg_trials = [AvgTrial(_trials_avg[session], sessionpath=session)
+                      for session in sessions]
 
-    # read some extra data from trials and create supplementary data
     tibial_torsion = dict()
-    for tr in trials_dyn:
-        # read tibial torsion for each trial and make supplementary traces
-        # these will only be shown for KneeAnglesZ (knee rotation) variable
-        tors = dict()
-        tors['R'], tors['L'] = (tr.subj_params['RTibialTorsion'],
-                                tr.subj_params['LTibialTorsion'])
-        if tors['R'] is None or tors['L'] is None:
-            logger.warning('could not read tibial torsion values from %s'
-                           % tr.trialname)
-            continue
-        # include torsion info for all cycles; this is useful when plotting
-        # isolated cycles
-        cycs = tr.get_cycles(model_cycles)
-        for cyc in cycs:
-            tibial_torsion[cyc] = dict()
-            for ctxt in tors:
-                var_ = ctxt + 'KneeAnglesZ'
-                tibial_torsion[cyc][var_] = dict()
-                # x = % of gait cycle
-                tibial_torsion[cyc][var_]['t'] = np.arange(101)
-                # static tibial torsion value as function of x
-                # convert radians -> degrees
-                tibial_torsion[cyc][var_]['data'] = (np.ones(101) * tors[ctxt]
-                                                     / np.pi * 180)
-                tibial_torsion[cyc][var_]['label'] = ('Tib. tors. (%s) % s' %
-                                                      (ctxt, tr.trialname))
+    if not report_data:
+        # read some extra data from trials and create supplementary data
+        for tr in trials_dyn:
+            # read tibial torsion for each trial and make supplementary traces
+            # these will only be shown for KneeAnglesZ (knee rotation) variable
+            tors = dict()
+            tors['R'], tors['L'] = (tr.subj_params['RTibialTorsion'],
+                                    tr.subj_params['LTibialTorsion'])
+            if tors['R'] is None or tors['L'] is None:
+                logger.warning('could not read tibial torsion values from %s'
+                            % tr.trialname)
+                continue
+            # include torsion info for all cycles; this is useful when plotting
+            # isolated cycles
+            cycs = tr.get_cycles(model_cycles)
+            for cyc in cycs:
+                tibial_torsion[cyc] = dict()
+                for ctxt in tors:
+                    var_ = ctxt + 'KneeAnglesZ'
+                    tibial_torsion[cyc][var_] = dict()
+                    # x = % of gait cycle
+                    tibial_torsion[cyc][var_]['t'] = np.arange(101)
+                    # static tibial torsion value as function of x
+                    # convert radians -> degrees
+                    tibial_torsion[cyc][var_]['data'] = (np.ones(101) * tors[ctxt]
+                                                        / np.pi * 180)
+                    tibial_torsion[cyc][var_]['label'] = ('Tib. tors. (%s) % s' %
+                                                        (ctxt, tr.trialname))
 
     # find video files for all trials
     signals.progress.emit('Finding videos...', 0)
@@ -280,14 +309,18 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
         trials_dd.append({'label': tr.name_with_description,
                           'value': tr.trialname})
 
-    # in EMG layout, keep chs that are active in any of the trials
-    signals.progress.emit('Reading EMG data', 0)
-    try:
-        emgs = [tr.emg for tr in trials_dyn]
-        emg_layout = layouts.rm_dead_channels_multitrial(emgs,
-                                                         cfg.layouts.std_emg)
-    except GaitDataError:
-        emg_layout = 'disabled'
+    if not report_data or 'EMG' not in report_data:
+        # in EMG layout, keep chs that are active in any of the trials
+        signals.progress.emit('Reading EMG data', 0)
+        try:
+            emgs = [tr.emg for tr in trials_dyn]
+            emg_layout = layouts.rm_dead_channels_multitrial(emgs,
+                                                            cfg.layouts.std_emg)
+        except GaitDataError:
+            emg_layout = 'disabled'
+    else:
+        # EMG plot will be pulled from report_data so layout does not matter
+        emg_layout = None
 
     # FIXME: layouts into config?
     _layouts = OrderedDict([
@@ -320,8 +353,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     dd_opts_multi_upper = list()
     dd_opts_multi_lower = list()
 
+    report_data_new = dict()
     for k, (label, layout) in enumerate(_layouts.items()):
-        logger.debug('creating plot for %s' % label)
         signals.progress.emit('Creating plot: %s' % label, 100*k/len(_layouts))
         if signals.canceled:
             return None
@@ -342,98 +375,96 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             color_by['emg'] = cfg.web_report.emg_color_by
         legend_type = (cfg.web_report.comparison_legend_type if is_comparison
                        else cfg.web_report.legend_type)
-
         try:
-            # special layout
-            if isinstance(layout, basestring):
-                if layout == 'time_dist':
-                    # get plot in svg format and encode to base64 for html.Img
-                    buf = _time_dist_plot_svg(sessions)
-                    encoded_image = base64.b64encode(buf.read())
-                    graph_upper = html.Img(src='data:image/svg+xml;base64,{}'.
-                                           format(encoded_image),
-                                           id='gaitgraph%d' % k,
-                                           style={'height': '100%'})
-                    graph_lower = html.Img(src='data:image/svg+xml;base64,{}'.
-                                           format(encoded_image),
-                                           id='gaitgraph%d'
-                                           % (len(_layouts)+k),
-                                           style={'height': '100%'})
-
-                elif layout == 'patient_info':
-                    graph_upper = dcc.Markdown(patient_info_text)
-                    graph_lower = graph_upper
-
-                elif layout == 'static_kinematics':
-                    layout_ = cfg.layouts.lb_kinematics
-                    fig_ = plot_trials(trials_static, layout_,
-                                       model_normaldata=model_normaldata,
-                                       model_cycles='unnormalized',
-                                       emg_cycles=[],
-                                       legend_type='short_name_with_cyclename',
-                                       style_by=style_by, color_by=color_by,
-                                       big_fonts=True)
-                    graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
-                                            style={'height': '100%'})
-                    graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
-                                            % (len(_layouts)+k),
-                                            style={'height': '100%'})
-
-                elif layout == 'static_emg':
-                    layout_ = cfg.layouts.std_emg
-                    fig_ = plot_trials(trials_static, layout_,
-                                       model_normaldata=model_normaldata,
-                                       model_cycles=[],
-                                       emg_cycles='unnormalized',
-                                       legend_type='short_name_with_cyclename',
-                                       style_by=style_by, color_by=color_by,
-                                       big_fonts=True)
-                    graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
-                                            style={'height': '100%'})
-                    graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
-                                            % (len(_layouts)+k),
-                                            style={'height': '100%'})
-
-                elif layout == 'kinematics_average':
-                    layout_ = cfg.layouts.lb_kinematics
-                    fig_ = plot_trials(avg_trials, layout_,
-                                       style_by=style_by, color_by=color_by,                    
-                                       model_normaldata=model_normaldata,
-                                       big_fonts=True)
-                                       
-                    graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
-                                            style={'height': '100%'})
-                    graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
-                                            % (len(_layouts)+k),
-                                            style={'height': '100%'})
-
-                # will be caught and menu item will be empty
-                elif layout == 'disabled':
-                    raise ValueError
-
-                else:  # unrecognized layout; this is not caught by us
-                    raise Exception('Unrecognized layout: %s' % layout)
-
-            # regular gaitutils layout
+            if label in report_data:
+                logger.debug('loading %s from saved report data' % label)
+                figdata = report_data[label]
             else:
-                fig_ = plot_trials(trials_dyn, layout,
-                                   model_normaldata=model_normaldata,
-                                   emg_mode=emg_mode,
-                                   legend_type=legend_type,
-                                   style_by=style_by, color_by=color_by,
-                                   supplementary_data=supplementary_default,
-                                   big_fonts=True)
-                graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
+                logger.debug('creating figure data for %s' % label)
+                if isinstance(layout, basestring):  # handle special layout codes
+                    if layout == 'time_dist':
+                        # get plot in svg format and encode to base64 for html.Img
+                        buf = _time_dist_plot_svg(sessions)
+                        figdata = base64.b64encode(buf.read())
+                    elif layout == 'patient_info':
+                        figdata = patient_info_text
+                    elif layout == 'static_kinematics':
+                        layout_ = cfg.layouts.lb_kinematics
+                        figdata = plot_trials(trials_static, layout_,
+                                        model_normaldata=model_normaldata,
+                                        model_cycles='unnormalized',
+                                        emg_cycles=[],
+                                        legend_type='short_name_with_cyclename',
+                                        style_by=style_by, color_by=color_by,
+                                        big_fonts=True)
+                    elif layout == 'static_emg':
+                        layout_ = cfg.layouts.std_emg
+                        figdata = plot_trials(trials_static, layout_,
+                                        model_normaldata=model_normaldata,
+                                        model_cycles=[],
+                                        emg_cycles='unnormalized',
+                                        legend_type='short_name_with_cyclename',
+                                        style_by=style_by, color_by=color_by,
+                                        big_fonts=True)
+                    elif layout == 'kinematics_average':
+                        layout_ = cfg.layouts.lb_kinematics
+                        figdata = plot_trials(avg_trials, layout_,
+                                        style_by=style_by, color_by=color_by,                    
+                                        model_normaldata=model_normaldata,
+                                        big_fonts=True)
+                    # will be caught and menu item will be empty
+                    elif layout == 'disabled':
+                        raise ValueError
+                    else:  # unrecognized layout; this is not caught by us
+                        raise Exception('Unrecognized layout: %s' % layout)
+
+                else:  # regular gaitutils layout
+                    figdata = plot_trials(trials_dyn, layout,
+                                    model_normaldata=model_normaldata,
+                                    emg_mode=emg_mode,
+                                    legend_type=legend_type,
+                                    style_by=style_by, color_by=color_by,
+                                    supplementary_data=supplementary_default,
+                                    big_fonts=True)
+            # save created data
+            import plotly.graph_objs as go
+            if isinstance(figdata, go.Figure):
+                # serialize go.Figures before saving
+                # this makes them much faster for cPickle to handle
+                # apparently dcc.Graph can eat the serialized json directly,
+                # so no need to do anything on load
+                figdata_ = figdata.to_plotly_json()
+            else:
+                figdata_ = figdata
+            report_data_new[label] = figdata_
+
+            # make the upper and lower panel graphs from figdata, depending
+            # on data type
+            if layout == 'time_dist':
+                graph_upper = html.Img(src='data:image/svg+xml;base64,{}'.
+                                    format(figdata),
+                                    id='gaitgraph%d' % k,
+                                    style={'height': '100%'})
+                graph_lower = html.Img(src='data:image/svg+xml;base64,{}'.
+                                    format(figdata),
+                                    id='gaitgraph%d'
+                                    % (len(_layouts)+k),
+                                    style={'height': '100%'})
+            elif layout == 'patient_info':
+                graph_upper = dcc.Markdown(patient_info_text)
+                graph_lower = graph_upper
+            else:
+                # plotly fig -> dcc.Graph
+                graph_upper = dcc.Graph(figure=figdata, id='gaitgraph%d' % k,
                                         style={'height': '100%'})
-                graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
+                graph_lower = dcc.Graph(figure=figdata, id='gaitgraph%d'
                                         % (len(_layouts)+k),
                                         style={'height': '100%'})
-
             dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
             dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
 
         except (ValueError, GaitDataError) as e:
-            logger.warning('Failed to create plot for %s: %s' % (label, e))
+            logger.warning('failed to create figure for %s: %s' % (label, e))
             # insert the menu options but make them disabled
             dd_opts_multi_upper.append({'label': label, 'value': label,
                                         'disabled': True})
@@ -443,6 +474,11 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
 
     opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
     opts_multi, mapper_multi_lower = _make_dropdown_lists(dd_opts_multi_lower)
+
+    logger.debug('saving report data into %s' % data_fn)
+    signals.progress.emit('Saving report data to disk...', 99)    
+    with open(data_fn, 'wb') as f:
+        cPickle.dump(report_data_new, f, protocol=-1)
 
     def make_left_panel(split=True, upper_value='Kinematics',
                         lower_value='Kinematics'):

@@ -31,9 +31,10 @@ import numpy as np
 import time
 import logging
 import itertools
+import shutil
 
 from . import (nexus, eclipse, utils, GaitDataError, sessionutils,
-               read_data, cfg)
+               read_data, videos, cfg)
 from gui.qt_widgets import ProgressSignals
 
 logger = logging.getLogger(__name__)
@@ -451,7 +452,7 @@ def copy_session_videos():
     sessionpath = nexus.get_sessionpath()
     c3dfiles = sessionutils.get_c3ds(sessionpath, tags=cfg.eclipse.repr_tags,
                                      trial_type='dynamic')
-    vidfiles = itertools.chain.from_iterable(sessionutils.get_trial_videos(c3d)
+    vidfiles = itertools.chain.from_iterable(videos.get_trial_videos(c3d, vid_ext='.avi')
                                              for c3d in c3dfiles)
     vidfiles = list(vidfiles)
     if not vidfiles:

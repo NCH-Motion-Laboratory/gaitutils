@@ -513,7 +513,9 @@ def automark_events(source, mkrdata=None, events_range=None, fp_events=None,
         vel_thresholds = {'L_strike': None, 'L_toeoff': None,
                           'R_strike': None, 'R_toeoff': None}
 
+
     if mkrdata is None:
+        # FIXME: missing markers are not detected here?
         reqd_markers = (cfg.autoproc.right_foot_markers +
                         cfg.autoproc.left_foot_markers +
                         cfg.autoproc.track_markers)

@@ -228,10 +228,10 @@ class WebReportDialog(QtWidgets.QDialog):
 
         # launch the report creation thread
         self.parent._run_in_thread(web.dash_report, thread=True, block_ui=True,
-                             finished_func=self.parent._reset_main_ui,
-                             result_func=self._web_report_ready,
-                             info=info, sessions=sessions, tags=tags,
-                             signals=signals)
+                                   finished_func=self.parent._reset_main_ui,
+                                   result_func=self._web_report_ready,
+                                   info=info, sessions=sessions, tags=tags,
+                                   signals=signals)
 
     @property
     def active_reports(self):
@@ -371,7 +371,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionTime_distance_average.triggered.connect(self._plot_timedist_average)
         # XXX: these get run in the main thread
         self.actionCopy_session_videos_to_desktop.triggered.connect(copy_session_videos)
-        self.actionAutomark_events.triggered.connect(automark_trial)
+        self.actionAutomark_events.triggered.connect(self._automark_trial)
 
         # set backend radio buttons according to choice in cfg
         self.rb_map = {'plotly': self.rbPlotly,
@@ -380,7 +380,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         rb_active.setChecked(True)
 
         # add plot layouts to combobox
-
         cb_items = sorted(configdot.get_description(lo) or loname
                           for loname, lo in cfg['layouts'])
         self.cbNexusTrialLayout.addItems(cb_items)
@@ -412,6 +411,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
             if rb.isChecked():
                 return backend
 
+    def _automark_trial(self):
+        session = _get_nexus_sessionpath()
+        if session is None:
+            return
+        self._run_in_thread(automark_trial, thread=True,
+                            finished_func=self._reset_main_ui)
+
     def _autoproc_session(self):
         """Wrapper to run autoprocess for Nexus session"""
         session = _get_nexus_sessionpath()
@@ -432,8 +438,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.prog._canceled.connect(signals.cancel)
 
         self._run_in_thread(autoproc_session, thread=True,
-                      finished_func=self._reset_main_ui,
-                      signals=signals)
+                            finished_func=self._reset_main_ui,
+                            signals=signals)
 
     def _autoproc_trial(self):
         """Wrapper to run autoprocess for Nexus trial"""
@@ -444,8 +450,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.prog._canceled.connect(signals.cancel)
 
         self._run_in_thread(autoproc_trial, thread=True,
-                      finished_func=self._reset_main_ui,
-                      signals=signals)
+                            finished_func=self._reset_main_ui,
+                            signals=signals)
 
     def _plot_timedist_average(self):
         """Plot time-distance average"""
@@ -456,9 +462,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # we need to force backend here, since plotly is not yet supported
         result_func = lambda fig: self._show_plots(fig, backend='matplotlib')
         self._run_in_thread(do_session_average_plot, thread=True,
-                      finished_func=self._reset_main_ui,
-                      result_func=result_func,
-                      session=session)
+                            finished_func=self._reset_main_ui,
+                            result_func=result_func,
+                            session=session)
 
     def _plot_trial_median_velocities(self):
         """Trial velocity plot from current Nexus session"""
@@ -467,9 +473,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         backend = self._get_plotting_backend_ui()
         self._run_in_thread(plot_trial_velocities, thread=True,
-                      finished_func=self._reset_main_ui,
-                      result_func=self._show_plots,
-                      session=session, backend=backend)
+                            finished_func=self._reset_main_ui,
+                            result_func=self._show_plots,
+                            session=session, backend=backend)
 
     def _plot_trial_timedep_velocities(self):
         """Trial velocity plot from current Nexus session"""
@@ -478,9 +484,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         backend = self._get_plotting_backend_ui()
         self._run_in_thread(plot_trial_timedep_velocities, thread=True,
-                      finished_func=self._reset_main_ui,
-                      result_func=self._show_plots,
-                      session=session, backend=backend)
+                            finished_func=self._reset_main_ui,
+                            result_func=self._show_plots,
+                            session=session, backend=backend)
 
     def _plot_nexus_average(self):
         """Plot average from current Nexus session"""
@@ -492,10 +498,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
         lout_name = self.layouts_map[lout_desc]
         backend = self._get_plotting_backend_ui()
         self._run_in_thread(plot_session_average, thread=True,
-                      finished_func=self._reset_main_ui,
-                      result_func=self._show_plots,
-                      session=session, model_normaldata=model_normaldata,
-                      layout_name=lout_name, backend=backend)
+                            finished_func=self._reset_main_ui,
+                            result_func=self._show_plots,
+                            session=session, model_normaldata=model_normaldata,
+                            layout_name=lout_name, backend=backend)
 
     def _plot_nexus_trial(self):
         """Plot the current Nexus trial according to UI choices"""
@@ -511,15 +517,15 @@ class Gaitmenu(QtWidgets.QMainWindow):
         backend = self._get_plotting_backend_ui()
         from_c3d = self.xbPlotFromC3D.checkState()
         self._run_in_thread(plot_nexus_trial, thread=True,
-                      finished_func=self._reset_main_ui,
-                      result_func=self._show_plots,
-                      layout_name=lout_name,
-                      model_normaldata=model_normaldata,
-                      model_cycles=model_cycles,
-                      emg_cycles=emg_cycles,
-                      emg_mode=emg_mode,
-                      from_c3d=from_c3d,
-                      backend=backend)
+                            finished_func=self._reset_main_ui,
+                            result_func=self._show_plots,
+                            layout_name=lout_name,
+                            model_normaldata=model_normaldata,
+                            model_cycles=model_cycles,
+                            emg_cycles=emg_cycles,
+                            emg_mode=emg_mode,
+                            from_c3d=from_c3d,
+                            backend=backend)
 
     def _create_web_report_nexus(self):
         """Create web report based on current Nexus session"""
@@ -540,16 +546,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
         emg_mode = 'rms' if self.xbEMGRMS.checkState() else None
         model_cycles = emg_cycles = cycs
         self._run_in_thread(plot_sessions, thread=True,
-                      finished_func=self._reset_main_ui,
-                      result_func=self._show_plots,
-                      sessions=[session],
-                      layout_name=lout_name,
-                      legend_type='tag_with_cycle',
-                      model_normaldata=model_normaldata,
-                      model_cycles=model_cycles,
-                      emg_cycles=emg_cycles,
-                      emg_mode=emg_mode,
-                      backend=backend)
+                            finished_func=self._reset_main_ui,
+                            result_func=self._show_plots,
+                            sessions=[session],
+                            layout_name=lout_name,
+                            legend_type='tag_with_cycle',
+                            model_normaldata=model_normaldata,
+                            model_cycles=model_cycles,
+                            emg_cycles=emg_cycles,
+                            emg_mode=emg_mode,
+                            backend=backend)
 
     def _show_plots(self, fig, backend=None):
         """Shows fig"""
@@ -649,7 +655,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             signals.progress.connect(lambda text, p: self.prog.update(text, p))
             self.prog._canceled.connect(signals.cancel)
             self._run_in_thread(_run_postprocessing, thread=True, block_ui=True,
-                          finished_func=self._reset_main_ui)
+                                finished_func=self._reset_main_ui)
         elif not trials:
             qt_message_dialog('No trials in session to run postprocessing for')
         elif not cfg.autoproc.postproc_pipelines:
@@ -711,14 +717,14 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # create the report
         if comparison:
             self._run_in_thread(pdf.create_comparison_report,
-                          thread=True,
-                          finished_func=self._reset_main_ui,
-                          sessions=sessions)
+                                thread=True,
+                                finished_func=self._reset_main_ui,
+                                sessions=sessions)
         else:
             self._run_in_thread(pdf.create_report, thread=True,
-                          finished_func=self._reset_main_ui,
-                          sessionpath=sessions[0], info=info,
-                          pages=dlg_info.pages)
+                                finished_func=self._reset_main_ui,
+                                sessionpath=sessions[0], info=info,
+                                pages=dlg_info.pages)
 
     def _log_message(self, msg):
         c = self.txtOutput.textCursor()
@@ -748,7 +754,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._tardieuwin.show()
 
     def _run_in_thread(self, fun, thread=False, block_ui=True, finished_func=None,
-                 result_func=None, **kwargs):
+                       result_func=None, **kwargs):
         """Run function fun with args kwargs in a worker thread.
         If block_ui==True, disable main ui until worker thread is finished.
         finished_func will be called when thread is finished. result_func

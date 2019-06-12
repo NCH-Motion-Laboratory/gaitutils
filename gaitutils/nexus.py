@@ -164,13 +164,13 @@ def get_sessionpath():
 
 
 def _run_pipeline(pipeline, foo, timeout):
-    """Wrapper needed for the multiprocessing module due to pickle limitations"""
+    """Wrapper needed for multiprocessing due to pickle limitations"""
     vicon = viconnexus()
     return vicon.Client.RunPipeline(pipeline, foo, timeout)
 
+
 def run_pipelines(pipelines):
     """Run given Nexus pipeline(s)"""
-    vicon = viconnexus()
     if type(pipelines) != list:
         pipelines = [pipelines]
     for pipeline in pipelines:
@@ -180,6 +180,7 @@ def run_pipelines(pipelines):
         if result.Error():
             logger.warning('error while trying to run Nexus pipeline: %s'
                            % pipeline)
+
 
 def run_pipelines_multiprocessing(pipelines):
     """Run given Nexus pipeline(s) via multiprocessing module. The idea
@@ -194,7 +195,7 @@ def run_pipelines_multiprocessing(pipelines):
         p = multiprocessing.Process(target=_run_pipeline, args=args)
         p.start()
         while p.exitcode is None:
-            time.sleep(.05)
+            time.sleep(.1)
 
 
 def get_trialname():

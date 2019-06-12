@@ -21,7 +21,6 @@ import time
 import requests
 import logging
 import traceback
-import multiprocessing
 
 from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
                          ChooseSessionsDialog, qt_matplotlib_window)
@@ -44,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 def _get_nexus_sessionpath():
-    """Get Nexus sessionpath, handle exceptions for use outside _execute"""
+    """Get Nexus sessionpath, handle exceptions for use outside _run_in_thread"""
     try:
         sessionpath = nexus.get_sessionpath()
         return sessionpath
@@ -141,7 +140,7 @@ class WebReportInfoDialog(QtWidgets.QDialog):
 
 class WebReportDialog(QtWidgets.QDialog):
     """Dialog for managing web reports. In current implementation, this needs a
-    GaitMenu instance as a parent (uses _execute() and other parent methods)"""
+    GaitMenu instance as a parent (uses _run_in_thread() and other parent methods)"""
 
     def __init__(self, parent):
         super(self.__class__, self).__init__(parent)
@@ -206,11 +205,12 @@ class WebReportDialog(QtWidgets.QDialog):
             else:
                 return
 
-        self.prog = ProgressBar('Creating web report...')
-        self.prog.update('Collecting session information...', 0)
+        # give progress bar to parent so that parent can close it
+        self.parent.prog = ProgressBar('Creating web report...')
+        self.parent.prog.update('Collecting session information...', 0)
         signals = ProgressSignals()
-        signals.progress.connect(lambda text, p: self.prog.update(text, p))
-        self.prog._canceled.connect(signals.cancel)
+        signals.progress.connect(lambda text, p: self.parent.prog.update(text, p))
+        self.parent.prog._canceled.connect(signals.cancel)
 
         # for comparison between sessions, get representative trials only
         tags = (cfg.eclipse.repr_tags if len(sessions) > 1 else
@@ -227,7 +227,7 @@ class WebReportDialog(QtWidgets.QDialog):
             self.parent._convert_vidfiles(vidfiles, signals)
 
         # launch the report creation thread
-        self.parent._execute(web.dash_report, thread=True, block_ui=True,
+        self.parent._run_in_thread(web.dash_report, thread=True, block_ui=True,
                              finished_func=self.parent._reset_main_ui,
                              result_func=self._web_report_ready,
                              info=info, sessions=sessions, tags=tags,
@@ -315,7 +315,7 @@ class WebReportDialog(QtWidgets.QDialog):
         not run.
         Serving is a bit flaky in py2 (multiple requests cause exceptions)
         """
-        self.parent._execute(app.server.run, thread=True, block_ui=False,
+        self.parent._run_in_thread(app.server.run, thread=True, block_ui=False,
                              debug=False, port=port, threaded=True)
         # double clicking on the list item will browse to corresponding port
         self.listActiveReports.add_item(app._gaitutils_report_name, data=port)
@@ -349,9 +349,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         self._web_report_dialog = WebReportDialog(self)
 
-        # simple signal->slot connections - ui is not blocked
-        # suitable for stuff that finishes instantly, modal dialogs and
-        # functions that themselves call _execute
+        # connect ui widgets
         self.actionCreate_PDF_report.triggered.connect(lambda ev: self._create_pdf_report())
         self.actionCreate_PDF_report_Nexus.triggered.connect(self._create_pdf_report_nexus)
         self.actionWeb_reports.triggered.connect(self._web_report_dialog.show)
@@ -367,23 +365,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnPDFReportNexus.clicked.connect(self._create_pdf_report_nexus)
         self.btnWebReportNexus.clicked.connect(self._create_web_report_nexus)
         self.actionRun_postprocessing_pipelines.triggered.connect(self._postprocess_session)
-
-        # consistency menu
-        self._widget_connect_task(self.actionTrial_median_velocities,
-                                  self._plot_trial_median_velocities)
-        self._widget_connect_task(self.actionTrial_timedep_velocities,
-                                  self._plot_trial_timedep_velocities)
-        self._widget_connect_task(self.actionTime_distance_average,
-                                  self._plot_timedist_average)
-        
-        # processing menu
-        self._widget_connect_task(self.actionAutomark_events,
-                                  automark_trial,
-                                  thread=True)
-        self._widget_connect_task(self.actionConvert_session_videos_to_web_format,
-                                  self._convert_session_videos)
-        self._widget_connect_task(self.actionCopy_session_videos_to_desktop,
-                                  copy_session_videos)
+        self.actionTrial_median_velocities.triggered.connect(self._plot_trial_median_velocities)
+        self.actionTrial_timedep_velocities.triggered.connect(self._plot_trial_timedep_velocities)
+        self.actionConvert_session_videos_to_web_format.triggered.connect(self._convert_session_videos)
+        self.actionTime_distance_average.triggered.connect(self._plot_timedist_average)
+        # XXX: these get run in the main thread
+        self.actionCopy_session_videos_to_desktop.triggered.connect(copy_session_videos)
+        self.actionAutomark_events.triggered.connect(automark_trial)
 
         # set backend radio buttons according to choice in cfg
         self.rb_map = {'plotly': self.rbPlotly,
@@ -443,7 +431,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         signals.progress.connect(lambda text, p: self.prog.update(text, p))
         self.prog._canceled.connect(signals.cancel)
 
-        self._execute(autoproc_session, thread=True,
+        self._run_in_thread(autoproc_session, thread=True,
                       finished_func=self._reset_main_ui,
                       signals=signals)
 
@@ -455,7 +443,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         signals.progress.connect(lambda text, p: self.prog.update(text, p))
         self.prog._canceled.connect(signals.cancel)
 
-        self._execute(autoproc_trial, thread=True,
+        self._run_in_thread(autoproc_trial, thread=True,
                       finished_func=self._reset_main_ui,
                       signals=signals)
 
@@ -467,7 +455,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         # we need to force backend here, since plotly is not yet supported
         result_func = lambda fig: self._show_plots(fig, backend='matplotlib')
-        self._execute(do_session_average_plot, thread=True,
+        self._run_in_thread(do_session_average_plot, thread=True,
                       finished_func=self._reset_main_ui,
                       result_func=result_func,
                       session=session)
@@ -478,7 +466,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if session is None:
             return
         backend = self._get_plotting_backend_ui()
-        self._execute(plot_trial_velocities, thread=True,
+        self._run_in_thread(plot_trial_velocities, thread=True,
                       finished_func=self._reset_main_ui,
                       result_func=self._show_plots,
                       session=session, backend=backend)
@@ -489,7 +477,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if session is None:
             return
         backend = self._get_plotting_backend_ui()
-        self._execute(plot_trial_timedep_velocities, thread=True,
+        self._run_in_thread(plot_trial_timedep_velocities, thread=True,
                       finished_func=self._reset_main_ui,
                       result_func=self._show_plots,
                       session=session, backend=backend)
@@ -503,7 +491,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         lout_desc = self.cbNexusTrialLayout.currentText()
         lout_name = self.layouts_map[lout_desc]
         backend = self._get_plotting_backend_ui()
-        self._execute(plot_session_average, thread=True,
+        self._run_in_thread(plot_session_average, thread=True,
                       finished_func=self._reset_main_ui,
                       result_func=self._show_plots,
                       session=session, model_normaldata=model_normaldata,
@@ -522,7 +510,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         model_cycles = emg_cycles = cycs
         backend = self._get_plotting_backend_ui()
         from_c3d = self.xbPlotFromC3D.checkState()
-        self._execute(plot_nexus_trial, thread=True,
+        self._run_in_thread(plot_nexus_trial, thread=True,
                       finished_func=self._reset_main_ui,
                       result_func=self._show_plots,
                       layout_name=lout_name,
@@ -551,7 +539,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
         emg_mode = 'rms' if self.xbEMGRMS.checkState() else None
         model_cycles = emg_cycles = cycs
-        self._execute(plot_sessions, thread=True,
+        self._run_in_thread(plot_sessions, thread=True,
                       finished_func=self._reset_main_ui,
                       result_func=self._show_plots,
                       sessions=[session],
@@ -572,20 +560,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._mpl_windows.append(_mpl_win)
         elif backend == 'plotly':
             _show_plotly_fig(fig)
-
-    def _widget_connect_task(self, widget, fun, thread=False):
-        """Helper to connect widget with task. Use lambda to consume unused
-        events argument. If thread=True, launch in a separate worker thread."""
-        # by default, just enable UI buttons when thread finishes
-        finished_func = self._reset_main_ui if thread else None
-        if isinstance(widget, QtWidgets.QPushButton):
-            sig = widget.clicked
-        elif isinstance(widget, QtWidgets.QAction):
-            sig = widget.triggered
-        else:
-            raise ValueError('Invalid widget type')
-        sig.connect(lambda ev: self._execute(fun, thread=thread,
-                                             finished_func=finished_func))
 
     def _convert_vidfiles(self, vidfiles, signals):
         """Convert given list of video files"""
@@ -674,7 +648,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             signals = ProgressSignals()
             signals.progress.connect(lambda text, p: self.prog.update(text, p))
             self.prog._canceled.connect(signals.cancel)
-            self._execute(_run_postprocessing, thread=True, block_ui=True,
+            self._run_in_thread(_run_postprocessing, thread=True, block_ui=True,
                           finished_func=self._reset_main_ui)
         elif not trials:
             qt_message_dialog('No trials in session to run postprocessing for')
@@ -736,12 +710,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         # create the report
         if comparison:
-            self._execute(pdf.create_comparison_report,
+            self._run_in_thread(pdf.create_comparison_report,
                           thread=True,
                           finished_func=self._reset_main_ui,
                           sessions=sessions)
         else:
-            self._execute(pdf.create_report, thread=True,
+            self._run_in_thread(pdf.create_report, thread=True,
                           finished_func=self._reset_main_ui,
                           sessionpath=sessions[0], info=info,
                           pages=dlg_info.pages)
@@ -773,45 +747,30 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._tardieuwin = _tardieu.TardieuWindow()
             self._tardieuwin.show()
 
-    def _execute(self, fun, thread=False, block_ui=True, finished_func=None,
+    def _run_in_thread(self, fun, thread=False, block_ui=True, finished_func=None,
                  result_func=None, **kwargs):
-        """Run function fun with args kwargs. If thread==True, run in a
-        separate worker thread. If block_ui==True, disable ui until worker
-        thread is finished.
-        If not thread:
-        Returns function return value.
-        If thread:
+        """Run function fun with args kwargs in a worker thread.
+        If block_ui==True, disable main ui until worker thread is finished.
         finished_func will be called when thread is finished. result_func
         will be called with the function return value as its single argument,
         unless an exception is raised during thread execution."""
         fun_ = partial(fun, **kwargs)
         if block_ui:
             self._disable_main_ui()
-        if thread:
-            self.runner = Runner(fun_)
-            if finished_func:
-                self.runner.signals.finished.connect(finished_func)
-            if result_func:
-                self.runner.signals.result.connect(lambda r: result_func(r))
-            self.runner.signals.error.connect(lambda e: _exception(e))
-            self.threadpool.start(self.runner)
-        else:
-            try:
-                retval = fun_()
-            except Exception as e:
-                retval = None
-                _exception(e)
-            finally:
-                if block_ui:
-                    self._reset_main_ui()
-                return retval
+        self.runner = Runner(fun_)
+        if finished_func:
+            self.runner.signals.finished.connect(finished_func)
+        if result_func:
+            self.runner.signals.result.connect(lambda r: result_func(r))
+        self.runner.signals.error.connect(lambda e: _exception(e))
+        self.threadpool.start(self.runner)
 
 
 class RunnerSignals(QObject):
     """Need a separate class since QRunnable cannot emit signals"""
-    finished = pyqtSignal()
-    result = pyqtSignal(object)
-    error = pyqtSignal(Exception)
+    finished = pyqtSignal()  # thread finished
+    result = pyqtSignal(object)  # successful completion - return value
+    error = pyqtSignal(Exception)  # exception raised during run
 
 
 class Runner(QRunnable):
@@ -823,17 +782,13 @@ class Runner(QRunnable):
         self.signals = RunnerSignals()
 
     def run(self):
-        logger.debug('threaded runner starting for %s' % self.fun)
         try:
             retval = self.fun()
         except Exception as e:
-            logger.debug('exception on threaded runner')
             self.signals.error.emit(e)
         else:
-            logger.debug('threaded runner completed without exceptions')            
             self.signals.result.emit(retval)
         finally:
-            logger.debug('threaded runner finished')
             self.signals.finished.emit()
 
 

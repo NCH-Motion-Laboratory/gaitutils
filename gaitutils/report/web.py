@@ -142,6 +142,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
         patient_info_text += info['report_notes']
 
     # load normal data for gait models
+    signals.progress.emit('Loading normal data...', 0)
     model_normaldata = dict()
     for fn in cfg.general.normaldata_files:
         ndata = normaldata.read_normaldata(fn)
@@ -196,6 +197,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
     if op.isfile(data_fn) and not recreate_plots:
         logger.debug('loading saved report data from %s' % data_fn)
         signals.progress.emit('Loading saved report...', 0)
+        if signals.canceled:
+            return None
         with open(data_fn, 'rb') as f:
             report_data = cPickle.load(f)
     else:

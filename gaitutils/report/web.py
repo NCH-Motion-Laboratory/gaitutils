@@ -183,8 +183,13 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                                % (tag, session))
             c3ds[session]['vid_only'][tag] = dyn_vids[-1:]
 
+    # see whether we can load report figures from disk
     # collect data trials (static and dynamic) that affect the graphs
     # report 'data digest' is based on these trials only
+    # FIXME: if saved data exists, we should assume it contains ALL plots
+    # and skip loading normal data and all other plot-related stuff.
+    # then if a plot cannot be loaded, throw an error and ask user to
+    # recreate the plots
     data_c3ds = list()
     for session in sessions:
         for type in ['dynamic', 'static']:

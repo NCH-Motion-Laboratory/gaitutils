@@ -24,7 +24,7 @@ import logging
 import os.path as op
 import base64
 import io
-import dill
+import cPickle
 
 from .. import (cfg, normaldata, models, layouts, GaitDataError,
                 sessionutils, numutils, videos)
@@ -197,7 +197,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
         logger.debug('loading saved report data from %s' % data_fn)
         signals.progress.emit('Loading saved report...', 0)
         with open(data_fn, 'rb') as f:
-            report_data = dill.load(f)
+            report_data = cPickle.load(f)
     else:
         report_data = dict()
         logger.debug('no saved data found or recreate forced')
@@ -469,7 +469,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
     logger.debug('saving report data into %s' % data_fn)
     signals.progress.emit('Saving report data to disk...', 99)    
     with open(data_fn, 'wb') as f:
-        dill.dump(report_data_new, f)
+        cPickle.dump(report_data_new, f, protocol=-1)
 
     def make_left_panel(split=True, upper_value='Kinematics',
                         lower_value='Kinematics'):

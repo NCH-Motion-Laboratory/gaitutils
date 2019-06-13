@@ -82,7 +82,8 @@ def _report_name(sessions, long_name=True):
     return '%s: %s' % (report_type, sessions_str)
 
 
-def dash_report(info=None, sessions=None, tags=None, signals=None):
+def dash_report(info=None, sessions=None, tags=None, signals=None,
+                recreate_plots=None):
     """Returns dash app for web report.
     info: patient info
     sessions: list of session dirs
@@ -90,6 +91,9 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     signals: instance of ProgressSignals, used to send progress updates across
     threads
     """
+
+    if recreate_plots is None:
+        recreate_plots = False
 
     signals.progress.emit('Collecting trials...', 0)
     # relative width of left panel (1-12)
@@ -189,14 +193,15 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     logger.debug('report data digest: %s' % digest)
     data_dir = sorted(sessions)[0]
     data_fn = op.join(data_dir, 'web_report_%s.dat' % digest)
-    if op.isfile(data_fn):
+    if op.isfile(data_fn) and not recreate_plots:
         logger.debug('loading saved report data from %s' % data_fn)
+        signals.progress.emit('Loading saved report...', 0)
         with open(data_fn, 'rb') as f:
             report_data = dill.load(f)
             logger.debug(report_data.keys())
     else:
         report_data = dict()
-        logger.debug('no saved data found')
+        logger.debug('no saved data found or recreate forced')
 
     # make Trial instances for all dynamic and static trials
     trials_dyn = list()

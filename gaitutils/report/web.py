@@ -198,7 +198,6 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
         signals.progress.emit('Loading saved report...', 0)
         with open(data_fn, 'rb') as f:
             report_data = dill.load(f)
-            logger.debug(report_data.keys())
     else:
         report_data = dict()
         logger.debug('no saved data found or recreate forced')
@@ -220,38 +219,41 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
             tri = Trial(c3ds[session]['static']['Static'][0])
             trials_static.append(tri)
 
-    # make average trials
-    avg_trials = [AvgTrial(_trials_avg[session], sessionpath=session)
-                  for session in sessions]
+    avg_trials = None
+    if not report_data or 'Kinematics average' not in report_data:
+        # make average trials
+        avg_trials = [AvgTrial(_trials_avg[session], sessionpath=session)
+                      for session in sessions]
 
-    # read some extra data from trials and create supplementary data
     tibial_torsion = dict()
-    for tr in trials_dyn:
-        # read tibial torsion for each trial and make supplementary traces
-        # these will only be shown for KneeAnglesZ (knee rotation) variable
-        tors = dict()
-        tors['R'], tors['L'] = (tr.subj_params['RTibialTorsion'],
-                                tr.subj_params['LTibialTorsion'])
-        if tors['R'] is None or tors['L'] is None:
-            logger.warning('could not read tibial torsion values from %s'
-                           % tr.trialname)
-            continue
-        # include torsion info for all cycles; this is useful when plotting
-        # isolated cycles
-        cycs = tr.get_cycles(model_cycles)
-        for cyc in cycs:
-            tibial_torsion[cyc] = dict()
-            for ctxt in tors:
-                var_ = ctxt + 'KneeAnglesZ'
-                tibial_torsion[cyc][var_] = dict()
-                # x = % of gait cycle
-                tibial_torsion[cyc][var_]['t'] = np.arange(101)
-                # static tibial torsion value as function of x
-                # convert radians -> degrees
-                tibial_torsion[cyc][var_]['data'] = (np.ones(101) * tors[ctxt]
-                                                     / np.pi * 180)
-                tibial_torsion[cyc][var_]['label'] = ('Tib. tors. (%s) % s' %
-                                                      (ctxt, tr.trialname))
+    if not report_data:
+        # read some extra data from trials and create supplementary data
+        for tr in trials_dyn:
+            # read tibial torsion for each trial and make supplementary traces
+            # these will only be shown for KneeAnglesZ (knee rotation) variable
+            tors = dict()
+            tors['R'], tors['L'] = (tr.subj_params['RTibialTorsion'],
+                                    tr.subj_params['LTibialTorsion'])
+            if tors['R'] is None or tors['L'] is None:
+                logger.warning('could not read tibial torsion values from %s'
+                            % tr.trialname)
+                continue
+            # include torsion info for all cycles; this is useful when plotting
+            # isolated cycles
+            cycs = tr.get_cycles(model_cycles)
+            for cyc in cycs:
+                tibial_torsion[cyc] = dict()
+                for ctxt in tors:
+                    var_ = ctxt + 'KneeAnglesZ'
+                    tibial_torsion[cyc][var_] = dict()
+                    # x = % of gait cycle
+                    tibial_torsion[cyc][var_]['t'] = np.arange(101)
+                    # static tibial torsion value as function of x
+                    # convert radians -> degrees
+                    tibial_torsion[cyc][var_]['data'] = (np.ones(101) * tors[ctxt]
+                                                        / np.pi * 180)
+                    tibial_torsion[cyc][var_]['label'] = ('Tib. tors. (%s) % s' %
+                                                        (ctxt, tr.trialname))
 
     # find video files for all trials
     signals.progress.emit('Finding videos...', 0)
@@ -307,14 +309,18 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
         trials_dd.append({'label': tr.name_with_description,
                           'value': tr.trialname})
 
-    # in EMG layout, keep chs that are active in any of the trials
-    signals.progress.emit('Reading EMG data', 0)
-    try:
-        emgs = [tr.emg for tr in trials_dyn]
-        emg_layout = layouts.rm_dead_channels_multitrial(emgs,
-                                                         cfg.layouts.std_emg)
-    except GaitDataError:
-        emg_layout = 'disabled'
+    if not report_data or 'EMG' not in report_data:
+        # in EMG layout, keep chs that are active in any of the trials
+        signals.progress.emit('Reading EMG data', 0)
+        try:
+            emgs = [tr.emg for tr in trials_dyn]
+            emg_layout = layouts.rm_dead_channels_multitrial(emgs,
+                                                            cfg.layouts.std_emg)
+        except GaitDataError:
+            emg_layout = 'disabled'
+    else:
+        # EMG plot will be pulled from report_data so layout does not matter
+        emg_layout = None
 
     # FIXME: layouts into config?
     _layouts = OrderedDict([
@@ -461,7 +467,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
     opts_multi, mapper_multi_lower = _make_dropdown_lists(dd_opts_multi_lower)
 
     logger.debug('saving report data into %s' % data_fn)
-    signals.progress.emit('Saving report data to disk...', 0)    
+    signals.progress.emit('Saving report data to disk...', 99)    
     with open(data_fn, 'wb') as f:
         dill.dump(report_data_new, f)
 

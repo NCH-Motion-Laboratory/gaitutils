@@ -461,6 +461,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
     opts_multi, mapper_multi_lower = _make_dropdown_lists(dd_opts_multi_lower)
 
     logger.debug('saving report data into %s' % data_fn)
+    signals.progress.emit('Saving report data to disk...', 0)    
     with open(data_fn, 'wb') as f:
         dill.dump(report_data_new, f)
 

@@ -24,6 +24,7 @@ import logging
 import os.path as op
 import base64
 import io
+import dill
 
 from .. import (cfg, normaldata, models, layouts, GaitDataError,
                 sessionutils, numutils, videos)
@@ -177,29 +178,21 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                                % (tag, session))
             c3ds[session]['vid_only'][tag] = dyn_vids[-1:]
 
-    # calculate digest
-    import hashlib
-    import dill
     data_c3ds = list()
-    hash_c3ds = list()
     for session in sessions:
         for type in ['dynamic', 'static']:
             for fnl in c3ds[session][type].values():
                 data_c3ds.extend(fnl)
-    for fn in data_c3ds: 
-        with open(fn, 'rb') as f:
-            data = f.read()
-            hash = hashlib.md5(data).hexdigest()
-            hash_c3ds.append(hash)
-    hash_c3ds = sorted(hash_c3ds)
-    hash_str = ''.join(hash_c3ds)
-    hash_total = hashlib.md5(hash_str).hexdigest()
-    report_filename = 'web_report_%s.dat' % hash_total
-
-    report_filename_ = op.join(sessions[0], report_filename)
-    if op.isfile(report_filename_):
-        with open(report_filename_, 'rb') as f:
-            allfigs = dill.load(f)
+    digest = numutils.files_digest(data_c3ds)
+    logger.debug('report data digest: %s' % digest)
+    data_dir = sorted(sessions)[0]
+    data_fn = op.join(data_dir, 'web_report_%s' % digest)
+    if op.isfile(data_fn):
+        logger.debug('loading saved report data from %s' % data_fn)
+        with open(data_fn, 'rb') as f:
+            report_data = dill.load(data_fn)
+    else:
+        logger.debug('no saved data found')
 
     # make Trial instances for all dynamic and static trials
     trials_dyn = list()

@@ -18,7 +18,7 @@ from numpy.lib.stride_tricks import as_strided
 
 
 def files_digest(files):
-    """Create total md5 digest for a set of files"""
+    """Create total md5 digest for a list of files"""
     hashes = list()
     for fn in files: 
         with open(fn, 'rb') as f:

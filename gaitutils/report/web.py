@@ -178,6 +178,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
                                % (tag, session))
             c3ds[session]['vid_only'][tag] = dyn_vids[-1:]
 
+    # collect data trials (static and dynamic) that affect the graphs
+    # report 'data digest' is based on these trials only
     data_c3ds = list()
     for session in sessions:
         for type in ['dynamic', 'static']:
@@ -186,12 +188,14 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     digest = numutils.files_digest(data_c3ds)
     logger.debug('report data digest: %s' % digest)
     data_dir = sorted(sessions)[0]
-    data_fn = op.join(data_dir, 'web_report_%s' % digest)
+    data_fn = op.join(data_dir, 'web_report_%s.dat' % digest)
     if op.isfile(data_fn):
         logger.debug('loading saved report data from %s' % data_fn)
         with open(data_fn, 'rb') as f:
-            report_data = dill.load(data_fn)
+            report_data = dill.load(f)
+            logger.debug(report_data.keys())
     else:
+        report_data = dict()
         logger.debug('no saved data found')
 
     # make Trial instances for all dynamic and static trials
@@ -338,8 +342,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
     dd_opts_multi_upper = list()
     dd_opts_multi_lower = list()
 
+    report_data_new = dict()
     for k, (label, layout) in enumerate(_layouts.items()):
-        logger.debug('creating plot for %s' % label)
         signals.progress.emit('Creating plot: %s' % label, 100*k/len(_layouts))
         if signals.canceled:
             return None
@@ -360,98 +364,87 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
             color_by['emg'] = cfg.web_report.emg_color_by
         legend_type = (cfg.web_report.comparison_legend_type if is_comparison
                        else cfg.web_report.legend_type)
-
         try:
-            # special layout
-            if isinstance(layout, basestring):
-                if layout == 'time_dist':
-                    # get plot in svg format and encode to base64 for html.Img
-                    buf = _time_dist_plot_svg(sessions)
-                    encoded_image = base64.b64encode(buf.read())
-                    graph_upper = html.Img(src='data:image/svg+xml;base64,{}'.
-                                           format(encoded_image),
-                                           id='gaitgraph%d' % k,
-                                           style={'height': '100%'})
-                    graph_lower = html.Img(src='data:image/svg+xml;base64,{}'.
-                                           format(encoded_image),
-                                           id='gaitgraph%d'
-                                           % (len(_layouts)+k),
-                                           style={'height': '100%'})
-
-                elif layout == 'patient_info':
-                    graph_upper = dcc.Markdown(patient_info_text)
-                    graph_lower = graph_upper
-
-                elif layout == 'static_kinematics':
-                    layout_ = cfg.layouts.lb_kinematics
-                    fig_ = plot_trials(trials_static, layout_,
-                                       model_normaldata=model_normaldata,
-                                       model_cycles='unnormalized',
-                                       emg_cycles=[],
-                                       legend_type='short_name_with_cyclename',
-                                       style_by=style_by, color_by=color_by,
-                                       big_fonts=True)
-                    graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
-                                            style={'height': '100%'})
-                    graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
-                                            % (len(_layouts)+k),
-                                            style={'height': '100%'})
-
-                elif layout == 'static_emg':
-                    layout_ = cfg.layouts.std_emg
-                    fig_ = plot_trials(trials_static, layout_,
-                                       model_normaldata=model_normaldata,
-                                       model_cycles=[],
-                                       emg_cycles='unnormalized',
-                                       legend_type='short_name_with_cyclename',
-                                       style_by=style_by, color_by=color_by,
-                                       big_fonts=True)
-                    graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
-                                            style={'height': '100%'})
-                    graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
-                                            % (len(_layouts)+k),
-                                            style={'height': '100%'})
-
-                elif layout == 'kinematics_average':
-                    layout_ = cfg.layouts.lb_kinematics
-                    fig_ = plot_trials(avg_trials, layout_,
-                                       style_by=style_by, color_by=color_by,                    
-                                       model_normaldata=model_normaldata,
-                                       big_fonts=True)
-                                       
-                    graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
-                                            style={'height': '100%'})
-                    graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
-                                            % (len(_layouts)+k),
-                                            style={'height': '100%'})
-
-                # will be caught and menu item will be empty
-                elif layout == 'disabled':
-                    raise ValueError
-
-                else:  # unrecognized layout; this is not caught by us
-                    raise Exception('Unrecognized layout: %s' % layout)
-
-            # regular gaitutils layout
+            if label in report_data:
+                logger.debug('loading %s from saved report data' % label)
+                figdata = report_data[label]
             else:
-                fig_ = plot_trials(trials_dyn, layout,
-                                   model_normaldata=model_normaldata,
-                                   emg_mode=emg_mode,
-                                   legend_type=legend_type,
-                                   style_by=style_by, color_by=color_by,
-                                   supplementary_data=supplementary_default,
-                                   big_fonts=True)
-                graph_upper = dcc.Graph(figure=fig_, id='gaitgraph%d' % k,
+                logger.debug('creating figure data for %s' % label)
+                if isinstance(layout, basestring):  # handle special layout codes
+                    if layout == 'time_dist':
+                        # get plot in svg format and encode to base64 for html.Img
+                        buf = _time_dist_plot_svg(sessions)
+                        figdata = base64.b64encode(buf.read())
+                    elif layout == 'patient_info':
+                        figdata = patient_info_text
+                    elif layout == 'static_kinematics':
+                        layout_ = cfg.layouts.lb_kinematics
+                        figdata = plot_trials(trials_static, layout_,
+                                        model_normaldata=model_normaldata,
+                                        model_cycles='unnormalized',
+                                        emg_cycles=[],
+                                        legend_type='short_name_with_cyclename',
+                                        style_by=style_by, color_by=color_by,
+                                        big_fonts=True)
+                    elif layout == 'static_emg':
+                        layout_ = cfg.layouts.std_emg
+                        figdata = plot_trials(trials_static, layout_,
+                                        model_normaldata=model_normaldata,
+                                        model_cycles=[],
+                                        emg_cycles='unnormalized',
+                                        legend_type='short_name_with_cyclename',
+                                        style_by=style_by, color_by=color_by,
+                                        big_fonts=True)
+                    elif layout == 'kinematics_average':
+                        layout_ = cfg.layouts.lb_kinematics
+                        figdata = plot_trials(avg_trials, layout_,
+                                        style_by=style_by, color_by=color_by,                    
+                                        model_normaldata=model_normaldata,
+                                        big_fonts=True)
+                    # will be caught and menu item will be empty
+                    elif layout == 'disabled':
+                        raise ValueError
+                    else:  # unrecognized layout; this is not caught by us
+                        raise Exception('Unrecognized layout: %s' % layout)
+
+                else:  # regular gaitutils layout
+                    figdata = plot_trials(trials_dyn, layout,
+                                    model_normaldata=model_normaldata,
+                                    emg_mode=emg_mode,
+                                    legend_type=legend_type,
+                                    style_by=style_by, color_by=color_by,
+                                    supplementary_data=supplementary_default,
+                                    big_fonts=True)
+            # save created data
+            report_data_new[label] = figdata
+
+            # make the upper and lower panel graphs from figdata, depending
+            # on data type
+            if layout == 'time_dist':
+                graph_upper = html.Img(src='data:image/svg+xml;base64,{}'.
+                                    format(figdata),
+                                    id='gaitgraph%d' % k,
+                                    style={'height': '100%'})
+                graph_lower = html.Img(src='data:image/svg+xml;base64,{}'.
+                                    format(figdata),
+                                    id='gaitgraph%d'
+                                    % (len(_layouts)+k),
+                                    style={'height': '100%'})
+            elif layout == 'patient_info':
+                graph_upper = dcc.Markdown(patient_info_text)
+                graph_lower = graph_upper
+            else:
+                # plotly fig -> dcc.Graph
+                graph_upper = dcc.Graph(figure=figdata, id='gaitgraph%d' % k,
                                         style={'height': '100%'})
-                graph_lower = dcc.Graph(figure=fig_, id='gaitgraph%d'
+                graph_lower = dcc.Graph(figure=figdata, id='gaitgraph%d'
                                         % (len(_layouts)+k),
                                         style={'height': '100%'})
-
             dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
             dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
 
         except (ValueError, GaitDataError) as e:
-            logger.warning('Failed to create plot for %s: %s' % (label, e))
+            logger.warning('failed to create figure for %s: %s' % (label, e))
             # insert the menu options but make them disabled
             dd_opts_multi_upper.append({'label': label, 'value': label,
                                         'disabled': True})
@@ -461,6 +454,10 @@ def dash_report(info=None, sessions=None, tags=None, signals=None):
 
     opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
     opts_multi, mapper_multi_lower = _make_dropdown_lists(dd_opts_multi_lower)
+
+    logger.debug('saving report data into %s' % data_fn)
+    with open(data_fn, 'wb') as f:
+        dill.dump(report_data_new, f)
 
     def make_left_panel(split=True, upper_value='Kinematics',
                         lower_value='Kinematics'):

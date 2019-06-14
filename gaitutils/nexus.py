@@ -24,7 +24,7 @@ from . import GaitDataError, cfg
 logger = logging.getLogger(__name__)
 
 
-def _find_nexus_path(vicon_path):
+def _find_nexus_path(vicon_path=None):
     """Return path to most recent Nexus version"""
 
     if vicon_path is None:

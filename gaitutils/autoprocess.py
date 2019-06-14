@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
     """Run autoprocessing for all enffiles (list of paths to .enf files).
     """
+    _delete_c3ds(enffiles)
 
     # signals is used to track progress across threads; if not given, just
     # create a dummy one to simplify calls later
@@ -406,12 +407,8 @@ def _delete_c3ds(enffiles):
 def autoproc_session(patterns=None, signals=None):
     sessionpath = nexus.get_sessionpath()
     enffiles = list(sessionutils.get_session_enfs(sessionpath))
-
     if not enffiles:
         raise GaitDataError('No trials found (no .enf files in session)')
-
-    _delete_c3ds(enffiles)
-
     if patterns:
         # filter trial names according to patterns
         enffiles = [s for s in enffiles if any([p in s for p in patterns])]
@@ -425,7 +422,6 @@ def autoproc_trial(signals=None):
         raise GaitDataError('No trial open in Nexus')
     fn += '.Trial.enf'
     enffiles = [op.join(nexus.get_sessionpath(), fn)]  # listify single enf
-    _delete_c3ds(enffiles)
     _do_autoproc(enffiles, signals=signals)
 
 

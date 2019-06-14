@@ -209,7 +209,7 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
     """A dialog for picking report sessions"""
 
     def __init__(self, min_sessions=1, max_sessions=3):
-        super(QtWidgets.QDialog, self).__init__()
+        QtWidgets.QDialog.__init__(self)
         # load user interface made with designer
         uifile = resource_filename('gaitutils', 'gui/sessions.ui')
         uic.loadUi(uifile, self)
@@ -260,7 +260,7 @@ class ChooseSessionsDialogWeb(ChooseSessionsDialog):
     """Web report sessions dialog"""
 
     def __init__(self, min_sessions=1, max_sessions=3):
-        super(QtWidgets.QDialog, self).__init__()
+        QtWidgets.QDialog.__init__(self)
         # load user interface made with designer
         uifile = resource_filename('gaitutils', 'gui/web_report_sessions.ui')
         uic.loadUi(uifile, self)
@@ -275,5 +275,5 @@ class ChooseSessionsDialogWeb(ChooseSessionsDialog):
 
     def accept(self):
         self.recreate_plots = self.xbRecreatePlots.checkState()
-        super(ChooseSessionsDialog, self).accept()
+        super(ChooseSessionsDialogWeb, self).accept()
 

@@ -574,12 +574,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _convert_vidfiles(self, vidfiles, signals):
         """Convert given list of video files"""
-        self._disable_main_ui()
         # get the converter processes
         procs = convert_videos(vidfiles=vidfiles)
         if not procs:
             logger.warning('video converter processes could not be started')
-            self._reset_main_ui()            
             return
         completed = False
         # wait in sleep loop until all converter processes have finished
@@ -596,7 +594,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
             signals.progress.emit(prog_txt, prog_p)
             time.sleep(.1)
             completed = n_complete == len(procs)
-        self._reset_main_ui()
 
     def _convert_session_videos(self):
         """Convert Nexus session videos to web format"""
@@ -618,12 +615,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                     'been converted. Redo?')
             if reply == QtWidgets.QMessageBox.NoRole:
                 return
+        self._disable_main_ui()
         self.prog = ProgressBar('Converting session videos...')
         signals = ProgressSignals()
         signals.progress.connect(lambda text, p: self.prog.update(text, p))
         self.prog._canceled.connect(signals.cancel)        
         self._convert_vidfiles(vidfiles, signals)
-        self.prog.reset()
+        self._reset_main_ui()
 
     def _postprocess_session(self):
         """Run additional postprocessing pipelines for tagged trials"""

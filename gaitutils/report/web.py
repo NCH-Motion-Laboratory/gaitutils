@@ -13,6 +13,7 @@ from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
 from builtins import str
 from past.builtins import basestring
 import numpy as np
+import plotly.graph_objs as go
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -95,7 +96,6 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
     if recreate_plots is None:
         recreate_plots = False
 
-    signals.progress.emit('Collecting trials...', 0)
     # relative width of left panel (1-12)
     # 3-session comparison uses narrower video panel
     # LEFT_WIDTH = 8 if len(sessions) == 3 else 7
@@ -108,9 +108,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
 
     if len(sessions) < 1 or len(sessions) > 3:
         raise ValueError('Need a list of one to three sessions')
-
     is_comparison = len(sessions) > 1
-
     report_name = _report_name(sessions)
     info = info or sessionutils.default_info()
 
@@ -118,44 +116,16 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
     # if doing a comparison, pick representative trials only
     dyn_tags = tags or (cfg.eclipse.repr_tags if is_comparison else
                         cfg.eclipse.tags)
-    # will be shown in the menu for static trials
+    # this tag will be shown in the menu for static trials
     static_tag = 'Static'
 
-    age = None
-    if info['hetu'] is not None:
-        # compute subject age at session time
-        session_dates = [sessionutils.get_session_date(session) for
-                         session in sessions]
-        ages = [numutils.age_from_hetu(info['hetu'], d) for d in
-                session_dates]
-        age = max(ages)
-
-    # create Markdown text for patient info
-    patient_info_text = '##### %s ' % (info['fullname'] if info['fullname']
-                                       else 'Name unknown')
-    if info['hetu']:
-        patient_info_text += '(%s)' % info['hetu']
-    patient_info_text += '\n\n'
-    # if age:
-    #     patient_info_text += 'Age at measurement time: %d\n\n' % age
-    if info['report_notes']:
-        patient_info_text += info['report_notes']
-
-    # load normal data for gait models
-    signals.progress.emit('Loading normal data...', 0)
-    model_normaldata = dict()
-    for fn in cfg.general.normaldata_files:
-        ndata = normaldata.read_normaldata(fn)
-        model_normaldata.update(ndata)
-    if age is not None:
-        age_ndata_file = normaldata.normaldata_age(age)
-        if age_ndata_file:
-            age_ndata = normaldata.read_normaldata(age_ndata_file)
-            model_normaldata.update(age_ndata)
-
-    # find the c3d files and build a nice dict
+    # collect all session c3ds into dict
     c3ds = {session: dict() for session in sessions}
+    data_c3ds = list()  # c3ds that are used for data
+    signals.progress.emit('Collecting trials...', 0)
     for session in sessions:
+        if signals.canceled:
+            return None
         c3ds[session] = dict(dynamic=dict(), static=dict(), vid_only=dict())
         # collect dynamic trials for each tag
         for tag in dyn_tags:
@@ -164,8 +134,11 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
             if len(dyns) > 1:
                 logger.warning('multiple tagged trials (%s) for %s' %
                                (tag, session))
-            c3ds[session]['dynamic'][tag] = dyns[-1:]
-        # require at least one dynamic for each session
+            dyn_trial = dyns[-1:]
+            c3ds[session]['dynamic'][tag] = dyn_trial  # may be empty list
+            if dyn_trial:
+                data_c3ds.extend(dyn_trial)
+        # require at least one dynamic trial for each session
         if not any(c3ds[session]['dynamic'][tag] for tag in dyn_tags):
             raise GaitDataError('No tagged dynamic trials found for %s' %
                                 (session))
@@ -174,7 +147,10 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
         if len(sts) > 1:
             logger.warning('multiple static trials for %s, using last one'
                            % session)
-        c3ds[session]['static'][static_tag] = sts[-1:]
+        static_trial = sts[-1:]
+        c3ds[session]['static'][static_tag] = static_trial
+        if static_trial:
+            data_c3ds.extend(static_trial)
         # collect video-only dynamic trials
         for tag in cfg.eclipse.video_tags:
             dyn_vids = sessionutils.get_c3ds(session, tags=tag)
@@ -184,33 +160,22 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
             c3ds[session]['vid_only'][tag] = dyn_vids[-1:]
 
     # see whether we can load report figures from disk
-    # collect data trials (static and dynamic) that affect the graphs
-    # report 'data digest' is based on these trials only
-    # FIXME: if saved data exists, we should assume it contains ALL plots
-    # and skip loading normal data and all other plot-related stuff.
-    # then if a plot cannot be loaded, throw an error and ask user to
-    # recreate the plots
-    data_c3ds = list()
-    for session in sessions:
-        for type in ['dynamic', 'static']:
-            for fnl in c3ds[session][type].values():
-                data_c3ds.extend(fnl)
     digest = numutils.files_digest(data_c3ds)
     logger.debug('report data digest: %s' % digest)
+    # data is always saved into alphabetically first session
     data_dir = sorted(sessions)[0]
     data_fn = op.join(data_dir, 'web_report_%s.dat' % digest)
     if op.isfile(data_fn) and not recreate_plots:
         logger.debug('loading saved report data from %s' % data_fn)
         signals.progress.emit('Loading saved report...', 0)
-        if signals.canceled:
-            return None
         with open(data_fn, 'rb') as f:
-            report_data = cPickle.load(f)
+            saved_report_data = cPickle.load(f)
     else:
-        report_data = dict()
+        saved_report_data = dict()
         logger.debug('no saved data found or recreate forced')
 
     # make Trial instances for all dynamic and static trials
+    # this is currently needed even if saved report is used
     trials_dyn = list()
     trials_static = list()
     _trials_avg = dict()
@@ -226,42 +191,6 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
         if c3ds[session]['static'][static_tag]:
             tri = Trial(c3ds[session]['static']['Static'][0])
             trials_static.append(tri)
-
-    avg_trials = None
-    if not report_data or 'Kinematics average' not in report_data:
-        # make average trials
-        avg_trials = [AvgTrial(_trials_avg[session], sessionpath=session)
-                      for session in sessions]
-
-    tibial_torsion = dict()
-    if not report_data:
-        # read some extra data from trials and create supplementary data
-        for tr in trials_dyn:
-            # read tibial torsion for each trial and make supplementary traces
-            # these will only be shown for KneeAnglesZ (knee rotation) variable
-            tors = dict()
-            tors['R'], tors['L'] = (tr.subj_params['RTibialTorsion'],
-                                    tr.subj_params['LTibialTorsion'])
-            if tors['R'] is None or tors['L'] is None:
-                logger.warning('could not read tibial torsion values from %s'
-                            % tr.trialname)
-                continue
-            # include torsion info for all cycles; this is useful when plotting
-            # isolated cycles
-            cycs = tr.get_cycles(model_cycles)
-            for cyc in cycs:
-                tibial_torsion[cyc] = dict()
-                for ctxt in tors:
-                    var_ = ctxt + 'KneeAnglesZ'
-                    tibial_torsion[cyc][var_] = dict()
-                    # x = % of gait cycle
-                    tibial_torsion[cyc][var_]['t'] = np.arange(101)
-                    # static tibial torsion value as function of x
-                    # convert radians -> degrees
-                    tibial_torsion[cyc][var_]['data'] = (np.ones(101) * tors[ctxt]
-                                                        / np.pi * 180)
-                    tibial_torsion[cyc][var_]['label'] = ('Tib. tors. (%s) % s' %
-                                                        (ctxt, tr.trialname))
 
     # find video files for all trials
     signals.progress.emit('Finding videos...', 0)
@@ -317,7 +246,75 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
         trials_dd.append({'label': tr.name_with_description,
                           'value': tr.trialname})
 
-    if not report_data or 'EMG' not in report_data:
+    emg_layout = None
+    tibial_torsion = dict()
+
+    # stuff that's needed to (re)create the figures
+    if not saved_report_data:
+        age = None
+        if info['hetu'] is not None:
+            # compute subject age at session time
+            session_dates = [sessionutils.get_session_date(session) for
+                            session in sessions]
+            ages = [numutils.age_from_hetu(info['hetu'], d) for d in
+                    session_dates]
+            age = max(ages)
+
+        # create Markdown text for patient info
+        patient_info_text = '##### %s ' % (info['fullname'] if info['fullname']
+                                        else 'Name unknown')
+        if info['hetu']:
+            patient_info_text += '(%s)' % info['hetu']
+        patient_info_text += '\n\n'
+        # if age:
+        #     patient_info_text += 'Age at measurement time: %d\n\n' % age
+        if info['report_notes']:
+            patient_info_text += info['report_notes']
+
+        # load normal data for gait models
+        signals.progress.emit('Loading normal data...', 0)
+        model_normaldata = dict()
+        for fn in cfg.general.normaldata_files:
+            ndata = normaldata.read_normaldata(fn)
+            model_normaldata.update(ndata)
+        if age is not None:
+            age_ndata_file = normaldata.normaldata_age(age)
+            if age_ndata_file:
+                age_ndata = normaldata.read_normaldata(age_ndata_file)
+                model_normaldata.update(age_ndata)
+
+        # make average trials
+        avg_trials = [AvgTrial(_trials_avg[session], sessionpath=session)
+                      for session in sessions]
+
+        # read some extra data from trials and create supplementary data
+        for tr in trials_dyn:
+            # read tibial torsion for each trial and make supplementary traces
+            # these will only be shown for KneeAnglesZ (knee rotation) variable
+            tors = dict()
+            tors['R'], tors['L'] = (tr.subj_params['RTibialTorsion'],
+                                    tr.subj_params['LTibialTorsion'])
+            if tors['R'] is None or tors['L'] is None:
+                logger.warning('could not read tibial torsion values from %s'
+                            % tr.trialname)
+                continue
+            # include torsion info for all cycles; this is useful when plotting
+            # isolated cycles
+            cycs = tr.get_cycles(model_cycles)
+            for cyc in cycs:
+                tibial_torsion[cyc] = dict()
+                for ctxt in tors:
+                    var_ = ctxt + 'KneeAnglesZ'
+                    tibial_torsion[cyc][var_] = dict()
+                    # x = % of gait cycle
+                    tibial_torsion[cyc][var_]['t'] = np.arange(101)
+                    # static tibial torsion value as function of x
+                    # convert radians -> degrees
+                    tibial_torsion[cyc][var_]['data'] = (np.ones(101) * tors[ctxt]
+                                                        / np.pi * 180)
+                    tibial_torsion[cyc][var_]['label'] = ('Tib. tors. (%s) % s' %
+                                                        (ctxt, tr.trialname))
+
         # in EMG layout, keep chs that are active in any of the trials
         signals.progress.emit('Reading EMG data', 0)
         try:
@@ -326,11 +323,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                                                             cfg.layouts.std_emg)
         except GaitDataError:
             emg_layout = 'disabled'
-    else:
-        # EMG plot will be pulled from report_data so layout does not matter
-        emg_layout = None
 
-    # FIXME: layouts into config?
     _layouts = OrderedDict([
             ('Patient info', 'patient_info'),
             ('Kinematics', cfg.layouts.lb_kinematics),
@@ -361,6 +354,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
     dd_opts_multi_upper = list()
     dd_opts_multi_lower = list()
 
+    # loop through layouts, create or load figures
     report_data_new = dict()
     for k, (label, layout) in enumerate(_layouts.items()):
         signals.progress.emit('Creating plot: %s' % label, 100*k/len(_layouts))
@@ -384,9 +378,11 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
         legend_type = (cfg.web_report.comparison_legend_type if is_comparison
                        else cfg.web_report.legend_type)
         try:
-            if label in report_data:
+            if saved_report_data:
                 logger.debug('loading %s from saved report data' % label)
-                figdata = report_data[label]
+                if label not in saved_report_data:
+                    raise Exception('Saved report data is invalid. Please recreate report.')
+                figdata = saved_report_data[label]
             else:
                 logger.debug('creating figure data for %s' % label)
                 if isinstance(layout, basestring):  # handle special layout codes
@@ -434,17 +430,17 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                                     style_by=style_by, color_by=color_by,
                                     supplementary_data=supplementary_default,
                                     big_fonts=True)
-            # save created data
-            import plotly.graph_objs as go
-            if isinstance(figdata, go.Figure):
-                # serialize go.Figures before saving
-                # this makes them much faster for cPickle to handle
-                # apparently dcc.Graph can eat the serialized json directly,
-                # so no need to do anything on load
-                figdata_ = figdata.to_plotly_json()
-            else:
-                figdata_ = figdata
-            report_data_new[label] = figdata_
+            # save newly created data
+            if not saved_report_data:
+                if isinstance(figdata, go.Figure):
+                    # serialize go.Figures before saving
+                    # this makes them much faster for cPickle to handle
+                    # apparently dcc.Graph can eat the serialized json directly,
+                    # so no need to do anything on load
+                    figdata_ = figdata.to_plotly_json()
+                else:
+                    figdata_ = figdata
+                report_data_new[label] = figdata_
 
             # make the upper and lower panel graphs from figdata, depending
             # on data type
@@ -459,7 +455,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                                     % (len(_layouts)+k),
                                     style={'height': '100%'})
             elif layout == 'patient_info':
-                graph_upper = dcc.Markdown(patient_info_text)
+                graph_upper = dcc.Markdown(figdata)
                 graph_lower = graph_upper
             else:
                 # plotly fig -> dcc.Graph
@@ -483,10 +479,12 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
     opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
     opts_multi, mapper_multi_lower = _make_dropdown_lists(dd_opts_multi_lower)
 
-    logger.debug('saving report data into %s' % data_fn)
-    signals.progress.emit('Saving report data to disk...', 99)    
-    with open(data_fn, 'wb') as f:
-        cPickle.dump(report_data_new, f, protocol=-1)
+    # if plots were newly created, save them to disk
+    if not saved_report_data:
+        logger.debug('saving report data into %s' % data_fn)
+        signals.progress.emit('Saving report data to disk...', 99)    
+        with open(data_fn, 'wb') as f:
+            cPickle.dump(report_data_new, f, protocol=-1)
 
     def make_left_panel(split=True, upper_value='Kinematics',
                         lower_value='Kinematics'):

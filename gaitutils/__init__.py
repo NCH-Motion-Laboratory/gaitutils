@@ -30,3 +30,4 @@ logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
 from .envutils import GaitDataError
 from .config import cfg
+from . import trial, viz, report, stats

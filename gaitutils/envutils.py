@@ -13,6 +13,7 @@ import subprocess
 import psutil
 import os.path as op
 import os
+from ulstools import env
 from pkg_resources import resource_filename
 import logging
 
@@ -24,6 +25,10 @@ logger = logging.getLogger(__name__)
 
 class GaitDataError(Exception):
     pass
+
+
+def make_gaitutils_shortcut():
+    env.make_shortcut('gaitmenu', 'gaitutils menu')
 
 
 def _count_script_instances(scriptname):

@@ -26,7 +26,7 @@ from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
                          ChooseSessionsDialog, ChooseSessionsDialogWeb,
                          qt_matplotlib_window)
 from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
-from ..numutils import check_hetu
+from ulstools.num import check_hetu
 from ..normaldata import read_session_normaldata
 from ..videos import _collect_session_videos, convert_videos
 from .. import GaitDataError, nexus, cfg, sessionutils, envutils, configdot

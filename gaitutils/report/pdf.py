@@ -16,6 +16,7 @@ from collections import defaultdict
 
 from .. import (cfg, numutils, normaldata, sessionutils, normaldata,
                 GaitDataError)
+from ulstools.num import age_from_hetu
 from ..viz.timedist import do_session_average_plot, do_comparison_plot, session_analysis_text
 from ..viz.plots import plot_sessions, plot_session_average, plot_trial_velocities
 
@@ -91,7 +92,7 @@ def create_report(sessionpath, info=None, pages=None):
         raise GaitDataError('No tagged trials found in %s' % sessiondir)
     session_t = sessionutils.get_session_date(sessionpath)
     logger.debug('session timestamp: %s', session_t)
-    age = numutils.age_from_hetu(hetu, session_t) if hetu else None
+    age = age_from_hetu(hetu, session_t) if hetu else None
 
     model_normaldata = normaldata.read_session_normaldata(sessionpath)
 

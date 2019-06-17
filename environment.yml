@@ -26,4 +26,6 @@ dependencies:
     - flake8
     - gaitutils
     - pytest
+    - pathlib
+    - git+https://github.com/jjnurminen/ulstools.git#egg=ulstools
 

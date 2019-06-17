@@ -13,7 +13,8 @@ import os.path as op
 import logging
 
 from . import cfg, sessionutils
-from .numutils import isfloat, age_from_hetu
+from .numutils import isfloat
+from ulstools.num import age_from_hetu
 from .models import models_all
 
 logger = logging.getLogger(__name__)

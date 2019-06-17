@@ -26,6 +26,7 @@ import os.path as op
 import base64
 import io
 import cPickle
+from ulstools.num import age_from_hetu
 
 from .. import (cfg, normaldata, models, layouts, GaitDataError,
                 sessionutils, numutils, videos)
@@ -256,7 +257,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
             # compute subject age at session time
             session_dates = [sessionutils.get_session_date(session) for
                             session in sessions]
-            ages = [numutils.age_from_hetu(info['hetu'], d) for d in
+            ages = [age_from_hetu(info['hetu'], d) for d in
                     session_dates]
             age = max(ages)
 

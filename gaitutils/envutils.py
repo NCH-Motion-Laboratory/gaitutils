@@ -10,9 +10,7 @@ Stuff related to Python environment
 import sys
 import traceback
 import subprocess
-import psutil
 import os.path as op
-import os
 from ulstools import env
 from pkg_resources import resource_filename
 import logging
@@ -29,21 +27,6 @@ class GaitDataError(Exception):
 
 def make_gaitutils_shortcut():
     env.make_shortcut('gaitmenu', 'gaitutils menu')
-
-
-def _count_script_instances(scriptname):
-    """Count running instances of Python script"""
-    nprocs = 0
-    for proc in psutil.process_iter():
-        try:
-            cmdline = proc.cmdline()
-            if len(cmdline) > 1:
-                if 'python' in cmdline[0] and scriptname in cmdline[1]:
-                    nprocs += 1
-        # catch NoSuchProcess for procs that disappear inside loop
-        except (psutil.AccessDenied, psutil.NoSuchProcess):
-            continue
-    return nprocs
 
 
 def _git_autoupdate():

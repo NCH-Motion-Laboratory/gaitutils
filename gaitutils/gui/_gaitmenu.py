@@ -21,6 +21,7 @@ import time
 import requests
 import logging
 import traceback
+import ulstools
 
 from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
                          ChooseSessionsDialog, ChooseSessionsDialogWeb,
@@ -337,14 +338,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         uifile = resource_filename('gaitutils', 'gui/gaitmenu.ui')
         uic.loadUi(uifile, self)
 
-        if not cfg.general.allow_multiple_menu_instances:
-            sname = op.split(__file__)[1]
-            nprocs = envutils._count_script_instances(sname)
-            if nprocs >= 2:
-                qt_message_dialog('Another instance of the menu seems to be '
-                                  'running. Please use that instance or '
-                                  'stop it before starting a new one.')
-                sys.exit()
+        if (not cfg.general.allow_multiple_menu_instances and
+           ulstools.env.already_running('gaitmenu')):
+            qt_message_dialog('Another instance of the menu seems to be '
+                              'running. Please use that instance or '
+                              'stop it before starting a new one.')
+            sys.exit()
 
         if cfg.general.git_autoupdate:
             if envutils._git_autoupdate():

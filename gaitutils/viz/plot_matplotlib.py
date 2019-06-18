@@ -70,7 +70,6 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     values dict is keyed as values[condition][var][context],
     given by e.g. get_c3d_analysis()
     stddev can be None or a dict keyed as stddev[condition][var][context].
-    If no stddev for a given condition, set stddev[condition] = None
     plotvars gives variables to plot (if not all) and their order.
     """
     fig = Figure()
@@ -94,8 +93,10 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
             vals_this = [values[cond][var][context] for cond in conds]
             if not np.count_nonzero(~np.isnan(vals_this)):
                 continue
-            stddevs_this = ([stddev[cond][var][context] if stddev[cond]
-                             else None for cond in conds])
+            if stddev is None or stddev[cond] is None:
+                stddevs_this = None
+            else:
+                stddevs_this = [stddev[cond][var][context]]
             units_this = len(conds) * [units[ind]]
             ypos = np.arange(len(vals_this) * thickness, 0, -thickness)
             xerr = stddevs_this if stddev_bars else None

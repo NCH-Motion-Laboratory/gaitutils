@@ -13,6 +13,7 @@ import numpy as np
 from collections import OrderedDict
 
 from .. import analysis, GaitDataError, sessionutils, cfg
+from ..normaldata import read_timedist_normaldata
 from .plot_matplotlib import time_dist_barchart
 
 logger = logging.getLogger(__name__)
@@ -157,7 +158,6 @@ def _multitrial_analysis(trials):
             res_std = {cond_label: None}
         res_avg_all.update(res_avg)
         res_std_all.update(res_std)
- 
     return res_avg_all, res_std_all
 
 
@@ -170,6 +170,8 @@ def _plot_trials(trials, plotvars=None, interactive=True):
     if plotvars is None:
         plotvars = _timedist_vars
     res_avg_all, res_std_all = _multitrial_analysis(trials)
+    timedist_normals = read_timedist_normaldata()
     return time_dist_barchart(res_avg_all, stddev=res_std_all,
+                              normaldata=timedist_normals,
                               stddev_bars=False, plotvars=plotvars)
 

@@ -10,6 +10,7 @@ from builtins import zip
 import numpy as np
 import openpyxl
 import os.path as op
+import json
 import logging
 
 from . import cfg, sessionutils
@@ -38,6 +39,18 @@ def read_all_normaldata(age=None):
             age_ndata = read_normaldata(age_ndata_file)
             model_normaldata.update(age_ndata)
     return model_normaldata
+
+
+def read_timedist_normaldata():
+    """Read time-distance normaldata from JSON file"""
+    fn = cfg.general.timedist_normaldata
+    if op.isfile(fn):
+        with open(fn, 'r') as f:
+            logger.debug('reading time-distance normaldata from %s' % fn)
+            return json.load(f)
+    else:
+        logger.debug('cannot find time-dist normaldata in %s' % fn)
+        return dict()
 
 
 def read_session_normaldata(session):

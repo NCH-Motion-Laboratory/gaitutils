@@ -63,7 +63,7 @@ def _plot_height_ratios(layout):
     return plotheightratios
 
 
-def time_dist_barchart(values, stddev=None, thickness=.5,
+def time_dist_barchart(values, stddev=None, normaldata=None, thickness=.5,
                        color=None, stddev_bars=True,
                        plotvars=None):
     """ Multi-variable and multi-condition barchart plot.
@@ -102,8 +102,11 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
             xerr = stddevs_this if stddev_bars else None
             rects = ax.barh(ypos, vals_this, thickness, align='edge',
                             color=color, xerr=xerr)
-            # FIXME: set axis scale according to var normal values
-            ax.set_xlim([0, 1.5 * max(vals_this)])
+            if not normaldata or var not in normaldata:
+                xmax = 1.5 * max(vals_this)
+            else:
+                xmax = 2 * normaldata[var]
+            ax.set_xlim([0, xmax])
             texts = list()
             for val, std, unit in zip(vals_this, stddevs_this, units_this):
                 if val == 0:

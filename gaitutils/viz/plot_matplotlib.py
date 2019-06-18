@@ -147,7 +147,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     for ind, (var, unit) in enumerate(zip(vars_, units)):
         textax = fig.add_subplot(gs[ind, 1])
         textax.axis('off')
-        label = '%s (%s)' % (var, unit)
+        label = '%s (%s)' % (var, unit) if unit else var
         textax.text(0, .5, label, ha='center', va='center')
 
     rects = _plot_oneside(vars_, 'Left', 0)

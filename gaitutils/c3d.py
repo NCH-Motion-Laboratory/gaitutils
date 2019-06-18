@@ -21,7 +21,9 @@ from . import GaitDataError
 logger = logging.getLogger(__name__)
 try:
     import btk
+    BTK_IMPORTED = True
 except ImportError:
+    BTK_IMPORTED = False
     logger.warning('cannot find btk module; unable to read .c3d files')
 
 

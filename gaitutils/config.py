@@ -15,6 +15,8 @@ from pkg_resources import resource_filename
 
 from .configdot import parse_config, update_config, dump_config
 
+# logging handlers might not be installed at this point, so config related
+# messages may not be seen at all. alternative would be to use print
 logger = logging.getLogger(__name__)
 
 
@@ -61,4 +63,5 @@ else:
 
 _handle_cfg_defaults(cfg)
 
-sys.stdout.flush()  # make sure that warnings are printed out
+# if using print for config messages:
+# sys.stdout.flush()  # make sure that warnings are printed out

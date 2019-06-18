@@ -30,7 +30,7 @@ from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ulstools.num import check_hetu
 from ..normaldata import read_session_normaldata
 from ..videos import _collect_session_videos, convert_videos
-from .. import GaitDataError, nexus, cfg, sessionutils, envutils, configdot
+from .. import GaitDataError, nexus, cfg, sessionutils, envutils, configdot, c3d
 from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
                            copy_session_videos)
@@ -399,7 +399,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         XStream.stdout().messageWritten.connect(self._log_message)
         XStream.stderr().messageWritten.connect(self._log_message)
-        logger.debug('interpreter: %s' % sys.executable)
         self.threadpool = QThreadPool()
         # we need a thread for each web server plus one worker thread
         self.threadpool.setMaxThreadCount(cfg.web_report.max_reports + 1)
@@ -829,13 +828,17 @@ def main():
     handler = QtHandler()
     handler.setFormatter(logging.Formatter("%(name)s: %(message)s"))
     root_logger.addHandler(handler)
+    root_logger.setLevel(logging.DEBUG)
+
+    # quiet down some noisy loggers
+    logging.getLogger('matplotlib').setLevel(logging.WARNING)
+    logging.getLogger('PyQt5.uic').setLevel(logging.WARNING)
+    logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
     gaitmenu = Gaitmenu()
     gaitmenu.show()
-    # re-check btk here so it's more clear for the user
-    try:
-        import btk
-    except ImportError:
+    logger.debug('Python interpreter: %s' % sys.executable)
+    if not c3d.BTK_IMPORTED:
         logger.warning('cannot find btk module; unable to read .c3d files')        
     nexus_status = 'Vicon Nexus is %srunning' % ('' if nexus.pid() else 'not ')
     logger.debug(nexus_status)

@@ -9,6 +9,7 @@ Note: specific to the Helsinki gait lab!
 from __future__ import absolute_import
 
 import logging
+import io
 import os.path as op
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
@@ -134,7 +135,6 @@ def create_report(sessionpath, info=None, pages=None):
 
     # time-dist text
     _timedist_txt = session_analysis_text(sessionpath)
-    fig_timedist_txt = _make_text_fig(_timedist_txt, titlepage=False)
 
     # for next 2 plots, disable the legends (too many cycles)
     # kin consistency
@@ -198,13 +198,16 @@ def create_report(sessionpath, info=None, pages=None):
         _savefig(pdf, fig_title)
         _savefig(pdf, fig_vel, header)
         _savefig(pdf, fig_timedist_avg, header)
-        _savefig(pdf, fig_timedist_txt, header)
         _savefig(pdf, fig_kinematics_cons, header)
         _savefig(pdf, fig_kinetics_cons, header)        
         _savefig(pdf, fig_musclelen_cons, header, footer_musclelen)
         _savefig(pdf, fig_emg_cons, header)
         _savefig(pdf, fig_kin_avg, header)
 
+    timedist_txt_file = sessiondir + '_time_distance.txt'
+    timedist_txt_path = op.join(sessionpath, timedist_txt_file)
+    with io.open(timedist_txt_path, 'w', encoding='utf8') as f:
+        f.write(_timedist_txt)
 
 def create_comparison_report(sessions, pdfpath, pages=None):
     """Do a simple comparison report between sessions"""

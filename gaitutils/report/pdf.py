@@ -15,8 +15,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from collections import defaultdict
 
-from .. import (cfg, numutils, normaldata, sessionutils, normaldata,
-                GaitDataError)
+from .. import cfg, sessionutils, normaldata, GaitDataError
 from ulstools.num import age_from_hetu
 from ..viz.timedist import do_session_average_plot, do_comparison_plot, session_analysis_text
 from ..viz.plots import plot_sessions, plot_session_average, plot_trial_velocities

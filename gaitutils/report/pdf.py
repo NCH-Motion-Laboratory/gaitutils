@@ -206,6 +206,7 @@ def create_report(sessionpath, info=None, pages=None):
     timedist_txt_file = sessiondir + '_time_distance.txt'
     timedist_txt_path = op.join(sessionpath, timedist_txt_file)
     with io.open(timedist_txt_path, 'w', encoding='utf8') as f:
+        logger.debug('writing timedist text data into %s' % timedist_txt_path)
         f.write(_timedist_txt)
 
 def create_comparison_report(sessions, pdfpath, pages=None):

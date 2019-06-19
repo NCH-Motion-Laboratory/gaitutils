@@ -15,7 +15,6 @@ from collections import defaultdict
 import numpy as np
 import re
 import os.path as op
-import glob
 import logging
 
 from .emg import EMG
@@ -26,7 +25,18 @@ logger = logging.getLogger(__name__)
 
 
 def nexus_trial(from_c3d=False):
-    """Return Trial instance from currently open Nexus trial."""
+    """Return Trial instance from currently open Nexus trial.
+   
+    Parameters
+    ----------
+    from_c3d : bool
+        If True, try to read the trial data from the corresponding c3d file.
+
+    Returns
+    -------
+        A Trial instance.
+
+    """
     vicon = nexus.viconnexus()
     if from_c3d:
         trname = vicon.GetTrialName()
@@ -39,34 +49,6 @@ def nexus_trial(from_c3d=False):
             return Trial(nexus.viconnexus())
     else:
         return Trial(nexus.viconnexus())
-
-
-def _nexus_crop_events_before_forceplate():
-    """Delete events preceding first forceplate strike."""
-    vicon = nexus.viconnexus()
-    tr = Trial(vicon)
-    fp_cycles = [cyc for cyc in tr.cycles if cyc.on_forceplate]
-    cycs_sorted = sorted(fp_cycles, key=lambda cyc: cyc.start)
-    if not cycs_sorted:
-        return
-    cyc1 = cycs_sorted[0]
-    context = {'L': 'Left', 'R': 'Right'}[cyc1.context]
-    context_other = 'Left' if context == 'Right' else 'Right'
-    strike_ctxt = vicon.GetEvents(tr.name, context, "Foot Strike")[0]
-    strike_ctxt = [f for f in strike_ctxt if f >= cyc1.start]
-    toeoff_ctxt = vicon.GetEvents(tr.name, context, "Foot Off")[0]
-    toeoff_ctxt = [f for f in toeoff_ctxt if f >= cyc1.start]
-    strike_other = vicon.GetEvents(tr.name, context_other, "Foot Strike")[0]
-    toeoff_other = vicon.GetEvents(tr.name, context_other, "Foot Off")[0]
-    vicon.ClearAllEvents()
-    for ev in strike_ctxt:
-        vicon.CreateAnEvent(tr.name, context, 'Foot Strike', ev, 0)
-    for ev in strike_other:
-        vicon.CreateAnEvent(tr.name, context_other, 'Foot Strike', ev, 0)
-    for ev in toeoff_ctxt:
-        vicon.CreateAnEvent(tr.name, context, 'Foot Off', ev, 0)
-    for ev in toeoff_other:
-        vicon.CreateAnEvent(tr.name, context_other, 'Foot Off', ev, 0)
 
 
 class Noncycle(object):
@@ -153,6 +135,11 @@ class Gaitcycle(object):
         ----------
         var : array
             NxM array of frame-based data to normalize.
+
+        Returns
+        -------
+        tn, ndata
+        
         """
         # convert 1D arrays to 2D
         if len(var.shape) == 1:

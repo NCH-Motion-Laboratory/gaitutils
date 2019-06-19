@@ -15,13 +15,11 @@ import logging
 from gaitutils.config import cfg
 from gaitutils.numutils import segment_angles, best_match
 from gaitutils import eclipse
-from gaitutils.utils import (is_plugingait_set, check_plugingait_set,
-                             _point_in_poly, _pig_markerset)
+from gaitutils.utils import (is_plugingait_set, _point_in_poly, _pig_markerset,
+                             _check_markers_flipped)
 from utils import _file_path
 
 
-# load default cfg so that user settings will not affect testing
-cfg.load_default()
 logger = logging.getLogger(__name__)
 
 trial_enf = _file_path('anon.Trial.enf')
@@ -55,11 +53,11 @@ def test_check_plugingait_set():
     mkrdata['RTOE'] = np.atleast_2d([2, 1.5, 0])
     mkrdata['LHEE'] = np.atleast_2d([0, 1, 0])
     mkrdata['LTOE'] = np.atleast_2d([0, 1.5, 0])
-    assert check_plugingait_set(mkrdata)
+    assert not list(_check_markers_flipped(mkrdata))
     # flip heel and toe markers
     mkrdata['LHEE'] = np.atleast_2d([0, 1.5, 0])
     mkrdata['LTOE'] = np.atleast_2d([0, 1, 0])
-    assert not check_plugingait_set(mkrdata)
+    assert list(_check_markers_flipped(mkrdata))
 
 
 def test_point_in_poly():
@@ -119,6 +117,3 @@ def test_enf_writer():
     assert edi['DESCRIPTION'] == 'testing'
     with pytest.raises(IOError):
         eclipse.set_eclipse_keys('no.enf', {})
-
-
-run_tests_if_main()

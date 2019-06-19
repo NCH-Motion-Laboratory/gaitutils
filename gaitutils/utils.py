@@ -43,7 +43,8 @@ def get_crossing_frame(mP, dim=1, p0=0):
     return ycross
 
 
-def avg_markerdata(mkrdata, markers, var_type='_P', roi=None, fail_on_gaps=True):
+def avg_markerdata(mkrdata, markers, var_type='_P', roi=None,
+                   fail_on_gaps=True):
     """ Average marker data.
     """
     data_shape = mkrdata[markers[0]+var_type].shape

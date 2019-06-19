@@ -39,9 +39,11 @@ def load_quirks(session):
         quirks = dict()
     return quirks
 
+
 def default_info():
     """Return info dict with placeholder values"""
     return {key: None for key in json_keys}
+
 
 def load_info(session):
     """Return the patient info dict from the given session"""

@@ -13,7 +13,7 @@ import re
 from gaitutils.configdot import (parse_config, update_config, dump_config,
                                  RE_COMMENT, RE_SECTION_HEADER, RE_VAR_DEF,
                                  get_description, _parse_config)
-from utils import run_tests_if_main, _file_path
+from utils import _file_path
 
 
 logger = logging.getLogger(__name__)
@@ -146,6 +146,3 @@ def test_write_read_cycle():
         assert secname in cfg_back
         for itemname, item in sec:
             assert itemname in getattr(cfg_back, secname)
-
-
-#run_tests_if_main()

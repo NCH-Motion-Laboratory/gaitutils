@@ -17,7 +17,7 @@ from gaitutils.numutils import segment_angles, best_match
 from gaitutils import eclipse
 from gaitutils.utils import (is_plugingait_set, check_plugingait_set,
                              _point_in_poly, _pig_markerset)
-from utils import run_tests_if_main, _file_path
+from utils import _file_path
 
 
 # load default cfg so that user settings will not affect testing

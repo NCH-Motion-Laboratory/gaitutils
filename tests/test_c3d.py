@@ -22,7 +22,7 @@ import logging
 from gaitutils import read_data, utils, cfg
 from gaitutils.trial import Trial
 from gaitutils.utils import detect_forceplate_events
-from utils import run_tests_if_main, _trial_path, _c3d_path, _file_path
+from utils import _trial_path, _c3d_path, _file_path
 
 
 # FIXME: load default cfg so that user settings will not affect testing
@@ -145,5 +145,3 @@ def test_c3d_fp_detection():
     res = detect_forceplate_events(c3d4)['coded']
     assert res == 'L'
 
-
-run_tests_if_main()

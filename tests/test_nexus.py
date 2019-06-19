@@ -18,7 +18,7 @@ from gaitutils import nexus, utils, models, read_data
 from gaitutils.config import cfg
 from gaitutils import Trial
 from gaitutils.utils import detect_forceplate_events
-from utils import (run_tests_if_main, _nexus_open_trial, _trial_path,
+from utils import (_nexus_open_trial, _trial_path,
                    start_nexus)
 
 
@@ -215,5 +215,3 @@ def test_event_marking():
     _events_check(events_dict)
     vicon.SaveTrial(60)  # to prevent 'Save trial?' dialog on subsequent loads
 
-
-run_tests_if_main()

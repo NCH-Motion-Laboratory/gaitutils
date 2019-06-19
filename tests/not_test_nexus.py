@@ -8,8 +8,6 @@ Unit tests on a running instance of Vicon Nexus.
 
 
 import numpy as np
-from nose.tools import (assert_set_equal, assert_in, assert_equal,
-                        assert_raises, assert_less_equal)
 from numpy.testing import (assert_allclose, assert_array_equal,
                            assert_array_almost_equal)
 

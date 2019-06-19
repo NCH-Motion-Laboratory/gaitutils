@@ -43,7 +43,7 @@ def get_crossing_frame(mP, dim=1, p0=0):
     return ycross
 
 
-def avg_markerdata(mkrdata, markers, var_type='_P', roi=None):
+def avg_markerdata(mkrdata, markers, var_type='_P', roi=None, fail_on_gaps=True):
     """ Average marker data.
     """
     data_shape = mkrdata[markers[0]+var_type].shape
@@ -55,10 +55,16 @@ def avg_markerdata(mkrdata, markers, var_type='_P', roi=None):
     for marker in markers:
         gap_frames = mkrdata[marker+'_gaps']
         if np.intersect1d(roi_frames, gap_frames).size > 0:
-            raise GaitDataError('Averaging data for %s has gaps' % marker)
+            if fail_on_gaps:
+                raise GaitDataError('Averaging data for %s has gaps' % marker)
+            else:
+                logger.warning('marker %s cannot be included in average due to gaps' % marker)
+                continue
         else:
             mP += mkrdata[marker+var_type]
             n_ok += 1
+    if n_ok == 0:
+        raise GaitDataError('all markers have gaps, cannot average')
     else:
         return mP / n_ok
 
@@ -204,9 +210,9 @@ def _leading_foot(mkrdata, roi=None):
     gait_dim = principal_movement_direction(subj_pos)
     gait_dir = np.median(np.diff(subj_pos, axis=0), axis=0)[gait_dim]
     lfoot = avg_markerdata(mkrdata, cfg.autoproc.left_foot_markers,
-                           roi=roi)[:, gait_dim]
+                           roi=roi, fail_on_gaps=False)[:, gait_dim]
     rfoot = avg_markerdata(mkrdata, cfg.autoproc.right_foot_markers,
-                           roi=roi)[:, gait_dim]
+                           roi=roi, fail_on_gaps=False)[:, gait_dim]
     cmpfun = np.greater if gait_dir > 0 else np.less
     return [None if R == 0.0 or L == 0.0 else ('R' if cmpfun(R, L) else 'L')
             for R, L in zip(rfoot, lfoot)]
@@ -513,7 +519,6 @@ def automark_events(source, mkrdata=None, events_range=None, fp_events=None,
         vel_thresholds = {'L_strike': None, 'L_toeoff': None,
                           'R_strike': None, 'R_toeoff': None}
 
-
     if mkrdata is None:
         # FIXME: missing markers are not detected here?
         reqd_markers = (cfg.autoproc.right_foot_markers +
@@ -522,10 +527,10 @@ def automark_events(source, mkrdata=None, events_range=None, fp_events=None,
         mkrdata = get_marker_data(source, reqd_markers)
 
     rfootctrv_ = avg_markerdata(mkrdata, cfg.autoproc.right_foot_markers,
-                                var_type='_V', roi=roi)
+                                var_type='_V', roi=roi, fail_on_gaps=False)
     rfootctrv = np.linalg.norm(rfootctrv_, axis=1)
     lfootctrv_ = avg_markerdata(mkrdata, cfg.autoproc.left_foot_markers,
-                                var_type='_V', roi=roi)
+                                var_type='_V', roi=roi, fail_on_gaps=False)
     lfootctrv = np.linalg.norm(lfootctrv_, axis=1)
 
     # position data: use ANK marker

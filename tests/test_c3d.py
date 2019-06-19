@@ -112,13 +112,13 @@ def test_c3d_fp_detection():
     c3dfile = _trial_path('runner', 'JL brooks 2,8 51.c3d')
     res = detect_forceplate_events(c3dfile)['coded']
     assert res == 'XRLXX'
-    c3dfile = _trial_path('girl6v', '2015_10_22_girl6v_IN02.c3d')
-    res = detect_forceplate_events(c3dfile)['coded']
-    assert res == 'R'
+    #c3dfile = _trial_path('girl6v', '2015_10_22_girl6v_IN02.c3d')
+    #res = detect_forceplate_events(c3dfile)['coded']
+    #assert res == 'R'
     # detect slight overstep (toeoff not on plate)
-    c3d1 = _c3d_path('slight_overstep.c3d')
-    res = detect_forceplate_events(c3d1)['coded']
-    assert res == 'X'
+    #c3d1 = _c3d_path('slight_overstep.c3d')
+    #res = detect_forceplate_events(c3d1)['coded']
+    #assert res == 'X'
     # detect double contact (both feet on plate)
     c3d2 = _c3d_path('double_contact.c3d')
     res = detect_forceplate_events(c3d2)['coded']

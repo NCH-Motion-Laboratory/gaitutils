@@ -93,7 +93,7 @@ def _read_gcd(filename):
         -gcd data is assumed to be in (mean, dev) 2-column format and is
          converted to (min, max) (Polygon normal data format) as
          mean-dev, mean+dev
-        -gcd variable names may be weird and will be translated according
+        -gcd variable names are different and will be translated according
         to each models translation table """
     ndata = dict()
     with open(filename, 'r') as f:
@@ -149,3 +149,31 @@ def _read_xlsx(filename):
         normaldata[colname] = (np.stack([normaldata[colname], data], axis=1)
                                if colname in normaldata else data)
     return _check_normaldata(normaldata)
+
+
+def _write_xlsx(normaldata, filename):
+    """Save normal data dict into Polygon xlsx format"""
+    repl_di = {'X': ' (1)', 'Y': ' (2)', 'Z': ' (3)'}
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Normal'
+    for n, var in enumerate(sorted(normaldata), 1):
+        data = normaldata[var]
+        nrows, ncols = data.shape
+        if nrows not in (51, 1) or ncols != 2:
+            raise ValueError('normal data has unexpected dimensions')
+        # convert trailing dimension to number
+        if var[-1] in 'XYZ':
+            var_ = var[:-1] + repl_di[var[-1]]
+        else:
+            var_ = var
+        firstcol, secondcol = 2*n-1, 2*n
+        for col, coldata in zip([firstcol, secondcol], [data[:, 0], data[:, 1]]):
+            ws.cell(column=col, row=1, value=var_)
+            ws.cell(column=col, row=2, value=0)
+            ws.cell(column=col, row=3, value='unknown')
+            for k, val in enumerate(coldata):
+                ws.cell(column=col, row=4+k, value=val)
+    wb.save(filename=filename)
+
+

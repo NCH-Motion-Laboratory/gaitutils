@@ -180,3 +180,37 @@ def _write_xlsx(normaldata, filename):
                 ws.cell(column=col, row=4+k, value=val)
     wb.save(filename=filename)
 
+
+def normals_from_avgtrial(avgtrial):
+    """Get normal data from averaged trial"""
+    normaldata = dict()
+    for mod in models_all:
+        vars = mod.varlabels_noside
+        for var in vars:
+            rvar, lvar = 'R'+var, 'L'+var
+            if not (rvar in avgtrial.stddev_data and lvar in avgtrial.stddev_data):
+                logger.warning('no stddev data for %s, skipping variable' % var)
+                continue
+            try:
+                _, rdata = avgtrial.get_model_data(rvar)
+                _, ldata = avgtrial.get_model_data(lvar)
+                rstd = avgtrial.stddev_data[rvar]
+                lstd = avgtrial.stddev_data[lvar]
+            except KeyError:
+                logger.warning('cannot get model data for %s' % var)
+                continue
+            avg_vardata = (rdata + ldata) / 2.
+            std_vardata = (rstd + lstd) / 2.
+            lower_vardata = avg_vardata - std_vardata
+            upper_vardata = avg_vardata - std_vardata
+            normaldata[var] = np.stack([lower_vardata, upper_vardata], axis=1)
+    return normaldata
+
+                
+
+
+
+
+
+
+

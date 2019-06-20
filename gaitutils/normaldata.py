@@ -164,16 +164,19 @@ def _write_xlsx(normaldata, filename):
             raise ValueError('normal data has unexpected dimensions')
         # convert trailing dimension to number
         if var[-1] in 'XYZ':
-            var_ = var[:-1] + repl_di[var[-1]]
+            if 'Power' in var:
+                var_ = var[:-1]
+            else:
+                var_ = var[:-1] + repl_di[var[-1]]
         else:
             var_ = var
         firstcol, secondcol = 2*n-1, 2*n
+        # write (data min, data max) columns for each variable
         for col, coldata in zip([firstcol, secondcol], [data[:, 0], data[:, 1]]):
-            ws.cell(column=col, row=1, value=var_)
-            ws.cell(column=col, row=2, value=0)
-            ws.cell(column=col, row=3, value='unknown')
+            ws.cell(column=col, row=1, value=var_)  # column header
+            ws.cell(column=col, row=2, value=0)  # not clear what this is
+            ws.cell(column=col, row=3, value='unknown')  # supposed to be unit, not used by us
             for k, val in enumerate(coldata):
                 ws.cell(column=col, row=4+k, value=val)
     wb.save(filename=filename)
-
 

@@ -93,10 +93,10 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
             vals_this = [values[cond][var][context] for cond in conds]
             if not np.count_nonzero(~np.isnan(vals_this)):
                 continue
-            if stddev is None or stddev[cond] is None:
-                stddevs_this = None
+            if stddev is None:
+                stddevs_this = [None for cond in conds]
             else:
-                stddevs_this = [stddev[cond][var][context]]
+                stddevs_this = [stddev[cond][var][context] for cond in conds]
             units_this = len(conds) * [units[ind]]
             ypos = np.arange(len(vals_this) * thickness, 0, -thickness)
             xerr = stddevs_this if stddev_bars else None

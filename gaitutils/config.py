@@ -13,7 +13,7 @@ import sys
 import logging
 from pkg_resources import resource_filename
 
-from .configdot import parse_config, update_config, dump_config
+from ulstools.configdot import parse_config, update_config, dump_config
 
 # logging handlers might not be installed at this point, so config related
 # messages may not be seen at all. alternative would be to use print

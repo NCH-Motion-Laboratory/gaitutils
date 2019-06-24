@@ -22,6 +22,7 @@ import requests
 import logging
 import traceback
 import ulstools
+from ulstools import configdot
 
 from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
                          ChooseSessionsDialog, ChooseSessionsDialogWeb,
@@ -30,7 +31,7 @@ from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ulstools.num import check_hetu
 from ..normaldata import read_session_normaldata
 from ..videos import _collect_session_videos, convert_videos
-from .. import GaitDataError, nexus, cfg, sessionutils, envutils, configdot, c3d
+from .. import GaitDataError, nexus, cfg, sessionutils, envutils, c3d
 from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
                            copy_session_videos)

@@ -157,7 +157,7 @@ def _collect_model_data(trials, fp_cycles_only=False):
     """
 
     if not trials:
-        logger.debug('no trials')
+        logger.warning('no trials')
         return
     if not isinstance(trials, list):
         trials = [trials]
@@ -178,7 +178,7 @@ def _collect_model_data(trials, fp_cycles_only=False):
         else:
             trial = Trial(trial_)
 
-        logger.debug('collecting data for %s' % trial.trialname)
+        logger.info('collecting data for %s' % trial.trialname)
 
         # see which models are included in trial
         models_ok = list()
@@ -188,8 +188,8 @@ def _collect_model_data(trials, fp_cycles_only=False):
                 trial.get_model_data(var)
                 models_ok.append(model)
             except GaitDataError:
-                logger.debug('cannot read variable %s from %s, skipping '
-                             'corresponding model %s' % (var, trial.trialname,
+                logger.info('cannot read variable %s from %s, skipping '
+                            'corresponding model %s' % (var, trial.trialname,
                                                          model.desc))
         for model in models_ok:
             # gather data
@@ -209,11 +209,14 @@ def _collect_model_data(trials, fp_cycles_only=False):
                            not cycle.on_forceplate):
                                 continue
                         _, data = trial.get_model_data(var)
-                        # add as first row or concatenate to existing data
-                        data_all[var] = (data[None, :] if data_all[var]
-                                         is None else
-                                         np.concatenate([data_all[var],
-                                                        data[None, :]]))
+                        if np.all(np.isnan(data)):
+                            logger.info('no data was found for %s/%s' % (trial.trialname, var))
+                        else:
+                            # add as first row or concatenate to existing data
+                            data_all[var] = (data[None, :] if data_all[var]
+                                            is None else
+                                            np.concatenate([data_all[var],
+                                                            data[None, :]]))
 
     n = len(trials)
     logger.debug('collected %d trials, %d/%d R/L cycles, %d/%d kinetics cycles'

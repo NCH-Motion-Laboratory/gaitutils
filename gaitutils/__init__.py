@@ -1,6 +1,8 @@
 import sys
 import os
-import logging
+
+from .envutils import GaitDataError
+
 
 def run_from_ipython():
     try:
@@ -9,6 +11,7 @@ def run_from_ipython():
     except NameError:
         return False
 
+
 # fake stdout and stderr not being available if run
 # under pythonw.exe on Windows
 if (sys.platform.find('win') != -1 and sys.executable.find('pythonw') != -1 and
@@ -16,6 +19,8 @@ if (sys.platform.find('win') != -1 and sys.executable.find('pythonw') != -1 and
     blackhole = open(os.devnull, 'w')
     sys.stdout = sys.stderr = blackhole
 
-from .envutils import GaitDataError
+# in case we want to print stuff from config.py, it's better to delay
+# the import until this point (after the stdout fix above)
 from .config import cfg
-from . import trial, viz, report, stats
+
+

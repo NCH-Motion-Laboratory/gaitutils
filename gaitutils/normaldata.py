@@ -185,8 +185,8 @@ def normals_from_avgtrial(avgtrial):
     """Get normal data from averaged trial"""
     normaldata = dict()
     for mod in models_all:
-        vars = mod.varlabels_noside
-        for var in vars:
+        thevars = mod.varlabels_noside
+        for var in thevars:
             rvar, lvar = 'R'+var, 'L'+var
             if not (rvar in avgtrial.stddev_data and lvar in avgtrial.stddev_data):
                 logger.warning('no stddev data for %s, skipping variable' % var)

@@ -46,7 +46,7 @@ class AvgTrial(Trial):
         self._model_data = avgdata
         self.stddev_data = stddata
         self.n_ok = n_ok
-        self.t = np.arange(101)  # 0..100%
+        self.t = np.arange(101)  # data is on normalized cycle 0..100%
         # fake 2 gait cycles, L/R
         self.cycles = list()
         self.cycles.append(Gaitcycle(0, 101, 60, 'R', True, 1, 1000,
@@ -58,6 +58,7 @@ class AvgTrial(Trial):
 
     @property
     def emg(self):
+        # FIXME: could average EMG RMS
         raise GaitDataError('EMG averaging not supported yet')
 
     def get_model_data(self, var):
@@ -175,10 +176,7 @@ def _collect_model_data(trials, fp_cycles_only=False):
         if isinstance(trial_, Trial):
             trial = trial_
         else:
-            try:
-                trial = Trial(trial_)
-            except GaitDataError:
-                logger.warning('cannot load %s' % trial_)
+            trial = Trial(trial_)
 
         logger.debug('collecting data for %s' % trial.trialname)
 
@@ -187,7 +185,7 @@ def _collect_model_data(trials, fp_cycles_only=False):
         for model in models.models_all:
             var = model.varnames[0]
             try:
-                data = trial.get_model_data(var)[1]
+                trial.get_model_data(var)
                 models_ok.append(model)
             except GaitDataError:
                 logger.debug('cannot read variable %s from %s, skipping '
@@ -210,7 +208,7 @@ def _collect_model_data(trials, fp_cycles_only=False):
                         if ((model.is_kinetic_var(var) or fp_cycles_only) and
                            not cycle.on_forceplate):
                                 continue
-                        data = trial.get_model_data(var)[1]
+                        _, data = trial.get_model_data(var)
                         # add as first row or concatenate to existing data
                         data_all[var] = (data[None, :] if data_all[var]
                                          is None else

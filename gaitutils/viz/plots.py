@@ -17,6 +17,22 @@ from .plot_misc import get_backend
 logger = logging.getLogger(__name__)
 
 
+def plot_c3ds(c3ds, layout_name=None, backend=None, model_cycles=None,
+              emg_cycles=None, emg_mode=None, maintitle=None,
+              model_normaldata=None):
+    """Plot specified c3d files"""
+    backend_lib = get_backend(backend)
+    layout = layouts.get_layout(layout_name)
+
+    trials = [trial.Trial(c3d) for c3d in c3ds]
+
+    return backend_lib.plot_trials(trials, layout,
+                                   model_normaldata=model_normaldata,
+                                   model_cycles=model_cycles,
+                                   emg_cycles=emg_cycles, emg_mode=emg_mode,
+                                   legend_type='short_name_with_cyclename')
+
+
 def plot_nexus_trial(layout_name=None, backend=None, model_cycles=None,
                      emg_cycles=None, emg_mode=None, maintitle=None,
                      from_c3d=True, model_normaldata=None):

@@ -16,7 +16,8 @@ import ast
 import io
 from collections import defaultdict
 
-from .. import nexus, GaitDataError, cfg, configdot
+from .. import nexus, GaitDataError, cfg
+from ulstools import configdot
 from ..config import _handle_cfg_defaults, cfg_user_fn
 
 

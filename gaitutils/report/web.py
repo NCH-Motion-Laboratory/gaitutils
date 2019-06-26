@@ -536,7 +536,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
 
                     dcc.Checklist(id='split-left',
                                   options=[{'label': 'Two panels',
-                                            'value': 'split'}], values=[]),
+                                            'value': 'split'}], value=[]),
 
                     # need split=True so that both panels are in initial layout
                     html.Div(make_left_panel(split=True), id='div-left-main')
@@ -561,7 +561,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
 
     @app.callback(
             Output('div-left-main', 'children'),
-            [Input('split-left', 'values')],
+            [Input('split-left', 'value')],
             [State('dd-vars-upper-multi', 'value')]
         )
     def update_panel_layout(split_panels, upper_value):

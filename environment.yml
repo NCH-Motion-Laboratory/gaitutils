@@ -24,8 +24,8 @@ dependencies:
     - dash
     - dash-daq
     - flake8
-    - gaitutils
     - pytest
     - pathlib
-    - git+https://github.com/jjnurminen/ulstools.git#egg=ulstools
+    - https://github.com/jjnurminen/gaitutils/archive/master.zip
+    - https://github.com/jjnurminen/ulstools/archive/master.zip
 

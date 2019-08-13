@@ -26,11 +26,6 @@ dependencies:
     - flake8
     - pytest
     - pathlib
-    # use pip editable mode solely to get py style console_scripts
-    # (i.e. gaitmenu-script.py) in the environment script dir;
-    # these are needed to run the entry points in the given environment
-    # via a desktop shortcut etc. pip by default will install exe style
-    # console scripts only
-    - -e git+https://github.com/jjnurminen/gaitutils.git#egg=gaitutils
+    - https://github.com/jjnurminen/gaitutils/archive/master.zip
     - https://github.com/jjnurminen/ulstools/archive/master.zip
 

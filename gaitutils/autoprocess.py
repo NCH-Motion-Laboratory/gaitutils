@@ -35,7 +35,7 @@ import shutil
 
 from . import (nexus, eclipse, utils, GaitDataError, sessionutils,
                read_data, videos, cfg)
-from gui.qt_widgets import ProgressSignals
+from .gui.qt_widgets import ProgressSignals
 
 logger = logging.getLogger(__name__)
 

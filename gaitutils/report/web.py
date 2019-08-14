@@ -25,7 +25,7 @@ import logging
 import os.path as op
 import base64
 import io
-import cPickle
+
 from ulstools.num import age_from_hetu
 
 from .. import (cfg, normaldata, models, layouts, GaitDataError,
@@ -34,6 +34,12 @@ from ..trial import Trial
 from ..viz.plot_plotly import plot_trials
 from ..viz import timedist
 from ..stats import AvgTrial
+
+# for Python 3 compatibility
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 
 logger = logging.getLogger(__name__)
@@ -170,7 +176,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
         logger.debug('loading saved report data from %s' % data_fn)
         signals.progress.emit('Loading saved report...', 0)
         with open(data_fn, 'rb') as f:
-            saved_report_data = cPickle.load(f)
+            saved_report_data = pickle.load(f)
     else:
         saved_report_data = dict()
         logger.debug('no saved data found or recreate forced')
@@ -435,7 +441,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
             if not saved_report_data:
                 if isinstance(figdata, go.Figure):
                     # serialize go.Figures before saving
-                    # this makes them much faster for cPickle to handle
+                    # this makes them much faster for pickle to handle
                     # apparently dcc.Graph can eat the serialized json directly,
                     # so no need to do anything on load
                     figdata_ = figdata.to_plotly_json()
@@ -485,7 +491,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
         logger.debug('saving report data into %s' % data_fn)
         signals.progress.emit('Saving report data to disk...', 99)    
         with open(data_fn, 'wb') as f:
-            cPickle.dump(report_data_new, f, protocol=-1)
+            pickle.dump(report_data_new, f, protocol=-1)
 
     def make_left_panel(split=True, upper_value='Kinematics',
                         lower_value='Kinematics'):

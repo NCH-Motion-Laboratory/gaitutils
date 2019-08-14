@@ -29,7 +29,7 @@ def make_gaitutils_shortcut():
     """This makes a desktop shortcut to gaitmenu gui. Only works with proper
     (non-editable) install which places gaitmenu.py under the conda env
     directory, i.e. not with pip -e or python setup.py install"""
-    env.make_shortcut('gaitutils/gui/gaitmenu.py', 'gaitutils menu')
+    env.make_shortcut('gaitutils', 'gui/gaitmenu.py', 'gaitutils menu')
 
 
 def _git_autoupdate():

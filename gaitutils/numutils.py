@@ -24,7 +24,9 @@ def files_digest(files):
             hash = hashlib.md5(data).hexdigest()
             hashes.append(hash)
     hashes = sorted(hashes)
-    hash_str = ''.join(hashes)
+    # concat as unicode and encode to get a definite byte representation
+    # in both py2 and py3
+    hash_str = u''.join(hashes).encode('utf-8')
     hash_total = hashlib.md5(hash_str).hexdigest()
     return hash_total
 

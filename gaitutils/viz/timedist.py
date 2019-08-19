@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Various time-distance statistics plots
-Currently matplotlib only
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -28,7 +27,8 @@ def do_session_average_plot(session, tags=None, backend=None):
         raise GaitDataError('No tagged trials found for session %s'
                             % session)
     session_ = op.split(session)[-1]
-    fig = _plot_trials({session_: trials}, title='Time-distance average, session %s' % session_,
+    fig = _plot_trials({session_: trials},
+                       title='Time-distance average, session %s' % session_,
                        backend=backend)
     return fig
 
@@ -63,7 +63,8 @@ def do_comparison_plot(sessions, tags=None, backend=None):
     return _plot_trials(trials, backend=backend)
 
 
-def _plot_trials(trials, plotvars=None, title=None, interactive=True, backend=None):
+def _plot_trials(trials, plotvars=None, title=None, interactive=True,
+                 backend=None):
     """Make a time-distance variable barchart from given trials (.c3d files).
     trials: dict of lists keyed by condition name
     If there are multiple trials per condition, they will be averaged.

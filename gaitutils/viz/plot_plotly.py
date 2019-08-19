@@ -35,8 +35,30 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     stddev can be None or a dict keyed as stddev[condition][var][context].
     plotvars gives variables to plot (if not all) and their order.
     """
+    conds = values.keys()
+    vals_1 = values[conds[0]]
+    varsets = [set(values[cond].keys()) for cond in conds]
+    # vars common to all conditions
+    vars_common = set.intersection(*varsets)
+    if plotvars is not None:
+        # pick specified vars that appear in all of the conditions
+        plotvars_set = set(plotvars)
+        vars_ok = set.intersection(plotvars_set, vars_common)
+        if plotvars_set - vars_ok:
+            logger.warning('some conditions are missing variables: %s'
+                           % (plotvars_set - vars_ok))
+        # to preserve original order
+        vars_ = [var for var in plotvars if var in vars_ok]
+    else:
+        vars_ = vars_common
+    units = [vals_1[var]['unit'] for var in vars_]
+
     fig = plotly.subplots.make_subplots(rows=1, cols=2, specs=[[{}, {}]], shared_xaxes=True,
-                                        shared_yaxes=False, vertical_spacing=0.001)
+                                        shared_yaxes=True, vertical_spacing=0.001)
+    d = np.random.rand(1, len(vars_))[0] * 10
+
+    fig.append_trace(go.Bar(y=vars_, x=d, orientation='h'), 1, 1)
+    fig.append_trace(go.Bar(y=vars_, x=d, orientation='h'), 1, 2)
 
     return fig
 

@@ -93,7 +93,7 @@ def session_analysis_text(sessionpath):
                                                   main_label=sessiondir))
 
 
-def do_session_average_plot(session, tags=None):
+def do_session_average_plot(session, tags=None, backend=None):
     """Find tagged trials from current session dir and plot average"""
     if tags is None:
         tags = cfg.eclipse.tags
@@ -103,24 +103,25 @@ def do_session_average_plot(session, tags=None):
         raise GaitDataError('No tagged trials found for session %s'
                             % session)
     session_ = op.split(session)[-1]
-    fig = _plot_trials({session_: trials}, title='Time-distance average, session %s' % session_)
+    fig = _plot_trials({session_: trials}, title='Time-distance average, session %s' % session_,
+                       backend=backend)
     return fig
 
 
-def do_single_trial_plot(c3dfile):
+def do_single_trial_plot(c3dfile, backend=None):
     """Plot a single trial time-distance."""
     c3dpath, c3dfile_ = op.split(c3dfile)
     fig = _plot_trials({c3dfile: [c3dfile]}, title='Time-distance variables, %s' % c3dfile_)
     return fig
 
 
-def do_multitrial_plot(c3dfiles, show=True):
+def do_multitrial_plot(c3dfiles, show=True, backend=None):
     """Plot multiple trial comparison time-distance"""
     trials = {op.split(c3d)[-1]: [c3d] for c3d in c3dfiles}
-    return _plot_trials(trials)
+    return _plot_trials(trials, backend=backend)
 
 
-def do_comparison_plot(sessions, tags=None):
+def do_comparison_plot(sessions, tags=None, backend=None):
     """Time-dist comparison of multiple sessions. Tagged trials from each
     session will be picked."""
     if tags is None:
@@ -134,7 +135,7 @@ def do_comparison_plot(sessions, tags=None):
         cond_label = op.split(session)[-1]
         trials[cond_label] = c3ds
 
-    return  _plot_trials(trials)
+    return _plot_trials(trials, backend=backend)
 
 
 def _multitrial_analysis(trials):

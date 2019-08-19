@@ -13,7 +13,7 @@ import numpy as np
 from collections import OrderedDict
 
 from .. import analysis, GaitDataError, sessionutils, cfg
-from .plot_matplotlib import time_dist_barchart
+from .plot_misc import get_backend
 
 logger = logging.getLogger(__name__)
 
@@ -161,7 +161,7 @@ def _multitrial_analysis(trials):
     return res_avg_all, res_std_all
 
 
-def _plot_trials(trials, plotvars=None, interactive=True):
+def _plot_trials(trials, plotvars=None, interactive=True, backend=None):
     """Make a time-distance variable barchart from given trials (.c3d files).
     trials: dict of lists keyed by condition name
     If there are multiple trials per condition, they will be averaged.
@@ -170,6 +170,7 @@ def _plot_trials(trials, plotvars=None, interactive=True):
     if plotvars is None:
         plotvars = _timedist_vars
     res_avg_all, res_std_all = _multitrial_analysis(trials)
-    return time_dist_barchart(res_avg_all, stddev=res_std_all,
-                              stddev_bars=False, plotvars=plotvars)
+    backend_lib = get_backend(backend)
+    return backend_lib.time_dist_barchart(res_avg_all, stddev=res_std_all,
+                                          stddev_bars=False, plotvars=plotvars)
 

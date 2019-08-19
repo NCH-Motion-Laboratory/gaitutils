@@ -25,6 +25,21 @@ from .plot_common import (_get_cycle_name, _var_title, IteratorMapper,
 logger = logging.getLogger(__name__)
 
 
+def time_dist_barchart(values, stddev=None, thickness=.5,
+                       color=None, stddev_bars=True,
+                       plotvars=None):
+    """ Multi-variable and multi-condition barchart plot.
+    values dict is keyed as values[condition][var][context],
+    given by e.g. get_c3d_analysis()
+    stddev can be None or a dict keyed as stddev[condition][var][context].
+    plotvars gives variables to plot (if not all) and their order.
+    """
+    fig = make_subplots(rows=1, cols=2, specs=[[{}, {}]], shared_xaxes=True,
+                        shared_yaxes=False, vertical_spacing=0.001)
+
+
+
+
 def _plot_vels(vels, labels):
     """Plot trial velocities as a stem plot"""
     trace = go.Scatter(y=vels, x=labels, mode='markers')

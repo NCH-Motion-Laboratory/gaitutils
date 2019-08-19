@@ -21,6 +21,7 @@ from .plot_common import (_get_cycle_name, _var_title,
                           IteratorMapper, _handle_style_and_color_args)
 from .. import models, normaldata, layouts, cfg, GaitDataError, numutils
 from ..stats import AvgTrial
+from ..timedist import _pick_common_vars
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,7 @@ def _plot_height_ratios(layout):
 
 def time_dist_barchart(values, stddev=None, thickness=.5,
                        color=None, stddev_bars=True,
-                       plotvars=None):
+                       plotvars=None, title=None, big_fonts=None):
     """ Multi-variable and multi-condition barchart plot.
     values dict is keyed as values[condition][var][context],
     given by e.g. get_c3d_analysis()
@@ -82,9 +83,9 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
             ax.text(rect.get_width() * .0, rect.get_y() + rect.get_height()/2.,
                     txt, ha='left', va='center', size=fontsize)
 
-    def _plot_oneside(vars_, context, col):
+    def _plot_oneside(vars, context, col):
         """Do the bar plots for given context and column"""
-        for ind, var in enumerate(vars_):
+        for ind, var in enumerate(vars):
             # FIXME: adding subplot here is unnnecessary and triggers mpl
             # depreciation
             ax = fig.add_subplot(gs[ind, col])
@@ -120,38 +121,20 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
         color = ['tab:green', 'tab:orange', 'tab:red', 'tab:brown',
                  'tab:pink', 'tab:gray', 'tab:olive']
 
-    conds = values.keys()
-    vals_1 = values[conds[0]]
-    varsets = [set(values[cond].keys()) for cond in conds]
-    # vars common to all conditions
-    vars_common = set.intersection(*varsets)
-
-    if plotvars is not None:
-        # pick specified vars that appear in all of the conditions
-        plotvars_set = set(plotvars)
-        vars_ok = set.intersection(plotvars_set, vars_common)
-        if plotvars_set - vars_ok:
-            logger.warning('some conditions are missing variables: %s'
-                           % (plotvars_set - vars_ok))
-        # to preserve original order
-        vars_ = [var for var in plotvars if var in vars_ok]
-    else:
-        vars_ = vars_common
-
-    units = [vals_1[var]['unit'] for var in vars_]
+    conds, vars, units = _pick_common_vars(values, plotvars)    
 
     # 3 columns: bar, labels, bar
-    gs = gridspec.GridSpec(len(vars_), 3, width_ratios=[1, 1/3., 1])
+    gs = gridspec.GridSpec(len(vars), 3, width_ratios=[1, 1/3., 1])
 
     # variable names into the center column
-    for ind, (var, unit) in enumerate(zip(vars_, units)):
+    for ind, (var, unit) in enumerate(zip(vars, units)):
         textax = fig.add_subplot(gs[ind, 1])
         textax.axis('off')
         label = '%s (%s)' % (var, unit) if unit else var
         textax.text(0, .5, label, ha='center', va='center')
 
-    rects = _plot_oneside(vars_, 'Left', 0)
-    rects = _plot_oneside(vars_, 'Right', 2)
+    rects = _plot_oneside(vars, 'Left', 0)
+    rects = _plot_oneside(vars, 'Right', 2)
 
     if len(conds) > 1:
         fig.legend(rects, conds, fontsize=7,
@@ -161,6 +144,8 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     fig.add_subplot(gs[0, 0]).set_title('Left')
     fig.add_subplot(gs[0, 2]).set_title('Right')
 
+    if title is not None:
+        fig.suptitle(title)
     return fig
 
 

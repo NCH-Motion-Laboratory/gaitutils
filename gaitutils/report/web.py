@@ -31,7 +31,7 @@ from ulstools.num import age_from_hetu
 from .. import (cfg, normaldata, models, layouts, GaitDataError,
                 sessionutils, numutils, videos)
 from ..trial import Trial
-from ..viz.plot_plotly import plot_trials
+from ..viz.plot_plotly import plot_trials, time_dist_barchart
 from ..viz import timedist
 from ..stats import AvgTrial
 
@@ -59,16 +59,6 @@ def _make_dropdown_lists(options):
         identity.append(di)
         mapper[option['label']] = option['value']
     return identity, mapper
-
-
-def _time_dist_plot_svg(sessions):
-    """Return time-dist plot in SVG format"""
-    fig = timedist.do_comparison_plot(sessions)
-    _canvas = FigureCanvas(fig)  # savefig requires a canvas
-    buf = io.BytesIO()
-    fig.savefig(buf, format='svg', bbox_inches='tight')
-    buf.seek(0)
-    return buf
 
 
 # helper to shutdown flask server, see http://flask.pocoo.org/snippets/67/
@@ -394,9 +384,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                 logger.debug('creating figure data for %s' % label)
                 if isinstance(layout, basestring):  # handle special layout codes
                     if layout == 'time_dist':
-                        # get plot in svg format and encode to base64 for html.Img
-                        buf = _time_dist_plot_svg(sessions)
-                        figdata = base64.b64encode(buf.read())
+                        figdata = timedist.do_comparison_plot(sessions, big_fonts=True,
+                                                              backend='plotly')
                     elif layout == 'patient_info':
                         figdata = patient_info_text
                     elif layout == 'static_kinematics':
@@ -451,7 +440,14 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
 
             # make the upper and lower panel graphs from figdata, depending
             # on data type
-            if layout == 'time_dist':
+            def _is_base64(s):
+                try:
+                    return base64.b64encode(base64.b64decode(s)) == s
+                except Exception:
+                    return False
+            # this is for old style timedist figures that were in base64
+            # encoded svg
+            if layout == 'time_dist' and _is_base64(figdata):
                 graph_upper = html.Img(src='data:image/svg+xml;base64,{}'.
                                     format(figdata),
                                     id='gaitgraph%d' % k,

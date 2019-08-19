@@ -462,13 +462,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
         session = _get_nexus_sessionpath()
         if session is None:
             return
-
-        # we need to force backend here, since plotly is not yet supported
-        result_func = lambda fig: self._show_plots(fig, backend='matplotlib')
+        backend = self._get_plotting_backend_ui()
         self._run_in_thread(do_session_average_plot, thread=True,
                             finished_func=self._reset_main_ui,
-                            result_func=result_func,
-                            session=session)
+                            result_func=self._show_plots,
+                            session=session, backend=backend)
 
     def _plot_trial_median_velocities(self):
         """Trial velocity plot from current Nexus session"""

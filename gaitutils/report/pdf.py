@@ -17,13 +17,15 @@ from collections import defaultdict
 
 from .. import cfg, sessionutils, normaldata, GaitDataError
 from ulstools.num import age_from_hetu
-from ..viz.timedist import do_session_average_plot, do_comparison_plot, session_analysis_text
+from ..viz.timedist import do_session_average_plot, do_comparison_plot
+from ..timedist import session_analysis_text
 from ..viz.plots import plot_sessions, plot_session_average, plot_trial_velocities
 
 
 logger = logging.getLogger(__name__)
 
 page_size = (11.69, 8.27)  # report page size = landscape A4
+pdf_backend = 'matplotlib'
 
 
 def _add_footer(fig, txt):
@@ -124,13 +126,14 @@ def create_report(sessionpath, info=None, pages=None):
     fig_vel = None
     if pages['TrialVelocity']:
         logger.debug('creating velocity plot')
-        fig_vel = plot_trial_velocities(sessionpath, backend='matplotlib')
+        fig_vel = plot_trial_velocities(sessionpath, backend=pdf_backend)
 
     # time-distance average
     fig_timedist_avg = None
     if pages['TimeDistAverage']:
         logger.debug('creating time-distance plot')
-        fig_timedist_avg = do_session_average_plot(sessionpath)
+        fig_timedist_avg = do_session_average_plot(sessionpath,
+                                                   backend=pdf_backend)
 
     # time-dist text
     _timedist_txt = session_analysis_text(sessionpath)
@@ -145,7 +148,7 @@ def create_report(sessionpath, info=None, pages=None):
                                             model_normaldata=model_normaldata,
                                             color_by=color_by,
                                             style_by=style_by,
-                                            backend='matplotlib',
+                                            backend=pdf_backend,
                                             figtitle='Kinematics consistency for %s' % sessiondir,
                                             legend=False)
 
@@ -158,7 +161,7 @@ def create_report(sessionpath, info=None, pages=None):
                                           model_normaldata=model_normaldata,
                                           color_by=color_by,
                                           style_by=style_by,
-                                          backend='matplotlib',
+                                          backend=pdf_backend,
                                           figtitle='Kinetics consistency for %s' % sessiondir,
                                           legend=False)
 
@@ -171,7 +174,7 @@ def create_report(sessionpath, info=None, pages=None):
                                            color_by=color_by,
                                            style_by=style_by,
                                            model_normaldata=model_normaldata,
-                                           backend='matplotlib',
+                                           backend=pdf_backend,
                                            figtitle='Muscle length consistency for %s' % sessiondir,
                                            legend=False)
     # EMG consistency
@@ -184,13 +187,13 @@ def create_report(sessionpath, info=None, pages=None):
                                      style_by=style_by,
                                      figtitle='EMG consistency for %s' % sessiondir,
                                      legend=False,
-                                     backend='matplotlib')
+                                     backend=pdf_backend)
     # average plots, R/L
     fig_kin_avg = None
     if pages['KinAverage']:
         fig_kin_avg = plot_session_average(sessionpath,
                                            model_normaldata=model_normaldata,
-                                           backend='matplotlib')
+                                           backend=pdf_backend)
 
     logger.debug('creating multipage pdf %s' % pdfpath)
     with PdfPages(pdfpath) as pdf:
@@ -240,7 +243,7 @@ def create_comparison_report(sessions, pdfpath, pages=None):
         fig_kin_cmp = plot_sessions(sessions, tags=cfg.eclipse.repr_tags,
                                     model_normaldata=model_normaldata,
                                     style_by='session', color_by='context',
-                                    backend='matplotlib')
+                                    backend=pdf_backend)
 
     header = u'Comparison %s' % sessions_str
     logger.debug('creating multipage comparison pdf %s' % pdfpath)

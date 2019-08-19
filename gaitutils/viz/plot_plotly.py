@@ -14,15 +14,108 @@ import plotly
 import plotly.graph_objs as go
 from plotly.matplotlylib.mpltools import merge_color_and_opacity
 import plotly.tools
+import plotly.subplots
 
 from .. import GaitDataError, cfg, layouts, models, normaldata, numutils
 from ..stats import AvgTrial
+from ..timedist import _pick_common_vars
 from .plot_common import (_get_cycle_name, _var_title, IteratorMapper,
                           _style_mpl_to_plotly,
                           _handle_style_and_color_args)
 
 
 logger = logging.getLogger(__name__)
+
+
+def time_dist_barchart(values, stddev=None, thickness=.5,
+                       color=None, stddev_bars=True,
+                       plotvars=None, title=None, big_fonts=False, figtitle=None):
+    """ Multi-variable and multi-condition barchart plot.
+    values dict is keyed as values[condition][var][context],
+    given by e.g. get_c3d_analysis()
+    stddev can be None or a dict keyed as stddev[condition][var][context].
+    plotvars gives variables to plot (if not all) and their order.
+
+    TODO:
+    fix hover labels
+    increase text size for bar text
+    """
+    conds, vars, units = _pick_common_vars(values, plotvars)
+    vars = vars[::-1]  # plotly yaxis starts from bottom
+    units = units[::-1]
+
+    legend_fontsize = cfg.plot_plotly.legend_fontsize
+    label_fontsize = cfg.plot_plotly.label_fontsize
+    subtitle_fontsize = cfg.plot_plotly.subtitle_fontsize
+    if big_fonts:
+        legend_fontsize += 2
+        label_fontsize += 2
+        subtitle_fontsize += 2
+
+    data = dict()
+    texts = dict()
+    ctxts = ['Left', 'Right']
+    for cond in conds:
+        data[cond] = dict()
+        texts[cond] = dict()
+        for ctxt in ctxts:
+            # flatten data into simple arrays of nvars x 1
+            data[cond][ctxt] = np.array([values[cond][var][ctxt] for var in vars])
+            if stddev:
+                stddevs = np.array([stddev[cond][var][ctxt] for var in vars])
+                texts[cond][ctxt] = [u'%.2f ± %.2f %s' % (val, std, unit) for
+                                     val, std, unit in zip(data[cond][ctxt], stddevs, units)]
+            else:
+                texts[cond][ctxt] = [u'%.2f %s' % (val, unit) for
+                                     val, unit in zip(data[cond][ctxt], units)]
+
+    # scale vars according to their maximums over all conditions
+    scaler = dict()
+    for ctxt in ctxts:
+        scaler[ctxt] = np.max(np.array([data[c][ctxt] for c in conds]), axis=0)
+    for cond in conds:
+        for ctxt in ctxts:
+            data[cond][ctxt] /= scaler[ctxt] * .01
+
+    fig = plotly.subplots.make_subplots(rows=1, cols=2,
+                                        specs=[[{}, {}]],
+                                        shared_xaxes=True,
+                                        shared_yaxes=True,
+                                        vertical_spacing=0,
+                                        horizontal_spacing=.05,
+                                        subplot_titles=ctxts)
+
+    varlabels = [s + ' ' for s in vars]  # hack: add spaces to create some margin
+    for condn, cond in enumerate(conds):
+        barcolor = cfg.plot.colors[condn]
+        for k, ctxt in enumerate(ctxts, 1):
+            show_legend = k == 1
+            trace_l = go.Bar(y=varlabels, x=data[cond][ctxt], orientation='h', name=cond,
+                             legendgroup=cond, text=texts[cond][ctxt],
+                             textposition='auto', showlegend=show_legend,
+                             hoverlabel=dict(namelength=-1),
+                             hoverinfo='y+text+name',
+                             marker_color=barcolor)
+            fig.append_trace(trace_l, 1, k)
+
+            #fig['layout']['yaxis%d' % k].update('font': {'size': label_fontsize})
+            fig['layout']['xaxis%d' % k].update(title={'text': '% of maximum',
+                                                'font': {'size': label_fontsize}})
+
+    margin = go.layout.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
+    legend = dict(font=dict(size=legend_fontsize))
+    plotly_layout = go.Layout(margin=margin,
+                              legend=legend,
+                              paper_bgcolor='rgba(255,255,255,0)',  # no background please
+                              plot_bgcolor='rgba(255,255,255,0)',
+                              font={'size': label_fontsize},
+                              hovermode='closest', title=figtitle)
+
+    fig['layout'].update(plotly_layout)
+    for anno in fig['layout']['annotations']:
+        anno['font']['size'] = subtitle_fontsize
+
+    return fig
 
 
 def _plot_vels(vels, labels):
@@ -109,8 +202,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     allvars = [item for row in layout for item in row]
     titles = [_var_title(var) for var in allvars]
-    fig = plotly.tools.make_subplots(rows=nrows, cols=ncols, print_grid=False,
-                                     subplot_titles=titles)
+    fig = plotly.subplots.make_subplots(rows=nrows, cols=ncols, print_grid=False,
+                                        subplot_titles=titles)
     legendgroups = set()
     model_normaldata_legend = True
     emg_normaldata_legend = True

@@ -103,16 +103,14 @@ def do_session_average_plot(session, tags=None):
         raise GaitDataError('No tagged trials found for session %s'
                             % session)
     session_ = op.split(session)[-1]
-    fig = _plot_trials({session_: trials})
-    fig.suptitle('Time-distance average, session %s' % session_)
+    fig = _plot_trials({session_: trials}, title='Time-distance average, session %s' % session_)
     return fig
 
 
 def do_single_trial_plot(c3dfile):
     """Plot a single trial time-distance."""
-    fig = _plot_trials({c3dfile: [c3dfile]})
     c3dpath, c3dfile_ = op.split(c3dfile)
-    fig.suptitle('Time-distance variables, %s' % c3dfile_)
+    fig = _plot_trials({c3dfile: [c3dfile]}, title='Time-distance variables, %s' % c3dfile_)
     return fig
 
 
@@ -161,7 +159,7 @@ def _multitrial_analysis(trials):
     return res_avg_all, res_std_all
 
 
-def _plot_trials(trials, plotvars=None, interactive=True, backend=None):
+def _plot_trials(trials, plotvars=None, title=None, interactive=True, backend=None):
     """Make a time-distance variable barchart from given trials (.c3d files).
     trials: dict of lists keyed by condition name
     If there are multiple trials per condition, they will be averaged.
@@ -172,5 +170,6 @@ def _plot_trials(trials, plotvars=None, interactive=True, backend=None):
     res_avg_all, res_std_all = _multitrial_analysis(trials)
     backend_lib = get_backend(backend)
     return backend_lib.time_dist_barchart(res_avg_all, stddev=res_std_all,
-                                          stddev_bars=False, plotvars=plotvars)
+                                          stddev_bars=False, plotvars=plotvars,
+                                          title=title)
 

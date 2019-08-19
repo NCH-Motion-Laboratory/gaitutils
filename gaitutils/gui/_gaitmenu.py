@@ -464,10 +464,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
 
         # we need to force backend here, since plotly is not yet supported
-        result_func = lambda fig: self._show_plots(fig, backend='matplotlib')
         self._run_in_thread(do_session_average_plot, thread=True,
                             finished_func=self._reset_main_ui,
-                            result_func=result_func,
+                            result_func=self._show_plots,
                             session=session)
 
     def _plot_trial_median_velocities(self):

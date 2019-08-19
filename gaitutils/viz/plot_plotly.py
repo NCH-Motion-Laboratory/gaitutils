@@ -14,6 +14,7 @@ import plotly
 import plotly.graph_objs as go
 from plotly.matplotlylib.mpltools import merge_color_and_opacity
 import plotly.tools
+import plotly.subplots
 
 from .. import GaitDataError, cfg, layouts, models, normaldata, numutils
 from ..stats import AvgTrial
@@ -27,15 +28,17 @@ logger = logging.getLogger(__name__)
 
 def time_dist_barchart(values, stddev=None, thickness=.5,
                        color=None, stddev_bars=True,
-                       plotvars=None):
+                       plotvars=None, title=None):
     """ Multi-variable and multi-condition barchart plot.
     values dict is keyed as values[condition][var][context],
     given by e.g. get_c3d_analysis()
     stddev can be None or a dict keyed as stddev[condition][var][context].
     plotvars gives variables to plot (if not all) and their order.
     """
-    fig = make_subplots(rows=1, cols=2, specs=[[{}, {}]], shared_xaxes=True,
-                        shared_yaxes=False, vertical_spacing=0.001)
+    fig = plotly.subplots.make_subplots(rows=1, cols=2, specs=[[{}, {}]], shared_xaxes=True,
+                                        shared_yaxes=False, vertical_spacing=0.001)
+
+    return fig
 
 
 
@@ -124,8 +127,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     allvars = [item for row in layout for item in row]
     titles = [_var_title(var) for var in allvars]
-    fig = plotly.tools.make_subplots(rows=nrows, cols=ncols, print_grid=False,
-                                     subplot_titles=titles)
+    fig = plotly.subplots.make_subplots(rows=nrows, cols=ncols, print_grid=False,
+                                        subplot_titles=titles)
     legendgroups = set()
     model_normaldata_legend = True
     emg_normaldata_legend = True

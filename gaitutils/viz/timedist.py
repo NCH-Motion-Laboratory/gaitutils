@@ -46,9 +46,9 @@ def do_multitrial_plot(c3dfiles, show=True, backend=None):
     return _plot_trials(trials, backend=backend)
 
 
-def do_comparison_plot(sessions, tags=None, backend=None):
+def do_comparison_plot(sessions, tags=None, big_fonts=False, backend=None):
     """Time-dist comparison of multiple sessions. Tagged trials from each
-    session will be picked."""
+    session will be picked. big_fonts option for plotly (web report) only"""
     if tags is None:
         tags = cfg.eclipse.tags
     trials = OrderedDict()
@@ -60,11 +60,11 @@ def do_comparison_plot(sessions, tags=None, backend=None):
         cond_label = op.split(session)[-1]
         trials[cond_label] = c3ds
 
-    return _plot_trials(trials, backend=backend)
+    return _plot_trials(trials, big_fonts=big_fonts, backend=backend)
 
 
 def _plot_trials(trials, plotvars=None, title=None, interactive=True,
-                 backend=None):
+                 big_fonts=False, backend=None):
     """Make a time-distance variable barchart from given trials (.c3d files).
     trials: dict of lists keyed by condition name
     If there are multiple trials per condition, they will be averaged.
@@ -76,5 +76,5 @@ def _plot_trials(trials, plotvars=None, title=None, interactive=True,
     backend_lib = get_backend(backend)
     return backend_lib.time_dist_barchart(res_avg_all, stddev=res_std_all,
                                           stddev_bars=False, plotvars=plotvars,
-                                          title=title)
+                                          title=title, big_fonts=big_fonts)
 

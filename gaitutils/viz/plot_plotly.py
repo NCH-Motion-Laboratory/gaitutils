@@ -78,23 +78,25 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     fig = plotly.subplots.make_subplots(rows=1, cols=2,
                                         specs=[[{}, {}]],
                                         shared_xaxes=True,
-                                        shared_yaxes=False,
+                                        shared_yaxes=True,
                                         vertical_spacing=0,
-                                        horizontal_spacing=.15,
+                                        horizontal_spacing=0,
                                         subplot_titles=ctxts)
-    for cond in conds:
+    for condn, cond in enumerate(conds):
+        barcolor = cfg.plot.colors[condn]
         for k, ctxt in enumerate(ctxts, 1):
             show_legend = k == 1
             trace_l = go.Bar(y=vars, x=data[cond][ctxt], orientation='h', name=cond,
                              legendgroup=cond, text=texts[cond][ctxt],
-                             textposition='auto', showlegend=show_legend)
+                             textposition='auto', showlegend=show_legend,
+                             marker_color=barcolor)
             fig.append_trace(trace_l, 1, k)
-            
-        #fig['layout']['yaxis1'].update(showticklabels=False)
-        #fig['layout']['yaxis%d' % k].update('font': {'size': label_fontsize})
-        fig['layout']['xaxis%d' % k].update(title={'text': '% of session maximum',
-                                            'font': {'size': label_fontsize}})
 
+            #fig['layout']['yaxis%d' % k].update('font': {'size': label_fontsize})
+            fig['layout']['xaxis%d' % k].update(title={'text': '% of maximum',
+                                                'font': {'size': label_fontsize}})
+
+    #fig['layout']['yaxis1'].update(showticklabels=False)
     return fig
 
 

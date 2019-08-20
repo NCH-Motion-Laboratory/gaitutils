@@ -66,7 +66,7 @@ def _plot_height_ratios(layout):
 
 def time_dist_barchart(values, stddev=None, thickness=.5,
                        color=None, stddev_bars=True,
-                       plotvars=None, title=None):
+                       plotvars=None, title=None, big_fonts=None):
     """ Multi-variable and multi-condition barchart plot.
     values dict is keyed as values[condition][var][context],
     given by e.g. get_c3d_analysis()

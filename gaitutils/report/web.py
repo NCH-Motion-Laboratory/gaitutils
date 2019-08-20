@@ -61,16 +61,6 @@ def _make_dropdown_lists(options):
     return identity, mapper
 
 
-def _time_dist_plot_svg(sessions):
-    """Return time-dist plot in SVG format"""
-    fig = timedist.do_comparison_plot(sessions)
-    _canvas = FigureCanvas(fig)  # savefig requires a canvas
-    buf = io.BytesIO()
-    fig.savefig(buf, format='svg', bbox_inches='tight')
-    buf.seek(0)
-    return buf
-
-
 # helper to shutdown flask server, see http://flask.pocoo.org/snippets/67/
 def _shutdown_server():
     func = request.environ.get('werkzeug.server.shutdown')
@@ -394,7 +384,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                 logger.debug('creating figure data for %s' % label)
                 if isinstance(layout, basestring):  # handle special layout codes
                     if layout == 'time_dist':
-                        figdata = time_dist_barchart(sessions, big_fonts=True)
+                        figdata = timedist.do_comparison_plot(sessions, big_fonts=True,
+                                                              backend='plotly')
                     elif layout == 'patient_info':
                         figdata = patient_info_text
                     elif layout == 'static_kinematics':
@@ -449,17 +440,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
 
             # make the upper and lower panel graphs from figdata, depending
             # on data type
-            if layout == 'time_dist':
-                graph_upper = html.Img(src='data:image/svg+xml;base64,{}'.
-                                    format(figdata),
-                                    id='gaitgraph%d' % k,
-                                    style={'height': '100%'})
-                graph_lower = html.Img(src='data:image/svg+xml;base64,{}'.
-                                    format(figdata),
-                                    id='gaitgraph%d'
-                                    % (len(_layouts)+k),
-                                    style={'height': '100%'})
-            elif layout == 'patient_info':
+            if layout == 'patient_info':
                 graph_upper = dcc.Markdown(figdata)
                 graph_lower = graph_upper
             else:

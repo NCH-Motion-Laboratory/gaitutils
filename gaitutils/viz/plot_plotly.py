@@ -40,7 +40,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     ctr justified y labels in middle column?
     disable x axis / change to % of maximum
     increase y labels vs. bar spacing
-    refactor values formatting (shared with mpl plotter)
+    refactor formatting of values dict (shared with mpl plotter)
     fix hover labels
     increase text size for bar text
     """
@@ -56,12 +56,12 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
         if plotvars_set - vars_ok:
             logger.warning('some conditions are missing variables: %s'
                            % (plotvars_set - vars_ok))
-        # to preserve original order
+        # to preserve original var order
         vars_ = [var for var in plotvars if var in vars_ok]
     else:
         vars_ = vars_common
-    units = [vals_1[var]['unit'] for var in vars_]
     vars_ = vars_[::-1]  # plotly yaxis starts from bottom
+    units = [vals_1[var]['unit'] for var in vars_]
    
     # for plotly, we want simple arrays of nvars x 1, separately for L/R
     data_l, data_r = dict(), dict()
@@ -69,11 +69,10 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     for cond in conds:
         data_r[cond] = np.array([values[cond][var]['Right'] for var in vars_])
         data_l[cond] = np.array([values[cond][var]['Left'] for var in vars_])
-        vals_l = data_l[cond]
-        text_l[cond] = list()
-        for k, val in enumerate(vals_l):
-            text_l[cond].append(u'%.2f %s' % (val, units[k]))
+        text_l[cond] = [u'%.2f %s' % (val, unit) for
+                        val, unit in zip(data_l[cond], units)]
 
+    # scale vars according to their maximums over all conditions
     scaler_r = np.max(np.array([data_r[cond] for cond in conds]), axis=0)
     scaler_l = np.max(np.array([data_l[cond] for cond in conds]), axis=0)
     for cond in conds:

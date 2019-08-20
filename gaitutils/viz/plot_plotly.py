@@ -34,6 +34,15 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     given by e.g. get_c3d_analysis()
     stddev can be None or a dict keyed as stddev[condition][var][context].
     plotvars gives variables to plot (if not all) and their order.
+
+    TODO:
+    trace colors - same on L/R
+    ctr justified y labels in middle column?
+    disable x axis / change to % of maximum
+    increase y labels vs. bar spacing
+    refactor values formatting (shared with mpl plotter)
+    fix hover labels
+    increase text size for bar text
     """
     conds = values.keys()
     vals_1 = values[conds[0]]
@@ -52,14 +61,41 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     else:
         vars_ = vars_common
     units = [vals_1[var]['unit'] for var in vars_]
+    vars_ = vars_[::-1]  # plotly yaxis starts from bottom
+   
+    # for plotly, we want simple arrays of nvars x 1, separately for L/R
+    data_l, data_r = dict(), dict()
+    text_l, text_r = dict(), dict()    
+    for cond in conds:
+        data_r[cond] = np.array([values[cond][var]['Right'] for var in vars_])
+        data_l[cond] = np.array([values[cond][var]['Left'] for var in vars_])
+        vals_l = data_l[cond]
+        text_l[cond] = list()
+        for k, val in enumerate(vals_l):
+            text_l[cond].append(u'%.2f %s' % (val, units[k]))
 
-    fig = plotly.subplots.make_subplots(rows=1, cols=2, specs=[[{}, {}]], shared_xaxes=True,
-                                        shared_yaxes=True, vertical_spacing=0.001)
-    d = np.random.rand(1, len(vars_))[0] * 10
+    scaler_r = np.max(np.array([data_r[cond] for cond in conds]), axis=0)
+    scaler_l = np.max(np.array([data_l[cond] for cond in conds]), axis=0)
+    for cond in conds:
+        data_r[cond] /= scaler_r
+        data_l[cond] /= scaler_l
 
-    fig.append_trace(go.Bar(y=vars_, x=d, orientation='h'), 1, 1)
-    fig.append_trace(go.Bar(y=vars_, x=d, orientation='h'), 1, 2)
-
+    fig = plotly.subplots.make_subplots(rows=1, cols=2,
+                                        specs=[[{}, {}]],
+                                        shared_xaxes=True,
+                                        shared_yaxes=False,
+                                        vertical_spacing=0,
+                                        horizontal_spacing=.1,
+                                        subplot_titles=['Left', 'Right'])
+    for cond in conds:
+        trace_l = go.Bar(y=vars_, x=data_l[cond], orientation='h', name=cond,
+                         legendgroup=cond, text=text_l[cond], textposition='auto')
+        fig.append_trace(trace_l, 1, 1)
+        trace_r = go.Bar(y=vars_, x=data_r[cond], orientation='h', name=cond,
+                         legendgroup=cond, showlegend=False, textposition='auto')
+        fig.append_trace(trace_r, 1, 2)
+    
+    #fig['layout']['yaxis1'].update(showticklabels=False)
     return fig
 
 

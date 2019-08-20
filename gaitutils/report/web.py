@@ -31,7 +31,7 @@ from ulstools.num import age_from_hetu
 from .. import (cfg, normaldata, models, layouts, GaitDataError,
                 sessionutils, numutils, videos)
 from ..trial import Trial
-from ..viz.plot_plotly import plot_trials
+from ..viz.plot_plotly import plot_trials, time_dist_barchart
 from ..viz import timedist
 from ..stats import AvgTrial
 
@@ -394,9 +394,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                 logger.debug('creating figure data for %s' % label)
                 if isinstance(layout, basestring):  # handle special layout codes
                     if layout == 'time_dist':
-                        # get plot in svg format and encode to base64 for html.Img
-                        buf = _time_dist_plot_svg(sessions)
-                        figdata = base64.b64encode(buf.read())
+                        figdata = time_dist_barchart(sessions, big_fonts=True)
                     elif layout == 'patient_info':
                         figdata = patient_info_text
                     elif layout == 'static_kinematics':

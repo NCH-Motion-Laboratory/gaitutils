@@ -113,4 +113,28 @@ def _multitrial_analysis(trials):
     return res_avg_all, res_std_all
 
 
+def _pick_common_vars(values, vars_wanted=None):
+    """Helper to pick analysis vars data that exist for
+    all conditions. Returns vars and corresponding units"""
+    conds = values.keys()
+    vals_1 = values[conds[0]]
+    varsets = [set(values[cond].keys()) for cond in conds]
+    # vars common to all conditions
+    vars_common = set.intersection(*varsets)
+    if vars_wanted is not None:
+        # pick specified vars that appear in all of the conditions
+        vars_wanted_set = set(vars_wanted)
+        vars_ok = set.intersection(vars_wanted_set, vars_common)
+        if vars_wanted_set - vars_ok:
+            logger.warning('some conditions are missing variables: %s'
+                           % (vars_wanted_set - vars_ok))
+        # preserve original var order
+        vars = [var for var in vars_wanted if var in vars_ok]
+    else:
+        vars = vars_common
+    units = [vals_1[var]['unit'] for var in vars]
+    return conds, vars, units
+
+
+
 

@@ -21,6 +21,7 @@ from .plot_common import (_get_cycle_name, _var_title,
                           IteratorMapper, _handle_style_and_color_args)
 from .. import models, normaldata, layouts, cfg, GaitDataError, numutils
 from ..stats import AvgTrial
+from ..timedist import _pick_common_vars
 
 logger = logging.getLogger(__name__)
 
@@ -120,25 +121,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
         color = ['tab:green', 'tab:orange', 'tab:red', 'tab:brown',
                  'tab:pink', 'tab:gray', 'tab:olive']
 
-    conds = values.keys()
-    vals_1 = values[conds[0]]
-    varsets = [set(values[cond].keys()) for cond in conds]
-    # vars common to all conditions
-    vars_common = set.intersection(*varsets)
-
-    if plotvars is not None:
-        # pick specified vars that appear in all of the conditions
-        plotvars_set = set(plotvars)
-        vars_ok = set.intersection(plotvars_set, vars_common)
-        if plotvars_set - vars_ok:
-            logger.warning('some conditions are missing variables: %s'
-                           % (plotvars_set - vars_ok))
-        # to preserve original order
-        vars_ = [var for var in plotvars if var in vars_ok]
-    else:
-        vars_ = vars_common
-
-    units = [vals_1[var]['unit'] for var in vars_]
+    conds, vars, units = _pick_common_vars(values, plotvars)    
 
     # 3 columns: bar, labels, bar
     gs = gridspec.GridSpec(len(vars_), 3, width_ratios=[1, 1/3., 1])

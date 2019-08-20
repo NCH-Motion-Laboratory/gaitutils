@@ -18,6 +18,7 @@ import plotly.subplots
 
 from .. import GaitDataError, cfg, layouts, models, normaldata, numutils
 from ..stats import AvgTrial
+from ..timedist import _pick_common_vars
 from .plot_common import (_get_cycle_name, _var_title, IteratorMapper,
                           _style_mpl_to_plotly,
                           _handle_style_and_color_args)
@@ -28,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 def time_dist_barchart(values, stddev=None, thickness=.5,
                        color=None, stddev_bars=True,
-                       plotvars=None, title=None):
+                       plotvars=None, title=None, big_fonts=False):
     """ Multi-variable and multi-condition barchart plot.
     values dict is keyed as values[condition][var][context],
     given by e.g. get_c3d_analysis()
@@ -44,57 +45,56 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     fix hover labels
     increase text size for bar text
     """
-    conds = values.keys()
-    vals_1 = values[conds[0]]
-    varsets = [set(values[cond].keys()) for cond in conds]
-    # vars common to all conditions
-    vars_common = set.intersection(*varsets)
-    if plotvars is not None:
-        # pick specified vars that appear in all of the conditions
-        plotvars_set = set(plotvars)
-        vars_ok = set.intersection(plotvars_set, vars_common)
-        if plotvars_set - vars_ok:
-            logger.warning('some conditions are missing variables: %s'
-                           % (plotvars_set - vars_ok))
-        # to preserve original var order
-        vars_ = [var for var in plotvars if var in vars_ok]
-    else:
-        vars_ = vars_common
-    vars_ = vars_[::-1]  # plotly yaxis starts from bottom
-    units = [vals_1[var]['unit'] for var in vars_]
+    conds, vars, units = _pick_common_vars(values, plotvars)
+    vars = vars[::-1]  # plotly yaxis starts from bottom
+    units = units[::-1]
    
-    # for plotly, we want simple arrays of nvars x 1, separately for L/R
-    data_l, data_r = dict(), dict()
-    text_l, text_r = dict(), dict()    
+    legend_fontsize = cfg.plot_plotly.legend_fontsize   
+    label_fontsize = cfg.plot_plotly.label_fontsize
+    if big_fonts:
+        label_fontsize += 2
+        legend_fontsize += 2
+
+    data = dict()
+    texts = dict()
+    ctxts = ['Left', 'Right']
     for cond in conds:
-        data_r[cond] = np.array([values[cond][var]['Right'] for var in vars_])
-        data_l[cond] = np.array([values[cond][var]['Left'] for var in vars_])
-        text_l[cond] = [u'%.2f %s' % (val, unit) for
-                        val, unit in zip(data_l[cond], units)]
+        data[cond] = dict()
+        texts[cond] = dict()
+        for ctxt in ctxts:
+            # flatten data into simple arrays of nvars x 1
+            data[cond][ctxt] = np.array([values[cond][var][ctxt] for var in vars])
+            texts[cond][ctxt] = [u'%.2f %s' % (val, unit) for
+                                 val, unit in zip(data[cond][ctxt], units)]
 
     # scale vars according to their maximums over all conditions
-    scaler_r = np.max(np.array([data_r[cond] for cond in conds]), axis=0)
-    scaler_l = np.max(np.array([data_l[cond] for cond in conds]), axis=0)
+    scaler = dict()
+    for ctxt in ctxts:
+        scaler[ctxt] = np.max(np.array([data[c][ctxt] for c in conds]), axis=0)
     for cond in conds:
-        data_r[cond] /= scaler_r
-        data_l[cond] /= scaler_l
+        for ctxt in ctxts:
+            data[cond][ctxt] /= scaler[ctxt] * .01
 
     fig = plotly.subplots.make_subplots(rows=1, cols=2,
                                         specs=[[{}, {}]],
                                         shared_xaxes=True,
                                         shared_yaxes=False,
                                         vertical_spacing=0,
-                                        horizontal_spacing=.1,
-                                        subplot_titles=['Left', 'Right'])
+                                        horizontal_spacing=.15,
+                                        subplot_titles=ctxts)
     for cond in conds:
-        trace_l = go.Bar(y=vars_, x=data_l[cond], orientation='h', name=cond,
-                         legendgroup=cond, text=text_l[cond], textposition='auto')
-        fig.append_trace(trace_l, 1, 1)
-        trace_r = go.Bar(y=vars_, x=data_r[cond], orientation='h', name=cond,
-                         legendgroup=cond, showlegend=False, textposition='auto')
-        fig.append_trace(trace_r, 1, 2)
-    
-    #fig['layout']['yaxis1'].update(showticklabels=False)
+        for k, ctxt in enumerate(ctxts, 1):
+            show_legend = k == 1
+            trace_l = go.Bar(y=vars, x=data[cond][ctxt], orientation='h', name=cond,
+                             legendgroup=cond, text=texts[cond][ctxt],
+                             textposition='auto', showlegend=show_legend)
+            fig.append_trace(trace_l, 1, k)
+            
+        #fig['layout']['yaxis1'].update(showticklabels=False)
+        #fig['layout']['yaxis%d' % k].update('font': {'size': label_fontsize})
+        fig['layout']['xaxis%d' % k].update(title={'text': '% of session maximum',
+                                            'font': {'size': label_fontsize}})
+
     return fig
 
 

@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 def time_dist_barchart(values, stddev=None, thickness=.5,
                        color=None, stddev_bars=True,
-                       plotvars=None, title=None, big_fonts=False):
+                       plotvars=None, title=None, big_fonts=False, figtitle=None):
     """ Multi-variable and multi-condition barchart plot.
     values dict is keyed as values[condition][var][context],
     given by e.g. get_c3d_analysis()
@@ -37,23 +37,22 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     plotvars gives variables to plot (if not all) and their order.
 
     TODO:
-    trace colors - same on L/R
-    ctr justified y labels in middle column?
-    disable x axis / change to % of maximum
     increase y labels vs. bar spacing
-    refactor formatting of values dict (shared with mpl plotter)
     fix hover labels
     increase text size for bar text
+    add std
     """
     conds, vars, units = _pick_common_vars(values, plotvars)
     vars = vars[::-1]  # plotly yaxis starts from bottom
     units = units[::-1]
-   
-    legend_fontsize = cfg.plot_plotly.legend_fontsize   
+
+    legend_fontsize = cfg.plot_plotly.legend_fontsize
     label_fontsize = cfg.plot_plotly.label_fontsize
+    subtitle_fontsize = cfg.plot_plotly.subtitle_fontsize
     if big_fonts:
-        label_fontsize += 2
         legend_fontsize += 2
+        label_fontsize += 2
+        subtitle_fontsize += 2
 
     data = dict()
     texts = dict()
@@ -64,8 +63,13 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
         for ctxt in ctxts:
             # flatten data into simple arrays of nvars x 1
             data[cond][ctxt] = np.array([values[cond][var][ctxt] for var in vars])
-            texts[cond][ctxt] = [u'%.2f %s' % (val, unit) for
-                                 val, unit in zip(data[cond][ctxt], units)]
+            if stddev:
+                stddevs = np.array([stddev[cond][var][ctxt] for var in vars])
+                texts[cond][ctxt] = [u'%.2f ± %.2f %s' % (val, std, unit) for
+                                     val, std, unit in zip(data[cond][ctxt], stddevs, units)]
+            else:
+                texts[cond][ctxt] = [u'%.2f %s' % (val, unit) for
+                                     val, unit in zip(data[cond][ctxt], units)]
 
     # scale vars according to their maximums over all conditions
     scaler = dict()
@@ -80,7 +84,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
                                         shared_xaxes=True,
                                         shared_yaxes=True,
                                         vertical_spacing=0,
-                                        horizontal_spacing=0,
+                                        horizontal_spacing=.1,
                                         subplot_titles=ctxts)
     for condn, cond in enumerate(conds):
         barcolor = cfg.plot.colors[condn]
@@ -96,7 +100,15 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
             fig['layout']['xaxis%d' % k].update(title={'text': '% of maximum',
                                                 'font': {'size': label_fontsize}})
 
-    #fig['layout']['yaxis1'].update(showticklabels=False)
+    margin = go.layout.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
+    legend = dict(font=dict(size=legend_fontsize))
+    plotly_layout = go.Layout(margin=margin,
+                              legend=legend,
+                              font={'size': label_fontsize},
+                              hovermode='closest', title=figtitle)
+
+    fig['layout'].update(plotly_layout)
+
     return fig
 
 

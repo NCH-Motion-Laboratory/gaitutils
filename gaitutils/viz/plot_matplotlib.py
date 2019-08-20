@@ -83,9 +83,9 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
             ax.text(rect.get_width() * .0, rect.get_y() + rect.get_height()/2.,
                     txt, ha='left', va='center', size=fontsize)
 
-    def _plot_oneside(vars_, context, col):
+    def _plot_oneside(vars, context, col):
         """Do the bar plots for given context and column"""
-        for ind, var in enumerate(vars_):
+        for ind, var in enumerate(vars):
             # FIXME: adding subplot here is unnnecessary and triggers mpl
             # depreciation
             ax = fig.add_subplot(gs[ind, col])
@@ -124,17 +124,17 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     conds, vars, units = _pick_common_vars(values, plotvars)    
 
     # 3 columns: bar, labels, bar
-    gs = gridspec.GridSpec(len(vars_), 3, width_ratios=[1, 1/3., 1])
+    gs = gridspec.GridSpec(len(vars), 3, width_ratios=[1, 1/3., 1])
 
     # variable names into the center column
-    for ind, (var, unit) in enumerate(zip(vars_, units)):
+    for ind, (var, unit) in enumerate(zip(vars, units)):
         textax = fig.add_subplot(gs[ind, 1])
         textax.axis('off')
         label = '%s (%s)' % (var, unit) if unit else var
         textax.text(0, .5, label, ha='center', va='center')
 
-    rects = _plot_oneside(vars_, 'Left', 0)
-    rects = _plot_oneside(vars_, 'Right', 2)
+    rects = _plot_oneside(vars, 'Left', 0)
+    rects = _plot_oneside(vars, 'Right', 2)
 
     if len(conds) > 1:
         fig.legend(rects, conds, fontsize=7,

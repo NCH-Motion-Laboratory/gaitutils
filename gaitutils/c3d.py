@@ -315,7 +315,8 @@ def get_forceplate_data(c3dfile):
             label = ch.GetLabel()[-3:-1]  # strip descriptor and plate number
             rawdata[label] = np.squeeze(ch.GetData().GetValues())
         if not all([ch in rawdata for ch in read_chs]):
-            raise GaitDataError('could not read force/moment data')
+            logger.warning('could not read force/moment data for plate %d' % nplate)
+            continue
         F = np.stack([rawdata['Fx'], rawdata['Fy'], rawdata['Fz']], axis=1)
         M = np.stack([rawdata['Mx'], rawdata['My'], rawdata['Mz']], axis=1)
         # this should be the plate thickness (from moment origin to physical

@@ -220,6 +220,11 @@ class Trial(object):
             logger.warning('using quirk: EMG correction factor = %g' % emg_correction_factor)
         else:
             emg_correction_factor = 1
+        if 'ignore_eclipse_fp_info' in quirks:
+            logger.warning('using quirk: ignore Eclipse forceplate fields')
+            self.use_eclipse_fp_info = False
+        else:
+            self.use_eclipse_fp_info = True
         # data are lazily read
         self.emg = EMG(self.source, correction_factor=emg_correction_factor)
         self._forceplate_data = None
@@ -359,7 +364,7 @@ class Trial(object):
         """Read the forceplate events."""
         try:
             fp_info = (eclipse.eclipse_fp_keys(self.eclipse_data) if
-                       cfg.trial.use_eclipse_fp_info else None)
+                       cfg.trial.use_eclipse_fp_info and self.use_eclipse_fp_info else None)
             # FIXME: marker data already read?
             return utils.detect_forceplate_events(self.source, fp_info=fp_info)
         except GaitDataError:

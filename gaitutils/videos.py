@@ -74,7 +74,7 @@ def get_trial_videos(trialfile, camera_label=None, vid_ext=None, overlay=None):
     trialbase = op.splitext(trialfile)[0]
     # XXX: should really be case insensitive, but does not matter on Windows
     vid_exts = ['avi', 'ogv']
-    globs_ = ('%s*%s' % (trialbase, vid_ext) for vid_ext in vid_exts)
+    globs_ = ('%s.*%s' % (trialbase, vid_ext) for vid_ext in vid_exts)
     vids = itertools.chain.from_iterable(glob.iglob(glob_) for glob_ in globs_)
     if camera_label is not None:
         vids = _filter_by_label(vids, camera_label)

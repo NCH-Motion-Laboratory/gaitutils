@@ -37,10 +37,8 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     plotvars gives variables to plot (if not all) and their order.
 
     TODO:
-    increase y labels vs. bar spacing
     fix hover labels
     increase text size for bar text
-    add std
     """
     conds, vars, units = _pick_common_vars(values, plotvars)
     vars = vars[::-1]  # plotly yaxis starts from bottom
@@ -84,15 +82,19 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
                                         shared_xaxes=True,
                                         shared_yaxes=True,
                                         vertical_spacing=0,
-                                        horizontal_spacing=.1,
+                                        horizontal_spacing=.05,
                                         subplot_titles=ctxts)
+
+    varlabels = [s + ' ' for s in vars]  # hack: add spaces to create some margin
     for condn, cond in enumerate(conds):
         barcolor = cfg.plot.colors[condn]
         for k, ctxt in enumerate(ctxts, 1):
             show_legend = k == 1
-            trace_l = go.Bar(y=vars, x=data[cond][ctxt], orientation='h', name=cond,
+            trace_l = go.Bar(y=varlabels, x=data[cond][ctxt], orientation='h', name=cond,
                              legendgroup=cond, text=texts[cond][ctxt],
                              textposition='auto', showlegend=show_legend,
+                             hoverlabel=dict(namelength=-1),
+                             hoverinfo='y+text+name',
                              marker_color=barcolor)
             fig.append_trace(trace_l, 1, k)
 
@@ -104,14 +106,16 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     legend = dict(font=dict(size=legend_fontsize))
     plotly_layout = go.Layout(margin=margin,
                               legend=legend,
+                              paper_bgcolor='rgba(255,255,255,0)',  # no background please
+                              plot_bgcolor='rgba(255,255,255,0)',
                               font={'size': label_fontsize},
                               hovermode='closest', title=figtitle)
 
     fig['layout'].update(plotly_layout)
+    for anno in fig['layout']['annotations']:
+        anno['font']['size'] = subtitle_fontsize
 
     return fig
-
-
 
 
 def _plot_vels(vels, labels):

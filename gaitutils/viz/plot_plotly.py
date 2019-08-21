@@ -92,6 +92,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
             show_legend = k == 1
             trace_l = go.Bar(y=varlabels, x=data[cond][ctxt], orientation='h', name=cond,
                              legendgroup=cond, text=texts[cond][ctxt],
+                             textfont={'size': label_fontsize},
                              textposition='auto', showlegend=show_legend,
                              hoverlabel=dict(namelength=-1),
                              hoverinfo='y+text+name',

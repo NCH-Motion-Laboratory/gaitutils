@@ -58,22 +58,26 @@ def convert_videos(vidfiles, check_only=False):
 
 
 def _collect_session_videos(session, tags):
-    """Collect session AVI files"""
+    """Collect session .avi files (trial videos). This only collects
+    files for tagged dynamic trials, extra video-only trials and static trials."""
     c3ds = sessionutils.get_c3ds(session, tags=tags,
                                  trial_type='dynamic')
     c3ds += sessionutils.get_c3ds(session, tags=cfg.eclipse.video_tags,
                                   trial_type='dynamic')
     c3ds += sessionutils.get_c3ds(session, trial_type='static')
-    vids_it = (get_trial_videos(c3d, vid_ext='.avi')
-               for c3d in c3ds)
+    camlabels = set(cfg.general.camera_labels.values())
+    vids_it = (get_trial_videos(c3d, camera_label=camlabel, vid_ext='.avi', overlay=overlay, maxn=1)
+               for c3d in c3ds for camlabel in camlabels for overlay in [True, False])
     return list(itertools.chain.from_iterable(vids_it))
 
 
-def get_trial_videos(trialfile, camera_label=None, vid_ext=None, overlay=None):
+def get_trial_videos(trialfile, camera_label=None, vid_ext=None, overlay=None, maxn=None):
     """Return list of video files for trial file. File may be c3d or enf etc"""
     trialbase = op.splitext(trialfile)[0]
     # XXX: should really be case insensitive, but does not matter on Windows
-    vid_exts = ['avi', 'ogv']
+    vid_exts = ['.avi', '.ogv']
+    if vid_ext not in vid_exts:
+        raise ValueError('unrecognized video extension %s' % vid_ext)
     globs_ = ('%s.*%s' % (trialbase, vid_ext) for vid_ext in vid_exts)
     vids = itertools.chain.from_iterable(glob.iglob(glob_) for glob_ in globs_)
     if camera_label is not None:
@@ -82,11 +86,16 @@ def get_trial_videos(trialfile, camera_label=None, vid_ext=None, overlay=None):
         vids = _filter_by_extension(vids, vid_ext)
     if overlay is not None:
         vids = _filter_by_overlay(vids, overlay)
-    return list(vids)
+    if maxn is None:
+        return sorted(vids)
+    else:
+        return sorted(vids)[:maxn]
 
 
 def _filter_by_label(vids, camera_label):
     """Filter videos by camera label"""
+    if camera_label not in cfg.general.camera_labels.values():
+        raise ValueError('unconfigured camera label %s' % camera_label)
     ids = [id for id, label in cfg.general.camera_labels.items() if
            camera_label == label]
     vid_its = itertools.tee(vids, len(ids))  # need to reuse vids iterator
@@ -112,10 +121,9 @@ def _filter_by_id(vids, camera_id):
 def _filter_by_overlay(vids, overlay=True):
     """Filter to get overlay or non-overlay videos"""
     for vid in vids:
-        if 'overlay' in vid:
-            if overlay:
-                yield vid
-        elif not overlay:
+        if 'overlay' in vid and overlay:
+            yield vid
+        elif 'overlay' not in vid and not overlay:
             yield vid
 
 

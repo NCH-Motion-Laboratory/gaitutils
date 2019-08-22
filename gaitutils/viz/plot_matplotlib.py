@@ -86,9 +86,13 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
     def _plot_oneside(vars, context, col):
         """Do the bar plots for given context and column"""
         for ind, var in enumerate(vars):
-            # FIXME: adding subplot here is unnnecessary and triggers mpl
-            # depreciation
             ax = fig.add_subplot(gs[ind, col])
+            if ind == 0:
+                if col == 0:
+                    ax.set_title('Left')
+                elif col == 2:
+                    ax.set_title('Right')
+
             ax.axis('off')
             # may have several bars (conditions) per variable
             vals_this = [values[cond][var][context] for cond in conds]
@@ -123,7 +127,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
 
     conds, vars, units = _pick_common_vars(values, plotvars)    
 
-    # 3 columns: bar, labels, bar
+    # 3 columns: bars, labels, bars
     gs = gridspec.GridSpec(len(vars), 3, width_ratios=[1, 1/3., 1])
 
     # variable names into the center column
@@ -140,9 +144,6 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
         fig.legend(rects, conds, fontsize=7,
                    bbox_to_anchor=(.5, 0), loc="lower right",
                    bbox_transform=fig.transFigure)
-
-    fig.add_subplot(gs[0, 0]).set_title('Left')
-    fig.add_subplot(gs[0, 2]).set_title('Right')
 
     if title is not None:
         fig.suptitle(title)

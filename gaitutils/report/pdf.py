@@ -68,7 +68,7 @@ def _savefig(pdf, fig, header=None, footer=None):
     pdf.savefig(fig)
 
 
-def create_report(sessionpath, info=None, pages=None):
+def create_report(sessionpath, info=None, pages=None, destdir=None):
     """Create the pdf report and save in session directory"""
 
     if info is None:
@@ -85,8 +85,10 @@ def create_report(sessionpath, info=None, pages=None):
 
     session_root, sessiondir = op.split(sessionpath)
     patient_code = op.split(session_root)[1]
+    if destdir is None:
+        destdir = sessionpath
     pdfname = sessiondir + '.pdf'
-    pdfpath = op.join(sessionpath, pdfname)
+    pdfpath = op.join(destdir, pdfname)
 
     tagged_trials = sessionutils.get_c3ds(sessionpath, tags=cfg.eclipse.tags,
                                           trial_type='dynamic')
@@ -207,10 +209,11 @@ def create_report(sessionpath, info=None, pages=None):
         _savefig(pdf, fig_kin_avg, header)
 
     timedist_txt_file = sessiondir + '_time_distance.txt'
-    timedist_txt_path = op.join(sessionpath, timedist_txt_file)
+    timedist_txt_path = op.join(destdir, timedist_txt_file)
     with io.open(timedist_txt_path, 'w', encoding='utf8') as f:
         logger.debug('writing timedist text data into %s' % timedist_txt_path)
         f.write(_timedist_txt)
+
 
 def create_comparison_report(sessions, pdfpath, pages=None):
     """Do a simple comparison report between sessions"""

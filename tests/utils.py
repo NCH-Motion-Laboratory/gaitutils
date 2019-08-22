@@ -33,7 +33,7 @@ def start_nexus():
 
 
 def _file_path(filename):
-    """Path for files directly under testdata dir"""
+    """Path for files/dirs directly under testdata dir"""
     return op.abspath(op.join(testdata_root, filename))
 
 

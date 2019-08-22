@@ -66,15 +66,19 @@ def _collect_session_videos(session, tags):
                                   trial_type='dynamic')
     c3ds += sessionutils.get_c3ds(session, trial_type='static')
     camlabels = set(cfg.general.camera_labels.values())
-    vids_it = (get_trial_videos(c3d, camera_label=camlabel, vid_ext='.avi', overlay=overlay, maxn=1)
-               for c3d in c3ds for camlabel in camlabels for overlay in [True, False])
+    # for each trial, pick at most one avi and one overlay avi per camera
+    vids_it = (get_trial_videos(c3d, camera_label=camlabel, vid_ext='.avi',
+               overlay=overlay, maxn=1) for c3d in c3ds
+               for camlabel in camlabels for overlay in [True, False])
+    # chain resulting video files into single list
     return list(itertools.chain.from_iterable(vids_it))
 
 
-def get_trial_videos(trialfile, camera_label=None, vid_ext=None, overlay=None, maxn=None):
+def get_trial_videos(trialfile, camera_label=None, vid_ext=None, overlay=None,
+                     maxn=None):
     """Return list of video files for trial file. File may be c3d or enf etc"""
     trialbase = op.splitext(trialfile)[0]
-    # XXX: should really be case insensitive, but does not matter on Windows
+    # XXX: should really be case insensitive, but it does not matter on Windows
     vid_exts = ['.avi', '.ogv']
     if vid_ext not in vid_exts:
         raise ValueError('unrecognized video extension %s' % vid_ext)

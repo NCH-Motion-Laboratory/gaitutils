@@ -378,8 +378,10 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
             if saved_report_data:
                 logger.debug('loading %s from saved report data' % label)
                 if label not in saved_report_data:
-                    raise Exception('Saved report data is invalid. Please recreate report.')
-                figdata = saved_report_data[label]
+                    # will be caught, resulting in empty menu item
+                    raise ValueError
+                else:
+                    figdata = saved_report_data[label]
             else:
                 logger.debug('creating figure data for %s' % label)
                 if isinstance(layout, basestring):  # handle special layout codes
@@ -412,8 +414,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                                         style_by=style_by, color_by=color_by,                    
                                         model_normaldata=model_normaldata,
                                         big_fonts=True)
-                    # will be caught and menu item will be empty
                     elif layout == 'disabled':
+                        # will be caught, resulting in empty menu item
                         raise ValueError
                     else:  # unrecognized layout; this is not caught by us
                         raise Exception('Unrecognized layout: %s' % layout)
@@ -470,7 +472,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
             dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
             dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
 
-        except (ValueError, GaitDataError) as e:
+        except (ValueError, GaitDataError) as e:  # could not create a figure
             logger.warning('failed to create figure for %s: %s' % (label, e))
             # insert the menu options but make them disabled
             dd_opts_multi_upper.append({'label': label, 'value': label,

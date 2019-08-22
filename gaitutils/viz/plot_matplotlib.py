@@ -37,7 +37,7 @@ def _plot_vels(vels, labels):
     ax.tick_params(axis='both', which='major', labelsize=8)
     vavg = np.nanmean(vels)
     ax.set_title('Walking speed for dynamic trials (average %.2f m/s)' % vavg)
-    fig.tight_layout()
+    fig.set_tight_layout(True)
     return fig
 
 
@@ -49,7 +49,7 @@ def _plot_timedep_vels(vels, labels):
     ax.set_xlabel('% of trial')
     for vel in vels:
         ax.plot(vel)
-    fig.tight_layout()
+    fig.set_tight_layout(True)
     return fig
 
 

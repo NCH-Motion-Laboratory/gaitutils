@@ -100,7 +100,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
             fig.append_trace(trace_l, 1, k)
 
             # increase var label size a bit
-            fig['layout']['yaxis%d' % k].update(title={'font': {'size': label_fontsize+2}})
+            fig['layout']['yaxis%d' % k].update(title={'font': {'size': label_fontsize}})
             fig['layout']['xaxis%d' % k].update(title={'text': '% of maximum',
                                                 'font': {'size': label_fontsize}})
 

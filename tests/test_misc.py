@@ -12,12 +12,11 @@ from numpy.testing import assert_allclose
 from shutil import copyfile
 import logging
 
-from gaitutils.config import cfg
 from gaitutils.numutils import segment_angles, best_match
 from gaitutils import eclipse
 from gaitutils.utils import (is_plugingait_set, _point_in_poly, _pig_markerset,
                              _check_markers_flipped)
-from utils import _file_path
+from utils import _file_path, cfg
 
 
 logger = logging.getLogger(__name__)

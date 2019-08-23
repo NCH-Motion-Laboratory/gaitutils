@@ -2,13 +2,7 @@
 """
 
 c3d unit tests.
-
-
-MISSING:
-    event detection
-    model data reads
-    EMG data reads
-    forceplate data direct reads
+This is not super important since btk has its own test suite
 
 
 @author: jussi (jnu@iki.fi)
@@ -22,10 +16,9 @@ import logging
 from gaitutils import read_data, utils
 from gaitutils.trial import Trial
 from gaitutils.utils import detect_forceplate_events
-from utils import _trial_path, _c3d_path, _file_path
+from utils import _trial_path, _c3d_path, _file_path, cfg
 
 
-# FIXME: load default cfg so that user settings will not affect testing
 logger = logging.getLogger(__name__)
 
 

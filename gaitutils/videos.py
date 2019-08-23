@@ -68,19 +68,19 @@ def _collect_session_videos(session, tags):
     camlabels = set(cfg.general.camera_labels.values())
     # for each trial, pick at most one avi and one overlay avi per camera
     vids_it = (get_trial_videos(c3d, camera_label=camlabel, vid_ext='.avi',
-               overlay=overlay, maxn=1) for c3d in c3ds
+               overlay=overlay, single_file=True) for c3d in c3ds
                for camlabel in camlabels for overlay in [True, False])
     # chain resulting video files into single list
     return list(itertools.chain.from_iterable(vids_it))
 
 
 def get_trial_videos(trialfile, camera_label=None, vid_ext=None, overlay=None,
-                     maxn=None):
+                     single_file=False):
     """Return list of video files for trial file. File may be c3d or enf etc"""
     trialbase = op.splitext(trialfile)[0]
     # XXX: should really be case insensitive, but it does not matter on Windows
     vid_exts = ['.avi', '.ogv']
-    if vid_ext not in vid_exts:
+    if vid_ext is not None and vid_ext not in vid_exts:
         raise ValueError('unrecognized video extension %s' % vid_ext)
     globs_ = ('%s.*%s' % (trialbase, vid_ext) for vid_ext in vid_exts)
     vids = itertools.chain.from_iterable(glob.iglob(glob_) for glob_ in globs_)
@@ -90,10 +90,7 @@ def get_trial_videos(trialfile, camera_label=None, vid_ext=None, overlay=None,
         vids = _filter_by_extension(vids, vid_ext)
     if overlay is not None:
         vids = _filter_by_overlay(vids, overlay)
-    if maxn is None:
-        return sorted(vids)
-    else:
-        return sorted(vids)[:maxn]
+    return sorted(vids)[-1:] if single_file else sorted(vids)
 
 
 def _filter_by_label(vids, camera_label):

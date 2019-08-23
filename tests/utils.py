@@ -13,10 +13,14 @@ import os
 import subprocess
 import time
 import logging
+from ulstools.configdot import parse_config
 
-from gaitutils import nexus, cfg
+from gaitutils import nexus, config
 
 
+# reset the config so that user settings do not affect testing
+cfg = parse_config(config.cfg_template_fn)
+# where test data is held
 testdata_root = r'Z:\gaitutils_testdata'
 
 

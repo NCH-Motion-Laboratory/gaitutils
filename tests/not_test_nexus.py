@@ -13,16 +13,11 @@ from numpy.testing import (assert_allclose, assert_array_equal,
 
 import gaitutils
 from gaitutils import nexus, utils, models, read_data
-from gaitutils.config import cfg
 from gaitutils import Trial
 from gaitutils.utils import detect_forceplate_events
 from utils import (_nexus_open_trial, _trial_path,
-                   start_nexus)
+                   start_nexus, cfg)
 
-
-cfg.load_default()  # so that user settings will not affect testing
-start_nexus()
-vicon = nexus.viconnexus()
 
 
 def test_nexus_reader():

@@ -427,8 +427,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         session = _get_nexus_sessionpath()
         if session is None:
             return
-        c3ds = sessionutils.get_c3ds(session, trial_type='DYNAMIC',
-                                     check_if_exists=True)
+        c3ds = sessionutils.get_c3ds(session, trial_type='DYNAMIC')
         if c3ds:
             reply = qt_yesno_dialog('Some of the dynamic trials have been '
                                     'processed already. Are you sure you want '

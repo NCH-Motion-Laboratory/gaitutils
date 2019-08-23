@@ -9,16 +9,19 @@ Misc numerical utils
 
 from __future__ import division
 
+import logging
 import numpy as np
 import hashlib
 from scipy.signal import medfilt
 from numpy.lib.stride_tricks import as_strided
 
+logger = logging.getLogger(__name__)
+
 
 def files_digest(files):
     """Create total md5 digest for a list of files"""
     hashes = list()
-    for fn in files: 
+    for fn in files:
         with open(fn, 'rb') as f:
             data = f.read()
             hash = hashlib.md5(data).hexdigest()

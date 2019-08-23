@@ -175,7 +175,7 @@ def _filter_exists(files):
             yield f
 
 
-def get_c3ds(sessionpath, tags=None, trial_type=None, check_if_exists=False):
+def get_c3ds(sessionpath, tags=None, trial_type=None, check_if_exists=True):
     """Get specified c3d files for session."""
     enfs = get_session_enfs(sessionpath)
     if trial_type is not None:

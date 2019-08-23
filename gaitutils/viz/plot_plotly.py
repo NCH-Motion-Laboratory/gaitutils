@@ -329,9 +329,11 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                            not cyc.on_forceplate):
                             do_plot = False
 
-                        if do_plot:
-                            t, y = trial.get_model_data(var)
+                        t, y = trial.get_model_data(var)
+                        if y is None:
+                            do_plot = False
 
+                        if do_plot:
                             # decide style and color
                             if style_by['model'] == 'context':
                                 sty = cfg.plot.context_styles[context]

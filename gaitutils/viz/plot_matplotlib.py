@@ -313,8 +313,12 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                                 alpha=cfg.plot.
                                                 model_normals_alpha)
 
+                        t, y = trial.get_model_data(var)
+                        if y is None:
+                            do_plot = False
+
                         if do_plot:
-                            t, y = trial.get_model_data(var)
+
 
                             # decide style and color 
                             if style_by['model'] == 'context':

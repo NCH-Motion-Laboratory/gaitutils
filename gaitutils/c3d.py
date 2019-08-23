@@ -28,9 +28,9 @@ try:
 except ImportError:
     try:
         if sys.version_info.major == 3:
-            from pyBTK.btk3 import btk
+            import pyBTK.btk3 as btk
         elif sys.version_info.major == 2:
-            from pyBTK.btk2 import btk
+            import pyBTK.btk2 as btk
         else:
             raise Exception('unexpected major Python version')
         BTK_IMPORTED = True

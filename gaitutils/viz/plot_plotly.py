@@ -243,13 +243,13 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                         normalx = np.linspace(0, 100, ndata.shape[0])
                         fillcolor = merge_color_and_opacity(cfg.plot.model_normals_color, cfg.plot.model_normals_alpha)
                         ntrace = _plotly_fill_between(normalx,
-                                                    ndata[:, 0],
-                                                    ndata[:, 1],
-                                                    fillcolor=fillcolor,
-                                                    name='Norm.',
-                                                    legendgroup='Norm.',
-                                                    showlegend=model_normaldata_legend,
-                                                    line=dict(width=0))  # no border lines
+                                                      ndata[:, 0],
+                                                      ndata[:, 1],
+                                                      fillcolor=fillcolor,
+                                                      name='Norm.',
+                                                      legendgroup='Norm.',
+                                                      showlegend=model_normaldata_legend,
+                                                      line=dict(width=0))  # no border lines
                         fig.append_trace(ntrace, i+1, j+1)
                         model_normaldata_legend = False
 

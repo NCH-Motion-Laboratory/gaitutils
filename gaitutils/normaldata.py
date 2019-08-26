@@ -158,10 +158,12 @@ def _write_xlsx(normaldata, filename):
     ws = wb.active
     ws.title = 'Normal'
     for n, var in enumerate(sorted(normaldata), 1):
+        logger.debug('writing %s' % var)
         data = normaldata[var]
         nrows, ncols = data.shape
         if nrows not in (51, 1) or ncols != 2:
-            raise ValueError('normal data has unexpected dimensions')
+            raise ValueError('normaldata has unexpected dimensions: %d x %d'
+                             % (nrows, ncols))
         # convert trailing dimension to number
         if var[-1] in 'XYZ':
             if 'Power' in var:
@@ -182,7 +184,7 @@ def _write_xlsx(normaldata, filename):
 
 
 def normals_from_avgtrial(avgtrial):
-    """Get normal data from averaged trial"""
+    """Compute normaldata from averaged trial"""
     normaldata = dict()
     for mod in models_all:
         thevars = mod.varlabels_noside
@@ -197,8 +199,15 @@ def normals_from_avgtrial(avgtrial):
                 rstd = avgtrial.stddev_data[rvar]
                 lstd = avgtrial.stddev_data[lvar]
             except KeyError:
+                pass
+            if rdata is None or ldata is None:
                 logger.warning('cannot get model data for %s' % var)
                 continue
+            # traditionally normaldata uses 2% cycle intervals, so downsample it
+            rdata = rdata[::2]
+            ldata = ldata[::2]
+            rstd = rstd[::2]
+            lstd = lstd[::2]          
             avg_vardata = (rdata + ldata) / 2.
             std_vardata = (rstd + lstd) / 2.
             lower_vardata = avg_vardata - std_vardata

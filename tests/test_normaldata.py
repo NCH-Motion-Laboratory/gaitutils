@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 fn_xlsx = _file_path('normaldata.xlsx')
 
 
-
 def test_read_xlsx_normaldata():
     """Test read of default xlsx normaldata"""
     ndata = normaldata._read_xlsx(fn_xlsx)

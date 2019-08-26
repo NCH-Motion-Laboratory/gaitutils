@@ -12,7 +12,7 @@ import openpyxl
 import os.path as op
 import logging
 
-from . import cfg, sessionutils
+from . import cfg, sessionutils, GaitDataError
 from .numutils import isfloat
 from ulstools.num import age_from_hetu
 from .models import models_all
@@ -59,14 +59,14 @@ def read_normaldata(filename):
     """
     logger.debug('reading normal data from %s' % filename)
     if not op.isfile(filename):
-        raise ValueError('No such file %s' % filename)
+        raise GaitDataError('No such file %s' % filename)
     type_ = op.splitext(filename)[1].lower()
     if type_ == '.gcd':
         return _read_gcd(filename)
     elif type_ == '.xlsx':
         return _read_xlsx(filename)
     else:
-        raise ValueError('Only .gcd or .xlsx file formats are supported')
+        raise GaitDataError('Only .gcd or .xlsx file formats are supported')
 
 
 def normaldata_age(age):
@@ -214,12 +214,4 @@ def normals_from_avgtrial(avgtrial):
             upper_vardata = avg_vardata - std_vardata
             normaldata[var] = np.stack([lower_vardata, upper_vardata], axis=1)
     return normaldata
-
-                
-
-
-
-
-
-
-
+               

@@ -44,8 +44,8 @@ def nexus_trial(from_c3d=False):
         if op.isfile(c3dfile):
             return Trial(c3dfile)
         else:
-            logger.info('no c3d file for currently loaded trial, loading '
-                        'directly from Nexus')
+            logger.info('no c3d file %s for currently loaded trial, loading '
+                        'directly from Nexus' % c3dfile)
             return Trial(nexus.viconnexus())
     else:
         return Trial(nexus.viconnexus())

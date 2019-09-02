@@ -184,39 +184,6 @@ def _write_xlsx(normaldata, filename):
     wb.save(filename=filename)
 
 
-def normals_from_avgtrial(avgtrial):
-    """Compute normaldata from averaged trial"""
-    normaldata = dict()
-    for mod in models_all:
-        thevars = mod.varlabels_noside
-        for var in thevars:
-            rvar, lvar = 'R'+var, 'L'+var
-            if not (rvar in avgtrial.stddev_data and lvar in avgtrial.stddev_data):
-                logger.warning('no stddev data for %s, skipping variable' % var)
-                continue
-            try:
-                _, rdata = avgtrial.get_model_data(rvar)
-                _, ldata = avgtrial.get_model_data(lvar)
-                rstd = avgtrial.stddev_data[rvar]
-                lstd = avgtrial.stddev_data[lvar]
-            except KeyError:
-                pass
-            if rdata is None or ldata is None:
-                logger.warning('cannot get model data for %s' % var)
-                continue
-            # traditionally normaldata uses 2% cycle intervals, so downsample it
-            rdata = rdata[::2]
-            ldata = ldata[::2]
-            rstd = rstd[::2]
-            lstd = lstd[::2]          
-            avg_vardata = (rdata + ldata) / 2.
-            std_vardata = (rstd + lstd) / 2.
-            lower_vardata = avg_vardata - std_vardata
-            upper_vardata = avg_vardata + std_vardata
-            normaldata[var] = np.stack([lower_vardata, upper_vardata], axis=1)
-    return normaldata
-
-
 def normals_from_data(data):
     """Compute normaldata from data dict output by get_model_data"""
     normaldata = dict()
@@ -233,10 +200,8 @@ def normals_from_data(data):
             # mean and median should coincide for normal distribution but
             # median is less sensitive to outliers, so use it
             curve_med = np.median(curves, axis=0)
-            curve_mean = np.mean(curves, axis=0)
-            #curve_std = np.std(curves, axis=0)
             curve_std = stats.mad(curves, axis=0)
-            # traditionally normaldata uses 2% cycle intervals, so downsample it            
+            # traditionally normaldata uses 2% cycle intervals, so downsample
             curve_med_ds = curve_med[::2]
             curve_std_ds = curve_std[::2]
             lower_vardata = curve_med_ds - curve_std_ds

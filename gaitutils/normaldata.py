@@ -12,7 +12,7 @@ import openpyxl
 import os.path as op
 import logging
 
-from . import cfg, sessionutils, GaitDataError
+from . import cfg, sessionutils, GaitDataError, stats
 from .numutils import isfloat
 from ulstools.num import age_from_hetu
 from .models import models_all
@@ -215,4 +215,31 @@ def normals_from_avgtrial(avgtrial):
             upper_vardata = avg_vardata + std_vardata
             normaldata[var] = np.stack([lower_vardata, upper_vardata], axis=1)
     return normaldata
-               
+
+
+def normals_from_data(data):
+    """Compute normaldata from data dict output by get_model_data"""
+    normaldata = dict()
+    for mod in models_all:
+        thevars = mod.varlabels_noside
+        for var in thevars:
+            rvar, lvar = 'R'+var, 'L'+var
+            rcurves, lcurves = data[rvar], data[lvar]
+            if rcurves is None or lcurves is None:
+                logger.warning('cannot get model data for %s' % var)
+                continue
+            # combine data for L/R
+            curves = np.concatenate([rcurves, lcurves])
+            # mean and median should coincide for normal distribution but
+            # median is less sensitive to outliers, so use it
+            curve_med = np.median(curves, axis=0)
+            curve_mean = np.mean(curves, axis=0)
+            #curve_std = np.std(curves, axis=0)
+            curve_std = stats.mad(curves, axis=0)
+            # traditionally normaldata uses 2% cycle intervals, so downsample it            
+            curve_med_ds = curve_med[::2]
+            curve_std_ds = curve_std[::2]
+            lower_vardata = curve_med_ds - curve_std_ds
+            upper_vardata = curve_med_ds + curve_std_ds
+            normaldata[var] = np.stack([lower_vardata, upper_vardata], axis=1)
+    return normaldata

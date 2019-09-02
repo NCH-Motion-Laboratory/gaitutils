@@ -223,3 +223,9 @@ def _collect_model_data(trials, fp_cycles_only=False):
                  % (n, nc['R'], nc['L'], nc['Rkin'], nc['Lkin']))
 
     return data_all, nc
+
+
+def mad(x, scale=1.4826, axis=0):
+    """Median absolute deviation. A robust alternative to stddev"""
+    med = np.median(x, axis=axis)
+    return scale * np.median(np.abs(x - med), axis=axis)

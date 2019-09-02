@@ -12,7 +12,7 @@ import openpyxl
 import os.path as op
 import logging
 
-from . import cfg, sessionutils, GaitDataError, stats
+from . import cfg, sessionutils, GaitDataError, numutils
 from .numutils import isfloat
 from ulstools.num import age_from_hetu
 from .models import models_all
@@ -200,7 +200,7 @@ def normals_from_data(data):
             # mean and median should coincide for normal distribution but
             # median is less sensitive to outliers, so use it
             curve_med = np.median(curves, axis=0)
-            curve_std = stats.mad(curves, axis=0)
+            curve_std = numutils.mad(curves, axis=0)
             # traditionally normaldata uses 2% cycle intervals, so downsample
             curve_med_ds = curve_med[::2]
             curve_std_ds = curve_std[::2]

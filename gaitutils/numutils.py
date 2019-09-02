@@ -18,6 +18,12 @@ from numpy.lib.stride_tricks import as_strided
 logger = logging.getLogger(__name__)
 
 
+def mad(x, scale=1.4826, axis=0):
+    """Median absolute deviation. A robust alternative to stddev."""
+    med = np.median(x, axis=axis)
+    return scale * np.median(np.abs(x - med), axis=axis)
+
+
 def files_digest(files):
     """Create total md5 digest for a list of files"""
     hashes = list()

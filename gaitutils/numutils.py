@@ -180,5 +180,4 @@ def rms(data, win):
         raise ValueError('Need RMS window of odd length')
     rms_ = np.sqrt(running_sum(data**2, win) / win)
     # pad ends of RMS data so that lengths are matched
-    pad = np.repeat(0, (win-1)/2)
-    return np.concatenate([pad, rms_, pad])
+    return np.pad(rms_, (int((win-1)/2),), 'reflect')

@@ -12,7 +12,7 @@ import os.path as op
 from collections import defaultdict
 
 from .trial import Trial, Gaitcycle
-from . import models, GaitDataError
+from . import models, GaitDataError, cfg, numutils
 
 logger = logging.getLogger(__name__)
 
@@ -225,3 +225,48 @@ def _collect_model_data(trials, fp_cycles_only=False):
     return data_all, nc
 
 
+def _collect_emg_data(trials, rms=True, grid_points=101):
+    """Collect cycle normalized EMG data from trials"""
+    if not trials:
+        logger.warning('no trials')
+        return
+    if not isinstance(trials, list):
+        trials = [trials]
+
+    data_all = dict()
+    meta = list()
+
+    chs = cfg.emg.channel_labels.keys()
+
+    for n, trial_ in enumerate(trials):
+        # see whether it's already a Trial instance or we need to create one
+        if isinstance(trial_, Trial):
+            trial = trial_
+        else:
+            trial = Trial(trial_)
+
+        for cycle in trial.cycles:
+            trial.set_norm_cycle(cycle)
+
+            for ch in chs:
+                if ch[0] != cycle.context:
+                    continue
+                # get data on analog sampling grid and compute rms
+                try:
+                    t, data = trial.get_emg_data(ch)
+                except KeyError:
+                    logger.warning('no channel %s for %s' % (ch, trial))
+                    continue
+                if rms:
+                    data = numutils.rms(data, cfg.emg.rms_win)
+                # transform to desired grid (0..100% by default)
+                t_analog = np.linspace(0, 100, len(data))
+                tn = np.linspace(0, 100, grid_points)
+                data_cyc = np.interp(tn, t_analog, data)
+                if ch not in data_all:
+                    data_all[ch] = data_cyc[None, :]
+                else:
+                    data_all[ch] = np.concatenate([data_all[ch],
+                                                  data_cyc[None, :]])
+            meta.append('%s: %s' % (trial.trialname, cycle.name))
+    return data_all, meta

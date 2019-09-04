@@ -416,12 +416,11 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                                       trial.n_ok[var])
 
                     # plot EMG variable
-                    elif (trial.emg is not None and trial.emg.is_channel(var) or var in
-                          cfg.emg.channel_labels):
-                        # plot only if EMG channel context matches cycle ctxt
-                        # FIXME: this assumes that EMG names begin with context
-                        do_plot = (var[0] == context and trial.emg.status_ok(var)
-                                   and cyc in emg_cycles_)
+                    elif (trial.emg is not None and trial.emg.is_channel(var)
+                          or var in cfg.emg.channel_labels):
+                        do_plot = (trial.emg.context_ok(var, cyc.context) and
+                                   trial.emg.status_ok(var) and
+                                   cyc in emg_cycles_)
                         # FIXME: maybe annotate disconnected chans
                         # _no_ticks_or_labels(ax)
                         # _axis_annotate(ax, 'disconnected')

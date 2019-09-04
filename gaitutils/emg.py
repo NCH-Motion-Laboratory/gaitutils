@@ -19,6 +19,8 @@ from . import read_data, cfg
 logger = logging.getLogger(__name__)
 
 
+
+
 class EMG(object):
     """ Class for handling EMG data. """
 
@@ -66,6 +68,15 @@ class EMG(object):
         """ Returns True for existing channel with signal ok, False
         otherwise """
         return self.is_channel(item) and self._is_valid_emg(self[item])
+
+    @staticmethod
+    def context_ok(ch, context):
+        """Check if channel context matches given context. Returns True if
+        channel does not have a context"""
+        if (ch in cfg.emg.channel_context and context.upper()
+           != cfg.emg.channel_context[ch].upper()):
+            return False
+        return True
 
     def _is_valid_emg(self, y):
         """ Check whether channel contains a valid EMG signal. Usually invalid

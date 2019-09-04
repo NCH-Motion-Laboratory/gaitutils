@@ -249,8 +249,10 @@ def _collect_emg_data(trials, rms=True, grid_points=101):
             trial.set_norm_cycle(cycle)
 
             for ch in chs:
-                if ch[0] != cycle.context:
+
+                if not trial.emg.context_ok(ch, cycle.context):
                     continue
+
                 # get data on analog sampling grid and compute rms
                 try:
                     t, data = trial.get_emg_data(ch)

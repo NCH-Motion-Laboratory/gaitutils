@@ -96,9 +96,13 @@ class OptionsDialog(QtWidgets.QDialog):
                        key=lambda it: configdot.get_description(it))
         for item in items:
             desc = configdot.get_description(item)
-            input_widget = QtWidgets.QLineEdit()
-            input_widget.setText(item.literal_value)
-            input_widget.setCursorPosition(0)  # show beginning of line
+            if item.value in (True, False):
+                input_widget = QtWidgets.QCheckBox()
+                input_widget.setChecked(item.value)
+            else:
+                input_widget = QtWidgets.QLineEdit()
+                input_widget.setText(item.literal_value)
+                input_widget.setCursorPosition(0)  # show beginning of line
             lout.addRow(desc, input_widget)
             self._input_widgets[secname][item.name] = input_widget
         return tab
@@ -182,8 +186,11 @@ class OptionsDialog(QtWidgets.QDialog):
             for itemname, item in sec:
                 _widget = self._input_widgets[secname][itemname]
                 val = item.literal_value
-                _widget.setText(val)
-                _widget.setCursorPosition(0)
+                if isinstance(_widget, QtWidgets.QLineEdit):
+                    _widget.setText(val)
+                    _widget.setCursorPosition(0)
+                elif isinstance(_widget, QtWidgets.QCheckBox):
+                    _widget.setChecked(item.value)
 
     def _update_cfg(self):
         """Update cfg according to input widgets"""
@@ -191,7 +198,12 @@ class OptionsDialog(QtWidgets.QDialog):
             for itemname, item in sec:
                 _widget = self._input_widgets[secname][itemname]
                 try:
-                    item.value = ast.literal_eval(_widget.text())
+                    if isinstance(_widget, QtWidgets.QLineEdit):
+                        item.value = ast.literal_eval(_widget.text())
+                    elif isinstance(_widget, QtWidgets.QCheckBox):
+                        item.value = _widget.isChecked()
+                    else:
+                        raise ValueError('Invalid input widget class, how come?')
                 except SyntaxError:
                     return itemname, _widget.text()
         _handle_cfg_defaults(cfg)

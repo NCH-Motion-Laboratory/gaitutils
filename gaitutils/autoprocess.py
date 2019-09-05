@@ -186,10 +186,11 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
                 continue
 
         # check for valid Plug-in Gait set
-        if not utils.is_plugingait_set(mkrdata):
-            logger.warning('marker set does not correspond to Plug-in Gait')
-            _fail(trial, 'label_failure')
-            continue
+        if cfg.autoproc.check_marker_set:
+            if not utils.is_plugingait_set(mkrdata):
+                logger.warning('marker set does not correspond to Plug-in Gait')
+                _fail(trial, 'label_failure')
+                continue
         # check for flipped markers
         flipped = list(utils._check_markers_flipped(mkrdata))
         if flipped:

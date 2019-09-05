@@ -269,7 +269,7 @@ def get_metadata(c3dfile):
             'n_forceplates': n_forceplates, 'markers': markers}
 
 
-def get_model_data(c3dfile, model):
+def get_model_data(c3dfile, model, ignore_missing=False):
     modeldata = dict()
     acq = _get_c3dacq(c3dfile)
     var_dims = (3, acq.GetPointFrameNumber())
@@ -278,8 +278,8 @@ def get_model_data(c3dfile, model):
             vals = acq.GetPoint(var).GetValues()
             modeldata[var] = np.transpose(np.squeeze(vals))
         except RuntimeError:
-            if model.is_optional_var(var):
-                logger.info('cannot read optional variable %s, returning nans'
+            if model.is_optional_var(var) or ignore_missing:
+                logger.info('cannot read model variable %s, returning nans'
                             % var)
                 data = np.empty(var_dims)
                 data[:] = np.nan

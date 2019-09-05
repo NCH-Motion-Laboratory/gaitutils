@@ -453,8 +453,8 @@ def get_model_data(vicon, model):
         if nums:
             data = np.squeeze(np.array(nums))
         else:
-            if model.is_optional_var(var):
-                logger.info('cannot read optional variable %s, returning nans'
+            if model.is_optional_var(var) or ignore_missing:
+                logger.info('cannot read variable %s, returning nans'
                             % var)
                 data = np.empty(var_dims)
                 data[:] = np.nan

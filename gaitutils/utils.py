@@ -71,37 +71,16 @@ def avg_markerdata(mkrdata, markers, var_type='_P', roi=None,
         return mP / n_ok
 
 
-# FIXME: marker sets could be moved into models.py?
-def _pig_markerset(fullbody=True, sacr=True):
-    """ PiG marker set as dict (empty values) """
-    _pig = ['LASI', 'RASI', 'LTHI', 'LKNE', 'LTIB', 'LANK', 'LHEE',
-            'LTOE', 'RTHI', 'RKNE', 'RTIB', 'RANK', 'RHEE', 'RTOE']
-    if fullbody:
-        _pig += ['LFHD', 'RFHD', 'LBHD', 'RBHD', 'C7', 'T10', 'CLAV', 'STRN',
-                 'RBAK', 'LSHO', 'LELB', 'LWRA', 'LWRB', 'LFIN', 'RSHO',
-                 'RELB', 'RWRA', 'RWRB', 'RFIN']
-    # add pelvis posterior markers; SACR or RPSI/LPSI
-    _pig.extend(['SACR'] if sacr else ['RPSI', 'LPSI'])
-    return {mkr: None for mkr in _pig}
-
-
 def _pig_pelvis_markers():
     return ['RASI', 'RPSI', 'LASI', 'LPSI', 'SACR']
 
 
-def is_plugingait_set(mkrdata):
-    """ Check whether marker data set corresponds to Plug-in Gait (full body or
-    lower body only). Extra markers are accepted. """
-    mkrs = set(mkrdata.keys())
-    # required markers
-    lb_mkrs_sacr = set(_pig_markerset(fullbody=False).keys())
-    lb_mkrs_psi = set(_pig_markerset(fullbody=False, sacr=False).keys())
-    set_ok = lb_mkrs_psi.issubset(mkrs) or lb_mkrs_sacr.issubset(mkrs)
-    if not set_ok:
-        missing = set(('LASI', 'RASI', 'LTHI', 'LKNE', 'LTIB', 'LANK', 'LHEE',
-                      'LTOE', 'RTHI', 'RKNE', 'RTIB', 'RANK', 'RHEE', 'RTOE')) - mkrs
-        logger.debug('missing markers: %s' % missing)
-    return set_ok
+def is_valid_markerset(mkrdata, model):
+    """Check whether mkrdata markers contains any markerset for given model."""
+    for markers in model.markers.values():
+        if markers.issubset(set(mkrdata.keys())):
+            return True
+    return False
 
 
 def _check_markers_flipped(mkrdata):

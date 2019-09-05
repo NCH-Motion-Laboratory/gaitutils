@@ -83,6 +83,8 @@ class GaitModel(object):
         self.is_kinetic_var = lambda var: False
         # callable to return whether var read is allowed to fail
         self.is_optional_var = lambda var: False
+        # different variations of marker sets
+        self.markers = dict()
 
 
 """ Create models """
@@ -274,6 +276,15 @@ pig_lowerbody.ydesc = _dict_with_side({
                          'PelvisAnglesX': ('Posterior', 'Anterior'),
                          'PelvisAnglesY': ('Down', 'Up'),
                          'PelvisAnglesZ': ('External', 'Internal')})
+
+# define markers
+_markers_common = set('LASI', 'RASI', 'LTHI', 'LKNE', 'LTIB', 'LANK', 'LHEE',
+                      'LTOE', 'RTHI', 'RKNE', 'RTIB', 'RANK', 'RHEE', 'RTOE')
+_markers_sacr = _markers_common + 'SACR'
+_markers_psi = _markers_common + ('RPSI', 'LPSI')
+pig_lowerbody.markers = {'SACR': _markers_sacr,
+                         'PSI': _markers_psi,
+                         'common': _markers_common}
 
 models_all.append(pig_lowerbody)
 

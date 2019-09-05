@@ -59,7 +59,8 @@ def avg_markerdata(mkrdata, markers, var_type='_P', roi=None,
             if fail_on_gaps:
                 raise GaitDataError('Averaging data for %s has gaps' % marker)
             else:
-                logger.warning('marker %s cannot be included in average due to gaps' % marker)
+                logger.warning('marker %s cannot be included in average '
+                               'due to gaps' % marker)
                 continue
         else:
             mP += mkrdata[marker+var_type]
@@ -95,7 +96,12 @@ def is_plugingait_set(mkrdata):
     # required markers
     lb_mkrs_sacr = set(_pig_markerset(fullbody=False).keys())
     lb_mkrs_psi = set(_pig_markerset(fullbody=False, sacr=False).keys())
-    return lb_mkrs_psi.issubset(mkrs) or lb_mkrs_sacr.issubset(mkrs)
+    set_ok = lb_mkrs_psi.issubset(mkrs) or lb_mkrs_sacr.issubset(mkrs)
+    if not set_ok:
+        missing = set(('LASI', 'RASI', 'LTHI', 'LKNE', 'LTIB', 'LANK', 'LHEE',
+                      'LTOE', 'RTHI', 'RKNE', 'RTIB', 'RANK', 'RHEE', 'RTOE')) - mkrs
+        logger.debug('missing markers: %s' % missing)
+    return set_ok
 
 
 def _check_markers_flipped(mkrdata):

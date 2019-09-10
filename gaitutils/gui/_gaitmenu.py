@@ -663,17 +663,24 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         """ Confirm and close application. """
+        
         if self._web_report_dialog.active_reports:
             reply = qt_yesno_dialog('There are active web reports which '
                                     'will be closed. Are you sure you '
                                     'want to quit?')
             if reply == QtWidgets.QMessageBox.YesRole:
                 self._web_report_dialog.shutdown()
+                self._close_mpl_windows()
                 event.accept()
             else:
                 event.ignore()
         else:
+            self._close_mpl_windows()            
             event.accept()
+
+    def _close_mpl_windows(self):
+        for win in self._mpl_windows:
+            win.close()
 
     def _options_dialog(self):
         """Show the options dialog"""

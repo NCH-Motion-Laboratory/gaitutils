@@ -631,4 +631,11 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
     # inject some info of our own
     app._gaitutils_report_name = report_name
 
+    # XXX: the Flask app ends up with a logger by the name of 'gaitutils', which has a default
+    # stderr handler. since logger hierarchy corresponds to package hierarchy,
+    # this creates a bug where all gaitutils package loggers propagate their messages into
+    # the app logger and they get shown multiple times. as a dirty fix, we disable the
+    # handlers for the app logger (they still get shown since they propagate to the root logger)
+    app.logger.handlers = []
+
     return app

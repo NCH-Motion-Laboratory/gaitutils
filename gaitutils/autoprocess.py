@@ -284,15 +284,22 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
 
         # write Eclipse fp values according to our detection
         fp_info = fpev['our_fp_info']
-        if cfg.autoproc.write_eclipse_fp_info is True:
-            logger.debug('writing detected forceplate info into Eclipse')
-            eclipse.set_eclipse_keys(enffile, fp_info,
-                                     update_existing=True)
-        elif cfg.autoproc.write_eclipse_fp_info == 'reset':
-            logger.debug('resetting Eclipse forceplate info')
-            fp_info_auto = {k: 'Auto' for k, v in fp_info.items()}
-            eclipse.set_eclipse_keys(enffile, fp_info_auto,
-                                     update_existing=True)
+        # try to avoid a possible race condition where Nexus is still
+        # holding the .enf file open
+        time.sleep(.1)
+        try:
+            if cfg.autoproc.write_eclipse_fp_info is True:
+                logger.debug('writing detected forceplate info into Eclipse')
+                eclipse.set_eclipse_keys(enffile, fp_info,
+                                         update_existing=True)
+            elif cfg.autoproc.write_eclipse_fp_info == 'reset':
+                logger.debug('resetting Eclipse forceplate info')
+                fp_info_auto = {k: 'Auto' for k, v in fp_info.items()}
+                eclipse.set_eclipse_keys(enffile, fp_info_auto,
+                                         update_existing=True)
+        except IOError:
+            logger.warning('failed to update Eclipse forceplate info '
+                           'in %s' % enffile)
 
     # all preprocessing done
     # compute velocity thresholds using all trials
@@ -358,7 +365,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
     if cfg.autoproc.eclipse_write_key:
         # try to avoid a possible race condition where Nexus is still
         # holding the .enf file open
-        time.sleep(.5)
+        time.sleep(.1)
         for filepath, trial in trials.items():
             enf_file = filepath + '.Trial.enf'
             try:
@@ -367,7 +374,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
                                           trial['description']},
                                          update_existing=True)
             except IOError:
-                logger.warning('Could not write Eclipse description to %s' %
+                logger.warning('failed to update Eclipse description in %s' %
                                enf_file)
     else:
         logger.debug('not updating Eclipse data')

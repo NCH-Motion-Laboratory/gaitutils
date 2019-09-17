@@ -15,10 +15,13 @@ import os.path as op
 import ast
 import io
 from collections import defaultdict
+import logging
 
 from .. import nexus, GaitDataError, cfg
 from ulstools import configdot
 from ..config import _handle_cfg_defaults, cfg_user_fn
+
+logger = logging.getLogger(__name__)
 
 
 def qt_matplotlib_window(fig):
@@ -96,7 +99,7 @@ class OptionsDialog(QtWidgets.QDialog):
                        key=lambda it: configdot.get_description(it))
         for item in items:
             desc = configdot.get_description(item)
-            if item.value in (True, False):
+            if isinstance(item.value, bool):
                 input_widget = QtWidgets.QCheckBox()
                 input_widget.setChecked(item.value)
             else:

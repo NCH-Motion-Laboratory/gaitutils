@@ -1,0 +1,32 @@
+name: gaitutils_py3
+channels:
+  - defaults
+dependencies:
+  - configobj
+  - flask
+  - freetype
+  - future
+  - matplotlib
+  - numpy
+  - scipy
+  - python
+  - openpyxl
+  - pip
+  - plotly
+  - pyqt
+  - spyder
+  - jupyter
+  - urllib3
+  - werkzeug
+  - xlrd
+  - xlsxwriter
+  - xlutils
+  - pip:
+    - dash
+    - dash-daq
+    - flake8
+    - pytest
+    - pathlib
+    - https://github.com/jjnurminen/gaitutils/archive/master.zip
+    - https://github.com/jjnurminen/ulstools/archive/master.zip
+

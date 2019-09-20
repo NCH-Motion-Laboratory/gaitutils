@@ -7,6 +7,10 @@ plotting functionality shared between backends
 """
 
 
+from builtins import str
+from builtins import next
+from past.builtins import basestring
+from builtins import object
 import datetime
 import logging
 import copy
@@ -50,7 +54,7 @@ def _handle_style_and_color_args(style_by, color_by):
         style_by = {'model': style_by}
     elif not isinstance(style_by, dict):
         raise ValueError('style_by must be str or dict')
-    for k in style_by_defaults.viewkeys() - style_by.viewkeys():
+    for k in set(style_by_defaults) - set(style_by):
         style_by[k] = style_by_defaults[k]  # update missing values
     if not set(style_by.values()).issubset(vals_ok):
         raise ValueError('invalid style_by argument in %s' % style_by.items())
@@ -62,7 +66,7 @@ def _handle_style_and_color_args(style_by, color_by):
         color_by = {'model': color_by, 'emg': color_by}
     elif not isinstance(color_by, dict):
         raise ValueError('color_by must be str or dict')
-    for k in color_by_defaults.viewkeys() - color_by.viewkeys():
+    for k in set(color_by_defaults) - set(color_by):
         color_by[k] = color_by_defaults[k]  # update missing values
     if not set(color_by.values()).issubset(vals_ok):
         raise ValueError('invalid color_by argument in %s' % color_by.items())

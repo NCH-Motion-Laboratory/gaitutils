@@ -8,6 +8,7 @@ Utility functions for processing gait data.
 
 from __future__ import division
 
+from builtins import range
 from builtins import str
 from builtins import zip
 from scipy import signal
@@ -39,7 +40,7 @@ def get_crossing_frame(mP, dim=1, p0=0):
             if y[p-10] != 0 and y[p+10] != 0:
                 # y must change sign also around p
                 if np.sign(y[p-10]) != np.sign(y[p+10]):
-                        ycross.append(p)
+                    ycross.append(p)
     return ycross
 
 

@@ -337,9 +337,10 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
             ])
 
     # pick desired single variables from model and append
-    pig_singlevars_ = (models.pig_lowerbody.varlabels_noside.items() +
-                       models.pig_lowerbody_kinetics.varlabels_noside.items())
-    pig_singlevars = sorted(pig_singlevars_, key=lambda item: item[1])
+    # Py2: dict merge below can be done more elegantly once Py2 is dropped
+    pig_singlevars_ = models.pig_lowerbody.varlabels_noside.copy()
+    pig_singlevars_.update(models.pig_lowerbody_kinetics.varlabels_noside)
+    pig_singlevars = sorted(pig_singlevars_.items(), key=lambda item: item[1])
     singlevars = OrderedDict([(varlabel, [[var]]) for var, varlabel in
                               pig_singlevars])
     _layouts.update(singlevars)

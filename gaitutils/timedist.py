@@ -116,7 +116,7 @@ def _multitrial_analysis(trials):
 def _pick_common_vars(values, vars_wanted=None):
     """Helper to pick analysis vars data that exist for
     all conditions. Returns vars and corresponding units"""
-    conds = values.keys()
+    conds = list(values.keys())
     vals_1 = values[conds[0]]
     varsets = [set(values[cond].keys()) for cond in conds]
     # vars common to all conditions
@@ -134,7 +134,3 @@ def _pick_common_vars(values, vars_wanted=None):
         vars = vars_common
     units = [vals_1[var]['unit'] for var in vars]
     return conds, vars, units
-
-
-
-

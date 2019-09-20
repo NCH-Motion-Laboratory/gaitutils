@@ -183,7 +183,7 @@ def _collect_model_data(trials, fp_cycles_only=False):
         # see which models are included in trial
         models_ok = list()
         for model in models.models_all:
-            var = model.varnames[0]
+            var = list(model.varnames)[0]
             try:
                 trial.get_model_data(var)
                 models_ok.append(model)

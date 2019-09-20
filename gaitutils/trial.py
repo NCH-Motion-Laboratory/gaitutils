@@ -59,7 +59,7 @@ class Noncycle(object):
         self.name = 'unnorm. (%s)' % context
         self.toeoffn = None
         self.on_forceplate = False
-        self.start = None
+        self.start = 0  # to allow cycle sorting
         self.end = None
 
 

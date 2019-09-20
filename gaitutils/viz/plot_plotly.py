@@ -4,10 +4,13 @@ plotly based plotting functions
 
 @author: Jussi (jnu@iki.fi)
 """
+from __future__ import division
 
+from builtins import zip
 import logging
 from builtins import range
 from itertools import cycle
+import sys
 
 import numpy as np
 import plotly
@@ -303,7 +306,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                     cyclename_full = _get_cycle_name(trial, cyc,
                                                      name_type='full')
                     # plotly cannot directly handle unicode objects
-                    if isinstance(tracename, unicode):
+                    # needs to be handled in py2/3 compatible way
+                    if sys.version_info.major == 2 and isinstance(tracename, unicode):
                         tracename = tracename.encode('utf-8')
 
                     # tracename determines the legend group
@@ -449,7 +453,9 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 if yunit == 'deg':
                                     yunit = u'\u00B0'  # Unicode degree sign
                                 ydesc = [s[:3] for s in mod.ydesc[var]]  # shorten
-                                ylabel = (u'%s %s %s' % (ydesc[0], yunit, ydesc[1])).encode('utf-8')
+                                ylabel = (u'%s %s %s' % (ydesc[0], yunit, ydesc[1]))
+                                if sys.version_info.major == 2 and isinstance(ylabel, unicode):
+                                    ylabel = ylabel.encode('utf-8')
                                 fig['layout'][yaxis].update(title={'text': ylabel, 'font': {'size': label_fontsize}})
                                 # less decimals on hover label
                                 fig['layout'][yaxis].update(hoverformat='.2f')
@@ -467,7 +473,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                             tracename_emg = 'EMG:' + tracename
 
                             t_, y_ = trial.get_emg_data(var)
-                            t = (t_ / trial.samplesperframe if not normalized
+                            t = (t_/trial.samplesperframe if not normalized
                                  else t_)
                             y = (numutils.rms(y_, cfg.emg.rms_win)
                                  if emg_mode == 'rms' else y_)

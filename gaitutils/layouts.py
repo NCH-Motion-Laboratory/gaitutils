@@ -72,7 +72,7 @@ def rm_dead_channels_multitrial(emgs, layout):
     if not chs_ok:
         raise GaitDataError('No acceptable channels in any of the EMGs')
     rowlen = len(layout[0])
-    lout = zip(*[iter(chs_ok)]*rowlen)  # grouper recipe from itertools
+    lout = list(zip(*[iter(chs_ok)]*rowlen))  # grouper recipe from itertools
     rows_ok = [any(row) for row in lout]
     layout = [row for i, row in enumerate(layout) if rows_ok[i]]
     return layout

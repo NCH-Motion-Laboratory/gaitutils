@@ -23,6 +23,7 @@ GAP HANDLING:
 
 @author: Jussi (jnu@iki.fi)
 """
+from __future__ import division
 
 from builtins import zip
 import os
@@ -112,7 +113,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         filepath = enffile[:enffile.find('.Trial')]  # rm .TrialXXX and .enf
         filename = os.path.split(filepath)[1]
       
-        signals.progress.emit('Preprocessing: %s' % filename, 100*ind/len(enffiles))
+        signals.progress.emit('Preprocessing: %s' % filename, int(100*ind/len(enffiles)))
         if signals.canceled:
             return None
 
@@ -318,7 +319,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         enf_file = filepath + '.Trial.enf'
 
         signals.progress.emit('Marking events and running models: %s' % filename,
-                              100*ind/len(sel_trials))
+                              int(100*ind/len(sel_trials)))
         if signals.canceled:
             return None
 

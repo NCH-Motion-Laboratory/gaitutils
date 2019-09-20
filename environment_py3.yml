@@ -1,4 +1,4 @@
-name: gaitutils_py3
+name: gaitutils_py3_32bit
 channels:
   - defaults
 dependencies:

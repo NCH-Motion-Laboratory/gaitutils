@@ -11,6 +11,7 @@ Computations on gait trials
 from __future__ import division
 from builtins import zip
 import numpy as np
+import scipy
 import logging
 from collections import defaultdict
 
@@ -119,3 +120,32 @@ def _step_width(source):
             # marker data is in mm, but return step width in m
             sw[context].append(np.linalg.norm(VSW) / 1000.)
     return sw
+
+
+def _toe_clearance(source):
+    """Compute toe clearance"""
+    tr = Trial(source)
+    mkrdata = tr.full_marker_data
+    for context in 'L':
+        marker = context + 'TOE'
+        data = mkrdata[marker][:, 2]
+        max_inds = scipy.signal.argrelextrema(data, np.greater)[0]
+        min_inds = scipy.signal.argrelextrema(data, np.less)[0]
+        for ind in max_inds:
+            # pick (at most) 2 previous minima for each maximum
+            this_mins = np.where(min_inds < ind)[0][-2:]
+            if this_mins.size == 0:
+                continue
+            baseline = data[min_inds[this_mins]].min()
+            baseline_ind = min_inds[this_mins]
+            prominence = data[ind] - baseline
+            print(ind)
+            print(baseline)
+            print(baseline_ind)
+            print(prominence)
+            
+
+
+
+
+

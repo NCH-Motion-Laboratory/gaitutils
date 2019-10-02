@@ -253,7 +253,10 @@ def get_metadata(c3dfile):
         logger.warning('Cannot get subject name')
         name = u'Unknown'
 
-    par_names = _get_c3d_metadata_subfields(acq, 'PROCESSING')
+    try:
+        par_names = _get_c3d_metadata_subfields(acq, 'PROCESSING')
+    except RuntimeError:
+        raise RuntimeError('cannot read metadata from %s' % c3dfile)
     subj_params = defaultdict(lambda: None)
     subj_params.update({par: _get_c3d_subject_param(acq, par) for
                         par in par_names})

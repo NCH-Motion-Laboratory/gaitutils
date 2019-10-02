@@ -67,9 +67,11 @@ def qt_yesno_dialog(msg):
 
 
 def qt_dir_chooser():
-    """Selector dialog to select dir (or multiple dirs)"""
+    """Selector dialog to select dir (or multiple dirs). Always returns a list
+    (empty if dialog was canceled)"""
     # native dialog - single dir only
-    return [QtWidgets.QFileDialog.getExistingDirectory(None, 'Select session')]
+    dir = QtWidgets.QFileDialog.getExistingDirectory(None, 'Select session')
+    return [dir] if dir else list()
     # non-native dialog - multiple dirs. a bit messy, currently not in use
     file_dialog = QtWidgets.QFileDialog()
     file_dialog.setFileMode(QtWidgets.QFileDialog.DirectoryOnly)
@@ -221,6 +223,7 @@ class OptionsDialog(QtWidgets.QDialog):
         else:
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
 
+
 class ChooseSessionsDialog(QtWidgets.QDialog):
     """A dialog for picking report sessions"""
 
@@ -252,12 +255,11 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
         else:
             dirs = qt_dir_chooser()
         dirs = [op.normpath(d) for d in dirs]
-        if dirs:
-            for dir_ in dirs:
-                if dir_ in self.sessions:
-                    qt_message_dialog('Session %s already loaded' % dir_)
-                elif dir_:
-                    self.listSessions.add_item(dir_, data=dir_)
+        for dir_ in dirs:
+            if dir_ in self.sessions:
+                qt_message_dialog('Session %s already loaded' % dir_)
+            else:
+                self.listSessions.add_item(dir_, data=dir_)
 
     @property
     def sessions(self):

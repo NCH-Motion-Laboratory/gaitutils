@@ -28,13 +28,13 @@ def get_layout(layout_name):
 def check_layout(layout):
     """Check layout consistency. Return tuple (n_of_rows, n_of_cols)"""
     if not layout or not isinstance(layout, list):
-        raise ValueError('Invalid layout')
+        raise TypeError('Invalid layout')
     if not isinstance(layout[0], list):
-        raise ValueError('Invalid layout')
+        raise TypeError('Invalid layout')
     nrows = len(layout)
     ncols = len(layout[0])
     if ncols < 1:
-        raise ValueError('Invalid layout: %s' % layout)
+        raise TypeError('Invalid layout: %s' % layout)
     for col in layout:
         if not isinstance(col, list) or len(col) != ncols:
             raise ValueError('Inconsistent layout: %s' % layout)

@@ -380,7 +380,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                 logger.debug('loading %s from saved report data' % label)
                 if label not in saved_report_data:
                     # will be caught, resulting in empty menu item
-                    raise ValueError
+                    raise RuntimeError
                 else:
                     figdata = saved_report_data[label]
             else:
@@ -417,7 +417,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                                         big_fonts=True)
                     elif layout == 'disabled':
                         # will be caught, resulting in empty menu item
-                        raise ValueError
+                        raise RuntimeError
                     else:  # unrecognized layout; this is not caught by us
                         raise Exception('Unrecognized layout: %s' % layout)
 
@@ -473,7 +473,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
             dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
             dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
 
-        except (ValueError, GaitDataError) as e:  # could not create a figure
+        except (RuntimeError, GaitDataError) as e:  # could not create a figure
             logger.warning('failed to create figure for %s: %s' % (label, e))
             # insert the menu options but make them disabled
             dd_opts_multi_upper.append({'label': label, 'value': label,

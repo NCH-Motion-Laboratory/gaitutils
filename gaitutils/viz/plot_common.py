@@ -53,7 +53,7 @@ def _handle_style_and_color_args(style_by, color_by):
     elif isinstance(style_by, basestring):
         style_by = {'model': style_by}
     elif not isinstance(style_by, dict):
-        raise ValueError('style_by must be str or dict')
+        raise TypeError('style_by must be str or dict')
     for k in set(style_by_defaults) - set(style_by):
         style_by[k] = style_by_defaults[k]  # update missing values
     if not set(style_by.values()).issubset(vals_ok):
@@ -65,7 +65,7 @@ def _handle_style_and_color_args(style_by, color_by):
     elif isinstance(color_by, basestring):
         color_by = {'model': color_by, 'emg': color_by}
     elif not isinstance(color_by, dict):
-        raise ValueError('color_by must be str or dict')
+        raise TypeError('color_by must be str or dict')
     for k in set(color_by_defaults) - set(color_by):
         color_by[k] = color_by_defaults[k]  # update missing values
     if not set(color_by.values()).issubset(vals_ok):

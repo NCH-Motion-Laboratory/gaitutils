@@ -20,7 +20,7 @@ def _reader_module(source):
     elif c3d.is_c3dfile(source):
         return c3d
     else:
-        raise ValueError('Error reading from source: %s' % source)
+        raise RuntimeError('Error reading from source: %s' % source)
 
 
 def get_metadata(source):
@@ -117,5 +117,5 @@ def get_model_data(source, model):
                     modeldata[var+'Y'] = modeldata[var][1, :]
                     modeldata[var+'Z'] = modeldata[var][2, :]
                 else:
-                    raise ValueError('Expected a 3D array')
+                    raise RuntimeError('Expected a 3D array')
     return modeldata

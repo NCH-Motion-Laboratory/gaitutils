@@ -39,8 +39,8 @@ def _browse_localhost(url=None, port=None):
         proc = subprocess.Popen([cfg.general.browser_path, url])
         logger.debug('new browser pid %d' % proc.pid)
     except Exception:
-        raise ValueError('Cannot start configured web browser: %s'
-                         % cfg.general.browser_path)
+        raise RuntimeError('Cannot start configured web browser: %s'
+                           % cfg.general.browser_path)
 
 
 def get_backend(backend_name):

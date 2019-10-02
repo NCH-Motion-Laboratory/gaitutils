@@ -23,7 +23,7 @@ def model_from_var(var_):
     if var_ is None:
         return None
     elif not isinstance(var_, basestring):
-        raise ValueError('Variable name must be a string or None')
+        raise TypeError('Variable name must be a string or None')
     for model in models_all:
         if var_ in model.varnames or var_ in model.varnames_noside:
             return model

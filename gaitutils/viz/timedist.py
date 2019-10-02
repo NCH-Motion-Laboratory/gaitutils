@@ -56,7 +56,7 @@ def do_comparison_plot(sessions, tags=None, big_fonts=False, backend=None):
     for session in sessions:
         c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
         if not c3ds:
-            raise ValueError('No tagged trials found in session %s' % session)
+            raise RuntimeError('No tagged trials found in session %s' % session)
         cond_label = op.split(session)[-1]
         trials[cond_label] = c3ds
 

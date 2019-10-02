@@ -44,8 +44,8 @@ def convert_videos(vidfiles, check_only=False):
     vidconv_bin = cfg.general.videoconv_path
     vidconv_opts = cfg.general.videoconv_opts
     if not (op.isfile(vidconv_bin) and os.access(vidconv_bin, os.X_OK)):
-        raise ValueError('Invalid video converter executable: %s'
-                         % vidconv_bin)
+        raise RuntimeError('Invalid video converter executable: %s'
+                           % vidconv_bin)
     procs = []
     for vidfile in convfiles:
         cmd = [vidconv_bin]+vidconv_opts.split()+[vidfile]
@@ -134,5 +134,5 @@ def _camera_id(fname):
     fn_split = op.split(fname)[-1].split('.')
     id = fn_split[1]
     if not numutils.isint(id):
-        raise ValueError('Cannot parse video id from filename %s' % fname)
+        raise RuntimeError('Cannot parse video id from filename %s' % fname)
     return id

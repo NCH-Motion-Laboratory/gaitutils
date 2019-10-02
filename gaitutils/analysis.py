@@ -41,7 +41,7 @@ def group_analysis(an_list, fun=np.mean):
     Returns single dict with the same condition. """
 
     if not isinstance(an_list, list):
-        raise ValueError('Need a list of analysis dicts')
+        raise TypeError('Need a list of analysis dicts')
 
     if not an_list:
         return None
@@ -51,7 +51,7 @@ def group_analysis(an_list, fun=np.mean):
 
     condsets = [set(an.keys()) for an in an_list]
     if set.difference(*condsets):  # currently we are strict
-        raise ValueError('Conditions need to match')
+        raise RuntimeError('Conditions need to match')
     conds = set.intersection(*condsets)
 
     for cond in conds:

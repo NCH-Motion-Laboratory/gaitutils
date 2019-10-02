@@ -64,7 +64,7 @@ def _get_c3d_metadata_field(acq, field, subfield):
         try:
             return field.GetChild(child)
         except RuntimeError:
-            raise ValueError('Invalid c3d metadata field: %s' % child)
+            raise RuntimeError('Invalid c3d metadata field: %s' % child)
 
     info = _get_child(_get_child(meta, field), subfield).GetInfo()
     if info.GetFormatAsString() == 'Char':
@@ -72,7 +72,7 @@ def _get_c3d_metadata_field(acq, field, subfield):
     elif info.GetFormatAsString() == 'Real':
         return [x for x in info.ToDouble()]
     else:
-        raise ValueError('Unhandled btk meta info type')
+        raise RuntimeError('Unhandled btk meta info type')
 
 
 def _get_c3dacq(c3dfile):
@@ -96,7 +96,7 @@ def get_analysis(c3dfile, condition='unknown'):
         units = _get_c3d_metadata_field(acq, 'ANALYSIS', 'UNITS')
         contexts = _get_c3d_metadata_field(acq, 'ANALYSIS', 'CONTEXTS')
         vals = _get_c3d_metadata_field(acq, 'ANALYSIS', 'VALUES')
-    except ValueError:
+    except RuntimeError:
         raise GaitDataError('Cannot read time-distance parameters from %s'
                             % c3dfile)
 
@@ -195,7 +195,7 @@ def _get_marker_data(c3dfile, markers, ignore_edge_gaps=True,
 def _get_c3d_subject_param(acq, param):
     try:
         param = _get_c3d_metadata_field(acq, 'PROCESSING', param)[0]
-    except ValueError:
+    except RuntimeError:
         logger.warning('Cannot get subject parameter %s' % param)
         param = None
     return param
@@ -223,7 +223,7 @@ def get_metadata(c3dfile):
     # get markers
     try:
         markers = _get_c3d_metadata_field(acq, 'POINT', 'LABELS')
-    except ValueError:
+    except RuntimeError:
         markers = list()
     # not sure what the '*xx' markers are, but delete them for now
     markers = [m for m in markers if m[0] != '*']
@@ -249,14 +249,14 @@ def get_metadata(c3dfile):
     # get subject info
     try:
         name = _get_c3d_metadata_field(acq, 'SUBJECTS', 'NAMES')[0]
-    except ValueError:
+    except RuntimeError:
         logger.warning('Cannot get subject name')
         name = u'Unknown'
 
     try:
         par_names = _get_c3d_metadata_subfields(acq, 'PROCESSING')
     except RuntimeError:
-        raise RuntimeError('cannot read metadata from %s' % c3dfile)
+        raise GaitDataError('cannot read metadata from %s' % c3dfile)
     subj_params = defaultdict(lambda: None)
     subj_params.update({par: _get_c3d_subject_param(acq, par) for
                         par in par_names})

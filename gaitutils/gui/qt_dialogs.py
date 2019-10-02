@@ -208,7 +208,7 @@ class OptionsDialog(QtWidgets.QDialog):
                     elif isinstance(_widget, QtWidgets.QCheckBox):
                         item.value = _widget.isChecked()
                     else:
-                        raise ValueError('Invalid input widget class, how come?')
+                        raise RuntimeError('Invalid input widget class, how come?')
                 except SyntaxError:
                     return itemname, _widget.text()
         _handle_cfg_defaults(cfg)

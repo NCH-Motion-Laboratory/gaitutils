@@ -59,7 +59,7 @@ def _savefig(pdf, fig, header=None, footer=None):
     if fig is None:
         return
     elif not isinstance(fig, Figure):
-        raise ValueError('fig must be matplotlib Figure, got %s' % fig)
+        raise TypeError('fig must be matplotlib Figure, got %s' % fig)
     if header is not None:
         _add_header(fig, header)
     if footer is not None:

@@ -441,7 +441,7 @@ class Trial(object):
                     return (_filter_cycles(cycles, context, cyclespec[0]) or
                             _filter_cycles(cycles, context, cyclespec[1:]))
             else:
-                raise ValueError('Invalid argument')
+                raise TypeError('Invalid argument')
 
         if not isinstance(cyclespec, dict):
             cyclespec = {'R': cyclespec, 'L': cyclespec}

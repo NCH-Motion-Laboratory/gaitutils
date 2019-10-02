@@ -95,6 +95,8 @@ def average_trials(trials, max_dist=None, fp_cycles_only=False,
         WIP
     """
     data, Ncyc = _collect_model_data(trials, fp_cycles_only=fp_cycles_only)
+    if data is None:
+        return (None,) * 4
 
     stddata = dict()
     avgdata = dict()
@@ -158,7 +160,7 @@ def _collect_model_data(trials, fp_cycles_only=False):
 
     if not trials:
         logger.warning('no trials')
-        return
+        return None, None
     if not isinstance(trials, list):
         trials = [trials]
 

@@ -82,6 +82,9 @@ def average_trials(trials, max_dist=None, fp_cycles_only=False,
     fp_cycles_only: bool
         If True, only collect data from forceplate cycles. Kinetics will always
         be collected from forceplate cycles only.
+    reject_zeros: bool
+        Reject any curves which contain zero (0.000...) values. These are sometimes
+        used to mark gaps.
 
     Returns:
 
@@ -219,11 +222,9 @@ def _collect_model_data(trials, fp_cycles_only=False):
                                             is None else
                                             np.concatenate([data_all[var],
                                                             data[None, :]]))
-
     n = len(trials)
     logger.debug('collected %d trials, %d/%d R/L cycles, %d/%d kinetics cycles'
                  % (n, nc['R'], nc['L'], nc['Rkin'], nc['Lkin']))
-
     return data_all, nc
 
 

@@ -294,4 +294,3 @@ class ChooseSessionsDialogWeb(ChooseSessionsDialog):
     def accept(self):
         self.recreate_plots = self.xbRecreatePlots.checkState()
         super(ChooseSessionsDialogWeb, self).accept()
-

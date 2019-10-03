@@ -72,26 +72,31 @@ class AvgTrial(Trial):
 
 
 def average_trials(trials, max_dist=None, fp_cycles_only=False,
-                   reject_zeros=True):
+                   reject_zeros=True, use_medians=False):
     """ Average model data from several trials.
 
     trials: list
         filename, or list of filenames (c3d) to read trials from, or list
         of Trial instances
-    max_dist: maximum curve distance from median, for outlier rejection
+    max_dist: maximum curve distance from median, for outlier rejection. Not
+        applied if medians are used (use_medians)
     fp_cycles_only: bool
         If True, only collect data from forceplate cycles. Kinetics will always
         be collected from forceplate cycles only.
     reject_zeros: bool
         Reject any curves which contain zero (0.000...) values. These are sometimes
         used to mark gaps.
+    use_medians:
+        Use median and MAD (median absolute deviation) instead of mean and standard
+        deviation. Medians are robust to outliers but not robust to small sample size.
+        Thus, use of medians may be a bad idea for small samples.
 
     Returns:
 
     avgdata: dict
-        The data
+        Averaged (or median) data
     stddata: dict
-        Standard dev for each var
+        Standard dev (or MAD) for each var
     N_ok: dict
         N of accepted cycles for each var
     Ncyc: dict
@@ -113,16 +118,6 @@ def average_trials(trials, max_dist=None, fp_cycles_only=False,
             continue
         else:
             Ntot = vardata.shape[0]
-
-            # drop outliers
-            if max_dist is not None:
-                outliers = _outlier_rows(vardata, max_dist)
-                N_out = np.count_nonzero(outliers)
-                if N_out > 0:
-                    logger.debug('%s: dropping %d outlier curves' %
-                                 (var, N_out))
-                    vardata = vardata[~outliers, :] if N_out else vardata
-
             # drop curves containing zero values
             if reject_zeros:
                 rows_bad = np.where(np.any(vardata == 0, axis=1))[0]
@@ -130,11 +125,24 @@ def average_trials(trials, max_dist=None, fp_cycles_only=False,
                     logger.debug('%s: dropping %d curves with zero output' %
                                  (var, len(rows_bad)))
                     vardata = np.delete(vardata, rows_bad, axis=0)
-
             n_ok = vardata.shape[0]
-            stddata[var] = vardata.std(axis=0) if n_ok > 0 else None
-            avgdata[var] = vardata.mean(axis=0) if n_ok > 0 else None
-
+            if n_ok == 0:
+                stddata[var] = 0
+                avgdata[var] = 0
+            elif use_medians:
+                stddata[var] = numutils.mad(vardata, axis=0)
+                avgdata[var] = np.median(vardata, axis=0)
+            else:
+                # drop outliers first
+                if max_dist is not None:
+                    outliers = _outlier_rows(vardata, max_dist)
+                    N_out = np.count_nonzero(outliers)
+                    if N_out > 0:
+                        logger.debug('%s: dropping %d outlier curves' %
+                                     (var, N_out))
+                        vardata = vardata[~outliers, :] if N_out else vardata
+                stddata[var] = vardata.std(axis=0) if n_ok > 0 else None
+                avgdata[var] = vardata.mean(axis=0) if n_ok > 0 else None
             logger.debug('%s: averaged %d/%d curves' % (var, n_ok, Ntot))
             N_ok[var] = n_ok
 

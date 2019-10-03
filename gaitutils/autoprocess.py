@@ -44,7 +44,8 @@ logger = logging.getLogger(__name__)
 def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
     """Run autoprocessing for all enffiles (list of paths to .enf files).
     """
-    _delete_c3ds(enffiles)
+    if not cfg.autoproc.run_models_only:
+        _delete_c3ds(enffiles)
 
     # signals is used to track progress across threads; if not given, just
     # create a dummy one to simplify calls later
@@ -109,7 +110,19 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         logger.debug('force closing open trial')
         vicon.CloseTrial(5000)  # timeout in ms
 
+    # init trials dict
+    for enffile in enffiles:
+        filepath = enffile[:enffile.find('.Trial')]  # rm .TrialXXX and .enf
+        trial = dict()
+        trials[filepath] = trial
+
+    # run preprocessing operations
     for ind, enffile in enumerate(enffiles):
+
+        # skip preprocessing completely
+        if cfg.autoproc.run_models_only:
+            break
+
         filepath = enffile[:enffile.find('.Trial')]  # rm .TrialXXX and .enf
         filename = os.path.split(filepath)[1]
       
@@ -117,8 +130,6 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         if signals.canceled:
             return None
 
-        trial = dict()
-        trials[filepath] = trial
         logger.debug('loading in Nexus: %s' % filename)
         vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
         try:
@@ -310,6 +321,11 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
     vel_th = {key: (np.median(x) if x.size > 0 else None) for key, x in
               foot_vel.items()}
 
+    # if preprocessing was skipped, mark all trials for subsequent processing
+    if cfg.autoproc.run_models_only:
+        for tr in trials.values():
+            tr['recon_ok'] = True
+
     # 2nd pass
     sel_trials = {filepath: trial for filepath, trial in trials.items()
                   if trial['recon_ok']}
@@ -321,52 +337,54 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
         enf_file = filepath + '.Trial.enf'
 
-        signals.progress.emit('Marking events and running models: %s' % filename,
+        signals.progress.emit('Events and models: %s' % filename,
                               int(100*ind/len(sel_trials)))
         if signals.canceled:
             return None
 
-        # automark using global velocity thresholds
-        try:
-            vicon.ClearAllEvents()
-            evs = utils.automark_events(vicon, vel_thresholds=vel_th,
-                                        mkrdata=trial['mkrdata'],
-                                        fp_events=trial['fpev'],
-                                        events_range=cfg.autoproc.events_range,
-                                        start_on_forceplate=cfg.autoproc.
-                                        start_on_forceplate, roi=trial['roi'])
-        except GaitDataError:  # cannot automark
-            eclipse_str = '%s,%s' % (trial['description'],
-                                     cfg.autoproc.enf_descriptions
-                                     ['automark_failure'])
-            logger.debug('automark failed')
-            _save_trial()
+        if not cfg.autoproc.run_models_only:
+            # automark using global velocity thresholds
+            try:
+                vicon.ClearAllEvents()
+                evs = utils.automark_events(vicon, vel_thresholds=vel_th,
+                                            mkrdata=trial['mkrdata'],
+                                            fp_events=trial['fpev'],
+                                            events_range=cfg.autoproc.events_range,
+                                            start_on_forceplate=cfg.autoproc.
+                                            start_on_forceplate, roi=trial['roi'])
+            except GaitDataError:  # cannot automark
+                eclipse_str = '%s,%s' % (trial['description'],
+                                        cfg.autoproc.enf_descriptions
+                                        ['automark_failure'])
+                logger.debug('automark failed')
+                _save_trial()
+                trial['description'] = eclipse_str
+                continue  # next trial
+
+            if signals.canceled:
+                return None
+
+            # crop trial around events
+            if nexus_ver >= 2.5:
+                evs_all = list(itertools.chain.from_iterable(evs.values()))
+                if evs_all:
+                    # when setting roi, do not go beyond trial range
+                    minfr, maxfr = vicon.GetTrialRange()
+                    roistart = max(min(evs_all) - cfg.autoproc.crop_margin, minfr)
+                    roiend = min(max(evs_all) + cfg.autoproc.crop_margin, maxfr)
+                    # method cannot take numpy.int64
+                    vicon.SetTrialRegionOfInterest(int(roistart), int(roiend))
+
+            eclipse_str = '%s,%s' % (cfg.autoproc.enf_descriptions['ok'],
+                                     trial['description'])
             trial['description'] = eclipse_str
-            continue  # next trial
-
-        if signals.canceled:
-            return None
-
-        # crop trial around events
-        if nexus_ver >= 2.5:
-            evs_all = list(itertools.chain.from_iterable(evs.values()))
-            if evs_all:
-                # when setting roi, do not go beyond trial range
-                minfr, maxfr = vicon.GetTrialRange()
-                roistart = max(min(evs_all) - cfg.autoproc.crop_margin, minfr)
-                roiend = min(max(evs_all) + cfg.autoproc.crop_margin, maxfr)
-                # method cannot take numpy.int64
-                vicon.SetTrialRegionOfInterest(int(roistart), int(roiend))
 
         # run model pipeline and save
-        eclipse_str = '%s,%s' % (cfg.autoproc.enf_descriptions['ok'],
-                                 trial['description'])
         run_pipelines(cfg.autoproc.model_pipelines)
         _save_trial()
-        trial['description'] = eclipse_str
 
-    # all done; update Eclipse descriptions
-    if cfg.autoproc.eclipse_write_key:
+    # all done; update enf files
+    if cfg.autoproc.eclipse_write_key and not cfg.autoproc.run_models_only:
         # try to avoid a possible race condition where Nexus is still
         # holding the .enf file open
         time.sleep(.1)

@@ -283,13 +283,14 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         _save_trial()
         trial['description'] = eclipse_str
 
-        # write Eclipse fp values according to our detection
+        # write Eclipse fp values according to our detection, or reset them
+        # note that Eclipse fp data affects e.g. Plug-in Gait functioning
         fp_info = fpev['our_fp_info']
         # try to avoid a possible race condition where Nexus is still
         # holding the .enf file open
         time.sleep(.1)
         try:
-            if cfg.autoproc.write_eclipse_fp_info is True:
+            if cfg.autoproc.write_eclipse_fp_info == 'write':
                 logger.debug('writing detected forceplate info into Eclipse')
                 eclipse.set_eclipse_keys(enffile, fp_info,
                                          update_existing=True)
@@ -298,6 +299,8 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
                 fp_info_auto = {k: 'Auto' for k, v in fp_info.items()}
                 eclipse.set_eclipse_keys(enffile, fp_info_auto,
                                          update_existing=True)
+            else:
+                logger.debug('ignoring Eclipse forceplate info')
         except IOError:
             logger.warning('failed to update Eclipse forceplate info '
                            'in %s' % enffile)

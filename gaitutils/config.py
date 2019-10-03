@@ -32,6 +32,9 @@ def _handle_cfg_defaults(cfg):
     if cfg.general.videoconv_path == 'default':
         fn = resource_filename('gaitutils', 'thirdparty/ffmpeg2theora.exe')
         cfg.general['videoconv_path'].value = fn
+    if cfg.autoproc.write_eclipse_fp_info is True:
+        cfg.autoproc['write_eclipse_fp_info'].value = 'write'
+
 
 # default config
 cfg_template_fn = resource_filename(__name__, 'data/default.cfg')

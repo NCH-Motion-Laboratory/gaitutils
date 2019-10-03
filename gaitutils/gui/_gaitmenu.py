@@ -339,6 +339,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         uifile = resource_filename('gaitutils', 'gui/gaitmenu.ui')
         uic.loadUi(uifile, self)
 
+        # disable editing of log widget text
+        self.txtOutput.setReadOnly(True)
+
         if (not cfg.general.allow_multiple_menu_instances and
            ulstools.env.already_running('gaitmenu')):
             qt_message_dialog('Another instance of the menu seems to be '
@@ -733,6 +736,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                 pages=dlg_info.pages)
 
     def _log_message(self, msg):
+        """Logs a message to the log widget"""
         c = self.txtOutput.textCursor()
         c.movePosition(QtGui.QTextCursor.End)
         self.txtOutput.setTextCursor(c)

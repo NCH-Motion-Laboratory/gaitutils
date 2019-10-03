@@ -55,7 +55,7 @@ def plot_nexus_trial(layout_name=None, backend=None, model_cycles=None,
 
 
 def plot_sessions(sessions, layout_name=None, model_normaldata=None,
-                  tags=None, make_pdf=False,
+                  tagged_only=True, tags=None, make_pdf=False,
                   style_by=None, color_by=None, legend_type=None,
                   model_cycles=None, emg_cycles=None, emg_mode=None,
                   backend=None, figtitle=None, legend=True):
@@ -66,6 +66,8 @@ def plot_sessions(sessions, layout_name=None, model_normaldata=None,
 
     if tags is None:
         tags = cfg.eclipse.tags
+    if not tagged_only:
+        tags = None
 
     backend_lib = get_backend(backend)
     layout = layouts.get_layout(layout_name)
@@ -94,15 +96,17 @@ def plot_sessions(sessions, layout_name=None, model_normaldata=None,
                                    figtitle=figtitle, legend=legend)
 
 
-def plot_session_average(session, layout_name=None, tags=None,
-                         model_normaldata=None, backend=None):
-    """Plot average of all session trials"""
+def plot_session_average(session, layout_name=None, tagged_only=True,
+                         tags=None, model_normaldata=None, backend=None):
+    """Plot average of session trials"""
 
     layout = layouts.get_layout(layout_name)
     backend_lib = get_backend(backend)
 
     if tags is None:
         tags = cfg.eclipse.tags
+    if not tagged_only:
+        tags = None
 
     c3ds = sessionutils.get_c3ds(session, tags=tags,
                                  trial_type='dynamic')

@@ -113,8 +113,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
     # init trials dict
     for enffile in enffiles:
         filepath = enffile[:enffile.find('.Trial')]  # rm .TrialXXX and .enf
-        trial = dict()
-        trials[filepath] = trial
+        trials[filepath] = dict()
 
     # run preprocessing operations
     for ind, enffile in enumerate(enffiles):
@@ -125,7 +124,8 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
 
         filepath = enffile[:enffile.find('.Trial')]  # rm .TrialXXX and .enf
         filename = os.path.split(filepath)[1]
-      
+        trial = trials[filepath]
+
         signals.progress.emit('Preprocessing: %s' % filename, int(100*ind/len(enffiles)))
         if signals.canceled:
             return None

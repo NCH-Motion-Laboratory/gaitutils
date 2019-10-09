@@ -35,7 +35,7 @@ from .. import GaitDataError, nexus, cfg, sessionutils, envutils, c3d
 from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
                            copy_session_videos)
-from ..viz.plots import (plot_nexus_trial, plot_sessions,
+from ..viz.plots import (plot_nexus_trial, plot_sessions, plot_c3ds,
                          plot_trial_timedep_velocities,
                          plot_trial_velocities, plot_session_average)
 from ..viz.timedist import do_session_average_plot
@@ -395,6 +395,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionAutoprocess_session.triggered.connect(self._autoproc_session)
         self.actionAutoprocess_single_trial.triggered.connect(self._autoproc_trial)
         self.btnAddSession.clicked.connect(self._add_session_dialog)
+        self.btnPlotTrials.clicked.connect(self._plot_trials)
         self.btnPDFReportNexus.clicked.connect(self._create_pdf_report_nexus)
         self.btnWebReportNexus.clicked.connect(self._create_web_report_nexus)
         self.actionRun_postprocessing_pipelines.triggered.connect(self._postprocess_session)
@@ -523,7 +524,32 @@ class Gaitmenu(QtWidgets.QMainWindow):
                             result_func=self._show_plots,
                             session=session, backend=backend)
 
+
     def _plot_trials(self):
+        """Plot trials from list"""
+        model_normaldata = read_session_normaldata(session)
+        lout_desc = self.cbNexusTrialLayout.currentText()
+        lout_name = self.layouts_map[lout_desc]
+        backend = self._get_plotting_backend_ui()
+        emg_mode = 'rms' if self.xbEMGRMS.checkState() else None
+        cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
+        model_cycles = emg_cycles = cycs
+        backend = self._get_plotting_backend_ui()
+        trials = [item.text for item in self.listTrials.items]
+        if trials:
+            self._run_in_thread(plot_c3ds, thread=True,
+                                finished_func=self._reset_main_ui,
+                                result_func=self._show_plots,
+                                layout_name=lout_name,
+                                legend_type='tag_with_cycle',
+                                model_normaldata=model_normaldata,
+                                model_cycles=model_cycles,
+                                emg_cycles=emg_cycles,
+                                emg_mode=emg_mode,
+                                backend=backend)
+
+
+    def _plot_trials_old(self):
         """Plot superposed trials"""
         session = _get_nexus_sessionpath()
         if session is None:
@@ -717,21 +743,19 @@ class Gaitmenu(QtWidgets.QMainWindow):
         dlg.exec_()
 
     def _add_session_dialog(self):
-        """Show the add session dialog and add trials"""
+        """Show the add session dialog and add trials to list"""
+        existing = list()
         dlg = AddSessionDialog(self)
-        trials = (item.userdata for item in self.listTrials.items)
+        item_names = (item.text for item in self.listTrials.items)
         if dlg.exec_():
             for c3dfile in dlg.c3ds:
-                self.listTrials.add_item(c3dfile)
-
-
-        trials = (item.userdata for item in self.listTrials.items)
-        # check if trial already loaded (based on name)
-        # TODO: might use smarter detection
-        if tr.trialname in [trial.trialname for trial in trials]:
-            return
-        self.listTrials.add_item(_trial_namestr(tr), data=tr)
-
+                if c3dfile not in item_names:
+                    self.listTrials.add_item(c3dfile)
+                else:
+                    existing.append(c3dfile)
+        if existing:
+            qt_message_dialog('Following trials were already loaded: %s'
+                              % ',\n'.join(existing))
 
     def _create_pdf_report_nexus(self):
         session = _get_nexus_sessionpath()

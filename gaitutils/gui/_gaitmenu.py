@@ -335,7 +335,7 @@ class AddSessionDialog(QtWidgets.QDialog):
     """Dialog for adding trials to trials list"""
 
     def __init__(self, parent):
-        super(self.__class__, self).__init__(parent)
+        QtWidgets.QDialog.__init__(self)
         uifile = resource_filename('gaitutils', 'gui/add_session_dialog.ui')
         uic.loadUi(uifile, self)
 
@@ -345,12 +345,14 @@ class AddSessionDialog(QtWidgets.QDialog):
         if self.rbUseCurrentNexusSession.isChecked():
             session = nexus.get_sessionpath()
         else:
-            session = qt_dir_chooser()
-        if not session:
-            return []
+            sessions = qt_dir_chooser()
+            session = sessions[0] if sessions else None
+        if session:
+            self.c3ds = sessionutils.get_c3ds(session, tags=tags,
+                                              trial_type='dynamic')
         else:
-            return sessionutils.get_c3ds(session, tags=tags,
-                                         trial_type='dynamic')
+            self.c3ds = list()
+        self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
 
 
 class Gaitmenu(QtWidgets.QMainWindow):

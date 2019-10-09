@@ -249,30 +249,16 @@
        </widget>
       </item>
       <item row="4" column="1">
-       <widget class="QPushButton" name="pushButton">
+       <widget class="QPushButton" name="btnAddIndividualTrials">
         <property name="text">
-         <string>Add trials...</string>
+         <string>Add individual trials...</string>
         </property>
        </widget>
       </item>
       <item row="4" column="2">
-       <widget class="QPushButton" name="pushButton_2">
+       <widget class="QPushButton" name="btnAddSession">
         <property name="text">
-         <string>Add Nexus trial</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="3">
-       <widget class="QPushButton" name="pushButton_3">
-        <property name="text">
-         <string>Add Nexus tagged trials</string>
-        </property>
-       </widget>
-      </item>
-      <item row="12" column="1" colspan="4">
-       <widget class="QPushButton" name="btnPlotTrials">
-        <property name="text">
-         <string>Plot</string>
+         <string>Add session...</string>
         </property>
        </widget>
       </item>
@@ -291,6 +277,13 @@
          </size>
         </property>
        </spacer>
+      </item>
+      <item row="12" column="1" colspan="4">
+       <widget class="QPushButton" name="btnPlotTrials">
+        <property name="text">
+         <string>Plot</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>

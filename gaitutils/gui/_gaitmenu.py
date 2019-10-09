@@ -26,7 +26,7 @@ from ulstools import configdot
 
 from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
                          ChooseSessionsDialog, ChooseSessionsDialogWeb,
-                         qt_matplotlib_window)
+                         qt_matplotlib_window, qt_dir_chooser)
 from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ulstools.num import check_hetu
 from ..normaldata import read_session_normaldata
@@ -331,6 +331,28 @@ class WebReportDialog(QtWidgets.QDialog):
         _browse_localhost(port=port)
 
 
+class AddSessionDialog(QtWidgets.QDialog):
+    """Dialog for adding trials to trials list"""
+
+    def __init__(self, parent):
+        super(self.__class__, self).__init__(parent)
+        uifile = resource_filename('gaitutils', 'gui/add_session_dialog.ui')
+        uic.loadUi(uifile, self)
+
+    def accept(self):
+        tags = (cfg.eclipse.tags if self.rbAddTaggedTrials.isChecked()
+                else None)
+        if self.rbUseCurrentNexusSession.isChecked():
+            session = nexus.get_sessionpath()
+        else:
+            session = qt_dir_chooser()
+        if not session:
+            return []
+        else:
+            return sessionutils.get_c3ds(session, tags=tags,
+                                         trial_type='dynamic')
+
+
 class Gaitmenu(QtWidgets.QMainWindow):
 
     def __init__(self):
@@ -367,8 +389,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionTardieu_analysis.triggered.connect(self._tardieu)
         self.actionAutoprocess_session.triggered.connect(self._autoproc_session)
         self.actionAutoprocess_single_trial.triggered.connect(self._autoproc_trial)
-        self.btnPlotTrials.clicked.connect(self._plot_trials)
-        self.btnPlotAverage.clicked.connect(self._plot_trials_average)
+        self.btnAddSession.clicked.connect(self._add_session_dialog)
         self.btnPDFReportNexus.clicked.connect(self._create_pdf_report_nexus)
         self.btnWebReportNexus.clicked.connect(self._create_web_report_nexus)
         self.actionRun_postprocessing_pipelines.triggered.connect(self._postprocess_session)
@@ -385,11 +406,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                'matplotlib': self.rbMatplotlib}
         rb_backend_active = self.rb_map_backend[cfg.plot.backend]
         rb_backend_active.setChecked(True)
-        self.rb_map_trials = {'current': self.rbCurrentTrial,
-                              'tagged': self.rbTaggedTrials,
-                              'all': self.rbAllTrials}
-        rb_trials_active = self.rb_map_trials['current']
-        rb_trials_active.setChecked(True)
 
         # add plot layouts to combobox
         cb_items = sorted(configdot.get_description(lo) or loname
@@ -694,6 +710,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _options_dialog(self):
         """Show the options dialog"""
         dlg = OptionsDialog(self)
+        dlg.exec_()
+
+    def _add_session_dialog(self):
+        """Show the add session dialog"""
+        dlg = AddSessionDialog(self)
         dlg.exec_()
 
     def _create_pdf_report_nexus(self):

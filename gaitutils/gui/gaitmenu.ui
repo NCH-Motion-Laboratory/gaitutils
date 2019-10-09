@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>774</width>
+    <width>629</width>
     <height>747</height>
    </rect>
   </property>
@@ -232,24 +232,24 @@
         </property>
        </spacer>
       </item>
-      <item row="10" column="1" colspan="4">
-       <widget class="QPushButton" name="btnPlotTrials">
+      <item row="4" column="1">
+       <widget class="QPushButton" name="btnAddSession">
         <property name="text">
-         <string>Plot</string>
+         <string>Add session...</string>
         </property>
        </widget>
       </item>
-      <item row="4" column="4">
+      <item row="4" column="2">
        <widget class="QPushButton" name="btnAddIndividualTrials">
         <property name="text">
          <string>Add individual trials...</string>
         </property>
        </widget>
       </item>
-      <item row="4" column="3">
-       <widget class="QPushButton" name="btnAddSession">
+      <item row="4" column="3" colspan="2">
+       <widget class="QPushButton" name="btnPlotTrials">
         <property name="text">
-         <string>Add session...</string>
+         <string>Plot</string>
         </property>
        </widget>
       </item>
@@ -288,7 +288,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>774</width>
+     <width>629</width>
      <height>21</height>
     </rect>
    </property>

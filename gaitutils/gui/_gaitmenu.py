@@ -340,19 +340,22 @@ class AddSessionDialog(QtWidgets.QDialog):
         uic.loadUi(uifile, self)
 
     def accept(self):
+        self.c3ds = list()
         tags = (cfg.eclipse.tags if self.rbAddTaggedTrials.isChecked()
                 else None)
+        # get session
         if self.rbUseCurrentNexusSession.isChecked():
-            session = nexus.get_sessionpath()
+            session = _get_nexus_sessionpath()
         else:
             sessions = qt_dir_chooser()
             session = sessions[0] if sessions else None
         if session:
             self.c3ds = sessionutils.get_c3ds(session, tags=tags,
                                               trial_type='dynamic')
-        else:
-            self.c3ds = list()
-        self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
+            if self.c3ds:
+                self.done(QtWidgets.QDialog.Accepted)
+            else:
+                qt_message_dialog('No trials found for session %s' % session)
 
 
 class Gaitmenu(QtWidgets.QMainWindow):
@@ -715,9 +718,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
         dlg.exec_()
 
     def _add_session_dialog(self):
-        """Show the add session dialog"""
+        """Show the add session dialog and add trials"""
         dlg = AddSessionDialog(self)
-        dlg.exec_()
+        if dlg.exec_():
+            logger.debug(dlg.c3ds)
+
 
     def _create_pdf_report_nexus(self):
         session = _get_nexus_sessionpath()

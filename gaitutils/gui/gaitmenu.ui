@@ -33,138 +33,6 @@
     </item>
     <item>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="10" column="1">
-       <widget class="QPushButton" name="btnPlotTrials">
-        <property name="text">
-         <string>Plot</string>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="1">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>Options:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="12" column="4">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="13" column="2">
-       <widget class="QPushButton" name="btnPDFReportNexus">
-        <property name="text">
-         <string>PDF report...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="12" column="1">
-       <widget class="QLabel" name="label_7">
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>Reports from Nexus session</string>
-        </property>
-       </widget>
-      </item>
-      <item row="9" column="1">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Backend:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="9" column="3">
-       <widget class="QRadioButton" name="rbMatplotlib">
-        <property name="text">
-         <string>matplotlib</string>
-        </property>
-        <attribute name="buttonGroup">
-         <string notr="true">buttonGroup_2</string>
-        </attribute>
-       </widget>
-      </item>
-      <item row="6" column="2">
-       <widget class="QCheckBox" name="xbPlotUnnorm">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Plot unnormalized data</string>
-        </property>
-       </widget>
-      </item>
-      <item row="9" column="2">
-       <widget class="QRadioButton" name="rbPlotly">
-        <property name="text">
-         <string>plotly (web browser)</string>
-        </property>
-        <attribute name="buttonGroup">
-         <string notr="true">buttonGroup_2</string>
-        </attribute>
-       </widget>
-      </item>
-      <item row="13" column="1">
-       <widget class="QPushButton" name="btnWebReportNexus">
-        <property name="text">
-         <string>Web report...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2">
-       <widget class="QPushButton" name="pushButton">
-        <property name="text">
-         <string>Add...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="1">
-       <widget class="QLabel" name="label_6">
-        <property name="text">
-         <string>Color trials by:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="4">
-       <widget class="QPushButton" name="pushButton_3">
-        <property name="text">
-         <string>Add Nexus tagged</string>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="1">
-       <widget class="QLabel" name="label_9">
-        <property name="text">
-         <string>Style trials by:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="2">
-       <widget class="QComboBox" name="comboBox_2">
-        <item>
-         <property name="text">
-          <string>Context</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item row="2" column="3">
-       <widget class="QPushButton" name="pushButton_2">
-        <property name="text">
-         <string>Add Nexus trial</string>
-        </property>
-       </widget>
-      </item>
       <item row="3" column="1" colspan="4">
        <widget class="NiceListWidget" name="listTrials">
         <property name="sizePolicy">
@@ -175,7 +43,17 @@
         </property>
        </widget>
       </item>
-      <item row="6" column="4">
+      <item row="10" column="3">
+       <widget class="QRadioButton" name="rbMatplotlib">
+        <property name="text">
+         <string>matplotlib</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup_2</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="7" column="4">
        <widget class="QCheckBox" name="xbEMGRMS">
         <property name="text">
          <string>Plot EMG as RMS</string>
@@ -188,12 +66,97 @@
       <item row="2" column="1">
        <widget class="QLabel" name="label_8">
         <property name="text">
-         <string>Trials:</string>
+         <string>Selected trials:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="1">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Plot options:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="15" column="2">
+       <widget class="QPushButton" name="btnPDFReportNexus">
+        <property name="text">
+         <string>PDF report...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="14" column="4">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string/>
         </property>
        </widget>
       </item>
       <item row="7" column="2">
-       <widget class="QComboBox" name="comboBox">
+       <widget class="QCheckBox" name="xbPlotUnnorm">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Plot unnormalized data</string>
+        </property>
+       </widget>
+      </item>
+      <item row="10" column="2">
+       <widget class="QRadioButton" name="rbPlotly">
+        <property name="text">
+         <string>plotly (web browser)</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup_2</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="15" column="1">
+       <widget class="QPushButton" name="btnWebReportNexus">
+        <property name="text">
+         <string>Web report...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="1">
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>Color trials by:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="1">
+       <widget class="QLabel" name="label_9">
+        <property name="text">
+         <string>Style trials by:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="14" column="1">
+       <widget class="QLabel" name="label_7">
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Reports from Nexus session</string>
+        </property>
+       </widget>
+      </item>
+      <item row="10" column="1">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Backend:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="2">
+       <widget class="QComboBox" name="comboBox_2">
         <item>
          <property name="text">
           <string>Context</string>
@@ -201,40 +164,7 @@
         </item>
        </widget>
       </item>
-      <item row="4" column="1">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Layout:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="11" column="1">
-       <spacer name="verticalSpacer_2">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>10</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="4" column="2" colspan="3">
-       <widget class="QComboBox" name="cbNexusTrialLayout">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="3">
+      <item row="7" column="3">
        <widget class="QCheckBox" name="xbEMGRMS_2">
         <property name="text">
          <string>Average</string>
@@ -242,6 +172,15 @@
         <property name="checked">
          <bool>false</bool>
         </property>
+       </widget>
+      </item>
+      <item row="8" column="2">
+       <widget class="QComboBox" name="comboBox">
+        <item>
+         <property name="text">
+          <string>Context</string>
+         </property>
+        </item>
        </widget>
       </item>
       <item row="2" column="5">
@@ -271,6 +210,83 @@
         <property name="sizeHint" stdset="0">
          <size>
           <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="5" column="2" colspan="3">
+       <widget class="QComboBox" name="cbNexusTrialLayout">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="13" column="1">
+       <spacer name="verticalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>10</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="5" column="1">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Plot layout:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QPushButton" name="pushButton">
+        <property name="text">
+         <string>Add trials...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="2">
+       <widget class="QPushButton" name="pushButton_2">
+        <property name="text">
+         <string>Add Nexus trial</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="3">
+       <widget class="QPushButton" name="pushButton_3">
+        <property name="text">
+         <string>Add Nexus tagged trials</string>
+        </property>
+       </widget>
+      </item>
+      <item row="12" column="1" colspan="4">
+       <widget class="QPushButton" name="btnPlotTrials">
+        <property name="text">
+         <string>Plot</string>
+        </property>
+       </widget>
+      </item>
+      <item row="11" column="2">
+       <spacer name="verticalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>10</width>
           <height>20</height>
          </size>
         </property>
@@ -502,7 +518,6 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup"/>
   <buttongroup name="buttonGroup_2"/>
  </buttongroups>
 </ui>

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>300</height>
+    <height>192</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,38 +16,45 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="4" column="0">
-      <widget class="QRadioButton" name="radioButton_4">
-       <property name="text">
-        <string>Single trials...</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
+     <item row="2" column="1">
       <widget class="QRadioButton" name="radioButton">
        <property name="text">
-        <string>Tagged trials only</string>
+        <string>Add tagged trials only</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="0">
-      <widget class="QRadioButton" name="radioButton_3">
-       <property name="text">
-        <string>From session...</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
+     <item row="2" column="2">
       <widget class="QRadioButton" name="radioButton_2">
        <property name="text">
-        <string>All trials</string>
+        <string>Add all trials</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
-      <widget class="QRadioButton" name="radioButton_5">
+     <item row="2" column="0">
+      <widget class="QLabel" name="label">
        <property name="text">
-        <string>From Nexus session</string>
+        <string>Session options:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0" colspan="3">
+      <widget class="QPushButton" name="pushButton_2">
+       <property name="text">
+        <string>Add from current Nexus session</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0" colspan="3">
+      <widget class="QPushButton" name="pushButton_3">
+       <property name="text">
+        <string>Add single trials...</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0" colspan="3">
+      <widget class="QPushButton" name="pushButton">
+       <property name="text">
+        <string>Add from session...</string>
        </property>
       </widget>
      </item>

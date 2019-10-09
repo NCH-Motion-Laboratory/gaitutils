@@ -19,18 +19,18 @@ logger = logging.getLogger(__name__)
 
 def plot_c3ds(c3ds, layout_name=None, backend=None, model_cycles=None,
               emg_cycles=None, emg_mode=None, maintitle=None,
+              style_by=None, color_by=None, legend_type=None,              
               model_normaldata=None):
     """Plot specified c3d files"""
     backend_lib = get_backend(backend)
     layout = layouts.get_layout(layout_name)
-
     trials = [trial.Trial(c3d) for c3d in c3ds]
-
     return backend_lib.plot_trials(trials, layout,
                                    model_normaldata=model_normaldata,
                                    model_cycles=model_cycles,
                                    emg_cycles=emg_cycles, emg_mode=emg_mode,
-                                   legend_type='short_name_with_cyclename')
+                                   color_by=color_by, style_by=style_by,
+                                   legend_type=legend_type)
 
 
 def plot_nexus_trial(layout_name=None, backend=None, model_cycles=None,

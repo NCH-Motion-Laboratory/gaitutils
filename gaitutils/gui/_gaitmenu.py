@@ -29,8 +29,9 @@ from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
                          qt_matplotlib_window, qt_dir_chooser)
 from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ulstools.num import check_hetu
-from ..normaldata import read_session_normaldata
+from ..normaldata import read_session_normaldata, read_all_normaldata
 from ..videos import _collect_session_videos, convert_videos
+from ..trial import Trial
 from .. import GaitDataError, nexus, cfg, sessionutils, envutils, c3d
 from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
@@ -39,8 +40,9 @@ from ..viz.plots import (plot_nexus_trial, plot_sessions, plot_c3ds,
                          plot_trial_timedep_velocities,
                          plot_trial_velocities, plot_session_average)
 from ..viz.timedist import do_session_average_plot
-from ..viz.plot_misc import _browse_localhost, _show_plotly_fig
+from ..viz.plot_misc import _browse_localhost, _show_plotly_fig, get_backend
 from ..report import web, pdf
+from ..import layouts
 
 logger = logging.getLogger(__name__)
 
@@ -524,10 +526,24 @@ class Gaitmenu(QtWidgets.QMainWindow):
                             result_func=self._show_plots,
                             session=session, backend=backend)
 
+    def _add_session_dialog(self):
+        """Show the add session dialog and add trials to list"""
+        existing = list()
+        dlg = AddSessionDialog(self)
+        item_names = (item.text for item in self.listTrials.items)
+        if dlg.exec_():
+            for c3dfile in dlg.c3ds:
+                if c3dfile not in item_names:
+                    self.listTrials.add_item(c3dfile, data=Trial(c3dfile))
+                else:
+                    existing.append(c3dfile)
+        if existing:
+            qt_message_dialog('Following trials were already loaded: %s'
+                              % ',\n'.join(existing))
 
     def _plot_trials(self):
         """Plot trials from list"""
-        model_normaldata = read_session_normaldata(session)
+        model_normaldata = read_all_normaldata()
         lout_desc = self.cbNexusTrialLayout.currentText()
         lout_name = self.layouts_map[lout_desc]
         backend = self._get_plotting_backend_ui()
@@ -535,20 +551,23 @@ class Gaitmenu(QtWidgets.QMainWindow):
         cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
         model_cycles = emg_cycles = cycs
         backend = self._get_plotting_backend_ui()
-        trials = [item.text for item in self.listTrials.items]
+        backend_lib = get_backend(backend)
+        fun = backend_lib.plot_trials
+        layout = layouts.get_layout(lout_name)
+        trials = [item.userdata for item in self.listTrials.items]
         if trials:
-            self._run_in_thread(plot_c3ds, thread=True,
+            self._run_in_thread(fun, thread=True,
                                 finished_func=self._reset_main_ui,
                                 result_func=self._show_plots,
-                                layout_name=lout_name,
-                                legend_type='tag_with_cycle',
-                                model_normaldata=model_normaldata,
+                                trials=trials,
+                                layout=layout,
                                 model_cycles=model_cycles,
                                 emg_cycles=emg_cycles,
                                 emg_mode=emg_mode,
-                                backend=backend)
+                                legend_type='tag_with_cycle',
+                                model_normaldata=model_normaldata)
 
-
+    # FIXME: delete fun
     def _plot_trials_old(self):
         """Plot superposed trials"""
         session = _get_nexus_sessionpath()
@@ -742,20 +761,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         dlg = OptionsDialog(self)
         dlg.exec_()
 
-    def _add_session_dialog(self):
-        """Show the add session dialog and add trials to list"""
-        existing = list()
-        dlg = AddSessionDialog(self)
-        item_names = (item.text for item in self.listTrials.items)
-        if dlg.exec_():
-            for c3dfile in dlg.c3ds:
-                if c3dfile not in item_names:
-                    self.listTrials.add_item(c3dfile)
-                else:
-                    existing.append(c3dfile)
-        if existing:
-            qt_message_dialog('Following trials were already loaded: %s'
-                              % ',\n'.join(existing))
 
     def _create_pdf_report_nexus(self):
         session = _get_nexus_sessionpath()

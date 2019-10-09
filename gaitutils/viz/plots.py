@@ -59,7 +59,7 @@ def plot_sessions(sessions, layout_name=None, model_normaldata=None,
                   style_by=None, color_by=None, legend_type=None,
                   model_cycles=None, emg_cycles=None, emg_mode=None,
                   backend=None, figtitle=None, legend=True):
-    """Plot tagged trials from given session(s)."""
+    """Plot tagged trials or all trials from given session(s)."""
 
     if not isinstance(sessions, list):
         sessions = [sessions]
@@ -98,7 +98,7 @@ def plot_sessions(sessions, layout_name=None, model_normaldata=None,
 
 def plot_session_average(session, layout_name=None, tagged_only=True,
                          tags=None, model_normaldata=None, backend=None):
-    """Plot average of session trials"""
+    """Plot average of tagged or all session trials"""
 
     layout = layouts.get_layout(layout_name)
     backend_lib = get_backend(backend)

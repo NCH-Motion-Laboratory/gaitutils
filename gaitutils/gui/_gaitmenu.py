@@ -367,9 +367,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionTardieu_analysis.triggered.connect(self._tardieu)
         self.actionAutoprocess_session.triggered.connect(self._autoproc_session)
         self.actionAutoprocess_single_trial.triggered.connect(self._autoproc_trial)
-        self.btnPlotNexusTrial.clicked.connect(self._plot_nexus_trial)
-        self.btnPlotNexusSession.clicked.connect(self._plot_nexus_session)
-        self.btnPlotNexusAverage.clicked.connect(self._plot_nexus_average)
+        self.btnPlotTrials.clicked.connect(self._plot_trials)
+        self.btnPlotAverage.clicked.connect(self._plot_trials_average)
         self.btnPDFReportNexus.clicked.connect(self._create_pdf_report_nexus)
         self.btnWebReportNexus.clicked.connect(self._create_web_report_nexus)
         self.actionRun_postprocessing_pipelines.triggered.connect(self._postprocess_session)
@@ -381,11 +380,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionCopy_session_videos_to_desktop.triggered.connect(copy_session_videos)
         self.actionAutomark_events.triggered.connect(self._automark_trial)
 
-        # set backend radio buttons according to choice in cfg
-        self.rb_map = {'plotly': self.rbPlotly,
-                       'matplotlib': self.rbMatplotlib}
-        rb_active = self.rb_map[cfg.plot.backend]
-        rb_active.setChecked(True)
+        # set up radio buttons 
+        self.rb_map_backend = {'plotly': self.rbPlotly,
+                               'matplotlib': self.rbMatplotlib}
+        rb_backend_active = self.rb_map_backend[cfg.plot.backend]
+        rb_backend_active.setChecked(True)
+        self.rb_map_trials = {'current': self.rbCurrentTrial,
+                              'tagged': self.rbTaggedTrials,
+                              'all': self.rbAllTrials}
+        rb_trials_active = self.rb_map_trials['current']
+        rb_trials_active.setChecked(True)
 
         # add plot layouts to combobox
         cb_items = sorted(configdot.get_description(lo) or loname
@@ -413,10 +417,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.prog = None
 
     def _get_plotting_backend_ui(self):
-        """Return backend as selected in main menu"""
-        for backend, rb in self.rb_map.items():
+        """Get backend selection from UI"""
+        for backend, rb in self.rb_map_backend.items():
             if rb.isChecked():
                 return backend
+
+    def _get_trial_sel(self):
+        """Get trials selection from UI"""
+        for trial_sel, rb in self.rb_map_trials.items():
+            if rb.isChecked():
+                return trial_sel
 
     def _automark_trial(self):
         session = _get_nexus_sessionpath()
@@ -492,6 +502,50 @@ class Gaitmenu(QtWidgets.QMainWindow):
                             result_func=self._show_plots,
                             session=session, backend=backend)
 
+    def _plot_trials(self):
+        """Plot superposed trials"""
+        session = _get_nexus_sessionpath()
+        if session is None:
+            return
+        model_normaldata = read_session_normaldata(session)
+        lout_desc = self.cbNexusTrialLayout.currentText()
+        lout_name = self.layouts_map[lout_desc]
+        backend = self._get_plotting_backend_ui()
+        emg_mode = 'rms' if self.xbEMGRMS.checkState() else None
+        cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
+        model_cycles = emg_cycles = cycs
+        backend = self._get_plotting_backend_ui()
+        from_c3d = self.xbPlotFromC3D.checkState()
+        trial_sel = self._get_trial_sel()
+        if trial_sel == 'current':
+            self._run_in_thread(plot_nexus_trial, thread=True,
+                                finished_func=self._reset_main_ui,
+                                result_func=self._show_plots,
+                                layout_name=lout_name,
+                                model_normaldata=model_normaldata,
+                                model_cycles=model_cycles,
+                                emg_cycles=emg_cycles,
+                                emg_mode=emg_mode,
+                                from_c3d=from_c3d,
+                                backend=backend)
+        elif trial_sel in ['tagged', 'all']:
+            tagged_only = trial_sel == 'tagged'
+            self._run_in_thread(plot_sessions, thread=True,
+                                finished_func=self._reset_main_ui,
+                                result_func=self._show_plots,
+                                sessions=[session],
+                                layout_name=lout_name,
+                                legend_type='tag_with_cycle',
+                                model_normaldata=model_normaldata,
+                                tagged_only=tagged_only,
+                                model_cycles=model_cycles,
+                                emg_cycles=emg_cycles,
+                                emg_mode=emg_mode,
+                                backend=backend)
+
+    def _plot_trials_average(self):
+        pass
+
     def _plot_nexus_average(self):
         """Plot average from current Nexus session"""
         session = _get_nexus_sessionpath()
@@ -507,59 +561,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
                             session=session, model_normaldata=model_normaldata,
                             layout_name=lout_name, backend=backend)
 
-    def _plot_nexus_trial(self):
-        """Plot the current Nexus trial according to UI choices"""
-        session = _get_nexus_sessionpath()
-        if session is None:
-            return
-        model_normaldata = read_session_normaldata(session)
-        lout_desc = self.cbNexusTrialLayout.currentText()
-        lout_name = self.layouts_map[lout_desc]
-        emg_mode = 'rms' if self.xbEMGRMS.checkState() else None
-        cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
-        model_cycles = emg_cycles = cycs
-        backend = self._get_plotting_backend_ui()
-        from_c3d = self.xbPlotFromC3D.checkState()
-        self._run_in_thread(plot_nexus_trial, thread=True,
-                            finished_func=self._reset_main_ui,
-                            result_func=self._show_plots,
-                            layout_name=lout_name,
-                            model_normaldata=model_normaldata,
-                            model_cycles=model_cycles,
-                            emg_cycles=emg_cycles,
-                            emg_mode=emg_mode,
-                            from_c3d=from_c3d,
-                            backend=backend)
-
     def _create_web_report_nexus(self):
         """Create web report based on current Nexus session"""
         session = _get_nexus_sessionpath()
         if session:
             self._web_report_dialog._create_web_report(sessions=[session])
-
-    def _plot_nexus_session(self):
-        """Plot the current Nexus session according to UI choices"""
-        session = _get_nexus_sessionpath()
-        if session is None:
-            return
-        model_normaldata = read_session_normaldata(session)
-        lout_desc = self.cbNexusTrialLayout.currentText()
-        lout_name = self.layouts_map[lout_desc]
-        backend = self._get_plotting_backend_ui()
-        cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
-        emg_mode = 'rms' if self.xbEMGRMS.checkState() else None
-        model_cycles = emg_cycles = cycs
-        self._run_in_thread(plot_sessions, thread=True,
-                            finished_func=self._reset_main_ui,
-                            result_func=self._show_plots,
-                            sessions=[session],
-                            layout_name=lout_name,
-                            legend_type='tag_with_cycle',
-                            model_normaldata=model_normaldata,
-                            model_cycles=model_cycles,
-                            emg_cycles=emg_cycles,
-                            emg_mode=emg_mode,
-                            backend=backend)
 
     def _show_plots(self, fig, backend=None):
         """Shows fig"""

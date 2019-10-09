@@ -690,7 +690,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         elif not cfg.autoproc.postproc_pipelines:
             qt_message_dialog('No postprocessing pipelines defined')
 
-
     def closeEvent(self, event):
         """ Confirm and close application. """
         
@@ -720,8 +719,18 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _add_session_dialog(self):
         """Show the add session dialog and add trials"""
         dlg = AddSessionDialog(self)
+        trials = (item.userdata for item in self.listTrials.items)
         if dlg.exec_():
-            logger.debug(dlg.c3ds)
+            for c3dfile in dlg.c3ds:
+                self.listTrials.add_item(c3dfile)
+
+
+        trials = (item.userdata for item in self.listTrials.items)
+        # check if trial already loaded (based on name)
+        # TODO: might use smarter detection
+        if tr.trialname in [trial.trialname for trial in trials]:
+            return
+        self.listTrials.add_item(_trial_namestr(tr), data=tr)
 
 
     def _create_pdf_report_nexus(self):

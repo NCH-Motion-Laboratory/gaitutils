@@ -395,6 +395,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionAutoprocess_session.triggered.connect(self._autoproc_session)
         self.actionAutoprocess_single_trial.triggered.connect(self._autoproc_trial)
         self.btnAddSession.clicked.connect(self._add_session_dialog)
+        self.btnAddTrials.clicked.connect(self._add_trials_dialog)
+        self.btnClearAll.clicked.connect(self._clear_trials)
+        self.btnClearTrial.clicked.connect(self._clear_trial)
         self.btnPlotTrials.clicked.connect(self._plot_trials)
         self.btnPDFReportNexus.clicked.connect(self._create_pdf_report_nexus)
         self.btnWebReportNexus.clicked.connect(self._create_web_report_nexus)
@@ -524,20 +527,42 @@ class Gaitmenu(QtWidgets.QMainWindow):
                             result_func=self._show_plots,
                             session=session, backend=backend)
 
-    def _add_session_dialog(self):
-        """Show the add session dialog and add trials to list"""
+    def _add_c3dfiles(self, c3dfiles):
+        """Add given c3d files to trials list"""
         existing = list()
-        dlg = AddSessionDialog(self)
         item_names = (item.text for item in self.listTrials.items)
-        if dlg.exec_():
-            for c3dfile in dlg.c3ds:
-                if c3dfile not in item_names:
-                    self.listTrials.add_item(c3dfile, data=Trial(c3dfile))
-                else:
-                    existing.append(c3dfile)
+        for c3dfile in c3dfiles:
+            if c3dfile not in item_names:
+                self.listTrials.add_item(c3dfile, data=Trial(c3dfile))
+            else:
+                existing.append(c3dfile)
         if existing:
             qt_message_dialog('Following trials were already loaded: %s'
                               % ',\n'.join(existing))
+
+    def _add_session_dialog(self):
+        """Show the add session dialog and add trials to list"""
+        dlg = AddSessionDialog(self)
+        if dlg.exec_():
+            self._add_c3dfiles(dlg.c3ds)
+
+    def _add_trials_dialog(self):
+        """Add individual trials to list"""
+        fout = QtWidgets.QFileDialog.getOpenFileNames(self,
+                                                     'Load C3D files',
+                                                      op.expanduser('~'),
+                                                      'C3D files (*.c3d)')
+        files = [op.normpath(f) for f in fout[0]]
+        self._add_c3dfiles(files)
+
+    def _clear_trials(self):
+        """Clear the trials list"""
+        self.listTrials.clear()
+
+    def _clear_trial(self):
+        """Clear selected trial"""
+        if self.listTrials.currentItem():
+            self.listTrials.rm_current_item()
 
     def _plot_trials(self):
         """Plot trials from list"""

@@ -31,6 +31,7 @@ def nexus_trial(from_c3d=False):
     ----------
     from_c3d : bool
         If True, try to read the trial data from the corresponding c3d file.
+        If False, read via Nexus API (slower).
 
     Returns
     -------
@@ -414,7 +415,7 @@ class Trial(object):
             ('forceplate', 0) would return forceplate cycles if any, and the
             first cycle in case there are none.
 
-        Returns list of gaitcycle instances, sorted by starting frame.
+        Returns list of Gaitcycle instances, sorted by starting frame.
         """
         def _filter_cycles(cycles, context, cyclespec):
             """Takes a list of cycles and filters it according to cyclespec,

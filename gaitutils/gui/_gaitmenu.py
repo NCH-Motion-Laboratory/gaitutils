@@ -31,8 +31,7 @@ from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ulstools.num import check_hetu
 from ..normaldata import read_session_normaldata, read_all_normaldata
 from ..videos import _collect_session_videos, convert_videos
-from ..trial import Trial
-from .. import GaitDataError, nexus, cfg, sessionutils, envutils, c3d, stats
+from .. import GaitDataError, nexus, cfg, sessionutils, envutils, c3d, stats, trial
 from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
                            copy_session_videos)
@@ -387,6 +386,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # connect ui widgets
         self.btnAddSession.clicked.connect(self._add_session_dialog)
         self.btnAddTrials.clicked.connect(self._add_trials_dialog)
+        self.btnAddNexusTrial.clicked.connect(self._add_nexus_trial)
         self.btnClearAll.clicked.connect(self._clear_trials)
         self.btnClearTrial.clicked.connect(self._clear_trial)
         self.btnPlotTrials.clicked.connect(self._plot_trials)
@@ -530,14 +530,21 @@ class Gaitmenu(QtWidgets.QMainWindow):
         """Add given c3d files to trials list"""
         existing = list()
         item_names = (item.text for item in self.listTrials.items)
+        c3dfiles = (op.normpath(fn) for fn in c3dfiles)
         for c3dfile in c3dfiles:
             if c3dfile not in item_names:
-                self.listTrials.add_item(c3dfile, data=Trial(c3dfile))
+                self.listTrials.add_item(c3dfile, data=trial.Trial(c3dfile))
             else:
                 existing.append(c3dfile)
         if existing:
             qt_message_dialog('Following trials were already loaded: %s'
                               % ',\n'.join(existing))
+
+    def _add_nexus_trial(self):
+        """Add directly from Nexus"""
+        tr = trial.nexus_trial(from_c3d=True)
+        trialname = '<Nexus> %s' % tr.trialname
+        self.listTrials.add_item(trialname, data=tr)
 
     def _add_session_dialog(self):
         """Show the add session dialog and add trials to list"""
@@ -551,8 +558,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                                      'Load C3D files',
                                                       op.expanduser('~'),
                                                       'C3D files (*.c3d)')
-        files = [op.normpath(f) for f in fout[0]]
-        self._add_c3dfiles(files)
+        self._add_c3dfiles(fout[0])
 
     def _clear_trials(self):
         """Clear the trials list"""
@@ -590,7 +596,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _plot_trials_average(self):
         """Average trials from list and plot"""
         trials = [item.userdata for item in self.listTrials.items]
-        if not trials:
+        if len(trials) < 2:
+            qt_message_dialog('Need at least 2 trials for averaging')
             return
         layout_desc = self.cbLayout.currentText()
         layout_name = self.layouts_map[layout_desc]

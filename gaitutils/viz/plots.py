@@ -18,17 +18,15 @@ logger = logging.getLogger(__name__)
 
 
 def plot_trials(trials, layout_name=None, backend=None,
-                model_normaldata=None, model_cycles=None,
-                emg_cycles=None, emg_mode=None, legend_type=None,
-                style_by=None, color_by=None, supplementary_data=None,
-                legend=True, figtitle=None):
+                model_normaldata=None, cycles=None, emg_mode=None,
+                legend_type=None, style_by=None, color_by=None,
+                supplementary_data=None, legend=True, figtitle=None):
     """Plot trials using specified or default backend"""
     backend_lib = get_backend(backend)
     layout = layouts.get_layout(layout_name)
     return backend_lib.plot_trials(trials, layout,
                                    model_normaldata=model_normaldata,
-                                   model_cycles=model_cycles,
-                                   emg_cycles=emg_cycles,
+                                   cycles=cycles,
                                    emg_mode=emg_mode, legend_type=legend_type,
                                    style_by=style_by, color_by=color_by,
                                    supplementary_data=supplementary_data,

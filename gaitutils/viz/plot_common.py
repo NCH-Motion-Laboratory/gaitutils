@@ -43,6 +43,24 @@ class IteratorMapper(object):
             return prop
 
 
+def _handle_cyclespec(cycles):
+    """Handle cyclespec argument"""
+    default_cycles = cfg.plot.default_cycles
+    if cycles == 'unnormalized':
+        cycles = {vartype: 'unnormalized' for vartype in default_cycles}
+    elif cycles is None:
+        cycles = default_cycles
+    elif isinstance(cycles, dict):
+        if set(cycles) - set(default_cycles):  # unknown keys
+            raise ValueError('invalid cycle argument')
+        _defcycles = default_cycles.copy()
+        _defcycles.update(cycles)
+        cycles = _defcycles
+    else:
+        raise ValueError('invalid cycle argument')
+    return cycles
+
+
 def _handle_style_and_color_args(style_by, color_by):
     """Handle style and color choice"""
     vals_ok = set(('session', 'trial', 'context', None))

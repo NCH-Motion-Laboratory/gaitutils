@@ -17,7 +17,7 @@ import matplotlib.gridspec as gridspec
 import numpy as np
 import logging
 
-from .plot_common import (_get_cycle_name, _var_title,
+from .plot_common import (_get_cycle_name, _var_title, _handle_cyclespec,
                           IteratorMapper, _handle_style_and_color_args)
 from .. import models, normaldata, layouts, cfg, GaitDataError, numutils
 from ..stats import AvgTrial
@@ -163,10 +163,9 @@ def _remove_ticks_and_labels(ax):
                    left=False, labelleft=False)
 
 
-def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
-                emg_cycles=None, emg_mode=None, legend_type=None,
-                style_by=None, color_by=None, supplementary_data=None,
-                legend=True, figtitle=None):
+def plot_trials(trials, layout, model_normaldata=None, cycles=None,
+                emg_mode=None, legend_type=None, style_by=None, color_by=None,
+                supplementary_data=None, legend=True, figtitle=None):
     """plot trials and return Figure instance"""
 
     if not trials:
@@ -216,15 +215,8 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
     #              tight_layout=auto_spacing_params)
     # fig = Figure(figsize=(figw, figh))
 
-    model_cycles = (cfg.plot.default_model_cycles if model_cycles is None
-                    else model_cycles)
-    emg_cycles = (cfg.plot.default_emg_cycles if emg_cycles is None else
-                  emg_cycles)
-    if model_cycles == 'unnormalized' or emg_cycles == 'unnormalized':
-        normalized = False
-        model_cycles = emg_cycles = 'unnormalized'
-    else:
-        normalized = True
+    cycles = _handle_cyclespec(cycles)
+    normalized = cycles != 'unnormalized'
 
     axes = dict()
     leg_entries = dict()
@@ -234,17 +226,17 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     # plot actual data
     for trial_ind, trial in enumerate(trials):
-        # these are the actual Gaitcycle instances
-        model_cycles_ = trial.get_cycles(model_cycles)
-        emg_cycles_ = trial.get_cycles(emg_cycles)
+        # get Gaitcycle instances from trial according to cycle specs
+        model_cycles_ = trial.get_cycles(cycles['model'])
+        emg_cycles_ = trial.get_cycles(cycles['emg'])
         allcycles = list(set.union(set(model_cycles_), set(emg_cycles_)))
         if not allcycles:
             logger.debug('trial %s has no cycles of specified type' %
                          trial.trialname)
 
         logger.debug('plotting total of %d cycles for %s (%d model, %d EMG)'
-                     % (len(allcycles), trial.trialname, len(model_cycles),
-                        len(emg_cycles)))
+                     % (len(allcycles), trial.trialname, len(model_cycles_),
+                        len(emg_cycles_)))
 
         for cyc_ind, cyc in enumerate(allcycles):
             first_cyc = trial_ind == 0 and cyc_ind == 0

@@ -549,8 +549,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         layout_name = self.layouts_map[layout_desc]
         backend = self._get_plotting_backend_ui()
         emg_mode = 'rms' if self.xbEMGRMS.checkState() else None
-        cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
-        model_cycles = emg_cycles = cycs
+        cycles = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
         backend = self._get_plotting_backend_ui()
         self._run_in_thread(plot_trials, thread=True,
                             finished_func=self._reset_main_ui,
@@ -558,53 +557,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
                             trials=trials,
                             layout_name=layout_name,
                             backend=backend,
-                            model_cycles=model_cycles,
-                            emg_cycles=emg_cycles,
+                            cycles=cycles,
                             emg_mode=emg_mode,
                             legend_type='tag_with_cycle',
                             model_normaldata=model_normaldata)
 
-    # FIXME: delete fun
-    def _plot_trials_old(self):
-        """Plot superposed trials"""
-        session = _get_nexus_sessionpath()
-        if session is None:
-            return
-        model_normaldata = read_session_normaldata(session)
-        lout_desc = self.cbLayout.currentText()
-        lout_name = self.layouts_map[lout_desc]
-        backend = self._get_plotting_backend_ui()
-        emg_mode = 'rms' if self.xbEMGRMS.checkState() else None
-        cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
-        model_cycles = emg_cycles = cycs
-        backend = self._get_plotting_backend_ui()
-        from_c3d = self.xbPlotFromC3D.checkState()
-        trial_sel = self._get_trial_sel()
-        if trial_sel == 'current':
-            self._run_in_thread(plot_nexus_trial, thread=True,
-                                finished_func=self._reset_main_ui,
-                                result_func=self._show_plots,
-                                layout_name=lout_name,
-                                model_normaldata=model_normaldata,
-                                model_cycles=model_cycles,
-                                emg_cycles=emg_cycles,
-                                emg_mode=emg_mode,
-                                from_c3d=from_c3d,
-                                backend=backend)
-        elif trial_sel in ['tagged', 'all']:
-            tagged_only = trial_sel == 'tagged'
-            self._run_in_thread(plot_sessions, thread=True,
-                                finished_func=self._reset_main_ui,
-                                result_func=self._show_plots,
-                                sessions=[session],
-                                layout_name=lout_name,
-                                legend_type='tag_with_cycle',
-                                model_normaldata=model_normaldata,
-                                tagged_only=tagged_only,
-                                model_cycles=model_cycles,
-                                emg_cycles=emg_cycles,
-                                emg_mode=emg_mode,
-                                backend=backend)
+
 
     def _plot_trials_average(self):
         pass

@@ -32,7 +32,7 @@ from ulstools.num import check_hetu
 from ..normaldata import read_session_normaldata, read_all_normaldata
 from ..videos import _collect_session_videos, convert_videos
 from ..trial import Trial
-from .. import GaitDataError, nexus, cfg, sessionutils, envutils, c3d
+from .. import GaitDataError, nexus, cfg, sessionutils, envutils, c3d, stats
 from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
                            copy_session_videos)
@@ -399,6 +399,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnClearAll.clicked.connect(self._clear_trials)
         self.btnClearTrial.clicked.connect(self._clear_trial)
         self.btnPlotTrials.clicked.connect(self._plot_trials)
+        self.btnAveragePlot.clicked.connect(self._plot_trials_average)
         self.btnPDFReportNexus.clicked.connect(self._create_pdf_report_nexus)
         self.btnWebReportNexus.clicked.connect(self._create_web_report_nexus)
         self.actionRun_postprocessing_pipelines.triggered.connect(self._postprocess_session)
@@ -576,6 +577,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         emg_mode = 'rms' if self.xbEMGRMS.checkState() else None
         cycles = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
         backend = self._get_plotting_backend_ui()
+        # FIXME: hardcoded legend type
         self._run_in_thread(plot_trials, thread=True,
                             finished_func=self._reset_main_ui,
                             result_func=self._show_plots,
@@ -584,29 +586,21 @@ class Gaitmenu(QtWidgets.QMainWindow):
                             backend=backend,
                             cycles=cycles,
                             emg_mode=emg_mode,
-                            legend_type='tag_with_cycle',
+                            legend_type='short_name_with_tag_and_cycle',
                             model_normaldata=model_normaldata)
 
-
-
     def _plot_trials_average(self):
-        pass
-
-    def _plot_nexus_average(self):
-        """Plot average from current Nexus session"""
-        session = _get_nexus_sessionpath()
-        if session is None:
-            return
-        model_normaldata = read_session_normaldata(session)
-        lout_desc = self.cbLayout.currentText()
-        lout_name = self.layouts_map[lout_desc]
-        backend = self._get_plotting_backend_ui()
-        self._run_in_thread(plot_session_average, thread=True,
+        """Average trials from list and plot"""
+        trials = [item.userdata for item in self.listTrials.items]        
+        layout_desc = self.cbLayout.currentText()
+        layout_name = self.layouts_map[layout_desc]
+        avgtrial = stats.AvgTrial(trials)
+        self._run_in_thread(plot_trials, thread=True,
                             finished_func=self._reset_main_ui,
                             result_func=self._show_plots,
-                            session=session, model_normaldata=model_normaldata,
-                            layout_name=lout_name, backend=backend)
-
+                            trials=avgtrial, layout_name=layout_name,
+                            color_by='context')
+        
     def _create_web_report_nexus(self):
         """Create web report based on current Nexus session"""
         session = _get_nexus_sessionpath()

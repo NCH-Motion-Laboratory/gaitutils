@@ -43,108 +43,14 @@
         </attribute>
        </widget>
       </item>
-      <item row="7" column="4">
-       <widget class="QCheckBox" name="xbEMGRMS">
-        <property name="text">
-         <string>Plot EMG as RMS</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="1">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>Plot options:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="16" column="2">
+      <item row="18" column="2">
        <widget class="QPushButton" name="btnPDFReportNexus">
         <property name="text">
          <string>PDF report...</string>
         </property>
        </widget>
       </item>
-      <item row="15" column="4">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="2">
-       <widget class="QCheckBox" name="xbPlotUnnorm">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Plot unnormalized data</string>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="2">
-       <widget class="QRadioButton" name="rbPlotly">
-        <property name="text">
-         <string>plotly (web browser)</string>
-        </property>
-        <attribute name="buttonGroup">
-         <string notr="true">buttonGroup_2</string>
-        </attribute>
-       </widget>
-      </item>
       <item row="16" column="1">
-       <widget class="QPushButton" name="btnWebReportNexus">
-        <property name="text">
-         <string>Web report...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="15" column="1">
-       <widget class="QLabel" name="label_7">
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>Reports from Nexus session</string>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="1">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Backend:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="3">
-       <widget class="QCheckBox" name="xbEMGRMS_2">
-        <property name="text">
-         <string>Average</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="2" colspan="3">
-       <widget class="QComboBox" name="cbLayout">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
-      </item>
-      <item row="14" column="1">
        <spacer name="verticalSpacer_2">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
@@ -167,7 +73,90 @@
         </property>
        </widget>
       </item>
-      <item row="12" column="2">
+      <item row="5" column="5">
+       <spacer name="horizontalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Preferred</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="8" column="1">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Backend:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="17" column="1">
+       <widget class="QLabel" name="label_7">
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Reports from Nexus session</string>
+        </property>
+       </widget>
+      </item>
+      <item row="18" column="1">
+       <widget class="QPushButton" name="btnWebReportNexus">
+        <property name="text">
+         <string>Web report...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="2">
+       <widget class="QCheckBox" name="xbPlotUnnorm">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Plot unnormalized data</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLabel" name="label_6">
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Plot trials</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="1">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Plot options:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="17" column="4">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="14" column="2">
        <spacer name="verticalSpacer_4">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
@@ -190,13 +179,6 @@
         </property>
        </widget>
       </item>
-      <item row="11" column="2">
-       <widget class="QPushButton" name="btnAddTrials">
-        <property name="text">
-         <string>Add individual trials...</string>
-        </property>
-       </widget>
-      </item>
       <item row="10" column="1" colspan="4">
        <widget class="NiceListWidget" name="listTrials">
         <property name="sizePolicy">
@@ -207,40 +189,31 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
-       <widget class="QLabel" name="label_6">
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>Plot trials</string>
+      <item row="5" column="2" colspan="3">
+       <widget class="QComboBox" name="cbLayout">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
        </widget>
       </item>
-      <item row="5" column="5">
-       <spacer name="horizontalSpacer_4">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Preferred</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="9" column="1">
-       <widget class="QLabel" name="label_8">
+      <item row="11" column="2">
+       <widget class="QPushButton" name="btnAddTrials">
         <property name="text">
-         <string>Selected trials:</string>
+         <string>Add individual trials...</string>
         </property>
+       </widget>
+      </item>
+      <item row="8" column="2">
+       <widget class="QRadioButton" name="rbPlotly">
+        <property name="text">
+         <string>plotly (web browser)</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup_2</string>
+        </attribute>
        </widget>
       </item>
       <item row="5" column="0">
@@ -259,7 +232,14 @@
         </property>
        </spacer>
       </item>
-      <item row="12" column="1">
+      <item row="9" column="1">
+       <widget class="QLabel" name="label_8">
+        <property name="text">
+         <string>Trials:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="13" column="1">
        <widget class="QPushButton" name="btnPlotTrials">
         <property name="text">
          <string>Plot</string>
@@ -277,6 +257,30 @@
        <widget class="QPushButton" name="btnClearAll">
         <property name="text">
          <string>Clear all</string>
+        </property>
+       </widget>
+      </item>
+      <item row="13" column="2">
+       <widget class="QPushButton" name="btnAveragePlot">
+        <property name="text">
+         <string>Average and plot</string>
+        </property>
+       </widget>
+      </item>
+      <item row="12" column="1" colspan="4">
+       <widget class="Line" name="line">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="3">
+       <widget class="QCheckBox" name="xbEMGRMS">
+        <property name="text">
+         <string>Plot EMG as RMS</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
         </property>
        </widget>
       </item>

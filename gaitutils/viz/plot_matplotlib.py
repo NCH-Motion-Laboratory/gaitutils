@@ -215,8 +215,8 @@ def plot_trials(trials, layout, model_normaldata=None, cycles=None,
     #              tight_layout=auto_spacing_params)
     # fig = Figure(figsize=(figw, figh))
 
-    cycles = _handle_cyclespec(cycles)
     normalized = cycles != 'unnormalized'
+    cycles = _handle_cyclespec(cycles)
 
     axes = dict()
     leg_entries = dict()

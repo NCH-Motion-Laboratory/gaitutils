@@ -36,13 +36,11 @@ from .. import GaitDataError, nexus, cfg, sessionutils, envutils, c3d
 from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
                            copy_session_videos)
-from ..viz.plots import (plot_nexus_trial, plot_sessions, plot_c3ds,
-                         plot_trial_timedep_velocities,
+from ..viz.plots import (plot_trials, plot_trial_timedep_velocities,
                          plot_trial_velocities, plot_session_average)
 from ..viz.timedist import do_session_average_plot
-from ..viz.plot_misc import _browse_localhost, _show_plotly_fig, get_backend
+from ..viz.plot_misc import _browse_localhost, _show_plotly_fig
 from ..report import web, pdf
-from ..import layouts
 
 logger = logging.getLogger(__name__)
 
@@ -418,13 +416,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # add plot layouts to combobox
         cb_items = sorted(configdot.get_description(lo) or loname
                           for loname, lo in cfg['layouts'])
-        self.cbNexusTrialLayout.addItems(cb_items)
+        self.cbLayout.addItems(cb_items)
         # set default option to PiG lower body (if it's on the list)
         try:
             default_index = cb_items.index('PiG lower body kinematics')
         except ValueError:
             default_index = 0
-        self.cbNexusTrialLayout.setCurrentIndex(default_index)
+        self.cbLayout.setCurrentIndex(default_index)
         # map descriptions to layout names
         self.layouts_map = {(configdot.get_description(lo) or loname): loname
                             for loname, lo in cfg['layouts']}
@@ -543,29 +541,28 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _plot_trials(self):
         """Plot trials from list"""
+        trials = [item.userdata for item in self.listTrials.items]
+        if not trials:
+            return
         model_normaldata = read_all_normaldata()
-        lout_desc = self.cbNexusTrialLayout.currentText()
-        lout_name = self.layouts_map[lout_desc]
+        layout_desc = self.cbLayout.currentText()
+        layout_name = self.layouts_map[layout_desc]
         backend = self._get_plotting_backend_ui()
         emg_mode = 'rms' if self.xbEMGRMS.checkState() else None
         cycs = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
         model_cycles = emg_cycles = cycs
         backend = self._get_plotting_backend_ui()
-        backend_lib = get_backend(backend)
-        fun = backend_lib.plot_trials
-        layout = layouts.get_layout(lout_name)
-        trials = [item.userdata for item in self.listTrials.items]
-        if trials:
-            self._run_in_thread(fun, thread=True,
-                                finished_func=self._reset_main_ui,
-                                result_func=self._show_plots,
-                                trials=trials,
-                                layout=layout,
-                                model_cycles=model_cycles,
-                                emg_cycles=emg_cycles,
-                                emg_mode=emg_mode,
-                                legend_type='tag_with_cycle',
-                                model_normaldata=model_normaldata)
+        self._run_in_thread(plot_trials, thread=True,
+                            finished_func=self._reset_main_ui,
+                            result_func=self._show_plots,
+                            trials=trials,
+                            layout_name=layout_name,
+                            backend=backend,
+                            model_cycles=model_cycles,
+                            emg_cycles=emg_cycles,
+                            emg_mode=emg_mode,
+                            legend_type='tag_with_cycle',
+                            model_normaldata=model_normaldata)
 
     # FIXME: delete fun
     def _plot_trials_old(self):
@@ -574,7 +571,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if session is None:
             return
         model_normaldata = read_session_normaldata(session)
-        lout_desc = self.cbNexusTrialLayout.currentText()
+        lout_desc = self.cbLayout.currentText()
         lout_name = self.layouts_map[lout_desc]
         backend = self._get_plotting_backend_ui()
         emg_mode = 'rms' if self.xbEMGRMS.checkState() else None
@@ -618,7 +615,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if session is None:
             return
         model_normaldata = read_session_normaldata(session)
-        lout_desc = self.cbNexusTrialLayout.currentText()
+        lout_desc = self.cbLayout.currentText()
         lout_name = self.layouts_map[lout_desc]
         backend = self._get_plotting_backend_ui()
         self._run_in_thread(plot_session_average, thread=True,

@@ -17,36 +17,34 @@ from .plot_misc import get_backend
 logger = logging.getLogger(__name__)
 
 
-def plot_c3ds(c3ds, layout_name=None, backend=None, model_cycles=None,
-              emg_cycles=None, emg_mode=None, maintitle=None,
-              style_by=None, color_by=None, legend_type=None,              
-              model_normaldata=None):
-    """Plot specified c3d files"""
+def plot_trials(trials, layout_name=None, backend=None,
+                model_normaldata=None, model_cycles=None,
+                emg_cycles=None, emg_mode=None, legend_type=None,
+                style_by=None, color_by=None, supplementary_data=None,
+                legend=True, figtitle=None):
+    """Plot trials using specified or default backend"""
     backend_lib = get_backend(backend)
     layout = layouts.get_layout(layout_name)
-    trials = [trial.Trial(c3d) for c3d in c3ds]
     return backend_lib.plot_trials(trials, layout,
                                    model_normaldata=model_normaldata,
                                    model_cycles=model_cycles,
-                                   emg_cycles=emg_cycles, emg_mode=emg_mode,
-                                   color_by=color_by, style_by=style_by,
-                                   legend_type=legend_type)
+                                   emg_cycles=emg_cycles,
+                                   emg_mode=emg_mode, legend_type=legend_type,
+                                   style_by=style_by, color_by=color_by,
+                                   supplementary_data=supplementary_data,
+                                   legend=legend, figtitle=figtitle)
 
 
 def plot_nexus_trial(layout_name=None, backend=None, model_cycles=None,
                      emg_cycles=None, emg_mode=None, maintitle=None,
                      from_c3d=True, model_normaldata=None):
     """Plot the currently loaded trial from Vicon Nexus"""
-
     backend_lib = get_backend(backend)
-
     tr = trial.nexus_trial(from_c3d=from_c3d)
     layout = layouts.get_layout(layout_name)
     layout = layouts.rm_dead_channels(tr.emg, layout)
-
     # force unnormalized plot for static trial
     model_cycles = 'unnormalized' if tr.is_static else model_cycles
-
     return backend_lib.plot_trials([tr], layout,
                                    model_normaldata=model_normaldata,
                                    model_cycles=model_cycles,

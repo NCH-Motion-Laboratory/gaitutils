@@ -164,8 +164,8 @@ def _remove_ticks_and_labels(ax):
 
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
-                emg_cycles=None, emg_mode=None, legend_type=None, style_by=None,
-                color_by=None, supplementary_data=None,
+                emg_cycles=None, emg_mode=None, legend_type=None,
+                style_by=None, color_by=None, supplementary_data=None,
                 legend=True, figtitle=None):
     """plot trials and return Figure instance"""
 

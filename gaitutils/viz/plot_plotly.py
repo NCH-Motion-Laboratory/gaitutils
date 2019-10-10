@@ -167,8 +167,8 @@ _plot_cache = dict()  # cache for plot_trials
 
 
 def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
-                emg_cycles=None, emg_mode=None, legend_type=None, style_by=None,
-                color_by=None, supplementary_data=None,
+                emg_cycles=None, emg_mode=None, legend_type=None,
+                style_by=None, color_by=None, supplementary_data=None,
                 legend=True, figtitle=None, big_fonts=False):
     """Make a plotly plot of layout, including given trials.
     FIXME: legend is currently ignored

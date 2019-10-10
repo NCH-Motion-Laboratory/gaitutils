@@ -29,14 +29,14 @@ from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
                          qt_matplotlib_window, qt_dir_chooser)
 from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ulstools.num import check_hetu
-from ..normaldata import read_session_normaldata, read_all_normaldata
+from ..normaldata import read_all_normaldata
 from ..videos import _collect_session_videos, convert_videos
 from .. import GaitDataError, nexus, cfg, sessionutils, envutils, c3d, stats, trial
 from . import _tardieu
 from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
                            copy_session_videos)
 from ..viz.plots import (plot_trials, plot_trial_timedep_velocities,
-                         plot_trial_velocities, plot_session_average)
+                         plot_trial_velocities)
 from ..viz.timedist import do_session_average_plot
 from ..viz.plot_misc import _browse_localhost, _show_plotly_fig
 from ..report import web, pdf
@@ -47,14 +47,13 @@ logger = logging.getLogger(__name__)
 def _get_nexus_sessionpath():
     """Get Nexus sessionpath, handle exceptions for use outside _run_in_thread"""
     try:
-        sessionpath = nexus.get_sessionpath()
-        return sessionpath
+        return nexus.get_sessionpath()
     except GaitDataError as e:
-        _exception(e)
+        _report_exception(e)
         return None
 
 
-def _exception(e):
+def _report_exception(e):
     logger.debug('caught exception when running task')
     qt_message_dialog(_exception_msg(e))
 
@@ -542,9 +541,17 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _add_nexus_trial(self):
         """Add directly from Nexus"""
-        tr = trial.nexus_trial(from_c3d=True)
+        try:
+            tr = trial.nexus_trial(from_c3d=True)
+        except GaitDataError as e:
+            _report_exception(e)
+            return
+        item_names = (item.text for item in self.listTrials.items)
         trialname = '<Nexus> %s' % tr.trialname
-        self.listTrials.add_item(trialname, data=tr)
+        if trialname not in item_names:
+            self.listTrials.add_item(trialname, data=tr)
+        else:
+            qt_message_dialog('%s was already loaded' % trialname)
 
     def _add_session_dialog(self):
         """Show the add session dialog and add trials to list"""
@@ -556,7 +563,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         """Add individual trials to list"""
         fout = QtWidgets.QFileDialog.getOpenFileNames(self,
                                                      'Load C3D files',
-                                                      op.expanduser('~'),
+                                                      None,
                                                       'C3D files (*.c3d)')
         self._add_c3dfiles(fout[0])
 
@@ -834,7 +841,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self.runner.signals.finished.connect(finished_func)
         if result_func:
             self.runner.signals.result.connect(lambda r: result_func(r))
-        self.runner.signals.error.connect(lambda e: _exception(e))
+        self.runner.signals.error.connect(lambda e: _report_exception(e))
         self.threadpool.start(self.runner)
 
 

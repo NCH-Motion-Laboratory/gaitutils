@@ -589,14 +589,19 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _plot_trials_average(self):
         """Average trials from list and plot"""
-        trials = [item.userdata for item in self.listTrials.items]        
+        trials = [item.userdata for item in self.listTrials.items]
+        if not trials:
+            return
         layout_desc = self.cbLayout.currentText()
         layout_name = self.layouts_map[layout_desc]
+        backend = self._get_plotting_backend_ui()        
         avgtrial = stats.AvgTrial(trials)
         self._run_in_thread(plot_trials, thread=True,
                             finished_func=self._reset_main_ui,
                             result_func=self._show_plots,
-                            trials=avgtrial, layout_name=layout_name,
+                            trials=avgtrial,
+                            layout_name=layout_name,
+                            backend=backend,
                             color_by='context')
         
     def _create_web_report_nexus(self):

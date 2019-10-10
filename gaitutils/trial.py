@@ -39,8 +39,10 @@ def nexus_trial(from_c3d=False):
 
     """
     vicon = nexus.viconnexus()
+    trname = vicon.GetTrialName()  # 2-tuple of (path, name)
+    if not trname[1]:
+        raise GaitDataError('No trial loaded in Nexus')
     if from_c3d:
-        trname = vicon.GetTrialName()
         c3dfile = op.join(*trname) + '.c3d'
         if op.isfile(c3dfile):
             return Trial(c3dfile)

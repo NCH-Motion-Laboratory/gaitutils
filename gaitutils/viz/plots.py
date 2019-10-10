@@ -50,25 +50,20 @@ def plot_nexus_trial(layout_name=None, backend=None, cycles=None,
                                    legend_type='short_name_with_cyclename')
 
 
-def plot_sessions(sessions, layout_name=None, model_normaldata=None,
-                  tagged_only=True, tags=None, make_pdf=False,
-                  style_by=None, color_by=None, legend_type=None,
-                  model_cycles=None, emg_cycles=None, emg_mode=None,
-                  backend=None, figtitle=None, legend=True):
+def plot_sessions(sessions, tagged_only=True, tags=None, layout_name=None,
+                  backend=None,
+                  model_normaldata=None, cycles=None, emg_mode=None,
+                  legend_type=None, style_by=None, color_by=None,
+                  supplementary_data=None, legend=True, figtitle=None):
     """Plot tagged trials or all trials from given session(s)."""
 
+    # collect c3d files from all sessions
     if not isinstance(sessions, list):
         sessions = [sessions]
-
     if tags is None:
         tags = cfg.eclipse.tags
     if not tagged_only:
         tags = None
-
-    backend_lib = get_backend(backend)
-    layout = layouts.get_layout(layout_name)
-
-    # collect c3d files across sessions
     c3ds_all = list()
     for session in sessions:
         c3ds = sessionutils.get_c3ds(session, tags=tags,
@@ -83,13 +78,10 @@ def plot_sessions(sessions, layout_name=None, model_normaldata=None,
     #emgs = [tr.emg for tr in trials]
     #layout = layouts.rm_dead_channels_multitrial(emgs, layout)
 
-    return backend_lib.plot_trials(trials, layout,
-                                   model_normaldata=model_normaldata,
-                                   legend_type=legend_type,
-                                   style_by=style_by, color_by=color_by,
-                                   model_cycles=model_cycles,
-                                   emg_cycles=emg_cycles, emg_mode=emg_mode,
-                                   figtitle=figtitle, legend=legend)
+    return plot_trials(trials, layout_name=layout_name, backend=backend,
+                       model_normaldata=model_normaldata, cycles=cycles, emg_mode=emg_mode,
+                       legend_type=legend_type, style_by=style_by, color_by=color_by,
+                       supplementary_data=None, legend=legend, figtitle=figtitle)
 
 
 def plot_session_average(session, layout_name=None, tagged_only=True,

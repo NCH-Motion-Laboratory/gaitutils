@@ -232,6 +232,58 @@
         </property>
        </widget>
       </item>
+      <item row="6" column="3">
+       <widget class="QComboBox" name="cbColorTrialsBy">
+        <item>
+         <property name="text">
+          <string>Context</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Trial</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Session</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="6" column="2">
+       <widget class="QLabel" name="label_7">
+        <property name="text">
+         <string>Color trials by:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="4">
+       <widget class="QLabel" name="label_9">
+        <property name="text">
+         <string>Style trials by:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="5">
+       <widget class="QComboBox" name="cbStyleTrialsBy">
+        <item>
+         <property name="text">
+          <string>Context</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Trial</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Session</string>
+         </property>
+        </item>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>

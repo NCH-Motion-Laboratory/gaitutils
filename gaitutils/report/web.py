@@ -7,8 +7,6 @@ Report related functions
 
 
 from __future__ import division
-from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
-                                                FigureCanvas)
 
 from builtins import str
 from past.builtins import basestring
@@ -100,8 +98,6 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
     VIDS_TOTAL_HEIGHT = 88  # % of browser window height
     # reduce to set, since there may be several labels for given id
     camera_labels = set(cfg.general.camera_labels.values())
-    model_cycles = cfg.plot.default_model_cycles
-    emg_cycles = cfg.plot.default_emg_cycles
 
     if len(sessions) < 1 or len(sessions) > 3:
         raise ValueError('Need a list of one to three sessions')
@@ -297,7 +293,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                 continue
             # include torsion info for all cycles; this is useful when plotting
             # isolated cycles
-            cycs = tr.get_cycles(model_cycles)
+            cycs = tr.get_cycles(cfg.plot.default_cycles['model'])
             for cyc in cycs:
                 tibial_torsion[cyc] = dict()
                 for ctxt in tors:
@@ -394,21 +390,19 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                     elif layout == 'static_kinematics':
                         layout_ = cfg.layouts.lb_kinematics
                         figdata = plot_trials(trials_static, layout_,
-                                        model_normaldata=model_normaldata,
-                                        model_cycles='unnormalized',
-                                        emg_cycles=[],
-                                        legend_type='short_name_with_cyclename',
-                                        style_by=style_by, color_by=color_by,
-                                        big_fonts=True)
+                                              model_normaldata=model_normaldata,
+                                              cycles={'model': 'unnormalized', 'emg': []},
+                                              legend_type='short_name_with_cyclename',
+                                              style_by=style_by, color_by=color_by,
+                                              big_fonts=True)
                     elif layout == 'static_emg':
                         layout_ = cfg.layouts.std_emg
                         figdata = plot_trials(trials_static, layout_,
-                                        model_normaldata=model_normaldata,
-                                        model_cycles=[],
-                                        emg_cycles='unnormalized',
-                                        legend_type='short_name_with_cyclename',
-                                        style_by=style_by, color_by=color_by,
-                                        big_fonts=True)
+                                              model_normaldata=model_normaldata,
+                                              cycles={'model': [], 'emg': 'unnormalized'},
+                                              legend_type='short_name_with_cyclename',
+                                              style_by=style_by, color_by=color_by,
+                                              big_fonts=True)
                     elif layout == 'kinematics_average':
                         layout_ = cfg.layouts.lb_kinematics
                         figdata = plot_trials(avg_trials, layout_,

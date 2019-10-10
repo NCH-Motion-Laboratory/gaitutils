@@ -33,8 +33,8 @@ def plot_trials(trials, layout_name=None, backend=None,
                                    legend=legend, figtitle=figtitle)
 
 
-def plot_nexus_trial(layout_name=None, backend=None, model_cycles=None,
-                     emg_cycles=None, emg_mode=None, maintitle=None,
+def plot_nexus_trial(layout_name=None, backend=None, cycles=None,
+                     emg_mode=None, maintitle=None,
                      from_c3d=True, model_normaldata=None):
     """Plot the currently loaded trial from Vicon Nexus"""
     backend_lib = get_backend(backend)
@@ -42,11 +42,11 @@ def plot_nexus_trial(layout_name=None, backend=None, model_cycles=None,
     layout = layouts.get_layout(layout_name)
     layout = layouts.rm_dead_channels(tr.emg, layout)
     # force unnormalized plot for static trial
-    model_cycles = 'unnormalized' if tr.is_static else model_cycles
+    if tr.is_static:
+        cycles = 'unnormalized'
     return backend_lib.plot_trials([tr], layout,
                                    model_normaldata=model_normaldata,
-                                   model_cycles=model_cycles,
-                                   emg_cycles=emg_cycles, emg_mode=emg_mode,
+                                   cycles=cycles, emg_mode=emg_mode,
                                    legend_type='short_name_with_cyclename')
 
 

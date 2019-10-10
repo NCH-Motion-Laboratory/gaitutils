@@ -443,7 +443,7 @@ def get_roi(vicon):
     return np.arange(roi[0], roi[1])
 
 
-def get_model_data(vicon, model):
+def get_model_data(vicon, model, ignore_missing=False):
     """ Read model output variables (e.g. Plug-in Gait) """
     modeldata = dict()
     var_dims = (3, vicon.GetFrameCount())

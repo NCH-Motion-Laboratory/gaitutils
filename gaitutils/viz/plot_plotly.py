@@ -125,7 +125,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
 
 def _plot_vels(vels, labels):
     """Plot trial velocities as a stem plot"""
-    trace = go.Scatter(y=vels, x=labels, mode='markers')
+    trace = dict(y=vels, x=labels, mode='markers')
     layout = go.Layout(xaxis=dict(title='Trial', automargin=True),
                        yaxis=dict(title='Velocity (m/s)'))
     return dict(data=[trace], layout=layout)
@@ -135,7 +135,7 @@ def _plot_timedep_vels(vels, labels):
     """Plot trial time-dependent velocities"""
     traces = list()
     for vel, label in zip(vels, labels):
-        trace = go.Scatter(y=vel, text=label, name=label, hoverinfo='x+y+text')
+        trace = dict(y=vel, text=label, name=label, hoverinfo='x+y+text')
         traces.append(trace)
     # FIXME: labels get truncated, not fixed by automargin
     layout = go.Layout(xaxis=dict(title='% of trial', automargin=True),
@@ -147,7 +147,7 @@ def _plotly_fill_between(x, ylow, yhigh, **kwargs):
     """Fill area between ylow and yhigh"""
     x_ = np.concatenate([x, x[::-1]])  # construct a closed curve
     y_ = np.concatenate([yhigh, ylow[::-1]])
-    return go.Scatter(x=x_, y=y_, fill='toself', mode='none',
+    return dict(x=x_, y=y_, fill='toself', mode='none',
                       hoverinfo='none', **kwargs)
 
 
@@ -374,7 +374,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                         trace['legendgroup'] = tracename
                                         trace['showlegend'] = show_legend
                             else:  # need to create trace
-                                trace = go.Scatter(x=t, y=y, name=tracename,
+                                trace = dict(x=t, y=y, name=tracename,
                                                    text=cyclename_full,
                                                    legendgroup=tracename,
                                                    showlegend=show_legend,
@@ -394,7 +394,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                 marker = dict(color=col,
                                               symbol='triangle-up',
                                               size=8)
-                                toeoff_marker = go.Scatter(x=t[toeoff:toeoff+1],
+                                toeoff_marker = dict(x=t[toeoff:toeoff+1],
                                                            y=y[toeoff:toeoff+1],
                                                            showlegend=False,
                                                            legendgroup=tracename,
@@ -436,7 +436,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     data_sup = supdata[var]['data']
                                     label_sup = supdata[var]['label']
                                     
-                                    strace = go.Scatter(x=t_sup, y=data_sup,
+                                    strace = dict(x=t_sup, y=data_sup,
                                                         name=label_sup,
                                                         text=label_sup,
                                                         line=line,
@@ -507,7 +507,7 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
                                     trace['legendgroup'] = tracename
                                     trace['showlegend'] = show_legend
                             else:
-                                trace = go.Scatter(x=t,
+                                trace = dict(x=t,
                                                    y=y*cfg.plot.emg_multiplier,
                                                    name=tracename_emg,
                                                    legendgroup=tracename,

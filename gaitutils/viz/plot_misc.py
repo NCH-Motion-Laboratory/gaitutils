@@ -24,7 +24,8 @@ logger = logging.getLogger(__name__)
 def _show_plotly_fig(fig):
     """Shows a Plotly fig in configured browser"""
     tmp_html = op.join(tempfile.gettempdir(), 'gaitutils_temp.html')
-    plotly.offline.plot(fig, filename=tmp_html, auto_open=False)
+    plotly.offline.plot(fig, filename=tmp_html, auto_open=False,
+                        validate=False)
     _browse_localhost(url='file:///%s' % tmp_html)
 
 

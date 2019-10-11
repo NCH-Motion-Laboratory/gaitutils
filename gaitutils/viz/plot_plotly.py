@@ -100,7 +100,7 @@ def time_dist_barchart(values, stddev=None, thickness=.5,
                              hoverlabel=dict(namelength=-1),
                              hoverinfo='y+text+name',
                              marker_color=barcolor)
-            fig.append_trace(trace_l, 1, k)
+            fig.add_trace(trace_l, 1, k)
 
             # increase var label size a bit
             fig['layout']['yaxis%d' % k].update(tickfont={'size': label_fontsize+2})
@@ -247,7 +247,7 @@ def plot_trials(trials, layout, model_normaldata=None, cycles=None,
                                                       legendgroup='Norm.',
                                                       showlegend=model_normaldata_legend,
                                                       line=dict(width=0))  # no border lines
-                        fig.append_trace(ntrace, i+1, j+1)
+                        fig.add_trace(ntrace, i+1, j+1)
                         model_normaldata_legend = False
 
                 elif var in cfg.emg.channel_labels and var in cfg.emg.channel_normaldata:
@@ -265,7 +265,7 @@ def plot_trials(trials, layout, model_normaldata=None, cycles=None,
                                                     showlegend=emg_normaldata_legend,
                                                     fillcolor=fillcolor,
                                                     line=dict(width=0))  # no border lines                                           
-                        fig.append_trace(ntrace, i+1, j+1)
+                        fig.add_trace(ntrace, i+1, j+1)
                         emg_normaldata_legend = False
 
     # plot actual data
@@ -393,10 +393,10 @@ def plot_trials(trials, layout, model_normaldata=None, cycles=None,
                                                            hoverinfo='skip',
                                                            mode='markers',
                                                            marker=marker)
-                                fig.append_trace(toeoff_marker, i+1, j+1)
+                                fig.add_trace(toeoff_marker, i+1, j+1)
 
                             # add trace to figure
-                            fig.append_trace(trace, i+1, j+1)
+                            fig.add_trace(trace, i+1, j+1)
                             legendgroups.add(tracename)
 
                             # each cycle gets its own stddev plot
@@ -416,7 +416,7 @@ def plot_trials(trials, layout, model_normaldata=None, cycles=None,
                                                                 legendgroup='Stddev, %s' % tracename,
                                                                 showlegend=show_legend,
                                                                 line=dict(width=0))  # no border lines
-                                    fig.append_trace(ntrace, i+1, j+1)
+                                    fig.add_trace(ntrace, i+1, j+1)
 
                             # add supplementary data
                             if cyc in supplementary_data:
@@ -435,7 +435,7 @@ def plot_trials(trials, layout, model_normaldata=None, cycles=None,
                                                         legendgroup=tracename,
                                                         hoverinfo='x+y+text',
                                                         showlegend=False)
-                                    fig.append_trace(strace, i+1, j+1)
+                                    fig.add_trace(strace, i+1, j+1)
                                     legendgroups.add(tracename)
 
                             # adjust subplot once
@@ -512,7 +512,7 @@ def plot_trials(trials, layout, model_normaldata=None, cycles=None,
                                 _plot_cache[trial][cyc][var] = trace
 
                             legendgroups.add(tracename_emg)
-                            fig.append_trace(trace, i+1, j+1)
+                            fig.add_trace(trace, i+1, j+1)
 
                         # adjust subplot once
                         if cyc_ind == 0:

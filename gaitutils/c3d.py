@@ -14,6 +14,7 @@ import logging
 import numpy as np
 import os
 import sys
+from functools32 import lru_cache
 
 from .numutils import center_of_pressure, change_coords
 from . import GaitDataError
@@ -74,7 +75,7 @@ def _get_c3d_metadata_field(acq, field, subfield):
     else:
         raise RuntimeError('Unhandled btk meta info type')
 
-
+@lru_cache(maxsize=100)
 def _get_c3dacq(c3dfile):
     """Get a btk.btkAcquisition object"""
     reader = btk.btkAcquisitionFileReader()

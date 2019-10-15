@@ -233,7 +233,7 @@ class WebReportDialog(QtWidgets.QDialog):
             self.parent._convert_vidfiles(vidfiles, signals)
 
         # launch the report creation thread
-        self.parent._run_in_thread(web.dash_report, thread=True, block_ui=True,
+        self.parent._run_in_thread(web.dash_report, block_ui=True,
                                    finished_func=self.parent._enable_main_ui,
                                    result_func=self._web_report_ready,
                                    info=info, sessions=sessions, tags=tags,
@@ -322,8 +322,8 @@ class WebReportDialog(QtWidgets.QDialog):
         not run.
         Serving is a bit flaky in py2 (multiple requests cause exceptions)
         """
-        self.parent._run_in_thread(app.server.run, thread=True, block_ui=False,
-                             debug=False, port=port, threaded=True)
+        self.parent._run_in_thread(app.server.run, block_ui=False,
+                                   debug=False, port=port, threaded=True)
         # double clicking on the list item will browse to corresponding port
         self.listActiveReports.add_item(app._gaitutils_report_name, data=port)
         # enable delete buttons etc.
@@ -457,8 +457,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         session = _get_nexus_sessionpath()
         if session is None:
             return
-        self._run_in_thread(automark_trial, thread=True,
-                            finished_func=self._enable_main_ui)
+        self._run_in_thread(automark_trial, finished_func=self._enable_main_ui)
 
     def _autoproc_session(self):
         """Wrapper to run autoprocess for Nexus session"""
@@ -478,7 +477,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         signals.progress.connect(lambda text, p: self.prog.update(text, p))
         self.prog._canceled.connect(signals.cancel)
 
-        self._run_in_thread(autoproc_session, thread=True,
+        self._run_in_thread(autoproc_session,
                             finished_func=self._enable_main_ui,
                             signals=signals)
 
@@ -490,7 +489,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         signals.progress.connect(lambda text, p: self.prog.update(text, p))
         self.prog._canceled.connect(signals.cancel)
 
-        self._run_in_thread(autoproc_trial, thread=True,
+        self._run_in_thread(autoproc_trial,
                             finished_func=self._enable_main_ui,
                             signals=signals)
 
@@ -500,7 +499,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if session is None:
             return
         backend = self._get_plotting_backend_ui()
-        self._run_in_thread(do_session_average_plot, thread=True,
+        self._run_in_thread(do_session_average_plot,
                             finished_func=self._enable_main_ui,
                             result_func=self._show_plots,
                             session=session, backend=backend)
@@ -511,7 +510,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if session is None:
             return
         backend = self._get_plotting_backend_ui()
-        self._run_in_thread(plot_trial_velocities, thread=True,
+        self._run_in_thread(plot_trial_velocities,
                             finished_func=self._enable_main_ui,
                             result_func=self._show_plots,
                             session=session, backend=backend)
@@ -522,7 +521,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if session is None:
             return
         backend = self._get_plotting_backend_ui()
-        self._run_in_thread(plot_trial_timedep_velocities, thread=True,
+        self._run_in_thread(plot_trial_timedep_velocities,
                             finished_func=self._enable_main_ui,
                             result_func=self._show_plots,
                             session=session, backend=backend)
@@ -599,7 +598,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         cycles = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
         backend = self._get_plotting_backend_ui()
         # FIXME: hardcoded legend type
-        self._run_in_thread(plot_trials, thread=True,
+        self._run_in_thread(plot_trials,
                             finished_func=self._enable_main_ui,
                             result_func=self._show_plots,
                             trials=trials,
@@ -620,7 +619,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         layout_name = self.layouts_map[layout_desc]
         backend = self._get_plotting_backend_ui()        
         avgtrial = stats.AvgTrial(trials)
-        self._run_in_thread(plot_trials, thread=True,
+        self._run_in_thread(plot_trials,
                             finished_func=self._enable_main_ui,
                             result_func=self._show_plots,
                             trials=avgtrial,
@@ -729,7 +728,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             signals = ProgressSignals()
             signals.progress.connect(lambda text, p: self.prog.update(text, p))
             self.prog._canceled.connect(signals.cancel)
-            self._run_in_thread(_run_postprocessing, thread=True, block_ui=True,
+            self._run_in_thread(_run_postprocessing, block_ui=True,
                                 finished_func=self._enable_main_ui)
         elif not trials:
             qt_message_dialog('No trials in session to run postprocessing for')
@@ -799,11 +798,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # create the report
         if comparison:
             self._run_in_thread(pdf.create_comparison_report,
-                                thread=True,
                                 finished_func=self._enable_main_ui,
                                 sessions=sessions)
         else:
-            self._run_in_thread(pdf.create_report, thread=True,
+            self._run_in_thread(pdf.create_report,
                                 finished_func=self._enable_main_ui,
                                 sessionpath=sessions[0], info=info,
                                 pages=dlg_info.pages)
@@ -836,7 +834,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._tardieuwin = _tardieu.TardieuWindow()
             self._tardieuwin.show()
 
-    def _run_in_thread(self, fun, thread=False, block_ui=True, finished_func=None,
+    def _run_in_thread(self, fun, block_ui=True, finished_func=None,
                        result_func=None, **kwargs):
         """Run function fun with args kwargs in a worker thread.
         If block_ui==True, disable main ui until worker thread is finished.

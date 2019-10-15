@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>683</width>
+    <width>629</width>
     <height>747</height>
    </rect>
   </property>
@@ -33,93 +33,14 @@
     </item>
     <item>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="5" column="1">
-       <widget class="QLabel" name="label_5">
+      <item row="13" column="2">
+       <widget class="QPushButton" name="btnAveragePlot">
         <property name="text">
-         <string>Options:</string>
+         <string>Average and plot</string>
         </property>
        </widget>
       </item>
-      <item row="9" column="1">
-       <widget class="QLabel" name="label_7">
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>Reports from Nexus session</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="5">
-       <spacer name="horizontalSpacer_5">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Preferred</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="10" column="1">
-       <widget class="QPushButton" name="btnWebReportNexus">
-        <property name="text">
-         <string>Web report...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1" colspan="4">
-       <widget class="QLabel" name="label_6">
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>Plot from Nexus session</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Select layout:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="9" column="4">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="10">
-       <spacer name="horizontalSpacer_4">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Preferred</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="5" column="4">
+      <item row="7" column="3">
        <widget class="QCheckBox" name="xbEMGRMS">
         <property name="text">
          <string>Plot EMG as RMS</string>
@@ -130,35 +51,54 @@
        </widget>
       </item>
       <item row="8" column="1">
-       <spacer name="verticalSpacer_4">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>40</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="5" column="8">
-       <widget class="QPushButton" name="btnPlotNexusSession">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
+       <widget class="QLabel" name="label">
         <property name="text">
-         <string>Plot tagged trials</string>
+         <string>Backend:</string>
         </property>
        </widget>
       </item>
-      <item row="5" column="2">
+      <item row="11" column="1">
+       <widget class="QPushButton" name="btnAddSession">
+        <property name="text">
+         <string>Add session...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="12" column="1" colspan="6">
+       <widget class="Line" name="line">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="1">
+       <widget class="QLabel" name="label_8">
+        <property name="text">
+         <string>Trials:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="3">
+       <widget class="QRadioButton" name="rbMatplotlib">
+        <property name="text">
+         <string>matplotlib</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup_2</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="8" column="2">
+       <widget class="QRadioButton" name="rbPlotly">
+        <property name="text">
+         <string>plotly (web browser)</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup_2</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="7" column="2">
        <widget class="QCheckBox" name="xbPlotUnnorm">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -171,34 +111,7 @@
         </property>
        </widget>
       </item>
-      <item row="7" column="1">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Backend:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="8">
-       <widget class="QPushButton" name="btnPlotNexusTrial">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Plot current trial</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="8">
-       <widget class="QPushButton" name="btnPlotNexusAverage">
-        <property name="text">
-         <string>Plot session average</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
+      <item row="5" column="0">
        <spacer name="horizontalSpacer_3">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -214,44 +127,108 @@
         </property>
        </spacer>
       </item>
-      <item row="5" column="3">
-       <widget class="QCheckBox" name="xbPlotFromC3D">
+      <item row="13" column="1">
+       <widget class="QPushButton" name="btnPlotTrials">
         <property name="text">
-         <string>Plot from C3D file</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
+         <string>Plot</string>
         </property>
        </widget>
       </item>
-      <item row="7" column="2">
-       <widget class="QRadioButton" name="rbPlotly">
+      <item row="5" column="7">
+       <spacer name="horizontalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Preferred</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="5" column="1">
+       <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>plotly (web browser)</string>
+         <string>Plot layout:</string>
         </property>
        </widget>
       </item>
-      <item row="7" column="3">
-       <widget class="QRadioButton" name="rbMatplotlib">
+      <item row="11" column="2">
+       <widget class="QPushButton" name="btnAddTrials">
         <property name="text">
-         <string>matplotlib</string>
+         <string>Add single trials...</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="2" colspan="3">
-       <widget class="QComboBox" name="cbNexusTrialLayout">
+      <item row="10" column="1" colspan="6">
+       <widget class="NiceListWidget" name="listTrials">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
        </widget>
       </item>
-      <item row="10" column="2">
-       <widget class="QPushButton" name="btnPDFReportNexus">
+      <item row="15" column="6">
+       <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>PDF report...</string>
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="1">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Plot options:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLabel" name="label_6">
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Plot trials</string>
+        </property>
+       </widget>
+      </item>
+      <item row="11" column="3">
+       <widget class="QPushButton" name="btnAddNexusTrial">
+        <property name="text">
+         <string>Add Nexus trial</string>
+        </property>
+       </widget>
+      </item>
+      <item row="11" column="4">
+       <widget class="QPushButton" name="btnClearTrial">
+        <property name="text">
+         <string>Clear trial</string>
+        </property>
+       </widget>
+      </item>
+      <item row="11" column="5">
+       <widget class="QPushButton" name="btnClearAll">
+        <property name="text">
+         <string>Clear all</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="2" colspan="4">
+       <widget class="QComboBox" name="cbLayout">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
        </widget>
       </item>
@@ -274,22 +251,6 @@
      </spacer>
     </item>
     <item>
-     <spacer name="verticalSpacer_2">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-      <property name="sizeType">
-       <enum>QSizePolicy::Fixed</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>20</width>
-        <height>20</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item>
      <widget class="QLabel" name="label_4">
       <property name="text">
        <string>Output log:</string>
@@ -306,7 +267,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>683</width>
+     <width>629</width>
      <height>21</height>
     </rect>
    </property>
@@ -338,6 +299,8 @@
     <property name="title">
      <string>Reports</string>
     </property>
+    <addaction name="actionWeb_report_from_Nexus_session"/>
+    <addaction name="actionPDF_report_from_Nexus_session"/>
     <addaction name="actionWeb_reports"/>
     <addaction name="actionCreate_PDF_report"/>
    </widget>
@@ -486,7 +449,22 @@
     <string>PDF report from Nexus session...</string>
    </property>
   </action>
+  <action name="actionPDF_report_from_Nexus_session">
+   <property name="text">
+    <string>PDF report from Nexus session...</string>
+   </property>
+  </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>NiceListWidget</class>
+   <extends>QListWidget</extends>
+   <header>gaitutils.gui.qt_widgets</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
+ <buttongroups>
+  <buttongroup name="buttonGroup_2"/>
+ </buttongroups>
 </ui>

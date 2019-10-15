@@ -23,7 +23,7 @@ from .. import GaitDataError, cfg, layouts, models, normaldata, numutils
 from ..stats import AvgTrial
 from ..timedist import _pick_common_vars
 from .plot_common import (_get_cycle_name, _var_title, IteratorMapper,
-                          _style_mpl_to_plotly,
+                          _style_mpl_to_plotly, _handle_cyclespec,
                           _handle_style_and_color_args)
 
 
@@ -166,8 +166,8 @@ def _get_plotly_axis_labels(i, j, ncols):
 _plot_cache = dict()  # cache for plot_trials
 
 
-def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
-                emg_cycles=None, emg_mode=None, legend_type=None, style_by=None,
+def plot_trials(trials, layout, model_normaldata=None, cycles=None,
+                emg_mode=None, legend_type=None, style_by=None,
                 color_by=None, supplementary_data=None,
                 legend=True, figtitle=None, big_fonts=False):
     """Make a plotly plot of layout, including given trials.
@@ -207,21 +207,15 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     allvars = [item for row in layout for item in row]
     titles = [_var_title(var) for var in allvars]
-    fig = plotly.subplots.make_subplots(rows=nrows, cols=ncols, print_grid=False,
+    fig = plotly.subplots.make_subplots(rows=nrows, cols=ncols,
+                                        print_grid=False,
                                         subplot_titles=titles)
     legendgroups = set()
     model_normaldata_legend = True
     emg_normaldata_legend = True
 
-    model_cycles = (cfg.plot.default_model_cycles if model_cycles is None
-                    else model_cycles)
-    emg_cycles = (cfg.plot.default_emg_cycles if emg_cycles is None else
-                  emg_cycles)
-    if model_cycles == 'unnormalized' or emg_cycles == 'unnormalized':
-        normalized = False
-        model_cycles = emg_cycles = 'unnormalized'
-    else:
-        normalized = True
+    normalized = cycles != 'unnormalized'
+    cycles = _handle_cyclespec(cycles)
 
     legend_fontsize = cfg.plot_plotly.legend_fontsize
     label_fontsize = cfg.plot_plotly.label_fontsize
@@ -276,15 +270,13 @@ def plot_trials(trials, layout, model_normaldata=None, model_cycles=None,
 
     # plot actual data
     for trial in trials:
-
-        # these are the actual Gaitcycle instances
-        model_cycles_ = trial.get_cycles(model_cycles)
-        emg_cycles_ = trial.get_cycles(emg_cycles)
+        # get Gaitcycle instances from trial according to cycle specs
+        model_cycles_ = trial.get_cycles(cycles['model'])
+        emg_cycles_ = trial.get_cycles(cycles['emg'])
         allcycles = list(set.union(set(model_cycles_), set(emg_cycles_)))
         if not allcycles:
             logger.debug('trial %s has no cycles of specified type' %
                          trial.trialname)
-
         logger.debug('plotting total of %d cycles for %s (%d model, %d EMG)'
                      % (len(allcycles), trial.trialname, len(model_cycles_),
                         len(emg_cycles_)))

@@ -11,6 +11,7 @@ from builtins import zip
 import numpy as np
 import openpyxl
 import os.path as op
+from functools32 import lru_cache
 import logging
 
 from . import cfg, sessionutils, GaitDataError, numutils
@@ -51,6 +52,7 @@ def read_session_normaldata(session):
     return read_all_normaldata(age)
 
 
+@lru_cache(maxsize=10)
 def read_normaldata(filename):
     """ Read normal data into dict. Dict keys are variables and values
     are Numpy arrays of shape (n, 2). n is either 1 (scalar variable)

@@ -31,6 +31,7 @@ def nexus_trial(from_c3d=False):
     ----------
     from_c3d : bool
         If True, try to read the trial data from the corresponding c3d file.
+        If False, read via Nexus API (slower).
 
     Returns
     -------
@@ -38,8 +39,10 @@ def nexus_trial(from_c3d=False):
 
     """
     vicon = nexus.viconnexus()
+    trname = vicon.GetTrialName()  # 2-tuple of (path, name)
+    if not trname[1]:
+        raise GaitDataError('No trial loaded in Nexus')
     if from_c3d:
-        trname = vicon.GetTrialName()
         c3dfile = op.join(*trname) + '.c3d'
         if op.isfile(c3dfile):
             return Trial(c3dfile)
@@ -217,7 +220,8 @@ class Trial(object):
         quirks = sessionutils.load_quirks(self.sessionpath)
         if 'emg_correction_factor' in quirks:
             emg_correction_factor = quirks['emg_correction_factor']
-            logger.warning('using quirk: EMG correction factor = %g' % emg_correction_factor)
+            logger.warning('using quirk: EMG correction factor = %g'
+                           % emg_correction_factor)
         else:
             emg_correction_factor = 1
         if 'ignore_eclipse_fp_info' in quirks:
@@ -305,6 +309,17 @@ class Trial(object):
         """
         data = self._get_modelvar(var)
         return self._normalized_frame_data(data)
+
+    def _get_modelvar(self, var):
+        """Return unnormalized data for a model variable."""
+        model_ = models.model_from_var(var)
+        if not model_:
+            raise ValueError('No model found for %s' % var)
+        if model_.desc not in self._models_data:
+            # read and cache model data
+            modeldata = read_data.get_model_data(self.source, model_)
+            self._models_data[model_.desc] = modeldata
+        return self._models_data[model_.desc][var]
 
     def get_emg_data(self, ch):
         """Return trial data for an EMG variable.
@@ -414,7 +429,7 @@ class Trial(object):
             ('forceplate', 0) would return forceplate cycles if any, and the
             first cycle in case there are none.
 
-        Returns list of gaitcycle instances, sorted by starting frame.
+        Returns list of Gaitcycle instances, sorted by starting frame.
         """
         def _filter_cycles(cycles, context, cyclespec):
             """Takes a list of cycles and filters it according to cyclespec,
@@ -456,16 +471,6 @@ class Trial(object):
 
         return sorted(cycs_ok, key=lambda cyc: cyc.start)
 
-    def _get_modelvar(self, var):
-        """Return unnormalized data for a model variable."""
-        model_ = models.model_from_var(var)
-        if not model_:
-            raise ValueError('No model found for %s' % var)
-        if model_.desc not in self._models_data:
-            # read and cache model data
-            modeldata = read_data.get_model_data(self.source, model_)
-            self._models_data[model_.desc] = modeldata
-        return self._models_data[model_.desc][var]
 
     def _scan_cycles(self):
         """Create Gaitcycle instances based on trial strike/toeoff markers."""

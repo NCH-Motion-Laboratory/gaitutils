@@ -220,7 +220,8 @@ class Trial(object):
         quirks = sessionutils.load_quirks(self.sessionpath)
         if 'emg_correction_factor' in quirks:
             emg_correction_factor = quirks['emg_correction_factor']
-            logger.warning('using quirk: EMG correction factor = %g' % emg_correction_factor)
+            logger.warning('using quirk: EMG correction factor = %g'
+                           % emg_correction_factor)
         else:
             emg_correction_factor = 1
         if 'ignore_eclipse_fp_info' in quirks:

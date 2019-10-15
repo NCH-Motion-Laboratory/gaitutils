@@ -53,19 +53,21 @@ def _get_nexus_sessionpath():
         return None
 
 
-def _report_exception(e):
+def _report_exception(e, title=None):
+    """Report exception via Qt dialog. Show title and exception message"""
     logger.debug('caught exception when running task')
-    qt_message_dialog(_exception_msg(e))
+    if title is None:
+        title = 'There was an error running the operation. Details:'
+    e_msg = _exception_msg(e)
+    msg = '%s\n%s' % (title, e_msg)
+    qt_message_dialog(msg)
 
 
 def _exception_msg(e):
     """Return text representation of exception e"""
     # for our own error class, we know that a neat message is there
-    if isinstance(e, GaitDataError):
-        err_msg = e.message
-    else:  # otherwise, we have no idea, so use generic repr()
-        err_msg = repr(e)
-    return 'There was an error running the operation. Details:\n%s' % err_msg
+    # otherwise, we have no idea, so use generic repr()
+    return e.message if isinstance(e, GaitDataError) else repr(e)
 
 
 class PdfReportDialog(QtWidgets.QDialog):
@@ -232,7 +234,7 @@ class WebReportDialog(QtWidgets.QDialog):
 
         # launch the report creation thread
         self.parent._run_in_thread(web.dash_report, thread=True, block_ui=True,
-                                   finished_func=self.parent._reset_main_ui,
+                                   finished_func=self.parent._enable_main_ui,
                                    result_func=self._web_report_ready,
                                    info=info, sessions=sessions, tags=tags,
                                    signals=signals,
@@ -456,7 +458,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if session is None:
             return
         self._run_in_thread(automark_trial, thread=True,
-                            finished_func=self._reset_main_ui)
+                            finished_func=self._enable_main_ui)
 
     def _autoproc_session(self):
         """Wrapper to run autoprocess for Nexus session"""
@@ -477,7 +479,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.prog._canceled.connect(signals.cancel)
 
         self._run_in_thread(autoproc_session, thread=True,
-                            finished_func=self._reset_main_ui,
+                            finished_func=self._enable_main_ui,
                             signals=signals)
 
     def _autoproc_trial(self):
@@ -489,7 +491,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.prog._canceled.connect(signals.cancel)
 
         self._run_in_thread(autoproc_trial, thread=True,
-                            finished_func=self._reset_main_ui,
+                            finished_func=self._enable_main_ui,
                             signals=signals)
 
     def _plot_timedist_average(self):
@@ -499,7 +501,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         backend = self._get_plotting_backend_ui()
         self._run_in_thread(do_session_average_plot, thread=True,
-                            finished_func=self._reset_main_ui,
+                            finished_func=self._enable_main_ui,
                             result_func=self._show_plots,
                             session=session, backend=backend)
 
@@ -510,7 +512,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         backend = self._get_plotting_backend_ui()
         self._run_in_thread(plot_trial_velocities, thread=True,
-                            finished_func=self._reset_main_ui,
+                            finished_func=self._enable_main_ui,
                             result_func=self._show_plots,
                             session=session, backend=backend)
 
@@ -521,7 +523,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         backend = self._get_plotting_backend_ui()
         self._run_in_thread(plot_trial_timedep_velocities, thread=True,
-                            finished_func=self._reset_main_ui,
+                            finished_func=self._enable_main_ui,
                             result_func=self._show_plots,
                             session=session, backend=backend)
 
@@ -530,11 +532,19 @@ class Gaitmenu(QtWidgets.QMainWindow):
         existing = list()
         item_names = (item.text for item in self.listTrials.items)
         c3dfiles = (op.normpath(fn) for fn in c3dfiles)
+        self._disable_main_ui()
         for c3dfile in c3dfiles:
             if c3dfile not in item_names:
-                self.listTrials.add_item(c3dfile, data=trial.Trial(c3dfile))
+                try:
+                    tr = trial.Trial(c3dfile)
+                except GaitDataError as e:
+                    title = 'Could not load trial trial %s. Details:' % c3dfile
+                    _report_exception(e, title=title)
+                else:
+                    self.listTrials.add_item(c3dfile, data=tr)
             else:
                 existing.append(c3dfile)
+        self._enable_main_ui()
         if existing:
             qt_message_dialog('Following trials were already loaded: %s'
                               % ',\n'.join(existing))
@@ -590,7 +600,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         backend = self._get_plotting_backend_ui()
         # FIXME: hardcoded legend type
         self._run_in_thread(plot_trials, thread=True,
-                            finished_func=self._reset_main_ui,
+                            finished_func=self._enable_main_ui,
                             result_func=self._show_plots,
                             trials=trials,
                             layout_name=layout_name,
@@ -611,7 +621,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         backend = self._get_plotting_backend_ui()        
         avgtrial = stats.AvgTrial(trials)
         self._run_in_thread(plot_trials, thread=True,
-                            finished_func=self._reset_main_ui,
+                            finished_func=self._enable_main_ui,
                             result_func=self._show_plots,
                             trials=avgtrial,
                             layout_name=layout_name,
@@ -683,7 +693,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         signals.progress.connect(lambda text, p: self.prog.update(text, p))
         self.prog._canceled.connect(signals.cancel)        
         self._convert_vidfiles(vidfiles, signals)
-        self._reset_main_ui()
+        self._enable_main_ui()
 
     def _postprocess_session(self):
         """Run additional postprocessing pipelines for tagged trials"""
@@ -720,7 +730,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             signals.progress.connect(lambda text, p: self.prog.update(text, p))
             self.prog._canceled.connect(signals.cancel)
             self._run_in_thread(_run_postprocessing, thread=True, block_ui=True,
-                                finished_func=self._reset_main_ui)
+                                finished_func=self._enable_main_ui)
         elif not trials:
             qt_message_dialog('No trials in session to run postprocessing for')
         elif not cfg.autoproc.postproc_pipelines:
@@ -790,11 +800,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if comparison:
             self._run_in_thread(pdf.create_comparison_report,
                                 thread=True,
-                                finished_func=self._reset_main_ui,
+                                finished_func=self._enable_main_ui,
                                 sessions=sessions)
         else:
             self._run_in_thread(pdf.create_report, thread=True,
-                                finished_func=self._reset_main_ui,
+                                finished_func=self._enable_main_ui,
                                 sessionpath=sessions[0], info=info,
                                 pages=dlg_info.pages)
 
@@ -813,7 +823,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # update display immediately in case thread gets blocked
         QtWidgets.QApplication.processEvents()
 
-    def _reset_main_ui(self):
+    def _enable_main_ui(self):
         """Enable all operation buttons, close progress bar if any and restore cursor."""
         if self.prog is not None:
             self.prog.reset()

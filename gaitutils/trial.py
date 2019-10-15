@@ -310,6 +310,17 @@ class Trial(object):
         data = self._get_modelvar(var)
         return self._normalized_frame_data(data)
 
+    def _get_modelvar(self, var):
+        """Return unnormalized data for a model variable."""
+        model_ = models.model_from_var(var)
+        if not model_:
+            raise ValueError('No model found for %s' % var)
+        if model_.desc not in self._models_data:
+            # read and cache model data
+            modeldata = read_data.get_model_data(self.source, model_)
+            self._models_data[model_.desc] = modeldata
+        return self._models_data[model_.desc][var]
+
     def get_emg_data(self, ch):
         """Return trial data for an EMG variable.
 
@@ -460,16 +471,6 @@ class Trial(object):
 
         return sorted(cycs_ok, key=lambda cyc: cyc.start)
 
-    def _get_modelvar(self, var):
-        """Return unnormalized data for a model variable."""
-        model_ = models.model_from_var(var)
-        if not model_:
-            raise ValueError('No model found for %s' % var)
-        if model_.desc not in self._models_data:
-            # read and cache model data
-            modeldata = read_data.get_model_data(self.source, model_)
-            self._models_data[model_.desc] = modeldata
-        return self._models_data[model_.desc][var]
 
     def _scan_cycles(self):
         """Create Gaitcycle instances based on trial strike/toeoff markers."""

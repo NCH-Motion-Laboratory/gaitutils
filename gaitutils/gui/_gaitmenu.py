@@ -388,8 +388,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnAddSession.clicked.connect(self._add_session_dialog)
         self.btnAddTrials.clicked.connect(self._add_trials_dialog)
         self.btnAddNexusTrial.clicked.connect(self._add_nexus_trial)
-        self.btnClearAll.clicked.connect(self._clear_trials)
-        self.btnClearTrial.clicked.connect(self._clear_trial)
+        self.btnSelectAll.clicked.connect(self._select_all_trials)
+        self.btnSelectNone.clicked.connect(self._select_no_trials)
+        self.btnClearSelected.clicked.connect(self._clear_selected_trials)
         self.btnPlotTrials.clicked.connect(self._plot_trials)
         self.btnAveragePlot.clicked.connect(self._plot_trials_average)
         self.actionCreate_PDF_report.triggered.connect(lambda ev: self._create_pdf_report())
@@ -527,14 +528,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
                             session=session, backend=backend)
 
     def _add_trial_to_table(self, trial):
-        """Adds a trial to the trials table with given text fields"""
+        """Adds a trial to the trials table"""
         nrows = self.tableTrials.rowCount()
         self.tableTrials.insertRow(nrows)
         texts = (trial.trialname, trial.eclipse_data['DESCRIPTION'],
                  trial.eclipse_data['NOTES'], trial.sessionpath)
         for k, txt in enumerate(texts):
             item_ = QtWidgets.QTableWidgetItem(txt)
-            self.tableTrials.setItem(nrows-1, k, item_)
+            if k == 0:
+                item_.setData(QtCore.Qt.UserRole, trial)
+            self.tableTrials.setItem(nrows, k, item_)
 
     def _add_c3dfiles(self, c3dfiles):
         """Add given c3d files to trials list"""
@@ -584,9 +587,21 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _clear_trials(self):
         """Clear the trials list"""
-        self.listTrials.clear()
+        # FIXME: not used?
+        self.tableTrials.setRowCount(0)
 
-    def _clear_trial(self):
+    def _select_all_trials(self):
+        self.tableTrials.selectAll()
+
+    def _select_no_trials(self):
+        logger.debug(list(self._get_selected_rows()))
+        self.tableTrials.clearSelection()
+
+    def _get_selected_rows(self):
+        return set(inx.row() for inx in
+                   self.tableTrials.selectedIndexes())
+
+    def _clear_selected_trials(self):
         """Clear selected trial"""
         if self.listTrials.currentItem():
             self.listTrials.rm_current_item()

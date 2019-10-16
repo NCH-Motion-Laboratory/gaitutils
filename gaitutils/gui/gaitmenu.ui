@@ -40,97 +40,10 @@
         </property>
        </widget>
       </item>
-      <item row="10" column="1">
+      <item row="11" column="1">
        <widget class="QPushButton" name="btnAddSession">
         <property name="text">
          <string>Add session...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="11" column="1" colspan="6">
-       <widget class="Line" name="line">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="3">
-       <widget class="QRadioButton" name="rbMatplotlib">
-        <property name="text">
-         <string>matplotlib</string>
-        </property>
-        <attribute name="buttonGroup">
-         <string notr="true">buttonGroup_2</string>
-        </attribute>
-       </widget>
-      </item>
-      <item row="7" column="3">
-       <widget class="QCheckBox" name="xbEMGRMS">
-        <property name="text">
-         <string>Plot EMG as RMS</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="2">
-       <widget class="QRadioButton" name="rbPlotly">
-        <property name="text">
-         <string>plotly (web browser)</string>
-        </property>
-        <attribute name="buttonGroup">
-         <string notr="true">buttonGroup_2</string>
-        </attribute>
-       </widget>
-      </item>
-      <item row="7" column="2">
-       <widget class="QCheckBox" name="xbPlotUnnorm">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Plot unnormalized data</string>
-        </property>
-       </widget>
-      </item>
-      <item row="12" column="2">
-       <widget class="QPushButton" name="btnAveragePlot">
-        <property name="text">
-         <string>Average and plot</string>
-        </property>
-       </widget>
-      </item>
-      <item row="10" column="2">
-       <widget class="QPushButton" name="btnAddTrials">
-        <property name="text">
-         <string>Add single trials...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="7">
-       <spacer name="horizontalSpacer_4">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Preferred</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="12" column="1">
-       <widget class="QPushButton" name="btnPlotTrials">
-        <property name="text">
-         <string>Plot</string>
         </property>
        </widget>
       </item>
@@ -150,31 +63,10 @@
         </property>
        </spacer>
       </item>
-      <item row="5" column="1">
-       <widget class="QLabel" name="label_3">
+      <item row="14" column="1">
+       <widget class="QPushButton" name="btnPlotTrials">
         <property name="text">
-         <string>Plot layout:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="14" column="6">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="1">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>Plot options:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="10" column="3">
-       <widget class="QPushButton" name="btnAddNexusTrial">
-        <property name="text">
-         <string>Add Nexus trial</string>
+         <string>Plot selected</string>
         </property>
        </widget>
       </item>
@@ -191,7 +83,122 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="2" colspan="4">
+      <item row="7" column="3">
+       <widget class="QCheckBox" name="xbEMGRMS">
+        <property name="text">
+         <string>Plot EMG as RMS</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="1">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Plot options:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="11" column="5">
+       <widget class="QPushButton" name="btnSelectAll">
+        <property name="text">
+         <string>Select all</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="3">
+       <widget class="QRadioButton" name="rbMatplotlib">
+        <property name="text">
+         <string>matplotlib</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup_2</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Plot layout:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="13" column="1" colspan="7">
+       <widget class="Line" name="line">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="2">
+       <widget class="QRadioButton" name="rbPlotly">
+        <property name="text">
+         <string>plotly (web browser)</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup_2</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="11" column="2">
+       <widget class="QPushButton" name="btnAddTrials">
+        <property name="text">
+         <string>Add single trials...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="8">
+       <spacer name="horizontalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Preferred</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="14" column="2">
+       <widget class="QPushButton" name="btnAveragePlot">
+        <property name="text">
+         <string>Average and plot selected</string>
+        </property>
+       </widget>
+      </item>
+      <item row="11" column="3">
+       <widget class="QPushButton" name="btnAddNexusTrial">
+        <property name="text">
+         <string>Add Nexus trial</string>
+        </property>
+       </widget>
+      </item>
+      <item row="16" column="7">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="2">
+       <widget class="QCheckBox" name="xbPlotUnnorm">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Plot unnormalized data</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="2" colspan="6">
        <widget class="QComboBox" name="cbLayout">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -201,21 +208,7 @@
         </property>
        </widget>
       </item>
-      <item row="10" column="4">
-       <widget class="QPushButton" name="btnClearTrial">
-        <property name="text">
-         <string>Clear trial</string>
-        </property>
-       </widget>
-      </item>
-      <item row="10" column="5">
-       <widget class="QPushButton" name="btnClearAll">
-        <property name="text">
-         <string>Clear all</string>
-        </property>
-       </widget>
-      </item>
-      <item row="9" column="1" colspan="5">
+      <item row="9" column="1" colspan="7">
        <widget class="QTableWidget" name="tableTrials">
         <property name="sizeAdjustPolicy">
          <enum>QAbstractScrollArea::AdjustToContents</enum>
@@ -258,6 +251,20 @@
           <string>Full path</string>
          </property>
         </column>
+       </widget>
+      </item>
+      <item row="11" column="7">
+       <widget class="QPushButton" name="btnClearSelected">
+        <property name="text">
+         <string>Clear selected</string>
+        </property>
+       </widget>
+      </item>
+      <item row="11" column="4">
+       <widget class="QPushButton" name="btnSelectNone">
+        <property name="text">
+         <string>Select none</string>
+        </property>
        </widget>
       </item>
      </layout>

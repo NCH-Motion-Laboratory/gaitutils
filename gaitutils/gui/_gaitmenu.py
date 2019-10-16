@@ -526,27 +526,33 @@ class Gaitmenu(QtWidgets.QMainWindow):
                             result_func=self._show_plots,
                             session=session, backend=backend)
 
+    def _add_trial_to_table(self, trial):
+        """Adds a trial to the trials table with given text fields"""
+        nrows = self.tableTrials.rowCount()
+        self.tableTrials.insertRow(nrows)
+        texts = (trial.trialname, trial.eclipse_data['DESCRIPTION'],
+                 trial.eclipse_data['NOTES'], trial.sessionpath)
+        for k, txt in enumerate(texts):
+            item_ = QtWidgets.QTableWidgetItem(txt)
+            self.tableTrials.setItem(nrows-1, k, item_)
+
     def _add_c3dfiles(self, c3dfiles):
         """Add given c3d files to trials list"""
-        existing = list()
-        item_names = (item.text for item in self.listTrials.items)
         c3dfiles = (op.normpath(fn) for fn in c3dfiles)
         self._disable_main_ui()
         for c3dfile in c3dfiles:
-            if c3dfile not in item_names:
-                try:
-                    tr = trial.Trial(c3dfile)
-                except GaitDataError as e:
-                    title = 'Could not load trial trial %s. Details:' % c3dfile
-                    _report_exception(e, title=title)
-                else:
-                    self.listTrials.add_item(c3dfile, data=tr)
+            try:
+                tr = trial.Trial(c3dfile)
+            except GaitDataError as e:
+                title = 'Could not load trial trial %s. Details:' % c3dfile
+                _report_exception(e, title=title)
             else:
-                existing.append(c3dfile)
+                self._add_trial_to_table(tr)
         self._enable_main_ui()
-        if existing:
-            qt_message_dialog('Following trials were already loaded: %s'
-                              % ',\n'.join(existing))
+        self.tableTrials.resizeColumnsToContents()
+        #if existing:
+        #    qt_message_dialog('Following trials were already loaded: %s'
+        #                      % ',\n'.join(existing))
 
     def _add_nexus_trial(self):
         """Add directly from Nexus"""

@@ -5,7 +5,6 @@ gaitutils custom Qt widgets
 @author: Jussi (jnu@iki.fi)
 """
 
-from builtins import range
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import QObject, pyqtSignal
 import logging

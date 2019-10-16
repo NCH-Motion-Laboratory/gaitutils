@@ -536,13 +536,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
         for k, txt in enumerate(texts):
             item_ = QtWidgets.QTableWidgetItem(txt)
             if k == 0:
+                # actual Trial instances are stored as userdata of
+                # QTableWidgetItems on each rows 1st column; thus
+                # we don't have to keep separate references to them
                 item_.setData(QtCore.Qt.UserRole, trial)
             self.tableTrials.setItem(nrows, k, item_)
 
     def _add_c3dfiles(self, c3dfiles):
         """Add given c3d files to trials list"""
         c3dfiles = (op.normpath(fn) for fn in c3dfiles)
-        self._disable_main_ui()
+        self._disable_main_ui()  # in case it takes a while
         for c3dfile in c3dfiles:
             try:
                 tr = trial.Trial(c3dfile)
@@ -551,11 +554,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 _report_exception(e, title=title)
             else:
                 self._add_trial_to_table(tr)
-        self._enable_main_ui()
-        self.tableTrials.resizeColumnsToContents()
-        #if existing:
-        #    qt_message_dialog('Following trials were already loaded: %s'
-        #                      % ',\n'.join(existing))
+                self.tableTrials.resizeColumnsToContents()
+            finally:
+                self._enable_main_ui()
 
     def _add_nexus_trial(self):
         """Add directly from Nexus"""
@@ -563,13 +564,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
             tr = trial.nexus_trial(from_c3d=True)
         except GaitDataError as e:
             _report_exception(e)
-            return
-        item_names = (item.text for item in self.listTrials.items)
-        trialname = '<Nexus> %s' % tr.trialname
-        if trialname not in item_names:
-            self.listTrials.add_item(trialname, data=tr)
         else:
-            qt_message_dialog('%s was already loaded' % trialname)
+            item_names = (item.text for item in self.listTrials.items)
+            trialname = '<Nexus> %s' % tr.trialname
+            if trialname not in item_names:
+                self.listTrials.add_item(trialname, data=tr)
+            else:
+                qt_message_dialog('%s was already loaded' % trialname)
 
     def _add_session_dialog(self):
         """Show the add session dialog and add trials to list"""
@@ -593,29 +594,28 @@ class Gaitmenu(QtWidgets.QMainWindow):
         """Clear trial selection"""
         self.tableTrials.clearSelection()
 
-    def _get_selected_rows(self):
+    @property
+    def _selected_rows(self):
         """Return indices of selected rows"""
         return list(set(idx.row() for idx in
                     self.tableTrials.selectedIndexes()))
 
-    def _get_selected_trials(self):
+    @property
+    def _selected_trials(self):
         """Return list of trials that are currently selected"""
         sel_items = (self.tableTrials.item(row, 0) for row in
-                     self._get_selected_rows())
+                     self._selected_rows)
         return list(item.data(QtCore.Qt.UserRole) for item in sel_items)
 
     def _remove_selected_trials(self):
         """Remove selected trials from list"""
-        rows = self._get_selected_rows()
-        while rows:
-            row = rows[0]
+        while self._selected_rows:
+            row = self._selected_rows[0]
             self.tableTrials.removeRow(row)
-            rows = self._get_selected_rows()
 
     def _plot_trials(self):
         """Plot selected trials"""
-        trials = self._get_selected_trials()
-        if not trials:
+        if not self._selected_rows:
             return
         model_normaldata = read_all_normaldata()
         layout_desc = self.cbLayout.currentText()
@@ -628,7 +628,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._run_in_thread(plot_trials,
                             finished_func=self._enable_main_ui,
                             result_func=self._show_plots,
-                            trials=trials,
+                            trials=self._selected_trials,
                             layout_name=layout_name,
                             backend=backend,
                             cycles=cycles,
@@ -638,14 +638,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _plot_trials_average(self):
         """Average trials from list and plot"""
-        trials = self._get_selected_trials()
-        if len(trials) < 2:
+        if len(self._selected_rows) < 2:
             qt_message_dialog('Need at least 2 trials for averaging')
             return
         layout_desc = self.cbLayout.currentText()
         layout_name = self.layouts_map[layout_desc]
         backend = self._get_plotting_backend_ui()        
-        avgtrial = stats.AvgTrial(trials)
+        avgtrial = stats.AvgTrial(self._selected_trials)
         self._run_in_thread(plot_trials,
                             finished_func=self._enable_main_ui,
                             result_func=self._show_plots,

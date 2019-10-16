@@ -390,7 +390,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnAddNexusTrial.clicked.connect(self._add_nexus_trial)
         self.btnSelectAll.clicked.connect(self._select_all_trials)
         self.btnSelectNone.clicked.connect(self._select_no_trials)
-        self.btnClearSelected.clicked.connect(self._clear_selected_trials)
+        self.btnClearSelected.clicked.connect(self._remove_selected_trials)
         self.btnPlotTrials.clicked.connect(self._plot_trials)
         self.btnAveragePlot.clicked.connect(self._plot_trials_average)
         self.actionCreate_PDF_report.triggered.connect(lambda ev: self._create_pdf_report())
@@ -585,35 +585,36 @@ class Gaitmenu(QtWidgets.QMainWindow):
                                                       'C3D files (*.c3d)')
         self._add_c3dfiles(fout[0])
 
-    def _clear_trials(self):
-        """Clear the trials list"""
-        # FIXME: not used?
-        self.tableTrials.setRowCount(0)
-
     def _select_all_trials(self):
+        """Select all trials"""
         self.tableTrials.selectAll()
 
     def _select_no_trials(self):
-        logger.debug(self._get_selected_trials())
+        """Clear trial selection"""
         self.tableTrials.clearSelection()
 
     def _get_selected_rows(self):
-        return set(inx.row() for inx in
-                   self.tableTrials.selectedIndexes())
+        """Return indices of selected rows"""
+        return list(set(idx.row() for idx in
+                    self.tableTrials.selectedIndexes()))
 
     def _get_selected_trials(self):
-        sel_rows = self._get_selected_rows()
-        sel_items = (self.tableTrials.item(row, 0) for row in sel_rows)
+        """Return list of trials that are currently selected"""
+        sel_items = (self.tableTrials.item(row, 0) for row in
+                     self._get_selected_rows())
         return list(item.data(QtCore.Qt.UserRole) for item in sel_items)
 
-    def _clear_selected_trials(self):
-        """Clear selected trial"""
-        if self.listTrials.currentItem():
-            self.listTrials.rm_current_item()
+    def _remove_selected_trials(self):
+        """Remove selected trials from list"""
+        rows = self._get_selected_rows()
+        while rows:
+            row = rows[0]
+            self.tableTrials.removeRow(row)
+            rows = self._get_selected_rows()
 
     def _plot_trials(self):
-        """Plot trials from list"""
-        trials = [item.userdata for item in self.listTrials.items]
+        """Plot selected trials"""
+        trials = self._get_selected_trials()
         if not trials:
             return
         model_normaldata = read_all_normaldata()
@@ -637,7 +638,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _plot_trials_average(self):
         """Average trials from list and plot"""
-        trials = [item.userdata for item in self.listTrials.items]
+        trials = self._get_selected_trials()
         if len(trials) < 2:
             qt_message_dialog('Need at least 2 trials for averaging')
             return

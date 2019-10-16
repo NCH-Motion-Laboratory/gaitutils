@@ -210,6 +210,9 @@
       </item>
       <item row="9" column="1" colspan="7">
        <widget class="QTableWidget" name="tableTrials">
+        <property name="styleSheet">
+         <string notr="true">font: 8pt;</string>
+        </property>
         <property name="sizeAdjustPolicy">
          <enum>QAbstractScrollArea::AdjustToContents</enum>
         </property>

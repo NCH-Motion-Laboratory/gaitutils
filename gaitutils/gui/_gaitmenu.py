@@ -594,12 +594,17 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.tableTrials.selectAll()
 
     def _select_no_trials(self):
-        logger.debug(list(self._get_selected_rows()))
+        logger.debug(self._get_selected_trials())
         self.tableTrials.clearSelection()
 
     def _get_selected_rows(self):
         return set(inx.row() for inx in
                    self.tableTrials.selectedIndexes())
+
+    def _get_selected_trials(self):
+        sel_rows = self._get_selected_rows()
+        sel_items = (self.tableTrials.item(row, 0) for row in sel_rows)
+        return list(item.data(QtCore.Qt.UserRole) for item in sel_items)
 
     def _clear_selected_trials(self):
         """Clear selected trial"""

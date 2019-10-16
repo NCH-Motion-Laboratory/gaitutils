@@ -411,7 +411,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionCopy_session_videos_to_desktop.triggered.connect(copy_session_videos)
         self.actionAutomark_events.triggered.connect(self._automark_trial)
 
-        # set up radio buttons 
+        # force "item selected" style, otherwise it will depend on focus
+        self.tableTrials.setStyleSheet("QTableView{ selection-background-color: rgba(0, 0, 255, 50%);  }")
+
+        # set up radio buttons
         self.rb_map_backend = {'plotly': self.rbPlotly,
                                'matplotlib': self.rbMatplotlib}
         rb_backend_active = self.rb_map_backend[cfg.plot.backend]
@@ -610,6 +613,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _remove_selected_trials(self):
         """Remove selected trials from list"""
         while self._selected_rows:
+            # this relies on _selected_rows dynamically changing after removals
             row = self._selected_rows[0]
             self.tableTrials.removeRow(row)
 

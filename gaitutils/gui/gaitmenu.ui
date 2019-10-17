@@ -43,7 +43,7 @@
       <item row="11" column="1">
        <widget class="QPushButton" name="btnAddSession">
         <property name="text">
-         <string>Add session...</string>
+         <string>Add from session...</string>
         </property>
        </widget>
       </item>
@@ -97,13 +97,6 @@
        <widget class="QLabel" name="label_5">
         <property name="text">
          <string>Plot options:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="11" column="5">
-       <widget class="QPushButton" name="btnSelectAll">
-        <property name="text">
-         <string>Select all</string>
         </property>
        </widget>
       </item>
@@ -256,17 +249,17 @@
         </column>
        </widget>
       </item>
+      <item row="11" column="6">
+       <widget class="QPushButton" name="btnSelectAll">
+        <property name="text">
+         <string>Select all</string>
+        </property>
+       </widget>
+      </item>
       <item row="11" column="7">
        <widget class="QPushButton" name="btnClearSelected">
         <property name="text">
          <string>Clear selected</string>
-        </property>
-       </widget>
-      </item>
-      <item row="11" column="4">
-       <widget class="QPushButton" name="btnSelectNone">
-        <property name="text">
-         <string>Select none</string>
         </property>
        </widget>
       </item>

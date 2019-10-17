@@ -389,7 +389,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnAddTrials.clicked.connect(self._add_trials_dialog)
         self.btnAddNexusTrial.clicked.connect(self._add_nexus_trial)
         self.btnSelectAll.clicked.connect(self._select_all_trials)
-        self.btnSelectNone.clicked.connect(self._select_no_trials)
         self.btnClearSelected.clicked.connect(self._remove_selected_trials)
         self.btnPlotTrials.clicked.connect(self._plot_trials)
         self.btnAveragePlot.clicked.connect(self._plot_trials_average)
@@ -411,8 +410,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionCopy_session_videos_to_desktop.triggered.connect(copy_session_videos)
         self.actionAutomark_events.triggered.connect(self._automark_trial)
 
-        # force "item selected" style, otherwise it will depend on focus
-        self.tableTrials.setStyleSheet("QTableView{ selection-background-color: rgba(0, 0, 255, 50%);  }")
+        # force "item selected" style, otherwise it will depend on focus; set font size
+        table_sheet = "QTableView{ selection-background-color: rgba(0, 0, 255, 50%); font-size: 8pt; }"
+        self.tableTrials.setStyleSheet(table_sheet)
 
         # set up radio buttons
         self.rb_map_backend = {'plotly': self.rbPlotly,
@@ -589,10 +589,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _select_all_trials(self):
         """Select all trials"""
         self.tableTrials.selectAll()
-
-    def _select_no_trials(self):
-        """Clear trial selection"""
-        self.tableTrials.clearSelection()
 
     @property
     def _selected_rows(self):

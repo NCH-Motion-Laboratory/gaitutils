@@ -566,6 +566,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
             _report_exception(e)
         else:
             self._add_trial_to_table(tr)
+            self.tableTrials.resizeColumnsToContents()
+
 
     def _add_session_dialog(self):
         """Show the add session dialog and add trials to list"""

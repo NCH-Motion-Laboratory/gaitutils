@@ -44,7 +44,7 @@ class IteratorMapper(object):
 
 
 def _handle_cyclespec(cycles):
-    """Handle cyclespec argument"""
+    """Handle cyclespec argument to plotter functions. """
     default_cycles = cfg.plot.default_cycles
     if cycles == 'unnormalized':
         cycles = {vartype: 'unnormalized' for vartype in default_cycles}
@@ -64,7 +64,6 @@ def _handle_cyclespec(cycles):
 def _handle_style_and_color_args(style_by, color_by):
     """Handle style and color choice"""
     vals_ok = set(('session', 'trial', 'context', None))
-
     style_by_defaults = {'model': cfg.plot.model_style_by}
     if style_by is None:
         style_by = dict()

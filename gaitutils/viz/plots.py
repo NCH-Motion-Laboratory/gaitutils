@@ -95,7 +95,7 @@ def plot_session_average(session, layout_name=None, tagged_only=True,
 
     c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
     if not c3ds:
-        raise GaitDataError('No dynamic trials found for current session')
+        raise GaitDataError('No dynamic trials found for %s' % session)
 
     atrial = stats.AvgTrial(c3ds, sessionpath=session)
     maintitle_ = '%s (%d trial average)' % (atrial.sessiondir, atrial.nfiles)
@@ -109,7 +109,7 @@ def plot_trial_velocities(session, backend=None):
     """Plot median velocities for each dynamic trial in Nexus session."""
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
     if not c3ds:
-        raise GaitDataError('No dynamic trials found for current session')
+        raise GaitDataError('No dynamic trials found for %s' % session)
 
     labels = [op.splitext(op.split(f)[1])[0] for f in c3ds]
     vels = np.array([utils._trial_median_velocity(trial) for trial in c3ds])
@@ -121,7 +121,7 @@ def plot_trial_timedep_velocities(session, backend=None):
     """Plot time-dependent velocity for each dynamic trial in session."""
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
     if not c3ds:
-        raise GaitDataError('No dynamic trials found for current session')
+        raise GaitDataError('No dynamic trials found for %s' % session)
 
     vels = list()
     labels = list()

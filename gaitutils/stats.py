@@ -144,8 +144,8 @@ def average_trials(trials, fp_cycles_only=False,
                     vardata = np.delete(vardata, outlier_rows, axis=0)
             n_ok = vardata.shape[0]
             if n_ok == 0:
-                stddata[var] = 0
-                avgdata[var] = 0
+                stddata[var] = None
+                avgdata[var] = None
             elif use_medians:
                 stddata[var] = numutils.mad(vardata, axis=0)
                 avgdata[var] = np.median(vardata, axis=0)

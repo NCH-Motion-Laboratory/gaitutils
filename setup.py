@@ -17,7 +17,7 @@ console_entries = ['gaitmenu=gaitutils.gui._gaitmenu:main',
                    'gaitmenu_make_shortcut=gaitutils.envutils:make_gaitutils_shortcut']
 
 setup(name='gaitutils',
-      version='0.12.7',
+      version='0.12.8',
       description='Utilities for processing and plotting gait data',
       author='Jussi Nurminen',
       author_email='jnu@iki.fi',

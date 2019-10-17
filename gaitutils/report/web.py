@@ -293,7 +293,9 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                 continue
             # include torsion info for all cycles; this is useful when plotting
             # isolated cycles
-            cycs = tr.get_cycles(cfg.plot.default_cycles['model'])
+            max_cycles = cfg.plot.max_cycles['model']
+            cycs = tr.get_cycles(cfg.plot.default_cycles['model'])[:max_cycles]
+                                 
             for cyc in cycs:
                 tibial_torsion[cyc] = dict()
                 for ctxt in tors:

@@ -16,20 +16,21 @@ logger = logging.getLogger(__name__)
 
 
 def plot_trials(trials, layout_name=None, backend=None, model_normaldata=None,
-                cycles=None, emg_mode=None, legend_type=None, style_by=None,
-                color_by=None, supplementary_data=None, legend=True,
+                cycles=None, max_cycles=None, emg_mode=None, legend_type=None,
+                style_by=None, color_by=None, supplementary_data=None, legend=True,
                 figtitle=None):
     """Plot trials using specified or default backend"""
     backend_lib = get_backend(backend)
     layout = layouts.get_layout(layout_name)
     return backend_lib.plot_trials(
         trials, layout, model_normaldata=model_normaldata, cycles=cycles,
+        max_cycles=max_cycles,
         emg_mode=emg_mode, legend_type=legend_type, style_by=style_by,
         color_by=color_by, supplementary_data=supplementary_data,
         legend=legend, figtitle=figtitle)
 
 
-def plot_nexus_trial(layout_name=None, backend=None, cycles=None,
+def plot_nexus_trial(layout_name=None, backend=None, cycles=None, max_cycles=None,
                      emg_mode=None, maintitle=None, from_c3d=True,
                      model_normaldata=None):
     """Plot the currently loaded trial from Vicon Nexus"""
@@ -42,12 +43,14 @@ def plot_nexus_trial(layout_name=None, backend=None, cycles=None,
         cycles = 'unnormalized'
     return backend_lib.plot_trials([tr], layout,
                                    model_normaldata=model_normaldata,
-                                   cycles=cycles, emg_mode=emg_mode,
+                                   cycles=cycles, max_cycles=max_cycles,
+                                   emg_mode=emg_mode,
                                    legend_type='short_name_with_cyclename')
 
 
 def plot_sessions(sessions, tagged_only=True, tags=None, layout_name=None,
                   backend=None, model_normaldata=None, cycles=None,
+                  max_cycles=None,
                   emg_mode=None, legend_type=None, style_by=None,
                   color_by=None, supplementary_data=None, legend=True,
                   figtitle=None):
@@ -75,6 +78,7 @@ def plot_sessions(sessions, tagged_only=True, tags=None, layout_name=None,
 
     return plot_trials(trials, layout_name=layout_name, backend=backend,
                        model_normaldata=model_normaldata, cycles=cycles,
+                       max_cycles=max_cycles,
                        emg_mode=emg_mode, legend_type=legend_type,
                        style_by=style_by, color_by=color_by,
                        supplementary_data=None, legend=legend,

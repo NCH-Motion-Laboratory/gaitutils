@@ -420,7 +420,6 @@ class Trial(object):
             dict, the given specification will be applied to both contexts.
 
             'all' gets all trial cycles. 'forceplate' gets cycles starting with
-            valid forceplate contact. '1st_forceplate' gets the 1st cycle with
             valid forceplate contact. 'unnormalized' gets a Noncycle that is
             used as a sentinel for unnormalized data.
             An int or a list of int gives the specified cycle indices from the
@@ -446,8 +445,6 @@ class Trial(object):
                 return cycles
             elif cyclespec == 'forceplate':  # all forceplate cycles
                 return [c for c in cycles if c.on_forceplate]
-            elif cyclespec == '1st_forceplate':  # 1st forceplate cycle
-                return [c for c in cycles if c.on_forceplate][:1]
             elif isinstance(cyclespec, tuple):
                 # recurse until we have cycles (or cyclespec is exhausted)
                 if not cyclespec:
@@ -470,7 +467,6 @@ class Trial(object):
             cycs_ok.extend(good_cycles)
 
         return sorted(cycs_ok, key=lambda cyc: cyc.start)
-
 
     def _scan_cycles(self):
         """Create Gaitcycle instances based on trial strike/toeoff markers."""

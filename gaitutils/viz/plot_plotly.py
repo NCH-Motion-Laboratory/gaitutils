@@ -167,6 +167,7 @@ _plot_cache = dict()  # cache for plot_trials
 
 
 def plot_trials(trials, layout, model_normaldata=None, cycles=None,
+                max_cycles=None,
                 emg_mode=None, legend_type=None, style_by=None,
                 color_by=None, supplementary_data=None,
                 legend=True, figtitle=None, big_fonts=False):
@@ -216,6 +217,8 @@ def plot_trials(trials, layout, model_normaldata=None, cycles=None,
 
     normalized = cycles != 'unnormalized'
     cycles = _handle_cyclespec(cycles)
+    if max_cycles is None:
+        max_cycles = cfg.plot.max_cycles
 
     legend_fontsize = cfg.plot_plotly.legend_fontsize
     label_fontsize = cfg.plot_plotly.label_fontsize
@@ -271,8 +274,8 @@ def plot_trials(trials, layout, model_normaldata=None, cycles=None,
     # plot actual data
     for trial in trials:
         # get Gaitcycle instances from trial according to cycle specs
-        model_cycles_ = trial.get_cycles(cycles['model'])
-        emg_cycles_ = trial.get_cycles(cycles['emg'])
+        model_cycles_ = trial.get_cycles(cycles['model'])[:max_cycles['model']]
+        emg_cycles_ = trial.get_cycles(cycles['emg'])[:max_cycles['emg']]
         allcycles = list(set.union(set(model_cycles_), set(emg_cycles_)))
         if not allcycles:
             logger.debug('trial %s has no cycles of specified type' %

@@ -73,7 +73,7 @@ class AvgTrial(Trial):
 
 def average_trials(trials, fp_cycles_only=False,
                    reject_zeros=True,
-                   reject_outliers=1e-4,
+                   reject_outliers=None,
                    use_medians=False):
     """ Average model data from several trials.
 

@@ -72,24 +72,33 @@ class AvgTrial(Trial):
 
 
 def average_trials(trials, fp_cycles_only=False,
-                   reject_zeros=True, use_medians=False):
+                   reject_zeros=True,
+                   reject_outliers=1e-4,
+                   use_medians=False):
     """ Average model data from several trials.
 
-    trials: list
+    Parameters
+    ----------
+    trials : list
         filename, or list of filenames (c3d) to read trials from, or list
         of Trial instances
-    fp_cycles_only: bool
+    fp_cycles_only : bool
         If True, only collect data from forceplate cycles. Kinetics will always
         be collected from forceplate cycles only.
-    reject_zeros: bool
-        Reject any curves which contain zero (0.000...) values. These are sometimes
-        used to mark gaps.
-    use_medians:
-        Use median and MAD (median absolute deviation) instead of mean and standard
-        deviation. Medians are robust to outliers but not robust to small sample size.
-        Thus, use of medians may be a bad idea for small samples.
+    reject_zeros : bool
+        Reject any curves which contain zero (0.000...) values. Zero values are
+        sometimes used to mark gaps.
+    reject_outliers : float or None
+        None for no automatic outlier rejection. Otherwise, a P value for false
+        rejection (assuming strictly normally distributed data). Outliers are
+        rejected based on robust statistics (modified Z-score) 
+    use_medians: bool
+        Use median and MAD (median absolute deviation) instead of mean and
+        stddev. The median is robust to outliers but not robust to small
+        sample size. Thus, use of medians may be a bad idea for small samples.
 
-    Returns:
+    Returns
+    -------
 
     avgdata: dict
         Averaged (or median) data
@@ -116,13 +125,23 @@ def average_trials(trials, fp_cycles_only=False,
             continue
         else:
             Ntot = vardata.shape[0]
-            # drop curves containing zero values
             if reject_zeros:
                 rows_bad = np.where(np.any(vardata == 0, axis=1))[0]
                 if len(rows_bad) > 0:
-                    logger.debug('%s: dropping %d curves with zero output' %
+                    logger.debug('%s: rejecting %d curves with zero values' %
                                  (var, len(rows_bad)))
                     vardata = np.delete(vardata, rows_bad, axis=0)
+            n_ok = vardata.shape[0]
+            if n_ok > 0 and reject_outliers is not None and not use_medians:
+                # a Bonferroni type correction for the p-threshold
+                p_threshold = reject_outliers / vardata.shape[0]
+                outlier_inds = numutils.outliers(vardata, axis=0,
+                                                 p_threshold=p_threshold)
+                outlier_rows = np.unique(outlier_inds[0])
+                if outlier_rows.size > 0:
+                    logger.debug('%s: rejecting %d curves with outliers' %
+                                 (var, outlier_rows.size))
+                    vardata = np.delete(vardata, outlier_rows, axis=0)
             n_ok = vardata.shape[0]
             if n_ok == 0:
                 stddata[var] = 0
@@ -139,6 +158,7 @@ def average_trials(trials, fp_cycles_only=False,
     if not avgdata:
         logger.warning('nothing averaged')
     return (avgdata, stddata, N_ok, Ncyc)
+
 
 def _collect_model_data(trials, fp_cycles_only=False):
     """ Collect given model data across trials and cycles.

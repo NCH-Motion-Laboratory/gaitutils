@@ -13,15 +13,82 @@ import logging
 import numpy as np
 import hashlib
 from scipy.signal import medfilt
+from scipy.special import erfinv
 from numpy.lib.stride_tricks import as_strided
 
 logger = logging.getLogger(__name__)
 
 
-def mad(x, scale=1.4826, axis=0):
-    """Median absolute deviation. A robust alternative to stddev."""
-    med = np.median(x, axis=axis)
-    return scale * np.median(np.abs(x - med), axis=axis)
+def mad(data, axis=None, scale=1.4826, keepdims=False):
+    """Median absolute deviation or MAD. Defined as the median absolute
+    deviation from the median of the data. A robust alternative to stddev.
+    Identical to scipy.stats.median_absolute_deviation(), but that does
+    not take a keepdims argument.
+
+    Parameters
+    ----------
+    data : array_like
+        The data
+    scale : float
+        Scaling of the result. By default, it is scaled to give a consistent
+        estimate of the standard deviation of values from a normal
+        distribution.
+    axis : Axis or axes along which to compute MAD.
+
+    Returns
+    -------
+    res : ndarray
+        The result
+    """
+    # keep dims here so that broadcasting works
+    med = np.median(data, axis=axis, keepdims=True)
+    return scale * np.median(np.abs(data - med), axis=axis, keepdims=keepdims)
+
+
+def modified_zscore(data, axis=0):
+    """Modified Z-score.
+
+    Z-score analogue computed using robust statistics.
+
+    Parameters
+    ----------
+    data : array_like
+        The data
+    axis : Axis or axes along which to compute the median values.
+
+    Returns
+    -------
+    res : ndarray
+        The result
+    """
+    med_ = np.median(data, axis=axis, keepdims=True)
+    mad_ = mad(data, axis=axis, keepdims=True)
+    return (data - med_) / mad_
+
+
+def outliers(x, axis=0, p_threshold=1e-3):
+    """Robustly detect outliers assuming a normal distribution.
+    
+    A modified Z-score is first computed based on the data. Then a threshold
+    Z is computed according to p_threshold, and values that exceed it
+    are rejected. p_threshold is the probability of rejection for strictly
+    normally distributed data, i.e. probability for "false outlier"
+    
+    Parameters
+    ----------
+    data : array_like
+        The data
+    axis : Axis or axes along which to compute the Z scores. E.g. axis=0
+        computes row-wise Z scores and rejects based on those.
+
+    Returns
+    -------
+    idx : tuple
+        Indexes of rejected values (as in np.where output)
+    """
+    zs = modified_zscore(x, axis=axis)
+    z_threshold = np.sqrt(2) * erfinv(1-p_threshold)
+    return np.where(abs(zs) > z_threshold)
 
 
 def files_digest(files):

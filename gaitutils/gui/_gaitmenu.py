@@ -568,12 +568,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         except GaitDataError as e:
             _report_exception(e)
         else:
-            item_names = (item.text for item in self.listTrials.items)
-            trialname = '<Nexus> %s' % tr.trialname
-            if trialname not in item_names:
-                self.listTrials.add_item(trialname, data=tr)
-            else:
-                qt_message_dialog('%s was already loaded' % trialname)
+            self._add_trial_to_table(tr)
+            self.tableTrials.resizeColumnsToContents()
+
 
     def _add_session_dialog(self):
         """Show the add session dialog and add trials to list"""

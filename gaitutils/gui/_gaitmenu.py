@@ -390,7 +390,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnAddNexusTrial.clicked.connect(self._add_nexus_trial)
         self.btnSelectAll.clicked.connect(self._select_all_trials)
         self.btnClearSelected.clicked.connect(self._remove_selected_trials)
-        self.btnPlotTrials.clicked.connect(self._plot_trials)
+        self.btnPlotTrials.clicked.connect(self._plot_selected_trials)
         self.btnAveragePlot.clicked.connect(self._plot_trials_average)
         self.actionCreate_PDF_report.triggered.connect(lambda ev: self._create_pdf_report())
         self.actionWeb_reports.triggered.connect(self._web_report_dialog.show)
@@ -409,10 +409,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # XXX: these get run in the main thread
         self.actionCopy_session_videos_to_desktop.triggered.connect(copy_session_videos)
         self.actionAutomark_events.triggered.connect(self._automark_trial)
-
+        # trials table settings
         # force "item selected" style, otherwise it will depend on focus; set font size
         table_sheet = "QTableView{ selection-background-color: rgba(0, 0, 255, 50%); font-size: 8pt; }"
         self.tableTrials.setStyleSheet(table_sheet)
+        self.tableTrials.cellDoubleClicked.connect(self._cell_doubleclicked)
 
         # set up radio buttons
         self.rb_map_backend = {'plotly': self.rbPlotly,
@@ -596,6 +597,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
         return list(set(idx.row() for idx in
                     self.tableTrials.selectedIndexes()))
 
+    def _cell_doubleclicked(self, row, col):
+        """Plot trial on double click"""
+        trial = self.tableTrials.item(row, 0).data(QtCore.Qt.UserRole)
+        self._plot_trials([trial])
+
     @property
     def _selected_trials(self):
         """Return list of trials that are currently selected"""
@@ -610,10 +616,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
             row = self._selected_rows[0]
             self.tableTrials.removeRow(row)
 
-    def _plot_trials(self):
-        """Plot selected trials"""
-        if not self._selected_rows:
-            return
+    def _plot_selected_trials(self):
+        if self._selected_rows:
+            self._plot_trials(self._selected_trials)
+
+    def _plot_trials(self, trials):
+        """Plot specified trials, or selected trials from menu"""
         model_normaldata = read_all_normaldata()
         layout_desc = self.cbLayout.currentText()
         layout_name = self.layouts_map[layout_desc]
@@ -625,7 +633,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._run_in_thread(plot_trials,
                             finished_func=self._enable_main_ui,
                             result_func=self._show_plots,
-                            trials=self._selected_trials,
+                            trials=trials,
                             layout_name=layout_name,
                             backend=backend,
                             cycles=cycles,

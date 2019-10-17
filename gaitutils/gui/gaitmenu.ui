@@ -204,10 +204,10 @@
       <item row="9" column="1" colspan="7">
        <widget class="QTableWidget" name="tableTrials">
         <property name="styleSheet">
-         <string notr="true">font: 8pt;</string>
+         <string notr="true"/>
         </property>
         <property name="sizeAdjustPolicy">
-         <enum>QAbstractScrollArea::AdjustToContents</enum>
+         <enum>QAbstractScrollArea::AdjustIgnored</enum>
         </property>
         <property name="editTriggers">
          <set>QAbstractItemView::NoEditTriggers</set>
@@ -219,7 +219,7 @@
          <enum>QAbstractItemView::SelectRows</enum>
         </property>
         <attribute name="horizontalHeaderStretchLastSection">
-         <bool>false</bool>
+         <bool>true</bool>
         </attribute>
         <attribute name="verticalHeaderVisible">
          <bool>false</bool>

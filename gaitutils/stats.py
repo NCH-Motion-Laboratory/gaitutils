@@ -203,7 +203,7 @@ def _collect_model_data(trials, fp_cycles_only=False):
             except GaitDataError:
                 logger.info('cannot read variable %s from %s, skipping '
                             'corresponding model %s' % (var, trial.trialname,
-                                                         model.desc))
+                                                        model.desc))
         for model in models_ok:
             # gather data
             for cycle in trial.cycles:

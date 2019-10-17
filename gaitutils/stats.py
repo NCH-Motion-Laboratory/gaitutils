@@ -27,8 +27,8 @@ class AvgTrial(Trial):
         s += '>'
         return s
 
-    def __init__(self, trials, sessionpath=None, fp_cycles_only=False, max_dist=None):
-        avgdata, stddata, n_ok, _ = average_trials(trials, max_dist=max_dist,
+    def __init__(self, trials, sessionpath=None, fp_cycles_only=False):
+        avgdata, stddata, n_ok, _ = average_trials(trials,
                                                    fp_cycles_only=fp_cycles_only)
         # nfiles may be misleading since not all trials may contain valid data
         self.nfiles = len(trials)
@@ -71,15 +71,13 @@ class AvgTrial(Trial):
             logger.debug('setting norm. cycle for AvgTrial (no effect)')
 
 
-def average_trials(trials, max_dist=None, fp_cycles_only=False,
+def average_trials(trials, fp_cycles_only=False,
                    reject_zeros=True, use_medians=False):
     """ Average model data from several trials.
 
     trials: list
         filename, or list of filenames (c3d) to read trials from, or list
         of Trial instances
-    max_dist: maximum curve distance from median, for outlier rejection. Not
-        applied if medians are used (use_medians)
     fp_cycles_only: bool
         If True, only collect data from forceplate cycles. Kinetics will always
         be collected from forceplate cycles only.
@@ -133,14 +131,6 @@ def average_trials(trials, max_dist=None, fp_cycles_only=False,
                 stddata[var] = numutils.mad(vardata, axis=0)
                 avgdata[var] = np.median(vardata, axis=0)
             else:
-                # drop outliers first
-                if max_dist is not None:
-                    outliers = _outlier_rows(vardata, max_dist)
-                    N_out = np.count_nonzero(outliers)
-                    if N_out > 0:
-                        logger.debug('%s: dropping %d outlier curves' %
-                                     (var, N_out))
-                        vardata = vardata[~outliers, :] if N_out else vardata
                 stddata[var] = vardata.std(axis=0) if n_ok > 0 else None
                 avgdata[var] = vardata.mean(axis=0) if n_ok > 0 else None
             logger.debug('%s: averaged %d/%d curves' % (var, n_ok, Ntot))
@@ -149,13 +139,6 @@ def average_trials(trials, max_dist=None, fp_cycles_only=False,
     if not avgdata:
         logger.warning('nothing averaged')
     return (avgdata, stddata, N_ok, Ncyc)
-
-
-def _outlier_rows(A, max_dist):
-    """ Find outlier rows from A, defined as max distance from median row """
-    med = np.median(A, axis=0)
-    return (np.abs(A-med)).max(axis=1) > max_dist
-
 
 def _collect_model_data(trials, fp_cycles_only=False):
     """ Collect given model data across trials and cycles.

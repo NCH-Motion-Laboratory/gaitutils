@@ -158,7 +158,7 @@ def get_sessionpath():
         sessionpath = None
     if not sessionpath:
         raise GaitDataError(
-            'Cannot get Nexus session path, ' 'no session or maybe in Live mode?'
+            'Cannot get Nexus session path, no session or maybe in Live mode?'
         )
     return op.normpath(sessionpath)
 
@@ -395,7 +395,7 @@ def _get_1_forceplate_data(vicon, devid):
     cop_ok &= np.logical_and(cop_w[:, 1] >= lb[1], cop_w[:, 1] <= ub[1]).all()
     if not cop_ok:
         logger.warning(
-            'center of pressure outside plate boundaries, ' 'clipping to plate'
+            'center of pressure outside plate boundaries, clipping to plate'
         )
         cop_w[:, 0] = np.clip(cop_w[:, 0], lb[0], ub[0])
         cop_w[:, 1] = np.clip(cop_w[:, 1], lb[1], ub[1])
@@ -452,7 +452,7 @@ def _get_marker_data(vicon, markers, ignore_edge_gaps=True, ignore_missing=False
                 continue
             else:
                 raise GaitDataError(
-                    'Cannot read marker trajectory ' 'from Nexus: \'%s\'' % marker
+                    'Cannot read marker trajectory from Nexus: %s' % marker
                 )
         mP = np.array([x, y, z]).transpose()
         mkrdata[marker] = mP

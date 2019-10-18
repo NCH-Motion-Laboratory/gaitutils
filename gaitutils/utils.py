@@ -456,7 +456,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             fr0 = strike_fr + settle_fr
             side = _leading_foot(mkrdata, roi=roi)[fr0]
             if side is None:
-                raise GaitDataError('cannot determine leading foot from marker' ' data')
+                raise GaitDataError('cannot determine leading foot from marker data')
             footlen = rfootlen if side == 'R' else lfootlen
             logger.debug('checking contact for leading foot: %s' % side)
             ok = _foot_plate_check(fp, mkrdata, fr0, side, footlen) == 2
@@ -744,7 +744,7 @@ def automark_events(
             ok_ind = np.where(np.abs(fpc - strikes) < FP_EVENT_TOL)[0]
             if ok_ind.size == 0:
                 logger.warning(
-                    'could not match forceplate strike with an ' 'autodetected strike'
+                    'could not match forceplate strike with an autodetected strike'
                 )
             else:
                 # replace with fp detected strikes
@@ -757,7 +757,7 @@ def automark_events(
             ok_ind = np.where(np.abs(fpc - toeoffs) < FP_EVENT_TOL)[0]
             if ok_ind.size == 0:
                 logger.warning(
-                    'could not match forceplate toeoff with an ' 'autodetected toeoff'
+                    'could not match forceplate toeoff with an autodetected toeoff'
                 )
             else:
                 toeoffs[ok_ind] = fpc[ok_ind]

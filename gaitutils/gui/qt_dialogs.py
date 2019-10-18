@@ -174,7 +174,7 @@ class OptionsDialog(QtWidgets.QDialog):
             )
         else:
             fout = QtWidgets.QFileDialog.getSaveFileName(
-                self, 'Save config file', op.expanduser('~'), 'Config files ' '(*.cfg)'
+                self, 'Save config file', op.expanduser('~'), 'Config files (*.cfg)'
             )
             fname = fout[0]
             if fname:

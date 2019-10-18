@@ -323,7 +323,7 @@ def get_forceplate_data(c3dfile):
         nplate += 1
         if plate.GetType() != 2:
             # Nexus should always write forceplates as type 2
-            raise GaitDataError('Only type 2 forceplates are ' 'supported for now')
+            raise GaitDataError('Only type 2 forceplates are supported for now')
         rawdata = dict()
         data = dict()
         for ch in btk.Iterate(plate.GetChannels()):
@@ -358,7 +358,7 @@ def get_forceplate_data(c3dfile):
         cop_wy = np.clip(cop_w[:, 1], lb[1], ub[1])
         if not (cop_wx == cop_w[:, 0]).all() and (cop_wy == cop_w[:, 1]).all():
             logger.warning(
-                'center of pressure outside forceplate ' 'bounds, clipping to plate'
+                'center of pressure outside forceplate bounds, clipping to plate'
             )
             cop[:, 0] = cop_wx
             cop[:, 1] = cop_wy

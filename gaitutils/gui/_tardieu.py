@@ -329,7 +329,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
                 pdf.savefig(figx)
         except IOError:
             qt_message_dialog(
-                'Error writing %s, ' 'check that file is not already open.' % fname
+                'Error writing %s, check that file is not already open.' % fname
             )
             return
 

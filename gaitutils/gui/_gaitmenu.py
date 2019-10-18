@@ -412,7 +412,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if cfg.general.git_autoupdate:
             if envutils._git_autoupdate():
                 qt_message_dialog(
-                    'The package was automatically updated. ' 'Restarting...'
+                    'The package was automatically updated. Restarting...'
                 )
                 os.execv(sys.executable, ['python'] + sys.argv)
 
@@ -782,7 +782,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         if convert_videos(vidfiles, check_only=True):
             reply = qt_yesno_dialog(
-                'It looks like the session videos have already ' 'been converted. Redo?'
+                'It looks like the session videos have already been converted. Redo?'
             )
             if reply == QtWidgets.QMessageBox.NoRole:
                 return

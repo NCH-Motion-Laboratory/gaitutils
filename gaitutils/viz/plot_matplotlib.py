@@ -627,5 +627,5 @@ def save_pdf(filename, fig):
             pdf.savefig(fig)
     except IOError:
         raise IOError(
-            'Error writing %s, ' 'check that file is not already open.' % filename
+            'Error writing %s, check that file is not already open.' % filename
         )

@@ -31,8 +31,7 @@ def load_quirks(session):
         with io.open(fname, 'r', encoding='utf-8') as f:
             try:
                 quirks = json.load(f)
-            except (UnicodeDecodeError, EOFError, IOError, TypeError,
-                    ValueError):
+            except (UnicodeDecodeError, EOFError, IOError, TypeError, ValueError):
                 logger.warning('cannot load quirks file %s' % fname)
                 quirks = dict()
     else:
@@ -54,21 +53,22 @@ def load_info(session):
                 info = json.load(f)
                 extra_keys = set(info.keys()) - set(json_keys)
                 if extra_keys:
-                    logger.warning('Extra keys %s in patient info file %s'
-                                   % (extra_keys, fname))
+                    logger.warning(
+                        'Extra keys %s in patient info file %s' % (extra_keys, fname)
+                    )
                     for key in extra_keys:
                         info.pop(key)
                 missing_keys = set(json_keys) - set(info.keys())
                 if missing_keys:
-                    logger.warning('Missing keys %s in patient info file %s'
-                                   % (missing_keys, fname))
+                    logger.warning(
+                        'Missing keys %s in patient info file %s'
+                        % (missing_keys, fname)
+                    )
                     # supply default values for missing keys
                     for key in missing_keys:
                         info[key] = default_info()[key]
-            except (UnicodeDecodeError, EOFError, IOError, TypeError,
-                    ValueError):
-                raise GaitDataError('Error loading patient info file %s'
-                                    % fname)
+            except (UnicodeDecodeError, EOFError, IOError, TypeError, ValueError):
+                raise GaitDataError('Error loading patient info file %s' % fname)
     else:
         info = None
 
@@ -88,8 +88,9 @@ def save_info(session, patient_info):
 def _merge_session_info(sessions):
     """Merge patient info files across sessions. fullname and hetu must match.
     Returns dict of individual session infos and the merged info"""
-    session_infos = {session: (load_info(session) or default_info())
-                     for session in sessions}
+    session_infos = {
+        session: (load_info(session) or default_info()) for session in sessions
+    }
     info = default_info()
     # ignore the session description (does not make sense when merging)
     for key in ['fullname', 'hetu', 'report_notes']:
@@ -145,8 +146,7 @@ def _filter_by_eclipse_keys(enfs, patterns, eclipse_keys):
     if not isinstance(eclipse_keys, list):
         eclipse_keys = [eclipse_keys]
     for enf in enfs:
-        ecldi = {key.upper(): val.upper() for key, val in
-                 get_eclipse_keys(enf).items()}
+        ecldi = {key.upper(): val.upper() for key, val in get_eclipse_keys(enf).items()}
         eclvals = [val for key, val in ecldi.items() if key in eclipse_keys]
         for pattern in patterns:
             if any(pattern.upper() in eclval for eclval in eclvals):

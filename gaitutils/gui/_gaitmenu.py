@@ -24,19 +24,32 @@ import traceback
 import ulstools
 from ulstools import configdot
 
-from .qt_dialogs import (OptionsDialog, qt_message_dialog, qt_yesno_dialog,
-                         ChooseSessionsDialog, ChooseSessionsDialogWeb,
-                         qt_matplotlib_window, qt_dir_chooser)
+from .qt_dialogs import (
+    OptionsDialog,
+    qt_message_dialog,
+    qt_yesno_dialog,
+    ChooseSessionsDialog,
+    ChooseSessionsDialogWeb,
+    qt_matplotlib_window,
+    qt_dir_chooser,
+)
 from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ulstools.num import check_hetu
 from ..normaldata import read_all_normaldata
 from ..videos import _collect_session_videos, convert_videos
 from .. import GaitDataError, nexus, cfg, sessionutils, envutils, c3d, stats, trial
 from . import _tardieu
-from ..autoprocess import (autoproc_session, autoproc_trial, automark_trial,
-                           copy_session_videos)
-from ..viz.plots import (plot_trials, plot_trial_timedep_velocities,
-                         plot_trial_velocities)
+from ..autoprocess import (
+    autoproc_session,
+    autoproc_trial,
+    automark_trial,
+    copy_session_videos,
+)
+from ..viz.plots import (
+    plot_trials,
+    plot_trial_timedep_velocities,
+    plot_trial_velocities,
+)
 from ..viz.timedist import do_session_average_plot
 from ..viz.plot_misc import _browse_localhost, _show_plotly_fig
 from ..report import web, pdf
@@ -156,11 +169,17 @@ class WebReportDialog(QtWidgets.QDialog):
         self.btnDeleteAllReports.clicked.connect(self._delete_all_reports)
         self.btnViewReport.clicked.connect(self._view_current_report)
         # add double click action to browse current report
-        (self.listActiveReports.itemDoubleClicked.
-         connect(lambda item: _browse_localhost(port=item.userdata)))
+        (
+            self.listActiveReports.itemDoubleClicked.connect(
+                lambda item: _browse_localhost(port=item.userdata)
+            )
+        )
         # these require active reports to be enabled
-        self.reportWidgets = [self.btnDeleteReport, self.btnDeleteAllReports,
-                              self.btnViewReport]
+        self.reportWidgets = [
+            self.btnDeleteReport,
+            self.btnDeleteAllReports,
+            self.btnViewReport,
+        ]
         self._set_report_button_status()
 
     def _create_web_report(self, sessions=None):
@@ -168,8 +187,10 @@ class WebReportDialog(QtWidgets.QDialog):
         web browser on localhost on the correct port"""
 
         if self.listActiveReports.count() == cfg.web_report.max_reports:
-            qt_message_dialog('Maximum number of active web reports active. '
-                              'Please delete some reports first.')
+            qt_message_dialog(
+                'Maximum number of active web reports active. '
+                'Please delete some reports first.'
+            )
             return
 
         if sessions is None:
@@ -184,28 +205,34 @@ class WebReportDialog(QtWidgets.QDialog):
         report_name = web._report_name(sessions)
         existing_names = [item.text for item in self.listActiveReports.items]
         if report_name in existing_names:
-            qt_message_dialog('There is already a report for %s' %
-                              report_name)
+            qt_message_dialog('There is already a report for %s' % report_name)
             return
 
         session_infos, info = sessionutils._merge_session_info(sessions)
         if info is None:
-            qt_message_dialog('Patient files do not match. Sessions may be '
-                              'from different patients. Continuing without '
-                              'patient info.')
+            qt_message_dialog(
+                'Patient files do not match. Sessions may be '
+                'from different patients. Continuing without '
+                'patient info.'
+            )
             info = sessionutils.default_info()
         else:
             dlg_info = WebReportInfoDialog(info, check_info=False)
             if dlg_info.exec_():
-                new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,
-                                report_notes=dlg_info.report_notes)
+                new_info = dict(
+                    hetu=dlg_info.hetu,
+                    fullname=dlg_info.fullname,
+                    report_notes=dlg_info.report_notes,
+                )
                 info.update(new_info)
 
                 # update info files (except session specific keys)
                 for session in sessions:
-                    update_dict = dict(report_notes=dlg_info.report_notes,
-                                       fullname=dlg_info.fullname,
-                                       hetu=dlg_info.hetu)
+                    update_dict = dict(
+                        report_notes=dlg_info.report_notes,
+                        fullname=dlg_info.fullname,
+                        hetu=dlg_info.hetu,
+                    )
                     session_infos[session].update(update_dict)
                     sessionutils.save_info(session, session_infos[session])
             else:
@@ -219,8 +246,7 @@ class WebReportDialog(QtWidgets.QDialog):
         self.parent.prog._canceled.connect(signals.cancel)
 
         # for comparison between sessions, get representative trials only
-        tags = (cfg.eclipse.repr_tags if len(sessions) > 1 else
-                cfg.eclipse.tags)
+        tags = cfg.eclipse.repr_tags if len(sessions) > 1 else cfg.eclipse.tags
 
         # collect all video files for conversion
         # includes tagged dynamic, video-only tagged, and static trials
@@ -233,12 +259,17 @@ class WebReportDialog(QtWidgets.QDialog):
             self.parent._convert_vidfiles(vidfiles, signals)
 
         # launch the report creation thread
-        self.parent._run_in_thread(web.dash_report, block_ui=True,
-                                   finished_func=self.parent._enable_main_ui,
-                                   result_func=self._web_report_ready,
-                                   info=info, sessions=sessions, tags=tags,
-                                   signals=signals,
-                                   recreate_plots=recreate_plots)
+        self.parent._run_in_thread(
+            web.dash_report,
+            block_ui=True,
+            finished_func=self.parent._enable_main_ui,
+            result_func=self._web_report_ready,
+            info=info,
+            sessions=sessions,
+            tags=tags,
+            signals=signals,
+            recreate_plots=recreate_plots,
+        )
 
     @property
     def active_reports(self):
@@ -322,8 +353,9 @@ class WebReportDialog(QtWidgets.QDialog):
         not run.
         Serving is a bit flaky in py2 (multiple requests cause exceptions)
         """
-        self.parent._run_in_thread(app.server.run, block_ui=False,
-                                   debug=False, port=port, threaded=True)
+        self.parent._run_in_thread(
+            app.server.run, block_ui=False, debug=False, port=port, threaded=True
+        )
         # double clicking on the list item will browse to corresponding port
         self.listActiveReports.add_item(app._gaitutils_report_name, data=port)
         # enable delete buttons etc.
@@ -341,8 +373,7 @@ class AddSessionDialog(QtWidgets.QDialog):
 
     def accept(self):
         self.c3ds = list()
-        tags = (cfg.eclipse.tags if self.rbAddTaggedTrials.isChecked()
-                else None)
+        tags = cfg.eclipse.tags if self.rbAddTaggedTrials.isChecked() else None
         # get session
         if self.rbUseCurrentNexusSession.isChecked():
             session = _get_nexus_sessionpath()
@@ -350,8 +381,7 @@ class AddSessionDialog(QtWidgets.QDialog):
             sessions = qt_dir_chooser()
             session = sessions[0] if sessions else None
         if session:
-            self.c3ds = sessionutils.get_c3ds(session, tags=tags,
-                                              trial_type='dynamic')
+            self.c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
             if self.c3ds:
                 self.done(QtWidgets.QDialog.Accepted)
             else:
@@ -359,7 +389,6 @@ class AddSessionDialog(QtWidgets.QDialog):
 
 
 class Gaitmenu(QtWidgets.QMainWindow):
-
     def __init__(self):
         super(self.__class__, self).__init__()
         # load user interface made with designer
@@ -369,17 +398,22 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # disable editing of log widget text
         self.txtOutput.setReadOnly(True)
 
-        if (not cfg.general.allow_multiple_menu_instances and
-           ulstools.env.already_running('gaitmenu')):
-            qt_message_dialog('Another instance of the menu seems to be '
-                              'running. Please use that instance or '
-                              'stop it before starting a new one.')
+        if (
+            not cfg.general.allow_multiple_menu_instances
+            and ulstools.env.already_running('gaitmenu')
+        ):
+            qt_message_dialog(
+                'Another instance of the menu seems to be '
+                'running. Please use that instance or '
+                'stop it before starting a new one.'
+            )
             sys.exit()
 
         if cfg.general.git_autoupdate:
             if envutils._git_autoupdate():
-                qt_message_dialog('The package was automatically updated. '
-                                  'Restarting...')
+                qt_message_dialog(
+                    'The package was automatically updated. ' 'Restarting...'
+                )
                 os.execv(sys.executable, ['python'] + sys.argv)
 
         self._web_report_dialog = WebReportDialog(self)
@@ -392,19 +426,33 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnClearSelected.clicked.connect(self._remove_selected_trials)
         self.btnPlotTrials.clicked.connect(self._plot_selected_trials)
         self.btnAveragePlot.clicked.connect(self._plot_trials_average)
-        self.actionCreate_PDF_report.triggered.connect(lambda ev: self._create_pdf_report())
+        self.actionCreate_PDF_report.triggered.connect(
+            lambda ev: self._create_pdf_report()
+        )
         self.actionWeb_reports.triggered.connect(self._web_report_dialog.show)
         self.actionQuit.triggered.connect(self.close)
         self.actionOpts.triggered.connect(self._options_dialog)
         self.actionTardieu_analysis.triggered.connect(self._tardieu)
         self.actionAutoprocess_session.triggered.connect(self._autoproc_session)
         self.actionAutoprocess_single_trial.triggered.connect(self._autoproc_trial)
-        self.actionPDF_report_from_Nexus_session.triggered.connect(self._create_pdf_report_nexus)
-        self.actionWeb_report_from_Nexus_session.triggered.connect(self._create_web_report_nexus)
-        self.actionRun_postprocessing_pipelines.triggered.connect(self._postprocess_session)
-        self.actionTrial_median_velocities.triggered.connect(self._plot_trial_median_velocities)
-        self.actionTrial_timedep_velocities.triggered.connect(self._plot_trial_timedep_velocities)
-        self.actionConvert_session_videos_to_web_format.triggered.connect(self._convert_session_videos)
+        self.actionPDF_report_from_Nexus_session.triggered.connect(
+            self._create_pdf_report_nexus
+        )
+        self.actionWeb_report_from_Nexus_session.triggered.connect(
+            self._create_web_report_nexus
+        )
+        self.actionRun_postprocessing_pipelines.triggered.connect(
+            self._postprocess_session
+        )
+        self.actionTrial_median_velocities.triggered.connect(
+            self._plot_trial_median_velocities
+        )
+        self.actionTrial_timedep_velocities.triggered.connect(
+            self._plot_trial_timedep_velocities
+        )
+        self.actionConvert_session_videos_to_web_format.triggered.connect(
+            self._convert_session_videos
+        )
         self.actionTime_distance_average.triggered.connect(self._plot_timedist_average)
         # XXX: these get run in the main thread
         self.actionCopy_session_videos_to_desktop.triggered.connect(copy_session_videos)
@@ -416,14 +464,14 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.tableTrials.cellDoubleClicked.connect(self._cell_doubleclicked)
 
         # set up radio buttons
-        self.rb_map_backend = {'plotly': self.rbPlotly,
-                               'matplotlib': self.rbMatplotlib}
+        self.rb_map_backend = {'plotly': self.rbPlotly, 'matplotlib': self.rbMatplotlib}
         rb_backend_active = self.rb_map_backend[cfg.plot.backend]
         rb_backend_active.setChecked(True)
 
         # add plot layouts to combobox
-        cb_items = sorted(configdot.get_description(lo) or loname
-                          for loname, lo in cfg['layouts'])
+        cb_items = sorted(
+            configdot.get_description(lo) or loname for loname, lo in cfg['layouts']
+        )
         self.cbLayout.addItems(cb_items)
         # set default option to PiG lower body (if it's on the list)
         try:
@@ -432,8 +480,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
             default_index = 0
         self.cbLayout.setCurrentIndex(default_index)
         # map descriptions to layout names
-        self.layouts_map = {(configdot.get_description(lo) or loname): loname
-                            for loname, lo in cfg['layouts']}
+        self.layouts_map = {
+            (configdot.get_description(lo) or loname): loname
+            for loname, lo in cfg['layouts']
+        }
 
         XStream.stdout().messageWritten.connect(self._log_message)
         XStream.stderr().messageWritten.connect(self._log_message)
@@ -471,9 +521,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         c3ds = sessionutils.get_c3ds(session, trial_type='DYNAMIC')
         if c3ds:
-            reply = qt_yesno_dialog('Some of the dynamic trials have been '
-                                    'processed already. Are you sure you want '
-                                    'to run autoprocessing?')
+            reply = qt_yesno_dialog(
+                'Some of the dynamic trials have been '
+                'processed already. Are you sure you want '
+                'to run autoprocessing?'
+            )
             if reply == QtWidgets.QMessageBox.NoRole:
                 return
 
@@ -482,9 +534,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         signals.progress.connect(lambda text, p: self.prog.update(text, p))
         self.prog._canceled.connect(signals.cancel)
 
-        self._run_in_thread(autoproc_session,
-                            finished_func=self._enable_main_ui,
-                            signals=signals)
+        self._run_in_thread(
+            autoproc_session, finished_func=self._enable_main_ui, signals=signals
+        )
 
     def _autoproc_trial(self):
         """Wrapper to run autoprocess for Nexus trial"""
@@ -494,9 +546,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         signals.progress.connect(lambda text, p: self.prog.update(text, p))
         self.prog._canceled.connect(signals.cancel)
 
-        self._run_in_thread(autoproc_trial,
-                            finished_func=self._enable_main_ui,
-                            signals=signals)
+        self._run_in_thread(
+            autoproc_trial, finished_func=self._enable_main_ui, signals=signals
+        )
 
     def _plot_timedist_average(self):
         """Plot time-distance average"""
@@ -504,10 +556,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if session is None:
             return
         backend = self._get_plotting_backend_ui()
-        self._run_in_thread(do_session_average_plot,
-                            finished_func=self._enable_main_ui,
-                            result_func=self._show_plots,
-                            session=session, backend=backend)
+        self._run_in_thread(
+            do_session_average_plot,
+            finished_func=self._enable_main_ui,
+            result_func=self._show_plots,
+            session=session,
+            backend=backend,
+        )
 
     def _plot_trial_median_velocities(self):
         """Trial velocity plot from current Nexus session"""
@@ -515,10 +570,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if session is None:
             return
         backend = self._get_plotting_backend_ui()
-        self._run_in_thread(plot_trial_velocities,
-                            finished_func=self._enable_main_ui,
-                            result_func=self._show_plots,
-                            session=session, backend=backend)
+        self._run_in_thread(
+            plot_trial_velocities,
+            finished_func=self._enable_main_ui,
+            result_func=self._show_plots,
+            session=session,
+            backend=backend,
+        )
 
     def _plot_trial_timedep_velocities(self):
         """Trial velocity plot from current Nexus session"""
@@ -526,17 +584,24 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if session is None:
             return
         backend = self._get_plotting_backend_ui()
-        self._run_in_thread(plot_trial_timedep_velocities,
-                            finished_func=self._enable_main_ui,
-                            result_func=self._show_plots,
-                            session=session, backend=backend)
+        self._run_in_thread(
+            plot_trial_timedep_velocities,
+            finished_func=self._enable_main_ui,
+            result_func=self._show_plots,
+            session=session,
+            backend=backend,
+        )
 
     def _add_trial_to_table(self, trial):
         """Adds a trial to the trials table"""
         nrows = self.tableTrials.rowCount()
         self.tableTrials.insertRow(nrows)
-        texts = (trial.trialname, trial.eclipse_data['DESCRIPTION'],
-                 trial.eclipse_data['NOTES'], trial.sessionpath)
+        texts = (
+            trial.trialname,
+            trial.eclipse_data['DESCRIPTION'],
+            trial.eclipse_data['NOTES'],
+            trial.sessionpath,
+        )
         for k, txt in enumerate(texts):
             item_ = QtWidgets.QTableWidgetItem(txt)
             if k == 0:
@@ -572,7 +637,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._add_trial_to_table(tr)
             self.tableTrials.resizeColumnsToContents()
 
-
     def _add_session_dialog(self):
         """Show the add session dialog and add trials to list"""
         dlg = AddSessionDialog(self)
@@ -581,10 +645,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _add_trials_dialog(self):
         """Add individual trials to list"""
-        fout = QtWidgets.QFileDialog.getOpenFileNames(self,
-                                                     'Load C3D files',
-                                                      None,
-                                                      'C3D files (*.c3d)')
+        fout = QtWidgets.QFileDialog.getOpenFileNames(
+            self, 'Load C3D files', None, 'C3D files (*.c3d)'
+        )
         self._add_c3dfiles(fout[0])
 
     def _select_all_trials(self):
@@ -594,8 +657,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
     @property
     def _selected_rows(self):
         """Return indices of selected rows"""
-        return list(set(idx.row() for idx in
-                    self.tableTrials.selectedIndexes()))
+        return list(set(idx.row() for idx in self.tableTrials.selectedIndexes()))
 
     def _cell_doubleclicked(self, row, col):
         """Plot trial on double click"""
@@ -605,8 +667,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
     @property
     def _selected_trials(self):
         """Return list of trials that are currently selected"""
-        sel_items = (self.tableTrials.item(row, 0) for row in
-                     self._selected_rows)
+        sel_items = (self.tableTrials.item(row, 0) for row in self._selected_rows)
         return list(item.data(QtCore.Qt.UserRole) for item in sel_items)
 
     def _remove_selected_trials(self):
@@ -630,16 +691,18 @@ class Gaitmenu(QtWidgets.QMainWindow):
         cycles = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
         backend = self._get_plotting_backend_ui()
         # FIXME: hardcoded legend type
-        self._run_in_thread(plot_trials,
-                            finished_func=self._enable_main_ui,
-                            result_func=self._show_plots,
-                            trials=trials,
-                            layout_name=layout_name,
-                            backend=backend,
-                            cycles=cycles,
-                            emg_mode=emg_mode,
-                            legend_type='short_name_with_tag_and_cycle',
-                            model_normaldata=model_normaldata)
+        self._run_in_thread(
+            plot_trials,
+            finished_func=self._enable_main_ui,
+            result_func=self._show_plots,
+            trials=trials,
+            layout_name=layout_name,
+            backend=backend,
+            cycles=cycles,
+            emg_mode=emg_mode,
+            legend_type='short_name_with_tag_and_cycle',
+            model_normaldata=model_normaldata,
+        )
 
     def _plot_trials_average(self):
         """Average trials from list and plot"""
@@ -650,16 +713,19 @@ class Gaitmenu(QtWidgets.QMainWindow):
         layout_name = self.layouts_map[layout_desc]
         backend = self._get_plotting_backend_ui()
         reject_outliers = cfg.trial.outlier_rejection_threshold
-        avgtrial = stats.AvgTrial(self._selected_trials,
-                                  reject_outliers=reject_outliers)
-        self._run_in_thread(plot_trials,
-                            finished_func=self._enable_main_ui,
-                            result_func=self._show_plots,
-                            trials=avgtrial,
-                            layout_name=layout_name,
-                            backend=backend,
-                            color_by='context')
-        
+        avgtrial = stats.AvgTrial(
+            self._selected_trials, reject_outliers=reject_outliers
+        )
+        self._run_in_thread(
+            plot_trials,
+            finished_func=self._enable_main_ui,
+            result_func=self._show_plots,
+            trials=avgtrial,
+            layout_name=layout_name,
+            backend=backend,
+            color_by='context',
+        )
+
     def _create_web_report_nexus(self):
         """Create web report based on current Nexus session"""
         session = _get_nexus_sessionpath()
@@ -692,11 +758,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
                     p.kill()
                 break
             n_complete = len([p for p in procs if p.poll() is not None])
-            prog_txt = ('Converting videos: %d of %d files done'
-                        % (n_complete, len(procs)))
+            prog_txt = 'Converting videos: %d of %d files done' % (
+                n_complete,
+                len(procs),
+            )
             prog_p = 100 * n_complete / float(len(procs))
             signals.progress.emit(prog_txt, prog_p)
-            time.sleep(.1)
+            time.sleep(0.1)
             completed = n_complete == len(procs)
 
     def _convert_session_videos(self):
@@ -705,25 +773,24 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if session is None:
             return
         try:
-            vidfiles = _collect_session_videos(session,
-                                               tags=cfg.eclipse.tags)
+            vidfiles = _collect_session_videos(session, tags=cfg.eclipse.tags)
         except GaitDataError as e:
             qt_message_dialog(_exception_msg(e))
             return
         if not vidfiles:
-            qt_message_dialog('Cannot find any video files for session %s'
-                              % session)
+            qt_message_dialog('Cannot find any video files for session %s' % session)
             return
         if convert_videos(vidfiles, check_only=True):
-            reply = qt_yesno_dialog('It looks like the session videos have already '
-                                    'been converted. Redo?')
+            reply = qt_yesno_dialog(
+                'It looks like the session videos have already ' 'been converted. Redo?'
+            )
             if reply == QtWidgets.QMessageBox.NoRole:
                 return
         self._disable_main_ui()
         self.prog = ProgressBar('Converting session videos...')
         signals = ProgressSignals()
         signals.progress.connect(lambda text, p: self.prog.update(text, p))
-        self.prog._canceled.connect(signals.cancel)        
+        self.prog._canceled.connect(signals.cancel)
         self._convert_vidfiles(vidfiles, signals)
         self._enable_main_ui()
 
@@ -736,8 +803,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 trbase = op.splitext(tr)[0]
                 vicon.OpenTrial(trbase, cfg.autoproc.nexus_timeout)
                 nexus.run_pipelines_multiprocessing(cfg.autoproc.postproc_pipelines)
-                prog_txt = ('Running postprocessing pipelines: %s for %d trials'
-                            % (cfg.autoproc.postproc_pipelines, len(trials)))
+                prog_txt = 'Running postprocessing pipelines: %s for %d trials' % (
+                    cfg.autoproc.postproc_pipelines,
+                    len(trials),
+                )
                 prog_p = 100 * k / float(len(trials))
                 signals.progress.emit(prog_txt, prog_p)
                 if signals.canceled:
@@ -748,21 +817,25 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if session is None:
             return
         # XXX: run for tagged + static - maybe this should be configurable
-        trials = sessionutils.get_c3ds(session, tags=cfg.eclipse.tags,
-                                       trial_type='dynamic')
+        trials = sessionutils.get_c3ds(
+            session, tags=cfg.eclipse.tags, trial_type='dynamic'
+        )
         trials += sessionutils.get_c3ds(session, trial_type='static')
         if trials and cfg.autoproc.postproc_pipelines:
             logger.debug('running postprocessing for %s' % trials)
             vicon = nexus.viconnexus()
             self.prog = ProgressBar('Running postprocessing pipelines...')
-            self.prog.update('Running postprocessing pipelines: %s for %d '
-                             'trials' % (cfg.autoproc.postproc_pipelines,
-                                         len(trials)), 0)
+            self.prog.update(
+                'Running postprocessing pipelines: %s for %d '
+                'trials' % (cfg.autoproc.postproc_pipelines, len(trials)),
+                0,
+            )
             signals = ProgressSignals()
             signals.progress.connect(lambda text, p: self.prog.update(text, p))
             self.prog._canceled.connect(signals.cancel)
-            self._run_in_thread(_run_postprocessing, block_ui=True,
-                                finished_func=self._enable_main_ui)
+            self._run_in_thread(
+                _run_postprocessing, block_ui=True, finished_func=self._enable_main_ui
+            )
         elif not trials:
             qt_message_dialog('No trials in session to run postprocessing for')
         elif not cfg.autoproc.postproc_pipelines:
@@ -770,11 +843,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         """ Confirm and close application. """
-        
+
         if self._web_report_dialog.active_reports:
-            reply = qt_yesno_dialog('There are active web reports which '
-                                    'will be closed. Are you sure you '
-                                    'want to quit?')
+            reply = qt_yesno_dialog(
+                'There are active web reports which '
+                'will be closed. Are you sure you '
+                'want to quit?'
+            )
             if reply == QtWidgets.QMessageBox.YesRole:
                 self._web_report_dialog.shutdown()
                 self._close_mpl_windows()
@@ -782,7 +857,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             else:
                 event.ignore()
         else:
-            self._close_mpl_windows()            
+            self._close_mpl_windows()
             event.accept()
 
     def _close_mpl_windows(self):
@@ -793,7 +868,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         """Show the options dialog"""
         dlg = OptionsDialog(self)
         dlg.exec_()
-
 
     def _create_pdf_report_nexus(self):
         session = _get_nexus_sessionpath()
@@ -823,21 +897,29 @@ class Gaitmenu(QtWidgets.QMainWindow):
         dlg_info = PdfReportDialog(info, prompt=prompt_)
         if not dlg_info.exec_():
             return
-        new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,
-                        session_description=dlg_info.session_description)
+        new_info = dict(
+            hetu=dlg_info.hetu,
+            fullname=dlg_info.fullname,
+            session_description=dlg_info.session_description,
+        )
         info.update(new_info)
         sessionutils.save_info(session, info)
 
         # create the report
         if comparison:
-            self._run_in_thread(pdf.create_comparison_report,
-                                finished_func=self._enable_main_ui,
-                                sessions=sessions)
+            self._run_in_thread(
+                pdf.create_comparison_report,
+                finished_func=self._enable_main_ui,
+                sessions=sessions,
+            )
         else:
-            self._run_in_thread(pdf.create_report,
-                                finished_func=self._enable_main_ui,
-                                sessionpath=sessions[0], info=info,
-                                pages=dlg_info.pages)
+            self._run_in_thread(
+                pdf.create_report,
+                finished_func=self._enable_main_ui,
+                sessionpath=sessions[0],
+                info=info,
+                pages=dlg_info.pages,
+            )
 
     def _log_message(self, msg):
         """Logs a message to the log widget"""
@@ -867,8 +949,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self._tardieuwin = _tardieu.TardieuWindow()
             self._tardieuwin.show()
 
-    def _run_in_thread(self, fun, block_ui=True, finished_func=None,
-                       result_func=None, **kwargs):
+    def _run_in_thread(
+        self, fun, block_ui=True, finished_func=None, result_func=None, **kwargs
+    ):
         """Run function fun with args kwargs in a worker thread.
         If block_ui==True, disable main ui until worker thread is finished.
         finished_func will be called when thread is finished. result_func
@@ -888,6 +971,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
 class RunnerSignals(QObject):
     """Need a separate class since QRunnable cannot emit signals"""
+
     finished = pyqtSignal()  # thread finished
     result = pyqtSignal(object)  # successful completion - return value
     error = pyqtSignal(Exception)  # exception raised during run
@@ -920,8 +1004,10 @@ def main():
         """ Custom handler for unhandled exceptions:
         report to user via GUI and terminate. """
         tb_full = u''.join(traceback.format_exception(type_, value, tback))
-        qt_message_dialog('Oops! An unhandled exception was generated. '
-                          'The application will be closed.\n\n %s' % tb_full)
+        qt_message_dialog(
+            'Oops! An unhandled exception was generated. '
+            'The application will be closed.\n\n %s' % tb_full
+        )
         # dump traceback to file
         # try:
         #    with io.open(Config.traceback_file, 'w', encoding='utf-8') as f:
@@ -952,7 +1038,7 @@ def main():
     gaitmenu.show()
     logger.debug('Python interpreter: %s' % sys.executable)
     if not c3d.BTK_IMPORTED:
-        logger.warning('cannot find btk module; unable to read .c3d files')        
+        logger.warning('cannot find btk module; unable to read .c3d files')
     nexus_status = 'Vicon Nexus is %srunning' % ('' if nexus.pid() else 'not ')
     logger.debug(nexus_status)
     app.exec_()

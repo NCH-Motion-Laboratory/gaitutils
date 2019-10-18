@@ -8,16 +8,13 @@ Unit tests on a running instance of Vicon Nexus.
 
 
 import numpy as np
-from numpy.testing import (assert_allclose, assert_array_equal,
-                           assert_array_almost_equal)
+from numpy.testing import assert_allclose, assert_array_equal, assert_array_almost_equal
 
 import gaitutils
 from gaitutils import nexus, utils, models, read_data
 from gaitutils import Trial
 from gaitutils.utils import detect_forceplate_events
-from utils import (_nexus_open_trial, _trial_path,
-                   start_nexus, cfg)
-
+from utils import _nexus_open_trial, _trial_path, start_nexus, cfg
 
 
 def test_nexus_reader():
@@ -25,9 +22,9 @@ def test_nexus_reader():
     trialname = '2015_10_22_girl6v_IN03'
     _nexus_open_trial('girl6v', trialname)
     tr = Trial(vicon)
-    assert_equal(tr.analograte, 1000.)
-    assert_equal(tr.framerate, 100.)
-    assert_equal(tr.bodymass, 24.)
+    assert_equal(tr.analograte, 1000.0)
+    assert_equal(tr.framerate, 100.0)
+    assert_equal(tr.bodymass, 24.0)
     assert_equal(tr.name, 'Iiris')
     assert_equal(tr.n_forceplates, 1)
     assert_equal(tr.samplesperframe, 10.0)
@@ -47,9 +44,9 @@ def test_nexus_reader():
     trialname = 'astrid_080515_02'
     _nexus_open_trial('adult_3fp', trialname)
     tr = Trial(vicon)
-    assert_equal(tr.analograte, 1000.)
-    assert_equal(tr.framerate, 200.)
-    assert_equal(tr.bodymass, 70.)
+    assert_equal(tr.analograte, 1000.0)
+    assert_equal(tr.framerate, 200.0)
+    assert_equal(tr.bodymass, 70.0)
     assert_equal(tr.name, 'Astrid')
     assert_equal(tr.n_forceplates, 3)
     assert_equal(tr.samplesperframe, 5.0)
@@ -107,8 +104,17 @@ def test_read_data_compare_nexus_and_c3d():
     tr_nexus = Trial(vicon)
     tr_c3d = Trial(c3dfile)
     # metadata
-    attrs = ['analograte', 'framerate', 'bodymass', 'name', 'n_forceplates',
-             'samplesperframe', 'length', 'trialname', 'ncycles']
+    attrs = [
+        'analograte',
+        'framerate',
+        'bodymass',
+        'name',
+        'n_forceplates',
+        'samplesperframe',
+        'length',
+        'trialname',
+        'ncycles',
+    ]
     for attr in attrs:
         assert_equal(getattr(tr_nexus, attr), getattr(tr_c3d, attr))
     # model data
@@ -135,8 +141,7 @@ def test_read_data_compare_nexus_and_c3d():
     for ch in emg_chs:
         xn, dn = tr_nexus[ch]
         xc, dc = tr_c3d[ch]
-        assert_array_equal(xn,
-                           np.arange(tr_nexus.length*tr_nexus.samplesperframe))
+        assert_array_equal(xn, np.arange(tr_nexus.length * tr_nexus.samplesperframe))
         assert_array_equal(xn, xc)
         assert_array_almost_equal(dn, dc, decimal=NDEC)
     # read normalized EMG and compare
@@ -184,11 +189,12 @@ def test_event_marking():
         """Helper to check whether Nexus events are close to ground truth"""
         for side, sidedict in events_dict.items():
             for event_type, events in sidedict.items():
-                nexus_events = vicon.GetEvents(vicon.GetSubjectNames()[0],
-                                               side, event_type)[0]
+                nexus_events = vicon.GetEvents(
+                    vicon.GetSubjectNames()[0], side, event_type
+                )[0]
                 assert_equal(len(events), len(nexus_events))
                 for j, ev in enumerate(nexus_events):
-                    assert_less_equal(abs(ev-events[j]), ev_tol)
+                    assert_less_equal(abs(ev - events[j]), ev_tol)
 
     _nexus_open_trial('girl6v', '2015_10_22_girl6v_IN02')
 
@@ -200,11 +206,12 @@ def test_event_marking():
     # using forceplate thresholds
     vicon.ClearAllEvents()
     fpe = utils.detect_forceplate_events(vicon)
-    mkrdata = read_data.get_marker_data(vicon, cfg.autoproc.left_foot_markers +
-                                        cfg.autoproc.right_foot_markers)
+    mkrdata = read_data.get_marker_data(
+        vicon, cfg.autoproc.left_foot_markers + cfg.autoproc.right_foot_markers
+    )
     vel = utils.get_foot_contact_velocity(mkrdata, fpe)
-    nexus.automark_events(vicon, vel_thresholds=vel,
-                          events_range=[-1500, 1500], fp_events=fpe)
+    nexus.automark_events(
+        vicon, vel_thresholds=vel, events_range=[-1500, 1500], fp_events=fpe
+    )
     _events_check(events_dict)
     vicon.SaveTrial(60)  # to prevent 'Save trial?' dialog on subsequent loads
-

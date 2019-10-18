@@ -75,7 +75,7 @@ def _handle_style_and_color_args(style_by, color_by):
         style_by[k] = style_by_defaults[k]  # update missing values
     if not set(style_by.values()).issubset(vals_ok):
         raise ValueError('invalid style_by argument in %s' % style_by.items())
-    
+
     color_by_defaults = {'model': cfg.plot.model_color_by, 'emg': cfg.plot.emg_color_by}
     if color_by is None:
         color_by = dict()
@@ -125,11 +125,12 @@ def _truncate_trialname(trialname):
 def _get_cycle_name(trial, cycle, name_type):
     """Return descriptive name for a gait cycle"""
     if name_type == 'name_with_tag':
-        cyclename = '%s / %s' % (trial.trialname,
-                                 trial.eclipse_tag)
+        cyclename = '%s / %s' % (trial.trialname, trial.eclipse_tag)
     elif name_type == 'short_name_with_tag':
-        cyclename = '%s / %s' % (_truncate_trialname(trial.trialname),
-                                 trial.eclipse_tag)
+        cyclename = '%s / %s' % (
+            _truncate_trialname(trial.trialname),
+            trial.eclipse_tag,
+        )
     elif name_type == 'short_name_with_tag_and_cycle':
         cyclename = _truncate_trialname(trial.trialname)
         if trial.eclipse_tag is not None:
@@ -139,14 +140,11 @@ def _get_cycle_name(trial, cycle, name_type):
     elif name_type == 'tag_only':
         cyclename = trial.eclipse_tag
     elif name_type == 'tag_with_cycle':
-        cyclename = '%s / %s' % (trial.eclipse_tag,
-                                 cycle.name)
+        cyclename = '%s / %s' % (trial.eclipse_tag, cycle.name)
     elif name_type == 'full':
-        cyclename = '%s / %s' % (trial.name_with_description,
-                                 cycle.name)
+        cyclename = '%s / %s' % (trial.name_with_description, cycle.name)
     elif name_type == 'short_name_with_cyclename':
-        cyclename = '%s / %s' % (_truncate_trialname(trial.trialname),
-                                 cycle.name)
+        cyclename = '%s / %s' % (_truncate_trialname(trial.trialname), cycle.name)
     else:
         raise ValueError('Invalid name_type')
     return cyclename

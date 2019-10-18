@@ -24,8 +24,7 @@ logger = logging.getLogger(__name__)
 def _show_plotly_fig(fig):
     """Shows a Plotly fig in configured browser"""
     tmp_html = op.join(tempfile.gettempdir(), 'gaitutils_temp.html')
-    plotly.offline.plot(fig, filename=tmp_html, auto_open=False,
-                        validate=False)
+    plotly.offline.plot(fig, filename=tmp_html, auto_open=False, validate=False)
     _browse_localhost(url='file:///%s' % tmp_html)
 
 
@@ -40,8 +39,9 @@ def _browse_localhost(url=None, port=None):
         proc = subprocess.Popen([cfg.general.browser_path, url])
         logger.debug('new browser pid %d' % proc.pid)
     except Exception:
-        raise RuntimeError('Cannot start configured web browser: %s'
-                           % cfg.general.browser_path)
+        raise RuntimeError(
+            'Cannot start configured web browser: %s' % cfg.general.browser_path
+        )
 
 
 def get_backend(backend_name):

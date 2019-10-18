@@ -14,8 +14,12 @@ import logging
 
 from gaitutils.numutils import segment_angles, best_match
 from gaitutils import eclipse
-from gaitutils.utils import (is_plugingait_set, _point_in_poly, _pig_markerset,
-                             _check_markers_flipped)
+from gaitutils.utils import (
+    is_plugingait_set,
+    _point_in_poly,
+    _pig_markerset,
+    _check_markers_flipped,
+)
 from utils import _file_path, cfg
 
 
@@ -63,7 +67,7 @@ def test_point_in_poly():
     poly = np.array([[1, 1, 0], [1, 0, 0], [0, 0, 0], [0, 1, 0]])
     pt = np.array([1.0001, 1.0001, 0])
     assert not _point_in_poly(poly, pt)
-    pt = np.array([.5, .5, 0])
+    pt = np.array([0.5, 0.5, 0])
     assert _point_in_poly(poly, pt)
 
 
@@ -76,8 +80,8 @@ def test_segment_angles():
     assert a.shape == (1000, 3)
     # singular (identical successive points)
     P = np.array([0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 3, 0]).reshape(4, 3)
-    ang = np.array([np.nan, 135.])
-    assert_allclose(ang, segment_angles(P)/np.pi * 180)
+    ang = np.array([np.nan, 135.0])
+    assert_allclose(ang, segment_angles(P) / np.pi * 180)
 
 
 def test_best_match():

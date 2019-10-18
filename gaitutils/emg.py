@@ -19,8 +19,6 @@ from . import read_data, cfg
 logger = logging.getLogger(__name__)
 
 
-
-
 class EMG(object):
     """ Class for handling EMG data. """
 
@@ -49,8 +47,9 @@ class EMG(object):
         else:
             ch = min(matches, key=len)  # choose shortest matching name
         if len(matches) > 1:
-            logger.warning('multiple channel matches for %s: %s -> %s' %
-                           (item, matches, ch))
+            logger.warning(
+                'multiple channel matches for %s: %s -> %s' % (item, matches, ch)
+            )
         data = self.data[ch]
         data_ = self.filt(data, self.passband) if self.passband else data
         data_ *= self.correction_factor
@@ -73,8 +72,10 @@ class EMG(object):
     def context_ok(ch, context):
         """Check if channel context matches given context. Returns True if
         channel does not have a context"""
-        if (ch in cfg.emg.channel_context and context.upper()
-           != cfg.emg.channel_context[ch].upper()):
+        if (
+            ch in cfg.emg.channel_context
+            and context.upper() != cfg.emg.channel_context[ch].upper()
+        ):
             return False
         return True
 
@@ -90,15 +91,17 @@ class EMG(object):
         power_bw = 4  # width of power line peak detector (bandpass)
         nharm = 3  # number of harmonics to detect
         # detect the 50 Hz harmonics
-        linefreqs = (np.arange(nharm+1)+1) * self.linefreq
+        linefreqs = (np.arange(nharm + 1) + 1) * self.linefreq
         intvar = 0
         for f in linefreqs:
-            intvar += np.var(self.filt(y, [f-power_bw/2.,
-                                           f+power_bw/2.])) / power_bw
+            intvar += (
+                np.var(self.filt(y, [f - power_bw / 2.0, f + power_bw / 2.0]))
+                / power_bw
+            )
         # broadband signal
-        band = [self.linefreq+10, self.linefreq+10+broadband_bw]
+        band = [self.linefreq + 10, self.linefreq + 10 + broadband_bw]
         emgvar = np.var(self.filt(y, band)) / broadband_bw
-        intrel = 10*np.log10(intvar/emgvar)
+        intrel = 10 * np.log10(intvar / emgvar)
         return intrel < cfg.emg.max_interference
 
     def filt(self, y, passband):

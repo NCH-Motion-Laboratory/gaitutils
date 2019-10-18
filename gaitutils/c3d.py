@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 # import btk either from btk or pyBTK
 try:
     import btk
+
     BTK_IMPORTED = True
 except ImportError:
     try:
@@ -75,13 +76,14 @@ def _get_c3d_metadata_field(acq, field, subfield):
     else:
         raise RuntimeError('Unhandled btk meta info type')
 
+
 @lru_cache(maxsize=100)
 def _get_c3dacq(c3dfile):
     """Get a btk.btkAcquisition object"""
     reader = btk.btkAcquisitionFileReader()
     # Py2: btk interface cannot take unicode, so encode to latin-1 first
     if sys.version_info.major == 2:
-        c3dfile = c3dfile.encode('latin-1')   
+        c3dfile = c3dfile.encode('latin-1')
     reader.SetFilename(c3dfile)
     reader.Update()
     return reader.GetOutput()
@@ -98,8 +100,7 @@ def get_analysis(c3dfile, condition='unknown'):
         contexts = _get_c3d_metadata_field(acq, 'ANALYSIS', 'CONTEXTS')
         vals = _get_c3d_metadata_field(acq, 'ANALYSIS', 'VALUES')
     except RuntimeError:
-        raise GaitDataError('Cannot read time-distance parameters from %s'
-                            % c3dfile)
+        raise GaitDataError('Cannot read time-distance parameters from %s' % c3dfile)
 
     # build a nice output dict
     di = dict()
@@ -116,8 +117,9 @@ def get_analysis(c3dfile, condition='unknown'):
     for var in di_:
         for context in ['Left', 'Right']:
             if context not in di_[var]:
-                logger.warning('%s has missing value: %s / %s' %
-                               (c3dfile, var, context))
+                logger.warning(
+                    '%s has missing value: %s / %s' % (c3dfile, var, context)
+                )
                 di_[var][context] = np.NaN
 
     return di
@@ -153,14 +155,15 @@ def _get_analog_data(c3dfile, devname):
             chnames.append(chname)
             data[chname] = np.squeeze(i.GetValues())
     if chnames:
-        return {'t': np.arange(len(data[chname])) / acq.GetAnalogFrequency(),
-                'data': data}
+        return {
+            't': np.arange(len(data[chname])) / acq.GetAnalogFrequency(),
+            'data': data,
+        }
     else:
         raise GaitDataError('No matching analog channels found in data')
 
 
-def _get_marker_data(c3dfile, markers, ignore_edge_gaps=True,
-                     ignore_missing=False):
+def _get_marker_data(c3dfile, markers, ignore_edge_gaps=True, ignore_missing=False):
     """Get position, velocity and acceleration for specified markers."""
     if not isinstance(markers, list):  # listify if not already a list
         markers = [markers]
@@ -171,16 +174,14 @@ def _get_marker_data(c3dfile, markers, ignore_edge_gaps=True,
             mP = np.squeeze(acq.GetPoint(marker).GetValues())
         except RuntimeError:
             if ignore_missing:
-                logger.warning('Cannot read trajectory %s from c3d file'
-                               % marker)
+                logger.warning('Cannot read trajectory %s from c3d file' % marker)
                 continue
             else:
-                raise GaitDataError('Cannot read trajectory %s from c3d file'
-                                    % marker)
+                raise GaitDataError('Cannot read trajectory %s from c3d file' % marker)
         mkrdata[marker] = mP
         mkrdata[marker + '_P'] = mP
         mkrdata[marker + '_V'] = np.gradient(mP)[0]
-        mkrdata[marker + '_A'] = np.gradient(mkrdata[marker+'_V'])[0]
+        mkrdata[marker + '_A'] = np.gradient(mkrdata[marker + '_V'])[0]
         # find gaps
         allzero = np.any(mP, axis=1).astype(int)
         if ignore_edge_gaps:
@@ -259,19 +260,29 @@ def get_metadata(c3dfile):
     except RuntimeError:
         raise GaitDataError('cannot read metadata from %s' % c3dfile)
     subj_params = defaultdict(lambda: None)
-    subj_params.update({par: _get_c3d_subject_param(acq, par) for
-                        par in par_names})
+    subj_params.update({par: _get_c3d_subject_param(acq, par) for par in par_names})
 
     # sort events (may be in wrong temporal order, at least in c3d files)
     for li in [lstrikes, rstrikes, ltoeoffs, rtoeoffs]:
         li.sort()
 
-    return {'trialname': trialname, 'sessionpath': sessionpath,
-            'offset': offset, 'framerate': framerate, 'analograte': analograte,
-            'name': name, 'subj_params': subj_params, 'lstrikes': lstrikes,
-            'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs,
-            'length': length, 'samplesperframe': samplesperframe,
-            'n_forceplates': n_forceplates, 'markers': markers}
+    return {
+        'trialname': trialname,
+        'sessionpath': sessionpath,
+        'offset': offset,
+        'framerate': framerate,
+        'analograte': analograte,
+        'name': name,
+        'subj_params': subj_params,
+        'lstrikes': lstrikes,
+        'rstrikes': rstrikes,
+        'ltoeoffs': ltoeoffs,
+        'rtoeoffs': rtoeoffs,
+        'length': length,
+        'samplesperframe': samplesperframe,
+        'n_forceplates': n_forceplates,
+        'markers': markers,
+    }
 
 
 def get_model_data(c3dfile, model, ignore_missing=False):
@@ -284,14 +295,14 @@ def get_model_data(c3dfile, model, ignore_missing=False):
             modeldata[var] = np.transpose(np.squeeze(vals))
         except RuntimeError:
             if model.is_optional_var(var) or ignore_missing:
-                logger.info('cannot read model variable %s, returning nans'
-                            % var)
+                logger.info('cannot read model variable %s, returning nans' % var)
                 data = np.empty(var_dims)
                 data[:] = np.nan
                 modeldata[var] = data
             else:
-                raise GaitDataError('Cannot find model variable %s in %s' %
-                                    (var, c3dfile))
+                raise GaitDataError(
+                    'Cannot find model variable %s in %s' % (var, c3dfile)
+                )
         # c3d stores scalars as last dim of 3-d array
         if model.read_strategy == 'last':
             modeldata[var] = modeldata[var][2, :]
@@ -312,8 +323,7 @@ def get_forceplate_data(c3dfile):
         nplate += 1
         if plate.GetType() != 2:
             # Nexus should always write forceplates as type 2
-            raise GaitDataError('Only type 2 forceplates are '
-                                'supported for now')
+            raise GaitDataError('Only type 2 forceplates are ' 'supported for now')
         rawdata = dict()
         data = dict()
         for ch in btk.Iterate(plate.GetChannels()):
@@ -347,8 +357,9 @@ def get_forceplate_data(c3dfile):
         cop_wx = np.clip(cop_w[:, 0], lb[0], ub[0])
         cop_wy = np.clip(cop_w[:, 1], lb[1], ub[1])
         if not (cop_wx == cop_w[:, 0]).all() and (cop_wy == cop_w[:, 1]).all():
-            logger.warning('center of pressure outside forceplate '
-                           'bounds, clipping to plate')
+            logger.warning(
+                'center of pressure outside forceplate ' 'bounds, clipping to plate'
+            )
             cop[:, 0] = cop_wx
             cop[:, 1] = cop_wy
         # XXX moment and force transformations may still be wrong

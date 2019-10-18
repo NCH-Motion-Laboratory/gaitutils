@@ -76,8 +76,7 @@ def normaldata_age(age):
     """ Return age specific normal data file """
     for age_range, filename in cfg.general.normaldata_age.items():
         if age_range[0] <= age <= age_range[1]:
-            logger.debug('found normal data file %s for age %d' %
-                         (filename, age))
+            logger.debug('found normal data file %s for age %d' % (filename, age))
             return filename
 
 
@@ -110,7 +109,7 @@ def _read_gcd(filename):
         elif varname and isfloat(lis[0]):  # actual data
             # assume mean, dev format
             mean, dev = np.array(lis, dtype=float)
-            ndata[varname].append([mean-dev, mean+dev])
+            ndata[varname].append([mean - dev, mean + dev])
         else:  # comment etc.
             continue
     # translate variable names
@@ -118,8 +117,10 @@ def _read_gcd(filename):
     for nvarname, nval in ndata.items():
         for model in models_all:
             if nvarname in model.gcd_normaldata_map:
-                logger.debug('mapping normal data variable %s -> %s' %
-                             (nvarname, model.gcd_normaldata_map[nvarname]))
+                logger.debug(
+                    'mapping normal data variable %s -> %s'
+                    % (nvarname, model.gcd_normaldata_map[nvarname])
+                )
                 nvarname = model.gcd_normaldata_map[nvarname]
                 break
         ndata_[nvarname] = nval
@@ -138,8 +139,7 @@ def _read_xlsx(filename):
         if colname is None:
             continue
         # pick values from row 4 onwards (skips units etc.)
-        data = np.fromiter((c.value for k, c in enumerate(col) if k >= 3),
-                           float)
+        data = np.fromiter((c.value for k, c in enumerate(col) if k >= 3), float)
         data = data[~np.isnan(data)]  # drop empty rows
         # rewrite the coordinate
         colname = colname.replace(' (1)', 'X')
@@ -149,8 +149,11 @@ def _read_xlsx(filename):
         # are written as Z component (Nexus convention)
         if colname[-5:] == 'Power':
             colname += 'Z'
-        normaldata[colname] = (np.stack([normaldata[colname], data], axis=1)
-                               if colname in normaldata else data)
+        normaldata[colname] = (
+            np.stack([normaldata[colname], data], axis=1)
+            if colname in normaldata
+            else data
+        )
     return _check_normaldata(normaldata)
 
 
@@ -165,8 +168,9 @@ def _write_xlsx(normaldata, filename):
         data = normaldata[var]
         nrows, ncols = data.shape
         if nrows not in (51, 1) or ncols != 2:
-            raise ValueError('normaldata has unexpected dimensions: %d x %d'
-                             % (nrows, ncols))
+            raise ValueError(
+                'normaldata has unexpected dimensions: %d x %d' % (nrows, ncols)
+            )
         # convert trailing dimension to number
         if var[-1] in 'XYZ':
             if 'Power' in var:
@@ -175,14 +179,16 @@ def _write_xlsx(normaldata, filename):
                 var_ = var[:-1] + repl_di[var[-1]]
         else:
             var_ = var
-        firstcol, secondcol = 2*n-1, 2*n
+        firstcol, secondcol = 2 * n - 1, 2 * n
         # write (data min, data max) columns for each variable
         for col, coldata in zip([firstcol, secondcol], [data[:, 0], data[:, 1]]):
             ws.cell(column=col, row=1, value=var_)  # column header
             ws.cell(column=col, row=2, value=0)  # not clear what this is
-            ws.cell(column=col, row=3, value='unknown')  # supposed to be unit, not used by us
+            ws.cell(
+                column=col, row=3, value='unknown'
+            )  # supposed to be unit, not used by us
             for k, val in enumerate(coldata):
-                ws.cell(column=col, row=4+k, value=val)
+                ws.cell(column=col, row=4 + k, value=val)
     logger.debug('saving %s' % filename)
     wb.save(filename=filename)
 
@@ -193,7 +199,7 @@ def normals_from_data(data):
     for mod in models_all:
         thevars = mod.varlabels_noside
         for var in thevars:
-            rvar, lvar = 'R'+var, 'L'+var
+            rvar, lvar = 'R' + var, 'L' + var
             rcurves, lcurves = data[rvar], data[lvar]
             if rcurves is None or lcurves is None:
                 logger.warning('cannot get model data for %s' % var)

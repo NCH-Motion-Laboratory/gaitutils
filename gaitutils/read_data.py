@@ -65,8 +65,7 @@ def get_forceplate_data(source):
     return _reader_module(source).get_forceplate_data(source)
 
 
-def get_marker_data(source, markers, ignore_edge_gaps=True,
-                    ignore_missing=False):
+def get_marker_data(source, markers, ignore_edge_gaps=True, ignore_missing=False):
     """ Get position, velocity and acceleration for a given marker(s)
     (str or list of str).
     Returns dict mkrdata keyed with marker names followed by _P, _V or _A
@@ -80,9 +79,12 @@ def get_marker_data(source, markers, ignore_edge_gaps=True,
     ignore_missing: whether to ignore missing markers on read or raise an
     exception.
     """
-    return _reader_module(source)._get_marker_data(source, markers,
-                                                   ignore_edge_gaps=ignore_edge_gaps,
-                                                   ignore_missing=ignore_missing)
+    return _reader_module(source)._get_marker_data(
+        source,
+        markers,
+        ignore_edge_gaps=ignore_edge_gaps,
+        ignore_missing=ignore_missing,
+    )
 
 
 def get_emg_data(source):
@@ -104,18 +106,19 @@ def get_accelerometer_data(source):
 def get_model_data(source, model):
     """ Get other variables such as model outputs """
     ignore_missing = cfg.general.ignore_missing_model_vars
-    modeldata = _reader_module(source).get_model_data(source, model,
-                                                      ignore_missing=ignore_missing)
+    modeldata = _reader_module(source).get_model_data(
+        source, model, ignore_missing=ignore_missing
+    )
     for var in model.read_vars:
-            # convert Moment variables into SI units
-            if var.find('Moment') > 0:
-                modeldata[var] /= 1.0e3  # Nmm -> Nm
-            # split 3-d arrays into x,y,z variables
-            if model.read_strategy == 'split_xyz':
-                if modeldata[var].shape[0] == 3:
-                    modeldata[var+'X'] = modeldata[var][0, :]
-                    modeldata[var+'Y'] = modeldata[var][1, :]
-                    modeldata[var+'Z'] = modeldata[var][2, :]
-                else:
-                    raise RuntimeError('Expected a 3D array')
+        # convert Moment variables into SI units
+        if var.find('Moment') > 0:
+            modeldata[var] /= 1.0e3  # Nmm -> Nm
+        # split 3-d arrays into x,y,z variables
+        if model.read_strategy == 'split_xyz':
+            if modeldata[var].shape[0] == 3:
+                modeldata[var + 'X'] = modeldata[var][0, :]
+                modeldata[var + 'Y'] = modeldata[var][1, :]
+                modeldata[var + 'Z'] = modeldata[var][2, :]
+            else:
+                raise RuntimeError('Expected a 3D array')
     return modeldata

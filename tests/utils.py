@@ -43,8 +43,9 @@ def _file_path(filename):
 
 def _trial_path(subject, trial):
     """Return path to subject trial file (in session dir)"""
-    return op.abspath(op.join(testdata_root, 'test_subjects', subject,
-                              'test_session', trial))
+    return op.abspath(
+        op.join(testdata_root, 'test_subjects', subject, 'test_session', trial)
+    )
 
 
 def _c3d_path(filename):
@@ -57,4 +58,3 @@ def _nexus_open_trial(subject, trial):
     vicon = nexus.viconnexus()
     tpath = op.splitext(_trial_path(subject, trial))[0]  # strip .c3d
     vicon.OpenTrial(tpath, 60)
-

@@ -34,8 +34,7 @@ import logging
 import itertools
 import shutil
 
-from . import (nexus, eclipse, utils, GaitDataError, sessionutils,
-               read_data, videos, cfg)
+from . import nexus, eclipse, utils, GaitDataError, sessionutils, read_data, videos, cfg
 from .gui.qt_widgets import ProgressSignals
 
 logger = logging.getLogger(__name__)
@@ -53,8 +52,11 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         signals = ProgressSignals()
 
     # whether to run Nexus pipelines in separate processes
-    run_pipelines = (nexus.run_pipelines_multiprocessing if pipelines_in_proc else
-                     nexus.run_pipelines)
+    run_pipelines = (
+        nexus.run_pipelines_multiprocessing
+        if pipelines_in_proc
+        else nexus.run_pipelines
+    )
 
     def _save_trial():
         """Save trial in Nexus"""
@@ -76,8 +78,11 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
 
     def _fail(trial, reason):
         """Abort processing: mark and save trial"""
-        fail_desc = (cfg.autoproc.enf_descriptions[reason] if reason in
-                     cfg.autoproc.enf_descriptions else reason)
+        fail_desc = (
+            cfg.autoproc.enf_descriptions[reason]
+            if reason in cfg.autoproc.enf_descriptions
+            else reason
+        )
         logger.debug('preprocessing failed: %s' % fail_desc)
         trial['recon_ok'] = False
         trial['description'] = fail_desc
@@ -87,17 +92,23 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         """Try to determine ROI (in frames) from movement range"""
         subj_pos1 = subj_pos[:, [gait_dim]]
         # find non-gap frames where we are inside movement range
-        dist_ok = np.where((subj_pos1 >= mov_range[0]) &
-                           (subj_pos1 <= mov_range[1]) &
-                           (subj_pos1 != 0.0))[0]
+        dist_ok = np.where(
+            (subj_pos1 >= mov_range[0])
+            & (subj_pos1 <= mov_range[1])
+            & (subj_pos1 != 0.0)
+        )[0]
         if dist_ok.size > 0:
             return min(dist_ok), max(dist_ok)
         else:
             raise GaitDataError('no frames inside given range')
 
     # used to store stats about foot velocity
-    foot_vel = {'L_strike': np.array([]), 'R_strike': np.array([]),
-                'L_toeoff': np.array([]), 'R_toeoff': np.array([])}
+    foot_vel = {
+        'L_strike': np.array([]),
+        'R_strike': np.array([]),
+        'L_toeoff': np.array([]),
+        'R_toeoff': np.array([]),
+    }
     # 1st pass
     logger.debug('\n1st pass - processing %d trial(s)\n' % len(enffiles))
     trials = dict()
@@ -112,7 +123,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
 
     # init trials dict
     for enffile in enffiles:
-        filepath = enffile[:enffile.find('.Trial')]  # rm .TrialXXX and .enf
+        filepath = enffile[: enffile.find('.Trial')]  # rm .TrialXXX and .enf
         trials[filepath] = dict()
 
     # run preprocessing operations
@@ -122,11 +133,13 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         if cfg.autoproc.run_models_only:
             break
 
-        filepath = enffile[:enffile.find('.Trial')]  # rm .TrialXXX and .enf
+        filepath = enffile[: enffile.find('.Trial')]  # rm .TrialXXX and .enf
         filename = os.path.split(filepath)[1]
         trial = trials[filepath]
 
-        signals.progress.emit('Preprocessing: %s' % filename, int(100*ind/len(enffiles)))
+        signals.progress.emit(
+            'Preprocessing: %s' % filename, int(100 * ind / len(enffiles))
+        )
         if signals.canceled:
             return None
 
@@ -154,8 +167,9 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             trial['description'] = 'skipped'
             continue
         skip = [s.upper() for s in cfg.autoproc.eclipse_skip]
-        if (any([s in edata['DESCRIPTION'].upper() for s in skip]) or
-           any([s in edata['NOTES'].upper() for s in skip])):
+        if any([s in edata['DESCRIPTION'].upper() for s in skip]) or any(
+            [s in edata['NOTES'].upper() for s in skip]
+        ):
             logger.debug('skipping based on description/notes')
             # run preprocessing + save even for skipped trials, to mark
             # them as processed - mostly so that Eclipse export to Polygon
@@ -178,8 +192,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         # check for valid marker data
         allmarkers = nexus._get_marker_names(vicon, trajs_only=True)
         try:
-            mkrdata = read_data.get_marker_data(vicon, allmarkers,
-                                                ignore_missing=True)
+            mkrdata = read_data.get_marker_data(vicon, allmarkers, ignore_missing=True)
         except GaitDataError:
             logger.debug('get_marker_data failed')
             _fail(trial, 'label_failure')
@@ -207,14 +220,12 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         flipped = list(utils._check_markers_flipped(mkrdata))
         if flipped:
             for m1, m2 in flipped:
-                logger.warning('trying to swap trajectories for %s and %s'
-                               % (m1, m2))
+                logger.warning('trying to swap trajectories for %s and %s' % (m1, m2))
                 nexus._swap_markers(vicon, m1, m2)
 
         # get subject position by tracking markers
         try:
-            subj_pos = utils.avg_markerdata(mkrdata,
-                                            cfg.autoproc.track_markers)
+            subj_pos = utils.avg_markerdata(mkrdata, cfg.autoproc.track_markers)
         except GaitDataError:
             logger.debug('gaps in tracking markers')
             _fail(trial, 'label_failure')
@@ -234,23 +245,24 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             return None
 
         # check forceplate data
-        fp_info = (eclipse.eclipse_fp_keys(edata) if
-                   cfg.autoproc.use_eclipse_fp_info else None)
+        fp_info = (
+            eclipse.eclipse_fp_keys(edata) if cfg.autoproc.use_eclipse_fp_info else None
+        )
         try:
-            fpev = utils.detect_forceplate_events(vicon, mkrdata,
-                                                  fp_info=fp_info, roi=roi)
+            fpev = utils.detect_forceplate_events(
+                vicon, mkrdata, fp_info=fp_info, roi=roi
+            )
         except GaitDataError:
-            logger.warning('cannot determine forceplate events, possibly due '
-                           'to gaps')
+            logger.warning(
+                'cannot determine forceplate events, possibly due ' 'to gaps'
+            )
             _fail(trial, 'gaps')
             continue
         # get foot velocity info for all events (do not reduce to median)
         try:
-            vel = utils.get_foot_contact_velocity(mkrdata, fpev, medians=False,
-                                                  roi=roi)
+            vel = utils.get_foot_contact_velocity(mkrdata, fpev, medians=False, roi=roi)
         except GaitDataError:
-            logger.warning('cannot determine foot velocity, possibly due to '
-                           'gaps')
+            logger.warning('cannot determine foot velocity, possibly due to ' 'gaps')
             _fail(trial, 'gaps')
             continue
 
@@ -268,10 +280,10 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
 
         # save velocity data
         for context in valid:
-            nv = np.append(foot_vel[context+'_strike'], vel[context+'_strike'])
-            foot_vel[context+'_strike'] = nv
-            nv = np.append(foot_vel[context+'_toeoff'], vel[context+'_toeoff'])
-            foot_vel[context+'_toeoff'] = nv
+            nv = np.append(foot_vel[context + '_strike'], vel[context + '_strike'])
+            foot_vel[context + '_strike'] = nv
+            nv = np.append(foot_vel[context + '_toeoff'], vel[context + '_toeoff'])
+            foot_vel[context + '_toeoff'] = nv
         eclipse_str += ','
 
         # main direction in lab frame (1,2,3 for x,y,z)
@@ -280,8 +292,10 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         # +1/-1 for forward/backward (coord increase / decrease)
         gait_dir = np.median(np.diff(subj_pos_, axis=0), axis=0)[gait_dim]
         # write Eclipse key for direction
-        if ('dir_forward' in cfg.autoproc.enf_descriptions and 'dir_backward'
-           in cfg.autoproc.enf_descriptions):
+        if (
+            'dir_forward' in cfg.autoproc.enf_descriptions
+            and 'dir_backward' in cfg.autoproc.enf_descriptions
+        ):
             dir_str = 'dir_forward' if gait_dir > 0 else 'dir_backward'
             dir_desc = cfg.autoproc.enf_descriptions[dir_str]
             eclipse_str += '%s,' % dir_desc
@@ -299,27 +313,27 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         fp_info = fpev['our_fp_info']
         # try to avoid a possible race condition where Nexus is still
         # holding the .enf file open
-        time.sleep(.1)
+        time.sleep(0.1)
         try:
             if cfg.autoproc.write_eclipse_fp_info == 'write':
                 logger.debug('writing detected forceplate info into Eclipse')
-                eclipse.set_eclipse_keys(enffile, fp_info,
-                                         update_existing=True)
+                eclipse.set_eclipse_keys(enffile, fp_info, update_existing=True)
             elif cfg.autoproc.write_eclipse_fp_info == 'reset':
                 logger.debug('resetting Eclipse forceplate info')
                 fp_info_auto = {k: 'Auto' for k, v in fp_info.items()}
-                eclipse.set_eclipse_keys(enffile, fp_info_auto,
-                                         update_existing=True)
+                eclipse.set_eclipse_keys(enffile, fp_info_auto, update_existing=True)
             else:
                 logger.debug('ignoring Eclipse forceplate info')
         except IOError:
-            logger.warning('failed to update Eclipse forceplate info '
-                           'in %s' % enffile)
+            logger.warning(
+                'failed to update Eclipse forceplate info ' 'in %s' % enffile
+            )
 
     # all preprocessing done
     # compute velocity thresholds using all trials
-    vel_th = {key: (np.median(x) if x.size > 0 else None) for key, x in
-              foot_vel.items()}
+    vel_th = {
+        key: (np.median(x) if x.size > 0 else None) for key, x in foot_vel.items()
+    }
 
     # if preprocessing was skipped, mark all trials for subsequent processing
     if cfg.autoproc.run_models_only:
@@ -327,8 +341,9 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             tr['recon_ok'] = True
 
     # 2nd pass
-    sel_trials = {filepath: trial for filepath, trial in trials.items()
-                  if trial['recon_ok']}
+    sel_trials = {
+        filepath: trial for filepath, trial in trials.items() if trial['recon_ok']
+    }
     logger.debug('\n2nd pass - processing %d trials\n' % len(sel_trials))
 
     for ind, (filepath, trial) in enumerate(sel_trials.items()):
@@ -337,8 +352,9 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
         enf_file = filepath + '.Trial.enf'
 
-        signals.progress.emit('Events and models: %s' % filename,
-                              int(100*ind/len(sel_trials)))
+        signals.progress.emit(
+            'Events and models: %s' % filename, int(100 * ind / len(sel_trials))
+        )
         if signals.canceled:
             return None
 
@@ -346,16 +362,20 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             # automark using global velocity thresholds
             try:
                 vicon.ClearAllEvents()
-                evs = utils.automark_events(vicon, vel_thresholds=vel_th,
-                                            mkrdata=trial['mkrdata'],
-                                            fp_events=trial['fpev'],
-                                            events_range=cfg.autoproc.events_range,
-                                            start_on_forceplate=cfg.autoproc.
-                                            start_on_forceplate, roi=trial['roi'])
+                evs = utils.automark_events(
+                    vicon,
+                    vel_thresholds=vel_th,
+                    mkrdata=trial['mkrdata'],
+                    fp_events=trial['fpev'],
+                    events_range=cfg.autoproc.events_range,
+                    start_on_forceplate=cfg.autoproc.start_on_forceplate,
+                    roi=trial['roi'],
+                )
             except GaitDataError:  # cannot automark
-                eclipse_str = '%s,%s' % (trial['description'],
-                                        cfg.autoproc.enf_descriptions
-                                        ['automark_failure'])
+                eclipse_str = '%s,%s' % (
+                    trial['description'],
+                    cfg.autoproc.enf_descriptions['automark_failure'],
+                )
                 logger.debug('automark failed')
                 _save_trial()
                 trial['description'] = eclipse_str
@@ -375,8 +395,10 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
                     # method cannot take numpy.int64
                     vicon.SetTrialRegionOfInterest(int(roistart), int(roiend))
 
-            eclipse_str = '%s,%s' % (cfg.autoproc.enf_descriptions['ok'],
-                                     trial['description'])
+            eclipse_str = '%s,%s' % (
+                cfg.autoproc.enf_descriptions['ok'],
+                trial['description'],
+            )
             trial['description'] = eclipse_str
 
         # run model pipeline and save
@@ -387,17 +409,17 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
     if cfg.autoproc.eclipse_write_key and not cfg.autoproc.run_models_only:
         # try to avoid a possible race condition where Nexus is still
         # holding the .enf file open
-        time.sleep(.1)
+        time.sleep(0.1)
         for filepath, trial in trials.items():
             enf_file = filepath + '.Trial.enf'
             try:
-                eclipse.set_eclipse_keys(enf_file,
-                                         {cfg.autoproc.eclipse_write_key:
-                                          trial['description']},
-                                         update_existing=True)
+                eclipse.set_eclipse_keys(
+                    enf_file,
+                    {cfg.autoproc.eclipse_write_key: trial['description']},
+                    update_existing=True,
+                )
             except IOError:
-                logger.warning('failed to update Eclipse description in %s' %
-                               enf_file)
+                logger.warning('failed to update Eclipse description in %s' % enf_file)
     else:
         logger.debug('not updating Eclipse data')
 
@@ -426,12 +448,14 @@ def _delete_c3ds(enffiles):
         # x1d and x2d do not exist
         x1dfile = sessionutils._enf2other(enffile, 'x1d')
         x2dfile = sessionutils._enf2other(enffile, 'x2d')
-        if (op.isfile(x1dfile) and op.isfile(x2dfile)):
+        if op.isfile(x1dfile) and op.isfile(x2dfile):
             logger.debug('deleting existing c3d file %s' % c3dfile)
             os.remove(c3dfile)
         else:
-            logger.debug('refusing to delete c3d file %s since original '
-                         'data files .(x1d and .x2d) do not exist' % c3dfile)
+            logger.debug(
+                'refusing to delete c3d file %s since original '
+                'data files .(x1d and .x2d) do not exist' % c3dfile
+            )
 
 
 def autoproc_session(patterns=None, signals=None):
@@ -461,14 +485,12 @@ def automark_trial(plot=False):
     roi = vicon.GetTrialRegionOfInterest()
     vicon.ClearAllEvents()
 
-    foot_markers = (cfg.autoproc.left_foot_markers +
-                    cfg.autoproc.right_foot_markers)
+    foot_markers = cfg.autoproc.left_foot_markers + cfg.autoproc.right_foot_markers
     mkrs = foot_markers + utils._pig_pelvis_markers()
     mkrdata = read_data.get_marker_data(vicon, mkrs, ignore_missing=True)
     fpe = utils.detect_forceplate_events(vicon, mkrdata, roi=roi)
     vel = utils.get_foot_contact_velocity(mkrdata, fpe, roi=roi)
-    utils.automark_events(vicon, vel_thresholds=vel, fp_events=fpe, roi=roi,
-                          plot=plot)
+    utils.automark_events(vicon, vel_thresholds=vel, fp_events=fpe, roi=roi, plot=plot)
 
 
 def copy_session_videos():
@@ -480,10 +502,12 @@ def copy_session_videos():
         os.mkdir(dest_dir)
 
     sessionpath = nexus.get_sessionpath()
-    c3dfiles = sessionutils.get_c3ds(sessionpath, tags=cfg.eclipse.repr_tags,
-                                     trial_type='dynamic')
-    vidfiles = itertools.chain.from_iterable(videos.get_trial_videos(c3d, vid_ext='.avi')
-                                             for c3d in c3dfiles)
+    c3dfiles = sessionutils.get_c3ds(
+        sessionpath, tags=cfg.eclipse.repr_tags, trial_type='dynamic'
+    )
+    vidfiles = itertools.chain.from_iterable(
+        videos.get_trial_videos(c3d, vid_ext='.avi') for c3d in c3dfiles
+    )
     vidfiles = list(vidfiles)
     if not vidfiles:
         raise GaitDataError('No video files found for representative trials')

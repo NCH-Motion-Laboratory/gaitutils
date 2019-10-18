@@ -71,5 +71,3 @@ def register_gui_exception_handler(full_traceback=False):
 
     if cfg.general.gui_exceptions:
         sys.excepthook = _my_excepthook
-
-

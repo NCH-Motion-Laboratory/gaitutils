@@ -18,8 +18,17 @@ import os.path as op
 import logging
 
 from .emg import EMG
-from . import (cfg, GaitDataError, read_data, nexus, utils, eclipse, models,
-               videos, sessionutils)
+from . import (
+    cfg,
+    GaitDataError,
+    read_data,
+    nexus,
+    utils,
+    eclipse,
+    models,
+    videos,
+    sessionutils,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -47,8 +56,10 @@ def nexus_trial(from_c3d=False):
         if op.isfile(c3dfile):
             return Trial(c3dfile)
         else:
-            logger.info('no c3d file %s for currently loaded trial, loading '
-                        'directly from Nexus' % c3dfile)
+            logger.info(
+                'no c3d file %s for currently loaded trial, loading '
+                'directly from Nexus' % c3dfile
+            )
             return Trial(nexus.viconnexus())
     else:
         return Trial(nexus.viconnexus())
@@ -56,6 +67,7 @@ def nexus_trial(from_c3d=False):
 
 class Noncycle(object):
     """Used in place of Gaitcycle when requesting unnormalized data."""
+
     def __init__(self, context, trial=None):
         self.context = context
         self.trial = trial
@@ -93,8 +105,19 @@ class Gaitcycle(object):
             Cycle index.
     """
 
-    def __init__(self, start, end, toeoff, context, on_forceplate, plate_idx,
-                 smp_per_frame, trial=None, name=None, index=None):
+    def __init__(
+        self,
+        start,
+        end,
+        toeoff,
+        context,
+        on_forceplate,
+        plate_idx,
+        smp_per_frame,
+        trial=None,
+        name=None,
+        index=None,
+    ):
         self.len = end - start
         # convert frame indices to 0-based
         self.start = start
@@ -115,7 +138,7 @@ class Gaitcycle(object):
         # normalized x-axis of 0,1,2..100%
         self.tn = np.linspace(0, 100, 101)
         # normalize toe-off event to the cycle
-        self.toeoffn = round(100*((self.toeoff - self.start) / self.len))
+        self.toeoffn = round(100 * ((self.toeoff - self.start) / self.len))
         self.trial = trial
         self.plate_idx = plate_idx
         self.index = index
@@ -148,9 +171,12 @@ class Gaitcycle(object):
         if len(var.shape) == 1:
             var = var[:, np.newaxis]
         ncols = var.shape[1]
-        idata = np.array([np.interp(self.tn,
-                                    self.t, var[self.start:self.end, k])
-                          for k in range(ncols)]).T
+        idata = np.array(
+            [
+                np.interp(self.tn, self.t, var[self.start : self.end, k])
+                for k in range(ncols)
+            ]
+        ).T
         return self.tn, np.squeeze(idata)
 
     def crop_analog(self, var):
@@ -161,7 +187,7 @@ class Gaitcycle(object):
         var : array
             NxM array of analog data to normalize.
         """
-        return self.tn_analog, var[self.start_smp:self.end_smp]
+        return self.tn_analog, var[self.start_smp : self.end_smp]
 
 
 class Trial(object):
@@ -220,8 +246,9 @@ class Trial(object):
         quirks = sessionutils.load_quirks(self.sessionpath)
         if 'emg_correction_factor' in quirks:
             emg_correction_factor = quirks['emg_correction_factor']
-            logger.warning('using quirk: EMG correction factor = %g'
-                           % emg_correction_factor)
+            logger.warning(
+                'using quirk: EMG correction factor = %g' % emg_correction_factor
+            )
         else:
             emg_correction_factor = 1
         if 'ignore_eclipse_fp_info' in quirks:
@@ -248,7 +275,7 @@ class Trial(object):
         self.t_analog = np.arange(self.length * self.samplesperframe)
         # normalized x-axis of 0, 1, 2 .. 100%
         self.tn = np.linspace(0, 100, 101)
-        self.samplesperframe = self.analograte/self.framerate
+        self.samplesperframe = self.analograte / self.framerate
         self.cycles = list() if self.is_static else list(self._scan_cycles())
         self.ncycles = len(self.cycles)
 
@@ -262,8 +289,7 @@ class Trial(object):
     def eclipse_tag(self):
         """Return the first matching Eclipse tag for this trial."""
         for tag in cfg.eclipse.tags:
-            if any([tag in self.eclipse_data[fld] for fld in
-                    cfg.eclipse.tag_keys]):
+            if any([tag in self.eclipse_data[fld] for fld in cfg.eclipse.tag_keys]):
                 return tag
         return None
 
@@ -271,9 +297,11 @@ class Trial(object):
     def name_with_description(self):
         """Return string consisting of trial name and some Eclipse info."""
         # FIXME: Eclipse keys hardcoded
-        return '%s (%s, %s)' % (self.trialname,
-                                self.eclipse_data['DESCRIPTION'],
-                                self.eclipse_data['NOTES'])
+        return '%s (%s, %s)' % (
+            self.trialname,
+            self.eclipse_data['DESCRIPTION'],
+            self.eclipse_data['NOTES'],
+        )
 
     def _normalized_frame_data(self, data):
         """Return time axis and cycle normalized frame data"""
@@ -295,8 +323,7 @@ class Trial(object):
     def full_marker_data(self):
         """Return the full marker data dict."""
         if not self._marker_data:
-            self._marker_data = read_data.get_marker_data(self.source,
-                                                          self.markers)
+            self._marker_data = read_data.get_marker_data(self.source, self.markers)
         return self._marker_data
 
     def get_model_data(self, var):
@@ -372,14 +399,18 @@ class Trial(object):
         return self._normalized_analog_data(data)
 
     """WIP"""
+
     def get_accelerometer_data(self):
         return read_data.get_accelerometer_data(self.source)
 
     def _get_fp_events(self):
         """Read the forceplate events."""
         try:
-            fp_info = (eclipse.eclipse_fp_keys(self.eclipse_data) if
-                       cfg.trial.use_eclipse_fp_info and self.use_eclipse_fp_info else None)
+            fp_info = (
+                eclipse.eclipse_fp_keys(self.eclipse_data)
+                if cfg.trial.use_eclipse_fp_info and self.use_eclipse_fp_info
+                else None
+            )
             # FIXME: marker data already read?
             return utils.detect_forceplate_events(self.source, fp_info=fp_info)
         except GaitDataError:
@@ -430,6 +461,7 @@ class Trial(object):
 
         Returns list of Gaitcycle instances, sorted by starting frame.
         """
+
         def _filter_cycles(cycles, context, cyclespec):
             """Takes a list of cycles and filters it according to cyclespec,
             returning only cycles that match the spec"""
@@ -450,8 +482,9 @@ class Trial(object):
                 if not cyclespec:
                     return []
                 else:
-                    return (_filter_cycles(cycles, context, cyclespec[0]) or
-                            _filter_cycles(cycles, context, cyclespec[1:]))
+                    return _filter_cycles(
+                        cycles, context, cyclespec[0]
+                    ) or _filter_cycles(cycles, context, cyclespec[1:])
             else:
                 raise TypeError('Invalid argument')
 
@@ -485,7 +518,7 @@ class Trial(object):
             else:
                 toeoffs = self.rtoeoffs
                 context = 'R'
-            for k in range(0, len_s-1):
+            for k in range(0, len_s - 1):
                 start = strikes[k]
                 # see if cycle starts on forceplate strike
                 fp_strikes = np.array(self.fp_events[context + '_strikes'])
@@ -497,25 +530,40 @@ class Trial(object):
                     on_forceplate = min(diffs) <= STRIKE_TOL
                     if on_forceplate:
                         strike_idx = np.argmin(diffs)
-                        plate_idx = self.fp_events[context + '_strikes_plate'][strike_idx]
+                        plate_idx = self.fp_events[context + '_strikes_plate'][
+                            strike_idx
+                        ]
                     else:
                         plate_idx = None
-                    logger.debug('side %s: cycle start: %d, '
-                                 'detected fp events: %s'
-                                 % (context, start, fp_strikes))
-                end = strikes[k+1]
+                    logger.debug(
+                        'side %s: cycle start: %d, '
+                        'detected fp events: %s' % (context, start, fp_strikes)
+                    )
+                end = strikes[k + 1]
                 toeoff = [x for x in toeoffs if x > start and x < end]
                 if len(toeoff) == 0:
-                    raise GaitDataError('%s: no toeoff for cycle starting at '
-                                        '%d' % (self.trialname, start))
+                    raise GaitDataError(
+                        '%s: no toeoff for cycle starting at '
+                        '%d' % (self.trialname, start)
+                    )
                 elif len(toeoff) > 1:
-                    raise GaitDataError('%s: multiple toeoffs for cycle '
-                                        'starting at %d' % (self.trialname,
-                                                            start))
+                    raise GaitDataError(
+                        '%s: multiple toeoffs for cycle '
+                        'starting at %d' % (self.trialname, start)
+                    )
                 else:
                     toeoff = toeoff[0]
                 fp_str = ' (fp)' if on_forceplate else ''
-                name = '%s%d%s' % (sidestrs[context], (k+1), fp_str)
-                yield Gaitcycle(start, end, toeoff, context,
-                                on_forceplate, plate_idx, self.samplesperframe,
-                                trial=self, index=k+1, name=name)
+                name = '%s%d%s' % (sidestrs[context], (k + 1), fp_str)
+                yield Gaitcycle(
+                    start,
+                    end,
+                    toeoff,
+                    context,
+                    on_forceplate,
+                    plate_idx,
+                    self.samplesperframe,
+                    trial=self,
+                    index=k + 1,
+                    name=name,
+                )

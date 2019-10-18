@@ -21,22 +21,24 @@ def do_session_average_plot(session, tags=None, backend=None):
     """Find tagged trials from current session dir and plot average"""
     if tags is None:
         tags = cfg.eclipse.tags
-    trials = sessionutils.get_c3ds(session, tags=tags,
-                                   trial_type='dynamic')
+    trials = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
     if not trials:
-        raise GaitDataError('No tagged trials found for session %s'
-                            % session)
+        raise GaitDataError('No tagged trials found for session %s' % session)
     session_ = op.split(session)[-1]
-    fig = _plot_trials({session_: trials},
-                       title='Time-distance average, session %s' % session_,
-                       backend=backend)
+    fig = _plot_trials(
+        {session_: trials},
+        title='Time-distance average, session %s' % session_,
+        backend=backend,
+    )
     return fig
 
 
 def do_single_trial_plot(c3dfile, backend=None):
     """Plot a single trial time-distance."""
     c3dpath, c3dfile_ = op.split(c3dfile)
-    fig = _plot_trials({c3dfile: [c3dfile]}, title='Time-distance variables, %s' % c3dfile_)
+    fig = _plot_trials(
+        {c3dfile: [c3dfile]}, title='Time-distance variables, %s' % c3dfile_
+    )
     return fig
 
 
@@ -63,8 +65,9 @@ def do_comparison_plot(sessions, tags=None, big_fonts=False, backend=None):
     return _plot_trials(trials, big_fonts=big_fonts, backend=backend)
 
 
-def _plot_trials(trials, plotvars=None, title=None, interactive=True,
-                 big_fonts=False, backend=None):
+def _plot_trials(
+    trials, plotvars=None, title=None, interactive=True, big_fonts=False, backend=None
+):
     """Make a time-distance variable barchart from given trials (.c3d files).
     trials: dict of lists keyed by condition name
     If there are multiple trials per condition, they will be averaged.
@@ -74,7 +77,11 @@ def _plot_trials(trials, plotvars=None, title=None, interactive=True,
         plotvars = _timedist_vars
     res_avg_all, res_std_all = _multitrial_analysis(trials)
     backend_lib = get_backend(backend)
-    return backend_lib.time_dist_barchart(res_avg_all, stddev=res_std_all,
-                                          stddev_bars=False, plotvars=plotvars,
-                                          title=title, big_fonts=big_fonts)
-
+    return backend_lib.time_dist_barchart(
+        res_avg_all,
+        stddev=res_std_all,
+        stddev_bars=False,
+        plotvars=plotvars,
+        title=title,
+        big_fonts=big_fonts,
+    )

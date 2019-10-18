@@ -27,9 +27,9 @@ def test_trial_metadata():
     tr = Trial(c3dfile)
     # default tolerance of assert_allclose is 1e-7
     # could also use pytest.approx()
-    assert_allclose(tr.analograte, 1000.)
-    assert_equal(tr.framerate, 100.)
-    assert_allclose(tr.subj_params['Bodymass'], 24.)
+    assert_allclose(tr.analograte, 1000.0)
+    assert_equal(tr.framerate, 100.0)
+    assert_allclose(tr.subj_params['Bodymass'], 24.0)
     assert_equal(tr.name, 'Iiris')
     assert_equal(tr.n_forceplates, 1)
     assert_equal(tr.length, 794)
@@ -37,8 +37,8 @@ def test_trial_metadata():
     # 3-fp system
     c3dfile = _trial_path('adult_3fp', 'astrid_080515_02.c3d')
     tr = Trial(c3dfile)
-    assert_equal(tr.analograte, 1000.)
-    assert_equal(tr.framerate, 200.)
+    assert_equal(tr.analograte, 1000.0)
+    assert_equal(tr.framerate, 200.0)
     assert_allclose(tr.subj_params['Bodymass'], 65.59999, rtol=1e-4)
     assert_equal(tr.name, 'Astrid')
     assert_equal(tr.n_forceplates, 3)
@@ -47,11 +47,10 @@ def test_trial_metadata():
     # 5-fp system
     c3dfile = _trial_path('runner', 'JL brooks 2,8 51.c3d')
     tr = Trial(c3dfile)
-    assert_equal(tr.analograte, 1500.)
-    assert_equal(tr.framerate, 300.)
-    assert_allclose(tr.subj_params['Bodymass'], 74., rtol=1e-4)
+    assert_equal(tr.analograte, 1500.0)
+    assert_equal(tr.framerate, 300.0)
+    assert_allclose(tr.subj_params['Bodymass'], 74.0, rtol=1e-4)
     assert_equal(tr.name, 'JL')
     assert_equal(tr.n_forceplates, 5)
     assert_equal(tr.length, 391)
     assert_equal(tr.samplesperframe, 5)
-

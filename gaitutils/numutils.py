@@ -94,7 +94,7 @@ def outliers(x, median_axis=0, mad_axis=0, p_threshold=1e-3):
         Indexes of rejected values (as in np.where output)
     """
     zs = modified_zscore(x, median_axis=median_axis, mad_axis=mad_axis)
-    z_threshold = np.sqrt(2) * erfinv(1-p_threshold)
+    z_threshold = np.sqrt(2) * erfinv(1 - p_threshold)
     return np.where(abs(zs) > z_threshold)
 
 
@@ -123,11 +123,11 @@ def rolling_fun_strided(m, fun, win, axis=None):
     sh = m.shape
     st = m.strides
     # break up the given dim into windows, insert a new dim
-    sh_ = sh[:axis] + (sh[axis] - win + 1, win) + sh[axis+1:]
+    sh_ = sh[:axis] + (sh[axis] - win + 1, win) + sh[axis + 1 :]
     # insert a stride for the new dim, same as for the given dim
-    st_ = st[:axis] + (st[axis], st[axis]) + st[axis+1:]
+    st_ = st[:axis] + (st[axis], st[axis]) + st[axis + 1 :]
     # apply fun on the new dimension
-    return fun(as_strided(m, sh_, st_), axis=axis+1)
+    return fun(as_strided(m, sh_, st_), axis=axis + 1)
 
 
 def rising_zerocross(x):
@@ -187,7 +187,7 @@ def _baseline(v):
     nbins = int(len(v) / 10)  # exact n of bins should not matter
     ns, edges = np.histogram(v, bins=nbins)
     peak_ind = np.where(ns == np.max(ns))[0][0]
-    return v - np.mean(edges[peak_ind:peak_ind+2])
+    return v - np.mean(edges[peak_ind : peak_ind + 2])
 
 
 def center_of_pressure(F, M, dz):
@@ -201,8 +201,8 @@ def center_of_pressure(F, M, dz):
     fz = FP_FILTFUN(fz, FP_FILTW)
     nz_inds = np.where(np.abs(fz) > 0)[0]  # only divide on nonzero inds
     cop = np.zeros((fx.shape[0], 3))
-    cop[nz_inds, 0] = -(my[nz_inds] + fx[nz_inds] * dz)/fz[nz_inds]
-    cop[nz_inds, 1] = (mx[nz_inds] - fy[nz_inds] * dz)/fz[nz_inds]
+    cop[nz_inds, 0] = -(my[nz_inds] + fx[nz_inds] * dz) / fz[nz_inds]
+    cop[nz_inds, 1] = (mx[nz_inds] - fy[nz_inds] * dz) / fz[nz_inds]
     return cop
 
 
@@ -244,14 +244,15 @@ def running_sum(M, win, axis=None):
     s = np.cumsum(M, axis=axis)
     s = np.insert(s, 0, [0], axis=axis)
     len_ = s.shape[0] if axis is None else s.shape[axis]
-    return (s.take(np.arange(win, len_), axis=axis) -
-            s.take(np.arange(0, len_-win), axis=axis))
+    return s.take(np.arange(win, len_), axis=axis) - s.take(
+        np.arange(0, len_ - win), axis=axis
+    )
 
 
 def rms(data, win):
     """ Return RMS for a given data (1-d; will be flattened if not) """
     if win % 2 != 1:
         raise ValueError('Need RMS window of odd length')
-    rms_ = np.sqrt(running_sum(data**2, win) / win)
+    rms_ = np.sqrt(running_sum(data ** 2, win) / win)
     # pad ends of RMS data so that lengths are matched
-    return np.pad(rms_, (int((win-1)/2),), 'reflect')
+    return np.pad(rms_, (int((win - 1) / 2),), 'reflect')

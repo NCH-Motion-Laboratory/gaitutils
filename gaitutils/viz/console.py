@@ -30,8 +30,7 @@ def plot_nexus_trial():
     parser.add_argument('--layout', type=str)
     parser.add_argument('--backend', type=str)
     args = parser.parse_args()
-    fig = plots.plot_nexus_trial(layout_name=args.layout,
-                                 backend=args.backend)
+    fig = plots.plot_nexus_trial(layout_name=args.layout, backend=args.backend)
     show_fig(fig)
 
 
@@ -44,9 +43,9 @@ def plot_nexus_session():
     parser.add_argument('--tags', nargs='+')
     args = parser.parse_args()
     sessions = [nexus.get_sessionpath()]
-    fig = plots.plot_sessions(sessions, tags=args.tags,
-                              backend=args.backend,
-                              layout_name=args.layout)
+    fig = plots.plot_sessions(
+        sessions, tags=args.tags, backend=args.backend, layout_name=args.layout
+    )
     show_fig(fig)
 
 
@@ -58,6 +57,7 @@ def plot_nexus_session_average():
     parser.add_argument('--backend', type=str)
     args = parser.parse_args()
     session = nexus.get_sessionpath()
-    fig = plots.plot_session_average(session, layout_name=args.layout,
-                                     backend=args.backend)
+    fig = plots.plot_session_average(
+        session, layout_name=args.layout, backend=args.backend
+    )
     show_fig(fig)

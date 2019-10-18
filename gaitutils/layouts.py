@@ -64,15 +64,17 @@ def rm_dead_channels_multitrial(emgs, layout):
     for i, emg in enumerate(emgs):
         # accept channels w/ status ok, or anything that is NOT a
         # preconfigured EMG channel
-        chs_ok_ = [ch not in cfg.emg.channel_labels or emg.status_ok(ch) for
-                   row in layout for ch in row]
+        chs_ok_ = [
+            ch not in cfg.emg.channel_labels or emg.status_ok(ch)
+            for row in layout
+            for ch in row
+        ]
         # previously OK chs propagated as ok
-        chs_ok = ([a or b for a, b in zip(chs_ok, chs_ok_)] if i > 0 else
-                  chs_ok_)
+        chs_ok = [a or b for a, b in zip(chs_ok, chs_ok_)] if i > 0 else chs_ok_
     if not chs_ok:
         raise GaitDataError('No acceptable channels in any of the EMGs')
     rowlen = len(layout[0])
-    lout = list(zip(*[iter(chs_ok)]*rowlen))  # grouper recipe from itertools
+    lout = list(zip(*[iter(chs_ok)] * rowlen))  # grouper recipe from itertools
     rows_ok = [any(row) for row in lout]
     layout = [row for i, row in enumerate(layout) if rows_ok[i]]
     return layout

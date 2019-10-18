@@ -30,13 +30,13 @@ pdf_backend = 'matplotlib'
 
 def _add_footer(fig, txt):
     """Add footer text to mpl Figure"""
-    #XXX: currently puts text in right bottom corner    
+    # XXX: currently puts text in right bottom corner
     fig.text(1, 0, txt, fontsize=8, color='black', ha='right', va='bottom')
 
 
 def _add_header(fig, txt):
     """Add header text to mpl Figure"""
-    #XXX: currently puts text in left bottom corner
+    # XXX: currently puts text in left bottom corner
     fig.text(0, 0, txt, fontsize=8, color='black', ha='left', va='bottom')
 
 
@@ -46,11 +46,9 @@ def _make_text_fig(txt, titlepage=True):
     ax = fig.add_subplot(111)
     ax.set_axis_off()
     if titlepage:
-        ax.text(.5, .8, txt, ha='center', va='center', weight='bold',
-                fontsize=14)
+        ax.text(0.5, 0.8, txt, ha='center', va='center', weight='bold', fontsize=14)
     else:
-        ax.text(.5, .8, txt, ha='center', va='center',
-                fontsize=12)
+        ax.text(0.5, 0.8, txt, ha='center', va='center', fontsize=12)
     return fig
 
 
@@ -90,8 +88,9 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     pdfname = sessiondir + '.pdf'
     pdfpath = op.join(destdir, pdfname)
 
-    tagged_trials = sessionutils.get_c3ds(sessionpath, tags=cfg.eclipse.tags,
-                                          trial_type='dynamic')
+    tagged_trials = sessionutils.get_c3ds(
+        sessionpath, tags=cfg.eclipse.tags, trial_type='dynamic'
+    )
     if not tagged_trials:
         raise GaitDataError('No tagged trials found in %s' % sessiondir)
     session_t = sessionutils.get_session_date(sessionpath)
@@ -107,8 +106,9 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     title_txt += '\n'
     title_txt += u'Nimi: %s\n' % fullname
     title_txt += u'Henkilötunnus: %s\n' % (hetu if hetu else 'ei tiedossa')
-    title_txt += u'Ikä mittaushetkellä: %s\n' % ('%d vuotta' % age if age
-                                                   else 'ei tiedossa')
+    title_txt += u'Ikä mittaushetkellä: %s\n' % (
+        '%d vuotta' % age if age else 'ei tiedossa'
+    )
     title_txt += u'Mittaus: %s\n' % sessiondir
     if session_description:
         title_txt += u'Kuvaus: %s\n' % session_description
@@ -118,8 +118,9 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
 
     header = u'Nimi: %s Henkilötunnus: %s' % (fullname, hetu)
     musclelen_ndata = normaldata.normaldata_age(age)
-    footer_musclelen = (u' Normaalidata: %s' % musclelen_ndata if
-                        musclelen_ndata else u'')
+    footer_musclelen = (
+        u' Normaalidata: %s' % musclelen_ndata if musclelen_ndata else u''
+    )
 
     color_by = {'model': 'context', 'emg': 'trial'}
     style_by = {'model': None}
@@ -134,8 +135,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     fig_timedist_avg = None
     if pages['TimeDistAverage']:
         logger.debug('creating time-distance plot')
-        fig_timedist_avg = do_session_average_plot(sessionpath,
-                                                   backend=pdf_backend)
+        fig_timedist_avg = do_session_average_plot(sessionpath, backend=pdf_backend)
 
     # time-dist text
     _timedist_txt = session_analysis_text(sessionpath)
@@ -145,57 +145,65 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     fig_kinematics_cons = None
     if pages['KinematicsCons']:
         logger.debug('creating kinematics consistency plot')
-        fig_kinematics_cons = plot_sessions(sessions=[sessionpath],
-                                            layout_name='lb_kinematics',
-                                            model_normaldata=model_normaldata,
-                                            color_by=color_by,
-                                            style_by=style_by,
-                                            backend=pdf_backend,
-                                            figtitle='Kinematics consistency for %s' % sessiondir,
-                                            legend=False)
+        fig_kinematics_cons = plot_sessions(
+            sessions=[sessionpath],
+            layout_name='lb_kinematics',
+            model_normaldata=model_normaldata,
+            color_by=color_by,
+            style_by=style_by,
+            backend=pdf_backend,
+            figtitle='Kinematics consistency for %s' % sessiondir,
+            legend=False,
+        )
 
     # kinetics consistency
     fig_kinetics_cons = None
     if pages['KineticsCons']:
         logger.debug('creating kinetics consistency plot')
-        fig_kinetics_cons = plot_sessions(sessions=[sessionpath],
-                                          layout_name='lb_kinetics',
-                                          model_normaldata=model_normaldata,
-                                          color_by=color_by,
-                                          style_by=style_by,
-                                          backend=pdf_backend,
-                                          figtitle='Kinetics consistency for %s' % sessiondir,
-                                          legend=False)
+        fig_kinetics_cons = plot_sessions(
+            sessions=[sessionpath],
+            layout_name='lb_kinetics',
+            model_normaldata=model_normaldata,
+            color_by=color_by,
+            style_by=style_by,
+            backend=pdf_backend,
+            figtitle='Kinetics consistency for %s' % sessiondir,
+            legend=False,
+        )
 
     # musclelen consistency
     fig_musclelen_cons = None
     if pages['MuscleLenCons']:
         logger.debug('creating muscle length consistency plot')
-        fig_musclelen_cons = plot_sessions(sessions=[sessionpath],
-                                           layout_name='musclelen',
-                                           color_by=color_by,
-                                           style_by=style_by,
-                                           model_normaldata=model_normaldata,
-                                           backend=pdf_backend,
-                                           figtitle='Muscle length consistency for %s' % sessiondir,
-                                           legend=False)
+        fig_musclelen_cons = plot_sessions(
+            sessions=[sessionpath],
+            layout_name='musclelen',
+            color_by=color_by,
+            style_by=style_by,
+            model_normaldata=model_normaldata,
+            backend=pdf_backend,
+            figtitle='Muscle length consistency for %s' % sessiondir,
+            legend=False,
+        )
     # EMG consistency
     fig_emg_cons = None
     if do_emg_consistency:
-        logger.debug('creating EMG consistency plot')        
-        fig_emg_cons = plot_sessions(sessions=[sessionpath],
-                                     layout_name='std_emg',
-                                     color_by=color_by,
-                                     style_by=style_by,
-                                     figtitle='EMG consistency for %s' % sessiondir,
-                                     legend=False,
-                                     backend=pdf_backend)
+        logger.debug('creating EMG consistency plot')
+        fig_emg_cons = plot_sessions(
+            sessions=[sessionpath],
+            layout_name='std_emg',
+            color_by=color_by,
+            style_by=style_by,
+            figtitle='EMG consistency for %s' % sessiondir,
+            legend=False,
+            backend=pdf_backend,
+        )
     # average plots, R/L
     fig_kin_avg = None
     if pages['KinAverage']:
-        fig_kin_avg = plot_session_average(sessionpath,
-                                           model_normaldata=model_normaldata,
-                                           backend=pdf_backend)
+        fig_kin_avg = plot_session_average(
+            sessionpath, model_normaldata=model_normaldata, backend=pdf_backend
+        )
 
     logger.debug('creating multipage pdf %s' % pdfpath)
     with PdfPages(pdfpath) as pdf:
@@ -203,7 +211,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
         _savefig(pdf, fig_vel, header)
         _savefig(pdf, fig_timedist_avg, header)
         _savefig(pdf, fig_kinematics_cons, header)
-        _savefig(pdf, fig_kinetics_cons, header)        
+        _savefig(pdf, fig_kinetics_cons, header)
         _savefig(pdf, fig_musclelen_cons, header, footer_musclelen)
         _savefig(pdf, fig_emg_cons, header)
         _savefig(pdf, fig_kin_avg, header)
@@ -243,10 +251,14 @@ def create_comparison_report(sessions, pdfpath, pages=None):
 
     fig_kin_cmp = None
     if pages['KinCmp']:
-        fig_kin_cmp = plot_sessions(sessions, tags=cfg.eclipse.repr_tags,
-                                    model_normaldata=model_normaldata,
-                                    style_by='session', color_by='context',
-                                    backend=pdf_backend)
+        fig_kin_cmp = plot_sessions(
+            sessions,
+            tags=cfg.eclipse.repr_tags,
+            model_normaldata=model_normaldata,
+            style_by='session',
+            color_by='context',
+            backend=pdf_backend,
+        )
 
     header = u'Comparison %s' % sessions_str
     logger.debug('creating multipage comparison pdf %s' % pdfpath)
@@ -254,4 +266,3 @@ def create_comparison_report(sessions, pdfpath, pages=None):
         _savefig(pdf, fig_title)
         _savefig(pdf, fig_timedist_cmp, header)
         _savefig(pdf, fig_kin_cmp, header)
-

@@ -47,8 +47,7 @@ def _add_nexus_path(vicon_path):
 
     nexus_path = _find_nexus_path(vicon_path)
     if nexus_path is None:
-        logger.debug('cannot locate Nexus installation directory under %s'
-              % vicon_path)
+        logger.debug('cannot locate Nexus installation directory under %s' % vicon_path)
         return
 
     sdk_path = op.join(nexus_path, 'SDK', 'Python')
@@ -58,7 +57,7 @@ def _add_nexus_path(vicon_path):
         logger.debug('%s already in sys.path' % sdk_path)
 
     # import from Win32 or Win64 according to bitness of Python interpreter
-    bitness = '64' if sys.maxsize > 2**32 else '32'
+    bitness = '64' if sys.maxsize > 2 ** 32 else '32'
     win = 'Win' + bitness
     _win_sdk_path = op.join(nexus_path, 'SDK', win)
 
@@ -115,7 +114,7 @@ def true_ver():
                 if vind == -1:
                     return None
                 try:
-                    return float(exname[vind:vind+3])
+                    return float(exname[vind : vind + 3])
                 except ValueError:
                     return None
         except psutil.AccessDenied:
@@ -158,8 +157,9 @@ def get_sessionpath():
     except IOError:  # may be raised if Nexus was just terminated
         sessionpath = None
     if not sessionpath:
-        raise GaitDataError('Cannot get Nexus session path, '
-                            'no session or maybe in Live mode?')
+        raise GaitDataError(
+            'Cannot get Nexus session path, ' 'no session or maybe in Live mode?'
+        )
     return op.normpath(sessionpath)
 
 
@@ -175,11 +175,9 @@ def run_pipelines(pipelines):
         pipelines = [pipelines]
     for pipeline in pipelines:
         logger.debug('running pipeline: %s' % pipeline)
-        result = _run_pipeline(pipeline.encode('utf-8'), '',
-                               cfg.autoproc.nexus_timeout)
+        result = _run_pipeline(pipeline.encode('utf-8'), '', cfg.autoproc.nexus_timeout)
         if result.Error():
-            logger.warning('error while trying to run Nexus pipeline: %s'
-                           % pipeline)
+            logger.warning('error while trying to run Nexus pipeline: %s' % pipeline)
 
 
 def run_pipelines_multiprocessing(pipelines):
@@ -195,7 +193,7 @@ def run_pipelines_multiprocessing(pipelines):
         p = multiprocessing.Process(target=_run_pipeline, args=args)
         p.start()
         while p.exitcode is None:
-            time.sleep(.1)
+            time.sleep(0.1)
 
 
 def get_trialname():
@@ -226,8 +224,7 @@ def _get_marker_names(vicon, trajs_only=True):
     markers = vicon.GetMarkerNames(subjname)
     # only get markers with trajectories - excludes calibration markers
     if trajs_only:
-        markers = [mkr for mkr in markers if vicon.HasTrajectory(subjname,
-                                                                 mkr)]
+        markers = [mkr for mkr in markers if vicon.HasTrajectory(subjname, mkr)]
     return markers
 
 
@@ -240,8 +237,12 @@ def get_metadata(vicon):
     subjname = get_subjectnames()
     params_available = vicon.GetSubjectParamNames(subjname)
     subj_params = defaultdict(lambda: None)
-    subj_params.update({par: _get_nexus_subject_param(vicon, subjname, par) for
-                        par in params_available})
+    subj_params.update(
+        {
+            par: _get_nexus_subject_param(vicon, subjname, par)
+            for par in params_available
+        }
+    )
     trialname = get_trialname()
     if not trialname:
         raise GaitDataError('No trial loaded in Nexus')
@@ -268,22 +269,36 @@ def get_metadata(vicon):
         devid = devids[0]
         _, _, analograte, _, _, _ = vicon.GetDeviceDetails(devid)
     samplesperframe = analograte / framerate
-    logger.debug('offset @ %d, %d frames, framerate %d Hz, %d samples per '
-                 'frame' % (offset, length, framerate, samplesperframe))
+    logger.debug(
+        'offset @ %d, %d frames, framerate %d Hz, %d samples per '
+        'frame' % (offset, length, framerate, samplesperframe)
+    )
     # get n of forceplates
-    fp_devids = [id_ for id_ in devids if
-                 vicon.GetDeviceDetails(id_)[1].lower() == 'forceplate']
+    fp_devids = [
+        id_ for id_ in devids if vicon.GetDeviceDetails(id_)[1].lower() == 'forceplate'
+    ]
 
     # sort events (may be in wrong temporal order, at least in c3d files)
     for li in [lstrikes, rstrikes, ltoeoffs, rtoeoffs]:
         li.sort()
 
-    return {'trialname': trialname, 'sessionpath': sessionpath,
-            'offset': offset, 'framerate': framerate, 'analograte': analograte,
-            'name': subjname, 'subj_params': subj_params, 'lstrikes': lstrikes,
-            'rstrikes': rstrikes, 'ltoeoffs': ltoeoffs, 'rtoeoffs': rtoeoffs,
-            'length': length, 'samplesperframe': samplesperframe,
-            'n_forceplates': len(fp_devids), 'markers': markers}
+    return {
+        'trialname': trialname,
+        'sessionpath': sessionpath,
+        'offset': offset,
+        'framerate': framerate,
+        'analograte': analograte,
+        'name': subjname,
+        'subj_params': subj_params,
+        'lstrikes': lstrikes,
+        'rstrikes': rstrikes,
+        'ltoeoffs': ltoeoffs,
+        'rtoeoffs': rtoeoffs,
+        'length': length,
+        'samplesperframe': samplesperframe,
+        'n_forceplates': len(fp_devids),
+        'markers': markers,
+    }
 
 
 def get_emg_data(vicon):
@@ -298,8 +313,11 @@ def get_accelerometer_data(vicon):
 
 def _get_analog_data(vicon, devname):
     """ Read analog data from Nexus """
-    ids = [id_ for id_ in vicon.GetDeviceIDs() if
-           vicon.GetDeviceDetails(id_)[0].lower() == devname.lower()]
+    ids = [
+        id_
+        for id_ in vicon.GetDeviceIDs()
+        if vicon.GetDeviceDetails(id_)[0].lower() == devname.lower()
+    ]
     if len(ids) > 1:
         raise GaitDataError('Multiple matching analog devices')
     elif len(ids) == 0:
@@ -315,7 +333,7 @@ def _get_analog_data(vicon, devname):
     data = dict()
     for chid in chids:
         chdata, _, chrate = vicon.GetDeviceChannel(dev_id, outputid, chid)
-        chname = chnames[chid-1]  # chids start from 1
+        chname = chnames[chid - 1]  # chids start from 1
         data[chname] = np.array(chdata)
     return {'t': np.arange(len(chdata)) / drate, 'data': data}
 
@@ -361,10 +379,14 @@ def _get_1_forceplate_data(vicon, devid):
     # plate corners -> world coords
     cor = np.stack([nfp.LowerBounds, nfp.UpperBounds])
     cor_w = change_coords(cor, wR, wT)
-    cor_full = np.array([cor_w[0, :],
-                        [cor_w[0, 0], cor_w[1, 1], cor_w[0, 2]],
-                        cor_w[1, :],
-                        [cor_w[1, 0], cor_w[0, 1], cor_w[0, 2]]])
+    cor_full = np.array(
+        [
+            cor_w[0, :],
+            [cor_w[0, 0], cor_w[1, 1], cor_w[0, 2]],
+            cor_w[1, :],
+            [cor_w[1, 0], cor_w[0, 1], cor_w[0, 2]],
+        ]
+    )
 
     lb = np.min(cor_w, axis=0)
     ub = np.max(cor_w, axis=0)
@@ -372,21 +394,34 @@ def _get_1_forceplate_data(vicon, devid):
     cop_ok = np.logical_and(cop_w[:, 0] >= lb[0], cop_w[:, 0] <= ub[0]).all()
     cop_ok &= np.logical_and(cop_w[:, 1] >= lb[1], cop_w[:, 1] <= ub[1]).all()
     if not cop_ok:
-        logger.warning('center of pressure outside plate boundaries, '
-                       'clipping to plate')
+        logger.warning(
+            'center of pressure outside plate boundaries, ' 'clipping to plate'
+        )
         cop_w[:, 0] = np.clip(cop_w[:, 0], lb[0], ub[0])
         cop_w[:, 1] = np.clip(cop_w[:, 1], lb[1], ub[1])
-    return {'F': F, 'M': M, 'Ftot': Ftot, 'CoP': cop_w,
-            'wR': wR, 'wT': wT, 'lowerbounds': lb, 'upperbounds': ub,
-            'cor_w': cor_w, 'cor_full': cor_full}
+    return {
+        'F': F,
+        'M': M,
+        'Ftot': Ftot,
+        'CoP': cop_w,
+        'wR': wR,
+        'wT': wT,
+        'lowerbounds': lb,
+        'upperbounds': ub,
+        'cor_w': cor_w,
+        'cor_full': cor_full,
+    }
 
 
 def get_forceplate_data(vicon):
     """ Read all forceplate data from Nexus. """
     # get forceplate ids
     logger.debug('reading forceplate data from Vicon Nexus')
-    devids = [id_ for id_ in vicon.GetDeviceIDs() if
-              vicon.GetDeviceDetails(id_)[1].lower() == 'forceplate']
+    devids = [
+        id_
+        for id_ in vicon.GetDeviceIDs()
+        if vicon.GetDeviceDetails(id_)[1].lower() == 'forceplate'
+    ]
     if len(devids) == 0:
         logger.debug('no forceplates detected')
         return None
@@ -403,8 +438,7 @@ def _swap_markers(vicon, marker1, marker2):
     vicon.SetTrajectory(subj, marker1, m2[0], m2[1], m2[2], m2[3])
 
 
-def _get_marker_data(vicon, markers, ignore_edge_gaps=True,
-                     ignore_missing=False):
+def _get_marker_data(vicon, markers, ignore_edge_gaps=True, ignore_missing=False):
     """Get position, velocity and acceleration for specified markers."""
     if not isinstance(markers, list):
         markers = [markers]
@@ -414,17 +448,17 @@ def _get_marker_data(vicon, markers, ignore_edge_gaps=True,
         x, y, z, _ = vicon.GetTrajectory(subj, marker)
         if len(x) == 0:
             if ignore_missing:
-                logger.warning('Cannot read trajectory %s from Nexus'
-                               % marker)
+                logger.warning('Cannot read trajectory %s from Nexus' % marker)
                 continue
             else:
-                raise GaitDataError('Cannot read marker trajectory '
-                                    'from Nexus: \'%s\'' % marker)
+                raise GaitDataError(
+                    'Cannot read marker trajectory ' 'from Nexus: \'%s\'' % marker
+                )
         mP = np.array([x, y, z]).transpose()
         mkrdata[marker] = mP
         mkrdata[marker + '_P'] = mP
         mkrdata[marker + '_V'] = np.gradient(mP)[0]
-        mkrdata[marker + '_A'] = np.gradient(mkrdata[marker+'_V'])[0]
+        mkrdata[marker + '_A'] = np.gradient(mkrdata[marker + '_V'])[0]
         # find gaps
         allzero = np.any(mP, axis=1).astype(int)
         if ignore_edge_gaps:
@@ -454,14 +488,14 @@ def get_model_data(vicon, model, ignore_missing=False):
             data = np.squeeze(np.array(nums))
         else:
             if model.is_optional_var(var) or ignore_missing:
-                logger.info('cannot read variable %s, returning nans'
-                            % var)
+                logger.info('cannot read variable %s, returning nans' % var)
                 data = np.empty(var_dims)
                 data[:] = np.nan
             else:
-                raise GaitDataError('Cannot read model variable %s. Make sure '
-                                    'that the appropriate model has been run.'
-                                    % var)
+                raise GaitDataError(
+                    'Cannot read model variable %s. Make sure '
+                    'that the appropriate model has been run.' % var
+                )
         modeldata[var] = data
     return modeldata
 
@@ -472,8 +506,6 @@ def create_events(vicon, context, strikes, toeoffs):
     side_str = 'Right' if context == 'R' else 'Left'
     subjectname = get_subjectnames()
     for fr in strikes:
-        vicon.CreateAnEvent(subjectname, side_str, 'Foot Strike',
-                            int(fr+1), 0)
+        vicon.CreateAnEvent(subjectname, side_str, 'Foot Strike', int(fr + 1), 0)
     for fr in toeoffs:
-        vicon.CreateAnEvent(subjectname, side_str, 'Foot Off',
-                            int(fr+1), 0)
+        vicon.CreateAnEvent(subjectname, side_str, 'Foot Off', int(fr + 1), 0)

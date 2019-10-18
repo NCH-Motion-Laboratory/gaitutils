@@ -17,9 +17,19 @@ logger = logging.getLogger(__name__)
 
 
 # XXX: hardcoded time-distance variables, to set a certain order
-_timedist_vars = ['Walking Speed', 'Cadence', 'Foot Off', 'Opposite Foot Off',
-                  'Opposite Foot Contact', 'Double Support', 'Single Support',
-                  'Stride Time', 'Stride Length', 'Step Width', 'Step Length']
+_timedist_vars = [
+    'Walking Speed',
+    'Cadence',
+    'Foot Off',
+    'Opposite Foot Off',
+    'Opposite Foot Contact',
+    'Double Support',
+    'Single Support',
+    'Stride Time',
+    'Stride Length',
+    'Step Width',
+    'Step Length',
+]
 
 
 def _print_analysis_table(trials):
@@ -54,19 +64,21 @@ def _print_analysis_text_finnish(trials, vars_=None, main_label=None):
     hdr = 'Matka-aikamuuttujat (O/V)'
     hdr += ' (%s):\n' % main_label if main_label else ':\n'
     yield hdr
-    translations = {'Single Support': u'Yksöistukivaihe',
-                    'Double Support': u'Kaksoistukivaihe',
-                    'Opposite Foot Contact': u'Vastakkaisen jalan kontakti',
-                    'Opposite Foot Off': u'Vastakkainen jalka irti',
-                    'Limp Index': u'Limp-indeksi',
-                    'Step Length': u'Askelpituus',
-                    'Foot Off': u'Tukivaiheen kesto',
-                    'Walking Speed': u'Kävelynopeus',
-                    'Stride Length': u'Askelsyklin pituus',
-                    'Step Width': u'Askelleveys',
-                    'Step Time': u'Askeleen kesto',
-                    'Cadence': u'Kadenssi',
-                    'Stride Time': u'Askelsyklin kesto'}
+    translations = {
+        'Single Support': u'Yksöistukivaihe',
+        'Double Support': u'Kaksoistukivaihe',
+        'Opposite Foot Contact': u'Vastakkaisen jalan kontakti',
+        'Opposite Foot Off': u'Vastakkainen jalka irti',
+        'Limp Index': u'Limp-indeksi',
+        'Step Length': u'Askelpituus',
+        'Foot Off': u'Tukivaiheen kesto',
+        'Walking Speed': u'Kävelynopeus',
+        'Stride Length': u'Askelsyklin pituus',
+        'Step Width': u'Askelleveys',
+        'Step Time': u'Askeleen kesto',
+        'Cadence': u'Kadenssi',
+        'Stride Time': u'Askelsyklin kesto',
+    }
     unit_translations = {'steps/min': u'askelta/min'}
 
     for cond, cond_data in res_avg_all.items():
@@ -76,8 +88,14 @@ def _print_analysis_text_finnish(trials, vars_=None, main_label=None):
             var_ = translations[var] if var in translations else var
             unit = val['unit']
             unit_ = unit_translations[unit] if unit in unit_translations else unit
-            li = u'%s: %.2f ±%.2f / %.2f ±%.2f %s' % (var_, val['Right'], val_std['Right'],
-                                                        val['Left'], val_std['Left'], unit_)
+            li = u'%s: %.2f ±%.2f / %.2f ±%.2f %s' % (
+                var_,
+                val['Right'],
+                val_std['Right'],
+                val['Left'],
+                val_std['Left'],
+                unit_,
+            )
             yield li
     yield ''
 
@@ -85,10 +103,12 @@ def _print_analysis_text_finnish(trials, vars_=None, main_label=None):
 def session_analysis_text(sessionpath):
     """Return session time-distance vars as text"""
     sessiondir = op.split(sessionpath)[-1]
-    tagged_trials = sessionutils.get_c3ds(sessionpath, tags=cfg.eclipse.tags,
-                                          trial_type='dynamic')
-    return '\n'.join(_print_analysis_text_finnish({sessiondir: tagged_trials},
-                                                  main_label=sessiondir))
+    tagged_trials = sessionutils.get_c3ds(
+        sessionpath, tags=cfg.eclipse.tags, trial_type='dynamic'
+    )
+    return '\n'.join(
+        _print_analysis_text_finnish({sessiondir: tagged_trials}, main_label=sessiondir)
+    )
 
 
 def _multitrial_analysis(trials):
@@ -99,8 +119,10 @@ def _multitrial_analysis(trials):
     res_avg_all = OrderedDict()  # preserve condition ordering
     res_std_all = OrderedDict()  # for plots etc.
     for cond_label, cond_files in trials.items():
-        ans = [analysis.get_analysis(c3dfile, condition=cond_label)
-               for c3dfile in cond_files]
+        ans = [
+            analysis.get_analysis(c3dfile, condition=cond_label)
+            for c3dfile in cond_files
+        ]
         if len(ans) > 1:  # do average for this condition
             res_avg = analysis.group_analysis(ans)
             res_std = analysis.group_analysis(ans, fun=np.std)
@@ -109,7 +131,7 @@ def _multitrial_analysis(trials):
             res_std = {cond_label: None}
         res_avg_all.update(res_avg)
         res_std_all.update(res_std)
- 
+
     return res_avg_all, res_std_all
 
 
@@ -126,8 +148,10 @@ def _pick_common_vars(values, vars_wanted=None):
         vars_wanted_set = set(vars_wanted)
         vars_ok = set.intersection(vars_wanted_set, vars_common)
         if vars_wanted_set - vars_ok:
-            logger.warning('some conditions are missing variables: %s'
-                           % (vars_wanted_set - vars_ok))
+            logger.warning(
+                'some conditions are missing variables: %s'
+                % (vars_wanted_set - vars_ok)
+            )
         # preserve original var order
         vars = [var for var in vars_wanted if var in vars_ok]
     else:

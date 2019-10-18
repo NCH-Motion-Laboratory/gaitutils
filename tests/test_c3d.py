@@ -22,7 +22,6 @@ from utils import _trial_path, _c3d_path, _file_path, cfg
 logger = logging.getLogger(__name__)
 
 
-
 def test_c3d_marker_data():
     """Test marker data reads from c3d"""
     # lowerbody PiG marker set
@@ -49,10 +48,19 @@ def test_c3d_analysis_data():
     an_ = read_data.get_analysis(c3dfile, 'c3dtest')
     assert 'c3dtest' in an_
     an = an_['c3dtest']
-    an_vars = ['Stride Time', 'Opposite Foot Off', 'Double Support',
-               'Step Time', 'Single Support', 'Step Length', 'Foot Off',
-               'Walking Speed', 'Stride Length', 'Opposite Foot Contact',
-               'Cadence']
+    an_vars = [
+        'Stride Time',
+        'Opposite Foot Off',
+        'Double Support',
+        'Step Time',
+        'Single Support',
+        'Step Length',
+        'Foot Off',
+        'Walking Speed',
+        'Stride Length',
+        'Opposite Foot Contact',
+        'Cadence',
+    ]
     assert all([var in an for var in an_vars])
     assert all(['Left' in an[var] for var in an_vars])
     assert all(['Right' in an[var] for var in an_vars])
@@ -83,9 +91,9 @@ def test_c3d_fp_detection():
     assert res == 'X'
     # almost overstepped but should be flagged as ok
     # too hard - disabled for now
-    #c3d3 = 'testdata/test_c3ds/barely_ok.c3d'
-    #res = detect_forceplate_events(c3d3)['coded']
-    #assert res == 'R'
+    # c3d3 = 'testdata/test_c3ds/barely_ok.c3d'
+    # res = detect_forceplate_events(c3d3)['coded']
+    # assert res == 'R'
     # inside but on the edge
     c3d4 = _c3d_path('side_edge.c3d')
     res = detect_forceplate_events(c3d4)['coded']
@@ -102,4 +110,3 @@ def test_c3d_fp_detection():
     c3d4 = _c3d_path('adult_ok.c3d')
     res = detect_forceplate_events(c3d4)['coded']
     assert res == 'L'
-

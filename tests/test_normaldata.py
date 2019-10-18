@@ -28,8 +28,12 @@ def test_read_xlsx_normaldata():
     ndata_vars = ndata.keys()
     pigvars = models.pig_lowerbody.varlabels_noside.keys()
     # no normaldata for following vars
-    not_in_normal = {'AnkleAnglesY', 'ForeFootAnglesX',
-                     'ForeFootAnglesY', 'ForeFootAnglesZ'}
+    not_in_normal = {
+        'AnkleAnglesY',
+        'ForeFootAnglesX',
+        'ForeFootAnglesY',
+        'ForeFootAnglesZ',
+    }
     assert set(pigvars) - set(ndata_vars) == not_in_normal
 
 
@@ -45,20 +49,10 @@ def test_write_normaldata():
     ndata_vars = ndata2.keys()
     pigvars = models.pig_lowerbody.varlabels_noside.keys()
     # no normaldata for following vars
-    not_in_normal = {'AnkleAnglesY', 'ForeFootAnglesX',
-                     'ForeFootAnglesY', 'ForeFootAnglesZ'}
+    not_in_normal = {
+        'AnkleAnglesY',
+        'ForeFootAnglesX',
+        'ForeFootAnglesY',
+        'ForeFootAnglesZ',
+    }
     assert set(pigvars) - set(ndata_vars) == not_in_normal
-
-
-
-
-
-
-
-
-
-
-
-
-
-

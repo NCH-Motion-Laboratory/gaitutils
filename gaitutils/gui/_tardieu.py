@@ -36,8 +36,7 @@ import numpy as np
 import copy
 from pkg_resources import resource_filename
 from PyQt5 import QtGui, QtWidgets, uic, QtCore
-from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg,
-                                                NavigationToolbar2QT)
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
@@ -100,14 +99,14 @@ class HelpDialog(QtWidgets.QDialog):
 class SimpleToolbar(NavigationToolbar2QT):
     """ Simplified mpl navigation toolbar with some items removed """
 
-    toolitems = [t for t in NavigationToolbar2QT.toolitems if
-                 t[0] in ('Pan', 'Zoom')]
+    toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] in ('Pan', 'Zoom')]
 
 
 class TardieuWindow(QtWidgets.QMainWindow):
     """ Main Qt window with controls. The mpl figure containing the actual data
     is created by a separate class and embedded into this window. """
-    #FIXME: all str casts are probably unnecessary
+
+    # FIXME: all str casts are probably unnecessary
 
     def __init__(self, parent=None):
 
@@ -121,8 +120,9 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self._tardieu_plot._update_marker_status = self._update_marker_status
         self._tardieu_plot._update_status = self._update_status
         self.canvas = FigureCanvasQTAgg(self._tardieu_plot.fig)
-        self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                  QtWidgets.QSizePolicy.Expanding)
+        self.canvas.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         self.canvas.setParent(self)  # ?
         self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.canvas.show()
@@ -136,9 +136,9 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self.btnSetEMGFilter.clicked.connect(self._emg_filter_dialog)
 
         self.emg_passband = cfg.emg.passband
-        self.lblEMGPassband.setText('%.1f Hz - %.1f Hz' %
-                                    (self.emg_passband[0],
-                                     self.emg_passband[1]))
+        self.lblEMGPassband.setText(
+            '%.1f Hz - %.1f Hz' % (self.emg_passband[0], self.emg_passband[1])
+        )
 
         # keep some controls disabled until data is loaded
         self._set_data_controls(False)
@@ -163,16 +163,20 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
         # self.setStyleSheet("background-color: white;");
         # add canvas into last column, span all rows
-        self.mainGridLayout.addWidget(self.canvas, 1,
-                                      self.mainGridLayout.columnCount(),
-                                      self.mainGridLayout.rowCount()-1, 1)
+        self.mainGridLayout.addWidget(
+            self.canvas,
+            1,
+            self.mainGridLayout.columnCount(),
+            self.mainGridLayout.rowCount() - 1,
+            1,
+        )
 
         # create toolbar and add it into last column, 1st row
         self.toolbar = SimpleToolbar(self.canvas, self)
         self._tardieu_plot._toolbar = self.toolbar
-        self.mainGridLayout.addWidget(self.toolbar, 0,
-                                      self.mainGridLayout.columnCount()-1,
-                                      1, 1)
+        self.mainGridLayout.addWidget(
+            self.toolbar, 0, self.mainGridLayout.columnCount() - 1, 1, 1
+        )
         self.canvas.setFocus()
         self.canvas.draw()
 
@@ -201,8 +205,14 @@ class TardieuWindow(QtWidgets.QMainWindow):
     def _set_data_controls(self, enabled):
         """Show data related controls as (non)-responsive according to
         enabled (bool)"""
-        for w in [self.btnSaveFig, self.spEMGYScale, self.btnClearMarkers,
-                  self.btnSetEMGFilter, self.btnZoomFast, self.btnZoomReset]:
+        for w in [
+            self.btnSaveFig,
+            self.spEMGYScale,
+            self.btnClearMarkers,
+            self.btnSetEMGFilter,
+            self.btnZoomFast,
+            self.btnZoomReset,
+        ]:
             w.setEnabled(enabled)
 
     def _nonresp(self):
@@ -238,9 +248,9 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
     def _load_dialog_c3d(self):
         """Dialog for loading from c3d"""
-        fout = QtWidgets.QFileDialog.getOpenFileName(self, 'Open C3D file',
-                                                     '',
-                                                     u'C3D files (*.c3d)')[0]
+        fout = QtWidgets.QFileDialog.getOpenFileName(
+            self, 'Open C3D file', '', u'C3D files (*.c3d)'
+        )[0]
         if fout:
             self._load_dialog(fout)
 
@@ -258,13 +268,12 @@ class TardieuWindow(QtWidgets.QMainWindow):
             return
         side = 'R' if dlg.rbRight.isChecked() else 'L'
         # prepend side to configured EMG channel names
-        emg_chs = [side+ch for ch in cfg.tardieu.emg_chs]
+        emg_chs = [side + ch for ch in cfg.tardieu.emg_chs]
         ang0_nexus = dlg.spNormAngle.value()
 
         self._nonresp()
         try:
-            self._tardieu_plot.load_data(source, emg_chs, self.emg_passband,
-                                         ang0_nexus)
+            self._tardieu_plot.load_data(source, emg_chs, self.emg_passband, ang0_nexus)
         except GaitDataError as e:
             qt_message_dialog('Error: %s' % str(e))
             self._resp()
@@ -276,7 +285,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
         self._update_status()
         self._update_marker_status()
         # set data controls to match what was loaded
-        self.spEMGYScale.setValue(cfg.plot.emg_yscale*1e3)  # mV
+        self.spEMGYScale.setValue(cfg.plot.emg_yscale * 1e3)  # mV
         # enable all controls
         self._resp()
         self._set_data_controls(True)
@@ -284,27 +293,29 @@ class TardieuWindow(QtWidgets.QMainWindow):
     def _save_plot(self):
         """Save a pdf report"""
         fn_pdf = self._tardieu_plot.trial.trialname + '.pdf'
-        fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save plot',
-                                                      fn_pdf,
-                                                      u'PDF files (*pdf)')[0]
+        fname = QtWidgets.QFileDialog.getSaveFileName(
+            self, 'Save plot', fn_pdf, u'PDF files (*pdf)'
+        )[0]
         if not fname:
             return
         try:
             with PdfPages(fname) as pdf:
                 page_size = (11.69, 8.27)
                 # create header page
-                #timestr = time.strftime("%d.%m.%Y")
+                # timestr = time.strftime("%d.%m.%Y")
                 fig_hdr = Figure()
                 FigureCanvas(fig_hdr)
                 ax = fig_hdr.add_subplot(111)
                 ax.set_axis_off()
                 txt = self._tardieu_plot.status_text
-                ax.text(.5, .8, txt, ha='center', va='center', weight='bold',
-                        fontsize=12)
+                ax.text(
+                    0.5, 0.8, txt, ha='center', va='center', weight='bold', fontsize=12
+                )
                 fig_hdr.set_size_inches(page_size[0], page_size[1])
                 pdf.savefig(fig_hdr)
-                figx, data_axes, legend_ax = self._tardieu_plot.plot_data(interactive=False,
-                                                                          emg_yscale=self.spEMGYScale.value())
+                figx, data_axes, legend_ax = self._tardieu_plot.plot_data(
+                    interactive=False, emg_yscale=self.spEMGYScale.value()
+                )
                 FigureCanvas(figx)
                 figx.set_size_inches(page_size[0], page_size[1])
                 # full view
@@ -317,8 +328,9 @@ class TardieuWindow(QtWidgets.QMainWindow):
                     ax.set_xlim(fast_rng[0], fast_rng[1])
                 pdf.savefig(figx)
         except IOError:
-            qt_message_dialog('Error writing %s, '
-                              'check that file is not already open.' % fname)
+            qt_message_dialog(
+                'Error writing %s, ' 'check that file is not already open.' % fname
+            )
             return
 
     def _update_status(self):
@@ -366,8 +378,9 @@ class Markers(object):
         """Add a marker on mouse click"""
         if x not in self._markers.keys():
             if len(self._markers) == self.max_markers:
-                qt_message_dialog('You can place a maximum of %d markers' %
-                                  self.max_markers)
+                qt_message_dialog(
+                    'You can place a maximum of %d markers' % self.max_markers
+                )
             else:
                 self.add(x)
 
@@ -383,8 +396,9 @@ class Markers(object):
             self._markers[x]['color'] = col
             # each axis gets its own line artist
             for ax in self._axes:
-                self._markers[x][ax] = ax.axvline(x=x, color=col,
-                                                  linewidth=self.marker_width)
+                self._markers[x][ax] = ax.axvline(
+                    x=x, color=col, linewidth=self.marker_width
+                )
                 # generate picker events at given tolerance
                 self._markers[x][ax].set_picker(3)
 
@@ -418,12 +432,19 @@ class Markers(object):
         artists = list()
         legtxts = list()
         for mkr, anno, col in self.marker_info:
-            artists.append(matplotlib.lines.Line2D((0, 1), (0, 0),
-                                                   linewidth=self.marker_width,
-                                                   color=col))
+            artists.append(
+                matplotlib.lines.Line2D(
+                    (0, 1), (0, 0), linewidth=self.marker_width, color=col
+                )
+            )
             legtxts.append(u'%.3f s: %s' % (mkr, anno))
-        ax.legend(artists, legtxts, loc='upper left', ncol=ncol,
-                  prop={'size': cfg.plot_matplotlib.label_fontsize})
+        ax.legend(
+            artists,
+            legtxts,
+            loc='upper left',
+            ncol=ncol,
+            prop={'size': cfg.plot_matplotlib.label_fontsize},
+        )
 
     @property
     def marker_info(self):
@@ -445,17 +466,16 @@ class TardieuPlot(object):
         self.marker_key = 'shift'  # modifier key for markers
         self.markers = None
         # FIXME: check colors
-        self.marker_colors = ['orange', 'green', 'red', 'brown',
-                              'gray', 'purple']
+        self.marker_colors = ['orange', 'green', 'red', 'brown', 'gray', 'purple']
         self.marker_width = 1.5
         self.width_ratio = [1, 5]
         self.text_fontsize = 9
-        self.margin = .025  # margin at edge of plots
+        self.margin = 0.025  # margin at edge of plots
         self.margin = 0
         self.narrow = False
-        self.hspace = .4
-        self.wspace = .5
-        self.emg_automark_chs = ['Gas', 'Sol']   # FIXME: into config?
+        self.hspace = 0.4
+        self.wspace = 0.5
+        self.emg_automark_chs = ['Gas', 'Sol']  # FIXME: into config?
         self.data_axes = list()  # axes that actually contain data
         self.emg_axes = list()
         # these are callbacks that should be registered by the creator
@@ -495,7 +515,7 @@ class TardieuPlot(object):
             except KeyError:
                 raise GaitDataError('No such accelerometer channel %s' % ch)
             acctot = np.stack(accsigs)
-            self.acctot = np.sqrt(np.sum(acctot**2, 0))
+            self.acctot = np.sqrt(np.sum(acctot ** 2, 0))
         else:
             self.acctot = None
 
@@ -532,13 +552,13 @@ class TardieuPlot(object):
         if interactive:  # save trace objects for later modification by GUI
             self.emg_traces, self.rms_traces = dict(), dict()
 
-        nrows = len(self.emg_chs) + 3   # emgs + acc + marker data
+        nrows = len(self.emg_chs) + 3  # emgs + acc + marker data
         if self.acctot is not None:
             nrows += 1
 
         # add one row for legend if not in interactive mode
         if not interactive:
-            hr = [1] * nrows + [.5]
+            hr = [1] * nrows + [0.5]
             nrows += 1
             gs = gridspec.GridSpec(nrows, 1, height_ratios=hr)
             legend_ax = fig.add_subplot(gs[-1, 0])
@@ -552,20 +572,25 @@ class TardieuPlot(object):
         for ch in self.emg_chs:
             sharex = None if ind == 0 or not interactive else data_axes[0]
             ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
-            emgtr_, = ax.plot(self.time_analog, self.emgdata[ch]*1e3,
-                              linewidth=cfg.plot.emg_linewidth)
-            rmstr_, = ax.plot(self.time_analog, self.emg_rms[ch]*1e3,
-                              linewidth=cfg.plot.emg_rms_linewidth,
-                              color='black')
+            emgtr_, = ax.plot(
+                self.time_analog,
+                self.emgdata[ch] * 1e3,
+                linewidth=cfg.plot.emg_linewidth,
+            )
+            rmstr_, = ax.plot(
+                self.time_analog,
+                self.emg_rms[ch] * 1e3,
+                linewidth=cfg.plot.emg_rms_linewidth,
+                color='black',
+            )
             data_axes.append(ax)
             if interactive:
                 self.emg_traces[ind] = emgtr_
                 self.rms_traces[ind] = rmstr_
                 self.emg_axes.append(ax)
 
-            ysc = (cfg.plot.emg_yscale if emg_yscale is None
-                   else emg_yscale / 1.e3)
-            ax.set_ylim([-ysc*1e3, ysc*1e3])
+            ysc = cfg.plot.emg_yscale if emg_yscale is None else emg_yscale / 1.0e3
+            ax.set_ylim([-ysc * 1e3, ysc * 1e3])
             ax.set(ylabel='mV')
             ax.set_title(ch)
             ind += 1
@@ -574,8 +599,7 @@ class TardieuPlot(object):
         if self.acctot is not None:
             sharex = None if ind == 0 or not interactive else data_axes[0]
             ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
-            ax.plot(self.time_analog, self.acctot,
-                    linewidth=cfg.plot.emg_linewidth)
+            ax.plot(self.time_analog, self.acctot, linewidth=cfg.plot.emg_linewidth)
             # FIXME: no calibration yet so data is assumed to be in mV
             # ax.set(ylabel=u'm/s²')
             ax.set(ylabel=u'mV')
@@ -596,8 +620,7 @@ class TardieuPlot(object):
         sharex = None if ind == 0 or not interactive else data_axes[0]
         ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
         self.angveld = self.trial.framerate * np.diff(self.angd, axis=0)
-        ax.plot(self.time[:-1], self.angveld,
-                linewidth=cfg.plot.model_linewidth)
+        ax.plot(self.time[:-1], self.angveld, linewidth=cfg.plot.model_linewidth)
         ax.set(ylabel='deg/s')
         ax.set_title('Angular velocity')
         data_axes.append(ax)
@@ -607,8 +630,7 @@ class TardieuPlot(object):
         sharex = None if ind == 0 or not interactive else data_axes[0]
         ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
         self.angaccd = np.diff(self.angveld, axis=0)
-        ax.plot(self.time[:-2], self.angaccd,
-                linewidth=cfg.plot.model_linewidth)
+        ax.plot(self.time[:-2], self.angaccd, linewidth=cfg.plot.model_linewidth)
         ax.set(xlabel='Time (s)', ylabel=u'deg/s²')
         ax.set_title('Angular acceleration')
         data_axes.append(ax)
@@ -620,16 +642,13 @@ class TardieuPlot(object):
             self.data_axes = data_axes
             self.tmin, self.tmax = self.data_axes[0].get_xlim()
             # create markers
-            markers = Markers(self.marker_colors, self.marker_width,
-                              self.data_axes)
+            markers = Markers(self.marker_colors, self.marker_width, self.data_axes)
 
             # place the auto markers
             tmin_ = max(self.time[0], self.tmin)
             tmax_ = min(self.time[-1], self.tmax)
-            fmin, fmax = self._time_to_frame([tmin_, tmax_],
-                                             self.trial.framerate)
-            smin, smax = self._time_to_frame([tmin_, tmax_],
-                                             self.trial.analograte)
+            fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
+            smin, smax = self._time_to_frame([tmin_, tmax_], self.trial.analograte)
             # max. velocity
             velr = self.angveld[fmin:fmax]
             velmaxind = np.nanargmax(velr) / self.trial.framerate + tmin_
@@ -669,7 +688,7 @@ class TardieuPlot(object):
     def _get_fast_movement(self):
         """Get x range around fast movement"""
         velmaxt = self.time[np.nanargmax(self.angveld)]
-        return velmaxt-.5, velmaxt+1.5
+        return velmaxt - 0.5, velmaxt + 1.5
 
     def _xzoom(self, x1, x2):
         for ax in self.data_axes:
@@ -690,8 +709,8 @@ class TardieuPlot(object):
         for ind, ch in enumerate(self.emg_chs):
             t_, self.emgdata[ch] = self.trial.get_emg_data(ch)
             self.emg_rms[ch] = rms(self.emgdata[ch], cfg.emg.rms_win)
-            self.emg_traces[ind].set_ydata(self.emgdata[ch]*1e3)
-            self.rms_traces[ind].set_ydata(self.emg_rms[ch]*1e3)
+            self.emg_traces[ind].set_ydata(self.emgdata[ch] * 1e3)
+            self.rms_traces[ind].set_ydata(self.emg_rms[ch] * 1e3)
 
     @staticmethod
     def _adj_fonts(ax):
@@ -699,8 +718,9 @@ class TardieuPlot(object):
         ax.xaxis.label.set_fontsize(cfg.plot_matplotlib.label_fontsize)
         ax.yaxis.label.set_fontsize(cfg.plot_matplotlib.label_fontsize)
         ax.title.set_fontsize(cfg.plot_matplotlib.subtitle_fontsize)
-        ax.tick_params(axis='both', which='major',
-                       labelsize=cfg.plot_matplotlib.ticks_fontsize)
+        ax.tick_params(
+            axis='both', which='major', labelsize=cfg.plot_matplotlib.ticks_fontsize
+        )
 
     @staticmethod
     def _time_to_frame(times, rate):
@@ -744,8 +764,7 @@ class TardieuPlot(object):
         # if multiple markers get picked on a single click)
         if self._last_click_event == mevent:
             return
-        if (mevent.button != self.marker_del_button or
-           mevent.key != self.marker_key):
+        if mevent.button != self.marker_del_button or mevent.key != self.marker_key:
             return
         self.markers.delete_artist(event.artist, mevent.inaxes)
         self._last_click_event = mevent
@@ -789,8 +808,10 @@ class TardieuPlot(object):
             else:
                 s += u'Marker @%.3f s' % marker
                 s += (' (%s):<br>') % anno if anno else ':<br>'
-                s += u'dflex: %.2f° vel: %.2f°/s' % (self.angd[frame],
-                                                       self.angveld[frame])
+                s += u'dflex: %.2f° vel: %.2f°/s' % (
+                    self.angd[frame],
+                    self.angveld[frame],
+                )
                 s += u' acc: %.2f°/s²<br><br>' % self.angaccd[frame]
             s += u'</font>'
         return s
@@ -814,8 +835,7 @@ class TardieuPlot(object):
             s += 'Zoomed in to a single frame\nPlease zoom out for info'
             return s
         else:
-            smin, smax = self._time_to_frame([tmin_, tmax_],
-                                             self.trial.analograte)
+            smin, smax = self._time_to_frame([tmin_, tmax_], self.trial.analograte)
             s += u'In frames: %d - %d\n\n' % (fmin, fmax)
             # foot angle in chosen range and the maximum
             angr = self.angd[fmin:fmax]
@@ -839,8 +859,7 @@ class TardieuPlot(object):
                 rmsdata = self.emg_rms[ch][smin:smax]
                 rmsmax = rmsdata.max()
                 rmsmaxind = np.argmax(rmsdata) / self.trial.analograte + tmin_
-                s += u'%s max RMS: %.2f mV @ %.2f s\n' % (ch, rmsmax*1e3,
-                                                          rmsmaxind)
+                s += u'%s max RMS: %.2f mV @ %.2f s\n' % (ch, rmsmax * 1e3, rmsmaxind)
             return s
 
 

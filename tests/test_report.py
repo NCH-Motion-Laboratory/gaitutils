@@ -59,9 +59,7 @@ def test_web_report():
     app = web.dash_report(info=None, sessions=[sessiondir_abs], signals=foo)
     assert app
     # comparison
-    app = web.dash_report(info=None, sessions=[sessiondir_abs, sessiondir2_abs], signals=foo)
+    app = web.dash_report(
+        info=None, sessions=[sessiondir_abs, sessiondir2_abs], signals=foo
+    )
     assert app
-
-
-
-

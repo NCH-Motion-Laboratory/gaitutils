@@ -54,10 +54,13 @@ if op.isfile(cfg_user_fn):
     cfg_user = parse_config(cfg_user_fn)
     # update config from user file, but do not overwrite comments
     # new config items are only allowed in layouts section
-    update_config(cfg, cfg_user,
-                  create_new_sections=False,
-                  create_new_items=['layouts'],
-                  update_comments=False)
+    update_config(
+        cfg,
+        cfg_user,
+        create_new_sections=False,
+        create_new_items=['layouts'],
+        update_comments=False,
+    )
 else:
     logger.warning('no config file, trying to create %s' % cfg_user_fn)
     cfg_txt = dump_config(cfg)

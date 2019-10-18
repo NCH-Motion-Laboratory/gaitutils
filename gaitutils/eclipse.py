@@ -39,8 +39,7 @@ class FileFilter(object):
             self.fp = io.open(self.fname, encoding='utf8')
             data = self.fp.read()
         except UnicodeDecodeError:
-            logger.warning('Cannot interpret %s as utf-8, trying latin-1' %
-                           self.fname)
+            logger.warning('Cannot interpret %s as utf-8, trying latin-1' % self.fname)
             self.fp = io.open(self.fname, encoding='latin-1')
             data = self.fp.read()
         # filter
@@ -60,8 +59,7 @@ def _enf_reader(fname_enf):
     # do not listify comma-separated values
     # logger.debug('loading %s' % fname_enf)
     try:
-        cp = ConfigObj(fp, encoding='utf8', list_values=False,
-                       write_empty_values=True)
+        cp = ConfigObj(fp, encoding='utf8', list_values=False, write_empty_values=True)
     except configobj.ParseError:
         raise GaitDataError('Cannot parse config file %s' % fname_enf)
     if 'TRIAL_INFO' not in cp.sections:
@@ -76,15 +74,19 @@ def get_eclipse_keys(fname_enf, return_empty=False):
     """
     di = defaultdict(lambda: u'')
     cp = _enf_reader(fname_enf)
-    di.update({key: val for key, val in cp['TRIAL_INFO'].items()
-               if val != '' or return_empty})
+    di.update(
+        {key: val for key, val in cp['TRIAL_INFO'].items() if val != '' or return_empty}
+    )
     return di
 
 
 def eclipse_fp_keys(eclipse_keys):
     """ Filter that returns Eclipse forceplate keys/values as a dict """
-    return {key: val for key, val in eclipse_keys.items()
-            if key[:2] == 'FP' and len(key) == 3 and isint(key[2])}
+    return {
+        key: val
+        for key, val in eclipse_keys.items()
+        if key[:2] == 'FP' and len(key) == 3 and isint(key[2])
+    }
 
 
 def set_eclipse_keys(fname_enf, eclipse_dict, update_existing=False):
@@ -101,7 +103,7 @@ def set_eclipse_keys(fname_enf, eclipse_dict, update_existing=False):
         logger.debug('writing %s' % fname_enf)
         out = cp.write()  # output the config lines
         # result is utf8, but needs to be converted to unicode type for write
-        outu = [str(line+'\n', encoding='utf8') for line in out]
+        outu = [str(line + '\n', encoding='utf8') for line in out]
         with io.open(fname_enf, 'w', encoding='utf8') as fp:
             fp.writelines(outu)
     else:

@@ -11,7 +11,6 @@ from PyQt5 import QtDesigner
 
 
 class NiceListWidgetPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin):
-
     def __init__(self, parent=None):
 
         QtDesigner.QPyDesignerCustomWidgetPlugin.__init__(self)

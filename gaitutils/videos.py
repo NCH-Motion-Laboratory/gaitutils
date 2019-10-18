@@ -30,8 +30,7 @@ def convert_videos(vidfiles, check_only=False):
     if not isinstance(vidfiles, list):
         vidfiles = [vidfiles]
     # result files
-    convfiles = {vidfile: op.splitext(vidfile)[0] + CONV_EXT for vidfile
-                 in vidfiles}
+    convfiles = {vidfile: op.splitext(vidfile)[0] + CONV_EXT for vidfile in vidfiles}
     converted = [op.isfile(fn) for fn in convfiles.values()]  # already done
     if check_only:
         return all(converted)
@@ -44,15 +43,13 @@ def convert_videos(vidfiles, check_only=False):
     vidconv_bin = cfg.general.videoconv_path
     vidconv_opts = cfg.general.videoconv_opts
     if not (op.isfile(vidconv_bin) and os.access(vidconv_bin, os.X_OK)):
-        raise RuntimeError('Invalid video converter executable: %s'
-                           % vidconv_bin)
+        raise RuntimeError('Invalid video converter executable: %s' % vidconv_bin)
     procs = []
     for vidfile in convfiles:
-        cmd = [vidconv_bin]+vidconv_opts.split()+[vidfile]
+        cmd = [vidconv_bin] + vidconv_opts.split() + [vidfile]
         cmd = [s.encode('iso-8859-1') for s in cmd]
         # supply NO_WINDOW flag to prevent opening of consoles
-        p = subprocess.Popen(cmd, stdout=None,
-                             creationflags=0x08000000)
+        p = subprocess.Popen(cmd, stdout=None, creationflags=0x08000000)
         procs.append(p)
     return procs
 
@@ -60,22 +57,32 @@ def convert_videos(vidfiles, check_only=False):
 def _collect_session_videos(session, tags):
     """Collect session .avi files (trial videos). This only collects
     files for tagged dynamic trials, extra video-only trials and static trials."""
-    c3ds = sessionutils.get_c3ds(session, tags=tags,
-                                 trial_type='dynamic')
-    c3ds += sessionutils.get_c3ds(session, tags=cfg.eclipse.video_tags,
-                                  trial_type='dynamic')
+    c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
+    c3ds += sessionutils.get_c3ds(
+        session, tags=cfg.eclipse.video_tags, trial_type='dynamic'
+    )
     c3ds += sessionutils.get_c3ds(session, trial_type='static')
     camlabels = set(cfg.general.camera_labels.values())
     # for each trial, pick at most one avi and one overlay avi per camera
-    vids_it = (get_trial_videos(c3d, camera_label=camlabel, vid_ext='.avi',
-               overlay=overlay, single_file=True) for c3d in c3ds
-               for camlabel in camlabels for overlay in [True, False])
+    vids_it = (
+        get_trial_videos(
+            c3d,
+            camera_label=camlabel,
+            vid_ext='.avi',
+            overlay=overlay,
+            single_file=True,
+        )
+        for c3d in c3ds
+        for camlabel in camlabels
+        for overlay in [True, False]
+    )
     # chain resulting video files into single list
     return list(itertools.chain.from_iterable(vids_it))
 
 
-def get_trial_videos(trialfile, camera_label=None, vid_ext=None, overlay=None,
-                     single_file=False):
+def get_trial_videos(
+    trialfile, camera_label=None, vid_ext=None, overlay=None, single_file=False
+):
     """Return list of video files for trial file. File may be c3d or enf etc"""
     trialbase = op.splitext(trialfile)[0]
     # XXX: should really be case insensitive, but it does not matter on Windows
@@ -97,8 +104,9 @@ def _filter_by_label(vids, camera_label):
     """Filter videos by camera label"""
     if camera_label not in cfg.general.camera_labels.values():
         raise ValueError('unconfigured camera label %s' % camera_label)
-    ids = [id for id, label in cfg.general.camera_labels.items() if
-           camera_label == label]
+    ids = [
+        id for id, label in cfg.general.camera_labels.items() if camera_label == label
+    ]
     vid_its = itertools.tee(vids, len(ids))  # need to reuse vids iterator
     for id, vids_ in zip(ids, vid_its):
         for vid in _filter_by_id(vids_, id):

@@ -101,6 +101,7 @@ class QtHandler(logging.Handler):
 
 class XStream(QtCore.QObject):
     """Stream for Qt logging handler"""
+
     _stdout = None
     _stderr = None
     messageWritten = QtCore.pyqtSignal(str)
@@ -148,7 +149,7 @@ class ProgressBar(QtWidgets.QProgressDialog):
         self.setMinimum(0)
         self.setMaximum(100)
         self.setGeometry(500, 300, 500, 100)
-        #self.setAutoClose(False)
+        # self.setAutoClose(False)
         self.setAutoReset(False)
         self.show()
 
@@ -169,6 +170,7 @@ class ProgressBar(QtWidgets.QProgressDialog):
 
 class ProgressSignals(QObject):
     """Used to emit progress signals across threads"""
+
     progress = pyqtSignal(object, object)
 
     def __init__(self):
@@ -179,4 +181,3 @@ class ProgressSignals(QObject):
     def cancel(self):
         """Raise the cancel flag"""
         self.canceled = True
-

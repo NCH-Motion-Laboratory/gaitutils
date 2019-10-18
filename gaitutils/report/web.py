@@ -26,8 +26,16 @@ import io
 
 from ulstools.num import age_from_hetu
 
-from .. import (cfg, normaldata, models, layouts, GaitDataError,
-                sessionutils, numutils, videos)
+from .. import (
+    cfg,
+    normaldata,
+    models,
+    layouts,
+    GaitDataError,
+    sessionutils,
+    numutils,
+    videos,
+)
 from ..trial import Trial
 from ..viz.plot_plotly import plot_trials, time_dist_barchart
 from ..viz import timedist
@@ -71,15 +79,15 @@ def _report_name(sessions, long_name=True):
     """Create a title for the dash report"""
     sessions_str = ' / '.join([op.split(s)[-1] for s in sessions])
     if long_name:
-        report_type = ('Single session report' if len(sessions) == 1
-                       else 'Comparison report')
+        report_type = (
+            'Single session report' if len(sessions) == 1 else 'Comparison report'
+        )
     else:
         report_type = 'Single' if len(sessions) == 1 else 'Comparison'
     return '%s: %s' % (report_type, sessions_str)
 
 
-def dash_report(info=None, sessions=None, tags=None, signals=None,
-                recreate_plots=None):
+def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plots=None):
     """Returns dash app for web report.
     info: patient info
     sessions: list of session dirs
@@ -107,8 +115,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
 
     # tags for dynamic trials
     # if doing a comparison, pick representative trials only
-    dyn_tags = tags or (cfg.eclipse.repr_tags if is_comparison else
-                        cfg.eclipse.tags)
+    dyn_tags = tags or (cfg.eclipse.repr_tags if is_comparison else cfg.eclipse.tags)
     # this tag will be shown in the menu for static trials
     static_tag = 'Static'
 
@@ -122,24 +129,20 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
         c3ds[session] = dict(dynamic=dict(), static=dict(), vid_only=dict())
         # collect dynamic trials for each tag
         for tag in dyn_tags:
-            dyns = sessionutils.get_c3ds(session, tags=tag,
-                                         trial_type='dynamic')
+            dyns = sessionutils.get_c3ds(session, tags=tag, trial_type='dynamic')
             if len(dyns) > 1:
-                logger.warning('multiple tagged trials (%s) for %s' %
-                               (tag, session))
+                logger.warning('multiple tagged trials (%s) for %s' % (tag, session))
             dyn_trial = dyns[-1:]
             c3ds[session]['dynamic'][tag] = dyn_trial  # may be empty list
             if dyn_trial:
                 data_c3ds.extend(dyn_trial)
         # require at least one dynamic trial for each session
         if not any(c3ds[session]['dynamic'][tag] for tag in dyn_tags):
-            raise GaitDataError('No tagged dynamic trials found for %s' %
-                                (session))
+            raise GaitDataError('No tagged dynamic trials found for %s' % (session))
         # collect static trial (at most 1 per session)
         sts = sessionutils.get_c3ds(session, trial_type='static')
         if len(sts) > 1:
-            logger.warning('multiple static trials for %s, using last one'
-                           % session)
+            logger.warning('multiple static trials for %s, using last one' % session)
         static_trial = sts[-1:]
         c3ds[session]['static'][static_tag] = static_trial
         if static_trial:
@@ -148,8 +151,9 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
         for tag in cfg.eclipse.video_tags:
             dyn_vids = sessionutils.get_c3ds(session, tags=tag)
             if len(dyn_vids) > 1:
-                logger.warning('multiple tagged video-only trials (%s) for %s'
-                               % (tag, session))
+                logger.warning(
+                    'multiple tagged video-only trials (%s) for %s' % (tag, session)
+                )
             c3ds[session]['vid_only'][tag] = dyn_vids[-1:]
 
     # see whether we can load report figures from disk
@@ -189,7 +193,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
     signals.progress.emit('Finding videos...', 0)
     # add camera labels for overlay videos
     # XXX: may cause trouble if labels already contain the string 'overlay'
-    camera_labels_overlay = [lbl+' overlay' for lbl in camera_labels]
+    camera_labels_overlay = [lbl + ' overlay' for lbl in camera_labels]
     camera_labels.update(camera_labels_overlay)
 
     # build dict of videos for given tag / camera label
@@ -209,9 +213,17 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                     c3d = c3ds_this[0]  # only one c3d per tag and session
                     for camera_label in camera_labels:
                         overlay = 'overlay' in camera_label
-                        real_camera_label = (camera_label[:camera_label.find(' overlay')]
-                                             if overlay else camera_label)
-                        vids_this = videos.get_trial_videos(c3d, camera_label=real_camera_label, vid_ext='.ogv', overlay=overlay)
+                        real_camera_label = (
+                            camera_label[: camera_label.find(' overlay')]
+                            if overlay
+                            else camera_label
+                        )
+                        vids_this = videos.get_trial_videos(
+                            c3d,
+                            camera_label=real_camera_label,
+                            vid_ext='.ogv',
+                            overlay=overlay,
+                        )
                         if vids_this:
                             vid = vids_this[0]
                             url = '/static/%s' % op.split(vid)[1]
@@ -230,14 +242,12 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
             opts_tags.append({'label': '%s' % tag, 'value': tag})
     # add null entry in case we got no videos at all
     if not opts_tags:
-        opts_tags.append({'label': 'No videos', 'value': 'no videos',
-                          'disabled': True})
+        opts_tags.append({'label': 'No videos', 'value': 'no videos', 'disabled': True})
 
     # build dcc.Dropdown options list for the trials
     trials_dd = list()
     for tr in trials_dyn:
-        trials_dd.append({'label': tr.name_with_description,
-                          'value': tr.trialname})
+        trials_dd.append({'label': tr.name_with_description, 'value': tr.trialname})
 
     emg_layout = None
     tibial_torsion = dict()
@@ -247,15 +257,16 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
         age = None
         if info['hetu'] is not None:
             # compute subject age at session time
-            session_dates = [sessionutils.get_session_date(session) for
-                            session in sessions]
-            ages = [age_from_hetu(info['hetu'], d) for d in
-                    session_dates]
+            session_dates = [
+                sessionutils.get_session_date(session) for session in sessions
+            ]
+            ages = [age_from_hetu(info['hetu'], d) for d in session_dates]
             age = max(ages)
 
         # create Markdown text for patient info
-        patient_info_text = '##### %s ' % (info['fullname'] if info['fullname']
-                                        else 'Name unknown')
+        patient_info_text = '##### %s ' % (
+            info['fullname'] if info['fullname'] else 'Name unknown'
+        )
         if info['hetu']:
             patient_info_text += '(%s)' % info['hetu']
         patient_info_text += '\n\n'
@@ -277,25 +288,29 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                 model_normaldata.update(age_ndata)
 
         # make average trials
-        avg_trials = [AvgTrial(_trials_avg[session], sessionpath=session)
-                      for session in sessions]
+        avg_trials = [
+            AvgTrial(_trials_avg[session], sessionpath=session) for session in sessions
+        ]
 
         # read some extra data from trials and create supplementary data
         for tr in trials_dyn:
             # read tibial torsion for each trial and make supplementary traces
             # these will only be shown for KneeAnglesZ (knee rotation) variable
             tors = dict()
-            tors['R'], tors['L'] = (tr.subj_params['RTibialTorsion'],
-                                    tr.subj_params['LTibialTorsion'])
+            tors['R'], tors['L'] = (
+                tr.subj_params['RTibialTorsion'],
+                tr.subj_params['LTibialTorsion'],
+            )
             if tors['R'] is None or tors['L'] is None:
-                logger.warning('could not read tibial torsion values from %s'
-                            % tr.trialname)
+                logger.warning(
+                    'could not read tibial torsion values from %s' % tr.trialname
+                )
                 continue
             # include torsion info for all cycles; this is useful when plotting
             # isolated cycles
             max_cycles = cfg.plot.max_cycles['model']
             cycs = tr.get_cycles(cfg.plot.default_cycles['model'])[:max_cycles]
-                                 
+
             for cyc in cycs:
                 tibial_torsion[cyc] = dict()
                 for ctxt in tors:
@@ -305,21 +320,24 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                     tibial_torsion[cyc][var_]['t'] = np.arange(101)
                     # static tibial torsion value as function of x
                     # convert radians -> degrees
-                    tibial_torsion[cyc][var_]['data'] = (np.ones(101) * tors[ctxt]
-                                                        / np.pi * 180)
-                    tibial_torsion[cyc][var_]['label'] = ('Tib. tors. (%s) % s' %
-                                                        (ctxt, tr.trialname))
+                    tibial_torsion[cyc][var_]['data'] = (
+                        np.ones(101) * tors[ctxt] / np.pi * 180
+                    )
+                    tibial_torsion[cyc][var_]['label'] = 'Tib. tors. (%s) % s' % (
+                        ctxt,
+                        tr.trialname,
+                    )
 
         # in EMG layout, keep chs that are active in any of the trials
         signals.progress.emit('Reading EMG data', 0)
         try:
             emgs = [tr.emg for tr in trials_dyn]
-            emg_layout = layouts.rm_dead_channels_multitrial(emgs,
-                                                            cfg.layouts.std_emg)
+            emg_layout = layouts.rm_dead_channels_multitrial(emgs, cfg.layouts.std_emg)
         except GaitDataError:
             emg_layout = 'disabled'
 
-    _layouts = OrderedDict([
+    _layouts = OrderedDict(
+        [
             ('Patient info', 'patient_info'),
             ('Kinematics', cfg.layouts.lb_kinematics),
             ('Kinematics average', 'kinematics_average'),
@@ -332,15 +350,15 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
             ('Kinetics-EMG right', cfg.layouts.lb_kinetics_emg_r),
             ('Muscle length', cfg.layouts.musclelen),
             ('Time-distance variables', 'time_dist'),
-            ])
+        ]
+    )
 
     # pick desired single variables from model and append
     # Py2: dict merge below can be done more elegantly once Py2 is dropped
     pig_singlevars_ = models.pig_lowerbody.varlabels_noside.copy()
     pig_singlevars_.update(models.pig_lowerbody_kinetics.varlabels_noside)
     pig_singlevars = sorted(pig_singlevars_.items(), key=lambda item: item[1])
-    singlevars = OrderedDict([(varlabel, [[var]]) for var, varlabel in
-                              pig_singlevars])
+    singlevars = OrderedDict([(varlabel, [[var]]) for var, varlabel in pig_singlevars])
     _layouts.update(singlevars)
 
     # add supplementary data for normal layouts
@@ -353,7 +371,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
     # loop through layouts, create or load figures
     report_data_new = dict()
     for k, (label, layout) in enumerate(_layouts.items()):
-        signals.progress.emit('Creating plot: %s' % label, 100*k/len(_layouts))
+        signals.progress.emit('Creating plot: %s' % label, 100 * k / len(_layouts))
         if signals.canceled:
             return None
         # for comparison report, include session info in plot legends and
@@ -371,8 +389,11 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
             style_by['model'] = cfg.web_report.model_style_by
             color_by['model'] = cfg.web_report.model_color_by
             color_by['emg'] = cfg.web_report.emg_color_by
-        legend_type = (cfg.web_report.comparison_legend_type if is_comparison
-                       else cfg.web_report.legend_type)
+        legend_type = (
+            cfg.web_report.comparison_legend_type
+            if is_comparison
+            else cfg.web_report.legend_type
+        )
         try:
             if saved_report_data:
                 logger.debug('loading %s from saved report data' % label)
@@ -385,32 +406,45 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                 logger.debug('creating figure data for %s' % label)
                 if isinstance(layout, basestring):  # handle special layout codes
                     if layout == 'time_dist':
-                        figdata = timedist.do_comparison_plot(sessions, big_fonts=True,
-                                                              backend='plotly')
+                        figdata = timedist.do_comparison_plot(
+                            sessions, big_fonts=True, backend='plotly'
+                        )
                     elif layout == 'patient_info':
                         figdata = patient_info_text
                     elif layout == 'static_kinematics':
                         layout_ = cfg.layouts.lb_kinematics
-                        figdata = plot_trials(trials_static, layout_,
-                                              model_normaldata=model_normaldata,
-                                              cycles={'model': 'unnormalized', 'emg': []},
-                                              legend_type='short_name_with_cyclename',
-                                              style_by=style_by, color_by=color_by,
-                                              big_fonts=True)
+                        figdata = plot_trials(
+                            trials_static,
+                            layout_,
+                            model_normaldata=model_normaldata,
+                            cycles={'model': 'unnormalized', 'emg': []},
+                            legend_type='short_name_with_cyclename',
+                            style_by=style_by,
+                            color_by=color_by,
+                            big_fonts=True,
+                        )
                     elif layout == 'static_emg':
                         layout_ = cfg.layouts.std_emg
-                        figdata = plot_trials(trials_static, layout_,
-                                              model_normaldata=model_normaldata,
-                                              cycles={'model': [], 'emg': 'unnormalized'},
-                                              legend_type='short_name_with_cyclename',
-                                              style_by=style_by, color_by=color_by,
-                                              big_fonts=True)
+                        figdata = plot_trials(
+                            trials_static,
+                            layout_,
+                            model_normaldata=model_normaldata,
+                            cycles={'model': [], 'emg': 'unnormalized'},
+                            legend_type='short_name_with_cyclename',
+                            style_by=style_by,
+                            color_by=color_by,
+                            big_fonts=True,
+                        )
                     elif layout == 'kinematics_average':
                         layout_ = cfg.layouts.lb_kinematics
-                        figdata = plot_trials(avg_trials, layout_,
-                                        style_by=style_by, color_by=color_by,                    
-                                        model_normaldata=model_normaldata,
-                                        big_fonts=True)
+                        figdata = plot_trials(
+                            avg_trials,
+                            layout_,
+                            style_by=style_by,
+                            color_by=color_by,
+                            model_normaldata=model_normaldata,
+                            big_fonts=True,
+                        )
                     elif layout == 'disabled':
                         # will be caught, resulting in empty menu item
                         raise RuntimeError
@@ -418,13 +452,17 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                         raise Exception('Unrecognized layout: %s' % layout)
 
                 else:  # regular gaitutils layout
-                    figdata = plot_trials(trials_dyn, layout,
-                                    model_normaldata=model_normaldata,
-                                    emg_mode=emg_mode,
-                                    legend_type=legend_type,
-                                    style_by=style_by, color_by=color_by,
-                                    supplementary_data=supplementary_default,
-                                    big_fonts=True)
+                    figdata = plot_trials(
+                        trials_dyn,
+                        layout,
+                        model_normaldata=model_normaldata,
+                        emg_mode=emg_mode,
+                        legend_type=legend_type,
+                        style_by=style_by,
+                        color_by=color_by,
+                        supplementary_data=supplementary_default,
+                        big_fonts=True,
+                    )
             # save newly created data
             if not saved_report_data:
                 if isinstance(figdata, go.Figure):
@@ -444,38 +482,45 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
                     return base64.b64encode(base64.b64decode(s)) == s
                 except Exception:
                     return False
+
             # this is for old style timedist figures that were in base64
             # encoded svg
             if layout == 'time_dist' and _is_base64(figdata):
-                graph_upper = html.Img(src='data:image/svg+xml;base64,{}'.
-                                    format(figdata),
-                                    id='gaitgraph%d' % k,
-                                    style={'height': '100%'})
-                graph_lower = html.Img(src='data:image/svg+xml;base64,{}'.
-                                    format(figdata),
-                                    id='gaitgraph%d'
-                                    % (len(_layouts)+k),
-                                    style={'height': '100%'})
+                graph_upper = html.Img(
+                    src='data:image/svg+xml;base64,{}'.format(figdata),
+                    id='gaitgraph%d' % k,
+                    style={'height': '100%'},
+                )
+                graph_lower = html.Img(
+                    src='data:image/svg+xml;base64,{}'.format(figdata),
+                    id='gaitgraph%d' % (len(_layouts) + k),
+                    style={'height': '100%'},
+                )
             elif layout == 'patient_info':
                 graph_upper = dcc.Markdown(figdata)
                 graph_lower = graph_upper
             else:
                 # plotly fig -> dcc.Graph
-                graph_upper = dcc.Graph(figure=figdata, id='gaitgraph%d' % k,
-                                        style={'height': '100%'})
-                graph_lower = dcc.Graph(figure=figdata, id='gaitgraph%d'
-                                        % (len(_layouts)+k),
-                                        style={'height': '100%'})
+                graph_upper = dcc.Graph(
+                    figure=figdata, id='gaitgraph%d' % k, style={'height': '100%'}
+                )
+                graph_lower = dcc.Graph(
+                    figure=figdata,
+                    id='gaitgraph%d' % (len(_layouts) + k),
+                    style={'height': '100%'},
+                )
             dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
             dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
 
         except (RuntimeError, GaitDataError) as e:  # could not create a figure
             logger.warning('failed to create figure for %s: %s' % (label, e))
             # insert the menu options but make them disabled
-            dd_opts_multi_upper.append({'label': label, 'value': label,
-                                        'disabled': True})
-            dd_opts_multi_lower.append({'label': label, 'value': label,
-                                        'disabled': True})
+            dd_opts_multi_upper.append(
+                {'label': label, 'value': label, 'disabled': True}
+            )
+            dd_opts_multi_lower.append(
+                {'label': label, 'value': label, 'disabled': True}
+            )
             continue
 
     opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
@@ -484,34 +529,39 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
     # if plots were newly created, save them to disk
     if not saved_report_data:
         logger.debug('saving report data into %s' % data_fn)
-        signals.progress.emit('Saving report data to disk...', 99)    
+        signals.progress.emit('Saving report data to disk...', 99)
         with open(data_fn, 'wb') as f:
             pickle.dump(report_data_new, f, protocol=-1)
 
-    def make_left_panel(split=True, upper_value='Kinematics',
-                        lower_value='Kinematics'):
+    def make_left_panel(split=True, upper_value='Kinematics', lower_value='Kinematics'):
         """Make the left graph panels. If split, make two stacked panels"""
 
         # the upper graph & dropdown
         items = [
-                    dcc.Dropdown(id='dd-vars-upper-multi', clearable=False,
-                                 options=opts_multi,
-                                 value=upper_value),
-
-                    html.Div(id='div-upper', style={'height': '50%'}
-                             if split else {'height': '100%'})
-                ]
+            dcc.Dropdown(
+                id='dd-vars-upper-multi',
+                clearable=False,
+                options=opts_multi,
+                value=upper_value,
+            ),
+            html.Div(
+                id='div-upper', style={'height': '50%'} if split else {'height': '100%'}
+            ),
+        ]
 
         if split:
             # add the lower one
-            items.extend([
-                            dcc.Dropdown(id='dd-vars-lower-multi',
-                                         clearable=False,
-                                         options=opts_multi,
-                                         value=lower_value),
-
-                            html.Div(id='div-lower', style={'height': '50%'})
-                        ])
+            items.extend(
+                [
+                    dcc.Dropdown(
+                        id='dd-vars-lower-multi',
+                        clearable=False,
+                        options=opts_multi,
+                        value=lower_value,
+                    ),
+                    html.Div(id='div-lower', style={'height': '50%'}),
+                ]
+            )
 
         return html.Div(items, style={'height': '80vh'})
 
@@ -523,63 +573,78 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
     app.title = _report_name(sessions, long_name=False)
 
     # this is for generating the classnames in the CSS
-    num2words = {1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five',
-                 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten',
-                 11: 'eleven', 12: 'twelve'}
+    num2words = {
+        1: 'one',
+        2: 'two',
+        3: 'three',
+        4: 'four',
+        5: 'five',
+        6: 'six',
+        7: 'seven',
+        8: 'eight',
+        9: 'nine',
+        10: 'ten',
+        11: 'eleven',
+        12: 'twelve',
+    }
     classname_left = '%s columns' % num2words[LEFT_WIDTH]
-    classname_right = '%s columns' % num2words[12-LEFT_WIDTH]
+    classname_right = '%s columns' % num2words[12 - LEFT_WIDTH]
 
-    app.layout = html.Div([  # row
-
-            html.Div([  # left main div
-
+    app.layout = html.Div(
+        [  # row
+            html.Div(
+                [  # left main div
                     html.H6(report_name),
-
-                    dcc.Checklist(id='split-left',
-                                  options=[{'label': 'Two panels',
-                                            'value': 'split'}], value=[]),
-
+                    dcc.Checklist(
+                        id='split-left',
+                        options=[{'label': 'Two panels', 'value': 'split'}],
+                        value=[],
+                    ),
                     # need split=True so that both panels are in initial layout
-                    html.Div(make_left_panel(split=True), id='div-left-main')
-
-                    ], className=classname_left),
-
-            html.Div([  # right main div
-
-                    dcc.Dropdown(id='dd-camera', clearable=False,
-                                 options=opts_cameras,
-                                 value='Front camera'),
-
-                    dcc.Dropdown(id='dd-video-tag', clearable=False,
-                                 options=opts_tags,
-                                 value=opts_tags[0]['value']),
-
+                    html.Div(make_left_panel(split=True), id='div-left-main'),
+                ],
+                className=classname_left,
+            ),
+            html.Div(
+                [  # right main div
+                    dcc.Dropdown(
+                        id='dd-camera',
+                        clearable=False,
+                        options=opts_cameras,
+                        value='Front camera',
+                    ),
+                    dcc.Dropdown(
+                        id='dd-video-tag',
+                        clearable=False,
+                        options=opts_tags,
+                        value=opts_tags[0]['value'],
+                    ),
                     html.Div(id='videos'),
-
-                    ], className=classname_right),
-
-                     ], className='row')
+                ],
+                className=classname_right,
+            ),
+        ],
+        className='row',
+    )
 
     @app.callback(
-            Output('div-left-main', 'children'),
-            [Input('split-left', 'value')],
-            [State('dd-vars-upper-multi', 'value')]
-        )
+        Output('div-left-main', 'children'),
+        [Input('split-left', 'value')],
+        [State('dd-vars-upper-multi', 'value')],
+    )
     def update_panel_layout(split_panels, upper_value):
         split = 'split' in split_panels
         return make_left_panel(split, upper_value=upper_value)
 
     @app.callback(
-            Output('div-upper', 'children'),
-            [Input('dd-vars-upper-multi', 'value')]
-        )
+        Output('div-upper', 'children'), [Input('dd-vars-upper-multi', 'value')]
+    )
     def update_contents_upper_multi(sel_var):
         return mapper_multi_upper[sel_var]
 
     @app.callback(
-            Output('div-lower', 'children'),
-            [Input('dd-vars-lower-multi', 'value')]
-        )
+        Output('div-lower', 'children'), [Input('dd-vars-lower-multi', 'value')]
+    )
     def update_contents_lower_multi(sel_var):
         return mapper_multi_lower[sel_var]
 
@@ -587,17 +652,21 @@ def dash_report(info=None, sessions=None, tags=None, signals=None,
         """Create a video element with title"""
         if not url:
             return 'No video found'
-        vid_el = html.Video(src=url, controls=True, loop=True, preload='auto',
-                            title=title, style={'max-height': max_height,
-                                                'max-width': '100%'})
+        vid_el = html.Video(
+            src=url,
+            controls=True,
+            loop=True,
+            preload='auto',
+            title=title,
+            style={'max-height': max_height, 'max-width': '100%'},
+        )
         # return html.Div([title, vid_el])  # titles above videos
         return vid_el
 
     @app.callback(
-            Output('videos', 'children'),
-            [Input('dd-camera', 'value'),
-             Input('dd-video-tag', 'value')]
-        )
+        Output('videos', 'children'),
+        [Input('dd-camera', 'value'), Input('dd-video-tag', 'value')],
+    )
     def update_videos(camera_label, tag):
         """Create a list of video divs according to camera and tag selection"""
         if tag == 'no videos':

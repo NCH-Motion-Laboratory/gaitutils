@@ -27,11 +27,17 @@ class AvgTrial(Trial):
         s += '>'
         return s
 
-    def __init__(self, trials, sessionpath=None, reject_zeros=True, 
-                 reject_outliers=None, fp_cycles_only=False):
-        avgdata, stddata, n_ok, _ = average_trials(trials,
-                                                   reject_outliers=reject_outliers,
-                                                   fp_cycles_only=fp_cycles_only)
+    def __init__(
+        self,
+        trials,
+        sessionpath=None,
+        reject_zeros=True,
+        reject_outliers=None,
+        fp_cycles_only=False,
+    ):
+        avgdata, stddata, n_ok, _ = average_trials(
+            trials, reject_outliers=reject_outliers, fp_cycles_only=fp_cycles_only
+        )
         # nfiles may be misleading since not all trials may contain valid data
         self.nfiles = len(trials)
         self.trials = trials
@@ -51,10 +57,12 @@ class AvgTrial(Trial):
         self.t = np.arange(101)  # data is on normalized cycle 0..100%
         # fake 2 gait cycles, L/R
         self.cycles = list()
-        self.cycles.append(Gaitcycle(0, 101, 60, 'R', True, 1, 1000,
-                                     name='right', trial=self))
-        self.cycles.append(Gaitcycle(0, 101, 60, 'L', True, 1, 1000,
-                                     name='left', trial=self))
+        self.cycles.append(
+            Gaitcycle(0, 101, 60, 'R', True, 1, 1000, name='right', trial=self)
+        )
+        self.cycles.append(
+            Gaitcycle(0, 101, 60, 'L', True, 1, 1000, name='left', trial=self)
+        )
         self.ncycles = 2
         self.eclipse_data = defaultdict(lambda: '', {})
 
@@ -73,10 +81,13 @@ class AvgTrial(Trial):
             logger.debug('setting norm. cycle for AvgTrial (no effect)')
 
 
-def average_trials(trials, fp_cycles_only=False,
-                   reject_zeros=True,
-                   reject_outliers=1e-3,
-                   use_medians=False):
+def average_trials(
+    trials,
+    fp_cycles_only=False,
+    reject_zeros=True,
+    reject_outliers=1e-3,
+    use_medians=False,
+):
     """ Average model data from several trials.
 
     Parameters
@@ -133,8 +144,10 @@ def average_trials(trials, fp_cycles_only=False,
                 if not model_this.is_kinetic_var(var):
                     rows_bad = np.where(np.any(vardata == 0, axis=1))[0]
                     if len(rows_bad) > 0:
-                        logger.info('%s: rejecting %d curves with zero values' %
-                                    (var, len(rows_bad)))
+                        logger.info(
+                            '%s: rejecting %d curves with zero values'
+                            % (var, len(rows_bad))
+                        )
                         vardata = np.delete(vardata, rows_bad, axis=0)
             n_ok = vardata.shape[0]
             if n_ok > 0 and reject_outliers is not None and not use_medians:
@@ -145,13 +158,15 @@ def average_trials(trials, fp_cycles_only=False,
                 # this is necessary since frame-based MAD values
                 # can become really small especially in small datasets, causing
                 # Z-score to blow up and data getting rejected unnecessarily.
-                outlier_inds = numutils.outliers(vardata, median_axis=0,
-                                                 mad_axis=None,
-                                                 p_threshold=p_threshold)
+                outlier_inds = numutils.outliers(
+                    vardata, median_axis=0, mad_axis=None, p_threshold=p_threshold
+                )
                 outlier_rows = np.unique(outlier_inds[0])
                 if outlier_rows.size > 0:
-                    logger.info('%s: rejecting %d outlier(s) (P=%g)' %
-                                (var, outlier_rows.size, p_threshold))
+                    logger.info(
+                        '%s: rejecting %d outlier(s) (P=%g)'
+                        % (var, outlier_rows.size, p_threshold)
+                    )
                     vardata = np.delete(vardata, outlier_rows, axis=0)
             n_ok = vardata.shape[0]
             if n_ok == 0:
@@ -196,7 +211,7 @@ def _collect_model_data(trials, fp_cycles_only=False):
             data_all[var] = None
 
     nc = dict()
-    nc['R'], nc['L'], nc['Rkin'], nc['Lkin'] = (0,)*4
+    nc['R'], nc['L'], nc['Rkin'], nc['Lkin'] = (0,) * 4
 
     for n, trial_ in enumerate(trials):
         # see whether it's already a Trial instance or we need to create one
@@ -215,16 +230,17 @@ def _collect_model_data(trials, fp_cycles_only=False):
                 trial.get_model_data(var)
                 models_ok.append(model)
             except GaitDataError:
-                logger.info('cannot read variable %s from %s, skipping '
-                            'corresponding model %s' % (var, trial.trialname,
-                                                        model.desc))
+                logger.info(
+                    'cannot read variable %s from %s, skipping '
+                    'corresponding model %s' % (var, trial.trialname, model.desc)
+                )
         for model in models_ok:
             # gather data
             for cycle in trial.cycles:
                 trial.set_norm_cycle(cycle)
                 side = cycle.context
                 if cycle.on_forceplate:
-                    nc[side+'kin'] += 1
+                    nc[side + 'kin'] += 1
                 nc[side] += 1
 
                 for var in model.varnames:
@@ -232,21 +248,27 @@ def _collect_model_data(trials, fp_cycles_only=False):
                     # FIXME: this may not work with all models
                     if var[0] == side:
                         # don't collect kinetics if cycle is not on forceplate
-                        if ((model.is_kinetic_var(var) or fp_cycles_only) and
-                           not cycle.on_forceplate):
-                                continue
+                        if (
+                            model.is_kinetic_var(var) or fp_cycles_only
+                        ) and not cycle.on_forceplate:
+                            continue
                         _, data = trial.get_model_data(var)
                         if np.all(np.isnan(data)):
-                            logger.info('no data was found for %s/%s' % (trial.trialname, var))
+                            logger.info(
+                                'no data was found for %s/%s' % (trial.trialname, var)
+                            )
                         else:
                             # add as first row or concatenate to existing data
-                            data_all[var] = (data[None, :] if data_all[var]
-                                            is None else
-                                            np.concatenate([data_all[var],
-                                                            data[None, :]]))
+                            data_all[var] = (
+                                data[None, :]
+                                if data_all[var] is None
+                                else np.concatenate([data_all[var], data[None, :]])
+                            )
     n = len(trials)
-    logger.debug('collected %d trials, %d/%d R/L cycles, %d/%d kinetics cycles'
-                 % (n, nc['R'], nc['L'], nc['Rkin'], nc['Lkin']))
+    logger.debug(
+        'collected %d trials, %d/%d R/L cycles, %d/%d kinetics cycles'
+        % (n, nc['R'], nc['L'], nc['Rkin'], nc['Lkin'])
+    )
     return data_all, nc
 
 
@@ -293,7 +315,6 @@ def _collect_emg_data(trials, rms=True, grid_points=101):
                 if ch not in data_all:
                     data_all[ch] = data_cyc[None, :]
                 else:
-                    data_all[ch] = np.concatenate([data_all[ch],
-                                                  data_cyc[None, :]])
+                    data_all[ch] = np.concatenate([data_all[ch], data_cyc[None, :]])
             meta.append('%s: %s' % (trial.trialname, cycle.name))
     return data_all, meta

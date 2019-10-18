@@ -6,10 +6,8 @@ PyQt dialogs etc.
 """
 
 from PyQt5 import uic, QtWidgets
-from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
-                                                FigureCanvas)
-from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as
-                                                NavigationToolbar)
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from pkg_resources import resource_filename
 import os.path as op
 import ast
@@ -29,8 +27,9 @@ def qt_matplotlib_window(fig):
     _mpl_win = QtWidgets.QDialog()
     # _mpl_win.setGeometry(100, 100, 1500, 1000)
     _mpl_win._canvas = FigureCanvas(fig)
-    _mpl_win._canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                   QtWidgets.QSizePolicy.Expanding)
+    _mpl_win._canvas.setSizePolicy(
+        QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+    )
     _mpl_win._canvas.updateGeometry()  # not sure if this does anything
     toolbar = NavigationToolbar(_mpl_win._canvas, _mpl_win)
     layout = QtWidgets.QVBoxLayout()
@@ -48,8 +47,7 @@ def qt_message_dialog(msg):
     dlg = QtWidgets.QMessageBox()
     dlg.setWindowTitle('Message')
     dlg.setText(msg)
-    dlg.addButton(QtWidgets.QPushButton('Ok'),
-                  QtWidgets.QMessageBox.YesRole)
+    dlg.addButton(QtWidgets.QPushButton('Ok'), QtWidgets.QMessageBox.YesRole)
     dlg.exec_()
 
 
@@ -58,10 +56,8 @@ def qt_yesno_dialog(msg):
     dlg = QtWidgets.QMessageBox()
     dlg.setWindowTitle('Confirm')
     dlg.setText(msg)
-    dlg.addButton(QtWidgets.QPushButton('Yes'),
-                  QtWidgets.QMessageBox.YesRole)
-    dlg.addButton(QtWidgets.QPushButton('No'),
-                  QtWidgets.QMessageBox.NoRole)
+    dlg.addButton(QtWidgets.QPushButton('Yes'), QtWidgets.QMessageBox.YesRole)
+    dlg.addButton(QtWidgets.QPushButton('No'), QtWidgets.QMessageBox.NoRole)
     dlg.exec_()
     return dlg.buttonRole(dlg.clickedButton())
 
@@ -75,16 +71,13 @@ def qt_dir_chooser():
     # non-native dialog - multiple dirs. a bit messy, currently not in use
     file_dialog = QtWidgets.QFileDialog()
     file_dialog.setFileMode(QtWidgets.QFileDialog.DirectoryOnly)
-    file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog,
-                          True)
+    file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog, True)
     file_view = file_dialog.findChild(QtWidgets.QListView, 'listView')
     if file_view:
-        file_view.setSelectionMode(QtWidgets.QAbstractItemView.
-                                   MultiSelection)
+        file_view.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
     f_tree_view = file_dialog.findChild(QtWidgets.QTreeView)
     if f_tree_view:
-        f_tree_view.setSelectionMode(QtWidgets.QAbstractItemView.
-                                     MultiSelection)
+        f_tree_view.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
     return file_dialog.selectedFiles() if file_dialog.exec_() else []
 
 
@@ -97,8 +90,10 @@ class OptionsDialog(QtWidgets.QDialog):
         lout = QtWidgets.QFormLayout()
         tab.setLayout(lout)
         # get items sorted by comment
-        items = sorted((item for (itname, item) in section),
-                       key=lambda it: configdot.get_description(it))
+        items = sorted(
+            (item for (itname, item) in section),
+            key=lambda it: configdot.get_description(it),
+        )
         for item in items:
             desc = configdot.get_description(item)
             if isinstance(item.value, bool):
@@ -118,15 +113,12 @@ class OptionsDialog(QtWidgets.QDialog):
         self._input_widgets = defaultdict(lambda: dict())
 
         # build button box
-        std_buttons = (QtWidgets.QDialogButtonBox.Ok |
-                       QtWidgets.QDialogButtonBox.Cancel)
+        std_buttons = QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
         self.buttonBox = QtWidgets.QDialogButtonBox(std_buttons)
         loadButton = QtWidgets.QPushButton('Load...')
         saveButton = QtWidgets.QPushButton('Save...')
-        self.buttonBox.addButton(loadButton,
-                                 QtWidgets.QDialogButtonBox.ActionRole)
-        self.buttonBox.addButton(saveButton,
-                                 QtWidgets.QDialogButtonBox.ActionRole)
+        self.buttonBox.addButton(loadButton, QtWidgets.QDialogButtonBox.ActionRole)
+        self.buttonBox.addButton(saveButton, QtWidgets.QDialogButtonBox.ActionRole)
         loadButton.clicked.connect(self.load_config_dialog)
         saveButton.clicked.connect(self.save_config_dialog)
         self.buttonBox.accepted.connect(self.accept)
@@ -142,26 +134,31 @@ class OptionsDialog(QtWidgets.QDialog):
 
         _main_layout.addWidget(self.tabWidget)
         helptext = QtWidgets.QLabel()
-        helptext.setText('Changes into options will stay in effect until the program is restarted. To make changes\n'
-                         'permanent and automatically loaded on startup, save them into\n%s' % cfg_user_fn)
-        _main_layout.addWidget(helptext)        
+        helptext.setText(
+            'Changes into options will stay in effect until the program is restarted. To make changes\n'
+            'permanent and automatically loaded on startup, save them into\n%s'
+            % cfg_user_fn
+        )
+        _main_layout.addWidget(helptext)
         _main_layout.addWidget(self.buttonBox)
         self.setLayout(_main_layout)
 
     def load_config_dialog(self):
         """Bring up load dialog and load selected file"""
-        fout = QtWidgets.QFileDialog.getOpenFileName(self,
-                                                     'Load config file',
-                                                     op.expanduser('~'),
-                                                     'Config files (*.cfg)')
+        fout = QtWidgets.QFileDialog.getOpenFileName(
+            self, 'Load config file', op.expanduser('~'), 'Config files (*.cfg)'
+        )
         fname = fout[0]
         if fname:
             try:
                 cfg_new = configdot.parse_config(fname)
-                configdot.update_config(cfg, cfg_new,
-                                        create_new_sections=False,
-                                        create_new_items=['layouts'],
-                                        update_comments=False)
+                configdot.update_config(
+                    cfg,
+                    cfg_new,
+                    create_new_sections=False,
+                    create_new_items=['layouts'],
+                    update_comments=False,
+                )
             except ValueError:
                 qt_message_dialog('Could not parse %s' % fname)
             else:
@@ -171,14 +168,14 @@ class OptionsDialog(QtWidgets.QDialog):
         """Bring up save dialog and save data"""
         wname, txt = self._update_cfg()
         if wname is not None:
-            qt_message_dialog('Invalid input for item %s: %s\n'
-                              'Please fix before saving' % (wname, txt))
+            qt_message_dialog(
+                'Invalid input for item %s: %s\n'
+                'Please fix before saving' % (wname, txt)
+            )
         else:
-            fout = QtWidgets.QFileDialog.getSaveFileName(self,
-                                                         'Save config file',
-                                                         op.expanduser('~'),
-                                                         'Config files '
-                                                         '(*.cfg)')
+            fout = QtWidgets.QFileDialog.getSaveFileName(
+                self, 'Save config file', op.expanduser('~'), 'Config files ' '(*.cfg)'
+            )
             fname = fout[0]
             if fname:
                 with io.open(fname, 'w', encoding='utf8') as f:
@@ -218,8 +215,10 @@ class OptionsDialog(QtWidgets.QDialog):
         """Update config and close dialog, if widget inputs are ok. Otherwise show error dialog"""
         wname, txt = self._update_cfg()
         if wname is not None:
-            qt_message_dialog('Invalid input for item %s: %s\n'
-                              'Please fix before closing or cancel dialog' % (wname, txt))
+            qt_message_dialog(
+                'Invalid input for item %s: %s\n'
+                'Please fix before closing or cancel dialog' % (wname, txt)
+            )
         else:
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
 
@@ -234,8 +233,9 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
         uic.loadUi(uifile, self)
         # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.btnBrowseSession.clicked.connect(self.add_session)
-        self.btnAddNexusSession.clicked.connect(lambda: self.
-                                                add_session(from_nexus=True))
+        self.btnAddNexusSession.clicked.connect(
+            lambda: self.add_session(from_nexus=True)
+        )
         self.btnClearAll.clicked.connect(self.listSessions.clear)
         self.btnClearCurrent.clicked.connect(self.listSessions.rm_current_item)
         self.max_sessions = max_sessions
@@ -243,8 +243,9 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
 
     def add_session(self, from_nexus=False):
         if len(self.sessions) == self.max_sessions:
-            qt_message_dialog('You can specify maximum of %d sessions' %
-                              self.max_sessions)
+            qt_message_dialog(
+                'You can specify maximum of %d sessions' % self.max_sessions
+            )
             return
         if from_nexus:
             try:
@@ -267,9 +268,10 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
 
     def accept(self):
         if len(self.sessions) < self.min_sessions:
-            qt_message_dialog('Please select at least %d session%s' %
-                              (self.min_sessions,
-                               's' if self.min_sessions > 1 else ''))
+            qt_message_dialog(
+                'Please select at least %d session%s'
+                % (self.min_sessions, 's' if self.min_sessions > 1 else '')
+            )
         else:
             self.done(QtWidgets.QDialog.Accepted)
 
@@ -284,8 +286,9 @@ class ChooseSessionsDialogWeb(ChooseSessionsDialog):
         uic.loadUi(uifile, self)
         # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.btnBrowseSession.clicked.connect(self.add_session)
-        self.btnAddNexusSession.clicked.connect(lambda: self.
-                                                add_session(from_nexus=True))
+        self.btnAddNexusSession.clicked.connect(
+            lambda: self.add_session(from_nexus=True)
+        )
         self.btnClearAll.clicked.connect(self.listSessions.clear)
         self.btnClearCurrent.clicked.connect(self.listSessions.rm_current_item)
         self.max_sessions = max_sessions

@@ -41,13 +41,18 @@ def test_get_trial_videos():
     assert len(vids) == 7
     for vid in vids:
         assert op.isfile(vid)
-    vids = videos.get_trial_videos(trialfile, camera_label='Front camera', vid_ext='.avi')
+    vids = videos.get_trial_videos(
+        trialfile, camera_label='Front camera', vid_ext='.avi'
+    )
     assert len(vids) == 2
-    vids = videos.get_trial_videos(trialfile, camera_label='Front camera', vid_ext='.avi',
-                                   single_file=True)
+    vids = videos.get_trial_videos(
+        trialfile, camera_label='Front camera', vid_ext='.avi', single_file=True
+    )
     # get single video, must be one with the most recent timestamp
     assert len(vids) == 1
-    assert vids[0] == op.join(sessiondir_abs, "2018_12_17_preOp_RR07.2114551.20181317142825.avi")
+    assert vids[0] == op.join(
+        sessiondir_abs, "2018_12_17_preOp_RR07.2114551.20181317142825.avi"
+    )
     vids = videos.get_trial_videos(trialfile, vid_ext='.ogv')
     assert len(vids) == 3
     vids = videos.get_trial_videos(trialfile, vid_ext='.avi', overlay=True)

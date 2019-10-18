@@ -100,8 +100,10 @@ def plot_session_average(session, layout_name=None, tagged_only=True,
     c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
     if not c3ds:
         raise GaitDataError('No dynamic trials found for %s' % session)
-
-    atrial = stats.AvgTrial(c3ds, sessionpath=session)
+    
+    reject_outliers = cfg.trial.outlier_rejection_threshold
+    atrial = stats.AvgTrial(c3ds, reject_outliers=reject_outliers,
+                            sessionpath=session)
     maintitle_ = '%s (%d trial average)' % (atrial.sessiondir, atrial.nfiles)
 
     return backend_lib.plot_trials(atrial, layout,

@@ -27,8 +27,10 @@ class AvgTrial(Trial):
         s += '>'
         return s
 
-    def __init__(self, trials, sessionpath=None, fp_cycles_only=False):
+    def __init__(self, trials, sessionpath=None, reject_zeros=True, 
+                 reject_outliers=None, fp_cycles_only=False):
         avgdata, stddata, n_ok, _ = average_trials(trials,
+                                                   reject_outliers=reject_outliers,
                                                    fp_cycles_only=fp_cycles_only)
         # nfiles may be misleading since not all trials may contain valid data
         self.nfiles = len(trials)
@@ -73,7 +75,7 @@ class AvgTrial(Trial):
 
 def average_trials(trials, fp_cycles_only=False,
                    reject_zeros=True,
-                   reject_outliers=None,
+                   reject_outliers=1e-3,
                    use_medians=False):
     """ Average model data from several trials.
 
@@ -87,7 +89,8 @@ def average_trials(trials, fp_cycles_only=False,
         be collected from forceplate cycles only.
     reject_zeros : bool
         Reject any curves which contain zero (0.000...) values. Zero values are
-        sometimes used to mark gaps.
+        sometimes used to mark gaps. No zero rejection is done for kinetic variables,
+        since these may actually become zero due to clamping of force data.
     reject_outliers : float or None
         None for no automatic outlier rejection. Otherwise, a P value for false
         rejection (assuming strictly normally distributed data). Outliers are
@@ -126,21 +129,29 @@ def average_trials(trials, fp_cycles_only=False,
         else:
             Ntot = vardata.shape[0]
             if reject_zeros:
-                rows_bad = np.where(np.any(vardata == 0, axis=1))[0]
-                if len(rows_bad) > 0:
-                    logger.debug('%s: rejecting %d curves with zero values' %
-                                 (var, len(rows_bad)))
-                    vardata = np.delete(vardata, rows_bad, axis=0)
+                model_this = models.model_from_var(var)
+                if not model_this.is_kinetic_var(var):
+                    rows_bad = np.where(np.any(vardata == 0, axis=1))[0]
+                    if len(rows_bad) > 0:
+                        logger.info('%s: rejecting %d curves with zero values' %
+                                    (var, len(rows_bad)))
+                        vardata = np.delete(vardata, rows_bad, axis=0)
             n_ok = vardata.shape[0]
             if n_ok > 0 and reject_outliers is not None and not use_medians:
                 # a Bonferroni type correction for the p-threshold
                 p_threshold = reject_outliers / vardata.shape[0]
-                outlier_inds = numutils.outliers(vardata, axis=0,
+                # when computing outliers, estimate median absolute deviation
+                # using all data, instead of a frame-dependent MAD estimate.
+                # this is necessary since frame-based MAD values
+                # can become really small especially in small datasets, causing
+                # Z-score to blow up and data getting rejected unnecessarily.
+                outlier_inds = numutils.outliers(vardata, median_axis=0,
+                                                 mad_axis=None,
                                                  p_threshold=p_threshold)
                 outlier_rows = np.unique(outlier_inds[0])
                 if outlier_rows.size > 0:
-                    logger.debug('%s: rejecting %d curves with outliers' %
-                                 (var, outlier_rows.size))
+                    logger.info('%s: rejecting %d outlier(s) (P=%g)' %
+                                (var, outlier_rows.size, p_threshold))
                     vardata = np.delete(vardata, outlier_rows, axis=0)
             n_ok = vardata.shape[0]
             if n_ok == 0:

@@ -45,28 +45,35 @@ def mad(data, axis=None, scale=1.4826, keepdims=False):
     return scale * np.median(np.abs(data - med), axis=axis, keepdims=keepdims)
 
 
-def modified_zscore(data, axis=0):
+def modified_zscore(data, median_axis=0, mad_axis=0):
     """Modified Z-score.
 
     Z-score analogue computed using robust statistics.
+    Axes can be specified separately for estimating the median and the MAD (median 
+    absolute deviation). For example, if columns represent different variables
+    and rows are observations, giving 0 for both axes would take different
+    variables into account. Using median_axis=0 and mad_axis=None would use
+    column-specific median but a single MAD estimate computed over all
+    data.
 
     Parameters
     ----------
     data : array_like
         The data
-    axis : Axis or axes along which to compute the median values.
+    median_axis : Axis or axes along which to compute the median values.
+    mad_axis : Axis or axes along which to compute the MAD values.
 
     Returns
     -------
     res : ndarray
         The result
     """
-    med_ = np.median(data, axis=axis, keepdims=True)
-    mad_ = mad(data, axis=axis, keepdims=True)
+    med_ = np.median(data, axis=median_axis, keepdims=True)
+    mad_ = mad(data, axis=mad_axis, keepdims=True)
     return (data - med_) / mad_
 
 
-def outliers(x, axis=0, p_threshold=1e-3):
+def outliers(x, median_axis=0, mad_axis=0, p_threshold=1e-3):
     """Robustly detect outliers assuming a normal distribution.
     
     A modified Z-score is first computed based on the data. Then a threshold
@@ -86,7 +93,7 @@ def outliers(x, axis=0, p_threshold=1e-3):
     idx : tuple
         Indexes of rejected values (as in np.where output)
     """
-    zs = modified_zscore(x, axis=axis)
+    zs = modified_zscore(x, median_axis=median_axis, mad_axis=mad_axis)
     z_threshold = np.sqrt(2) * erfinv(1-p_threshold)
     return np.where(abs(zs) > z_threshold)
 

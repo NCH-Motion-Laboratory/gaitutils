@@ -648,8 +648,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         layout_desc = self.cbLayout.currentText()
         layout_name = self.layouts_map[layout_desc]
-        backend = self._get_plotting_backend_ui()        
-        avgtrial = stats.AvgTrial(self._selected_trials)
+        backend = self._get_plotting_backend_ui()
+        reject_outliers = cfg.trial.outlier_rejection_threshold
+        avgtrial = stats.AvgTrial(self._selected_trials,
+                                  reject_outliers=reject_outliers)
         self._run_in_thread(plot_trials,
                             finished_func=self._enable_main_ui,
                             result_func=self._show_plots,

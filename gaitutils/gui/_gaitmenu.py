@@ -648,7 +648,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
         fout = QtWidgets.QFileDialog.getOpenFileNames(
             self, 'Load C3D files', None, 'C3D files (*.c3d)'
         )
-        self._add_c3dfiles(fout[0])
+        if fout[0]:
+            self._add_c3dfiles(fout[0])
 
     def _select_all_trials(self):
         """Select all trials"""

@@ -26,16 +26,14 @@ json_keys = ['fullname', 'hetu', 'session_description', 'report_notes']
 
 def load_quirks(session):
     """Load session quirks"""
+    quirks = dict()
     fname = op.join(session, 'quirks.json')
     if op.isfile(fname):
         with io.open(fname, 'r', encoding='utf-8') as f:
             try:
-                quirks = json.load(f)
+                quirks.update(json.load(f))
             except (UnicodeDecodeError, EOFError, IOError, TypeError, ValueError):
                 logger.warning('cannot load quirks file %s' % fname)
-                quirks = dict()
-    else:
-        quirks = dict()
     return quirks
 
 
@@ -71,7 +69,6 @@ def load_info(session):
                 raise GaitDataError('Error loading patient info file %s' % fname)
     else:
         info = None
-
     return info
 
 

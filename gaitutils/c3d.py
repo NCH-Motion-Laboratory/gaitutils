@@ -102,24 +102,21 @@ def get_analysis(c3dfile, condition='unknown'):
         raise GaitDataError('Cannot read time-distance parameters from %s' % c3dfile)
 
     # build a nice output dict
-    di = dict()
-    di[condition] = dict()
+    di = defaultdict(lambda: defaultdict(dict))
     di_ = di[condition]
 
     for (var, unit, context, val) in zip(vars_, units, contexts, vals):
-        if var not in di_:
-            di_[var] = dict()
-            di_[var]['unit'] = unit
-        if context not in di_[var]:
-            di_[var][context] = val
+        di_[var]['unit'] = unit
+        di_[var][context] = val
 
+    # if c3d was missing vals for some var/context, insert nans
     for var in di_:
         for context in ['Left', 'Right']:
             if context not in di_[var]:
                 logger.warning(
                     '%s has missing value: %s / %s' % (c3dfile, var, context)
                 )
-                di_[var][context] = np.NaN
+                di_[var][context] = np.nan
 
     return di
 

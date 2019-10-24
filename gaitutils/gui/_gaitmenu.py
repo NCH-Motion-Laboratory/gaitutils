@@ -626,7 +626,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             try:
                 tr = trial.Trial(c3dfile)
             except GaitDataError as e:
-                title = 'Could not load trial trial %s. Details:' % c3dfile
+                title = 'Could not load trial %s. Details:' % op.split(c3dfile)[-1]
                 _report_exception(e, title=title)
             else:
                 self._add_trial_to_table(tr)

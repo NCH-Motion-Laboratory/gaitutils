@@ -11,13 +11,14 @@ from builtins import zip
 import numpy as np
 import openpyxl
 import os.path as op
-from functools32 import lru_cache
 import logging
 
 from . import cfg, sessionutils, GaitDataError, numutils
 from .numutils import isfloat
 from ulstools.num import age_from_hetu
 from .models import models_all
+from .envutils import lru_cache
+
 
 logger = logging.getLogger(__name__)
 

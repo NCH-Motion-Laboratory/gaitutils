@@ -17,6 +17,11 @@ import logging
 
 from .gui._windows import error_exit
 
+# import backported lru_cache for 2.7
+if sys.version_info.major == 2:
+    from functools32 import lru_cache
+else:
+    from functools import lru_cache
 
 logger = logging.getLogger(__name__)
 

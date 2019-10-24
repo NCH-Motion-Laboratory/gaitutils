@@ -14,9 +14,9 @@ import logging
 import numpy as np
 import os
 import sys
-from functools32 import lru_cache
 
 from .numutils import center_of_pressure, change_coords
+from .envutils import lru_cache
 from . import GaitDataError
 
 
@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 # import btk either from btk or pyBTK
 try:
     import btk
-
     BTK_IMPORTED = True
 except ImportError:
     try:
@@ -38,7 +37,7 @@ except ImportError:
         BTK_IMPORTED = True
     except ImportError:
         BTK_IMPORTED = False
-        logger.warning('cannot find btk module; unable to read .c3d files')
+        logger.warning('cannot import btk module; unable to read .c3d files')
 
 
 def is_c3dfile(obj):

@@ -30,7 +30,7 @@ from .plot_common import (
     _handle_cyclespec,
     _handle_style_and_color_args,
     _color_by_params,
-    _style_by_params
+    _style_by_params,
 )
 
 
@@ -385,9 +385,13 @@ def plot_trials(
 
                         if do_plot:
                             # decide style and color
-                            sty = _style_by_params(style_by['model'], trace_styles, trial, cyc, context)
+                            sty = _style_by_params(
+                                style_by['model'], trace_styles, trial, cyc, context
+                            )
                             sty = _style_mpl_to_plotly(sty)
-                            col = _color_by_params(color_by['model'], trace_colors, trial, cyc, context)
+                            col = _color_by_params(
+                                color_by['model'], trace_colors, trial, cyc, context
+                            )
 
                             line = dict(
                                 width=cfg.plot.model_linewidth, dash=sty, color=col
@@ -518,7 +522,9 @@ def plot_trials(
                                 else y_
                             )
 
-                            col = _color_by_params(color_by['emg'], emg_trace_colors, trial, cyc, context)
+                            col = _color_by_params(
+                                color_by['emg'], emg_trace_colors, trial, cyc, context
+                            )
                             col = merge_color_and_opacity(col, cfg.plot.emg_alpha)
                             lw = (
                                 cfg.plot.emg_rms_linewidth

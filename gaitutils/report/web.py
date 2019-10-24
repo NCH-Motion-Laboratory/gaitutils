@@ -386,7 +386,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
         else:
             legend_type = cfg.web_report.legend_type
             style_by = cfg.web_report.style_by
-            color_by = cfg.web_report.color_by            
+            color_by = cfg.web_report.color_by
 
         try:
             if saved_report_data:

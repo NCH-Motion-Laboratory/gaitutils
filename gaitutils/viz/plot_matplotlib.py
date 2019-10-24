@@ -24,7 +24,7 @@ from .plot_common import (
     IteratorMapper,
     _handle_style_and_color_args,
     _color_by_params,
-    _style_by_params
+    _style_by_params,
 )
 from .. import models, normaldata, layouts, cfg, GaitDataError, numutils
 from ..stats import AvgTrial
@@ -371,8 +371,12 @@ def plot_trials(
 
                         if do_plot:
                             # decide style and color
-                            sty = _style_by_params(style_by['model'], trace_styles, trial, cyc, context)
-                            col = _color_by_params(color_by['model'], trace_colors, trial, cyc, context)
+                            sty = _style_by_params(
+                                style_by['model'], trace_styles, trial, cyc, context
+                            )
+                            col = _color_by_params(
+                                color_by['model'], trace_colors, trial, cyc, context
+                            )
 
                             line_ = ax.plot(
                                 t,
@@ -490,7 +494,9 @@ def plot_trials(
                                 else y_
                             )
 
-                            col = _color_by_params(color_by['emg'], emg_trace_colors, trial, cyc, context)
+                            col = _color_by_params(
+                                color_by['emg'], emg_trace_colors, trial, cyc, context
+                            )
                             lw = (
                                 cfg.plot.emg_rms_linewidth
                                 if emg_mode == 'rms'

@@ -29,6 +29,8 @@ from .plot_common import (
     _style_mpl_to_plotly,
     _handle_cyclespec,
     _handle_style_and_color_args,
+    _color_by_params,
+    _style_by_params
 )
 
 
@@ -383,34 +385,10 @@ def plot_trials(
 
                         if do_plot:
                             # decide style and color
-                            if style_by['model'] == 'context':
-                                sty = cfg.plot.context_styles[context]
-                            elif style_by['model'] == 'session':
-                                sty = trace_styles.get_prop(trial.sessiondir)
-                            elif style_by['model'] == 'trial':
-                                sty = trace_styles.get_prop(trial)
-                            elif style_by['model'] == 'cycle':
-                                sty = trace_styles.get_prop(cyc)
-                            elif style_by['model'] is None:
-                                sty = '-'
-                            else:
-                                raise RuntimeError('Unexpected style argument %s'
-                                                   % style_by['model'])
+                            sty = _style_by_params(style_by['model'], trace_styles, trial, cyc, context)
                             sty = _style_mpl_to_plotly(sty)
+                            col = _color_by_params(color_by['model'], trace_colors, trial, cyc, context)
 
-                            if color_by['model'] == 'context':
-                                col = cfg.plot.context_colors[context]
-                            elif color_by['model'] == 'session':
-                                col = trace_colors.get_prop(trial.sessiondir)
-                            elif color_by['model'] == 'trial':
-                                col = trace_colors.get_prop(trial)
-                            elif color_by['model'] == 'cycle':
-                                col = trace_colors.get_prop(cyc)
-                            elif color_by['model'] is None:
-                                col = '#000000'
-                            else:
-                                raise RuntimeError('Unexpected color argument %s'
-                                                   % color_by['model'])
                             line = dict(
                                 width=cfg.plot.model_linewidth, dash=sty, color=col
                             )
@@ -540,20 +518,7 @@ def plot_trials(
                                 else y_
                             )
 
-                            if color_by['emg'] == 'session':
-                                col = emg_trace_colors.get_prop(trial.sessiondir)
-                            elif color_by['emg'] == 'trial':
-                                col = emg_trace_colors.get_prop(trial)
-                            elif color_by['emg'] == 'cycle':
-                                col = emg_trace_colors.get_prop(cyc)
-                            elif color_by['emg'] == 'context':
-                                col = cfg.plot.context_colors[context]
-                            elif color_by['emg'] is None:
-                                col = '#000000'
-                            else:
-                                raise RuntimeError('Unexpected color argument %s' %
-                                                   color_by['emg'])
-
+                            col = _color_by_params(color_by['emg'], emg_trace_colors, trial, cyc, context)
                             col = merge_color_and_opacity(col, cfg.plot.emg_alpha)
                             lw = (
                                 cfg.plot.emg_rms_linewidth

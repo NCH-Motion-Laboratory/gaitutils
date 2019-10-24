@@ -23,6 +23,8 @@ from .plot_common import (
     _handle_cyclespec,
     IteratorMapper,
     _handle_style_and_color_args,
+    _color_by_params,
+    _style_by_params
 )
 from .. import models, normaldata, layouts, cfg, GaitDataError, numutils
 from ..stats import AvgTrial
@@ -368,29 +370,9 @@ def plot_trials(
                             do_plot = False
 
                         if do_plot:
-
                             # decide style and color
-                            if style_by['model'] == 'context':
-                                sty = cfg.plot.context_styles[context]
-                            elif style_by['model'] == 'session':
-                                sty = trace_styles.get_prop(trial.sessiondir)
-                            elif style_by['model'] == 'trial':
-                                sty = trace_styles.get_prop(trial)
-                            elif style_by['model'] == 'cycle':
-                                sty = trace_styles.get_prop(cyc)
-                            elif style_by['model'] is None:
-                                sty = '-'
-
-                            if color_by['model'] == 'context':
-                                col = cfg.plot.context_colors[context]
-                            elif color_by['model'] == 'session':
-                                col = trace_colors.get_prop(trial.sessiondir)
-                            elif color_by['model'] == 'trial':
-                                col = trace_colors.get_prop(trial)
-                            elif color_by['model'] == 'cycle':
-                                col = trace_colors.get_prop(cyc)
-                            elif color_by['model'] is None:
-                                col = '#000000'
+                            sty = _style_by_params(style_by['model'], trace_styles, trial, cyc, context)
+                            col = _color_by_params(color_by['model'], trace_colors, trial, cyc, context)
 
                             line_ = ax.plot(
                                 t,
@@ -508,17 +490,7 @@ def plot_trials(
                                 else y_
                             )
 
-                            if color_by['emg'] == 'session':
-                                col = emg_trace_colors.get_prop(trial.sessiondir)
-                            elif color_by['emg'] == 'trial':
-                                col = emg_trace_colors.get_prop(trial)
-                            elif color_by['emg'] == 'cycle':
-                                col = emg_trace_colors.get_prop(cyc)
-                            elif color_by['emg'] == 'context':
-                                col = cfg.plot.context_colors[context]
-                            elif color_by['emg'] is None:
-                                col = '#000000'
-
+                            col = _color_by_params(color_by['emg'], emg_trace_colors, trial, cyc, context)
                             lw = (
                                 cfg.plot.emg_rms_linewidth
                                 if emg_mode == 'rms'

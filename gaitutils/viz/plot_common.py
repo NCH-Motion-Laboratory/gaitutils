@@ -21,6 +21,38 @@ from gaitutils import models, cfg
 logger = logging.getLogger(__name__)
 
 
+def _color_by_params(spec, mapper, trial, cyc, context):
+    """Helper to return color from mapper, according to trial etc."""
+    if spec == 'session':
+        return mapper.get_prop(trial.sessiondir)
+    elif spec == 'trial':
+        return mapper.get_prop(trial)
+    elif spec == 'cycle':
+        return mapper.get_prop(cyc)
+    elif spec == 'context':
+        return cfg.plot.context_colors[context]
+    elif spec is None:
+        return '#000000'
+    else:
+        raise RuntimeError('Unexpected colorspec: %s' % spec)
+
+
+def _style_by_params(spec, mapper, trial, cyc, context):
+    """Helper to return color from mapper, according to trial etc."""
+    if spec == 'session':
+        return mapper.get_prop(trial.sessiondir)
+    elif spec == 'trial':
+        return mapper.get_prop(trial)
+    elif spec == 'cycle':
+        return mapper.get_prop(cyc)
+    elif spec == 'context':
+        return cfg.plot.context_context_styles[context]
+    elif spec is None:
+        return '-'
+    else:
+        raise RuntimeError('Unexpected colorspec: %s' % spec)
+
+
 class IteratorMapper(object):
     """Map iterator values to keys. If key has been seen, previously mapped
     value is reused. Otherwise new value is taken from the iterator."""

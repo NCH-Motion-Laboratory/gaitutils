@@ -21,7 +21,7 @@ from .plot_common import (
     _get_cycle_name,
     _var_title,
     _handle_cyclespec,
-    IteratorMapper,
+    _cyclical_mapper,
     _handle_style_and_color_args,
     _color_by_params,
     _style_by_params,
@@ -243,10 +243,10 @@ def plot_trials(
 
     nrows, ncols = layouts.check_layout(layout)
 
-    # IteratorMappers generate and keep track of key -> linestyle mappings
-    trace_colors = IteratorMapper(cycle(cfg.plot.colors))
-    emg_trace_colors = IteratorMapper(cycle(cfg.plot.colors))
-    trace_styles = IteratorMapper(cycle(cfg.plot.linestyles))
+    # these generate and keep track of key -> linestyle (or color) mappings
+    trace_colors = _cyclical_mapper(cfg.plot.colors)
+    emg_trace_colors = _cyclical_mapper(cfg.plot.colors)
+    trace_styles = _cyclical_mapper(cfg.plot.linestyles)
 
     # compute figure width and height
     figh = min(nrows * cfg.plot_matplotlib.inch_per_row + 1, cfg.plot_matplotlib.maxh)

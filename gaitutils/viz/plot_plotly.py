@@ -25,7 +25,7 @@ from ..timedist import _pick_common_vars
 from .plot_common import (
     _get_cycle_name,
     _var_title,
-    IteratorMapper,
+    _cyclical_mapper,
     _style_mpl_to_plotly,
     _handle_cyclespec,
     _handle_style_and_color_args,
@@ -243,10 +243,10 @@ def plot_trials(
 
     nrows, ncols = layouts.check_layout(layout)
 
-    # IteratorMappers generate and keep track of key -> linestyle mappings
-    trace_colors = IteratorMapper(cycle(cfg.plot.colors))
-    emg_trace_colors = IteratorMapper(cycle(cfg.plot.colors))
-    trace_styles = IteratorMapper(cycle(cfg.plot.linestyles))
+    # these generate and keep track of key -> linestyle (or color) mappings
+    trace_colors = _cyclical_mapper(cfg.plot.colors)
+    emg_trace_colors = _cyclical_mapper(cfg.plot.colors)
+    trace_styles = _cyclical_mapper(cfg.plot.linestyles)
 
     allvars = [item for row in layout for item in row]
     titles = [_var_title(var) for var in allvars]

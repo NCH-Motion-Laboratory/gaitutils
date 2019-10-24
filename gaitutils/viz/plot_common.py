@@ -11,6 +11,8 @@ from builtins import str
 from builtins import next
 from past.builtins import basestring
 from builtins import object
+from itertools import cycle
+from collections import defaultdict
 import datetime
 import logging
 import copy
@@ -53,26 +55,10 @@ def _style_by_params(spec, mapper, trial, cyc, context):
         raise RuntimeError('Unexpected colorspec: %s' % spec)
 
 
-class IteratorMapper(object):
-    """Map iterator values to keys. If key has been seen, previously mapped
-    value is reused. Otherwise new value is taken from the iterator."""
-
-    def __init__(self, iterator):
-        self._iterator = iterator
-        self._prop_dict = dict()
-
-    def __repr__(self):
-        s = '<IteratorMapper|'
-        s += str(self._prop_dict)
-        return s
-
-    def get_prop(self, key):
-        if key in self._prop_dict:
-            return self._prop_dict[key]
-        else:
-            prop = next(self._iterator)
-            self._prop_dict[key] = prop
-            return prop
+def _cyclical_mapper(it):
+    """Maps iterator to keys cyclically"""
+    cyc_it = cycle(it)
+    return defaultdict(lambda: next(cyc_it))
 
 
 def _handle_cyclespec(cycles):

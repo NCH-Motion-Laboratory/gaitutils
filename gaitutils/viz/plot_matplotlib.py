@@ -427,7 +427,7 @@ def plot_trials(
                                         stdx,
                                         y - sdata,
                                         y + sdata,
-                                        color=cfg.plot.model_stddev_colors[cyc.context],
+                                        color=cfg.plot.model_stddev_colors[context],
                                         alpha=cfg.plot.model_stddev_alpha,
                                     )
                                     leg_entries['Stddev for %s' % tracegroup] = stddev_
@@ -492,7 +492,7 @@ def plot_trials(
                         or var in cfg.emg.channel_labels
                     ):
                         do_plot = (
-                            trial.emg.context_ok(var, cyc.context)
+                            trial.emg.context_ok(var, context)
                             and trial.emg.status_ok(var)
                             and cyc in emg_cycles_
                         )
@@ -514,6 +514,8 @@ def plot_trials(
                                 col = emg_trace_colors.get_prop(trial)
                             elif color_by['emg'] == 'cycle':
                                 col = emg_trace_colors.get_prop(cyc)
+                            elif color_by['emg'] == 'context':
+                                col = cfg.plot.context_colors[context]
                             elif color_by['emg'] is None:
                                 col = '#000000'
 

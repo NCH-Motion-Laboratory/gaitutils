@@ -397,6 +397,9 @@ def plot_trials(
                                 sty = trace_styles.get_prop(cyc)
                             elif style_by['model'] is None:
                                 sty = '-'
+                            else:
+                                raise RuntimeError('Unexpected style argument %s'
+                                                   % style_by['model'])
                             sty = _style_mpl_to_plotly(sty)
 
                             if color_by['model'] == 'context':
@@ -409,6 +412,9 @@ def plot_trials(
                                 col = trace_colors.get_prop(cyc)
                             elif color_by['model'] is None:
                                 col = '#000000'
+                            else:
+                                raise RuntimeError('Unexpected color argument %s'
+                                                   % color_by['model'])
                             line = dict(
                                 width=cfg.plot.model_linewidth, dash=sty, color=col
                             )
@@ -473,9 +479,7 @@ def plot_trials(
                                 ):
                                     sdata = model_stddev[var]
                                     stdx = np.linspace(0, 100, sdata.shape[0])
-                                    fillcolor_ = cfg.plot.model_stddev_colors[
-                                        cyc.context
-                                    ]
+                                    fillcolor_ = cfg.plot.model_stddev_colors[context]
                                     fillcolor = merge_color_and_opacity(
                                         fillcolor_, cfg.plot.model_stddev_alpha
                                     )
@@ -564,8 +568,13 @@ def plot_trials(
                                 col = emg_trace_colors.get_prop(trial)
                             elif color_by['emg'] == 'cycle':
                                 col = emg_trace_colors.get_prop(cyc)
+                            elif color_by['emg'] == 'context':
+                                col = cfg.plot.context_colors[context]
                             elif color_by['emg'] is None:
                                 col = '#000000'
+                            else:
+                                raise RuntimeError('Unexpected color argument %s' %
+                                                   color_by['emg'])
 
                             col = merge_color_and_opacity(col, cfg.plot.emg_alpha)
                             lw = (

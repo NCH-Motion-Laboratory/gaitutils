@@ -64,7 +64,7 @@ def _handle_cyclespec(cycles):
 def _handle_style_and_color_args(style_by, color_by):
     """Handle style and color choice"""
     vals_ok = set(('session', 'trial', 'context', None))
-    style_by_defaults = {'model': cfg.plot.model_style_by}
+    style_by_defaults = cfg.plot.style_by
     if style_by is None:
         style_by = dict()
     elif isinstance(style_by, basestring):
@@ -76,7 +76,7 @@ def _handle_style_and_color_args(style_by, color_by):
     if not set(style_by.values()).issubset(vals_ok):
         raise ValueError('invalid style_by argument in %s' % style_by.items())
 
-    color_by_defaults = {'model': cfg.plot.model_color_by, 'emg': cfg.plot.emg_color_by}
+    color_by_defaults = cfg.plot.color_by
     if color_by is None:
         color_by = dict()
     elif isinstance(color_by, basestring):

@@ -376,19 +376,15 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
             return None
         # for comparison report, include session info in plot legends and
         # use session specific line style
-        style_by = dict()
-        color_by = dict()
         emg_mode = None
         if is_comparison:
-            style_by['model'] = cfg.web_report.comparison_model_style_by
-            color_by['model'] = cfg.web_report.comparison_model_color_by
-            color_by['emg'] = cfg.web_report.comparison_emg_color_by
+            style_by = cfg.web_report.comparison_style_by
+            color_by = cfg.web_report.comparison_color_by
             if cfg.web_report.comparison_emg_rms:
                 emg_mode = 'rms'
         else:
-            style_by['model'] = cfg.web_report.model_style_by
-            color_by['model'] = cfg.web_report.model_color_by
-            color_by['emg'] = cfg.web_report.emg_color_by
+            style_by = cfg.web_report.style_by
+            color_by = cfg.web_report.color_by            
         legend_type = (
             cfg.web_report.comparison_legend_type
             if is_comparison

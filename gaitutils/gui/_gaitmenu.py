@@ -56,6 +56,13 @@ from ..report import web, pdf
 
 logger = logging.getLogger(__name__)
 
+# currently the VSCode debugger can only detect Python native threads
+# this enables a workaround for Qt threads (works only inside VSCode)
+VSCODE_DEBUG_THREADS = False
+
+if VSCODE_DEBUG_THREADS:
+    import ptvsd
+
 
 def _get_nexus_sessionpath():
     """Get Nexus sessionpath, handle exceptions for use outside _run_in_thread"""
@@ -988,6 +995,8 @@ class Runner(QRunnable):
 
     def run(self):
         try:
+            if VSCODE_DEBUG_THREADS:
+                ptvsd.debug_this_thread()
             retval = self.fun()
         except Exception as e:
             self.signals.error.emit(e)

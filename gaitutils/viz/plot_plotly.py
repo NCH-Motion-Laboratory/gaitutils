@@ -81,6 +81,7 @@ def time_dist_barchart(
             data[cond][ctxt] = np.array([values[cond][var][ctxt] for var in vars])
             if stddev:
                 stddevs = np.array([stddev[cond][var][ctxt] for var in vars])
+            if stddevs.max() > 0:
                 texts[cond][ctxt] = [
                     u'%.2f ± %.2f %s' % (val, std, unit)
                     for val, std, unit in zip(data[cond][ctxt], stddevs, units)

@@ -123,15 +123,10 @@ def _multitrial_analysis(trials):
             analysis.get_analysis(c3dfile, condition=cond_label)
             for c3dfile in cond_files
         ]
-        if len(ans) > 1:  # do average for this condition
-            res_avg = analysis.group_analysis(ans)
-            res_std = analysis.group_analysis(ans, fun=np.std)
-        else:  # do single-trial plot for this condition
-            res_avg = ans[0]
-            res_std = {cond_label: None}
+        res_avg = analysis.group_analysis(ans)
+        res_std = analysis.group_analysis(ans, fun=np.std)
         res_avg_all.update(res_avg)
         res_std_all.update(res_std)
-
     return res_avg_all, res_std_all
 
 

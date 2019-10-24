@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_analysis(c3dfile, condition='unknown'):
-    """ A wrapper that reads the c3d analysis values """
+    """A wrapper that reads the c3d analysis values"""
     di = c3d.get_analysis(c3dfile, condition=condition)
     # Nexus <2.8 does not compute step width into c3d
     if 'Step Width' not in di[condition]:
@@ -46,13 +46,10 @@ def group_analysis(an_list, fun=np.mean):
     if not an_list:
         return None
 
-    if len(an_list) == 1:
-        return an_list[0]
-
     condsets = [set(an.keys()) for an in an_list]
-    if set.difference(*condsets):  # currently we are strict
-        raise RuntimeError('Conditions need to match')
-    conds = set.intersection(*condsets)
+    conds = condsets[0]
+    if not all(cset == conds for cset in condsets):
+        raise RuntimeError('Conditions need to match between analysis dicts')
 
     for cond in conds:
         varsets = [set(an[cond].keys()) for an in an_list for cond in conds]

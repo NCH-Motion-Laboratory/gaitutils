@@ -199,15 +199,15 @@ class OptionsDialog(QtWidgets.QDialog):
         for secname, sec in cfg:
             for itemname, item in sec:
                 _widget = self._input_widgets[secname][itemname]
-                try:
-                    if isinstance(_widget, QtWidgets.QLineEdit):
+                if isinstance(_widget, QtWidgets.QLineEdit):
+                    try:
                         item.value = ast.literal_eval(_widget.text())
-                    elif isinstance(_widget, QtWidgets.QCheckBox):
-                        item.value = _widget.isChecked()
-                    else:
-                        raise RuntimeError('Invalid input widget class, how come?')
-                except SyntaxError:
-                    return itemname, _widget.text()
+                    except (SyntaxError, ValueError):
+                        return itemname, _widget.text()    
+                elif isinstance(_widget, QtWidgets.QCheckBox):
+                    item.value = _widget.isChecked()
+                else:
+                    raise RuntimeError('Invalid input widget class, how come?')
         _handle_cfg_defaults(cfg)
         return None, None
 

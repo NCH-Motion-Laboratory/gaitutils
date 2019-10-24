@@ -378,18 +378,16 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
         # use session specific line style
         emg_mode = None
         if is_comparison:
+            legend_type = cfg.web_report.comparison_legend_type
             style_by = cfg.web_report.comparison_style_by
             color_by = cfg.web_report.comparison_color_by
             if cfg.web_report.comparison_emg_rms:
                 emg_mode = 'rms'
         else:
+            legend_type = cfg.web_report.legend_type
             style_by = cfg.web_report.style_by
             color_by = cfg.web_report.color_by            
-        legend_type = (
-            cfg.web_report.comparison_legend_type
-            if is_comparison
-            else cfg.web_report.legend_type
-        )
+
         try:
             if saved_report_data:
                 logger.debug('loading %s from saved report data' % label)

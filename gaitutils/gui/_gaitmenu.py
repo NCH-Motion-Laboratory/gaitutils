@@ -58,9 +58,9 @@ logger = logging.getLogger(__name__)
 
 # currently the VSCode debugger can only detect Python native threads
 # this enables a workaround for Qt threads (works only inside VSCode)
-VSCODE_DEBUG_THREADS = False
+VSCODE_DEBUG_QT_THREADS = False
 
-if VSCODE_DEBUG_THREADS:
+if VSCODE_DEBUG_QT_THREADS:
     import ptvsd
 
 
@@ -995,7 +995,7 @@ class Runner(QRunnable):
 
     def run(self):
         try:
-            if VSCODE_DEBUG_THREADS:
+            if VSCODE_DEBUG_QT_THREADS:
                 ptvsd.debug_this_thread()
             retval = self.fun()
         except Exception as e:

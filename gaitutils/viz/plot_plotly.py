@@ -196,9 +196,6 @@ def _get_plotly_axis_labels(i, j, ncols):
     return 'xaxis%d' % plot_ind, 'yaxis%d' % plot_ind
 
 
-_plot_cache = dict()  # cache for plot_trials
-
-
 def plot_trials(
     trials,
     layout,
@@ -223,7 +220,6 @@ def plot_trials(
     cycle_linestyles: 
     supplementary_data: dict of additional data for each cycle and variable
     """
-    global _plot_cache
 
     if not trials:
         raise GaitDataError('No trials')
@@ -419,35 +415,17 @@ def plot_trials(
                                 width=cfg.plot.model_linewidth, dash=sty, color=col
                             )
 
-                            # check whether trace was already created
-                            if (
-                                trial in _plot_cache
-                                and cyc in _plot_cache[trial]
-                                and var in _plot_cache[trial][cyc]
-                            ):
-                                trace = _plot_cache[trial][cyc][var]
-                                # update some of the properties
-                                trace['name'] = tracename
-                                trace['legendgroup'] = tracename
-                                trace['showlegend'] = show_legend
-                            else:  # need to create trace
-                                trace = dict(
-                                    x=t,
-                                    y=y,
-                                    name=tracename,
-                                    text=cyclename_full,
-                                    legendgroup=tracename,
-                                    showlegend=show_legend,
-                                    hoverlabel=dict(namelength=-1),
-                                    hoverinfo='x+y+text',
-                                    line=line,
-                                )
-                                # add trace to cache
-                                if trial not in _plot_cache:
-                                    _plot_cache[trial] = dict()
-                                if cyc not in _plot_cache[trial]:
-                                    _plot_cache[trial][cyc] = dict()
-                                _plot_cache[trial][cyc][var] = trace
+                            trace = dict(
+                                x=t,
+                                y=y,
+                                name=tracename,
+                                text=cyclename_full,
+                                legendgroup=tracename,
+                                showlegend=show_legend,
+                                hoverlabel=dict(namelength=-1),
+                                hoverinfo='x+y+text',
+                                line=line,
+                            )
 
                             # add toeoff marker
                             if cyc.toeoffn is not None:
@@ -591,30 +569,14 @@ def plot_trials(
                             # same cycle.
                             show_legend = tracename_emg not in legendgroups
 
-                            if (
-                                trial in _plot_cache
-                                and cyc in _plot_cache[trial]
-                                and var in _plot_cache[trial][cyc]
-                            ):
-                                trace = _plot_cache[trial][cyc][var]
-                                trace['name'] = tracename_emg
-                                trace['legendgroup'] = tracename
-                                trace['showlegend'] = show_legend
-                            else:
-                                trace = dict(
-                                    x=t,
-                                    y=y * cfg.plot.emg_multiplier,
-                                    name=tracename_emg,
-                                    legendgroup=tracename,
-                                    showlegend=show_legend,
-                                    line=line,
-                                )
-                                if trial not in _plot_cache:
-                                    _plot_cache[trial] = dict()
-                                if cyc not in _plot_cache[trial]:
-                                    _plot_cache[trial][cyc] = dict()
-                                _plot_cache[trial][cyc][var] = trace
-
+                            trace = dict(
+                                x=t,
+                                y=y * cfg.plot.emg_multiplier,
+                                name=tracename_emg,
+                                legendgroup=tracename,
+                                showlegend=show_legend,
+                                line=line,
+                            )
                             legendgroups.add(tracename_emg)
                             fig.add_trace(trace, i + 1, j + 1)
 

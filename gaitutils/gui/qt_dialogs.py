@@ -203,7 +203,7 @@ class OptionsDialog(QtWidgets.QDialog):
                     try:
                         item.value = ast.literal_eval(_widget.text())
                     except (SyntaxError, ValueError):
-                        return itemname, _widget.text()    
+                        return itemname, _widget.text()
                 elif isinstance(_widget, QtWidgets.QCheckBox):
                     item.value = _widget.isChecked()
                 else:

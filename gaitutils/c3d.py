@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 # import btk either from btk or pyBTK
 try:
     import btk
+
     BTK_IMPORTED = True
 except ImportError:
     try:

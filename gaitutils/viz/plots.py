@@ -36,7 +36,7 @@ def plot_trials(
     Parameters
     ----------
     trials : list
-        Nist of Trial objects to plot.
+        List of Trial objects to plot.
     layout_name : str | None
         Name of the plot layout to use (defined in cfg).
     backend : str | None
@@ -103,9 +103,7 @@ def plot_sessions(
     legend=True,
     figtitle=None,
 ):
-    """Plot tagged trials or all trials from given session(s)."""
-
-    # collect c3d files from all sessions
+    """Gather trials across given sessions and plot them."""
     if not isinstance(sessions, list):
         sessions = [sessions]
     if tags is None:
@@ -149,7 +147,7 @@ def plot_session_average(
     model_normaldata=None,
     backend=None,
 ):
-    """Plot average of tagged or all session trials"""
+    """Average trials across sessions and plot."""
 
     layout = layouts.get_layout(layout_name)
     backend_lib = get_backend(backend)

@@ -28,6 +28,7 @@ from . import (
     models,
     videos,
     sessionutils,
+    numutils,
 )
 
 logger = logging.getLogger(__name__)
@@ -348,15 +349,21 @@ class Trial(object):
             self._models_data[model_.desc] = modeldata
         return self._models_data[model_.desc][var]
 
-    def get_emg_data(self, ch):
+    def get_emg_data(self, ch, rms=False):
         """Return trial data for an EMG variable.
+
+        Uses name matching: if the specified channel is not found in the data,
+        partial name matches are considered and data for the shortest match is
+        returned. For example, 'LGas' could be mapped to 'Voltage.LGas8'
 
         Parameters
         ----------
         ch : string
-            The EMG channel name.
+            The EMG channel name. Fuzzy name matching is used.
+        rms : bool
+            Return moving-window RMS instead of raw data.
         """
-        data = self.emg[ch]
+        data = self.emg.get_channel_data(ch, rms=rms)
         return self._normalized_analog_data(data)
 
     def get_marker_data(self, marker):
@@ -459,7 +466,10 @@ class Trial(object):
             ('forceplate', 0) would return forceplate cycles if any, and the
             first cycle in case there are none.
 
-        Returns list of Gaitcycle instances, sorted by starting frame.
+        Returns
+        -------
+        cycles : list
+            List of Gaitcycle instances, sorted by starting frame.
         """
 
         def _filter_cycles(cycles, context, cyclespec):

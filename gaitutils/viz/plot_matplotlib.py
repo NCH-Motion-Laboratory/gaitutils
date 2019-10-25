@@ -27,9 +27,10 @@ from .plot_common import (
     _style_by_params,
     _emg_yscale,
 )
-from .. import models, normaldata, layouts, cfg, GaitDataError, numutils
+from .. import models, normaldata, cfg, GaitDataError, numutils
 from ..stats import AvgTrial
 from ..timedist import _pick_common_vars
+from . import layouts
 
 logger = logging.getLogger(__name__)
 
@@ -241,6 +242,8 @@ def plot_trials(
 
     if model_normaldata is None:
         model_normaldata = normaldata.read_all_normaldata()
+
+    use_rms = emg_mode == 'rms'
 
     nrows, ncols = layouts.check_layout(layout)
 
@@ -475,7 +478,7 @@ def plot_trials(
                     # plot EMG variable
                     elif (
                         trial.emg is not None
-                        and trial.emg.is_channel(var)
+                        and trial.emg.has_channel(var)
                         or var in cfg.emg.channel_labels
                     ):
                         do_plot = (
@@ -487,20 +490,16 @@ def plot_trials(
                         # _no_ticks_or_labels(ax)
                         # _axis_annotate(ax, 'disconnected')
                         if do_plot:
-                            t_, y_ = trial.get_emg_data(var)
+
+                            t_, y = trial.get_emg_data(var, rms=use_rms)
                             t = t_ if normalized else t_ / trial.samplesperframe
-                            y = (
-                                numutils.rms(y_, cfg.emg.rms_win)
-                                if emg_mode == 'rms'
-                                else y_
-                            )
 
                             col = _color_by_params(
                                 color_by['emg'], emg_trace_colors, trial, cyc, context
                             )
                             lw = (
                                 cfg.plot.emg_rms_linewidth
-                                if emg_mode == 'rms'
+                                if use_rms
                                 else cfg.plot.emg_linewidth
                             )
                             line_ = ax.plot(

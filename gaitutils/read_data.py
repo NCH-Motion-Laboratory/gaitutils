@@ -105,10 +105,7 @@ def get_accelerometer_data(source):
 
 def get_model_data(source, model):
     """ Get other variables such as model outputs """
-    ignore_missing = cfg.general.ignore_missing_model_vars
-    modeldata = _reader_module(source).get_model_data(
-        source, model, ignore_missing=ignore_missing
-    )
+    modeldata = _reader_module(source).get_model_data(source, model)
     for var in model.read_vars:
         # convert Moment variables into SI units
         if var.find('Moment') > 0:

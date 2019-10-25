@@ -436,7 +436,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnSelectAll.clicked.connect(self._select_all_trials)
         self.btnClearSelected.clicked.connect(self._remove_selected_trials)
         self.btnPlotTrials.clicked.connect(self._plot_selected_trials)
-        self.btnAveragePlot.clicked.connect(self._plot_trials_average)
+        self.btnAveragePlot.clicked.connect(self._average_trials)
         self.actionCreate_PDF_report.triggered.connect(
             lambda ev: self._create_pdf_report()
         )
@@ -747,8 +747,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _plot_trials(self, trials, normalized=True):
         """Plot specified trials, or selected trials from menu"""
+        have_avgtrials = any(isinstance(tr, stats.AvgTrial) for tr in trials)
         if not normalized or self.xbPlotUnnorm.checkState():
-            if any(isinstance(tr, stats.AvgTrial) for tr in trials):
+            if have_avgtrials:
                 qt_message_dialog('Cannot plot average trials as unnormalized')
                 return
             cycles = 'unnormalized'
@@ -758,7 +759,15 @@ class Gaitmenu(QtWidgets.QMainWindow):
         layout_desc = self.cbLayout.currentText()
         layout_name = self.layouts_map[layout_desc]
         backend = self._get_plotting_backend_ui()
-        emg_mode = 'rms' if self.xbEMGRMS.checkState() else None
+
+        if self.xbEMGRMS.checkState():
+            emg_mode = 'rms'
+        elif have_avgtrials and 'EMG' in layout_name.upper():
+            qt_message_dialog('Averaged EMG can only be plotted in RMS mode')
+            return
+        else:
+            emg_mode = None
+
         backend = self._get_plotting_backend_ui()
         # FIXME: hardcoded legend type
         self._run_in_thread(
@@ -772,10 +781,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
             emg_mode=emg_mode,
             legend_type='short_name_with_tag_and_cycle',
             model_normaldata=model_normaldata,
+            auto_adjust_emg_layout=False,
         )
 
-    def _plot_trials_average(self):
-        """Average trials from list and plot"""
+    def _average_trials(self):
+        """Average trials from list, add resulting averaged trial to list"""
         if len(self._selected_rows) < 2:
             qt_message_dialog('Need at least 2 trials for averaging')
             return
@@ -783,10 +793,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog('Cannot include averaged trials in average')
             return
         reject_outliers = cfg.trial.outlier_rejection_threshold
-        avgtrial = stats.AvgTrial(
-            self._selected_trials, reject_outliers=reject_outliers
+        self._run_in_thread(
+            stats.AvgTrial.from_trials,
+            finished_func=self._enable_main_ui,
+            result_func=self._add_trial_to_table,
+            trials=self._selected_trials,
+            reject_outliers=reject_outliers,
         )
-        self._add_trial_to_table(avgtrial)
 
     def _create_web_report_nexus(self):
         """Create web report based on current Nexus session"""

@@ -20,9 +20,10 @@ from plotly.matplotlylib.mpltools import merge_color_and_opacity
 import plotly.tools
 import plotly.subplots
 
-from .. import GaitDataError, cfg, layouts, models, normaldata, numutils
+from .. import GaitDataError, cfg, models, normaldata, numutils
 from ..stats import AvgTrial
 from ..timedist import _pick_common_vars
+from . import layouts
 from .plot_common import (
     _get_cycle_name,
     _var_title,
@@ -216,15 +217,7 @@ def plot_trials(
     figtitle=None,
     big_fonts=False,
 ):
-    """Make a plotly plot of layout, including given trials.
-    FIXME: legend is currently ignored
-    trials: list of gaitutils.Trial instances
-    layout: list of lists defining plot layout (see plot.py)
-    model_normaldata: dict of normal data for model variables
-    legend_type: 
-    cycle_linestyles: 
-    supplementary_data: dict of additional data for each cycle and variable
-    """
+    """Plot gait trials in plotly backend"""
 
     if not trials:
         raise GaitDataError('No trials')
@@ -242,6 +235,8 @@ def plot_trials(
 
     if model_normaldata is None:
         model_normaldata = normaldata.read_all_normaldata()
+
+    use_rms = emg_mode == 'rms'
 
     nrows, ncols = layouts.check_layout(layout)
 
@@ -508,7 +503,7 @@ def plot_trials(
                                 subplot_adjusted[(i, j)] = True
 
                     # plot EMG variable
-                    elif trial.emg.is_channel(var) or var in cfg.emg.channel_labels:
+                    elif trial.emg.has_channel(var) or var in cfg.emg.channel_labels:
                         do_plot = (
                             trial.emg.context_ok(var, cyc.context)
                             and trial.emg.status_ok(var)
@@ -520,13 +515,8 @@ def plot_trials(
                         if do_plot:
                             tracename_emg = 'EMG:' + tracename
 
-                            t_, y_ = trial.get_emg_data(var)
-                            t = t_ / trial.samplesperframe if not normalized else t_
-                            y = (
-                                numutils.rms(y_, cfg.emg.rms_win)
-                                if emg_mode == 'rms'
-                                else y_
-                            )
+                            t_, y = trial.get_emg_data(var, rms=use_rms)
+                            t = t_ if normalized else t_ / trial.samplesperframe
 
                             col = _color_by_params(
                                 color_by['emg'], emg_trace_colors, trial, cyc, context
@@ -534,7 +524,7 @@ def plot_trials(
                             col = merge_color_and_opacity(col, cfg.plot.emg_alpha)
                             lw = (
                                 cfg.plot.emg_rms_linewidth
-                                if emg_mode == 'rms'
+                                if use_rms
                                 else cfg.plot.emg_linewidth
                             )
                             line = {'width': lw, 'color': col}

@@ -484,7 +484,7 @@ def get_roi(vicon):
     return np.arange(roi[0], roi[1])
 
 
-def get_model_data(vicon, model, ignore_missing=False):
+def get_model_data(vicon, model):
     """ Read model output variables (e.g. Plug-in Gait) """
     modeldata = dict()
     var_dims = (3, vicon.GetFrameCount())
@@ -494,15 +494,9 @@ def get_model_data(vicon, model, ignore_missing=False):
         if nums:
             data = np.squeeze(np.array(nums))
         else:
-            if model.is_optional_var(var) or ignore_missing:
-                logger.info('cannot read variable %s, returning nans' % var)
-                data = np.empty(var_dims)
-                data[:] = np.nan
-            else:
-                raise GaitDataError(
-                    'Cannot read model variable %s. Make sure '
-                    'that the appropriate model has been run.' % var
-                )
+            logger.info('cannot read variable %s, returning nans' % var)
+            data = np.empty(var_dims)
+            data[:] = np.nan
         modeldata[var] = data
     return modeldata
 

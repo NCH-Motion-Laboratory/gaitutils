@@ -30,7 +30,6 @@ from .. import (
     cfg,
     normaldata,
     models,
-    layouts,
     GaitDataError,
     sessionutils,
     numutils,
@@ -38,7 +37,7 @@ from .. import (
 )
 from ..trial import Trial
 from ..viz.plot_plotly import plot_trials, time_dist_barchart
-from ..viz import timedist
+from ..viz import timedist, layouts
 from ..stats import AvgTrial
 
 # for Python 3 compatibility
@@ -287,9 +286,10 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
                 age_ndata = normaldata.read_normaldata(age_ndata_file)
                 model_normaldata.update(age_ndata)
 
-        # make average trials
+        # make average trials for each session
         avg_trials = [
-            AvgTrial(_trials_avg[session], sessionpath=session) for session in sessions
+            AvgTrial.from_trials(_trials_avg[session], sessionpath=session)
+            for session in sessions
         ]
 
         # read some extra data from trials and create supplementary data

@@ -12,6 +12,7 @@ from __future__ import division
 import logging
 import numpy as np
 import hashlib
+from scipy import signal
 from scipy.signal import medfilt
 from scipy.special import erfinv
 from numpy.lib.stride_tricks import as_strided
@@ -22,7 +23,7 @@ logger = logging.getLogger(__name__)
 def mad(data, axis=None, scale=1.4826, keepdims=False):
     """Median absolute deviation or MAD. Defined as the median absolute
     deviation from the median of the data. A robust alternative to stddev.
-    Identical to scipy.stats.median_absolute_deviation(), but that does
+    Identical to scipy.stats.median_absolute_deviation(), which does
     not take a keepdims argument.
 
     Parameters
@@ -48,7 +49,7 @@ def mad(data, axis=None, scale=1.4826, keepdims=False):
 def modified_zscore(data, median_axis=0, mad_axis=0):
     """Modified Z-score.
 
-    Z-score analogue computed using robust statistics.
+    Z-score analogue computed using robust (median-based) statistics.
     Axes can be specified separately for estimating the median and the MAD (median 
     absolute deviation). For example, if columns represent different variables
     and rows are observations, giving 0 for both axes would take different
@@ -249,10 +250,37 @@ def running_sum(M, win, axis=None):
     )
 
 
-def rms(data, win):
-    """ Return RMS for a given data (1-d; will be flattened if not) """
+def rms(data, win, axis=None, pad_mode=None):
+    """Return rolling window RMS for a numpy array."""
+    if pad_mode is None:
+        pad_mode = 'edge'
     if win % 2 != 1:
         raise ValueError('Need RMS window of odd length')
-    rms_ = np.sqrt(running_sum(data ** 2, win) / win)
-    # pad ends of RMS data so that lengths are matched
-    return np.pad(rms_, (int((win - 1) / 2),), 'reflect')
+    datalen = len(data) if axis is None else data.shape[axis]
+    if win > datalen:
+        raise ValueError('Need win length < data length')
+    rms_ = np.sqrt(running_sum(data ** 2, win, axis=axis) / win)
+    # pad RMS data so that lengths are matched
+    padw = int((win - 1) / 2)
+    padarg_axis = (padw, padw)
+    if axis == None:
+        eff_dim = 1
+        axis = 0
+    else:
+        eff_dim = data.ndim
+    padarg = eff_dim * [(0, 0)]
+    padarg[axis] = padarg_axis
+    return np.pad(rms_, padarg, mode=pad_mode)
+
+
+def filtfilt(data, passband, sfrate, buttord=5):
+    """Filter given data to passband, e.g. [1, 40] (in Hz)
+    Implemented as pure lowpass, if highpass freq = 0 """
+    if passband is None:
+        return data
+    passbandn = 2 * np.array(passband) / sfrate
+    if passbandn[0] > 0:  # bandpass
+        b, a = signal.butter(buttord, passbandn, 'bandpass')
+    else:  # lowpass
+        b, a = signal.butter(buttord, passbandn[1])
+    return signal.filtfilt(b, a, data)

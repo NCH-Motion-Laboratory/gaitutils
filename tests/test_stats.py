@@ -8,6 +8,7 @@ Tests for trial stats
 
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
+import pytest
 import logging
 
 from gaitutils import sessionutils, stats, models
@@ -43,12 +44,17 @@ def test_collect_model_data():
     # forceplate cycles only
     data_all, nc = stats.collect_model_data(c3ds, fp_cycles_only=True)
     assert nc == {'R_fp': 19, 'R': 19, 'L': 17, 'L_fp': 17}
+    assert data_all['RKneeAnglesX'].shape[0] == nc['R']
+    assert data_all['RAnkleMomentX'].shape[0] == nc['R_fp']
+    assert data_all['RKneeAnglesX'].shape[1] == 101
 
 
 def test_average_model_data():
     """Test averaging of model data"""
     c3ds = sessionutils.get_c3ds(sessiondir_abs, trial_type='dynamic')
-    avgdata, stddata, N_ok, Ncyc = stats.average_trials(c3ds)
+    avgdata, stddata, ncycles_ok, ncycles = stats.average_trials(
+        c3ds, reject_outliers=None
+    )
     # test whether data was averaged for all vars
     # except CGM2 forefoot (which are not in the c3d data)
     desired_vars = set(
@@ -60,15 +66,35 @@ def test_average_model_data():
         assert avgdata[var] is not None and avgdata[var].shape == (101,)
         assert stddata[var] is not None and stddata[var].shape == (101,)
     # test with median stats
-    avgdata, stddata, N_ok, Ncyc = stats.average_trials(c3ds, use_medians=True)
+    avgdata, stddata, ncycles_ok, ncycles = stats.average_trials(c3ds, use_medians=True)
     for var in desired_vars:
         assert avgdata[var] is not None and avgdata[var].shape == (101,)
         assert stddata[var] is not None and stddata[var].shape == (101,)
+    # test outlier rejection; currently test is a bit lame
+    avgdata_, stddata_, ncycles_ok_, ncycles_ = stats.average_trials(
+        c3ds, reject_outliers=1e-3
+    )
+    assert not all(ncycles_ok[var] == ncycles_ok_[var] for var in ncycles_ok)
+    avgdata_, stddata_, ncycles_ok_, ncycles_ = stats.average_trials(
+        c3ds, reject_outliers=1e-30
+    )
+    assert all(ncycles_ok[var] == ncycles_ok_[var] for var in ncycles_ok)
 
 
-
-
-
-
-
-
+def test_avgtrial():
+    """Test the AvgTrial class"""
+    c3ds = sessionutils.get_c3ds(sessiondir_abs, trial_type='dynamic')
+    atrial = stats.AvgTrial(c3ds, sessionpath=sessiondir_abs, reject_outliers=1e-3)
+    assert atrial.sessionpath == sessiondir_abs
+    assert atrial.trialname
+    assert atrial.t.shape == (101,)
+    assert len(atrial.cycles) == atrial.ncycles == 2
+    assert atrial.cycles[0].trial == atrial
+    with pytest.raises(ValueError):
+        atrial.set_norm_cycle(None)
+    adata, t = atrial.get_model_data('RKneeAnglesX')
+    assert adata.shape == (101,)
+    cycs = atrial.get_cycles('all')
+    assert len(cycs) == 2
+    cycs = atrial.get_cycles('forceplate')
+    assert len(cycs) == 2

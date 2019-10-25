@@ -459,7 +459,10 @@ class Trial(object):
             ('forceplate', 0) would return forceplate cycles if any, and the
             first cycle in case there are none.
 
-        Returns list of Gaitcycle instances, sorted by starting frame.
+        Returns
+        -------
+        cycles : list
+            List of Gaitcycle instances, sorted by starting frame.
         """
 
         def _filter_cycles(cycles, context, cyclespec):

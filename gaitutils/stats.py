@@ -119,23 +119,24 @@ def average_trials(
         Averaged (or median) data as numpy array for each variable.
     stddata : dict
         Standard dev (or MAD) as numpy array for each variable.
-    N_ok : dict
+    ncycles_ok : dict
         N of accepted cycles for each variable.
-    Ncyc : dict
+    ncycles : dict
+        Total cycles considered for each context (see collect_data)
     """
-    data, Ncyc = collect_model_data(trials, fp_cycles_only=fp_cycles_only)
+    data, ncycles = collect_model_data(trials, fp_cycles_only=fp_cycles_only)
     if data is None:
         return (None,) * 4
 
     stddata = dict()
     avgdata = dict()
-    N_ok = dict()
+    ncycles_ok = dict()
 
     for var, vardata in data.items():
         if vardata is None:
             stddata[var] = None
             avgdata[var] = None
-            N_ok[var] = 0
+            ncycles_ok[var] = 0
             continue
         else:
             Ntot = vardata.shape[0]
@@ -179,11 +180,11 @@ def average_trials(
                 stddata[var] = vardata.std(axis=0) if n_ok > 0 else None
                 avgdata[var] = vardata.mean(axis=0) if n_ok > 0 else None
             logger.debug('%s: averaged %d/%d curves' % (var, n_ok, Ntot))
-            N_ok[var] = n_ok
+            ncycles_ok[var] = n_ok
 
     if not avgdata:
         logger.warning('nothing averaged')
-    return (avgdata, stddata, N_ok, Ncyc)
+    return (avgdata, stddata, ncycles_ok, ncycles)
 
 
 def collect_model_data(trials, fp_cycles_only=False):

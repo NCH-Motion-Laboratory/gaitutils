@@ -9,7 +9,7 @@ from builtins import str
 from builtins import zip
 import logging
 
-from . import cfg, GaitDataError
+from .. import cfg, GaitDataError
 
 logger = logging.getLogger(__name__)
 

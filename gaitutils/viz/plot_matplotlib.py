@@ -27,9 +27,10 @@ from .plot_common import (
     _style_by_params,
     _emg_yscale,
 )
-from .. import models, normaldata, layouts, cfg, GaitDataError, numutils
+from .. import models, normaldata, cfg, GaitDataError, numutils
 from ..stats import AvgTrial
 from ..timedist import _pick_common_vars
+from . import layouts
 
 logger = logging.getLogger(__name__)
 

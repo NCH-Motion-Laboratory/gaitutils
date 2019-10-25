@@ -14,7 +14,7 @@ from builtins import object
 from collections import defaultdict
 
 
-models_all = []
+models_all = list()
 
 
 def model_from_var(var_):

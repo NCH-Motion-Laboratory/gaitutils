@@ -30,7 +30,6 @@ from .. import (
     cfg,
     normaldata,
     models,
-    layouts,
     GaitDataError,
     sessionutils,
     numutils,
@@ -38,7 +37,7 @@ from .. import (
 )
 from ..trial import Trial
 from ..viz.plot_plotly import plot_trials, time_dist_barchart
-from ..viz import timedist
+from ..viz import timedist, layouts
 from ..stats import AvgTrial
 
 # for Python 3 compatibility

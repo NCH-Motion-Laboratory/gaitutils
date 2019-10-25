@@ -9,7 +9,8 @@ import numpy as np
 import os.path as op
 import logging
 
-from .. import cfg, layouts, trial, GaitDataError, sessionutils, stats, utils
+from .. import cfg, trial, GaitDataError, sessionutils, stats, utils
+from . import layouts
 from .plot_misc import get_backend
 
 logger = logging.getLogger(__name__)

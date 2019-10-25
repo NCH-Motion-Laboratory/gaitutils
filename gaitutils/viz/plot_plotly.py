@@ -20,9 +20,10 @@ from plotly.matplotlylib.mpltools import merge_color_and_opacity
 import plotly.tools
 import plotly.subplots
 
-from .. import GaitDataError, cfg, layouts, models, normaldata, numutils
+from .. import GaitDataError, cfg, models, normaldata, numutils
 from ..stats import AvgTrial
 from ..timedist import _pick_common_vars
+from . import layouts
 from .plot_common import (
     _get_cycle_name,
     _var_title,

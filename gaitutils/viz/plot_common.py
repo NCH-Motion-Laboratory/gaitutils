@@ -26,11 +26,11 @@ logger = logging.getLogger(__name__)
 def _color_by_params(spec, mapper, trial, cyc, context):
     """Helper to return color from mapper, according to trial etc."""
     if spec == 'session':
-        return mapper.get_prop(trial.sessiondir)
+        return mapper[trial.sessiondir]
     elif spec == 'trial':
-        return mapper.get_prop(trial)
+        return mapper[trial]
     elif spec == 'cycle':
-        return mapper.get_prop(cyc)
+        return mapper[cyc]
     elif spec == 'context':
         return cfg.plot.context_colors[context]
     elif spec is None:
@@ -42,13 +42,13 @@ def _color_by_params(spec, mapper, trial, cyc, context):
 def _style_by_params(spec, mapper, trial, cyc, context):
     """Helper to return color from mapper, according to trial etc."""
     if spec == 'session':
-        return mapper.get_prop(trial.sessiondir)
+        return mapper[trial.sessiondir]
     elif spec == 'trial':
-        return mapper.get_prop(trial)
+        return mapper[trial]
     elif spec == 'cycle':
-        return mapper.get_prop(cyc)
+        return mapper[cyc]
     elif spec == 'context':
-        return cfg.plot.context_context_styles[context]
+        return cfg.plot.context_styles[context]
     elif spec is None:
         return '-'
     else:

@@ -217,15 +217,7 @@ def plot_trials(
     figtitle=None,
     big_fonts=False,
 ):
-    """Make a plotly plot of layout, including given trials.
-    FIXME: legend is currently ignored
-    trials: list of gaitutils.Trial instances
-    layout: list of lists defining plot layout (see plot.py)
-    model_normaldata: dict of normal data for model variables
-    legend_type: 
-    cycle_linestyles: 
-    supplementary_data: dict of additional data for each cycle and variable
-    """
+    """Plot gait trials in plotly backend"""
 
     if not trials:
         raise GaitDataError('No trials')

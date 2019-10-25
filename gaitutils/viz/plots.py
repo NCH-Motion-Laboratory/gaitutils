@@ -31,7 +31,38 @@ def plot_trials(
     legend=True,
     figtitle=None,
 ):
-    """Plot trials using specified or default backend"""
+    """Plot gait trials.
+
+    Parameters
+    ----------
+    trials : list
+        Nist of Trial objects to plot.
+    layout_name : str | None
+        Name of the plot layout to use (defined in cfg).
+    backend : str | None
+        Name of backend to use, currently 'plotly' or 'matplotlib'. None for default backend.
+    model_normaldata : dict | None
+        Normaldata for model variables. None to use default normaldata (from cfg)
+    cycles : dict | str | int | tuple | list
+        Cycles to plot. See Trial.get_cycles()
+    max_cycles : dict | None
+        Maximum number of cycles to plot for each variable type. If None, taken from cfg.
+    emg_mode : str | None
+        Use 'rms' to plot EMG in RMS mode.
+    legend_type : str | None
+        Legend type for gait cycles (see _get_cycle_name for options). None to use cfg option.
+    style_by : dict | None
+        How to style each variable type. If None, taken from cfg.
+    color_by : dict | None
+        How to color each variable type. If None, taken from cfg.
+    supplementary_data : dict | None
+        Supplementary data to plot for each variable.
+    legend : bool
+        Whether to plot legend or not.
+    figtitle : str | None
+        Main title for the figure.
+    """
+
     backend_lib = get_backend(backend)
     layout = layouts.get_layout(layout_name)
     return backend_lib.plot_trials(

@@ -204,11 +204,7 @@ def _collect_model_data(trials, fp_cycles_only=False):
     if not isinstance(trials, list):
         trials = [trials]
 
-    data_all = dict()
-
-    for model in models.models_all:
-        for var in model.varnames:
-            data_all[var] = None
+    data_all = defaultdict(lambda: None)
 
     nc = dict()
     nc['R'], nc['L'], nc['Rkin'], nc['Lkin'] = (0,) * 4

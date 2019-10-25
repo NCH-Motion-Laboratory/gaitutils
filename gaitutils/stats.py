@@ -204,12 +204,12 @@ def collect_model_data(trials, fp_cycles_only=False):
     -------
     data_all : dict
         dict of numpy arrays keyed by variable
-    nc : dict
-        Total number of cycles for 'R', 'L', 'Rkin', 'Lkin'
-        (last two are kinetics cycles)
+    ncycles : dict
+        Total number of collected cycles for 'R', 'L', 'R_fp', 'L_fp'
+        (last two are for forceplate cycles)
     """
     data_all = defaultdict(lambda: None)
-    nc = defaultdict(lambda: 0)
+    ncycles = defaultdict(lambda: 0)
 
     if not trials:
         logger.warning('no trials')
@@ -242,8 +242,10 @@ def collect_model_data(trials, fp_cycles_only=False):
             trial.set_norm_cycle(cycle)
             context = cycle.context
             if cycle.on_forceplate:
-                nc[context + 'kin'] += 1
-            nc[context] += 1
+                ncycles[context + '_fp'] += 1
+                ncycles[context] += 1
+            elif not fp_cycles_only:
+                ncycles[context] += 1
 
             for model in models_ok:
                 for var in model.varnames:
@@ -267,10 +269,10 @@ def collect_model_data(trials, fp_cycles_only=False):
                             else np.concatenate([data_all[var], data[None, :]])
                         )
     logger.debug(
-        'collected %d trials, %d/%d R/L cycles, %d/%d kinetics cycles'
-        % (len(trials), nc['R'], nc['L'], nc['Rkin'], nc['Lkin'])
+        'collected %d trials, %d/%d R/L cycles, %d/%d forceplate cycles'
+        % (len(trials), ncycles['R'], ncycles['L'], ncycles['R_fp'], ncycles['L_fp'])
     )
-    return data_all, nc
+    return data_all, ncycles
 
 
 def _collect_emg_data(trials, rms=True, grid_points=101):

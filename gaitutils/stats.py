@@ -188,27 +188,34 @@ def average_trials(
 
 
 def _collect_model_data(trials, fp_cycles_only=False):
-    """ Collect given model data across trials and cycles.
-    Returns a dict of numpy arrays keyed by variable.
+    """Helper to collect model data across trials and cycles.
 
-    trials: list
+    Parameters
+    ----------
+    trials : list | str
         filename, or list of filenames (c3d) to read trials from, or list
         of Trial instances
-    fp_cycles_only: bool
+    fp_cycles_only : bool
         If True, only collect data from forceplate cycles. Kinetics will always
         be collected from forceplate cycles only.
+
+    Returns
+    -------
+    data_all : dict
+        dict of numpy arrays keyed by variable
+    nc : dict
+        Total number of cycles for 'R', 'L', 'Rkin', 'Lkin'
+        (last two are kinetics cycles)
     """
+    data_all = defaultdict(lambda: None)
+    nc = dict()
+    nc['R'], nc['L'], nc['Rkin'], nc['Lkin'] = (0,) * 4
 
     if not trials:
         logger.warning('no trials')
         return None, None
     if not isinstance(trials, list):
         trials = [trials]
-
-    data_all = defaultdict(lambda: None)
-
-    nc = dict()
-    nc['R'], nc['L'], nc['Rkin'], nc['Lkin'] = (0,) * 4
 
     for n, trial_ in enumerate(trials):
         # see whether it's already a Trial instance or we need to create one
@@ -243,24 +250,25 @@ def _collect_model_data(trials, fp_cycles_only=False):
                 for var in model.varnames:
                     # pick data only if var context matches cycle context
                     # FIXME: this may not work with all models
-                    if var[0] == side:
-                        # don't collect kinetics if cycle is not on forceplate
-                        if (
-                            model.is_kinetic_var(var) or fp_cycles_only
-                        ) and not cycle.on_forceplate:
-                            continue
-                        _, data = trial.get_model_data(var)
-                        if np.all(np.isnan(data)):
-                            logger.info(
-                                'no data was found for %s/%s' % (trial.trialname, var)
-                            )
-                        else:
-                            # add as first row or concatenate to existing data
-                            data_all[var] = (
-                                data[None, :]
-                                if data_all[var] is None
-                                else np.concatenate([data_all[var], data[None, :]])
-                            )
+                    if var[0] != side:
+                        continue
+                    # don't collect kinetics if cycle is not on forceplate
+                    if (
+                        model.is_kinetic_var(var) or fp_cycles_only
+                    ) and not cycle.on_forceplate:
+                        continue
+                    _, data = trial.get_model_data(var)
+                    if np.all(np.isnan(data)):
+                        logger.info(
+                            'no data for %s/%s' % (trial.trialname, var)
+                        )
+                    else:
+                        # add as first row or concatenate to existing data
+                        data_all[var] = (
+                            data[None, :]
+                            if data_all[var] is None
+                            else np.concatenate([data_all[var], data[None, :]])
+                        )
     n = len(trials)
     logger.debug(
         'collected %d trials, %d/%d R/L cycles, %d/%d kinetics cycles'

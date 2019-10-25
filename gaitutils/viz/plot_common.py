@@ -56,7 +56,17 @@ def _style_by_params(spec, mapper, trial, cyc, context):
 
 
 def _cyclical_mapper(it):
-    """Maps iterator to keys cyclically"""
+    """Map iterator to keys cyclically.
+
+    Example:
+    colors = ['red', 'blue', 'yellow']
+    mapper = _cyclical_mapper(colors)
+    mapper['foo']  # red
+    mapper['bar']  # blue
+    mapper['baz']  # yellow
+    mapper['zzz']  # red (iterator cycles over)
+    mapper['foo']  # red (old mappings are preserved)
+    """
     cyc_it = cycle(it)
     return defaultdict(lambda: next(cyc_it))
 

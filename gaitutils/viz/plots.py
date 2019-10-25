@@ -61,6 +61,11 @@ def plot_trials(
         Whether to plot legend or not.
     figtitle : str | None
         Main title for the figure.
+
+    Returns
+    -------
+    fig : Figure | dict
+        The figure object. Type depends on backend. Use show_fig() to show it.
     """
 
     backend_lib = get_backend(backend)
@@ -78,35 +83,6 @@ def plot_trials(
         supplementary_data=supplementary_data,
         legend=legend,
         figtitle=figtitle,
-    )
-
-
-def plot_nexus_trial(
-    layout_name=None,
-    backend=None,
-    cycles=None,
-    max_cycles=None,
-    emg_mode=None,
-    maintitle=None,
-    from_c3d=True,
-    model_normaldata=None,
-):
-    """Plot the currently loaded trial from Vicon Nexus"""
-    backend_lib = get_backend(backend)
-    tr = trial.nexus_trial(from_c3d=from_c3d)
-    layout = layouts.get_layout(layout_name)
-    layout = layouts.rm_dead_channels(tr.emg, layout)
-    # force unnormalized plot for static trial
-    if tr.is_static:
-        cycles = 'unnormalized'
-    return backend_lib.plot_trials(
-        [tr],
-        layout,
-        model_normaldata=model_normaldata,
-        cycles=cycles,
-        max_cycles=max_cycles,
-        emg_mode=emg_mode,
-        legend_type='short_name_with_cyclename',
     )
 
 

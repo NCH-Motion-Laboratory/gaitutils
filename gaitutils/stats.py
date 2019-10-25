@@ -101,8 +101,8 @@ def average_trials(
         be collected from forceplate cycles only.
     reject_zeros : bool
         Reject any curves which contain zero (0.000...) values. Zero values are
-        sometimes used to mark gaps. No zero rejection is done for kinetic variables,
-        since these may actually become zero due to clamping of force data.
+        commonly used to mark gaps. No zero rejection is done for kinetic vars,
+        since these may become zero also due to clamping of force data.
     reject_outliers : float or None
         None for no automatic outlier rejection. Otherwise, a P value for false
         rejection (assuming strictly normally distributed data). Outliers are
@@ -115,16 +115,15 @@ def average_trials(
     Returns
     -------
 
-    avgdata: dict
-        Averaged (or median) data
-    stddata: dict
-        Standard dev (or MAD) for each var
-    N_ok: dict
-        N of accepted cycles for each var
-    Ncyc: dict
-        WIP
+    avgdata : dict
+        Averaged (or median) data as numpy array for each variable.
+    stddata : dict
+        Standard dev (or MAD) as numpy array for each variable.
+    N_ok : dict
+        N of accepted cycles for each variable.
+    Ncyc : dict
     """
-    data, Ncyc = _collect_model_data(trials, fp_cycles_only=fp_cycles_only)
+    data, Ncyc = collect_model_data(trials, fp_cycles_only=fp_cycles_only)
     if data is None:
         return (None,) * 4
 
@@ -187,13 +186,15 @@ def average_trials(
     return (avgdata, stddata, N_ok, Ncyc)
 
 
-def _collect_model_data(trials, fp_cycles_only=False):
-    """Helper to collect model data across trials and cycles.
+def collect_model_data(trials, fp_cycles_only=False):
+    """Collect model data across trials and cycles.
+
+    Read model data for all supported models and pack it into numpy arrays.
 
     Parameters
     ----------
     trials : list | str
-        filename, or list of filenames (c3d) to read trials from, or list
+        filename, or list of filenames (c3d) to collect data from, or list
         of Trial instances
     fp_cycles_only : bool
         If True, only collect data from forceplate cycles. Kinetics will always
@@ -208,8 +209,7 @@ def _collect_model_data(trials, fp_cycles_only=False):
         (last two are kinetics cycles)
     """
     data_all = defaultdict(lambda: None)
-    nc = dict()
-    nc['R'], nc['L'], nc['Rkin'], nc['Lkin'] = (0,) * 4
+    nc = defaultdict(lambda: 0)
 
     if not trials:
         logger.warning('no trials')
@@ -217,7 +217,7 @@ def _collect_model_data(trials, fp_cycles_only=False):
     if not isinstance(trials, list):
         trials = [trials]
 
-    for n, trial_ in enumerate(trials):
+    for trial_ in trials:
         # see whether it's already a Trial instance or we need to create one
         if isinstance(trial_, Trial):
             trial = trial_
@@ -238,19 +238,18 @@ def _collect_model_data(trials, fp_cycles_only=False):
                     'cannot read variable %s from %s, skipping '
                     'corresponding model %s' % (var, trial.trialname, model.desc)
                 )
-        for model in models_ok:
-            # gather data
-            for cycle in trial.cycles:
-                trial.set_norm_cycle(cycle)
-                side = cycle.context
-                if cycle.on_forceplate:
-                    nc[side + 'kin'] += 1
-                nc[side] += 1
+        for cycle in trial.cycles:
+            trial.set_norm_cycle(cycle)
+            context = cycle.context
+            if cycle.on_forceplate:
+                nc[context + 'kin'] += 1
+            nc[context] += 1
 
+            for model in models_ok:
                 for var in model.varnames:
                     # pick data only if var context matches cycle context
                     # FIXME: this may not work with all models
-                    if var[0] != side:
+                    if var[0] != context:
                         continue
                     # don't collect kinetics if cycle is not on forceplate
                     if (
@@ -259,9 +258,7 @@ def _collect_model_data(trials, fp_cycles_only=False):
                         continue
                     _, data = trial.get_model_data(var)
                     if np.all(np.isnan(data)):
-                        logger.info(
-                            'no data for %s/%s' % (trial.trialname, var)
-                        )
+                        logger.info('no data for %s/%s' % (trial.trialname, var))
                     else:
                         # add as first row or concatenate to existing data
                         data_all[var] = (
@@ -269,10 +266,9 @@ def _collect_model_data(trials, fp_cycles_only=False):
                             if data_all[var] is None
                             else np.concatenate([data_all[var], data[None, :]])
                         )
-    n = len(trials)
     logger.debug(
         'collected %d trials, %d/%d R/L cycles, %d/%d kinetics cycles'
-        % (n, nc['R'], nc['L'], nc['Rkin'], nc['Lkin'])
+        % (len(trials), nc['R'], nc['L'], nc['Rkin'], nc['Lkin'])
     )
     return data_all, nc
 

@@ -276,7 +276,7 @@ def collect_model_data(trials, fp_cycles_only=False):
     return data_all, ncycles
 
 
-def _collect_emg_data(trials, rms=True, grid_points=101):
+def collect_emg_data(trials, rms=True, grid_points=101):
     """Collect cycle normalized EMG data from trials"""
     if not trials:
         logger.warning('no trials')
@@ -290,12 +290,8 @@ def _collect_emg_data(trials, rms=True, grid_points=101):
     chs = cfg.emg.channel_labels.keys()
 
     for n, trial_ in enumerate(trials):
-        # see whether it's already a Trial instance or we need to create one
-        if isinstance(trial_, Trial):
-            trial = trial_
-        else:
-            trial = Trial(trial_)
-
+        trial = trial_ if isinstance(trial_, Trial) else Trial(trial_)
+        
         for cycle in trial.cycles:
             trial.set_norm_cycle(cycle)
 

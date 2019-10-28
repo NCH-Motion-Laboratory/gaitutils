@@ -52,7 +52,7 @@ def test_collect_model_data():
 def test_collect_emg_data():
     """Test collection of EMG data"""
     c3ds = sessionutils.get_c3ds(sessiondir_abs, trial_type='dynamic')
-     emgs, ncycles = stats.collect_emg_data(c3ds)
+    emgs, ncycles = stats.collect_emg_data(c3ds)
 
 
 def test_average_model_data():

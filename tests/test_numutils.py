@@ -12,13 +12,10 @@ from numpy.testing import assert_allclose
 import logging
 
 from gaitutils.numutils import segment_angles, best_match, rms
-from utils import _file_path, cfg
+#from utils import _file_path, cfg
 
 
 logger = logging.getLogger(__name__)
-
-trial_enf = _file_path('anon.Trial.enf')
-trial_enf_write = _file_path('writetest.enf')
 
 
 def test_segment_angles():
@@ -45,4 +42,13 @@ def test_best_match():
 
 def test_rms():
     """Test RMS computation"""
+    x = np.ones(10)
+    assert_allclose(rms(x, 5), x)
+    with pytest.raises(ValueError):
+        rms(x, 11)
+    # edge vals are repeated due to 'reflect' padding
+    arms = np.array([2.1602469, 1.29099445, 2.1602469, 3.10912635, 4.0824829,
+                    5.06622805, 6.05530071, 7.04745817, 8.04155872, 7.04745817])
+    assert_allclose(rms(np.arange(10), win=3), arms)
+
 

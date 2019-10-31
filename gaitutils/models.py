@@ -198,11 +198,21 @@ pig_upperbody.varlabels_noside = {
 
 # FIXME: for now, ylabel is just the degree sign for all vars
 pig_upperbody.units = defaultdict(lambda: 'deg')
+# FIXME: incomplete y descriptions
 pig_upperbody.ydesc = defaultdict(lambda: ('', ''))  # FIXME: see Vicon docs
-
+upperbody_ydesc_partial = _dict_with_side(
+    {
+        'ThoraxAnglesX': ('Backward', 'Forward'),
+        'ThoraxAnglesY': ('Lateral', 'Medial'),
+        'ThoraxAnglesZ': ('Anterior', 'Posterior')
+    }
+)
+pig_upperbody.ydesc.update(upperbody_ydesc_partial)
 pig_upperbody.varlabels = _dict_with_side(pig_upperbody.varlabels_noside)
 pig_upperbody.varnames = pig_upperbody.varlabels.keys()
 pig_upperbody.varnames_noside = pig_upperbody.varlabels_noside.keys()
+
+pig_upperbody.is_optional_var = lambda var: True
 
 models_all.append(pig_upperbody)
 

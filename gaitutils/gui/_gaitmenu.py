@@ -637,7 +637,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _add_nexus_trial(self):
         """Add directly from Nexus"""
         try:
-            tr = trial.nexus_trial(from_c3d=True)
+            tr = trial.nexus_trial(from_c3d=cfg.trial.load_from_c3d)
         except GaitDataError as e:
             _report_exception(e)
         else:

@@ -336,6 +336,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
         except GaitDataError:
             emg_layout = 'disabled'
 
+    # FIXME: layouts shown in report should be configureable
     _layouts = OrderedDict(
         [
             ('Patient info', 'patient_info'),
@@ -349,6 +350,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
             ('Kinetics-EMG left', cfg.layouts.lb_kinetics_emg_l),
             ('Kinetics-EMG right', cfg.layouts.lb_kinetics_emg_r),
             ('Muscle length', cfg.layouts.musclelen),
+            ('Torso kinematics', cfg.layouts.torso),
             ('Time-distance variables', 'time_dist'),
         ]
     )

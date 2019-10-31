@@ -9,6 +9,7 @@ from __future__ import division
 from builtins import zip
 import logging
 from builtins import range
+from collections import defaultdict
 from itertools import cycle
 import sys
 
@@ -335,6 +336,8 @@ def plot_trials(
             % (len(allcycles), trial.trialname, len(model_cycles_), len(emg_cycles_))
         )
 
+        subplot_adjusted = defaultdict(lambda: False)
+
         for cyc_ind, cyc in enumerate(allcycles):
 
             trial.set_norm_cycle(cyc)
@@ -482,7 +485,7 @@ def plot_trials(
                                     legendgroups.add(tracename)
 
                             # adjust subplot once
-                            if cyc_ind == 0:
+                            if not subplot_adjusted[(i, j)]:
                                 # fig['layout'][xaxis].update(showticklabels=False)
                                 yunit = mod.units[var]
                                 if yunit == 'deg':
@@ -501,6 +504,7 @@ def plot_trials(
                                 )
                                 # less decimals on hover label
                                 fig['layout'][yaxis].update(hoverformat='.2f')
+                                subplot_adjusted[(i, j)] = True
 
                     # plot EMG variable
                     elif trial.emg.is_channel(var) or var in cfg.emg.channel_labels:
@@ -553,7 +557,7 @@ def plot_trials(
                             fig.add_trace(trace, i + 1, j + 1)
 
                         # adjust subplot once
-                        if cyc_ind == 0:
+                        if not subplot_adjusted[(i, j)]:
                             emg_yrange = (
                                 np.array([-cfg.plot.emg_yscale, cfg.plot.emg_yscale])
                                 * cfg.plot.emg_multiplier
@@ -570,6 +574,7 @@ def plot_trials(
                                 fig['layout'][xaxis].update(range=[0, 100])
                             # rm x tick labels, plot too crowded
                             # fig['layout'][xaxis].update(showticklabels=False)
+                            subplot_adjusted[(i, j)] = True
 
                     else:
                         raise GaitDataError('Unknown variable %s' % var)

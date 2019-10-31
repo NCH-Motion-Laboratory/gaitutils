@@ -4,3 +4,5 @@ The aim of gaitutils is to provide convenient methods for extracting and plottin
 
 An example operation would be "read a trial from Vicon Nexus, extract all gait cycles with valid forceplate contact, normalize the kinetics data to those cycles, and plot the ankle dorsi/plantarflexion moment". This can be accomplished with just a couple of lines of code. The package also includes a PyQt5-based GUI for plotting and processing operations.
 
+## Installation
+See the Wiki page for installation instructions.

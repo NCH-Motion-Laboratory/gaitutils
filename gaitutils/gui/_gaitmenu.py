@@ -61,7 +61,11 @@ logger = logging.getLogger(__name__)
 VSCODE_DEBUG_QT_THREADS = False
 
 if VSCODE_DEBUG_QT_THREADS:
-    import ptvsd
+    try:
+        import ptvsd
+    except ImportError:
+        logger.warning('VSCode thread debug option is ON but running outside VSCode')
+        VSCODE_DEBUG_QT_THREADS = False
 
 
 def _get_nexus_sessionpath():

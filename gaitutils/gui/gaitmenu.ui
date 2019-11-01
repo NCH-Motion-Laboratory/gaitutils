@@ -33,37 +33,6 @@
     </item>
     <item>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="5" column="2">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Plot layout:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="4">
-       <widget class="QRadioButton" name="rbPlotly">
-        <property name="text">
-         <string>plotly (web browser)</string>
-        </property>
-        <attribute name="buttonGroup">
-         <string notr="true">buttonGroup_2</string>
-        </attribute>
-       </widget>
-      </item>
-      <item row="8" column="2">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Backend:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="14" column="2">
-       <widget class="QPushButton" name="btnPlotTrials">
-        <property name="text">
-         <string>Plot selected</string>
-        </property>
-       </widget>
-      </item>
       <item row="3" column="2">
        <widget class="QLabel" name="label_6">
         <property name="font">
@@ -77,8 +46,56 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="10">
-       <spacer name="horizontalSpacer_4">
+      <item row="8" column="5">
+       <widget class="QRadioButton" name="rbMatplotlib">
+        <property name="text">
+         <string>matplotlib</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup_2</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="7" column="2">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Plot options:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="4">
+       <widget class="QRadioButton" name="rbPlotly">
+        <property name="text">
+         <string>plotly (web browser)</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup_2</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="5" column="2">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Plot layout:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="2">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Backend:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="15" column="2">
+       <widget class="QPushButton" name="btnPlotTrials">
+        <property name="text">
+         <string>Plot selected</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <spacer name="horizontalSpacer_3">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
@@ -93,8 +110,18 @@
         </property>
        </spacer>
       </item>
-      <item row="5" column="0">
-       <spacer name="horizontalSpacer_3">
+      <item row="5" column="4" colspan="6">
+       <widget class="QComboBox" name="cbLayout">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="10">
+       <spacer name="horizontalSpacer_4">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
@@ -119,44 +146,10 @@
         </property>
        </widget>
       </item>
-      <item row="8" column="5">
-       <widget class="QRadioButton" name="rbMatplotlib">
-        <property name="text">
-         <string>matplotlib</string>
-        </property>
-        <attribute name="buttonGroup">
-         <string notr="true">buttonGroup_2</string>
-        </attribute>
-       </widget>
-      </item>
-      <item row="13" column="2" colspan="8">
+      <item row="14" column="2" colspan="8">
        <widget class="Line" name="line">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="2">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>Plot options:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="4" colspan="6">
-       <widget class="QComboBox" name="cbLayout">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
-      </item>
-      <item row="16" column="9">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string/>
         </property>
        </widget>
       </item>
@@ -170,6 +163,41 @@
         </property>
         <property name="text">
          <string>Plot unnormalized data</string>
+        </property>
+       </widget>
+      </item>
+      <item row="17" column="9">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="15" column="3">
+       <widget class="QPushButton" name="btnAveragePlot">
+        <property name="text">
+         <string>Average selected</string>
+        </property>
+       </widget>
+      </item>
+      <item row="10" column="3">
+       <widget class="QPushButton" name="btnAddTrials">
+        <property name="text">
+         <string>Add single trials...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="12" column="2">
+       <widget class="QPushButton" name="btnSelectAll">
+        <property name="text">
+         <string>Select all</string>
+        </property>
+       </widget>
+      </item>
+      <item row="12" column="3">
+       <widget class="QPushButton" name="btnClearSelected">
+        <property name="text">
+         <string>Remove selected</string>
         </property>
        </widget>
       </item>
@@ -221,45 +249,24 @@
         </column>
        </widget>
       </item>
-      <item row="11" column="6">
+      <item row="10" column="4">
        <widget class="QPushButton" name="btnAddNexusTrial">
         <property name="text">
          <string>Add Nexus trial</string>
         </property>
        </widget>
       </item>
-      <item row="11" column="5">
-       <widget class="QPushButton" name="btnAddTrials">
-        <property name="text">
-         <string>Add single trials...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="11" column="4">
+      <item row="10" column="2">
        <widget class="QPushButton" name="btnAddSession">
         <property name="text">
-         <string>Add from session...</string>
+         <string>Add session...</string>
         </property>
        </widget>
       </item>
-      <item row="11" column="2">
-       <widget class="QPushButton" name="btnSelectAll">
-        <property name="text">
-         <string>Select all</string>
-        </property>
-       </widget>
-      </item>
-      <item row="11" column="3">
-       <widget class="QPushButton" name="btnClearSelected">
-        <property name="text">
-         <string>Remove selected</string>
-        </property>
-       </widget>
-      </item>
-      <item row="14" column="3">
-       <widget class="QPushButton" name="btnAveragePlot">
-        <property name="text">
-         <string>Average and plot selected</string>
+      <item row="11" column="2" colspan="8">
+       <widget class="Line" name="line_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
         </property>
        </widget>
       </item>

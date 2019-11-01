@@ -603,15 +603,15 @@ class Gaitmenu(QtWidgets.QMainWindow):
             backend=backend,
         )
 
-    def _add_trial_to_table(self, trial):
+    def _add_trial_to_table(self, tr):
         """Adds a trial to the trials table"""
         nrows = self.tableTrials.rowCount()
         self.tableTrials.insertRow(nrows)
         texts = (
-            trial.trialname,
-            trial.eclipse_data['DESCRIPTION'],
-            trial.eclipse_data['NOTES'],
-            trial.sessionpath,
+            tr.trialname,
+            tr.eclipse_data['DESCRIPTION'],
+            tr.eclipse_data['NOTES'],
+            tr.sessionpath,
         )
         for k, txt in enumerate(texts):
             item_ = QtWidgets.QTableWidgetItem(txt)
@@ -619,7 +619,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 # actual Trial instances are stored as userdata of
                 # QTableWidgetItems on each rows 1st column; thus
                 # we don't have to keep separate references to them
-                item_.setData(QtCore.Qt.UserRole, trial)
+                item_.setData(QtCore.Qt.UserRole, tr)
             self.tableTrials.setItem(nrows, k, item_)
 
     def _add_c3dfiles(self, c3dfiles):
@@ -673,8 +673,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _cell_doubleclicked(self, row, col):
         """Plot trial on double click"""
-        trial = self.tableTrials.item(row, 0).data(QtCore.Qt.UserRole)
-        self._plot_trials([trial])
+        tr = self.tableTrials.item(row, 0).data(QtCore.Qt.UserRole)
+        self._plot_trials([tr])
 
     @property
     def _selected_trials(self):
@@ -726,22 +726,14 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if len(self._selected_rows) < 2:
             qt_message_dialog('Need at least 2 trials for averaging')
             return
-        layout_desc = self.cbLayout.currentText()
-        layout_name = self.layouts_map[layout_desc]
-        backend = self._get_plotting_backend_ui()
+        if any(isinstance(tr, stats.AvgTrial) for tr in self._selected_trials):
+            qt_message_dialog('Cannot include averaged trials in average')
+            return
         reject_outliers = cfg.trial.outlier_rejection_threshold
         avgtrial = stats.AvgTrial(
             self._selected_trials, reject_outliers=reject_outliers
         )
-        self._run_in_thread(
-            plot_trials,
-            finished_func=self._enable_main_ui,
-            result_func=self._show_plots,
-            trials=avgtrial,
-            layout_name=layout_name,
-            backend=backend,
-            color_by='context',
-        )
+        self._add_trial_to_table(avgtrial)
 
     def _create_web_report_nexus(self):
         """Create web report based on current Nexus session"""

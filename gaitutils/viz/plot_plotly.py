@@ -32,6 +32,7 @@ from .plot_common import (
     _handle_style_and_color_args,
     _color_by_params,
     _style_by_params,
+    _emg_yscale
 )
 
 
@@ -558,16 +559,12 @@ def plot_trials(
 
                         # adjust subplot once
                         if not subplot_adjusted[(i, j)]:
-                            emg_yrange = (
-                                np.array([-cfg.plot.emg_yscale, cfg.plot.emg_yscale])
-                                * cfg.plot.emg_multiplier
-                            )
                             fig['layout'][yaxis].update(
                                 title={
                                     'text': cfg.plot.emg_ylabel,
                                     'font': {'size': label_fontsize},
                                 },
-                                range=emg_yrange,
+                                range=_emg_yscale(emg_mode)
                             )
                             # prevent changes due to legend clicks etc.
                             if normalized:

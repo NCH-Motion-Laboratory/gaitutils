@@ -25,6 +25,7 @@ from .plot_common import (
     _handle_style_and_color_args,
     _color_by_params,
     _style_by_params,
+    _emg_yscale
 )
 from .. import models, normaldata, layouts, cfg, GaitDataError, numutils
 from ..stats import AvgTrial
@@ -537,11 +538,8 @@ def plot_trials(
                                     which='major',
                                     labelsize=cfg.plot_matplotlib.ticks_fontsize,
                                 )
-                                ysc = [-cfg.plot.emg_yscale, cfg.plot.emg_yscale]
-                                ax.set_ylim(
-                                    ysc[0] * cfg.plot.emg_multiplier,
-                                    ysc[1] * cfg.plot.emg_multiplier,
-                                )
+                                
+                                ax.set_ylim(_emg_yscale(emg_mode))
 
                                 if normalized and var in cfg.emg.channel_normaldata:
                                     emgbar_ind = cfg.emg.channel_normaldata[var]

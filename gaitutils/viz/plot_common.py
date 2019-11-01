@@ -16,11 +16,27 @@ from collections import defaultdict
 import datetime
 import logging
 import copy
+import numpy as np
 
 from gaitutils import models, cfg
 
 
 logger = logging.getLogger(__name__)
+
+
+def _emg_yscale(emg_mode):
+    """Compute EMG y range for plotting"""
+    if emg_mode == 'rms':
+        emg_yrange = (
+            np.array([0, cfg.plot.emg_yscale])
+            * cfg.plot.emg_multiplier
+        )
+    else:
+        emg_yrange = (
+            np.array([-cfg.plot.emg_yscale, cfg.plot.emg_yscale])
+            * cfg.plot.emg_multiplier
+        )
+    return emg_yrange
 
 
 def _color_by_params(spec, mapper, trial, cyc, context):

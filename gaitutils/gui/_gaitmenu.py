@@ -690,17 +690,22 @@ class Gaitmenu(QtWidgets.QMainWindow):
             self.tableTrials.removeRow(row)
 
     def _plot_selected_trials(self):
-        if self._selected_rows:
+        if not self._selected_rows:
+            return
+        if (tr.is_static for tr in self._selected_trials):
+            qt_message_dialog('One or more trials are static, plotting all trials as unnormalized')
+            self._plot_trials(self._selected_trials, normalized=False)
+        else:
             self._plot_trials(self._selected_trials)
 
-    def _plot_trials(self, trials):
+    def _plot_trials(self, trials, normalized=True):
         """Plot specified trials, or selected trials from menu"""
         model_normaldata = read_all_normaldata()
         layout_desc = self.cbLayout.currentText()
         layout_name = self.layouts_map[layout_desc]
         backend = self._get_plotting_backend_ui()
         emg_mode = 'rms' if self.xbEMGRMS.checkState() else None
-        cycles = 'unnormalized' if self.xbPlotUnnorm.checkState() else None
+        cycles = 'unnormalized' if not normalized or self.xbPlotUnnorm.checkState() else None
         backend = self._get_plotting_backend_ui()
         # FIXME: hardcoded legend type
         self._run_in_thread(

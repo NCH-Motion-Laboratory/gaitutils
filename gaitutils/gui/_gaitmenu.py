@@ -692,7 +692,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _plot_selected_trials(self):
         if not self._selected_rows:
             return
-        if (tr.is_static for tr in self._selected_trials):
+        if any(tr.is_static for tr in self._selected_trials):
             qt_message_dialog('One or more trials are static, plotting all trials as unnormalized')
             self._plot_trials(self._selected_trials, normalized=False)
         else:

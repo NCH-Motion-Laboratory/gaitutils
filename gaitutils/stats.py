@@ -51,6 +51,7 @@ class AvgTrial(Trial):
             self.sessionpath = None
         self.source = 'averaged data'
         self.name = 'Unknown'
+        self.is_static = False
         self._model_data = avgdata
         self.stddev_data = stddata
         self.n_ok = n_ok

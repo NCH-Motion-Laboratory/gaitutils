@@ -700,12 +700,18 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _plot_trials(self, trials, normalized=True):
         """Plot specified trials, or selected trials from menu"""
+        if not normalized or self.xbPlotUnnorm.checkState():
+            if any(isinstance(tr, stats.AvgTrial) for tr in trials):
+                qt_message_dialog('Cannot plot average trials as unnormalized')
+                return
+            cycles = 'unnormalized'
+        else:
+            cycles = None
         model_normaldata = read_all_normaldata()
         layout_desc = self.cbLayout.currentText()
         layout_name = self.layouts_map[layout_desc]
         backend = self._get_plotting_backend_ui()
         emg_mode = 'rms' if self.xbEMGRMS.checkState() else None
-        cycles = 'unnormalized' if not normalized or self.xbPlotUnnorm.checkState() else None
         backend = self._get_plotting_backend_ui()
         # FIXME: hardcoded legend type
         self._run_in_thread(

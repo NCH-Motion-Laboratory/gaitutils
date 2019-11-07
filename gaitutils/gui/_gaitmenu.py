@@ -479,7 +479,24 @@ class Gaitmenu(QtWidgets.QMainWindow):
         rb_backend_active = self.rb_map_backend[cfg.plot.backend]
         rb_backend_active.setChecked(True)
 
-        # add plot layouts to combobox
+        def _colorstylevar_changed(self):
+            logger.debug('callback')
+
+        # set up color/style comboboxes
+        self.cbColorStyleVar.currentIndexChanged.connect(self._colorstylevar_changed)
+        # this callback only needs to fire when user activates the combobox
+        self.cbColorStyleBy.activated.connect(self._colorstyleby_changed)
+        # dynamically create combobox entries according to cfg
+        for vartype, col_choice in cfg.plot.color_by.items():
+            self.cbColorStyleVar.addItem(
+                'Set %s trace color by:' % vartype, userData=('color', vartype)
+            )
+        for vartype, sty_choice in cfg.plot.style_by.items():
+            self.cbColorStyleVar.addItem(
+                'Set %s trace style by:' % vartype, userData=('style', vartype)
+            )
+
+        # add plot layouts to layout combobox
         cb_items = sorted(
             configdot.get_description(lo) or loname for loname, lo in cfg['layouts']
         )
@@ -506,6 +523,34 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._mpl_windows = list()
         # progress bar
         self.prog = None
+
+    def _colorstylevar_changed(self, _idx):
+        """Callback for color/style variable selection combobox"""
+        # get current style/color choice and show it in the other combobox
+        mode, vartype = self.cbColorStyleVar.currentData()
+        cfg_item = {'color': cfg.plot.color_by, 'style': cfg.plot.style_by}[mode]
+        choice = cfg_item[vartype]
+        if choice is None:
+            choice = 'none'
+        idx = self.cbColorStyleBy.findText(choice)
+        self.cbColorStyleBy.setCurrentIndex(idx)
+        # don't allow styling for EMG variables
+        enabled = not (vartype == 'emg' and mode == 'style')
+        self.cbColorStyleBy.setEnabled(enabled)
+
+    def _colorstyleby_changed(self, _idx):
+        """Callback for color/style selection combobox"""
+        mode, vartype = self.cbColorStyleVar.currentData()
+        # set the appropriate cfg item according to choice
+        cfg_item = {'color': cfg.plot.color_by, 'style': cfg.plot.style_by}[mode]
+        colorstyleby_choice = self.cbColorStyleBy.currentText()
+        # Py2: convert unicode choices to str
+        # (unicode prefix looks weird in Options interface)
+        if sys.version_info.major == 2:
+            colorstyleby_choice = str(colorstyleby_choice)
+        if colorstyleby_choice == 'none':
+            colorstyleby_choice = None
+        cfg_item[vartype] = colorstyleby_choice
 
     def _get_plotting_backend_ui(self):
         """Get backend selection from UI"""
@@ -693,7 +738,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if not self._selected_rows:
             return
         if any(tr.is_static for tr in self._selected_trials):
-            qt_message_dialog('One or more trials are static, plotting all trials as unnormalized')
+            qt_message_dialog(
+                'One or more trials are static, plotting all trials as unnormalized'
+            )
             self._plot_trials(self._selected_trials, normalized=False)
         else:
             self._plot_trials(self._selected_trials)

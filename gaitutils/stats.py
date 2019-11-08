@@ -8,6 +8,7 @@ Compute statistics across/within trials
 
 import logging
 import numpy as np
+import scipy
 import os.path as op
 from collections import defaultdict
 
@@ -184,7 +185,7 @@ def average_trials(
 
 
 def collect_trial_data(
-    trials, collect_types=None, fp_cycles_only=False, analog_grid_points=None
+    trials, collect_types=None, fp_cycles_only=False, analog_len=None
 ):
     """Read model and analog data across trials into numpy arrays.
 
@@ -199,6 +200,9 @@ def collect_trial_data(
     fp_cycles_only : bool
         If True, only collect data from forceplate cycles. Kinetics model vars will always
         be collected from forceplate cycles only.
+    analog_len : int
+        Analog data length varies by gait cycle, so it will be resampled into grid length
+        specified by analog_len (default 501 samples)
 
     Returns
     -------
@@ -214,8 +218,8 @@ def collect_trial_data(
     if collect_types is None:
         collect_types = defaultdict(lambda: True)
 
-    if analog_grid_points is None:
-        analog_grid_points = 101
+    if analog_len is None:
+        analog_len = 501
 
     if not trials:
         logger.warning('no trials')
@@ -281,10 +285,7 @@ def collect_trial_data(
                 except KeyError:
                     logger.warning('no channel %s for %s' % (ch, trial))
                     continue
-                # transform to desired grid (0..100% by default)
-                t_analog = np.linspace(0, 100, len(data))
-                tn = np.linspace(0, 100, analog_grid_points)
-                data_cyc = np.interp(tn, t_analog, data)
+                data_cyc = scipy.signal.resample(data, analog_len)
                 if ch not in data_all['emg']:
                     data_all['emg'][ch] = data_cyc[None, :]
                 else:

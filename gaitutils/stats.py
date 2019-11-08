@@ -79,6 +79,98 @@ class AvgTrial(Trial):
             logger.debug('setting norm. cycle for AvgTrial (no effect)')
 
 
+def _robust_reject_rows(data, p_threshold):
+    """Reject rows (observations) from data"""
+    # a Bonferroni type correction for the p-threshold
+    p_threshold_corr = p_threshold / data.shape[0]
+    # when computing outliers, estimate median absolute deviation
+    # using all data, instead of a frame-dependent MAD estimate.
+    # this is necessary since frame-based MAD values
+    # can become really small especially in small datasets, causing
+    # Z-score to blow up and data getting rejected unnecessarily.
+    outlier_inds = numutils.outliers(
+        data, median_axis=0, mad_axis=None, p_threshold=p_threshold_corr
+    )
+    outlier_rows = np.unique(outlier_inds[0])
+    if outlier_rows.size > 0:
+        logger.info(
+            'rejected %d outlier(s) (corrected P=%g)'
+            % (outlier_rows.size, p_threshold_corr)
+        )
+        data = np.delete(data, outlier_rows, axis=0)
+    return data
+
+
+def average_analog_data(
+    data,
+    rms=True,    
+    reject_outliers=None,
+    use_medians=False,
+):
+    """Average collected EMG data.
+
+    Parameters
+    ----------
+    data : dict
+        Data to average (from collect_trial_data)
+    rms : bool
+        Compute RMS before averaging.
+    reject_outliers : float or None
+        None for no automatic outlier rejection. Otherwise, a P value for false
+        rejection (assuming strictly normally distributed data). Outliers are
+        rejected based on robust statistics (modified Z-score).
+    use_medians: bool
+        Use median and MAD (median absolute deviation) instead of mean and
+        stddev. The median is robust to outliers but not robust to small
+        sample size. Thus, use of medians may be a bad idea for small samples.
+
+    Returns
+    -------
+    avgdata : dict
+        Averaged (or median) data as numpy array for each variable.
+    stddata : dict
+        Standard dev (or MAD) as numpy array for each variable.
+    ncycles_ok : dict
+        N of accepted cycles for each variable.
+    """
+    stddata = dict()
+    avgdata = dict()
+    ncycles_ok = dict()
+
+    if reject_outliers is None:
+        reject_outliers = 1e-3
+
+    for var, vardata in data.items():
+        if vardata is None:
+            stddata[var] = None
+            avgdata[var] = None
+            ncycles_ok[var] = 0
+            continue
+        else:
+            if rms:
+                vardata = numutils.rms(vardata, cfg.emg.rms_win, axis=1)
+            n_ok = vardata.shape[0]
+            if n_ok > 0 and reject_outliers is not None and not use_medians:
+                logger.info('%s:' % var)
+                vardata = _robust_reject_rows(vardata, reject_outliers)
+            n_ok = vardata.shape[0]
+            if n_ok == 0:
+                stddata[var] = None
+                avgdata[var] = None
+            elif use_medians:
+                stddata[var] = numutils.mad(vardata, axis=0)
+                avgdata[var] = np.median(vardata, axis=0)
+            else:
+                stddata[var] = vardata.std(axis=0) if n_ok > 0 else None
+                avgdata[var] = vardata.mean(axis=0) if n_ok > 0 else None
+            logger.debug('%s: averaged %d/%d curves' % (var, n_ok, Ntot))
+            ncycles_ok[var] = n_ok
+
+    if not avgdata:
+        logger.warning('nothing averaged')
+    return (avgdata, stddata, ncycles_ok)
+
+
 def average_model_data(
     data,
     reject_zeros=True,
@@ -140,23 +232,8 @@ def average_model_data(
                         vardata = np.delete(vardata, rows_bad, axis=0)
             n_ok = vardata.shape[0]
             if n_ok > 0 and reject_outliers is not None and not use_medians:
-                # a Bonferroni type correction for the p-threshold
-                p_threshold = reject_outliers / vardata.shape[0]
-                # when computing outliers, estimate median absolute deviation
-                # using all data, instead of a frame-dependent MAD estimate.
-                # this is necessary since frame-based MAD values
-                # can become really small especially in small datasets, causing
-                # Z-score to blow up and data getting rejected unnecessarily.
-                outlier_inds = numutils.outliers(
-                    vardata, median_axis=0, mad_axis=None, p_threshold=p_threshold
-                )
-                outlier_rows = np.unique(outlier_inds[0])
-                if outlier_rows.size > 0:
-                    logger.info(
-                        '%s: rejecting %d outlier(s) (P=%g)'
-                        % (var, outlier_rows.size, p_threshold)
-                    )
-                    vardata = np.delete(vardata, outlier_rows, axis=0)
+                logger.info('%s:' % var)
+                vardata = _robust_reject_rows(vardata, reject_outliers)
             n_ok = vardata.shape[0]
             if n_ok == 0:
                 stddata[var] = None

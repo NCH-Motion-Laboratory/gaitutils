@@ -251,12 +251,16 @@ def running_sum(M, win, axis=None):
 
 def rms(data, win, axis=None):
     """Return RMS for a numpy array."""
-    if data.ndim > 1:
-        raise ValueError('Need a vector input')
     if win % 2 != 1:
         raise ValueError('Need RMS window of odd length')
     if win > len(data):
         raise ValueError('Need win length < data length')
     rms_ = np.sqrt(running_sum(data ** 2, win, axis=axis) / win)
-    # pad ends of RMS data so that lengths are matched
-    return np.pad(rms_, (int((win - 1) / 2),), 'reflect')
+    # pad RMS data so that lengths are matched
+    padw = int((win - 1) / 2)
+    padarg_axis = (padw, padw)
+    if axis == None:
+        axis = 0
+    padarg = data.ndim * [(0, 0)]
+    padarg[axis] = padarg_axis
+    return np.pad(rms_, padarg, 'reflect')

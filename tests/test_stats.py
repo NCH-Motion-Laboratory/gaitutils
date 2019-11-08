@@ -25,8 +25,9 @@ sessiondir_abs = _file_path(sessiondir_)
 def test_collect_model_data():
     """Test collection of model data"""
     c3ds = sessionutils.get_c3ds(sessiondir_abs, trial_type='dynamic')
-    data_all, nc = stats.collect_model_data(c3ds)
-    collected_vars = set(data_all.keys())
+    data_all, nc = stats.collect_trial_data(c3ds)
+    data_model = data_all['model']
+    collected_vars = set(data_model.keys())
     # test whether data was collected for all vars
     # except CGM2 forefoot (which are not in the c3d data)
     desired_vars = set(
@@ -37,23 +38,16 @@ def test_collect_model_data():
     assert collected_vars == desired_vars
     # check that correct number of cycles was collected
     assert nc == {'R_fp': 19, 'R': 54, 'L': 53, 'L_fp': 17}
-    assert data_all['RKneeAnglesX'].shape[0] == nc['R']
-    assert data_all['RAnkleMomentX'].shape[0] == nc['R_fp']
-    assert data_all['RKneeAnglesX'].shape[1] == 101
-    assert data_all['fubar'] is None
+    assert data_model['RKneeAnglesX'].shape[0] == nc['R']
+    assert data_model['RAnkleMomentX'].shape[0] == nc['R_fp']
+    assert data_model['RKneeAnglesX'].shape[1] == 101
+    assert data_model['fubar'] is None
     # forceplate cycles only
-    data_all, nc = stats.collect_model_data(c3ds, fp_cycles_only=True)
+    data_model, nc = stats.collect_model_data(c3ds, fp_cycles_only=True)
     assert nc == {'R_fp': 19, 'R': 19, 'L': 17, 'L_fp': 17}
-    assert data_all['RKneeAnglesX'].shape[0] == nc['R']
-    assert data_all['RAnkleMomentX'].shape[0] == nc['R_fp']
-    assert data_all['RKneeAnglesX'].shape[1] == 101
-
-
-def test_collect_emg_data():
-    """Test collection of EMG data"""
-    c3ds = sessionutils.get_c3ds(sessiondir_abs, trial_type='dynamic')
-    emgs, ncycles = stats.collect_emg_data(c3ds)
-
+    assert data_model['RKneeAnglesX'].shape[0] == nc['R']
+    assert data_model['RAnkleMomentX'].shape[0] == nc['R_fp']
+    assert data_model['RKneeAnglesX'].shape[1] == 101
 
 def test_average_model_data():
     """Test averaging of model data"""

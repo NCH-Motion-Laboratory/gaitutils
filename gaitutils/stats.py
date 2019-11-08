@@ -80,22 +80,17 @@ class AvgTrial(Trial):
 
 
 def average_trials(
-    trials,
-    fp_cycles_only=False,
+    data,
     reject_zeros=True,
     reject_outliers=1e-3,
     use_medians=False,
 ):
-    """ Average model data from several trials.
+    """Average collected trial data.
 
     Parameters
     ----------
-    trials : list
-        filename, or list of filenames (c3d) to read trials from, or list
-        of Trial instances
-    fp_cycles_only : bool
-        If True, only collect data from forceplate cycles. Kinetics will always
-        be collected from forceplate cycles only.
+    data : dict
+        Data to average (from collect_trial_data)
     reject_zeros : bool
         Reject any curves which contain zero (0.000...) values. Zero values are
         commonly used to mark gaps. No zero rejection is done for kinetic vars,
@@ -111,20 +106,13 @@ def average_trials(
 
     Returns
     -------
-
     avgdata : dict
         Averaged (or median) data as numpy array for each variable.
     stddata : dict
         Standard dev (or MAD) as numpy array for each variable.
     ncycles_ok : dict
         N of accepted cycles for each variable.
-    ncycles : dict
-        Total cycles considered for each context (see collect_data)
     """
-    data, ncycles = collect_model_data(trials, fp_cycles_only=fp_cycles_only)
-    if data is None:
-        return (None,) * 4
-
     stddata = dict()
     avgdata = dict()
     ncycles_ok = dict()
@@ -138,8 +126,8 @@ def average_trials(
         else:
             Ntot = vardata.shape[0]
             if reject_zeros:
-                model_this = models.model_from_var(var)
-                if not model_this.is_kinetic_var(var):
+                this_model = models.model_from_var(var)
+                if not this_model.is_kinetic_var(var):
                     rows_bad = np.where(np.any(vardata == 0, axis=1))[0]
                     if len(rows_bad) > 0:
                         logger.info(
@@ -181,7 +169,7 @@ def average_trials(
 
     if not avgdata:
         logger.warning('nothing averaged')
-    return (avgdata, stddata, ncycles_ok, ncycles)
+    return (avgdata, stddata, ncycles_ok)
 
 
 def collect_trial_data(
@@ -266,7 +254,7 @@ def collect_trial_data(
                         continue
                     _, data = trial.get_model_data(var)
                     if np.all(np.isnan(data)):
-                        logger.info('no data for %s/%s' % (trial.trialname, var))
+                        logger.debug('no data for %s/%s' % (trial.trialname, var))
                     else:
                         # add as first row or concatenate to existing data
                         data_all['model'][var] = (

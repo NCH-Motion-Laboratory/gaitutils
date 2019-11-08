@@ -151,7 +151,8 @@ def average_analog_data(
                 vardata = numutils.rms(vardata, cfg.emg.rms_win, axis=1)
             n_ok = vardata.shape[0]
             if n_ok > 0 and reject_outliers is not None and not use_medians:
-                logger.info('%s:' % var)
+                rms_status = 'RMS for ' if rms else ''
+                logger.info('averaging %s%s (N=%d)' % (rms_status, var, n_ok))
                 vardata = _robust_reject_rows(vardata, reject_outliers)
             n_ok = vardata.shape[0]
             if n_ok == 0:
@@ -163,7 +164,6 @@ def average_analog_data(
             else:
                 stddata[var] = vardata.std(axis=0) if n_ok > 0 else None
                 avgdata[var] = vardata.mean(axis=0) if n_ok > 0 else None
-            logger.debug('%s: averaged %d/%d curves' % (var, n_ok, Ntot))
             ncycles_ok[var] = n_ok
 
     if not avgdata:

@@ -57,5 +57,6 @@ def test_rms():
     arms = np.array([2.1602469, 1.29099445, 2.1602469, 3.10912635, 4.0824829,
                     5.06622805, 6.05530071, 7.04745817, 8.04155872, 7.04745817])
     assert_allclose(rms(np.arange(10), win=3), arms)
+    # XXX: still needs a proper 2-d computation for completeness
 
 

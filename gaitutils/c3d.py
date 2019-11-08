@@ -288,7 +288,7 @@ def get_metadata(c3dfile):
     }
 
 
-def get_model_data(c3dfile, model, ignore_missing=False):
+def get_model_data(c3dfile, model):
     modeldata = dict()
     acq = _get_c3dacq(c3dfile)
     var_dims = (3, acq.GetPointFrameNumber())
@@ -297,15 +297,10 @@ def get_model_data(c3dfile, model, ignore_missing=False):
             vals = acq.GetPoint(var).GetValues()
             modeldata[var] = np.transpose(np.squeeze(vals))
         except RuntimeError:
-            if model.is_optional_var(var) or ignore_missing:
-                logger.info('cannot read model variable %s, returning nans' % var)
-                data = np.empty(var_dims)
-                data[:] = np.nan
-                modeldata[var] = data
-            else:
-                raise GaitDataError(
-                    'Cannot find model variable %s in %s' % (var, c3dfile)
-                )
+            logger.info('cannot read model variable %s, returning nans' % var)
+            data = np.empty(var_dims)
+            data[:] = np.nan
+            modeldata[var] = data
         # c3d stores scalars as last dim of 3-d array
         if model.read_strategy == 'last':
             modeldata[var] = modeldata[var][2, :]

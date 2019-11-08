@@ -81,8 +81,6 @@ class GaitModel(object):
         self.ydesc = dict()
         # callable to return whether var requires valid forceplate contact
         self.is_kinetic_var = lambda var: False
-        # callable to return whether var read is allowed to fail
-        self.is_optional_var = lambda var: False
 
 
 """ Create models """
@@ -143,8 +141,6 @@ ofm.ydesc = _dict_with_side(
 )
 
 
-# OFM may be unilateral, so make all vars optional
-ofm.is_optional_var = lambda var: True
 ofm.varlabels = _dict_with_side(ofm.varlabels_noside)
 ofm.varnames = ofm.varlabels.keys()
 ofm.varnames_noside = ofm.varlabels_noside.keys()
@@ -212,8 +208,6 @@ pig_upperbody.varlabels = _dict_with_side(pig_upperbody.varlabels_noside)
 pig_upperbody.varnames = pig_upperbody.varlabels.keys()
 pig_upperbody.varnames_noside = pig_upperbody.varlabels_noside.keys()
 
-pig_upperbody.is_optional_var = lambda var: True
-
 models_all.append(pig_upperbody)
 
 
@@ -258,9 +252,6 @@ pig_lowerbody.varlabels = _dict_with_side(pig_lowerbody.varlabels_noside)
 
 pig_lowerbody.varnames = pig_lowerbody.varlabels.keys()
 pig_lowerbody.varnames_noside = pig_lowerbody.varlabels_noside.keys()
-# for CGM2 compatibility
-pig_lowerbody.is_optional_var = lambda var: 'ForeFootAngles' in var
-
 
 pig_lowerbody.gcd_normaldata_map = {
     'DorsiPlanFlex': 'AnkleAnglesX',
@@ -404,8 +395,6 @@ pig_lowerbody_kinetics.ydesc = _dict_with_side(
 )
 
 pig_lowerbody_kinetics.is_kinetic_var = lambda varname: True
-# GRF may not be present if no kinetics
-pig_lowerbody_kinetics.is_optional_var = lambda varname: 'GRF' in varname
 
 models_all.append(pig_lowerbody_kinetics)
 

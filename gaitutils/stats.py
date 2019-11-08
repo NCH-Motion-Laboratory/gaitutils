@@ -231,24 +231,13 @@ def collect_trial_data(
 
     if collect_types['model']:
         data_all['model'] = defaultdict(lambda: None)
+        models_to_collect = models.models_all
+    else:
+        models_to_collect = list()
 
     for trial_ in trials:
         trial = trial_ if isinstance(trial_, Trial) else Trial(trial_)
         logger.info('collecting data for %s' % trial.trialname)
-
-        models_to_collect = list()
-        # see which models should be collected for this trial
-        if collect_types['model']:
-            for model in models.models_all:
-                var = list(model.varnames)[0]
-                try:
-                    trial.get_model_data(var)
-                    models_to_collect.append(model)
-                except GaitDataError:
-                    logger.info(
-                        'cannot read variable %s from %s, ignoring '
-                        'corresponding model %s' % (var, trial.trialname, model.desc)
-                    )
 
         for cycle in trial.cycles:
             trial.set_norm_cycle(cycle)

@@ -79,26 +79,26 @@ class AvgTrial(Trial):
             logger.debug('setting norm. cycle for AvgTrial (no effect)')
 
 
-def average_trials(
+def average_model_data(
     data,
     reject_zeros=True,
-    reject_outliers=1e-3,
+    reject_outliers=None,
     use_medians=False,
 ):
-    """Average collected trial data.
+    """Average collected model data.
 
     Parameters
     ----------
     data : dict
         Data to average (from collect_trial_data)
     reject_zeros : bool
-        Reject any curves which contain zero (0.000...) values. Zero values are
+        Reject any curves which contain zero values. Exact zero values are
         commonly used to mark gaps. No zero rejection is done for kinetic vars,
-        since these may become zero also due to clamping of force data.
+        since these may become zero due to clamping of force data.
     reject_outliers : float or None
         None for no automatic outlier rejection. Otherwise, a P value for false
         rejection (assuming strictly normally distributed data). Outliers are
-        rejected based on robust statistics (modified Z-score) 
+        rejected based on robust statistics (modified Z-score).
     use_medians: bool
         Use median and MAD (median absolute deviation) instead of mean and
         stddev. The median is robust to outliers but not robust to small
@@ -116,6 +116,9 @@ def average_trials(
     stddata = dict()
     avgdata = dict()
     ncycles_ok = dict()
+
+    if reject_outliers is None:
+        reject_outliers = 1e-3
 
     for var, vardata in data.items():
         if vardata is None:

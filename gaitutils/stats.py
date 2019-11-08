@@ -14,12 +14,21 @@ from collections import defaultdict
 from .trial import Trial, Gaitcycle
 from . import models, GaitDataError, cfg, numutils
 
+
 logger = logging.getLogger(__name__)
 
 
-class AvgTrial(Trial):
-    """Trial containing cycle-averaged data"""
+def create_avgtrial(
+    trials, reject_zeros=True, reject_outliers=None, fp_cycles_only=False
+):
+    """Build an AvgTrial from list of trials."""
 
+    avgdata, stddata, n_ok, _ = average_trials(
+        trials, reject_outliers=reject_outliers, fp_cycles_only=fp_cycles_only
+    )
+
+
+class AvgTrial(Trial):
     def __repr__(self):
         s = '<AvgTrial |'
         s += ' trial name: %s' % self.trialname
@@ -27,20 +36,7 @@ class AvgTrial(Trial):
         s += '>'
         return s
 
-    def __init__(
-        self,
-        trials,
-        sessionpath=None,
-        reject_zeros=True,
-        reject_outliers=None,
-        fp_cycles_only=False,
-    ):
-        avgdata, stddata, n_ok, _ = average_trials(
-            trials, reject_outliers=reject_outliers, fp_cycles_only=fp_cycles_only
-        )
-        # nfiles may be misleading since not all trials may contain valid data
-        self.nfiles = len(trials)
-        self.trials = trials
+    def __init__(self, avgdata, stddata, sessionpath=None):
         if sessionpath:
             self.sessionpath = sessionpath
             self.sessiondir = op.split(sessionpath)[-1]
@@ -187,30 +183,39 @@ def average_trials(
     return (avgdata, stddata, ncycles_ok, ncycles)
 
 
-def collect_model_data(trials, fp_cycles_only=False):
-    """Collect model data across trials and cycles.
-
-    Read model data for all supported models and pack it into numpy arrays.
+def collect_trial_data(
+    trials, collect_types=None, fp_cycles_only=False, analog_grid_points=None
+):
+    """Read model and analog data across trials into numpy arrays.
 
     Parameters
     ----------
     trials : list | str
         filename, or list of filenames (c3d) to collect data from, or list
         of Trial instances
+    collect_types : dict
+        Which kind of vars to collect. Currently supported keys: 'model', 'emg'. Default is to
+        collect all supported types.
     fp_cycles_only : bool
-        If True, only collect data from forceplate cycles. Kinetics will always
+        If True, only collect data from forceplate cycles. Kinetics model vars will always
         be collected from forceplate cycles only.
 
     Returns
     -------
     data_all : dict
-        dict of numpy arrays keyed by variable
+        dict keyed by variable type. Each value is a dict keyed by variable, whose values are numpy arrays of data.
     ncycles : dict
         Total number of collected cycles for 'R', 'L', 'R_fp', 'L_fp'
         (last two are for forceplate cycles)
     """
-    data_all = defaultdict(lambda: None)
+    data_all = dict()
     ncycles = defaultdict(lambda: 0)
+
+    if collect_types is None:
+        collect_types = defaultdict(lambda: True)
+
+    if analog_grid_points is None:
+        analog_grid_points = 101
 
     if not trials:
         logger.warning('no trials')
@@ -218,27 +223,33 @@ def collect_model_data(trials, fp_cycles_only=False):
     if not isinstance(trials, list):
         trials = [trials]
 
-    for trial_ in trials:
-        # see whether it's already a Trial instance or we need to create one
-        if isinstance(trial_, Trial):
-            trial = trial_
-        else:
-            trial = Trial(trial_)
+    if collect_types['emg']:
+        data_all['emg'] = defaultdict(lambda: None)
+        emg_chs_to_collect = cfg.emg.channel_labels.keys()
+    else:
+        emg_chs_to_collect = list()
 
+    if collect_types['model']:
+        data_all['model'] = defaultdict(lambda: None)
+
+    for trial_ in trials:
+        trial = trial_ if isinstance(trial_, Trial) else Trial(trial_)
         logger.info('collecting data for %s' % trial.trialname)
 
-        # see which models are included in trial
-        models_ok = list()
-        for model in models.models_all:
-            var = list(model.varnames)[0]
-            try:
-                trial.get_model_data(var)
-                models_ok.append(model)
-            except GaitDataError:
-                logger.info(
-                    'cannot read variable %s from %s, skipping '
-                    'corresponding model %s' % (var, trial.trialname, model.desc)
-                )
+        models_to_collect = list()
+        # see which models should be collected for this trial
+        if collect_types['model']:
+            for model in models.models_all:
+                var = list(model.varnames)[0]
+                try:
+                    trial.get_model_data(var)
+                    models_to_collect.append(model)
+                except GaitDataError:
+                    logger.info(
+                        'cannot read variable %s from %s, ignoring '
+                        'corresponding model %s' % (var, trial.trialname, model.desc)
+                    )
+
         for cycle in trial.cycles:
             trial.set_norm_cycle(cycle)
             context = cycle.context
@@ -248,10 +259,11 @@ def collect_model_data(trials, fp_cycles_only=False):
             elif not fp_cycles_only:
                 ncycles[context] += 1
 
-            for model in models_ok:
+            # collect model data
+            for model in models_to_collect:
                 for var in model.varnames:
                     # pick data only if var context matches cycle context
-                    # FIXME: this may not work with all models
+                    # FIXME: should implement context() for models
                     if var[0] != context:
                         continue
                     # don't collect kinetics if cycle is not on forceplate
@@ -264,57 +276,34 @@ def collect_model_data(trials, fp_cycles_only=False):
                         logger.info('no data for %s/%s' % (trial.trialname, var))
                     else:
                         # add as first row or concatenate to existing data
-                        data_all[var] = (
+                        data_all['model'][var] = (
                             data[None, :]
-                            if data_all[var] is None
-                            else np.concatenate([data_all[var], data[None, :]])
+                            if data_all['model'][var] is None
+                            else np.concatenate([data_all['model'][var], data[None, :]])
                         )
-    logger.debug(
-        'collected %d trials, %d/%d R/L cycles, %d/%d forceplate cycles'
-        % (len(trials), ncycles['R'], ncycles['L'], ncycles['R_fp'], ncycles['L_fp'])
-    )
-    return data_all, ncycles
 
-
-def collect_emg_data(trials, rms=True, grid_points=101):
-    """Collect cycle normalized EMG data from trials"""
-    if not trials:
-        logger.warning('no trials')
-        return
-    if not isinstance(trials, list):
-        trials = [trials]
-
-    data_all = dict()
-    meta = list()
-
-    chs = cfg.emg.channel_labels.keys()
-
-    for n, trial_ in enumerate(trials):
-        trial = trial_ if isinstance(trial_, Trial) else Trial(trial_)
-        
-        for cycle in trial.cycles:
-            trial.set_norm_cycle(cycle)
-
-            for ch in chs:
-
+            for ch in emg_chs_to_collect:
+                # check whether cycle matches channel context
                 if not trial.emg.context_ok(ch, cycle.context):
                     continue
-
                 # get data on analog sampling grid and compute rms
                 try:
                     t, data = trial.get_emg_data(ch)
                 except KeyError:
                     logger.warning('no channel %s for %s' % (ch, trial))
                     continue
-                if rms:
-                    data = numutils.rms(data, cfg.emg.rms_win)
                 # transform to desired grid (0..100% by default)
                 t_analog = np.linspace(0, 100, len(data))
-                tn = np.linspace(0, 100, grid_points)
+                tn = np.linspace(0, 100, analog_grid_points)
                 data_cyc = np.interp(tn, t_analog, data)
-                if ch not in data_all:
-                    data_all[ch] = data_cyc[None, :]
+                if ch not in data_all['emg']:
+                    data_all['emg'][ch] = data_cyc[None, :]
                 else:
-                    data_all[ch] = np.concatenate([data_all[ch], data_cyc[None, :]])
-            meta.append('%s: %s' % (trial.trialname, cycle.name))
-    return data_all, meta
+                    data_all['emg'][ch] = np.concatenate([data_all['emg'][ch], data_cyc[None, :]])
+
+    logger.debug(
+        'collected %d trials, %d/%d R/L cycles, %d/%d forceplate cycles'
+        % (len(trials), ncycles['R'], ncycles['L'], ncycles['R_fp'], ncycles['L_fp'])
+    )
+    return data_all, ncycles
+

@@ -250,17 +250,21 @@ def running_sum(M, win, axis=None):
 
 
 def rms(data, win, axis=None):
-    """Return RMS for a numpy array."""
+    """Return rolling window RMS for a numpy array."""
     if win % 2 != 1:
         raise ValueError('Need RMS window of odd length')
-    if win > len(data):
+    datalen = len(data) if axis is None else data.shape[axis]
+    if win > datalen:
         raise ValueError('Need win length < data length')
     rms_ = np.sqrt(running_sum(data ** 2, win, axis=axis) / win)
     # pad RMS data so that lengths are matched
     padw = int((win - 1) / 2)
     padarg_axis = (padw, padw)
     if axis == None:
+        eff_dim = 1
         axis = 0
-    padarg = data.ndim * [(0, 0)]
+    else:
+        eff_dim = data.ndim
+    padarg = eff_dim * [(0, 0)]
     padarg[axis] = padarg_axis
     return np.pad(rms_, padarg, 'reflect')

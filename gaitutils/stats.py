@@ -19,17 +19,8 @@ from . import models, GaitDataError, cfg, numutils
 logger = logging.getLogger(__name__)
 
 
-def create_avgtrial(
-    trials, reject_zeros=True, reject_outliers=None, fp_cycles_only=False
-):
-    """Build an AvgTrial from list of trials."""
-
-    avgdata, stddata, n_ok, _ = average_trials(
-        trials, reject_outliers=reject_outliers, fp_cycles_only=fp_cycles_only
-    )
-
-
 class AvgTrial(Trial):
+
     def __repr__(self):
         s = '<AvgTrial |'
         s += ' trial name: %s' % self.trialname
@@ -37,7 +28,18 @@ class AvgTrial(Trial):
         s += '>'
         return s
 
-    def __init__(self, avgdata, stddata, sessionpath=None):
+    def __init__(self, trials=None, avgdata=None, stddata=None, sessionpath=None):
+
+        if trials is None:
+            if avgdata is None:
+                raise ValueError('Need either list of trials or averaged data')
+        else:
+            if avgdata is None:
+                avgdata, stddata, n_ok = 
+            else:
+                raise ValueError('Need either list of trials or averaged data, not both')
+
+
         if sessionpath:
             self.sessionpath = sessionpath
             self.sessiondir = op.split(sessionpath)[-1]

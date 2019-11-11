@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 
 
 class AvgTrial(Trial):
-
     def __repr__(self):
         s = '<AvgTrial |'
         s += ' trial name: %s' % self.trialname
@@ -28,18 +27,48 @@ class AvgTrial(Trial):
         s += '>'
         return s
 
-    def __init__(self, trials=None, avgdata=None, stddata=None, sessionpath=None):
+        pass
 
-        if trials is None:
-            if avgdata is None:
-                raise ValueError('Need either list of trials or averaged data')
-        else:
-            if avgdata is None:
-                avgdata, stddata, n_ok = 
-            else:
-                raise ValueError('Need either list of trials or averaged data, not both')
+    @classmethod
+    def from_trials(
+        cls,
+        trials,
+        sessionpath=None,
+        reject_zeros=None,
+        reject_outliers=None,
+        use_medians=None,
+    ):
+        """Build AvgTrials from a list of trials"""
+        data_all, ncycles = collect_trial_data(trials)
+        avgdata_model, stddata_model, ncycles_ok_analog = average_model_data(
+            data_all['model'],
+            reject_zeros=reject_zeros,
+            reject_outliers=reject_outliers,
+            use_medians=use_medians,
+        )
+        avgdata_emg, stddata_emg, ncycles_ok_emg = average_analog_data(
+            data_all['emg'],
+            rms=True,
+            reject_outliers=reject_outliers,
+            use_medians=use_medians,
+        )
 
+        return cls(
+            avgdata_model=avgdata_model,
+            stddata_model=stddata_model,
+            avgdata_emg=avgdata_emg,
+            stddata_emg=stddata_emg,
+            sessionpath=sessionpath,
+        )
 
+    def __init__(
+        self,
+        avgdata_model=None,
+        stddata_model=None,
+        avgdata_emg=None,
+        stddata_emg=None,
+        sessionpath=None,
+    ):
         if sessionpath:
             self.sessionpath = sessionpath
             self.sessiondir = op.split(sessionpath)[-1]
@@ -48,12 +77,13 @@ class AvgTrial(Trial):
             self.trialname = '%d trial avg.' % self.nfiles
             self.sessiondir = None
             self.sessionpath = None
+
         self.source = 'averaged data'
         self.name = 'Unknown'
         self.is_static = False
-        self._model_data = avgdata
-        self.stddev_data = stddata
-        self.n_ok = n_ok
+        self._model_data = avgdata_model
+        self.stddev_data = stddata_model
+        # self.n_ok = n_ok  XXX
         self.t = np.arange(101)  # data is on normalized cycle 0..100%
         # fake 2 gait cycles, L/R
         self.cycles = list()
@@ -103,12 +133,7 @@ def _robust_reject_rows(data, p_threshold):
     return data
 
 
-def average_analog_data(
-    data,
-    rms=True,    
-    reject_outliers=None,
-    use_medians=False,
-):
+def average_analog_data(data, rms=None, reject_outliers=None, use_medians=None):
     """Average collected EMG data.
 
     Parameters
@@ -138,6 +163,12 @@ def average_analog_data(
     stddata = dict()
     avgdata = dict()
     ncycles_ok = dict()
+
+    if rms is None:
+        rms = False
+
+    if use_medians is None:
+        use_medians = False
 
     if reject_outliers is None:
         reject_outliers = 1e-3
@@ -173,12 +204,7 @@ def average_analog_data(
     return (avgdata, stddata, ncycles_ok)
 
 
-def average_model_data(
-    data,
-    reject_zeros=True,
-    reject_outliers=None,
-    use_medians=False,
-):
+def average_model_data(data, reject_zeros=None, reject_outliers=None, use_medians=None):
     """Average collected model data.
 
     Parameters
@@ -210,6 +236,12 @@ def average_model_data(
     stddata = dict()
     avgdata = dict()
     ncycles_ok = dict()
+
+    if use_medians is None:
+        use_medians = False
+
+    if reject_zeros is None:
+        reject_zeros = True
 
     if reject_outliers is None:
         reject_outliers = 1e-3
@@ -255,7 +287,7 @@ def average_model_data(
 
 
 def collect_trial_data(
-    trials, collect_types=None, fp_cycles_only=False, analog_len=None
+    trials, collect_types=None, fp_cycles_only=None, analog_len=None
 ):
     """Read model and analog data across trials into numpy arrays.
 
@@ -284,6 +316,9 @@ def collect_trial_data(
     """
     data_all = dict()
     ncycles = defaultdict(lambda: 0)
+
+    if fp_cycles_only is None:
+        fp_cycles_only = False
 
     if collect_types is None:
         collect_types = defaultdict(lambda: True)
@@ -327,6 +362,7 @@ def collect_trial_data(
                 for var in model.varnames:
                     # pick data only if var context matches cycle context
                     # FIXME: should implement context() for models
+                    # (and a filter for context?)
                     if var[0] != context:
                         continue
                     # don't collect kinetics if cycle is not on forceplate
@@ -355,11 +391,14 @@ def collect_trial_data(
                 except KeyError:
                     logger.warning('no channel %s for %s' % (ch, trial))
                     continue
+                # resample to requested grid
                 data_cyc = scipy.signal.resample(data, analog_len)
                 if ch not in data_all['emg']:
                     data_all['emg'][ch] = data_cyc[None, :]
                 else:
-                    data_all['emg'][ch] = np.concatenate([data_all['emg'][ch], data_cyc[None, :]])
+                    data_all['emg'][ch] = np.concatenate(
+                        [data_all['emg'][ch], data_cyc[None, :]]
+                    )
 
     logger.debug(
         'collected %d trials, %d/%d R/L cycles, %d/%d forceplate cycles'

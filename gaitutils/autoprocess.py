@@ -117,9 +117,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
     nexus_ver = nexus.true_ver()
     logger.debug('detected Nexus version: %g' % nexus_ver)
     # close trial to prevent 'Save trial?' dialog on first open
-    if nexus_ver >= 2.8:
-        logger.debug('force closing open trial')
-        vicon.CloseTrial(5000)  # timeout in ms
+    nexus.close_trial()
 
     # init trials dict
     for enffile in enffiles:

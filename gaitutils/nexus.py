@@ -128,6 +128,15 @@ def viconnexus():
     return ViconNexus.ViconNexus()
 
 
+def close_trial():
+    """Close currently opened trial (if supported)"""
+    vicon = viconnexus()
+    ver = true_ver()
+    if ver is not None and ver >= 2.8:
+        logger.debug('force closing open trial')
+        vicon.CloseTrial(5000)
+
+
 def get_subjectnames(single_only=True):
     """ Get subject name(s) from Nexus """
     vicon = viconnexus()

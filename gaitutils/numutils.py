@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 def mad(data, axis=None, scale=1.4826, keepdims=False):
     """Median absolute deviation or MAD. Defined as the median absolute
     deviation from the median of the data. A robust alternative to stddev.
-    Identical to scipy.stats.median_absolute_deviation(), but that does
+    Identical to scipy.stats.median_absolute_deviation(), which does
     not take a keepdims argument.
 
     Parameters
@@ -48,7 +48,7 @@ def mad(data, axis=None, scale=1.4826, keepdims=False):
 def modified_zscore(data, median_axis=0, mad_axis=0):
     """Modified Z-score.
 
-    Z-score analogue computed using robust statistics.
+    Z-score analogue computed using robust (median-based) statistics.
     Axes can be specified separately for estimating the median and the MAD (median 
     absolute deviation). For example, if columns represent different variables
     and rows are observations, giving 0 for both axes would take different

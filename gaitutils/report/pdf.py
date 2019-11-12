@@ -15,7 +15,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from collections import defaultdict
 
-from .. import cfg, sessionutils, normaldata, GaitDataError
+from .. import cfg, sessionutils, normaldata, GaitDataError, trial
 from ulstools.num import age_from_hetu
 from ..viz.timedist import do_session_average_plot, do_comparison_plot
 from ..timedist import session_analysis_text
@@ -93,6 +93,10 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     )
     if not tagged_trials:
         raise GaitDataError('No tagged trials found in %s' % sessiondir)
+
+    trials = (trial.Trial(t) for t in tagged_trials)
+    has_kinetics = any(c.on_forceplate for t in trials for c in t.cycles)
+
     session_t = sessionutils.get_session_date(sessionpath)
     logger.debug('session timestamp: %s', session_t)
     age = age_from_hetu(hetu, session_t) if hetu else None
@@ -158,7 +162,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
 
     # kinetics consistency
     fig_kinetics_cons = None
-    if pages['KineticsCons']:
+    if pages['KineticsCons'] and has_kinetics:
         logger.debug('creating kinetics consistency plot')
         fig_kinetics_cons = plot_sessions(
             sessions=[sessionpath],

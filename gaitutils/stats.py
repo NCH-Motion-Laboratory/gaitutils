@@ -20,14 +20,13 @@ logger = logging.getLogger(__name__)
 
 
 class AvgTrial(Trial):
+
     def __repr__(self):
         s = '<AvgTrial |'
         s += ' trial name: %s' % self.trialname
         s += ', trials: %s' % self.source
         s += '>'
         return s
-
-        pass
 
     @classmethod
     def from_trials(
@@ -72,20 +71,32 @@ class AvgTrial(Trial):
         sessionpath=None,
         nfiles=None,
     ):
+        if avgdata_model is None and avgdata_emg is None:
+            raise ValueError('no data for average')
+        
+        if nfiles is None:
+            raise ValueError('nfiles must be supplied')
+
+        self.nfiles = nfiles
         if sessionpath:
             self.sessionpath = sessionpath
             self.sessiondir = op.split(sessionpath)[-1]
-            self.trialname = '%s avg.' % self.sessiondir
+            self.trialname = '%s avg. (%d trials)' % (self.sessiondir, self.nfiles)
         else:
             self.trialname = '%d trial avg.' % self.nfiles
             self.sessiondir = None
             self.sessionpath = None
 
+        self._model_data = avgdata_model
+        self.stddev_data = stddata_model
+
+        self._emg_data = avgdata_emg
+        if avgdata_emg is not None:
+            self.t_analog = np.arange(avgdata_emg.shape[1])
+
         self.source = 'averaged data'
         self.name = 'Unknown'
         self.is_static = False
-        self._model_data = avgdata_model
-        self.stddev_data = stddata_model
         # self.n_ok = n_ok  XXX
         self.t = np.arange(101)  # data is on normalized cycle 0..100%
         # fake 2 gait cycles, L/R
@@ -102,10 +113,13 @@ class AvgTrial(Trial):
     @property
     def emg(self):
         # FIXME: could average EMG RMS
-        raise GaitDataError('EMG averaging not supported yet')
+        raise GaitDataError('EMG property not supported yet')
 
     def get_model_data(self, var):
         return self.t, self._model_data[var]
+
+    def get_emg_data(self, ch):
+        return self.t_analog, self._emg_data[ch]
 
     def set_norm_cycle(self, cycle=None):
         if cycle is None:
@@ -137,7 +151,7 @@ def _robust_reject_rows(data, p_threshold):
 
 
 def average_analog_data(data, rms=None, reject_outliers=None, use_medians=None):
-    """Average collected EMG data.
+    """Average collected analog data.
 
     Parameters
     ----------

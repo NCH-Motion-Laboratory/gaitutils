@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 
 
 class AvgTrial(Trial):
-
     def __repr__(self):
         s = '<AvgTrial |'
         s += ' trial name: %s' % self.trialname
@@ -74,7 +73,7 @@ class AvgTrial(Trial):
     ):
         if avgdata_model is None and avgdata_emg is None:
             raise ValueError('no data for average')
-        
+
         if nfiles is None:
             raise ValueError('nfiles must be supplied')
 
@@ -145,7 +144,7 @@ class AvgTrial(Trial):
             The channel name.
         """
         raise RuntimeError('EMG average not implemented yet')
-        #return self.t_analog, self.emg[ch]
+        # return self.t_analog, self.emg[ch]
 
     def set_norm_cycle(self, cycle=None):
         if cycle is None:

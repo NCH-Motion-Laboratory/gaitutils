@@ -22,8 +22,8 @@ sessiondir_ = 'test_subjects/D0063_RR/2018_12_17_preOp_RR'
 sessiondir_abs = _file_path(sessiondir_)
 
 
-def test_collect_model_data():
-    """Test collection of model data"""
+def test_collect_trial_data():
+    """Test collection of trial data"""
     c3ds = sessionutils.get_c3ds(sessiondir_abs, trial_type='dynamic')
     data_all, nc = stats.collect_trial_data(c3ds)
     data_model = data_all['model']
@@ -43,11 +43,23 @@ def test_collect_model_data():
     assert data_model['RKneeAnglesX'].shape[1] == 101
     assert data_model['fubar'] is None
     # forceplate cycles only
-    data_model, nc = stats.collect_model_data(c3ds, fp_cycles_only=True)
+    data_all, nc = stats.collect_trial_data(c3ds, fp_cycles_only=True)
+    data_model = data_all['model']
     assert nc == {'R_fp': 19, 'R': 19, 'L': 17, 'L_fp': 17}
     assert data_model['RKneeAnglesX'].shape[0] == nc['R']
     assert data_model['RAnkleMomentX'].shape[0] == nc['R_fp']
     assert data_model['RKneeAnglesX'].shape[1] == 101
+    # EMG data collection
+    data_all, nc = stats.collect_trial_data(
+        c3ds, collect_types={'model': False, 'emg': True}, analog_len=501
+    )
+    assert 'model' not in data_all
+    data_emg = data_all['emg']
+    assert set(data_emg.keys()) == set(cfg.emg.channel_labels.keys())
+    assert all(data.shape[0] == nc['L'] for ch, data in data_emg.items() if ch[0] == 'L')
+    assert all(data.shape[0] == nc['R'] for ch, data in data_emg.items() if ch[0] == 'R')
+    assert all(data.shape[1] == 501 for data in data_emg.values())
+
 
 def test_average_model_data():
     """Test averaging of model data"""

@@ -67,10 +67,13 @@ def test_collect_trial_data():
 
 def test_average_model_data():
     """Test averaging of model data"""
-    pass
     c3ds = sessionutils.get_c3ds(sessiondir_abs, trial_type='dynamic')
-    avgdata, stddata, ncycles_ok, ncycles = stats.average_trials(
-        c3ds, reject_outliers=None
+    data_all, nc = stats.collect_trial_data(
+        c3ds, collect_types={'model': True, 'emg': False}
+    )
+    data_model = data_all['model']
+    avgdata, stddata, ncycles_ok = stats.average_model_data(
+        data_model, reject_outliers=None
     )
     # test whether data was averaged for all vars
     # except CGM2 forefoot (which are not in the c3d data)
@@ -83,25 +86,28 @@ def test_average_model_data():
         assert avgdata[var] is not None and avgdata[var].shape == (101,)
         assert stddata[var] is not None and stddata[var].shape == (101,)
     # test with median stats
-    avgdata, stddata, ncycles_ok, ncycles = stats.average_trials(c3ds, use_medians=True)
+    avgdata, stddata, ncycles_ok = stats.average_model_data(
+        data_model, reject_outliers=None, use_medians=True
+    )
     for var in desired_vars:
         assert avgdata[var] is not None and avgdata[var].shape == (101,)
         assert stddata[var] is not None and stddata[var].shape == (101,)
-    # test outlier rejection; currently test is a bit lame
-    avgdata_, stddata_, ncycles_ok_, ncycles_ = stats.average_trials(
-        c3ds, reject_outliers=1e-3
+    # test outlier rejection
+    avgdata, stddata, ncycles_ok_reject = stats.average_model_data(
+        data_model, reject_outliers=1e-3
     )
-    assert not all(ncycles_ok[var] == ncycles_ok_[var] for var in ncycles_ok)
-    avgdata_, stddata_, ncycles_ok_, ncycles_ = stats.average_trials(
-        c3ds, reject_outliers=1e-30
-    )
-    assert all(ncycles_ok[var] == ncycles_ok_[var] for var in ncycles_ok)
+    for var in desired_vars:
+        assert avgdata[var] is not None and avgdata[var].shape == (101,)
+        assert stddata[var] is not None and stddata[var].shape == (101,)
+    assert any(ncycles_ok_reject[var] < ncycles_ok[var] for var in ncycles_ok)
 
 
 def test_avgtrial():
     """Test the AvgTrial class"""
     c3ds = sessionutils.get_c3ds(sessiondir_abs, trial_type='dynamic')
-    atrial = stats.AvgTrial(c3ds, sessionpath=sessiondir_abs, reject_outliers=1e-3)
+    atrial = stats.AvgTrial.from_trials(
+        c3ds, sessionpath=sessiondir_abs, reject_outliers=1e-3
+    )
     assert atrial.sessionpath == sessiondir_abs
     assert atrial.trialname
     assert atrial.t.shape == (101,)

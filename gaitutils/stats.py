@@ -13,7 +13,8 @@ import os.path as op
 from collections import defaultdict
 
 from .trial import Trial, Gaitcycle
-from . import models, GaitDataError, cfg, numutils
+from . import models, cfg, numutils
+from .emg import AvgEMG
 
 
 logger = logging.getLogger(__name__)
@@ -94,17 +95,13 @@ class AvgTrial(Trial):
         self.stddev_data = stddata_model
 
         if avgdata_emg is None:
-            self._emg_data = dict()
-            self.t_analog = np.arange(1000)
-        else:
-            self._emg_data = avgdata_emg
-            for ch in list(avgdata_emg.keys()):
-                if avgdata_emg[ch] is not None:
-                    analog_npts = len(avgdata_emg[ch])
-                    break
-            else:
-                analog_npts = 1000
-            self.t_analog = np.arange(analog_npts)
+            avgdata_emg = dict()
+        self.emg = AvgEMG(avgdata_emg)
+        analog_npts = 1000  # default
+        for ch in list(avgdata_emg.keys()):
+            if avgdata_emg[ch] is not None:
+                analog_npts = len(avgdata_emg[ch])
+        self.t_analog = np.arange(analog_npts)
 
         self.source = 'averaged data'
         self.name = 'Unknown'
@@ -121,11 +118,6 @@ class AvgTrial(Trial):
         )
         self.ncycles = 2
         self.eclipse_data = defaultdict(lambda: '', {})
-
-    @property
-    def emg(self):
-        # FIXME: could average EMG RMS
-        raise GaitDataError('EMG property not supported yet')
 
     def get_model_data(self, var):
         """Get averaged model variable.
@@ -152,7 +144,7 @@ class AvgTrial(Trial):
         ch : str
             The channel name.
         """
-        return self.t_analog, self._emg_data[ch]
+        return self.t_analog, self.emg[ch]
 
     def set_norm_cycle(self, cycle=None):
         if cycle is None:

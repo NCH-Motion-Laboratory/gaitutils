@@ -19,6 +19,8 @@ from . import read_data, cfg
 logger = logging.getLogger(__name__)
 
 
+
+
 class EMG(object):
     """ Class for handling EMG data. """
 
@@ -126,3 +128,38 @@ class EMG(object):
         emgdi = read_data.get_emg_data(self.source)
         self.data = emgdi['data']
         self.t = emgdi['t']
+
+
+class AvgEMG(EMG):
+
+    def __init__(self, data):
+        self.data = data
+
+    def __getitem__(self, item):
+        """ Return data for a channel (filtered if self.passband is set).
+        Uses name matching: if the specified channel is not found in the data,
+        partial name matches are considered and data for the shortest match is
+        returned. For example, 'LGas' could be mapped to 'Voltage.LGas8' """
+        if item is None or len(item) < 2:
+            raise KeyError('Invalid channel name')
+        if self.data is None:
+            self.read()
+        matches = [x for x in self.data if x.find(item) >= 0]
+        if len(matches) == 0:
+            raise KeyError('No matching channel for %s' % item)
+        else:
+            ch = min(matches, key=len)  # choose shortest matching name
+        if len(matches) > 1:
+            logger.warning(
+                'multiple channel matches for %s: %s -> %s' % (item, matches, ch)
+            )
+        return self.data[ch]
+
+    def _is_valid_emg(self, y):
+        return True
+
+    def filt(self, y, passband):
+        raise RuntimeError('filt not implemented for averaged EMG')
+    
+    def read(self):
+        raise RuntimeError('read not implemented for averaged EMG')

@@ -106,7 +106,40 @@ def test_avgtrial():
     """Test the AvgTrial class"""
     c3ds = sessionutils.get_c3ds(sessiondir_abs, trial_type='dynamic')
     atrial = stats.AvgTrial.from_trials(
-        c3ds, sessionpath=sessiondir_abs, reject_outliers=1e-3
+        c3ds, sessionpath=sessiondir_abs, reject_outliers=1e-3,
+    )
+    assert atrial.sessionpath == sessiondir_abs
+    assert atrial.trialname
+    assert atrial.t.shape == (101,)
+    assert len(atrial.cycles) == atrial.ncycles == 2
+    assert atrial.cycles[0].trial == atrial
+    with pytest.raises(ValueError):
+        atrial.set_norm_cycle(None)
+    adata, t = atrial.get_model_data('RKneeAnglesX')
+    assert adata.shape == (101,)
+    cycs = atrial.get_cycles('all')
+    assert len(cycs) == 2
+    cycs = atrial.get_cycles('forceplate')
+    assert len(cycs) == 2
+    # from already averaged data
+    data_all, nc = stats.collect_trial_data(
+        c3ds, collect_types={'model': True, 'emg': True}
+    )
+    data_model = data_all['model']
+    avgdata_model, stddata_model, ncycles_ok = stats.average_model_data(
+        data_model, reject_outliers=None
+    )
+    data_emg = data_all['emg']
+    avgdata_emg, stddata_emg, ncycles_ok = stats.average_analog_data(
+        data_emg, reject_outliers=None
+    )
+    atrial = stats.AvgTrial(
+        avgdata_model=avgdata_model,
+        stddata_model=stddata_model,
+        avgdata_emg=avgdata_emg,
+        stddata_emg=stddata_emg,
+        sessionpath=sessiondir_abs,
+        nfiles=len(c3ds),
     )
     assert atrial.sessionpath == sessiondir_abs
     assert atrial.trialname

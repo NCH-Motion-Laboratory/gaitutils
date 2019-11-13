@@ -39,6 +39,7 @@ class AvgTrial(Trial):
         use_medians=None,
     ):
         """Build AvgTrials from a list of trials"""
+        nfiles = len(trials)
         data_all, ncycles = collect_trial_data(trials)
         avgdata_model, stddata_model, ncycles_ok_analog = average_model_data(
             data_all['model'],
@@ -59,6 +60,7 @@ class AvgTrial(Trial):
             avgdata_emg=avgdata_emg,
             stddata_emg=stddata_emg,
             sessionpath=sessionpath,
+            nfiles=nfiles,
         )
 
     def __init__(
@@ -68,6 +70,7 @@ class AvgTrial(Trial):
         avgdata_emg=None,
         stddata_emg=None,
         sessionpath=None,
+        nfiles=None,
     ):
         if sessionpath:
             self.sessionpath = sessionpath

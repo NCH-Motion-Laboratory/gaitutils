@@ -286,7 +286,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
                 age_ndata = normaldata.read_normaldata(age_ndata_file)
                 model_normaldata.update(age_ndata)
 
-        # make average trials
+        # make average trials for each session
         avg_trials = [
             AvgTrial(_trials_avg[session], sessionpath=session) for session in sessions
         ]

@@ -144,7 +144,8 @@ class AvgTrial(Trial):
         ch : str
             The channel name.
         """
-        return self.t_analog, self.emg[ch]
+        raise RuntimeError('EMG average not implemented yet')
+        #return self.t_analog, self.emg[ch]
 
     def set_norm_cycle(self, cycle=None):
         if cycle is None:

@@ -19,8 +19,6 @@ from . import read_data, cfg
 logger = logging.getLogger(__name__)
 
 
-
-
 class EMG(object):
     """ Class for handling EMG data. """
 

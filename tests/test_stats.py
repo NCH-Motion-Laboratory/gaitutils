@@ -56,13 +56,18 @@ def test_collect_trial_data():
     assert 'model' not in data_all
     data_emg = data_all['emg']
     assert set(data_emg.keys()) == set(cfg.emg.channel_labels.keys())
-    assert all(data.shape[0] == nc['L'] for ch, data in data_emg.items() if ch[0] == 'L')
-    assert all(data.shape[0] == nc['R'] for ch, data in data_emg.items() if ch[0] == 'R')
+    assert all(
+        data.shape[0] == nc['L'] for ch, data in data_emg.items() if ch[0] == 'L'
+    )
+    assert all(
+        data.shape[0] == nc['R'] for ch, data in data_emg.items() if ch[0] == 'R'
+    )
     assert all(data.shape[1] == 501 for data in data_emg.values())
 
 
 def test_average_model_data():
     """Test averaging of model data"""
+    pass
     c3ds = sessionutils.get_c3ds(sessiondir_abs, trial_type='dynamic')
     avgdata, stddata, ncycles_ok, ncycles = stats.average_trials(
         c3ds, reject_outliers=None

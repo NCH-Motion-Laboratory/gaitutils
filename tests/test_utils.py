@@ -66,4 +66,3 @@ def test_point_in_poly():
     assert not _point_in_poly(poly, pt)
     pt = np.array([0.5, 0.5, 0])
     assert _point_in_poly(poly, pt)
-

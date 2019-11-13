@@ -12,7 +12,8 @@ from numpy.testing import assert_allclose
 import logging
 
 from gaitutils.numutils import segment_angles, best_match, rms
-#from utils import _file_path, cfg
+
+# from utils import _file_path, cfg
 
 
 logger = logging.getLogger(__name__)
@@ -51,12 +52,22 @@ def test_rms():
     # 2-d matrix shape tests
     x = np.ones((8, 10))
     assert_allclose(rms(x, 5, axis=0), x)
-    assert_allclose(rms(x, 5, axis=1), x)        
+    assert_allclose(rms(x, 5, axis=1), x)
     assert_allclose(rms(x, 5, axis=None), x.flatten())
     # edge vals are repeated due to 'reflect' padding
-    arms = np.array([2.1602469, 1.29099445, 2.1602469, 3.10912635, 4.0824829,
-                    5.06622805, 6.05530071, 7.04745817, 8.04155872, 7.04745817])
+    arms = np.array(
+        [
+            2.1602469,
+            1.29099445,
+            2.1602469,
+            3.10912635,
+            4.0824829,
+            5.06622805,
+            6.05530071,
+            7.04745817,
+            8.04155872,
+            7.04745817,
+        ]
+    )
     assert_allclose(rms(np.arange(10), win=3), arms)
     # XXX: still needs a proper 2-d computation for completeness
-
-

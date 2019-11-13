@@ -447,4 +447,3 @@ def collect_trial_data(
         % (len(trials), ncycles['R'], ncycles['L'], ncycles['R_fp'], ncycles['L_fp'])
     )
     return data_all, ncycles
-

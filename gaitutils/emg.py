@@ -129,7 +129,6 @@ class EMG(object):
 
 
 class AvgEMG(EMG):
-
     def __init__(self, data):
         self.data = data
 
@@ -158,6 +157,6 @@ class AvgEMG(EMG):
 
     def filt(self, y, passband):
         raise RuntimeError('filt not implemented for averaged EMG')
-    
+
     def read(self):
         raise RuntimeError('read not implemented for averaged EMG')

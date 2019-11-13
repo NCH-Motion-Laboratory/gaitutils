@@ -783,7 +783,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog('Cannot include averaged trials in average')
             return
         reject_outliers = cfg.trial.outlier_rejection_threshold
-        avgtrial = stats.AvgTrial(
+        avgtrial = stats.AvgTrial.from_trials(
             self._selected_trials, reject_outliers=reject_outliers
         )
         self._add_trial_to_table(avgtrial)

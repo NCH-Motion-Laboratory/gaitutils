@@ -288,7 +288,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
 
         # make average trials for each session
         avg_trials = [
-            AvgTrial(_trials_avg[session], sessionpath=session) for session in sessions
+            AvgTrial.from_trials(_trials_avg[session], sessionpath=session) for session in sessions
         ]
 
         # read some extra data from trials and create supplementary data

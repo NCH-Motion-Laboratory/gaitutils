@@ -162,7 +162,7 @@ def plot_session_average(
         raise GaitDataError('No dynamic trials found for %s' % session)
 
     reject_outliers = cfg.trial.outlier_rejection_threshold
-    atrial = stats.AvgTrial(c3ds, reject_outliers=reject_outliers, sessionpath=session)
+    atrial = stats.AvgTrial.from_trials(c3ds, reject_outliers=reject_outliers, sessionpath=session)
     maintitle_ = '%s (%d trial average)' % (atrial.sessiondir, atrial.nfiles)
 
     return backend_lib.plot_trials(

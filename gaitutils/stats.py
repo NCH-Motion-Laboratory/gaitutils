@@ -37,7 +37,7 @@ class AvgTrial(Trial):
         reject_outliers=None,
         use_medians=None,
     ):
-        """Build AvgTrials from a list of trials"""
+        """Build AvgTrial from a list of trials"""
         nfiles = len(trials)
         data_all, ncycles = collect_trial_data(trials)
         avgdata_model, stddata_model, ncycles_ok_analog = average_model_data(
@@ -87,12 +87,24 @@ class AvgTrial(Trial):
             self.sessiondir = None
             self.sessionpath = None
 
-        self._model_data = avgdata_model
+        if avgdata_model is None:
+            self._model_data = dict()
+        else:
+            self._model_data = avgdata_model
         self.stddev_data = stddata_model
 
-        self._emg_data = avgdata_emg
-        if avgdata_emg is not None:
-            self.t_analog = np.arange(avgdata_emg.shape[1])
+        if avgdata_emg is None:
+            self._emg_data = dict()
+            self.t_analog = np.arange(1000)
+        else:
+            self._emg_data = avgdata_emg
+            for ch in list(avgdata_emg.keys()):
+                if avgdata_emg[ch] is not None:
+                    analog_npts = len(avgdata_emg[ch])
+                    break
+            else:
+                analog_npts = 1000
+            self.t_analog = np.arange(analog_npts)
 
         self.source = 'averaged data'
         self.name = 'Unknown'
@@ -116,9 +128,30 @@ class AvgTrial(Trial):
         raise GaitDataError('EMG property not supported yet')
 
     def get_model_data(self, var):
-        return self.t, self._model_data[var]
+        """Get averaged model variable.
+
+        Parameters
+        ----------
+        var : str
+            The variable name.
+        """
+        try:
+            data = self._model_data[var]
+        except KeyError:
+            logger.info('no averaged data for %s, returning nans' % var)
+            var_dims = (3, 101)  # is this universal?
+            data = np.empty(var_dims)
+            data[:] = np.nan
+        return self.t, data
 
     def get_emg_data(self, ch):
+        """Get averaged EMG RMS data.
+
+        Parameters
+        ----------
+        ch : str
+            The channel name.
+        """
         return self.t_analog, self._emg_data[ch]
 
     def set_norm_cycle(self, cycle=None):

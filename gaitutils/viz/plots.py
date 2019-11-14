@@ -30,6 +30,7 @@ def plot_trials(
     supplementary_data=None,
     legend=True,
     figtitle=None,
+    auto_adjust_emg_layout=False,
 ):
     """Plot gait trials.
 
@@ -70,6 +71,11 @@ def plot_trials(
 
     backend_lib = get_backend(backend)
     layout = layouts.get_layout(layout_name)
+
+    if auto_adjust_emg_layout and 'EMG' in layout_name.upper():
+        emgs = [tr.emg for tr in trials]
+        layout = layouts.rm_dead_channels_multitrial(emgs, layout)
+
     return backend_lib.plot_trials(
         trials,
         layout,
@@ -117,10 +123,6 @@ def plot_sessions(
             raise GaitDataError('No tagged trials found for session %s' % session)
         c3ds_all.extend(c3ds)
     trials = [trial.Trial(c3d) for c3d in c3ds_all]
-
-    # remove dead channels from EMG layout
-    # emgs = [tr.emg for tr in trials]
-    # layout = layouts.rm_dead_channels_multitrial(emgs, layout)
 
     return plot_trials(
         trials,

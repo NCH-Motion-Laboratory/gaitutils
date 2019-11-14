@@ -11,7 +11,6 @@ Class for reading EMG
 from __future__ import division
 from builtins import object
 import numpy as np
-from scipy import signal
 import logging
 
 from . import read_data, cfg, numutils
@@ -25,12 +24,11 @@ class EMG(object):
     def __init__(self, source, correction_factor=1):
         logger.debug('new EMG instance from %s' % source)
         self.source = source
-        # order of Butterworth filter
-        self.buttord = 5
         self.passband = cfg.emg.passband
         self.linefreq = cfg.emg.linefreq
         self._data = None
         self.t = None
+        self.sfrate = None
         self.correction_factor = correction_factor
 
     @property
@@ -82,7 +80,7 @@ class EMG(object):
         if rms:
             data = numutils.rms(data, cfg.emg.rms_win)
         elif self.passband:  # no filtering for RMS data
-            data = self.filt(data, self.passband)
+            data = numutils.filtfilt(data, self.passband, self.sfrate)
         data *= self.correction_factor
         return data
 
@@ -112,7 +110,7 @@ class EMG(object):
             return False
         return True
 
-    def _is_valid_emg(self, y):
+    def _is_valid_emg(self, data):
         """ Check whether channel contains a valid EMG signal. Usually, an invalid
         signal can be identified by the presence of large powerline (harmonics)
         compared to broadband signal. Cause is typically disconnected or badly
@@ -127,28 +125,15 @@ class EMG(object):
         linefreqs = (np.arange(nharm + 1) + 1) * self.linefreq
         intvar = 0
         for f in linefreqs:
-            intvar += (
-                np.var(self.filt(y, [f - power_bw / 2.0, f + power_bw / 2.0]))
-                / power_bw
+            data_filt = numutils.filtfilt(
+                data, [f - power_bw / 2.0, f + power_bw / 2.0], self.sfrate
             )
+            intvar += np.var(data_filt) / power_bw
         # broadband signal
         band = [self.linefreq + 10, self.linefreq + 10 + broadband_bw]
-        emgvar = np.var(self.filt(y, band)) / broadband_bw
+        emgvar = np.var(numutils.filtfilt(data, band, self.sfrate)) / broadband_bw
         intrel = 10 * np.log10(intvar / emgvar)
         return intrel < cfg.emg.max_interference
-
-    def filt(self, y, passband):
-        """ Filter given data y to passband, e.g. [1, 40].
-        Passband is given in Hz. None for no filtering.
-        Implemented as pure lowpass, if highpass freq = 0 """
-        if passband is None:
-            return y
-        passbandn = 2 * np.array(passband) / self.sfrate
-        if passbandn[0] > 0:  # bandpass
-            b, a = signal.butter(self.buttord, passbandn, 'bandpass')
-        else:  # lowpass
-            b, a = signal.butter(self.buttord, passbandn[1])
-        return signal.filtfilt(b, a, y)
 
 
 class AvgEMG(EMG):

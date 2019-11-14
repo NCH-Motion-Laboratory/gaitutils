@@ -772,6 +772,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             emg_mode=emg_mode,
             legend_type='short_name_with_tag_and_cycle',
             model_normaldata=model_normaldata,
+            auto_adjust_emg_layout=True,
         )
 
     def _plot_trials_average(self):

@@ -12,6 +12,7 @@ from __future__ import division
 import logging
 import numpy as np
 import hashlib
+from scipy import signal
 from scipy.signal import medfilt
 from scipy.special import erfinv
 from numpy.lib.stride_tricks import as_strided
@@ -268,3 +269,16 @@ def rms(data, win, axis=None):
     padarg = eff_dim * [(0, 0)]
     padarg[axis] = padarg_axis
     return np.pad(rms_, padarg, 'reflect')
+
+
+def filtfilt(data, passband, sfrate, buttord=5):
+    """Filter given data to passband, e.g. [1, 40] (in Hz)
+    Implemented as pure lowpass, if highpass freq = 0 """
+    if passband is None:
+        return data
+    passbandn = 2 * np.array(passband) / sfrate
+    if passbandn[0] > 0:  # bandpass
+        b, a = signal.butter(buttord, passbandn, 'bandpass')
+    else:  # lowpass
+        b, a = signal.butter(buttord, passbandn[1])
+    return signal.filtfilt(b, a, data)

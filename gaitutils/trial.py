@@ -28,6 +28,7 @@ from . import (
     models,
     videos,
     sessionutils,
+    numutils,
 )
 
 logger = logging.getLogger(__name__)
@@ -348,15 +349,19 @@ class Trial(object):
             self._models_data[model_.desc] = modeldata
         return self._models_data[model_.desc][var]
 
-    def get_emg_data(self, ch):
+    def get_emg_data(self, ch, rms=False):
         """Return trial data for an EMG variable.
 
         Parameters
         ----------
         ch : string
             The EMG channel name.
+        rms : bool
+            Return moving-window RMS instead of raw data.
         """
         data = self.emg[ch]
+        if rms:
+            data = numutils.rms(data, cfg.emg.rms_win)
         return self._normalized_analog_data(data)
 
     def get_marker_data(self, marker):

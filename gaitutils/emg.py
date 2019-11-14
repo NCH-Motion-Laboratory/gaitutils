@@ -147,7 +147,7 @@ class AvgEMG(EMG):
         self.data = data
 
     def __getitem__(self, item):
-        raise RuntimeError('AvgTrial can only return RMS data')
+        raise RuntimeError('AvgEMG can only return RMS data')
 
     def rms(self, chname):
         chname = self._match_name(chname)

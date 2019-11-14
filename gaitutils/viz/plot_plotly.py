@@ -236,6 +236,8 @@ def plot_trials(
     if model_normaldata is None:
         model_normaldata = normaldata.read_all_normaldata()
 
+    use_rms = emg_mode == 'rms'
+
     nrows, ncols = layouts.check_layout(layout)
 
     # these generate and keep track of key -> linestyle (or color) mappings
@@ -513,13 +515,8 @@ def plot_trials(
                         if do_plot:
                             tracename_emg = 'EMG:' + tracename
 
-                            t_, y_ = trial.get_emg_data(var)
-                            t = t_ / trial.samplesperframe if not normalized else t_
-                            y = (
-                                numutils.rms(y_, cfg.emg.rms_win)
-                                if emg_mode == 'rms'
-                                else y_
-                            )
+                            t_, y = trial.get_emg_data(var, rms=use_rms)
+                            t = t_ if normalized else t_ / trial.samplesperframe
 
                             col = _color_by_params(
                                 color_by['emg'], emg_trace_colors, trial, cyc, context
@@ -527,7 +524,7 @@ def plot_trials(
                             col = merge_color_and_opacity(col, cfg.plot.emg_alpha)
                             lw = (
                                 cfg.plot.emg_rms_linewidth
-                                if emg_mode == 'rms'
+                                if use_rms
                                 else cfg.plot.emg_linewidth
                             )
                             line = {'width': lw, 'color': col}

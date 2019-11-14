@@ -135,7 +135,7 @@ class AvgTrial(Trial):
             data[:] = np.nan
         return self.t, data
 
-    def get_emg_data(self, ch):
+    def get_emg_data(self, ch, rms=None):
         """Get averaged EMG RMS data.
 
         Parameters
@@ -143,8 +143,9 @@ class AvgTrial(Trial):
         ch : str
             The channel name.
         """
-        raise RuntimeError('EMG average not implemented yet')
-        # return self.t_analog, self.emg[ch]
+        if not rms:
+            raise ValueError('AvgTrial only supports EMG in RMS mode')
+        return self.t_analog, self.data[ch]
 
     def set_norm_cycle(self, cycle=None):
         if cycle is None:

@@ -40,6 +40,7 @@ class AvgTrial(Trial):
         """Build AvgTrial from a list of trials"""
         nfiles = len(trials)
         data_all, ncycles = collect_trial_data(trials)
+
         avgdata_model, stddata_model, ncycles_ok_analog = average_model_data(
             data_all['model'],
             reject_zeros=reject_zeros,
@@ -100,7 +101,8 @@ class AvgTrial(Trial):
         for ch in list(avgdata_emg.keys()):
             if avgdata_emg[ch] is not None:
                 analog_npts = len(avgdata_emg[ch])
-        self.t_analog = np.arange(analog_npts)
+
+        self.tn_analog = np.linspace(0, 100, analog_npts)
 
         self.source = 'averaged data'
         self.name = 'Unknown'
@@ -145,7 +147,7 @@ class AvgTrial(Trial):
         """
         if not rms:
             raise ValueError('AvgTrial only supports EMG in RMS mode')
-        return self.t_analog, self.emg.get_channel_data(ch, rms=True)
+        return self.tn_analog, self.emg.get_channel_data(ch, rms=True)
 
     def set_norm_cycle(self, cycle=None):
         if cycle is None:

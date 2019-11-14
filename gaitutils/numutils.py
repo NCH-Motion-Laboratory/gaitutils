@@ -250,8 +250,10 @@ def running_sum(M, win, axis=None):
     )
 
 
-def rms(data, win, axis=None):
+def rms(data, win, axis=None, pad_mode=None):
     """Return rolling window RMS for a numpy array."""
+    if pad_mode is None:
+        pad_mode = 'edge'
     if win % 2 != 1:
         raise ValueError('Need RMS window of odd length')
     datalen = len(data) if axis is None else data.shape[axis]
@@ -268,7 +270,7 @@ def rms(data, win, axis=None):
         eff_dim = data.ndim
     padarg = eff_dim * [(0, 0)]
     padarg[axis] = padarg_axis
-    return np.pad(rms_, padarg, 'reflect')
+    return np.pad(rms_, padarg, mode=pad_mode)
 
 
 def filtfilt(data, passband, sfrate, buttord=5):

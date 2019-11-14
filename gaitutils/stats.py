@@ -349,7 +349,7 @@ def collect_trial_data(
         be collected from forceplate cycles only.
     analog_len : int
         Analog data length varies by gait cycle, so it will be resampled into grid length
-        specified by analog_len (default 501 samples)
+        specified by analog_len (default 1000 samples)
 
     Returns
     -------
@@ -369,7 +369,7 @@ def collect_trial_data(
         collect_types = defaultdict(lambda: True)
 
     if analog_len is None:
-        analog_len = 501
+        analog_len = 1000
 
     if not trials:
         logger.warning('no trials')

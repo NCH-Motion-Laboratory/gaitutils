@@ -14,7 +14,7 @@ import numpy as np
 from scipy import signal
 import logging
 
-from . import read_data, cfg
+from . import read_data, cfg, numutils
 
 logger = logging.getLogger(__name__)
 
@@ -32,28 +32,37 @@ class EMG(object):
         self.data = None
         self.correction_factor = correction_factor
 
+    def _match_name(self, chname):
+        if not (isinstance(chname, basestring) and len(chname)) >= 2:
+            raise ValueError('invalid channel name: %s' % chname)
+        matches = [x for x in self.data if x.find(chname) >= 0]
+        if len(matches) == 0:
+            raise KeyError('No matching channel for %s' % chname)
+        else:
+            ch = min(matches, key=len)  # choose shortest matching name
+        if len(matches) > 1:
+            logger.warning(
+                'multiple channel matches for %s: %s -> %s' % (chname, matches, ch)
+            )
+        return ch
+
     def __getitem__(self, item):
         """ Return data for a channel (filtered if self.passband is set).
         Uses name matching: if the specified channel is not found in the data,
         partial name matches are considered and data for the shortest match is
         returned. For example, 'LGas' could be mapped to 'Voltage.LGas8' """
-        if item is None or len(item) < 2:
-            raise KeyError('Invalid channel name')
         if self.data is None:
             self.read()
-        matches = [x for x in self.data if x.find(item) >= 0]
-        if len(matches) == 0:
-            raise KeyError('No matching channel for %s' % item)
-        else:
-            ch = min(matches, key=len)  # choose shortest matching name
-        if len(matches) > 1:
-            logger.warning(
-                'multiple channel matches for %s: %s -> %s' % (item, matches, ch)
-            )
+        ch = self._match_name(item)
         data = self.data[ch]
         data_ = self.filt(data, self.passband) if self.passband else data
         data_ *= self.correction_factor
         return data_
+
+    def get_rms_data(self, chname):
+        """Return RMS data for given channel."""
+        chdata = self[chname]
+        return numutils.rms(chdata, cfg.emg.rms_win)
 
     def is_channel(self, item):
         """ Convenience to see whether a channel exists in the data """
@@ -80,9 +89,9 @@ class EMG(object):
         return True
 
     def _is_valid_emg(self, y):
-        """ Check whether channel contains a valid EMG signal. Usually invalid
+        """ Check whether channel contains a valid EMG signal. Usually, an invalid
         signal can be identified by the presence of large powerline (harmonics)
-        compared to broadband signal. Cause is typically disconnected/badly
+        compared to broadband signal. Cause is typically disconnected or badly
         connected electrodes.
         TODO: should use multiple-zero IIR notch filter """
         # bandwidth of broadband signal. should be less than dist between
@@ -115,11 +124,10 @@ class EMG(object):
             b, a = signal.butter(self.buttord, passbandn, 'bandpass')
         else:  # lowpass
             b, a = signal.butter(self.buttord, passbandn[1])
-        yfilt = signal.filtfilt(b, a, y)
-        # yfilt = yfilt - signal.medfilt(yfilt, 21)
-        return yfilt
+        return signal.filtfilt(b, a, y)
 
     def read(self):
+        """Actually read the EMG data from source"""
         meta = read_data.get_metadata(self.source)
         logger.debug('reading EMG from %s' % meta['trialname'])
         self.sfrate = meta['analograte']
@@ -129,34 +137,28 @@ class EMG(object):
 
 
 class AvgEMG(EMG):
+    """Class for storing averaged RMS EMG. This differs from the EMG class in following
+    ways:
+    -RMS data is stored in self.data
+    -only the RMS data can be returned (via the rms method)
+    """
+
     def __init__(self, data):
         self.data = data
 
     def __getitem__(self, item):
-        """ Return data for a channel (filtered if self.passband is set).
-        Uses name matching: if the specified channel is not found in the data,
-        partial name matches are considered and data for the shortest match is
-        returned. For example, 'LGas' could be mapped to 'Voltage.LGas8' """
-        if item is None or len(item) < 2:
-            raise KeyError('Invalid channel name')
-        if self.data is None:
-            self.read()
-        matches = [x for x in self.data if x.find(item) >= 0]
-        if len(matches) == 0:
-            raise KeyError('No matching channel for %s' % item)
-        else:
-            ch = min(matches, key=len)  # choose shortest matching name
-        if len(matches) > 1:
-            logger.warning(
-                'multiple channel matches for %s: %s -> %s' % (item, matches, ch)
-            )
-        return self.data[ch]
+        raise RuntimeError('AvgTrial can only return RMS data')
+
+    def rms(self, chname):
+        chname = self._match_name(chname)
+        data = self.data[chname]
+        return numutils.rms(data, cfg.emg.rms_win)
 
     def _is_valid_emg(self, y):
         return True
 
     def filt(self, y, passband):
-        raise RuntimeError('filt not implemented for averaged EMG')
+        raise RuntimeError('filtering not implemented for averaged EMG')
 
     def read(self):
         raise RuntimeError('read not implemented for averaged EMG')

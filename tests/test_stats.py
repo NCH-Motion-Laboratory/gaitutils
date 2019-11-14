@@ -104,6 +104,7 @@ def test_average_model_data():
 
 def test_avgtrial():
     """Test the AvgTrial class"""
+    # create from trials
     c3ds = sessionutils.get_c3ds(sessiondir_abs, trial_type='dynamic')
     atrial = stats.AvgTrial.from_trials(
         c3ds, sessionpath=sessiondir_abs, reject_outliers=1e-3,
@@ -121,7 +122,7 @@ def test_avgtrial():
     assert len(cycs) == 2
     cycs = atrial.get_cycles('forceplate')
     assert len(cycs) == 2
-    # from already averaged data
+    # create from already averaged data
     data_all, nc = stats.collect_trial_data(
         c3ds, collect_types={'model': True, 'emg': True}
     )

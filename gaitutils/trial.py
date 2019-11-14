@@ -352,16 +352,18 @@ class Trial(object):
     def get_emg_data(self, ch, rms=False):
         """Return trial data for an EMG variable.
 
+        Uses name matching: if the specified channel is not found in the data,
+        partial name matches are considered and data for the shortest match is
+        returned. For example, 'LGas' could be mapped to 'Voltage.LGas8'
+
         Parameters
         ----------
         ch : string
-            The EMG channel name.
+            The EMG channel name. Fuzzy name matching is used.
         rms : bool
             Return moving-window RMS instead of raw data.
         """
-        data = self.emg[ch]
-        if rms:
-            data = numutils.rms(data, cfg.emg.rms_win)
+        data = self.emg.get_channel_data(ch, rms=rms)
         return self._normalized_analog_data(data)
 
     def get_marker_data(self, marker):

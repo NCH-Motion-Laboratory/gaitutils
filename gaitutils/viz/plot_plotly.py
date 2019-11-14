@@ -503,7 +503,7 @@ def plot_trials(
                                 subplot_adjusted[(i, j)] = True
 
                     # plot EMG variable
-                    elif trial.emg.is_channel(var) or var in cfg.emg.channel_labels:
+                    elif trial.emg.has_channel(var) or var in cfg.emg.channel_labels:
                         do_plot = (
                             trial.emg.context_ok(var, cyc.context)
                             and trial.emg.status_ok(var)

@@ -145,7 +145,7 @@ class AvgTrial(Trial):
         """
         if not rms:
             raise ValueError('AvgTrial only supports EMG in RMS mode')
-        return self.t_analog, self.data[ch]
+        return self.t_analog, self.emg.get_channel_data(ch, rms=True)
 
     def set_norm_cycle(self, cycle=None):
         if cycle is None:

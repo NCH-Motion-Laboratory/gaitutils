@@ -478,7 +478,7 @@ def plot_trials(
                     # plot EMG variable
                     elif (
                         trial.emg is not None
-                        and trial.emg.is_channel(var)
+                        and trial.emg.has_channel(var)
                         or var in cfg.emg.channel_labels
                     ):
                         do_plot = (

@@ -29,10 +29,27 @@ class EMG(object):
         self.buttord = 5
         self.passband = cfg.emg.passband
         self.linefreq = cfg.emg.linefreq
-        self.data = None
+        self._data = None
+        self.t = None
         self.correction_factor = correction_factor
 
+    @property
+    def data(self):
+        if self._data is None:
+            self._read_data()
+        return self._data
+
+    def _read_data(self):
+        """Read the EMG data from source"""
+        meta = read_data.get_metadata(self.source)
+        logger.debug('reading EMG from %s' % meta['trialname'])
+        self.sfrate = meta['analograte']
+        emgdi = read_data.get_emg_data(self.source)
+        self._data = emgdi['data']
+        self.t = emgdi['t']
+
     def _match_name(self, chname):
+        """Fuzzily match channel name"""
         if not (isinstance(chname, basestring) and len(chname)) >= 2:
             raise ValueError('invalid channel name: %s' % chname)
         matches = [x for x in self.data if x.find(chname) >= 0]
@@ -46,36 +63,43 @@ class EMG(object):
             )
         return ch
 
-    def __getitem__(self, item):
-        """ Return data for a channel (filtered if self.passband is set).
+    def get_channel_data(self, chname, rms=False):
+        """Return data for a channel (filtered if self.passband is set).
+       
         Uses name matching: if the specified channel is not found in the data,
         partial name matches are considered and data for the shortest match is
-        returned. For example, 'LGas' could be mapped to 'Voltage.LGas8' """
-        if self.data is None:
-            self.read()
-        ch = self._match_name(item)
+        returned. For example, 'LGas' could be mapped to 'Voltage.LGas8'
+
+        Parameters
+        ----------
+        ch : string
+            The EMG channel name. Fuzzy name matching is used.
+        rms : bool
+            Return moving-window RMS instead of raw data.
+        """
+        ch = self._match_name(chname)
         data = self.data[ch]
-        data_ = self.filt(data, self.passband) if self.passband else data
-        data_ *= self.correction_factor
-        return data_
+        if rms:
+            data = numutils.rms(data, cfg.emg.rms_win)
+        elif self.passband:  # no filtering for RMS data
+            data = self.filt(data, self.passband)
+        data *= self.correction_factor
+        return data
 
-    def get_rms_data(self, chname):
-        """Return RMS data for given channel."""
-        chdata = self[chname]
-        return numutils.rms(chdata, cfg.emg.rms_win)
-
-    def is_channel(self, item):
-        """ Convenience to see whether a channel exists in the data """
+    def has_channel(self, chname):
+        """Check whether a channel exists"""
         try:
-            self[item]
-            return True
+            self._match_name(chname)
         except KeyError:
             return False
+        return True
 
-    def status_ok(self, item):
-        """ Returns True for existing channel with signal ok, False
-        otherwise """
-        return self.is_channel(item) and self._is_valid_emg(self[item])
+    def status_ok(self, chname):
+        """Check whether a channel exists and has valid signal"""
+        if not self.has_channel(chname):
+            return False
+        data = self.get_channel_data(chname)
+        return self._is_valid_emg(data)
 
     @staticmethod
     def context_ok(ch, context):
@@ -126,33 +150,23 @@ class EMG(object):
             b, a = signal.butter(self.buttord, passbandn[1])
         return signal.filtfilt(b, a, y)
 
-    def read(self):
-        """Actually read the EMG data from source"""
-        meta = read_data.get_metadata(self.source)
-        logger.debug('reading EMG from %s' % meta['trialname'])
-        self.sfrate = meta['analograte']
-        emgdi = read_data.get_emg_data(self.source)
-        self.data = emgdi['data']
-        self.t = emgdi['t']
-
 
 class AvgEMG(EMG):
-    """Class for storing averaged RMS EMG. This differs from the EMG class in following
-    ways:
-    -RMS data is stored in self.data
-    -only the RMS data can be returned (via the rms method)
+    """Class for storing averaged RMS EMG. This tries to match EMG class API but differs
+    in following ways:
+    -precomputed RMS data is stored in self._data
+    -only the RMS data can be returned
+    -no filtering is done
     """
 
     def __init__(self, data):
-        self.data = data
+        self._data = data
 
-    def __getitem__(self, item):
-        raise RuntimeError('AvgEMG can only return RMS data')
-
-    def rms(self, chname):
+    def get_channel_data(self, chname, rms=None):
+        if not rms:
+            raise RuntimeError('AvgEMG can only return averaged RMS data')
         chname = self._match_name(chname)
-        data = self.data[chname]
-        return numutils.rms(data, cfg.emg.rms_win)
+        return self._data[chname]
 
     def _is_valid_emg(self, y):
         return True

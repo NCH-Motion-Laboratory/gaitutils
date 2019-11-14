@@ -215,9 +215,6 @@ def average_analog_data(data, rms=None, reject_outliers=None, use_medians=None):
     if use_medians is None:
         use_medians = False
 
-    if reject_outliers is None:
-        reject_outliers = 1e-3
-
     for var, vardata in data.items():
         if vardata is None:
             stddata[var] = None
@@ -228,6 +225,7 @@ def average_analog_data(data, rms=None, reject_outliers=None, use_medians=None):
             if rms:
                 vardata = numutils.rms(vardata, cfg.emg.rms_win, axis=1)
             n_ok = vardata.shape[0]
+            # do the outlier rejection
             if n_ok > 0 and reject_outliers is not None and not use_medians:
                 rms_status = 'RMS for ' if rms else ''
                 logger.info('averaging %s%s (N=%d)' % (rms_status, var, n_ok))
@@ -288,9 +286,6 @@ def average_model_data(data, reject_zeros=None, reject_outliers=None, use_median
     if reject_zeros is None:
         reject_zeros = True
 
-    if reject_outliers is None:
-        reject_outliers = 1e-3
-
     for var, vardata in data.items():
         if vardata is None:
             stddata[var] = None
@@ -310,6 +305,7 @@ def average_model_data(data, reject_zeros=None, reject_outliers=None, use_median
                         )
                         vardata = np.delete(vardata, rows_bad, axis=0)
             n_ok = vardata.shape[0]
+            # do the outlier rejection
             if n_ok > 0 and reject_outliers is not None and not use_medians:
                 logger.info('%s:' % var)
                 vardata = _robust_reject_rows(vardata, reject_outliers)

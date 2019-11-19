@@ -100,13 +100,11 @@ def outliers(x, median_axis=0, mad_axis=0, p_threshold=1e-3):
 
 def files_digest(files):
     """Create total md5 digest for a list of files"""
-    hashes = [file_digest(fn) for fn in files]
-    hashes = sorted(hashes)
+    hashes = sorted(file_digest(fn) for fn in files)
     # concat as unicode and encode to get a definite byte representation
     # in both py2 and py3
     hash_str = u''.join(hashes).encode('utf-8')
-    hash_total = hashlib.md5(hash_str).hexdigest()
-    return hash_total
+    return hashlib.md5(hash_str).hexdigest()
 
 
 def file_digest(fn):

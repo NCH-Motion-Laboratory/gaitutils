@@ -204,7 +204,7 @@ upperbody_ydesc_partial = _dict_with_side(
     {
         'ThoraxAnglesX': ('Backward', 'Forward'),
         'ThoraxAnglesY': ('Lateral', 'Medial'),
-        'ThoraxAnglesZ': ('Anterior', 'Posterior')
+        'ThoraxAnglesZ': ('Anterior', 'Posterior'),
     }
 )
 pig_upperbody.ydesc.update(upperbody_ydesc_partial)

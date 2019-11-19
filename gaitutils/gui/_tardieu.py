@@ -572,12 +572,12 @@ class TardieuPlot(object):
         for ch in self.emg_chs:
             sharex = None if ind == 0 or not interactive else data_axes[0]
             ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
-            emgtr_, = ax.plot(
+            (emgtr_,) = ax.plot(
                 self.time_analog,
                 self.emgdata[ch] * 1e3,
                 linewidth=cfg.plot.emg_linewidth,
             )
-            rmstr_, = ax.plot(
+            (rmstr_,) = ax.plot(
                 self.time_analog,
                 self.emg_rms[ch] * 1e3,
                 linewidth=cfg.plot.emg_rms_linewidth,

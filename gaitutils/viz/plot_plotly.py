@@ -32,7 +32,7 @@ from .plot_common import (
     _handle_style_and_color_args,
     _color_by_params,
     _style_by_params,
-    _emg_yscale
+    _emg_yscale,
 )
 
 
@@ -564,7 +564,7 @@ def plot_trials(
                                     'text': cfg.plot.emg_ylabel,
                                     'font': {'size': label_fontsize},
                                 },
-                                range=_emg_yscale(emg_mode)
+                                range=_emg_yscale(emg_mode),
                             )
                             # prevent changes due to legend clicks etc.
                             if normalized:

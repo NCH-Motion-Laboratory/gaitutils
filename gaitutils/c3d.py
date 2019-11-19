@@ -15,7 +15,7 @@ import numpy as np
 import os
 import sys
 
-from .numutils import center_of_pressure, change_coords
+from .numutils import center_of_pressure, change_coords, file_digest
 from .envutils import lru_cache
 from . import GaitDataError
 
@@ -77,9 +77,15 @@ def _get_c3d_metadata_field(acq, field, subfield):
         raise RuntimeError('Unhandled btk meta info type')
 
 
-@lru_cache(maxsize=100)
 def _get_c3dacq(c3dfile):
     """Get a btk.btkAcquisition object"""
+    digest = file_digest(c3dfile)
+    return _get_cache_c3dacq(c3dfile, digest)
+
+
+@lru_cache(maxsize=100)
+def _get_cache_c3dacq(c3dfile, digest):
+    """Cache c3dacq if filename and digest match"""
     reader = btk.btkAcquisitionFileReader()
     # Py2: btk interface cannot take unicode, so encode to latin-1 first
     if sys.version_info.major == 2:

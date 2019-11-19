@@ -100,18 +100,20 @@ def outliers(x, median_axis=0, mad_axis=0, p_threshold=1e-3):
 
 def files_digest(files):
     """Create total md5 digest for a list of files"""
-    hashes = list()
-    for fn in files:
-        with open(fn, 'rb') as f:
-            data = f.read()
-            hash = hashlib.md5(data).hexdigest()
-            hashes.append(hash)
+    hashes = [file_digest(fn) for fn in files]
     hashes = sorted(hashes)
     # concat as unicode and encode to get a definite byte representation
     # in both py2 and py3
     hash_str = u''.join(hashes).encode('utf-8')
     hash_total = hashlib.md5(hash_str).hexdigest()
     return hash_total
+
+
+def file_digest(fn):
+    """Return md5 digest for file"""
+    with open(fn, 'rb') as f:
+        data = f.read()
+    return hashlib.md5(data).hexdigest()
 
 
 def rolling_fun_strided(m, fun, win, axis=None):

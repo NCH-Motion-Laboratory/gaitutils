@@ -57,7 +57,7 @@ def test_rms():
     # edge vals are repeated due to 'reflect' padding
     arms = np.array(
         [
-            2.1602469,
+            1.29099445,
             1.29099445,
             2.1602469,
             3.10912635,
@@ -66,7 +66,7 @@ def test_rms():
             6.05530071,
             7.04745817,
             8.04155872,
-            7.04745817,
+            8.04155872,
         ]
     )
     assert_allclose(rms(np.arange(10), win=3), arms)

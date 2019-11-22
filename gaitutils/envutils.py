@@ -14,6 +14,7 @@ import os.path as op
 from ulstools import env
 from pkg_resources import resource_filename
 import logging
+import hashlib
 
 from .gui._windows import error_exit
 
@@ -76,3 +77,26 @@ def register_gui_exception_handler(full_traceback=False):
 
     if cfg.general.gui_exceptions:
         sys.excepthook = _my_excepthook
+
+
+def lru_cache_checkfile(fun):
+    """Caches function results, unless the argument file has changed.
+
+    A lru_cache type decorator for functions that take a file name argument.
+    Makes sense for functions that read a file and take a long time to process
+    the data (anything that takes significantly longer than the md5 digest).
+    Works by computing the md5 digest for the input file and passing that on to
+    lru_cache, so the cache is invalidated if file contents have changed.
+    """
+
+    @lru_cache()
+    def cached_fun(filename, md5sum):
+        return fun(filename)
+
+    def wrapper(filename):
+        with open(filename, 'rb') as f:
+            data = f.read()
+        md5sum = hashlib.md5(data).hexdigest()
+        return cached_fun(filename, md5sum)
+
+    return wrapper

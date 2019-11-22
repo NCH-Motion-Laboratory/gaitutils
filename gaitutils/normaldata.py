@@ -17,7 +17,7 @@ from . import cfg, sessionutils, GaitDataError, numutils
 from .numutils import isfloat
 from ulstools.num import age_from_hetu
 from .models import models_all
-from .envutils import lru_cache
+from .envutils import lru_cache_checkfile
 
 
 logger = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ def read_session_normaldata(session):
     return read_all_normaldata(age)
 
 
-@lru_cache(maxsize=10)
+@lru_cache_checkfile
 def read_normaldata(filename):
     """ Read normal data into dict. Dict keys are variables and values
     are Numpy arrays of shape (n, 2). n is either 1 (scalar variable)

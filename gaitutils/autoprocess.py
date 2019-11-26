@@ -434,6 +434,8 @@ def _delete_c3ds(enffiles):
     logger.debug('deleting previous c3d files')
     c3dfiles = sessionutils._filter_to_c3ds(enffiles)
     for enffile, c3dfile in zip(enffiles, c3dfiles):
+        if not op.isfile(c3dfile):
+            continue
         if not op.isfile(enffile):
             logger.warning('.enf file %s does not exist' % enffile)
         edata = eclipse.get_eclipse_keys(enffile, return_empty=True)

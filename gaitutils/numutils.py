@@ -43,59 +43,62 @@ def mad(data, axis=None, scale=1.4826, keepdims=False):
     """
     # keep dims here so that broadcasting works
     med = np.median(data, axis=axis, keepdims=True)
-    return scale * np.median(np.abs(data - med), axis=axis, keepdims=keepdims)
+    abs_devs = np.abs(data - med)
+    return scale * np.median(abs_devs, axis=axis, keepdims=keepdims)
 
 
-def modified_zscore(data, median_axis=0, mad_axis=0):
+def modified_zscore(data, axis=None, single_mad=None):
     """Modified Z-score.
 
     Z-score analogue computed using robust (median-based) statistics.
-    Axes can be specified separately for estimating the median and the MAD (median 
-    absolute deviation). For example, if columns represent different variables
-    and rows are observations, giving 0 for both axes would take different
-    variables into account. Using median_axis=0 and mad_axis=None would use
-    column-specific median but a single MAD estimate computed over all
-    data.
 
     Parameters
     ----------
     data : array_like
         The data
-    median_axis : Axis or axes along which to compute the median values.
-    mad_axis : Axis or axes along which to compute the MAD values.
+    axis : Axis or axes along which to compute the statistic.
+    single_mad : bool
+        Use a single MAD estimate computed all over the data. If False, MAD
+        will be computed along given axis (e.g. separately for each variable).
 
     Returns
     -------
     res : ndarray
         The result
     """
-    med_ = np.median(data, axis=median_axis, keepdims=True)
-    mad_ = mad(data, axis=mad_axis, keepdims=True)
+    med_ = np.median(data, axis=axis, keepdims=True)
+    mad_ = mad(data, axis=axis, keepdims=True)
+    if single_mad:
+        mad_ = np.median(mad_)
     return (data - med_) / mad_
 
 
-def outliers(x, median_axis=0, mad_axis=0, p_threshold=1e-3):
+def outliers(x, axis=0, single_mad=None, p_threshold=1e-3):
     """Robustly detect outliers assuming a normal distribution.
     
     A modified Z-score is first computed based on the data. Then a threshold
     Z is computed according to p_threshold, and values that exceed it
     are rejected. p_threshold is the probability of rejection for strictly
     normally distributed data, i.e. probability for "false outlier"
-    
+
     Parameters
     ----------
     data : array_like
         The data
     axis : Axis or axes along which to compute the Z scores. E.g. axis=0
         computes row-wise Z scores and rejects based on those.
+    single_mad : bool
+        Use a single MAD estimate computed all over the data. If False, MAD
+        will be computed along given axis (e.g. separately for each variable).
 
     Returns
     -------
     idx : tuple
         Indexes of rejected values (as in np.where output)
     """
-    zs = modified_zscore(x, median_axis=median_axis, mad_axis=mad_axis)
+    zs = modified_zscore(x, axis=axis, single_mad=single_mad)
     z_threshold = np.sqrt(2) * erfinv(1 - p_threshold)
+    logger.debug('Z threshold: %.2f' % z_threshold)
     return np.where(abs(zs) > z_threshold)
 
 

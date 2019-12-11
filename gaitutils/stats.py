@@ -157,16 +157,16 @@ class AvgTrial(Trial):
 
 
 def _robust_reject_rows(data, p_threshold):
-    """Reject rows (observations) from data"""
+    """Reject rows (observations) from data based on robust Z-score"""
     # a Bonferroni type correction for the p-threshold
-    p_threshold_corr = p_threshold / data.shape[0]
+    p_threshold_corr = p_threshold / data.shape[1]
     # when computing outliers, estimate median absolute deviation
-    # using all data, instead of a frame-dependent MAD estimate.
+    # using all data, instead of a frame-based MAD estimates.
     # this is necessary since frame-based MAD values
     # can become really small especially in small datasets, causing
-    # Z-score to blow up and data getting rejected unnecessarily.
+    # the Z-score to blow up and data getting rejected unnecessarily.
     outlier_inds = numutils.outliers(
-        data, median_axis=0, mad_axis=None, p_threshold=p_threshold_corr
+        data, axis=0, single_mad=False, p_threshold=p_threshold_corr
     )
     outlier_rows = np.unique(outlier_inds[0])
     if outlier_rows.size > 0:

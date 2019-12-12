@@ -54,3 +54,15 @@ def test_trial_metadata():
     assert_equal(tr.n_forceplates, 5)
     assert_equal(tr.length, 391)
     assert_equal(tr.samplesperframe, 5)
+
+
+def test_get_cycles():
+    """Test cycle getter"""
+    c3dfile = _trial_path('girl6v', '2015_10_22_girl6v_IN02.c3d')
+    tr = Trial(c3dfile)
+    cycs = tr.get_cycles('forceplate')
+    assert len(cycs) == 1
+    cycs = tr.get_cycles('all')
+    assert len(cycs) == 4
+    cycs = tr.get_cycles('all', max_cycles_per_context=1)
+    assert len(cycs) == 2

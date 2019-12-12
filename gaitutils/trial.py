@@ -447,7 +447,7 @@ class Trial(object):
         elif cycle is None or isinstance(cycle, Noncycle):
             self._normalize = None
 
-    def get_cycles(self, cyclespec):
+    def get_cycles(self, cyclespec, max_cycles_per_context=None):
         """ Get specified gait cycles from the trial as Gaitcycle instances.
 
         Parameters
@@ -507,6 +507,8 @@ class Trial(object):
             cycles_ = [c for c in self.cycles if c.context == context.upper()]
             # filter them according to cyclespec
             good_cycles = _filter_cycles(cycles_, context, cyclespec[context])
+            if max_cycles_per_context is not None:
+                good_cycles = good_cycles[:max_cycles_per_context]
             cycs_ok.extend(good_cycles)
 
         return sorted(cycs_ok, key=lambda cyc: cyc.start)

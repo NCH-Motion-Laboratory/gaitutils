@@ -14,7 +14,7 @@ import numpy as np
 import hashlib
 from scipy import signal
 from scipy.signal import medfilt
-from scipy.special import erfinv
+from scipy.special import erfcinv
 from numpy.lib.stride_tricks import as_strided
 
 logger = logging.getLogger(__name__)
@@ -97,7 +97,7 @@ def outliers(x, axis=0, single_mad=None, p_threshold=1e-3):
         Indexes of rejected values (as in np.where output)
     """
     zs = modified_zscore(x, axis=axis, single_mad=single_mad)
-    z_threshold = np.sqrt(2) * erfinv(1 - p_threshold)
+    z_threshold = np.sqrt(2) * erfcinv(p_threshold)
     logger.debug('Z threshold: %.2f' % z_threshold)
     return np.where(abs(zs) > z_threshold)
 

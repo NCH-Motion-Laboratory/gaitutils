@@ -287,8 +287,12 @@ def plot_trials(
     # plot actual data
     for trial_ind, trial in enumerate(trials):
         # get Gaitcycle instances from trial according to cycle specs
-        model_cycles_ = trial.get_cycles(cycles['model'], max_cycles_per_context=max_cycles['model'])
-        emg_cycles_ = trial.get_cycles(cycles['emg'], max_cycles_per_context=max_cycles['emg'])
+        model_cycles_ = trial.get_cycles(
+            cycles['model'], max_cycles_per_context=max_cycles['model']
+        )
+        emg_cycles_ = trial.get_cycles(
+            cycles['emg'], max_cycles_per_context=max_cycles['emg']
+        )
         allcycles = list(set.union(set(model_cycles_), set(emg_cycles_)))
         if not allcycles:
             logger.debug('trial %s has no cycles of specified type' % trial.trialname)

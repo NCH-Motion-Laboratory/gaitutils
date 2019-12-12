@@ -466,6 +466,9 @@ class Trial(object):
             ('forceplate', 0) would return forceplate cycles if any, and the
             first cycle in case there are none.
 
+        max_cycles_per_context : int | None
+            Maximum number of cycles returned per context.
+
         Returns
         -------
         cycles : list

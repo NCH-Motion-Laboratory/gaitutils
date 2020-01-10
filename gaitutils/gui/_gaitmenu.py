@@ -1115,6 +1115,7 @@ def main():
     gaitmenu = Gaitmenu()
     gaitmenu.show()
     logger.debug('Python interpreter: %s' % sys.executable)
+    logger.debug('Python version: %s' % sys.version)
     if not c3d.BTK_IMPORTED:
         logger.warning('cannot find btk module; unable to read .c3d files')
     nexus_status = 'Vicon Nexus is %srunning' % ('' if nexus.pid() else 'not ')

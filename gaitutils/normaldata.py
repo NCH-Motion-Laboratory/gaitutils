@@ -75,6 +75,8 @@ def read_normaldata(filename):
 
 def normaldata_age(age):
     """ Return age specific normal data file """
+    if not age:
+        return None
     for age_range, filename in cfg.general.normaldata_age.items():
         if age_range[0] <= age <= age_range[1]:
             logger.debug('found normal data file %s for age %d' % (filename, age))

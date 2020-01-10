@@ -13,7 +13,7 @@ import os.path as op
 from collections import defaultdict
 
 from .trial import Trial, Gaitcycle
-from . import models, cfg, numutils
+from . import models, cfg, numutils, GaitDataError
 from .emg import AvgEMG
 
 
@@ -429,7 +429,7 @@ def collect_trial_data(
                 # get data on analog sampling grid and compute rms
                 try:
                     t, data = trial.get_emg_data(ch)
-                except KeyError:
+                except (KeyError, GaitDataError):
                     logger.warning('no channel %s for %s' % (ch, trial))
                     continue
                 # resample to requested grid

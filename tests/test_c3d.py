@@ -26,7 +26,7 @@ def test_c3d_marker_data():
     """Test marker data reads from c3d"""
     # lowerbody PiG marker set
     c3dfile = _c3d_path('double_contact.c3d')
-    mkrset = utils._pig_markerset().keys()
+    mkrset = list(utils._pig_markerset().keys())
     mkrdata = read_data.get_marker_data(c3dfile, mkrset)
     assert utils.is_plugingait_set(mkrdata)
     assert len(mkrdata) == 5 * len(mkrset)  # vars = P*2, V, A & gaps
@@ -66,8 +66,9 @@ def test_c3d_analysis_data():
     assert all(['Right' in an[var] for var in an_vars])
     an_file = _file_path('analysis_testdata.p')
     an_g = pickle.load(open(an_file, 'rb'))
-    for context in ['Left', 'Right']:
-        assert_allclose(an_g['unknown'][var][context], an[var][context])
+    for var in an_vars:
+        for context in ['Left', 'Right']:
+            assert_allclose(an_g['unknown'][var][context], an[var][context])
 
 
 def test_c3d_fp_detection():

@@ -421,7 +421,7 @@ def plot_trials(
                                         stdx,
                                         y - sdata,
                                         y + sdata,
-                                        color=cfg.plot.model_stddev_colors[context],
+                                        color=col,
                                         alpha=cfg.plot.model_stddev_alpha,
                                     )
                                     leg_entries['Stddev for %s' % tracegroup] = stddev_

@@ -444,7 +444,7 @@ def plot_trials(
                                     sdata = model_stddev[var]
                                     stdx = np.linspace(0, 100, sdata.shape[0])
                                     fillcolor = merge_color_and_opacity(
-                                        fillcolor_, col
+                                        col, cfg.plot.model_stddev_alpha,
                                     )
                                     ntrace = _plotly_fill_between(
                                         stdx,

@@ -511,7 +511,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
             dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
 
         except (RuntimeError, GaitDataError) as e:  # could not create a figure
-            logger.warning('failed to create figure for %s: %s' % (label, e))
+            logger.warning(u'failed to create figure for %s: %s' % (label, e))
             # insert the menu options but make them disabled
             dd_opts_multi_upper.append(
                 {'label': label, 'value': label, 'disabled': True}

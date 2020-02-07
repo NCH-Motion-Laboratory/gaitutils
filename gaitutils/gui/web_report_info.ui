@@ -109,6 +109,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="xbVideoOnly">
+     <property name="text">
+      <string>Video-only report</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>

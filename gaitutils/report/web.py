@@ -86,7 +86,7 @@ def _report_name(sessions, long_name=True):
     return '%s: %s' % (report_type, sessions_str)
 
 
-def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plots=None):
+def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plots=None, video_only=None):
     """Returns dash app for web report.
     info: patient info
     sessions: list of session dirs
@@ -97,6 +97,9 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
 
     if recreate_plots is None:
         recreate_plots = False
+
+    if video_only is None:
+        video_only = False
 
     # relative width of left panel (1-12)
     # 3-session comparison uses narrower video panel

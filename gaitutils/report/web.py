@@ -99,7 +99,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
         recreate_plots = False
 
     if video_only is None:
-        video_only = True
+        video_only = False
 
     # relative width of left panel (1-12)
     # 3-session comparison uses narrower video panel

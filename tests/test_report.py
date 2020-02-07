@@ -55,13 +55,28 @@ def test_web_report():
 
     foo = Foo()
     foo.progress = Bar()
+
     # single session
     app = web.dash_report(info=None, sessions=[sessiondir_abs], signals=foo,
                           recreate_plots=True)
     assert app
+
+    # video-only
+    app = web.dash_report(info=None, sessions=[sessiondir_abs], signals=foo,
+                          recreate_plots=True, video_only=True
+    assert app
+
     # comparison
     app = web.dash_report(
         info=None, sessions=[sessiondir_abs, sessiondir2_abs], signals=foo,
         recreate_plots=True
     )
+
+    # video-only comparison
+    app = web.dash_report(
+        info=None, sessions=[sessiondir_abs, sessiondir2_abs], signals=foo,
+        recreate_plots=True, video_only=True
+    )
+
+
     assert app

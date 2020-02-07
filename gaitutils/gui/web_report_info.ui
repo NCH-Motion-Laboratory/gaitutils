@@ -102,6 +102,13 @@
     </layout>
    </item>
    <item>
+    <widget class="QCheckBox" name="xbRecreatePlots">
+     <property name="text">
+      <string>Recreate all figures (do not use saved figures)</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>

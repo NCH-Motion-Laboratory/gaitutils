@@ -149,6 +149,7 @@ class WebReportInfoDialog(QtWidgets.QDialog):
     def accept(self):
         """ Update config and close dialog, if widget inputs are ok. Otherwise
         show an error dialog """
+        self.recreate_plots = self.xbRecreatePlots.checkState()
         self.hetu = self.lnHetu.text().strip()
         self.fullname = self.lnFullName.text().strip()
         self.report_notes = str(self.txtNotes.toPlainText()).strip()
@@ -209,9 +210,6 @@ class WebReportDialog(QtWidgets.QDialog):
             if not dlg.exec_():
                 return
             sessions = dlg.sessions
-            recreate_plots = dlg.recreate_plots
-        else:
-            recreate_plots = False
 
         report_name = web._report_name(sessions)
         existing_names = [item.text for item in self.listActiveReports.items]
@@ -223,31 +221,31 @@ class WebReportDialog(QtWidgets.QDialog):
         if info is None:
             qt_message_dialog(
                 'Patient files do not match. Sessions may be '
-                'from different patients. Continuing without '
+                'from different patients. Continuing with default '
                 'patient info.'
             )
             info = sessionutils.default_info()
-        else:
-            dlg_info = WebReportInfoDialog(info, check_info=False)
-            if dlg_info.exec_():
-                new_info = dict(
-                    hetu=dlg_info.hetu,
-                    fullname=dlg_info.fullname,
-                    report_notes=dlg_info.report_notes,
-                )
-                info.update(new_info)
+        dlg_info = WebReportInfoDialog(info, check_info=False)
+        if dlg_info.exec_():
+            new_info = dict(
+                hetu=dlg_info.hetu,
+                fullname=dlg_info.fullname,
+                report_notes=dlg_info.report_notes,
+            )
+            recreate_plots = dlg_info.recreate_plots
+            info.update(new_info)
 
-                # update info files (except session specific keys)
-                for session in sessions:
-                    update_dict = dict(
-                        report_notes=dlg_info.report_notes,
-                        fullname=dlg_info.fullname,
-                        hetu=dlg_info.hetu,
-                    )
-                    session_infos[session].update(update_dict)
-                    sessionutils.save_info(session, session_infos[session])
-            else:
-                return
+            # update info files (except session specific keys)
+            for session in sessions:
+                update_dict = dict(
+                    report_notes=dlg_info.report_notes,
+                    fullname=dlg_info.fullname,
+                    hetu=dlg_info.hetu,
+                )
+                session_infos[session].update(update_dict)
+                sessionutils.save_info(session, session_infos[session])
+        else:
+            return
 
         # give progress bar to parent so that parent can close it
         self.parent.prog = ProgressBar('Creating web report...')

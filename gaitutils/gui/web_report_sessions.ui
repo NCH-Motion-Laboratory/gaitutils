@@ -39,13 +39,6 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
-      <widget class="QPushButton" name="btnClearAll">
-       <property name="text">
-        <string>Remove all</string>
-       </property>
-      </widget>
-     </item>
      <item row="3" column="0">
       <widget class="QPushButton" name="btnClearCurrent">
        <property name="text">
@@ -53,17 +46,17 @@
        </property>
       </widget>
      </item>
+     <item row="3" column="1">
+      <widget class="QPushButton" name="btnClearAll">
+       <property name="text">
+        <string>Remove all</string>
+       </property>
+      </widget>
+     </item>
      <item row="2" column="0">
       <widget class="QPushButton" name="btnBrowseSession">
        <property name="text">
         <string>Add session...</string>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0">
-      <widget class="QCheckBox" name="xbRecreatePlots">
-       <property name="text">
-        <string>Recreate all figures (do not use saved figures)</string>
        </property>
       </widget>
      </item>

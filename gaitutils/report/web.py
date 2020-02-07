@@ -99,7 +99,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
         recreate_plots = False
 
     if video_only is None:
-        video_only = False
+        video_only = True
 
     # relative width of left panel (1-12)
     # 3-session comparison uses narrower video panel
@@ -277,69 +277,70 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
         if info['report_notes']:
             patient_info_text += info['report_notes']
 
-        # load normal data for gait models
-        signals.progress.emit('Loading normal data...', 0)
         model_normaldata = dict()
-        for fn in cfg.general.normaldata_files:
-            ndata = normaldata.read_normaldata(fn)
-            model_normaldata.update(ndata)
-        if age is not None:
-            age_ndata_file = normaldata.normaldata_age(age)
-            if age_ndata_file:
-                age_ndata = normaldata.read_normaldata(age_ndata_file)
-                model_normaldata.update(age_ndata)
+        avg_trials = list()
+        if not video_only:
+            # load normal data for gait models
+            signals.progress.emit('Loading normal data...', 0)
+            for fn in cfg.general.normaldata_files:
+                ndata = normaldata.read_normaldata(fn)
+                model_normaldata.update(ndata)
+            if age is not None:
+                age_ndata_file = normaldata.normaldata_age(age)
+                if age_ndata_file:
+                    age_ndata = normaldata.read_normaldata(age_ndata_file)
+                    model_normaldata.update(age_ndata)
 
-        # make average trials for each session
-        avg_trials = [
-            AvgTrial.from_trials(_trials_avg[session], sessionpath=session)
-            for session in sessions
-        ]
-
-        # read some extra data from trials and create supplementary data
-        for tr in trials_dyn:
-            # read tibial torsion for each trial and make supplementary traces
-            # these will only be shown for KneeAnglesZ (knee rotation) variable
-            tors = dict()
-            tors['R'], tors['L'] = (
-                tr.subj_params['RTibialTorsion'],
-                tr.subj_params['LTibialTorsion'],
-            )
-            if tors['R'] is None or tors['L'] is None:
-                logger.warning(
-                    'could not read tibial torsion values from %s' % tr.trialname
+            # make average trials for each session
+            avg_trials = [
+                AvgTrial.from_trials(_trials_avg[session], sessionpath=session)
+                for session in sessions
+            ]
+            # read some extra data from trials and create supplementary data
+            for tr in trials_dyn:
+                # read tibial torsion for each trial and make supplementary traces
+                # these will only be shown for KneeAnglesZ (knee rotation) variable
+                tors = dict()
+                tors['R'], tors['L'] = (
+                    tr.subj_params['RTibialTorsion'],
+                    tr.subj_params['LTibialTorsion'],
                 )
-                continue
-            # include torsion info for all cycles; this is useful when plotting
-            # isolated cycles
-            max_cycles = cfg.plot.max_cycles['model']
-            cycs = tr.get_cycles(cfg.plot.default_cycles['model'])[:max_cycles]
-
-            for cyc in cycs:
-                tibial_torsion[cyc] = dict()
-                for ctxt in tors:
-                    var_ = ctxt + 'KneeAnglesZ'
-                    tibial_torsion[cyc][var_] = dict()
-                    # x = % of gait cycle
-                    tibial_torsion[cyc][var_]['t'] = np.arange(101)
-                    # static tibial torsion value as function of x
-                    # convert radians -> degrees
-                    tibial_torsion[cyc][var_]['data'] = (
-                        np.ones(101) * tors[ctxt] / np.pi * 180
+                if tors['R'] is None or tors['L'] is None:
+                    logger.warning(
+                        'could not read tibial torsion values from %s' % tr.trialname
                     )
-                    tibial_torsion[cyc][var_]['label'] = 'Tib. tors. (%s) % s' % (
-                        ctxt,
-                        tr.trialname,
-                    )
+                    continue
+                # include torsion info for all cycles; this is useful when plotting
+                # isolated cycles
+                max_cycles = cfg.plot.max_cycles['model']
+                cycs = tr.get_cycles(cfg.plot.default_cycles['model'])[:max_cycles]
 
-        # in EMG layout, keep chs that are active in any of the trials
-        signals.progress.emit('Reading EMG data', 0)
-        try:
-            emgs = [tr.emg for tr in trials_dyn]
-            emg_layout = layouts.rm_dead_channels_multitrial(emgs, cfg.layouts.std_emg)
-            if not emg_layout:
+                for cyc in cycs:
+                    tibial_torsion[cyc] = dict()
+                    for ctxt in tors:
+                        var_ = ctxt + 'KneeAnglesZ'
+                        tibial_torsion[cyc][var_] = dict()
+                        # x = % of gait cycle
+                        tibial_torsion[cyc][var_]['t'] = np.arange(101)
+                        # static tibial torsion value as function of x
+                        # convert radians -> degrees
+                        tibial_torsion[cyc][var_]['data'] = (
+                            np.ones(101) * tors[ctxt] / np.pi * 180
+                        )
+                        tibial_torsion[cyc][var_]['label'] = 'Tib. tors. (%s) % s' % (
+                            ctxt,
+                            tr.trialname,
+                        )
+
+            # in EMG layout, keep chs that are active in any of the trials
+            signals.progress.emit('Reading EMG data', 0)
+            try:
+                emgs = [tr.emg for tr in trials_dyn]
+                emg_layout = layouts.rm_dead_channels_multitrial(emgs, cfg.layouts.std_emg)
+                if not emg_layout:
+                    emg_layout = 'disabled'
+            except GaitDataError:
                 emg_layout = 'disabled'
-        except GaitDataError:
-            emg_layout = 'disabled'
 
     # FIXME: layouts shown in report should be configureable
     _layouts = OrderedDict(
@@ -375,167 +376,168 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
     dd_opts_multi_upper = list()
     dd_opts_multi_lower = list()
 
-    # loop through layouts, create or load figures
-    report_data_new = dict()
-    for k, (label, layout) in enumerate(_layouts.items()):
-        signals.progress.emit('Creating plot: %s' % label, 100 * k / len(_layouts))
-        if signals.canceled:
-            return None
-        # for comparison report, include session info in plot legends and
-        # use session specific line style
-        emg_mode = None
-        if is_comparison:
-            legend_type = cfg.web_report.comparison_legend_type
-            style_by = cfg.web_report.comparison_style_by
-            color_by = cfg.web_report.comparison_color_by
-            if cfg.web_report.comparison_emg_rms:
-                emg_mode = 'rms'
-        else:
-            legend_type = cfg.web_report.legend_type
-            style_by = cfg.web_report.style_by
-            color_by = cfg.web_report.color_by
-
-        try:
-            if saved_report_data:
-                logger.debug('loading %s from saved report data' % label)
-                if label not in saved_report_data:
-                    # will be caught, resulting in empty menu item
-                    raise RuntimeError
-                else:
-                    figdata = saved_report_data[label]
+    # loop through the layouts, create or load figures
+    if not video_only:
+        report_data_new = dict()
+        for k, (label, layout) in enumerate(_layouts.items()):
+            signals.progress.emit('Creating plot: %s' % label, 100 * k / len(_layouts))
+            if signals.canceled:
+                return None
+            # for comparison report, include session info in plot legends and
+            # use session specific line style
+            emg_mode = None
+            if is_comparison:
+                legend_type = cfg.web_report.comparison_legend_type
+                style_by = cfg.web_report.comparison_style_by
+                color_by = cfg.web_report.comparison_color_by
+                if cfg.web_report.comparison_emg_rms:
+                    emg_mode = 'rms'
             else:
-                logger.debug('creating figure data for %s' % label)
-                if isinstance(layout, basestring):  # handle special layout codes
-                    if layout == 'time_dist':
-                        figdata = timedist.do_comparison_plot(
-                            sessions, big_fonts=True, backend='plotly'
-                        )
-                    elif layout == 'patient_info':
-                        figdata = patient_info_text
-                    elif layout == 'static_kinematics':
-                        layout_ = cfg.layouts.lb_kinematics
-                        figdata = plot_trials(
-                            trials_static,
-                            layout_,
-                            model_normaldata=False,
-                            cycles='unnormalized',
-                            legend_type='short_name_with_cyclename',
-                            style_by=style_by,
-                            color_by=color_by,
-                            big_fonts=True,
-                        )
-                    elif layout == 'static_emg':
-                        layout_ = cfg.layouts.std_emg
-                        figdata = plot_trials(
-                            trials_static,
-                            layout_,
-                            model_normaldata=False,
-                            cycles='unnormalized',
-                            legend_type='short_name_with_cyclename',
-                            style_by=style_by,
-                            color_by=color_by,
-                            big_fonts=True,
-                        )
-                    elif layout == 'kinematics_average':
-                        layout_ = cfg.layouts.lb_kinematics
-                        figdata = plot_trials(
-                            avg_trials,
-                            layout_,
-                            style_by=style_by,
-                            color_by=color_by,
-                            model_normaldata=model_normaldata,
-                            big_fonts=True,
-                        )
-                    elif layout == 'disabled':
+                legend_type = cfg.web_report.legend_type
+                style_by = cfg.web_report.style_by
+                color_by = cfg.web_report.color_by
+
+            try:
+                if saved_report_data:
+                    logger.debug('loading %s from saved report data' % label)
+                    if label not in saved_report_data:
                         # will be caught, resulting in empty menu item
                         raise RuntimeError
-                    else:  # unrecognized layout; this is not caught by us
-                        raise Exception('Unrecognized layout: %s' % layout)
-
-                else:  # regular gaitutils layout
-                    figdata = plot_trials(
-                        trials_dyn,
-                        layout,
-                        model_normaldata=model_normaldata,
-                        emg_mode=emg_mode,
-                        legend_type=legend_type,
-                        style_by=style_by,
-                        color_by=color_by,
-                        supplementary_data=supplementary_default,
-                        big_fonts=True,
-                    )
-            # save newly created data
-            if not saved_report_data:
-                if isinstance(figdata, go.Figure):
-                    # serialize go.Figures before saving
-                    # this makes them much faster for pickle to handle
-                    # apparently dcc.Graph can eat the serialized json directly,
-                    # so no need to do anything on load
-                    figdata_ = figdata.to_plotly_json()
+                    else:
+                        figdata = saved_report_data[label]
                 else:
-                    figdata_ = figdata
-                report_data_new[label] = figdata_
+                    logger.debug('creating figure data for %s' % label)
+                    if isinstance(layout, basestring):  # handle special layout codes
+                        if layout == 'time_dist':
+                            figdata = timedist.do_comparison_plot(
+                                sessions, big_fonts=True, backend='plotly'
+                            )
+                        elif layout == 'patient_info':
+                            figdata = patient_info_text
+                        elif layout == 'static_kinematics':
+                            layout_ = cfg.layouts.lb_kinematics
+                            figdata = plot_trials(
+                                trials_static,
+                                layout_,
+                                model_normaldata=False,
+                                cycles='unnormalized',
+                                legend_type='short_name_with_cyclename',
+                                style_by=style_by,
+                                color_by=color_by,
+                                big_fonts=True,
+                            )
+                        elif layout == 'static_emg':
+                            layout_ = cfg.layouts.std_emg
+                            figdata = plot_trials(
+                                trials_static,
+                                layout_,
+                                model_normaldata=False,
+                                cycles='unnormalized',
+                                legend_type='short_name_with_cyclename',
+                                style_by=style_by,
+                                color_by=color_by,
+                                big_fonts=True,
+                            )
+                        elif layout == 'kinematics_average':
+                            layout_ = cfg.layouts.lb_kinematics
+                            figdata = plot_trials(
+                                avg_trials,
+                                layout_,
+                                style_by=style_by,
+                                color_by=color_by,
+                                model_normaldata=model_normaldata,
+                                big_fonts=True,
+                            )
+                        elif layout == 'disabled':
+                            # will be caught, resulting in empty menu item
+                            raise RuntimeError
+                        else:  # unrecognized layout; this is not caught by us
+                            raise Exception('Unrecognized layout: %s' % layout)
 
-            # make the upper and lower panel graphs from figdata, depending
-            # on data type
-            def _is_base64(s):
-                try:
-                    return base64.b64encode(base64.b64decode(s)) == s
-                except Exception:
-                    return False
+                    else:  # regular gaitutils layout
+                        figdata = plot_trials(
+                            trials_dyn,
+                            layout,
+                            model_normaldata=model_normaldata,
+                            emg_mode=emg_mode,
+                            legend_type=legend_type,
+                            style_by=style_by,
+                            color_by=color_by,
+                            supplementary_data=supplementary_default,
+                            big_fonts=True,
+                        )
+                # save newly created data
+                if not saved_report_data:
+                    if isinstance(figdata, go.Figure):
+                        # serialize go.Figures before saving
+                        # this makes them much faster for pickle to handle
+                        # apparently dcc.Graph can eat the serialized json directly,
+                        # so no need to do anything on load
+                        figdata_ = figdata.to_plotly_json()
+                    else:
+                        figdata_ = figdata
+                    report_data_new[label] = figdata_
 
-            # this is for old style timedist figures that were in base64
-            # encoded svg
-            if layout == 'time_dist' and _is_base64(figdata):
-                graph_upper = html.Img(
-                    src='data:image/svg+xml;base64,{}'.format(figdata),
-                    id='gaitgraph%d' % k,
-                    style={'height': '100%'},
+                # make the upper and lower panel graphs from figdata, depending
+                # on data type
+                def _is_base64(s):
+                    try:
+                        return base64.b64encode(base64.b64decode(s)) == s
+                    except Exception:
+                        return False
+
+                # this is for old style timedist figures that were in base64
+                # encoded svg
+                if layout == 'time_dist' and _is_base64(figdata):
+                    graph_upper = html.Img(
+                        src='data:image/svg+xml;base64,{}'.format(figdata),
+                        id='gaitgraph%d' % k,
+                        style={'height': '100%'},
+                    )
+                    graph_lower = html.Img(
+                        src='data:image/svg+xml;base64,{}'.format(figdata),
+                        id='gaitgraph%d' % (len(_layouts) + k),
+                        style={'height': '100%'},
+                    )
+                elif layout == 'patient_info':
+                    graph_upper = dcc.Markdown(figdata)
+                    graph_lower = graph_upper
+                else:
+                    # plotly fig -> dcc.Graph
+                    graph_upper = dcc.Graph(
+                        figure=figdata, id='gaitgraph%d' % k, style={'height': '100%'}
+                    )
+                    graph_lower = dcc.Graph(
+                        figure=figdata,
+                        id='gaitgraph%d' % (len(_layouts) + k),
+                        style={'height': '100%'},
+                    )
+                dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
+                dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
+
+            except (RuntimeError, GaitDataError) as e:  # could not create a figure
+                logger.warning(u'failed to create figure for %s: %s' % (label, e))
+                # insert the menu options but make them disabled
+                dd_opts_multi_upper.append(
+                    {'label': label, 'value': label, 'disabled': True}
                 )
-                graph_lower = html.Img(
-                    src='data:image/svg+xml;base64,{}'.format(figdata),
-                    id='gaitgraph%d' % (len(_layouts) + k),
-                    style={'height': '100%'},
+                dd_opts_multi_lower.append(
+                    {'label': label, 'value': label, 'disabled': True}
                 )
-            elif layout == 'patient_info':
-                graph_upper = dcc.Markdown(figdata)
-                graph_lower = graph_upper
-            else:
-                # plotly fig -> dcc.Graph
-                graph_upper = dcc.Graph(
-                    figure=figdata, id='gaitgraph%d' % k, style={'height': '100%'}
-                )
-                graph_lower = dcc.Graph(
-                    figure=figdata,
-                    id='gaitgraph%d' % (len(_layouts) + k),
-                    style={'height': '100%'},
-                )
-            dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
-            dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
+                continue
 
-        except (RuntimeError, GaitDataError) as e:  # could not create a figure
-            logger.warning(u'failed to create figure for %s: %s' % (label, e))
-            # insert the menu options but make them disabled
-            dd_opts_multi_upper.append(
-                {'label': label, 'value': label, 'disabled': True}
-            )
-            dd_opts_multi_lower.append(
-                {'label': label, 'value': label, 'disabled': True}
-            )
-            continue
+        opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
+        opts_multi, mapper_multi_lower = _make_dropdown_lists(dd_opts_multi_lower)
 
-    opts_multi, mapper_multi_upper = _make_dropdown_lists(dd_opts_multi_upper)
-    opts_multi, mapper_multi_lower = _make_dropdown_lists(dd_opts_multi_lower)
-
-    # if plots were newly created, save them to disk
-    if not saved_report_data:
-        logger.debug('saving report data into %s' % data_fn)
-        signals.progress.emit('Saving report data to disk...', 99)
-        with open(data_fn, 'wb') as f:
-            pickle.dump(report_data_new, f, protocol=-1)
+        # if plots were newly created, save them to disk
+        if not saved_report_data:
+            logger.debug('saving report data into %s' % data_fn)
+            signals.progress.emit('Saving report data to disk...', 99)
+            with open(data_fn, 'wb') as f:
+                pickle.dump(report_data_new, f, protocol=-1)
 
     def make_left_panel(split=True, upper_value='Kinematics', lower_value='Kinematics'):
-        """Make the left graph panels. If split, make two stacked panels"""
+        """Helper to make the left graph panels. If split=True, make two stacked panels"""
 
         # the upper graph & dropdown
         items = [
@@ -591,63 +593,88 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
     classname_left = '%s columns' % num2words[LEFT_WIDTH]
     classname_right = '%s columns' % num2words[12 - LEFT_WIDTH]
 
-    app.layout = html.Div(
-        [  # row
-            html.Div(
-                [  # left main div
-                    html.H6(report_name),
-                    dcc.Checklist(
-                        id='split-left',
-                        options=[{'label': 'Two panels', 'value': 'split'}],
-                        value=[],
-                    ),
-                    # need split=True so that both panels are in initial layout
-                    html.Div(make_left_panel(split=True), id='div-left-main'),
-                ],
-                className=classname_left,
-            ),
-            html.Div(
-                [  # right main div
-                    dcc.Dropdown(
-                        id='dd-camera',
-                        clearable=False,
-                        options=opts_cameras,
-                        value='Front camera',
-                    ),
-                    dcc.Dropdown(
-                        id='dd-video-tag',
-                        clearable=False,
-                        options=opts_tags,
-                        value=opts_tags[0]['value'],
-                    ),
-                    html.Div(id='videos'),
-                ],
-                className=classname_right,
-            ),
-        ],
-        className='row',
-    )
+    if video_only:
+        app.layout = html.Div(
+            [  # row
+                html.Div(
+                    [  # single main div
+                        dcc.Dropdown(
+                            id='dd-camera',
+                            clearable=False,
+                            options=opts_cameras,
+                            value='Front camera',
+                        ),
+                        dcc.Dropdown(
+                            id='dd-video-tag',
+                            clearable=False,
+                            options=opts_tags,
+                            value=opts_tags[0]['value'],
+                        ),
+                        html.Div(id='videos'),
+                    ],
+                    className='12 columns',
+                ),
+            ],
+            className='row',
+        )
+    else:  # the two-panel layout with graphs and video
+        app.layout = html.Div(
+            [  # row
+                html.Div(
+                    [  # left main div
+                        html.H6(report_name),
+                        dcc.Checklist(
+                            id='split-left',
+                            options=[{'label': 'Two panels', 'value': 'split'}],
+                            value=[],
+                        ),
+                        # need split=True so that both panels are in initial layout
+                        html.Div(make_left_panel(split=True), id='div-left-main'),
+                    ],
+                    className=classname_left,
+                ),
+                html.Div(
+                    [  # right main div
+                        dcc.Dropdown(
+                            id='dd-camera',
+                            clearable=False,
+                            options=opts_cameras,
+                            value='Front camera',
+                        ),
+                        dcc.Dropdown(
+                            id='dd-video-tag',
+                            clearable=False,
+                            options=opts_tags,
+                            value=opts_tags[0]['value'],
+                        ),
+                        html.Div(id='videos'),
+                    ],
+                    className=classname_right,
+                ),
+            ],
+            className='row',
+        )
 
-    @app.callback(
-        Output('div-left-main', 'children'),
-        [Input('split-left', 'value')],
-        [State('dd-vars-upper-multi', 'value')],
-    )
-    def update_panel_layout(split_panels, upper_value):
-        split = 'split' in split_panels
-        return make_left_panel(split, upper_value=upper_value)
+        @app.callback(
+            Output('div-left-main', 'children'),
+            [Input('split-left', 'value')],
+            [State('dd-vars-upper-multi', 'value')],
+        )
+        def update_panel_layout(split_panels, upper_value):
+            split = 'split' in split_panels
+            return make_left_panel(split, upper_value=upper_value)
 
-    @app.callback(
-        Output('div-upper', 'children'), [Input('dd-vars-upper-multi', 'value')]
-    )
-    def update_contents_upper_multi(sel_var):
-        return mapper_multi_upper[sel_var]
+        @app.callback(
+            Output('div-upper', 'children'), [Input('dd-vars-upper-multi', 'value')]
+        )
+        def update_contents_upper_multi(sel_var):
+            return mapper_multi_upper[sel_var]
 
-    @app.callback(
-        Output('div-lower', 'children'), [Input('dd-vars-lower-multi', 'value')]
-    )
-    def update_contents_lower_multi(sel_var):
-        return mapper_multi_lower[sel_var]
+        @app.callback(
+            Output('div-lower', 'children'), [Input('dd-vars-lower-multi', 'value')]
+        )
+        def update_contents_lower_multi(sel_var):
+            return mapper_multi_lower[sel_var]
 
     def _video_elem(title, url, max_height):
         """Create a video element with title"""

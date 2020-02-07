@@ -150,6 +150,7 @@ class WebReportInfoDialog(QtWidgets.QDialog):
         """ Update config and close dialog, if widget inputs are ok. Otherwise
         show an error dialog """
         self.recreate_plots = self.xbRecreatePlots.checkState()
+        self.video_only = self.xbVideoOnly.checkState()
         self.hetu = self.lnHetu.text().strip()
         self.fullname = self.lnFullName.text().strip()
         self.report_notes = str(self.txtNotes.toPlainText()).strip()
@@ -233,6 +234,7 @@ class WebReportDialog(QtWidgets.QDialog):
                 report_notes=dlg_info.report_notes,
             )
             recreate_plots = dlg_info.recreate_plots
+            video_only = dlg_info.video_only
             info.update(new_info)
 
             # update info files (except session specific keys)
@@ -278,6 +280,7 @@ class WebReportDialog(QtWidgets.QDialog):
             tags=tags,
             signals=signals,
             recreate_plots=recreate_plots,
+            video_only=video_only,
         )
 
     @property

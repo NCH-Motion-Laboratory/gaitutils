@@ -414,7 +414,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
                         figdata = plot_trials(
                             trials_static,
                             layout_,
-                            model_normaldata=model_normaldata,
+                            model_normaldata=False,
                             cycles={'model': 'unnormalized', 'emg': []},
                             legend_type='short_name_with_cyclename',
                             style_by=style_by,
@@ -426,7 +426,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
                         figdata = plot_trials(
                             trials_static,
                             layout_,
-                            model_normaldata=model_normaldata,
+                            model_normaldata=False,
                             cycles={'model': [], 'emg': 'unnormalized'},
                             legend_type='short_name_with_cyclename',
                             style_by=style_by,

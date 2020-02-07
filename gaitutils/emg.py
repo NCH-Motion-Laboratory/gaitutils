@@ -97,6 +97,8 @@ class EMG(object):
         """Check whether a channel exists and has valid signal"""
         if not self.has_channel(chname):
             return False
+        elif cfg.emg.chs_disabled and chname in cfg.emg.chs_disabled:  # deal with None also
+            return False
         data = self.get_channel_data(chname)
         return self._is_valid_emg(data)
 

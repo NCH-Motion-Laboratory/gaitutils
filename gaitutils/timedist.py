@@ -11,7 +11,7 @@ import os.path as op
 import numpy as np
 from collections import OrderedDict
 
-from . import analysis, sessionutils, cfg
+from . import analysis, sessionutils, cfg, GaitDataError
 
 logger = logging.getLogger(__name__)
 
@@ -119,14 +119,18 @@ def _multitrial_analysis(trials):
     res_avg_all = OrderedDict()  # preserve condition ordering
     res_std_all = OrderedDict()  # for plots etc.
     for cond_label, cond_files in trials.items():
-        ans = [
-            analysis.get_analysis(c3dfile, condition=cond_label)
-            for c3dfile in cond_files
-        ]
-        res_avg = analysis.group_analysis(ans)
-        res_std = analysis.group_analysis(ans, fun=np.std)
-        res_avg_all.update(res_avg)
-        res_std_all.update(res_std)
+        for c3dfile in cond_files:
+            ans = list()
+            try:
+                an = analysis.get_analysis(c3dfile, condition=cond_label)
+                ans.append(an)
+            except GaitDataError:
+                logger.warning('no analysis values found in %s' % c3dfile)
+        if ans:
+            res_avg = analysis.group_analysis(ans)
+            res_std = analysis.group_analysis(ans, fun=np.std)
+            res_avg_all.update(res_avg)
+            res_std_all.update(res_std)
     return res_avg_all, res_std_all
 
 

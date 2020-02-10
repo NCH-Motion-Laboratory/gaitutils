@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-c3d unit tests.
-This is not super important since btk has its own test suite
-
+Unit tests on c3d files
 
 @author: jussi (jnu@iki.fi)
 """

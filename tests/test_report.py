@@ -63,7 +63,7 @@ def test_web_report():
 
     # video-only
     app = web.dash_report(info=None, sessions=[sessiondir_abs], signals=foo,
-                          recreate_plots=True, video_only=True
+                          recreate_plots=True, video_only=True)
     assert app
 
     # comparison

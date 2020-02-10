@@ -411,14 +411,16 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             detect_foot = True
 
         # identify candidate frames for foot strike
-        # FIXME: filter should maybe depend on sampling freq
-        force_checks_ok = True
-        forcetot = signal.medfilt(fp['Ftot'])
-        forcetot = _baseline(forcetot)
-        fmax = max(forcetot)
-        fmaxind = np.where(forcetot == fmax)[0][0]  # first maximum
-        logger.debug('max force: %.2f N at %.2f' % (fmax, fmaxind))
 
+        # median filter to remove spikes
+        # XXX: kernel size should maybe depend on sampling freq?
+        forcetot = signal.medfilt(fp['Ftot'], kernel_size=3)
+        forcetot = _baseline(forcetot)
+        fmaxind = np.argmax(forcetot)
+        fmax = forcetot[fmaxind]
+        logger.debug('peak force: %.2f N at sample %d' % (fmax, fmaxind))
+
+        # find force threshold
         if bodymass is None:
             f_threshold = cfg.autoproc.forceplate_contact_threshold * fmax
             logger.warning(
@@ -431,20 +433,21 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
                 logger.debug('insufficient max. force on plate')
                 force_checks_ok = False
 
-        # find indices where force crosses threshold
+        # find indices around peak where force crosses threshold
+        f_rising_inds = rising_zerocross(forcetot - f_threshold)
+        f_falling_inds = falling_zerocross(forcetot - f_threshold)
         try:
-            logger.debug('force threshold: %.2f N' % f_threshold)
-            friseind = rising_zerocross(forcetot - f_threshold)[0]  # first rise
-            ffallind = falling_zerocross(forcetot - f_threshold)[-1]  # last fall
-            logger.debug('force rise: %d fall: %d' % (friseind, ffallind))
-            # 0-based frame indices (=1 less than Nexus frame index)
-            strike_fr = int(np.round(friseind / info['samplesperframe']))
-            toeoff_fr = int(np.round(ffallind / info['samplesperframe']))
-            logger.debug('strike @ frame %d, toeoff @ %d' % (strike_fr, toeoff_fr))
+            f_rising_ind = f_rising_inds[np.where(f_rising_inds < fmaxind)][-1]
+            f_falling_ind = f_falling_inds[np.where(f_falling_inds > fmaxind)][0]
+            logger.debug('force rise: %d fall: %d' % (f_rising_ind, f_falling_ind))
+            # these are 0-based frame indices (=1 less than Nexus frame index)
+            strike_fr = int(np.round(f_rising_ind / info['samplesperframe']))
+            toeoff_fr = int(np.round(f_falling_ind / info['samplesperframe']))
+            logger.debug('foot strike at frame %d, toeoff at %d' % (strike_fr, toeoff_fr))
+            force_checks_ok = True
         except IndexError:
             logger.debug('cannot detect force rise/fall')
             force_checks_ok = False
-
         if not force_checks_ok:
             valid = None
 

@@ -83,12 +83,12 @@ def test_c3d_fp_detection():
     res = detect_forceplate_events(c3dfile)['coded']
     assert res == 'R'
     # detect slight overstep (toeoff not on plate)
-    c3d1 = _c3d_path('slight_overstep.c3d')
-    res = detect_forceplate_events(c3d1)['coded']
+    c3dfile = _c3d_path('slight_overstep.c3d')
+    res = detect_forceplate_events(c3dfile)['coded']
     assert res == 'X'
     # detect double contact (both feet on plate)
-    c3d2 = _c3d_path('double_contact.c3d')
-    res = detect_forceplate_events(c3d2)['coded']
+    c3dfile = _c3d_path('double_contact.c3d')
+    res = detect_forceplate_events(c3dfile)['coded']
     assert res == 'X'
     # almost overstepped but should be flagged as ok
     # too hard - disabled for now
@@ -96,18 +96,23 @@ def test_c3d_fp_detection():
     # res = detect_forceplate_events(c3d3)['coded']
     # assert res == 'R'
     # inside but on the edge
-    c3d4 = _c3d_path('side_edge.c3d')
-    res = detect_forceplate_events(c3d4)['coded']
+    c3dfile = _c3d_path('side_edge.c3d')
+    res = detect_forceplate_events(c3dfile)['coded']
     assert res == 'L'
-    c3d4 = _c3d_path('adult_barely_overstepped.c3d')
-    res = detect_forceplate_events(c3d4)['coded']
+    c3dfile = _c3d_path('adult_barely_overstepped.c3d')
+    res = detect_forceplate_events(c3dfile)['coded']
     assert res == 'X'
-    c3d4 = _c3d_path('adult_almost_overstepped.c3d')
-    res = detect_forceplate_events(c3d4)['coded']
+    c3dfile = _c3d_path('adult_almost_overstepped.c3d')
+    res = detect_forceplate_events(c3dfile)['coded']
     assert res == 'L'
-    c3d4 = _c3d_path('adult_overstep.c3d')
-    res = detect_forceplate_events(c3d4)['coded']
+    c3dfile = _c3d_path('adult_overstep.c3d')
+    res = detect_forceplate_events(c3dfile)['coded']
     assert res == 'X'
-    c3d4 = _c3d_path('adult_ok.c3d')
-    res = detect_forceplate_events(c3d4)['coded']
+    c3dfile = _c3d_path('adult_ok.c3d')
+    res = detect_forceplate_events(c3dfile)['coded']
     assert res == 'L'
+    # walker device disturbs forceplate data, but we should
+    # still be able to detect foot contacts
+    c3dfile = _c3d_path('walker_on_forceplate.c3d')
+    res = detect_forceplate_events(c3dfile)['coded']
+    assert res == 'RLXX'

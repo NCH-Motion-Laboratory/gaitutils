@@ -1,2 +1,11 @@
 *pyc
 build
+.vscode/launch.json
+.vscode/settings.json
+gaitutils/.vscode/settings.json
+.pytest_cache/v/cache/nodeids
+.pytest_cache/v/cache/stepwise
+tests/.pytest_cache/v/cache/lastfailed
+tests/.pytest_cache/v/cache/nodeids
+tests/.pytest_cache/v/cache/stepwise
+tests/.vscode/settings.json

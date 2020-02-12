@@ -443,7 +443,9 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             # these are 0-based frame indices (=1 less than Nexus frame index)
             strike_fr = int(np.round(f_rising_ind / info['samplesperframe']))
             toeoff_fr = int(np.round(f_falling_ind / info['samplesperframe']))
-            logger.debug('foot strike at frame %d, toeoff at %d' % (strike_fr, toeoff_fr))
+            logger.debug(
+                'foot strike at frame %d, toeoff at %d' % (strike_fr, toeoff_fr)
+            )
             force_checks_ok = True
         except IndexError:
             logger.debug('cannot detect force rise/fall')

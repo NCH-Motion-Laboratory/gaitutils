@@ -446,8 +446,8 @@ def _delete_c3ds(enffiles):
 
         # to prevent data loss, do not delete c3d if original
         # x1d and x2d do not exist
-        x1dfile = sessionutils._enf2other(enffile, 'x1d')
-        x2dfile = sessionutils._enf2other(enffile, 'x2d')
+        x1dfile = sessionutils.enf_to_trialfile(enffile, 'x1d')
+        x2dfile = sessionutils.enf_to_trialfile(enffile, 'x2d')
         if op.isfile(x1dfile) and op.isfile(x2dfile):
             logger.debug('deleting existing c3d file %s' % c3dfile)
             os.remove(c3dfile)
@@ -460,7 +460,7 @@ def _delete_c3ds(enffiles):
 
 def autoproc_session(patterns=None, signals=None):
     sessionpath = nexus.get_sessionpath()
-    enffiles = list(sessionutils.get_session_enfs(sessionpath))
+    enffiles = sessionutils.get_enfs(sessionpath)
     if not enffiles:
         raise GaitDataError('No trials found (no .enf files in session)')
     if patterns:

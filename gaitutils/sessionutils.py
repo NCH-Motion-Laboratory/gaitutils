@@ -106,9 +106,11 @@ def _merge_session_info(sessions):
     return session_infos, info
 
 
-def _enf2other(fname, ext):
+def enf_to_trialfile(fname, ext):
     """Converts name of trial .enf file to corresponding .c3d or other
-    file type"""
+    trial file"""
+    if ext[0] == '.':
+        ext = ext[1:]
     enfre = r'\.*.Trial\d*.enf'  # .Trial followed by zero or more digits
     res = re.search(enfre, fname)
     if res is None:
@@ -118,8 +120,8 @@ def _enf2other(fname, ext):
 
 def get_session_date(sessionpath):
     """Return date when session was recorded (datetime.datetime object)"""
-    enfs = get_session_enfs(sessionpath)
-    x1ds = [_enf2other(fn, 'x1d') for fn in enfs]
+    enfs = get_enfs(sessionpath)
+    x1ds = [enf_to_trialfile(fn, 'x1d') for fn in enfs]
     if not x1ds:
         raise GaitDataError('Invalid session %s' % sessionpath)
     else:
@@ -129,7 +131,7 @@ def get_session_date(sessionpath):
         return datetime.datetime.fromtimestamp(op.getmtime(x1d))
 
 
-def get_session_enfs(sessionpath):
+def _get_session_enfs(sessionpath):
     """Return list of .enf files for the session """
     enfglob = op.join(sessionpath, '*Trial*.enf')
     for enf in glob.iglob(enfglob):
@@ -163,7 +165,7 @@ def _filter_by_type(enfs, trial_type):
 def _filter_to_c3ds(enfs):
     """Convert enf filenames to c3d"""
     for enf in enfs:
-        yield _enf2other(enf, 'c3d')
+        yield enf_to_trialfile(enf, 'c3d')
 
 
 def _filter_exists(files):
@@ -172,14 +174,22 @@ def _filter_exists(files):
             yield f
 
 
-def get_c3ds(sessionpath, tags=None, trial_type=None, check_if_exists=True):
-    """Get specified c3d files for session."""
-    enfs = get_session_enfs(sessionpath)
+def get_enfs(sessionpath, tags=None, trial_type=None, check_if_exists=True):
+    """Get specified enf files for session."""
+    enfs = _get_session_enfs(sessionpath)
     if trial_type is not None:
         enfs = _filter_by_type(enfs, trial_type)
     if tags is not None:
         enfs = _filter_by_tags(enfs, tags)
-    c3ds = _filter_to_c3ds(enfs)
     if check_if_exists:
-        c3ds = _filter_exists(c3ds)
+        enfs = _filter_exists(enfs)
+    return list(enfs)
+
+
+def get_c3ds(sessionpath, tags=None, trial_type=None, check_if_exists=True):
+    """Get specified c3d files for session."""
+    enfs = get_enfs(
+        sessionpath, tags=tags, trial_type=trial_type, check_if_exists=check_if_exists
+    )
+    c3ds = _filter_to_c3ds(enfs)
     return list(c3ds)

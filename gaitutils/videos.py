@@ -83,7 +83,9 @@ def _collect_session_videos(session, tags):
 def get_trial_videos(
     trialfile, camera_label=None, vid_ext=None, overlay=None, single_file=False
 ):
-    """Return list of video files for trial file. File may be c3d or enf etc"""
+    """Return list of video files for trial file. File may be c3d or x1d etc.
+    Note that the filename extension is directly appended, so finding videos for
+    .enf files (which are named differently from c3d etc.) will not work"""
     trialbase = op.splitext(trialfile)[0]
     # XXX: should really be case insensitive, but it does not matter on Windows
     vid_exts = ['.avi', '.ogv']

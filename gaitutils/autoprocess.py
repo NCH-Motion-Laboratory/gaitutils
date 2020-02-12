@@ -446,8 +446,8 @@ def _delete_c3ds(enffiles):
 
         # to prevent data loss, do not delete c3d if original
         # x1d and x2d do not exist
-        x1dfile = sessionutils._enf2other(enffile, 'x1d')
-        x2dfile = sessionutils._enf2other(enffile, 'x2d')
+        x1dfile = sessionutils.enf_to_trialfile(enffile, 'x1d')
+        x2dfile = sessionutils.enf_to_trialfile(enffile, 'x2d')
         if op.isfile(x1dfile) and op.isfile(x2dfile):
             logger.debug('deleting existing c3d file %s' % c3dfile)
             os.remove(c3dfile)

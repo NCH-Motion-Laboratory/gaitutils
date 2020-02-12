@@ -106,7 +106,7 @@ def _merge_session_info(sessions):
     return session_infos, info
 
 
-def _enf2other(fname, ext):
+def enf_to_trialfile(fname, ext):
     """Converts name of trial .enf file to corresponding .c3d or other
     file type"""
     enfre = r'\.*.Trial\d*.enf'  # .Trial followed by zero or more digits
@@ -119,7 +119,7 @@ def _enf2other(fname, ext):
 def get_session_date(sessionpath):
     """Return date when session was recorded (datetime.datetime object)"""
     enfs = get_enfs(sessionpath)
-    x1ds = [_enf2other(fn, 'x1d') for fn in enfs]
+    x1ds = [enf_to_trialfile(fn, 'x1d') for fn in enfs]
     if not x1ds:
         raise GaitDataError('Invalid session %s' % sessionpath)
     else:
@@ -163,7 +163,7 @@ def _filter_by_type(enfs, trial_type):
 def _filter_to_c3ds(enfs):
     """Convert enf filenames to c3d"""
     for enf in enfs:
-        yield _enf2other(enf, 'c3d')
+        yield enf_to_trialfile(enf, 'c3d')
 
 
 def _filter_exists(files):

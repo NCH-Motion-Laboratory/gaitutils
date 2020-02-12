@@ -35,7 +35,7 @@ from .. import (
     numutils,
     videos,
 )
-from ..sessionutils import _enf2other
+from ..sessionutils import enf_to_trialfile
 from ..trial import Trial
 from ..viz.plot_plotly import plot_trials
 from ..viz import timedist, layouts
@@ -198,7 +198,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
                             if overlay
                             else camera_label
                         )
-                        c3d = _enf2other(enf, 'c3d')
+                        c3d = enf_to_trialfile(enf, 'c3d')
                         vids_this = videos.get_trial_videos(
                             c3d,
                             camera_label=real_camera_label,
@@ -228,7 +228,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
     # this whole section is only needed if we have c3d data
     if not video_only:
         # see whether we can load report figures from disk
-        data_c3ds = [_enf2other(enffile, 'c3d') for enffile in data_enfs]
+        data_c3ds = [enf_to_trialfile(enffile, 'c3d') for enffile in data_enfs]
         digest = numutils.files_digest(data_c3ds)
         logger.debug('report data digest: %s' % digest)
         # data is always saved into alphabetically first session
@@ -254,12 +254,12 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
                 if enfs[session]['dynamic'][tag]:
                     if signals.canceled:
                         return None
-                    c3dfile = _enf2other(enfs[session]['dynamic'][tag][0], 'c3d')
+                    c3dfile = enf_to_trialfile(enfs[session]['dynamic'][tag][0], 'c3d')
                     tri = Trial(c3dfile)
                     trials_dyn.append(tri)
                     _trials_avg[session].append(tri)
             if enfs[session]['static'][static_tag]:
-                c3dfile = _enf2other(enfs[session]['static']['Static'][0], 'c3d')
+                c3dfile = enf_to_trialfile(enfs[session]['static']['Static'][0], 'c3d')
                 tri = Trial(c3dfile)
                 trials_static.append(tri)
 

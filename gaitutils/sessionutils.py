@@ -129,7 +129,7 @@ def get_session_date(sessionpath):
         return datetime.datetime.fromtimestamp(op.getmtime(x1d))
 
 
-def get_session_enfs(sessionpath):
+def _get_session_enfs(sessionpath):
     """Return list of .enf files for the session """
     enfglob = op.join(sessionpath, '*Trial*.enf')
     for enf in glob.iglob(enfglob):
@@ -172,14 +172,20 @@ def _filter_exists(files):
             yield f
 
 
-def get_c3ds(sessionpath, tags=None, trial_type=None, check_if_exists=True):
-    """Get specified c3d files for session."""
-    enfs = get_session_enfs(sessionpath)
+def get_enfs(sessionpath, tags=None, trial_type=None, check_if_exists=True):
+    """Get specified enf files for session."""
+    enfs = _get_session_enfs(sessionpath)
     if trial_type is not None:
         enfs = _filter_by_type(enfs, trial_type)
     if tags is not None:
         enfs = _filter_by_tags(enfs, tags)
-    c3ds = _filter_to_c3ds(enfs)
     if check_if_exists:
-        c3ds = _filter_exists(c3ds)
+        enfs = _filter_exists(enfs)
+    return list(enfs)
+
+
+def get_c3ds(sessionpath, tags=None, trial_type=None, check_if_exists=True):
+    """Get specified c3d files for session."""
+    enfs = get_enfs(sessionpath, tags=tags, trial_type=trial_type, check_if_exists=check_if_exists)
+    c3ds = _filter_to_c3ds(enfs)
     return list(c3ds)

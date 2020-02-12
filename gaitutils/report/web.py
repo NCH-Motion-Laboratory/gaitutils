@@ -106,8 +106,6 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
     # LEFT_WIDTH = 8 if len(sessions) == 3 else 7
     LEFT_WIDTH = 8
     VIDS_TOTAL_HEIGHT = 88  # % of browser window height
-    # reduce to set, since there may be several labels for given id
-    camera_labels = set(cfg.general.camera_labels.values())
 
     if len(sessions) < 1 or len(sessions) > 3:
         raise ValueError('Need a list of one to three sessions')
@@ -191,13 +189,13 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
             tri = Trial(c3ds[session]['static']['Static'][0])
             trials_static.append(tri)
 
-    # find video files for all trials
-    signals.progress.emit('Finding videos...', 0)
+    # get camera labels
+    # reduce to set, since there may be several labels for given id
+    camera_labels = set(cfg.general.camera_labels.values())
     # add camera labels for overlay videos
     # XXX: may cause trouble if labels already contain the string 'overlay'
     camera_labels_overlay = [lbl + ' overlay' for lbl in camera_labels]
     camera_labels.update(camera_labels_overlay)
-
     # build dict of videos for given tag / camera label
     # videos will be listed in session order
     vid_urls = dict()
@@ -208,6 +206,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
             vid_urls[tag][camera_label] = list()
 
     # collect all videos for given tag and camera, listed in session order
+    signals.progress.emit('Finding videos...', 0)
     for session in sessions:
         for trial_type in c3ds[session]:
             for tag, c3ds_this in c3ds[session][trial_type].items():
@@ -342,7 +341,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
             except GaitDataError:
                 emg_layout = 'disabled'
 
-    # FIXME: layouts shown in report should be configureable
+    # FIXME: layouts shown in report should be configurable
     _layouts = OrderedDict(
         [
             ('Patient info', 'patient_info'),

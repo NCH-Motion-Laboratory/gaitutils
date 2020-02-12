@@ -224,7 +224,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
     if not opts_tags:
         opts_tags.append({'label': 'No videos', 'value': 'no videos', 'disabled': True})
 
-    # this section is only needed if we have c3d data
+    # this whole section is only needed if we have c3d data
     if not video_only:
         # see whether we can load report figures from disk
         data_c3ds = [sessionutils._enf2other(enffile, 'c3d') for enffile in data_enfs]
@@ -290,58 +290,58 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
 
             model_normaldata = dict()
             avg_trials = list()
-            if not video_only:
-                # load normal data for gait models
-                signals.progress.emit('Loading normal data...', 0)
-                for fn in cfg.general.normaldata_files:
-                    ndata = normaldata.read_normaldata(fn)
-                    model_normaldata.update(ndata)
-                if age is not None:
-                    age_ndata_file = normaldata.normaldata_age(age)
-                    if age_ndata_file:
-                        age_ndata = normaldata.read_normaldata(age_ndata_file)
-                        model_normaldata.update(age_ndata)
 
-                # make average trials for each session
-                avg_trials = [
-                    AvgTrial.from_trials(_trials_avg[session], sessionpath=session)
-                    for session in sessions
-                ]
-                # read some extra data from trials and create supplementary data
-                for tr in trials_dyn:
-                    # read tibial torsion for each trial and make supplementary traces
-                    # these will only be shown for KneeAnglesZ (knee rotation) variable
-                    tors = dict()
-                    tors['R'], tors['L'] = (
-                        tr.subj_params['RTibialTorsion'],
-                        tr.subj_params['LTibialTorsion'],
+            # load normal data for gait models
+            signals.progress.emit('Loading normal data...', 0)
+            for fn in cfg.general.normaldata_files:
+                ndata = normaldata.read_normaldata(fn)
+                model_normaldata.update(ndata)
+            if age is not None:
+                age_ndata_file = normaldata.normaldata_age(age)
+                if age_ndata_file:
+                    age_ndata = normaldata.read_normaldata(age_ndata_file)
+                    model_normaldata.update(age_ndata)
+
+            # make average trials for each session
+            avg_trials = [
+                AvgTrial.from_trials(_trials_avg[session], sessionpath=session)
+                for session in sessions
+            ]
+            # read some extra data from trials and create supplementary data
+            for tr in trials_dyn:
+                # read tibial torsion for each trial and make supplementary traces
+                # these will only be shown for KneeAnglesZ (knee rotation) variable
+                tors = dict()
+                tors['R'], tors['L'] = (
+                    tr.subj_params['RTibialTorsion'],
+                    tr.subj_params['LTibialTorsion'],
+                )
+                if tors['R'] is None or tors['L'] is None:
+                    logger.warning(
+                        'could not read tibial torsion values from %s' % tr.trialname
                     )
-                    if tors['R'] is None or tors['L'] is None:
-                        logger.warning(
-                            'could not read tibial torsion values from %s' % tr.trialname
-                        )
-                        continue
-                    # include torsion info for all cycles; this is useful when plotting
-                    # isolated cycles
-                    max_cycles = cfg.plot.max_cycles['model']
-                    cycs = tr.get_cycles(cfg.plot.default_cycles['model'])[:max_cycles]
+                    continue
+                # include torsion info for all cycles; this is useful when plotting
+                # isolated cycles
+                max_cycles = cfg.plot.max_cycles['model']
+                cycs = tr.get_cycles(cfg.plot.default_cycles['model'])[:max_cycles]
 
-                    for cyc in cycs:
-                        tibial_torsion[cyc] = dict()
-                        for ctxt in tors:
-                            var_ = ctxt + 'KneeAnglesZ'
-                            tibial_torsion[cyc][var_] = dict()
-                            # x = % of gait cycle
-                            tibial_torsion[cyc][var_]['t'] = np.arange(101)
-                            # static tibial torsion value as function of x
-                            # convert radians -> degrees
-                            tibial_torsion[cyc][var_]['data'] = (
-                                np.ones(101) * tors[ctxt] / np.pi * 180
-                            )
-                            tibial_torsion[cyc][var_]['label'] = 'Tib. tors. (%s) % s' % (
-                                ctxt,
-                                tr.trialname,
-                            )
+                for cyc in cycs:
+                    tibial_torsion[cyc] = dict()
+                    for ctxt in tors:
+                        var_ = ctxt + 'KneeAnglesZ'
+                        tibial_torsion[cyc][var_] = dict()
+                        # x = % of gait cycle
+                        tibial_torsion[cyc][var_]['t'] = np.arange(101)
+                        # static tibial torsion value as function of x
+                        # convert radians -> degrees
+                        tibial_torsion[cyc][var_]['data'] = (
+                            np.ones(101) * tors[ctxt] / np.pi * 180
+                        )
+                        tibial_torsion[cyc][var_]['label'] = 'Tib. tors. (%s) % s' % (
+                            ctxt,
+                            tr.trialname,
+                        )
 
                 # in EMG layout, keep chs that are active in any of the trials
                 signals.progress.emit('Reading EMG data', 0)
@@ -353,26 +353,25 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
                 except GaitDataError:
                     emg_layout = 'disabled'
 
-                # define layouts
-                # FIXME: should be definable in config
-                _layouts = OrderedDict(
-                    [
-                        ('Patient info', 'patient_info'),
-                        ('Kinematics', cfg.layouts.lb_kinematics),
-                        ('Kinematics average', 'kinematics_average'),
-                        ('Static kinematics', 'static_kinematics'),
-                        ('Static EMG', 'static_emg'),
-                        ('Kinematics + kinetics', cfg.layouts.lb_kin_web),
-                        ('Kinetics', cfg.layouts.lb_kinetics_web),
-                        ('EMG', emg_layout),
-                        ('Kinetics-EMG left', cfg.layouts.lb_kinetics_emg_l),
-                        ('Kinetics-EMG right', cfg.layouts.lb_kinetics_emg_r),
-                        ('Muscle length', cfg.layouts.musclelen),
-                        ('Torso kinematics', cfg.layouts.torso),
-                        ('Time-distance variables', 'time_dist'),
-                    ]
-                )
-
+        # define layouts
+        # FIXME: should be definable in config
+        _layouts = OrderedDict(
+            [
+                ('Patient info', 'patient_info'),
+                ('Kinematics', cfg.layouts.lb_kinematics),
+                ('Kinematics average', 'kinematics_average'),
+                ('Static kinematics', 'static_kinematics'),
+                ('Static EMG', 'static_emg'),
+                ('Kinematics + kinetics', cfg.layouts.lb_kin_web),
+                ('Kinetics', cfg.layouts.lb_kinetics_web),
+                ('EMG', emg_layout),
+                ('Kinetics-EMG left', cfg.layouts.lb_kinetics_emg_l),
+                ('Kinetics-EMG right', cfg.layouts.lb_kinetics_emg_r),
+                ('Muscle length', cfg.layouts.musclelen),
+                ('Torso kinematics', cfg.layouts.torso),
+                ('Time-distance variables', 'time_dist'),
+            ]
+        )
         # pick desired single variables from model and append
         # Py2: dict merge below can be done more elegantly once Py2 is dropped
         pig_singlevars_ = models.pig_lowerbody.varlabels_noside.copy()

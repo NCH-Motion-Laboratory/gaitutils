@@ -87,7 +87,14 @@ def _report_name(sessions, long_name=True):
     return '%s: %s' % (report_type, sessions_str)
 
 
-def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plots=None, video_only=None):
+def dash_report(
+    info=None,
+    sessions=None,
+    tags=None,
+    signals=None,
+    recreate_plots=None,
+    video_only=None,
+):
     """Create a web report dash app.
 
     Parameters
@@ -348,7 +355,9 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
                 signals.progress.emit('Reading EMG data', 0)
                 try:
                     emgs = [tr.emg for tr in trials_dyn]
-                    emg_layout = layouts.rm_dead_channels_multitrial(emgs, cfg.layouts.std_emg)
+                    emg_layout = layouts.rm_dead_channels_multitrial(
+                        emgs, cfg.layouts.std_emg
+                    )
                     if not emg_layout:
                         emg_layout = 'disabled'
                 except GaitDataError:
@@ -378,7 +387,9 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
         pig_singlevars_ = models.pig_lowerbody.varlabels_noside.copy()
         pig_singlevars_.update(models.pig_lowerbody_kinetics.varlabels_noside)
         pig_singlevars = sorted(pig_singlevars_.items(), key=lambda item: item[1])
-        singlevars = OrderedDict([(varlabel, [[var]]) for var, varlabel in pig_singlevars])
+        singlevars = OrderedDict(
+            [(varlabel, [[var]]) for var, varlabel in pig_singlevars]
+        )
         _layouts.update(singlevars)
 
         # add supplementary data for normal layouts

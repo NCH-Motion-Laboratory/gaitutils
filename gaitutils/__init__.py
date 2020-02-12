@@ -9,6 +9,7 @@ from .envutils import GaitDataError
 # annoying in some cases
 logging.getLogger('gaitutils').addHandler(logging.NullHandler())
 
+
 def run_from_ipython():
     try:
         __IPYTHON__
@@ -26,7 +27,6 @@ if (
 ):
     blackhole = open(os.devnull, 'w')
     sys.stdout = sys.stderr = blackhole
-
 
 
 # in case we want to print stuff from config.py, it's better to delay

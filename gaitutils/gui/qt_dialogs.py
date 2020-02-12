@@ -294,6 +294,7 @@ class ChooseSessionsDialogWeb(ChooseSessionsDialog):
         self.max_sessions = max_sessions
         self.min_sessions = min_sessions
 
+
 #    def accept(self):
 #        self.recreate_plots = self.xbRecreatePlots.checkState()
 #        super(ChooseSessionsDialogWeb, self).accept()

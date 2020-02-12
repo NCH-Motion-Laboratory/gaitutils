@@ -188,6 +188,8 @@ def get_enfs(sessionpath, tags=None, trial_type=None, check_if_exists=True):
 
 def get_c3ds(sessionpath, tags=None, trial_type=None, check_if_exists=True):
     """Get specified c3d files for session."""
-    enfs = get_enfs(sessionpath, tags=tags, trial_type=trial_type, check_if_exists=check_if_exists)
+    enfs = get_enfs(
+        sessionpath, tags=tags, trial_type=trial_type, check_if_exists=check_if_exists
+    )
     c3ds = _filter_to_c3ds(enfs)
     return list(c3ds)

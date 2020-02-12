@@ -33,7 +33,7 @@ def test_collect_trial_data():
     desired_vars = set.union(
         set(models.pig_lowerbody.varnames),
         set(models.pig_lowerbody_kinetics.varnames),
-        set(models.musclelen.varnames)
+        set(models.musclelen.varnames),
     ) - set([var for var in models.pig_lowerbody.varnames if 'ForeFoot' in var])
     assert collected_vars == desired_vars
     # check that correct number of cycles was collected
@@ -80,7 +80,7 @@ def test_average_model_data():
     desired_vars = set.union(
         set(models.pig_lowerbody.varnames),
         set(models.pig_lowerbody_kinetics.varnames),
-        set(models.musclelen.varnames)
+        set(models.musclelen.varnames),
     ) - set([var for var in models.pig_lowerbody.varnames if 'ForeFoot' in var])
     for var in desired_vars:
         assert avgdata[var] is not None and avgdata[var].shape == (101,)

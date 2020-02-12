@@ -22,7 +22,7 @@ from collections import OrderedDict
 import logging
 import os.path as op
 import base64
-import io
+import copy
 
 from ulstools.num import age_from_hetu
 
@@ -87,12 +87,23 @@ def _report_name(sessions, long_name=True):
 
 
 def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plots=None, video_only=None):
-    """Returns dash app for web report.
-    info: patient info
-    sessions: list of session dirs
-    tags: tags for dynamic gait trials
-    signals: instance of ProgressSignals, used to send progress updates across
-    threads
+    """Create a web report dash app.
+
+    Parameters
+    ----------
+
+    info : dict
+        patient info
+    sessions : list
+        list of session dirs
+    tags : list
+        tags for dynamic gait trials
+    signals : ProgressSignals
+        instance of ProgressSignals, used to send progress updates across threads
+    recreate_plots : bool
+        force recreation of report
+    video_only : bool
+        Create a video-only report. C3D data will not be read.
     """
 
     if recreate_plots is None:
@@ -119,78 +130,8 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
     # this tag will be shown in the menu for static trials
     static_tag = 'Static'
 
-    # collect all session c3ds into dict
-    c3ds = {session: dict() for session in sessions}
-    data_c3ds = list()  # c3ds that are used for data
-    signals.progress.emit('Collecting trials...', 0)
-    for session in sessions:
-        if signals.canceled:
-            return None
-        c3ds[session] = dict(dynamic=dict(), static=dict(), vid_only=dict())
-        # collect dynamic trials for each tag
-        for tag in dyn_tags:
-            dyns = sessionutils.get_c3ds(session, tags=tag, trial_type='dynamic')
-            if len(dyns) > 1:
-                logger.warning('multiple tagged trials (%s) for %s' % (tag, session))
-            dyn_trial = dyns[-1:]
-            c3ds[session]['dynamic'][tag] = dyn_trial  # may be empty list
-            if dyn_trial:
-                data_c3ds.extend(dyn_trial)
-        # require at least one dynamic trial for each session
-        if not any(c3ds[session]['dynamic'][tag] for tag in dyn_tags):
-            raise GaitDataError('No tagged dynamic trials found for %s' % (session))
-        # collect static trial (at most 1 per session)
-        sts = sessionutils.get_c3ds(session, trial_type='static')
-        if len(sts) > 1:
-            logger.warning('multiple static trials for %s, using last one' % session)
-        static_trial = sts[-1:]
-        c3ds[session]['static'][static_tag] = static_trial
-        if static_trial:
-            data_c3ds.extend(static_trial)
-        # collect video-only dynamic trials
-        for tag in cfg.eclipse.video_tags:
-            dyn_vids = sessionutils.get_c3ds(session, tags=tag)
-            if len(dyn_vids) > 1:
-                logger.warning(
-                    'multiple tagged video-only trials (%s) for %s' % (tag, session)
-                )
-            c3ds[session]['vid_only'][tag] = dyn_vids[-1:]
-
-    # see whether we can load report figures from disk
-    digest = numutils.files_digest(data_c3ds)
-    logger.debug('report data digest: %s' % digest)
-    # data is always saved into alphabetically first session
-    data_dir = sorted(sessions)[0]
-    data_fn = op.join(data_dir, 'web_report_%s.dat' % digest)
-    if op.isfile(data_fn) and not recreate_plots:
-        logger.debug('loading saved report data from %s' % data_fn)
-        signals.progress.emit('Loading saved report...', 0)
-        with open(data_fn, 'rb') as f:
-            saved_report_data = pickle.load(f)
-    else:
-        saved_report_data = dict()
-        logger.debug('no saved data found or recreate forced')
-
-    # make Trial instances for all dynamic and static trials
-    # this is currently needed even if saved report is used
-    trials_dyn = list()
-    trials_static = list()
-    _trials_avg = dict()
-    for session in sessions:
-        _trials_avg[session] = list()
-        for tag in dyn_tags:
-            if c3ds[session]['dynamic'][tag]:
-                if signals.canceled:
-                    return None
-                tri = Trial(c3ds[session]['dynamic'][tag][0])
-                trials_dyn.append(tri)
-                _trials_avg[session].append(tri)
-        if c3ds[session]['static'][static_tag]:
-            tri = Trial(c3ds[session]['static']['Static'][0])
-            trials_static.append(tri)
-
-    # get camera labels
-    # reduce to set, since there may be several labels for given id
+    # get the camera labels
+    # reduce to a set, since there may be several labels for given id
     camera_labels = set(cfg.general.camera_labels.values())
     # add camera labels for overlay videos
     # XXX: may cause trouble if labels already contain the string 'overlay'
@@ -205,13 +146,50 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
         for camera_label in camera_labels:
             vid_urls[tag][camera_label] = list()
 
+    # collect all session enfs into dict
+    enfs = {session: dict() for session in sessions}
+    data_enfs = list()  # enfs that are used for data
+    signals.progress.emit('Collecting trials...', 0)
+    for session in sessions:
+        if signals.canceled:
+            return None
+        enfs[session] = dict(dynamic=dict(), static=dict(), vid_only=dict())
+        # collect dynamic trials for each tag
+        for tag in dyn_tags:
+            dyns = sessionutils.get_enfs(session, tags=tag, trial_type='dynamic')
+            if len(dyns) > 1:
+                logger.warning('multiple tagged trials (%s) for %s' % (tag, session))
+            dyn_trial = dyns[-1:]
+            enfs[session]['dynamic'][tag] = dyn_trial  # may be empty list
+            if dyn_trial:
+                data_enfs.extend(dyn_trial)
+        # require at least one dynamic trial for each session
+        if not any(enfs[session]['dynamic'][tag] for tag in dyn_tags):
+            raise GaitDataError('No tagged dynamic trials found for %s' % (session))
+        # collect static trial (at most 1 per session)
+        sts = sessionutils.get_enfs(session, trial_type='static')
+        if len(sts) > 1:
+            logger.warning('multiple static trials for %s, using last one' % session)
+        static_trial = sts[-1:]
+        enfs[session]['static'][static_tag] = static_trial
+        if static_trial:
+            data_enfs.extend(static_trial)
+        # collect video-only dynamic trials
+        for tag in cfg.eclipse.video_tags:
+            dyn_vids = sessionutils.get_enfs(session, tags=tag)
+            if len(dyn_vids) > 1:
+                logger.warning(
+                    'multiple tagged video-only trials (%s) for %s' % (tag, session)
+                )
+            enfs[session]['vid_only'][tag] = dyn_vids[-1:]
+
     # collect all videos for given tag and camera, listed in session order
     signals.progress.emit('Finding videos...', 0)
     for session in sessions:
-        for trial_type in c3ds[session]:
-            for tag, c3ds_this in c3ds[session][trial_type].items():
-                if c3ds_this:
-                    c3d = c3ds_this[0]  # only one c3d per tag and session
+        for trial_type in enfs[session]:
+            for tag, enfs_this in enfs[session][trial_type].items():
+                if enfs_this:
+                    enf = enfs_this[0]  # only one enf per tag and session
                     for camera_label in camera_labels:
                         overlay = 'overlay' in camera_label
                         real_camera_label = (
@@ -219,6 +197,7 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
                             if overlay
                             else camera_label
                         )
+                        c3d = sessionutils._enf2other(enf, 'c3d')
                         vids_this = videos.get_trial_videos(
                             c3d,
                             camera_label=real_camera_label,
@@ -245,138 +224,171 @@ def dash_report(info=None, sessions=None, tags=None, signals=None, recreate_plot
     if not opts_tags:
         opts_tags.append({'label': 'No videos', 'value': 'no videos', 'disabled': True})
 
-    # build dcc.Dropdown options list for the trials
-    trials_dd = list()
-    for tr in trials_dyn:
-        trials_dd.append({'label': tr.name_with_description, 'value': tr.trialname})
-
-    emg_layout = None
-    tibial_torsion = dict()
-
-    # stuff that's needed to (re)create the figures
-    if not saved_report_data:
-        age = None
-        if info['hetu'] is not None:
-            # compute subject age at session time
-            session_dates = [
-                sessionutils.get_session_date(session) for session in sessions
-            ]
-            ages = [age_from_hetu(info['hetu'], d) for d in session_dates]
-            age = max(ages)
-
-        # create Markdown text for patient info
-        patient_info_text = '##### %s ' % (
-            info['fullname'] if info['fullname'] else 'Name unknown'
-        )
-        if info['hetu']:
-            patient_info_text += '(%s)' % info['hetu']
-        patient_info_text += '\n\n'
-        # if age:
-        #     patient_info_text += 'Age at measurement time: %d\n\n' % age
-        if info['report_notes']:
-            patient_info_text += info['report_notes']
-
-        model_normaldata = dict()
-        avg_trials = list()
-        if not video_only:
-            # load normal data for gait models
-            signals.progress.emit('Loading normal data...', 0)
-            for fn in cfg.general.normaldata_files:
-                ndata = normaldata.read_normaldata(fn)
-                model_normaldata.update(ndata)
-            if age is not None:
-                age_ndata_file = normaldata.normaldata_age(age)
-                if age_ndata_file:
-                    age_ndata = normaldata.read_normaldata(age_ndata_file)
-                    model_normaldata.update(age_ndata)
-
-            # make average trials for each session
-            avg_trials = [
-                AvgTrial.from_trials(_trials_avg[session], sessionpath=session)
-                for session in sessions
-            ]
-            # read some extra data from trials and create supplementary data
-            for tr in trials_dyn:
-                # read tibial torsion for each trial and make supplementary traces
-                # these will only be shown for KneeAnglesZ (knee rotation) variable
-                tors = dict()
-                tors['R'], tors['L'] = (
-                    tr.subj_params['RTibialTorsion'],
-                    tr.subj_params['LTibialTorsion'],
-                )
-                if tors['R'] is None or tors['L'] is None:
-                    logger.warning(
-                        'could not read tibial torsion values from %s' % tr.trialname
-                    )
-                    continue
-                # include torsion info for all cycles; this is useful when plotting
-                # isolated cycles
-                max_cycles = cfg.plot.max_cycles['model']
-                cycs = tr.get_cycles(cfg.plot.default_cycles['model'])[:max_cycles]
-
-                for cyc in cycs:
-                    tibial_torsion[cyc] = dict()
-                    for ctxt in tors:
-                        var_ = ctxt + 'KneeAnglesZ'
-                        tibial_torsion[cyc][var_] = dict()
-                        # x = % of gait cycle
-                        tibial_torsion[cyc][var_]['t'] = np.arange(101)
-                        # static tibial torsion value as function of x
-                        # convert radians -> degrees
-                        tibial_torsion[cyc][var_]['data'] = (
-                            np.ones(101) * tors[ctxt] / np.pi * 180
-                        )
-                        tibial_torsion[cyc][var_]['label'] = 'Tib. tors. (%s) % s' % (
-                            ctxt,
-                            tr.trialname,
-                        )
-
-            # in EMG layout, keep chs that are active in any of the trials
-            signals.progress.emit('Reading EMG data', 0)
-            try:
-                emgs = [tr.emg for tr in trials_dyn]
-                emg_layout = layouts.rm_dead_channels_multitrial(emgs, cfg.layouts.std_emg)
-                if not emg_layout:
-                    emg_layout = 'disabled'
-            except GaitDataError:
-                emg_layout = 'disabled'
-
-    # FIXME: layouts shown in report should be configurable
-    _layouts = OrderedDict(
-        [
-            ('Patient info', 'patient_info'),
-            ('Kinematics', cfg.layouts.lb_kinematics),
-            ('Kinematics average', 'kinematics_average'),
-            ('Static kinematics', 'static_kinematics'),
-            ('Static EMG', 'static_emg'),
-            ('Kinematics + kinetics', cfg.layouts.lb_kin_web),
-            ('Kinetics', cfg.layouts.lb_kinetics_web),
-            ('EMG', emg_layout),
-            ('Kinetics-EMG left', cfg.layouts.lb_kinetics_emg_l),
-            ('Kinetics-EMG right', cfg.layouts.lb_kinetics_emg_r),
-            ('Muscle length', cfg.layouts.musclelen),
-            ('Torso kinematics', cfg.layouts.torso),
-            ('Time-distance variables', 'time_dist'),
-        ]
-    )
-
-    # pick desired single variables from model and append
-    # Py2: dict merge below can be done more elegantly once Py2 is dropped
-    pig_singlevars_ = models.pig_lowerbody.varlabels_noside.copy()
-    pig_singlevars_.update(models.pig_lowerbody_kinetics.varlabels_noside)
-    pig_singlevars = sorted(pig_singlevars_.items(), key=lambda item: item[1])
-    singlevars = OrderedDict([(varlabel, [[var]]) for var, varlabel in pig_singlevars])
-    _layouts.update(singlevars)
-
-    # add supplementary data for normal layouts
-    supplementary_default = dict()
-    supplementary_default.update(tibial_torsion)
-
-    dd_opts_multi_upper = list()
-    dd_opts_multi_lower = list()
-
-    # loop through the layouts, create or load figures
+    # this section is only needed if we have c3d data
     if not video_only:
+        # see whether we can load report figures from disk
+        data_c3ds = [sessionutils._enf2other(enffile, 'c3d') for enffile in data_enfs]
+        digest = numutils.files_digest(data_c3ds)
+        logger.debug('report data digest: %s' % digest)
+        # data is always saved into alphabetically first session
+        data_dir = sorted(sessions)[0]
+        data_fn = op.join(data_dir, 'web_report_%s.dat' % digest)
+        if op.isfile(data_fn) and not recreate_plots:
+            logger.debug('loading saved report data from %s' % data_fn)
+            signals.progress.emit('Loading saved report...', 0)
+            with open(data_fn, 'rb') as f:
+                saved_report_data = pickle.load(f)
+        else:
+            saved_report_data = dict()
+            logger.debug('no saved data found or recreate forced')
+
+        # make Trial instances for all dynamic and static trials
+        # this is currently needed even if saved report is used
+        trials_dyn = list()
+        trials_static = list()
+        _trials_avg = dict()
+        for session in sessions:
+            _trials_avg[session] = list()
+            for tag in dyn_tags:
+                if enfs[session]['dynamic'][tag]:
+                    if signals.canceled:
+                        return None
+                    c3dfile = sessionutils._enf2other(enfs[session]['dynamic'][tag][0], 'c3d')
+                    tri = Trial(c3dfile)
+                    trials_dyn.append(tri)
+                    _trials_avg[session].append(tri)
+            if enfs[session]['static'][static_tag]:
+                c3dfile = sessionutils._enf2other(enfs[session]['static']['Static'][0], 'c3d')
+                tri = Trial(c3dfile)
+                trials_static.append(tri)
+
+        emg_layout = None
+        tibial_torsion = dict()
+
+        # stuff that's needed to (re)create the figures
+        if not saved_report_data:
+            age = None
+            if info['hetu'] is not None:
+                # compute subject age at session time
+                session_dates = [
+                    sessionutils.get_session_date(session) for session in sessions
+                ]
+                ages = [age_from_hetu(info['hetu'], d) for d in session_dates]
+                age = max(ages)
+
+            # create Markdown text for patient info
+            patient_info_text = '##### %s ' % (
+                info['fullname'] if info['fullname'] else 'Name unknown'
+            )
+            if info['hetu']:
+                patient_info_text += '(%s)' % info['hetu']
+            patient_info_text += '\n\n'
+            # if age:
+            #     patient_info_text += 'Age at measurement time: %d\n\n' % age
+            if info['report_notes']:
+                patient_info_text += info['report_notes']
+
+            model_normaldata = dict()
+            avg_trials = list()
+            if not video_only:
+                # load normal data for gait models
+                signals.progress.emit('Loading normal data...', 0)
+                for fn in cfg.general.normaldata_files:
+                    ndata = normaldata.read_normaldata(fn)
+                    model_normaldata.update(ndata)
+                if age is not None:
+                    age_ndata_file = normaldata.normaldata_age(age)
+                    if age_ndata_file:
+                        age_ndata = normaldata.read_normaldata(age_ndata_file)
+                        model_normaldata.update(age_ndata)
+
+                # make average trials for each session
+                avg_trials = [
+                    AvgTrial.from_trials(_trials_avg[session], sessionpath=session)
+                    for session in sessions
+                ]
+                # read some extra data from trials and create supplementary data
+                for tr in trials_dyn:
+                    # read tibial torsion for each trial and make supplementary traces
+                    # these will only be shown for KneeAnglesZ (knee rotation) variable
+                    tors = dict()
+                    tors['R'], tors['L'] = (
+                        tr.subj_params['RTibialTorsion'],
+                        tr.subj_params['LTibialTorsion'],
+                    )
+                    if tors['R'] is None or tors['L'] is None:
+                        logger.warning(
+                            'could not read tibial torsion values from %s' % tr.trialname
+                        )
+                        continue
+                    # include torsion info for all cycles; this is useful when plotting
+                    # isolated cycles
+                    max_cycles = cfg.plot.max_cycles['model']
+                    cycs = tr.get_cycles(cfg.plot.default_cycles['model'])[:max_cycles]
+
+                    for cyc in cycs:
+                        tibial_torsion[cyc] = dict()
+                        for ctxt in tors:
+                            var_ = ctxt + 'KneeAnglesZ'
+                            tibial_torsion[cyc][var_] = dict()
+                            # x = % of gait cycle
+                            tibial_torsion[cyc][var_]['t'] = np.arange(101)
+                            # static tibial torsion value as function of x
+                            # convert radians -> degrees
+                            tibial_torsion[cyc][var_]['data'] = (
+                                np.ones(101) * tors[ctxt] / np.pi * 180
+                            )
+                            tibial_torsion[cyc][var_]['label'] = 'Tib. tors. (%s) % s' % (
+                                ctxt,
+                                tr.trialname,
+                            )
+
+                # in EMG layout, keep chs that are active in any of the trials
+                signals.progress.emit('Reading EMG data', 0)
+                try:
+                    emgs = [tr.emg for tr in trials_dyn]
+                    emg_layout = layouts.rm_dead_channels_multitrial(emgs, cfg.layouts.std_emg)
+                    if not emg_layout:
+                        emg_layout = 'disabled'
+                except GaitDataError:
+                    emg_layout = 'disabled'
+
+                # define layouts
+                # FIXME: should be definable in config
+                _layouts = OrderedDict(
+                    [
+                        ('Patient info', 'patient_info'),
+                        ('Kinematics', cfg.layouts.lb_kinematics),
+                        ('Kinematics average', 'kinematics_average'),
+                        ('Static kinematics', 'static_kinematics'),
+                        ('Static EMG', 'static_emg'),
+                        ('Kinematics + kinetics', cfg.layouts.lb_kin_web),
+                        ('Kinetics', cfg.layouts.lb_kinetics_web),
+                        ('EMG', emg_layout),
+                        ('Kinetics-EMG left', cfg.layouts.lb_kinetics_emg_l),
+                        ('Kinetics-EMG right', cfg.layouts.lb_kinetics_emg_r),
+                        ('Muscle length', cfg.layouts.musclelen),
+                        ('Torso kinematics', cfg.layouts.torso),
+                        ('Time-distance variables', 'time_dist'),
+                    ]
+                )
+
+        # pick desired single variables from model and append
+        # Py2: dict merge below can be done more elegantly once Py2 is dropped
+        pig_singlevars_ = models.pig_lowerbody.varlabels_noside.copy()
+        pig_singlevars_.update(models.pig_lowerbody_kinetics.varlabels_noside)
+        pig_singlevars = sorted(pig_singlevars_.items(), key=lambda item: item[1])
+        singlevars = OrderedDict([(varlabel, [[var]]) for var, varlabel in pig_singlevars])
+        _layouts.update(singlevars)
+
+        # add supplementary data for normal layouts
+        supplementary_default = dict()
+        supplementary_default.update(tibial_torsion)
+
+        dd_opts_multi_upper = list()
+        dd_opts_multi_lower = list()
+
+        # loop through the layouts, create or load figures
         report_data_new = dict()
         for k, (label, layout) in enumerate(_layouts.items()):
             signals.progress.emit('Creating plot: %s' % label, 100 * k / len(_layouts))

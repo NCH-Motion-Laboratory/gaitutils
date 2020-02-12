@@ -118,7 +118,7 @@ def _enf2other(fname, ext):
 
 def get_session_date(sessionpath):
     """Return date when session was recorded (datetime.datetime object)"""
-    enfs = get_session_enfs(sessionpath)
+    enfs = get_enfs(sessionpath)
     x1ds = [_enf2other(fn, 'x1d') for fn in enfs]
     if not x1ds:
         raise GaitDataError('Invalid session %s' % sessionpath)

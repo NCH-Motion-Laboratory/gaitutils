@@ -150,6 +150,7 @@ class WebReportInfoDialog(QtWidgets.QDialog):
         """ Update config and close dialog, if widget inputs are ok. Otherwise
         show an error dialog """
         self.recreate_plots = self.xbRecreatePlots.checkState()
+        self.force_convert_videos = self.xbForceConvertVideos.checkState()
         self.video_only = self.xbVideoOnly.checkState()
         self.hetu = self.lnHetu.text().strip()
         self.fullname = self.lnFullName.text().strip()
@@ -234,6 +235,7 @@ class WebReportDialog(QtWidgets.QDialog):
                 report_notes=dlg_info.report_notes,
             )
             recreate_plots = dlg_info.recreate_plots
+            force_convert_videos = dlg_info.force_convert_videos
             video_only = dlg_info.video_only
             info.update(new_info)
 
@@ -266,7 +268,7 @@ class WebReportDialog(QtWidgets.QDialog):
             vids = _collect_session_videos(session, tags=tags)
             vidfiles.extend(vids)
 
-        if not convert_videos(vidfiles, check_only=True):
+        if force_convert_videos or not convert_videos(vidfiles, check_only=True):
             self.parent._convert_vidfiles(vidfiles, signals)
 
         # launch the report creation thread

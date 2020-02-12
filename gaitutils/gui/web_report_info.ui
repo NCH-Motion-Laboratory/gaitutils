@@ -116,6 +116,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="xbForceConvertVideos">
+     <property name="text">
+      <string>Force video conversion even if videos already exist</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>

@@ -59,7 +59,7 @@
       <item row="11" column="3">
        <widget class="QPushButton" name="btnAddTrials">
         <property name="text">
-         <string>Add single trials...</string>
+         <string>Add C3D files...</string>
         </property>
        </widget>
       </item>
@@ -249,7 +249,7 @@
       <item row="11" column="4">
        <widget class="QPushButton" name="btnAddNexusTrial">
         <property name="text">
-         <string>Add Nexus trial</string>
+         <string>Add current Nexus trial</string>
         </property>
        </widget>
       </item>

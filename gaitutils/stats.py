@@ -385,32 +385,39 @@ def collect_trial_data(
     else:
         models_to_collect = list()
 
+    trial_types = list()
     for trial_ in trials:
         trial = trial_ if isinstance(trial_, Trial) else Trial(trial_)
         logger.info('collecting data for %s' % trial.trialname)
+        trial_types.append(trial.is_static)
+        if any(trial_types) and not all(trial_types):
+            raise GaitDataError('Cannot mix dynamic and static trials')
 
-        for cycle in trial.cycles:
-            trial.set_norm_cycle(cycle)
-            context = cycle.context
-            if cycle.on_forceplate:
-                ncycles[context + '_fp'] += 1
-                ncycles[context] += 1
-            elif not fp_cycles_only:
-                ncycles[context] += 1
+        cycles = [None] if trial.is_static else trial.cycles
+        for cycle in cycles:
+            if not trial.is_static:
+                trial.set_norm_cycle(cycle)
+                context = cycle.context
+                if cycle.on_forceplate:
+                    ncycles[context + '_fp'] += 1
+                    ncycles[context] += 1 
+                elif not fp_cycles_only:
+                    ncycles[context] += 1
 
             # collect model data
             for model in models_to_collect:
                 for var in model.varnames:
-                    # pick data only if var context matches cycle context
-                    # FIXME: should implement context() for models
-                    # (and a filter for context?)
-                    if var[0] != context:
-                        continue
-                    # don't collect kinetics if cycle is not on forceplate
-                    if (
-                        model.is_kinetic_var(var) or fp_cycles_only
-                    ) and not cycle.on_forceplate:
-                        continue
+                    if not trial.is_static:
+                        # pick data only if var context matches cycle context
+                        # FIXME: should implement context() for models
+                        # (and a filter for context?)
+                        if var[0] != context:
+                            continue
+                        # don't collect kinetics if cycle is not on forceplate
+                        if (
+                            model.is_kinetic_var(var) or fp_cycles_only
+                        ) and not cycle.on_forceplate:
+                            continue
                     _, data = trial.get_model_data(var)
                     if np.all(np.isnan(data)):
                         logger.debug('no data for %s/%s' % (trial.trialname, var))
@@ -424,7 +431,7 @@ def collect_trial_data(
 
             for ch in emg_chs_to_collect:
                 # check whether cycle matches channel context
-                if not trial.emg.context_ok(ch, cycle.context):
+                if not trial.is_static and not trial.emg.context_ok(ch, cycle.context):
                     continue
                 # get data on analog sampling grid and compute rms
                 try:

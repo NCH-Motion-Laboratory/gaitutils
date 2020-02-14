@@ -385,18 +385,27 @@ def collect_trial_data(
     else:
         models_to_collect = list()
 
+    trials_static = list()
     for trial_ in trials:
         trial = trial_ if isinstance(trial_, Trial) else Trial(trial_)
         logger.info('collecting data for %s' % trial.trialname)
+        trials_static.append(trial.is_static)
+        if any(trials_static) and not all(trials_static):
+            raise GaitDataError('All trials need to be of same type (either static or dynamic)')
 
-        for cycle in trial.cycles:
-            trial.set_norm_cycle(cycle)
-            context = cycle.context
-            if cycle.on_forceplate:
-                ncycles[context + '_fp'] += 1
-                ncycles[context] += 1
-            elif not fp_cycles_only:
-                ncycles[context] += 1
+        # loop over trial cycles (if dynamic)
+        cycles = [None] if trial.is_static else trial.cycles
+        for cycle in cycles:
+            if not trial.is_static:
+                trial.set_norm_cycle(cycle)
+                context = cycle.context
+                if cycle.on_forceplate:
+                    ncycles[context + '_fp'] += 1
+                    ncycles[context] += 1
+                elif not fp_cycles_only:
+                    ncycles[context] += 1
+            else:
+                context = None
 
             # collect model data
             for model in models_to_collect:
@@ -404,7 +413,7 @@ def collect_trial_data(
                     # pick data only if var context matches cycle context
                     # FIXME: should implement context() for models
                     # (and a filter for context?)
-                    if var[0] != context:
+                    if not trial.is_static and var[0] != context:
                         continue
                     # don't collect kinetics if cycle is not on forceplate
                     if (
@@ -424,7 +433,7 @@ def collect_trial_data(
 
             for ch in emg_chs_to_collect:
                 # check whether cycle matches channel context
-                if not trial.emg.context_ok(ch, cycle.context):
+                if not trial.is_static and not trial.emg.context_ok(ch, cycle.context):
                     continue
                 # get data on analog sampling grid and compute rms
                 try:

@@ -241,7 +241,9 @@ def plot_trials(
         supplementary_data = dict()
 
     if model_normaldata is None:
-        model_normaldata = normaldata.read_all_normaldata()
+        model_normaldata = normaldata.read_default_normaldata()
+
+    emg_normaldata = normaldata.read_emg_normaldata()
 
     use_rms = emg_mode == 'rms'
 
@@ -542,17 +544,24 @@ def plot_trials(
                                     labelsize=cfg.plot_matplotlib.ticks_fontsize,
                                 )
 
-                                ax.set_ylim(_emg_yscale(emg_mode))
+                                _emg_y_extent = _emg_yscale(emg_mode)
+                                ax.set_ylim(_emg_y_extent)
 
-                                if normalized and var in cfg.emg.channel_normaldata:
-                                    emgbar_ind = cfg.emg.channel_normaldata[var]
-                                    for inds in emgbar_ind:
-                                        emg_normal_lines_ = ax.axvspan(
-                                            inds[0],
-                                            inds[1],
-                                            alpha=cfg.plot.emg_normals_alpha,
-                                            color=cfg.plot.emg_normals_color,
-                                        )
+                                if normalized and var in emg_normaldata:
+                                    ndata = emg_normaldata[var][None, :]
+                                    # create a color strip below the EMG trace, according to normal data
+                                    logger.debug(_emg_y_extent)
+                                    extent_y0 = _emg_y_extent[0]
+                                    # strip width is total y scale / 10
+                                    extent_y1 = extent_y0 + (_emg_y_extent[1] - _emg_y_extent[0]) / 10.
+                                    emg_normal_lines_ = ax.imshow(
+                                        ndata,
+                                        extent=[0, 100, extent_y0, extent_y1],
+                                        aspect='auto',
+                                        cmap='Reds',
+                                        vmin=0,
+                                        vmax=1,
+                                    )
 
                     elif var is None:
                         continue

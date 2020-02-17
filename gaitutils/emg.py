@@ -161,7 +161,7 @@ class AvgEMG(EMG):
     def status_ok(self, chname):
         return self.has_channel(chname)
 
-    def _is_valid_emg(self, chname):
+    def _is_valid_emg(self, data):
         raise RuntimeError('signal check not implemented for averaged EMG')
 
     def filt(self, y, passband):

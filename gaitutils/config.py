@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def _handle_cfg_defaults(cfg):
-    """Handle some deprecated/changed types for user convenience"""
+    """Handle deprecated and default values"""
     if not isinstance(cfg.plot.emg_yscale, float):
         ysc = cfg.plot.emg_yscale[1]
         logger.warning('emg_yscale was changed to float, using %g' % ysc)
@@ -29,6 +29,9 @@ def _handle_cfg_defaults(cfg):
     if cfg.general.normaldata_files == 'default':
         fn = resource_filename('gaitutils', 'data/normal.gcd')
         cfg.general['normaldata_files'].value = [fn]
+    if cfg.emg.normaldata_file == 'default':
+        fn = resource_filename('gaitutils', 'data/emg_normaldata.json')
+        cfg.emg['normaldata_file'].value = fn
     if cfg.general.videoconv_path == 'default':
         fn = resource_filename('gaitutils', 'thirdparty/ffmpeg2theora.exe')
         cfg.general['videoconv_path'].value = fn

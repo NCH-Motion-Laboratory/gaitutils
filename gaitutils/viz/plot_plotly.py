@@ -234,7 +234,9 @@ def plot_trials(
         supplementary_data = dict()
 
     if model_normaldata is None:
-        model_normaldata = normaldata.read_all_normaldata()
+        model_normaldata = normaldata.read_default_normaldata()
+
+    emg_normaldata = normaldata.read_emg_normaldata()
 
     use_rms = emg_mode == 'rms'
 
@@ -293,33 +295,39 @@ def plot_trials(
                             line=dict(width=0),
                         )  # no border lines
                         fig.add_trace(ntrace, i + 1, j + 1)
-                        model_normaldata_legend = False
+                        model_normaldata_legend = False  # mark as plotted
 
                 elif (
-                    var in cfg.emg.channel_labels and var in cfg.emg.channel_normaldata
+                    var in cfg.emg.channel_labels and var in emg_normaldata
                 ):
-                    emgbar_ind = cfg.emg.channel_normaldata[var]
-                    for inds in emgbar_ind:
-                        # simulate x range fill by high y values
-                        # NOTE: using big values (>~1e3) for the normal bar height triggers a plotly bug
-                        # and screws up the normal bars (https://github.com/plotly/plotly.py/issues/1008)
-                        fillcolor = merge_color_and_opacity(
-                            cfg.plot.emg_normals_color, cfg.plot.emg_normals_alpha
-                        )
-                        ntrace = _plotly_fill_between(
-                            inds,
-                            [-1e1] * 2,
-                            [1e1] * 2,
-                            name='EMG norm.',
-                            legendgroup='EMG norm.',
-                            showlegend=emg_normaldata_legend,
-                            fillcolor=fillcolor,
-                            line=dict(width=0),
-                        )  # no border lines
-                        fig.add_trace(ntrace, i + 1, j + 1)
-                        emg_normaldata_legend = False
+                    # build x, y, z triplets for heatmap
+                    # cell size is automatically determined from y values, which is a bit clumsy
+                    # the idea is to build two strips of normal data at nearby y values, which fixes
+                    # the cell size at a small value (dy)
+                    _emg_y_extent = _emg_yscale(emg_mode)
+                    extent_y0 = _emg_y_extent[0]
+                    extent_y1 = extent_y0 + (_emg_y_extent[1] - _emg_y_extent[0]) / 20.                    
+                    Npts = 101
+                    x = np.concatenate((np.linspace(0, 100, Npts), np.linspace(0, 100, Npts)))
+                    y = np.concatenate((extent_y0 * np.ones(Npts), extent_y1 * np.ones(Npts)))
+                    z = np.concatenate((emg_normaldata[var], emg_normaldata[var]))
+                    heatmap = go.Heatmap(
+                        z=z,
+                        y=y,
+                        x=x,
+                        colorscale='reds',
+                        zmin=0,
+                        zmax=1,
+                        opacity=.5,
+                        showscale=False,
+                        name='EMG norm.',
+                        legendgroup='EMG norm.',
+                        showlegend=emg_normaldata_legend,
+                    )
+                    fig.add_trace(heatmap, i + 1, j + 1)
+                    emg_normaldata_legend = False  # mark as plotted
 
-    # plot actual data
+    # plot the actual data
     for trial in trials:
         # get Gaitcycle instances from trial according to cycle specs
         model_cycles_ = trial.get_cycles(

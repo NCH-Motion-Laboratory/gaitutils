@@ -11,6 +11,8 @@ from builtins import zip
 import numpy as np
 import openpyxl
 import os.path as op
+import json
+import io
 import logging
 
 from . import cfg, sessionutils, GaitDataError, numutils
@@ -23,9 +25,11 @@ from .envutils import lru_cache_checkfile
 logger = logging.getLogger(__name__)
 
 
-def read_all_normaldata(age=None):
-    """ Read all normal data defined in config. If age is specified, include
-    age specific normaldata. """
+def read_default_normaldata(age=None):
+    """Read all normal data defined in config.
+    
+    If age is specified, include age specific normaldata.
+    """
     model_normaldata = dict()
     # we generously accept both list and string
     if isinstance(cfg.general.normaldata_files, list):
@@ -44,13 +48,35 @@ def read_all_normaldata(age=None):
 
 
 def read_session_normaldata(session):
-    """Reads normal data according to patient info in current session"""
+    """Read normal data according to patient info in current session"""
     info = sessionutils.load_info(session)
     if info is not None and 'hetu' in info:
         age = age_from_hetu(info['hetu'])
     else:
         age = None
-    return read_all_normaldata(age)
+    return read_default_normaldata(age)
+
+
+def read_emg_normaldata(filename=None):
+    """Read JSON formatted EMG normal data.
+
+    The normal data is stored as a dict, where keys correspond to electrode names
+    and values are 101-element lists (returned as numpy arrays). The values correspond
+    to EMG activation in the range 0..1 and the index corresponds to % of the gait cycle.
+    """
+    if filename is None:
+        filename = cfg.emg.normaldata_file
+        #filename = r"C:\Users\hus20664877\gaitutils\emg_normaldata.json"
+    logger.debug('reading EMG normal data from %s' % filename)
+    if not op.isfile(filename):
+        raise GaitDataError('No such file %s' % filename)
+    with io.open(filename, 'r', encoding='utf-8') as f:
+        emg_normals = json.load(f)
+    for k, v in emg_normals.items():
+        if len(v) != 101:
+            raise GaitDataError('EMG normal data has invalid dims')
+    # convert lists into numpy arrays
+    return {k: np.array(v) for k, v in emg_normals.items()}
 
 
 @lru_cache_checkfile

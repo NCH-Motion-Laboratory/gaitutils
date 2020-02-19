@@ -297,19 +297,21 @@ def plot_trials(
                         fig.add_trace(ntrace, i + 1, j + 1)
                         model_normaldata_legend = False  # mark as plotted
 
-                elif (
-                    var in cfg.emg.channel_labels and var in emg_normaldata
-                ):
+                elif var in cfg.emg.channel_labels and var in emg_normaldata:
                     # build x, y, z triplets for heatmap
                     # cell size is automatically determined from y values, which is a bit clumsy
                     # the idea is to build two strips of normal data at nearby y values, which fixes
                     # the cell size at a small value (dy)
                     _emg_y_extent = _emg_yscale(emg_mode)
                     extent_y0 = _emg_y_extent[0]
-                    extent_y1 = extent_y0 + (_emg_y_extent[1] - _emg_y_extent[0]) / 20.                    
+                    extent_y1 = extent_y0 + (_emg_y_extent[1] - _emg_y_extent[0]) / 20.0
                     Npts = 101
-                    x = np.concatenate((np.linspace(0, 100, Npts), np.linspace(0, 100, Npts)))
-                    y = np.concatenate((extent_y0 * np.ones(Npts), extent_y1 * np.ones(Npts)))
+                    x = np.concatenate(
+                        (np.linspace(0, 100, Npts), np.linspace(0, 100, Npts))
+                    )
+                    y = np.concatenate(
+                        (extent_y0 * np.ones(Npts), extent_y1 * np.ones(Npts))
+                    )
                     z = np.concatenate((emg_normaldata[var], emg_normaldata[var]))
                     heatmap = go.Heatmap(
                         z=z,
@@ -318,7 +320,7 @@ def plot_trials(
                         colorscale='reds',
                         zmin=0,
                         zmax=1,
-                        opacity=.5,
+                        opacity=0.5,
                         showscale=False,
                         name='EMG norm.',
                         legendgroup='EMG norm.',

@@ -66,7 +66,7 @@ def read_emg_normaldata(filename=None):
     """
     if filename is None:
         filename = cfg.emg.normaldata_file
-        #filename = r"C:\Users\hus20664877\gaitutils\emg_normaldata.json"
+        # filename = r"C:\Users\hus20664877\gaitutils\emg_normaldata.json"
     logger.debug('reading EMG normal data from %s' % filename)
     if not op.isfile(filename):
         raise GaitDataError('No such file %s' % filename)

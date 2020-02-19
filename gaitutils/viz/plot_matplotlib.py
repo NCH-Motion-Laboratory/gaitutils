@@ -553,7 +553,10 @@ def plot_trials(
                                     logger.debug(_emg_y_extent)
                                     extent_y0 = _emg_y_extent[0]
                                     # strip width is total y scale / 10
-                                    extent_y1 = extent_y0 + (_emg_y_extent[1] - _emg_y_extent[0]) / 10.
+                                    extent_y1 = (
+                                        extent_y0
+                                        + (_emg_y_extent[1] - _emg_y_extent[0]) / 10.0
+                                    )
                                     emg_normal_lines_ = ax.imshow(
                                         ndata,
                                         extent=[0, 100, extent_y0, extent_y1],

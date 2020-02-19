@@ -400,7 +400,7 @@ def collect_trial_data(
                 context = cycle.context
                 if cycle.on_forceplate:
                     ncycles[context + '_fp'] += 1
-                    ncycles[context] += 1 
+                    ncycles[context] += 1
                 elif not fp_cycles_only:
                     ncycles[context] += 1
 

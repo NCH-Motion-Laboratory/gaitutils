@@ -54,7 +54,7 @@ class QDictEditWindow(QtWidgets.QDialog):
         buttonbox.accepted.connect(self.accept)
         buttonbox.rejected.connect(self.reject)
 
-        box_layout.add
+        #box_layout.add
         box_layout.addWidget(buttonbox)
 
         # generate the grid layout from the input data

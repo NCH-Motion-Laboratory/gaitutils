@@ -15,13 +15,13 @@ TODO:
 from PyQt5 import QtWidgets
 
 
-class QDictEditWindow(QtWidgets.QDialog):
+class QCompoundEditor(QtWidgets.QDialog):
 
     def __init__(self, data, key_hdr=None, val_hdr=None, parent=None):
 
         self.data = data
         self.is_list = isinstance(data, list)
-        super(QDictEditWindow, self).__init__(parent=parent)
+        super(QCompoundEditor, self).__init__(parent=parent)
         # the root layout
         box_layout = QtWidgets.QVBoxLayout()
         # the scroll area
@@ -34,8 +34,8 @@ class QDictEditWindow(QtWidgets.QDialog):
         #
         hdr_widget = QtWidgets.QWidget()
         hdr_grid = QtWidgets.QGridLayout(hdr_widget)
-        hdr_grid.addWidget(QtWidgets.QLabel('foo'), 0, 0)
-        hdr_grid.addWidget(QtWidgets.QLabel('bar'), 0, 1)
+        hdr_grid.addWidget(QtWidgets.QLabel(key_hdr), 0, 0)
+        hdr_grid.addWidget(QtWidgets.QLabel(val_hdr), 0, 1)
 
         box_layout.addWidget(hdr_widget)
         box_layout.addWidget(scroll)
@@ -85,6 +85,6 @@ if __name__ == '__main__':
     #data = ['Toe standing', 'Unipedal right', 'Unipedal left']
     data = {(7, 12): 'Z:\\PXD_files\\muscle_length_7_12.xlsx', (3, 6): 'Z:\\PXD_files\\muscle_length_3_6.xlsx', (13, 19): 'Z:\\PXD_files\\muscle_length_13_19.xlsx'}
     #data = [['AnkleAnglesX', 'AnkleAnglesY', 'AnkleAnglesZ'], ['ForeFootAnglesX', 'ForeFootAnglesZ', 'ForeFootAnglesY']]
-    window = QDictEditWindow(data)
+    window = QCompoundEditor(data, key_hdr='Key', val_hdr='Value')
     window.show()
     app.exec_()

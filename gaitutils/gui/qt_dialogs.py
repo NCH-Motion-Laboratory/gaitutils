@@ -82,7 +82,7 @@ def qt_dir_chooser():
 
 
 class QCompoundEditor(QtWidgets.QDialog):
-
+    """WIP: copy from qt_dictedit_proto.py"""
     def __init__(self, data, key_hdr=None, val_hdr=None, parent=None):
 
         self.data = data

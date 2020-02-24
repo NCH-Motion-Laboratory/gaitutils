@@ -13,69 +13,54 @@ TODO:
 """
 
 from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QDialogButtonBox, QPushButton
 
 
 class QCompoundEditor(QtWidgets.QDialog):
 
-    def __init__(self, data, key_hdr=None, val_hdr=None, parent=None):
-
-        self.data = data
-        self.is_list = isinstance(data, list)
+    def __init__(self, data, key_hdr=None, val_hdr=None, parent=None):        
         super(QCompoundEditor, self).__init__(parent=parent)
-        # the root layout
-        box_layout = QtWidgets.QVBoxLayout()
-        # the scroll area
-        scroll = QtWidgets.QScrollArea()
-        scroll.setWidgetResizable(True)
-        # we cannot directly add the layout to the scroll area, but have to
-        # use a proxy widget that is a QWidget instance
-        scroll_contents = QtWidgets.QWidget()
-        scroll.setWidget(scroll_contents)
-        #
-        hdr_widget = QtWidgets.QWidget()
-        hdr_grid = QtWidgets.QGridLayout(hdr_widget)
-        hdr_grid.addWidget(QtWidgets.QLabel(key_hdr), 0, 0)
-        hdr_grid.addWidget(QtWidgets.QLabel(val_hdr), 0, 1)
+        root_layout = QtWidgets.QVBoxLayout()
+        self.datable = QtWidgets.QTableWidget()
+        self.data = data
+        self.list_mode = isinstance(data, list)
+        self.buttonbox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        insertbutton = QPushButton('Insert')
+        deletebutton = QPushButton('Delete')
+        self.buttonbox.addButton(insertbutton, QDialogButtonBox.ActionRole)
+        self.buttonbox.addButton(deletebutton, QDialogButtonBox.ActionRole)
+        self.datable = QtWidgets.QTableWidget()
+        if self.list_mode:
+            self._init_for_list()
+        else:
+            self._init_for_dict()
+        root_layout.addWidget(self.datable)
+        root_layout.addWidget(self.buttonbox)
+        self.datable.resizeColumnsToContents()
+        self.datable.setSelectionBehavior(QtWidgets.QTableView.SelectRows)
+        self.setLayout(root_layout)
 
-        box_layout.addWidget(hdr_widget)
-        box_layout.addWidget(scroll)
+    def _init_for_dict(self):
+        self.datable.setColumnCount(2)
+        self.datable.setHorizontalHeaderLabels(['Key', 'Value'])
+        for k, (key, val) in enumerate(data.items()):
+            key = str(key)
+            self.datable.insertRow(k)
+            self.datable.setItem(k, 0, QtWidgets.QTableWidgetItem(key))
+            self.datable.setItem(k, 1, QtWidgets.QTableWidgetItem(val))
 
-        grid_layout = QtWidgets.QGridLayout(scroll_contents)
-
-        std_buttons = QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
-        buttonbox = QtWidgets.QDialogButtonBox(std_buttons)
-
-        add_button = QtWidgets.QPushButton('Add')
-        del_button = QtWidgets.QPushButton('Delete')
-        buttonbox.addButton(add_button, QtWidgets.QDialogButtonBox.ActionRole)
-        buttonbox.addButton(del_button, QtWidgets.QDialogButtonBox.ActionRole)
-        #loadButton.clicked.connect(self.load_config_dialog)
-        #saveButton.clicked.connect(self.save_config_dialog)
-        buttonbox.accepted.connect(self.accept)
-        buttonbox.rejected.connect(self.reject)
-
-        #box_layout.add
-        box_layout.addWidget(buttonbox)
-
-        # generate the grid layout from the input data
-        if self.is_list:
-            for k, item in enumerate(self.data):
-                le_val = QtWidgets.QLineEdit()
-                grid_layout.addWidget(le_val, k, 0)
-                le_val.setText(str(item))
-        else:  # dict
-            for k, (key, val) in enumerate(self.data.items()):
-                le_key = QtWidgets.QLineEdit()
-                grid_layout.addWidget(le_key, k, 0)
-                le_key.setText(str(key))
-                le_val = QtWidgets.QLineEdit()
-                grid_layout.addWidget(le_val, k, 1)
-                le_val.setText(str(val))
-        self.setLayout(box_layout)
+    def _init_for_list(self):
+        self.datable.setColumnCount(1)
+        self.datable.setHorizontalHeaderLabels(['Value'])
+        for k, val in enumerate(data):
+            key = str(key)
+            self.datable.insertRow(k)
+            self.datable.setItem(k, 0, QtWidgets.QTableWidgetItem(val))
 
     def _add_item(self):
         """Add a new dict/list item"""
         pass
+
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])

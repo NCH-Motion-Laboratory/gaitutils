@@ -18,17 +18,22 @@ from PyQt5.QtWidgets import QDialogButtonBox, QPushButton
 
 class QCompoundEditor(QtWidgets.QDialog):
 
-    def __init__(self, data, key_hdr=None, val_hdr=None, parent=None):        
+    def __init__(self, data, parent=None):
         super(QCompoundEditor, self).__init__(parent=parent)
         root_layout = QtWidgets.QVBoxLayout()
         self.datable = QtWidgets.QTableWidget()
         self.data = data
         self.list_mode = isinstance(data, list)
+        # create the button box
         self.buttonbox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         insertbutton = QPushButton('Insert')
         deletebutton = QPushButton('Delete')
         self.buttonbox.addButton(insertbutton, QDialogButtonBox.ActionRole)
         self.buttonbox.addButton(deletebutton, QDialogButtonBox.ActionRole)
+        insertbutton.clicked.connect(self._insert_item)
+        deletebutton.clicked.connect(self._delete_item)
+        self.buttonbox.accepted.connect(self.accept)
+        self.buttonbox.rejected.connect(self.reject)
         self.datable = QtWidgets.QTableWidget()
         if self.list_mode:
             self._init_for_list()
@@ -41,8 +46,10 @@ class QCompoundEditor(QtWidgets.QDialog):
         self.setLayout(root_layout)
 
     def _init_for_dict(self):
+        """Init table for dict data"""
         self.datable.setColumnCount(2)
         self.datable.setHorizontalHeaderLabels(['Key', 'Value'])
+        #self.datable.setVerticalHeaderLabels()
         for k, (key, val) in enumerate(data.items()):
             key = str(key)
             self.datable.insertRow(k)
@@ -50,16 +57,42 @@ class QCompoundEditor(QtWidgets.QDialog):
             self.datable.setItem(k, 1, QtWidgets.QTableWidgetItem(val))
 
     def _init_for_list(self):
+        """Init table for list data"""
         self.datable.setColumnCount(1)
         self.datable.setHorizontalHeaderLabels(['Value'])
         for k, val in enumerate(data):
-            key = str(key)
+            val = str(val)
             self.datable.insertRow(k)
             self.datable.setItem(k, 0, QtWidgets.QTableWidgetItem(val))
 
-    def _add_item(self):
-        """Add a new dict/list item"""
-        pass
+    def _insert_item(self):
+        """Insert a new dict/list item at current position"""
+        pos = self.datable.currentRow()
+        self.datable.insertRow(pos)
+
+    def _delete_item(self):
+        """Delete dict/list item at current position"""
+        pos = self.datable.currentRow()
+        self.datable.removeRow(pos)
+
+    def _collect_column(self, col):
+        """Collect data from column col"""
+        items = (self.datable.item(row, col) for row in range(self.datable.rowCount()))
+        return (_item.text() for _item in items)
+
+    def accept(self):
+        """Do some sanity checks, close dialog if ok"""
+        if self.list_mode:
+            self.data = self._collect_column(0)
+        else:
+            keys, vals = self._collect_column(0), self._collect_column(1)
+            self.data = {k: v for k, v in zip(keys, vals)}
+        self.done(QtWidgets.QDialog.Accepted)
+
+
+class QCompoundEditorList(QCompoundEditor):
+    
+
 
 
 if __name__ == '__main__':
@@ -70,6 +103,7 @@ if __name__ == '__main__':
     #data = ['Toe standing', 'Unipedal right', 'Unipedal left']
     data = {(7, 12): 'Z:\\PXD_files\\muscle_length_7_12.xlsx', (3, 6): 'Z:\\PXD_files\\muscle_length_3_6.xlsx', (13, 19): 'Z:\\PXD_files\\muscle_length_13_19.xlsx'}
     #data = [['AnkleAnglesX', 'AnkleAnglesY', 'AnkleAnglesZ'], ['ForeFootAnglesX', 'ForeFootAnglesZ', 'ForeFootAnglesY']]
-    window = QCompoundEditor(data, key_hdr='Key', val_hdr='Value')
-    window.show()
-    app.exec_()
+    dlg = QCompoundEditor(data)
+    dlg.show()
+    if dlg.exec_():
+        print(dlg.data)

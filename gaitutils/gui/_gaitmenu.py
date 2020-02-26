@@ -91,6 +91,9 @@ def _exception_msg(e):
     """Return text representation of exception e"""
     # for our own error class, we know that a neat message is there
     # otherwise, we have no idea, so use generic repr()
+    # XXX: some exception classes (e.g. IOError) repr doesn't print all relevant information
+    # (e.g. the file name), however it looks like the safest choice (str() has its own issues)
+    # this can probably be improved for Py3
     return e.message if isinstance(e, GaitDataError) else repr(e)
 
 

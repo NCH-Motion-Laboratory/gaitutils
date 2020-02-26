@@ -175,10 +175,18 @@ def dash_report(
         if not any(enfs[session]['dynamic'][tag] for tag in dyn_tags):
             raise GaitDataError('No tagged dynamic trials found for %s' % (session))
         # collect static trial (at most 1 per session)
+        # -prefer enfs that have a corresponding c3d file, even for a video-only report
+        # (so that the same static gets used for both video-only and full reports)
+        # -prefer the newest enf file
         sts = sessionutils.get_enfs(session, trial_type='static')
-        if len(sts) > 1:
-            logger.warning('multiple static trials for %s, using last one' % session)
-        static_trial = sts[-1:]
+        for st in reversed(sts):  # newest first
+            st_c3d = sessionutils.enf_to_trialfile(st, '.c3d')
+            if op.isfile(st_c3d):
+                static_trial = [st]
+                break
+        else:
+            # no c3ds were found - just pick the latest static trial
+            static_trial = sts[-1:]
         enfs[session]['static'][static_tag] = static_trial
         if static_trial:
             data_enfs.extend(static_trial)

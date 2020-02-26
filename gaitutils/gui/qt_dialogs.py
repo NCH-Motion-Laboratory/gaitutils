@@ -223,6 +223,9 @@ class OptionsDialog(QtWidgets.QDialog):
                         return itemname, _widget.text()
                 elif isinstance(_widget, QtWidgets.QCheckBox):
                     item.value = _widget.isChecked()
+                elif isinstance(_widget, QtWidgets.QPushButton):
+                    # compound editor; value should already be up to date
+                    pass
                 else:
                     raise RuntimeError('Invalid input widget class, how come?')
         _handle_cfg_defaults(cfg)

@@ -114,8 +114,11 @@ def time_dist_barchart(
         subplot_titles=ctxts,
     )
 
+    # ordering the bars properly is a bit tricky. seemingly, there's no way to control
+    # ordering of bars within a category, and they seem to be plotted from bottom to up by default.
+    # a dirty solution is to plot in reversed order and then reverse the legend also.
     varlabels = [s + ' ' for s in vars]  # hack: add spaces to create some margin
-    for condn, cond in enumerate(conds):
+    for condn, cond in enumerate(reversed(conds)):
         barcolor = cfg.plot.colors[condn]
         for k, ctxt in enumerate(ctxts, 1):
             show_legend = k == 1
@@ -134,7 +137,7 @@ def time_dist_barchart(
                 marker_color=barcolor,
             )
             fig.add_trace(trace_l, 1, k)
-
+            fig['layout']['legend']['traceorder'] = 'reversed'
             # increase var label size a bit
             fig['layout']['yaxis%d' % k].update(tickfont={'size': label_fontsize + 2})
             fig['layout']['xaxis%d' % k].update(

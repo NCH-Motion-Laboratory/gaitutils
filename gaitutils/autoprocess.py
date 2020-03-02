@@ -383,7 +383,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
                 return None
 
             # crop trial around events
-            if nexus_ver >= 2.5:
+            if nexus_ver['major'] >= 2 and nexus_ver['minor'] >= 5:
                 evs_all = list(itertools.chain.from_iterable(evs.values()))
                 if evs_all:
                     # when setting roi, do not go beyond trial range

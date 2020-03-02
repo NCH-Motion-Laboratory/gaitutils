@@ -103,19 +103,23 @@ def pid():
 
 
 def true_ver():
-    """ Tries to return the actual version of the running Nexus process
-    (API does not do that). Hackish and probably unreliable """
+    """Tries to return the actual version of the running Nexus process
+    (API does not do that). Hackish and probably unreliable. Returns dict
+    of major and minor version number"""
     PROCNAME = "Nexus.exe"
     for proc in psutil.process_iter():
         try:
             if proc.name() == PROCNAME:
                 exname = proc.exe()
                 vind = exname.find('2.')  # assumes ver >2.
-                if vind == -1:
+                vend = exname.find('\\Nexus.exe')
+                if vind == -1 or vend == -1:
                     return None
                 try:
-                    return float(exname[vind : vind + 3])
-                except ValueError:
+                    ver_str = exname[vind : vend]
+                    vmaj, vmin = ver_str.split('.')
+                    return {'major': int(vmaj), 'minor': int(vmin)}
+                except ValueError:  # cannot interpret version string
                     return None
         except psutil.AccessDenied:
             pass
@@ -129,10 +133,11 @@ def viconnexus():
 
 
 def close_trial():
-    """Close currently opened trial (if supported)"""
+    """Try to close currently opened Nexus trial"""
     vicon = viconnexus()
+    # this was not supported before Nexus 2.8
     ver = true_ver()
-    if ver is not None and ver >= 2.8:
+    if ver is not None and ver['major'] >= 2 and ver['minor'] >= 8:
         logger.debug('force closing open trial')
         vicon.CloseTrial(5000)
 

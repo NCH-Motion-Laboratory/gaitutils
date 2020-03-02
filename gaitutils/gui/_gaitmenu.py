@@ -129,7 +129,7 @@ class PdfReportDialog(QtWidgets.QDialog):
         if self.fullname and (check_hetu(self.hetu) or not self.hetu):
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
-            qt_message_dialog('Please enter a valid name and hetu')
+            qt_message_dialog('Please enter a name. If hetu (Finnish SSN) is entered, it needs to be valid.')
 
 
 class WebReportInfoDialog(QtWidgets.QDialog):

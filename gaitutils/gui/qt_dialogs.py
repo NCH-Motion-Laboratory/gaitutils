@@ -418,26 +418,3 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
         else:
             self.done(QtWidgets.QDialog.Accepted)
 
-
-class ChooseSessionsDialogWeb(ChooseSessionsDialog):
-    """Web report sessions dialog"""
-
-    def __init__(self, min_sessions=1, max_sessions=3):
-        QtWidgets.QDialog.__init__(self)
-        # load user interface made with designer
-        uifile = resource_filename('gaitutils', 'gui/web_report_sessions.ui')
-        uic.loadUi(uifile, self)
-        # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        self.btnBrowseSession.clicked.connect(self.add_session)
-        self.btnAddNexusSession.clicked.connect(
-            lambda: self.add_session(from_nexus=True)
-        )
-        self.btnClearAll.clicked.connect(self.listSessions.clear)
-        self.btnClearCurrent.clicked.connect(self.listSessions.rm_current_item)
-        self.max_sessions = max_sessions
-        self.min_sessions = min_sessions
-
-
-#    def accept(self):
-#        self.recreate_plots = self.xbRecreatePlots.checkState()
-#        super(ChooseSessionsDialogWeb, self).accept()

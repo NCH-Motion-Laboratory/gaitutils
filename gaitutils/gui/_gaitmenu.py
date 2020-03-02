@@ -29,7 +29,6 @@ from .qt_dialogs import (
     qt_message_dialog,
     qt_yesno_dialog,
     ChooseSessionsDialog,
-    ChooseSessionsDialogWeb,
     qt_matplotlib_window,
     qt_dir_chooser,
 )
@@ -211,7 +210,7 @@ class WebReportDialog(QtWidgets.QDialog):
             return
 
         if sessions is None:
-            dlg = ChooseSessionsDialogWeb()
+            dlg = ChooseSessionsDialog()
             if not dlg.exec_():
                 return
             sessions = dlg.sessions
@@ -967,9 +966,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
             sessions = dlg.sessions
 
         comparison = len(sessions) > 1
-        if comparison:
-            qt_message_dialog('PDF comparison report not supported right now')
-            return
 
         session = sessions[0]
         info = sessionutils.load_info(session)

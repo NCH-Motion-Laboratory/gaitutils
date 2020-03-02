@@ -214,13 +214,13 @@ class WebReportDialog(QtWidgets.QDialog):
             if not dlg.exec_():
                 return
             sessions = dlg.sessions
-
         report_name = web._report_name(sessions)
         existing_names = [item.text for item in self.listActiveReports.items]
         if report_name in existing_names:
             qt_message_dialog('There is already a report for %s' % report_name)
             return
 
+        # gather patient info files and merge them
         session_infos, info = sessionutils._merge_session_info(sessions)
         if info is None:
             qt_message_dialog(
@@ -229,6 +229,9 @@ class WebReportDialog(QtWidgets.QDialog):
                 'patient info.'
             )
             info = sessionutils.default_info()
+        
+        # ask user for info updates
+        # dialog will be prepopulated with the values gathered above
         dlg_info = WebReportInfoDialog(info, check_info=False)
         if dlg_info.exec_():
             new_info = dict(
@@ -241,7 +244,8 @@ class WebReportDialog(QtWidgets.QDialog):
             video_only = dlg_info.video_only
             info.update(new_info)
 
-            # update info files (except session specific keys)
+            # update info files in all sessions according to the user input
+            # exclude the session specific keys
             for session in sessions:
                 update_dict = dict(
                     report_notes=dlg_info.report_notes,
@@ -964,15 +968,48 @@ class Gaitmenu(QtWidgets.QMainWindow):
             if not dlg.exec_():
                 return
             sessions = dlg.sessions
-
         comparison = len(sessions) > 1
-
-        session = sessions[0]
-        info = sessionutils.load_info(session)
+        
+        # gather patient info files and merge them
+        session_infos, info = sessionutils._merge_session_info(sessions)
         if info is None:
+            qt_message_dialog(
+                'Patient files do not match. Sessions may be '
+                'from different patients. Continuing with default '
+                'patient info.'
+            )
             info = sessionutils.default_info()
+        if comparison:
+            info['session_description'] = None
+
         prompt_ = 'Please give additional subject information:'
         dlg_info = PdfReportDialog(info, prompt=prompt_)
+
+        if dlg_info.exec_():
+            new_info = dict(
+                hetu=dlg_info.hetu,
+                fullname=dlg_info.fullname,
+                report_notes=dlg_info.report_notes,
+            )
+            info.update(new_info)
+
+            # update info files (except session specific keys)
+            for session in sessions:
+                update_dict = dict(
+                    report_notes=dlg_info.report_notes,
+                    fullname=dlg_info.fullname,
+                    hetu=dlg_info.hetu,
+                )
+                session_infos[session].update(update_dict)
+                sessionutils.save_info(session, session_infos[session])
+        else:
+            return
+
+
+
+
+
+
         if not dlg_info.exec_():
             return
         new_info = dict(

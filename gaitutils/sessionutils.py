@@ -21,6 +21,7 @@ from . import cfg, GaitDataError
 
 logger = logging.getLogger(__name__)
 
+# the patient info keys
 json_keys = ['fullname', 'hetu', 'session_description', 'report_notes']
 
 
@@ -89,8 +90,9 @@ def _merge_session_info(sessions):
         session: (load_info(session) or default_info()) for session in sessions
     }
     info = default_info()
-    # ignore the session description (does not make sense when merging)
-    for key in ['fullname', 'hetu', 'report_notes']:
+    # merging session descriptions does not really make sense, but return it also
+    # in case we only get a single session
+    for key in json_keys:
         allvals = set([session_infos[session][key] for session in sessions])
         if None in allvals:
             allvals.remove(None)

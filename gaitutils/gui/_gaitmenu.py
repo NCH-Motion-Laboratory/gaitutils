@@ -126,7 +126,7 @@ class PdfReportDialog(QtWidgets.QDialog):
             wname = w.objectName()
             if wname[:2] == 'cb':
                 self.pages[wname[2:]] = w.checkState()
-        if self.fullname and check_hetu(self.hetu):
+        if self.fullname and (check_hetu(self.hetu) or not self.hetu):
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
             qt_message_dialog('Please enter a valid name and hetu')

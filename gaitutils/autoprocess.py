@@ -114,8 +114,11 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
     trials = dict()
 
     vicon = nexus.viconnexus()
-    nexus_ver = nexus.true_ver()
-    logger.debug('detected Nexus version: %g' % nexus_ver)
+    nexus_ver_major, nexus_ver_minor = nexus._nexus_version()
+    if nexus_ver_major is not None:
+        logger.info(
+            'detected Nexus version: %d.%d' % (nexus_ver_major, nexus_ver_minor)
+        )
     # close trial to prevent 'Save trial?' dialog on first open
     nexus.close_trial()
 
@@ -383,7 +386,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
                 return None
 
             # crop trial around events
-            if nexus_ver['major'] >= 2 and nexus_ver['minor'] >= 5:
+            if nexus._nexus_ver_greater(2, 5):
                 evs_all = list(itertools.chain.from_iterable(evs.values()))
                 if evs_all:
                     # when setting roi, do not go beyond trial range
@@ -392,6 +395,8 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
                     roiend = min(max(evs_all) + cfg.autoproc.crop_margin, maxfr)
                     # method cannot take numpy.int64
                     vicon.SetTrialRegionOfInterest(int(roistart), int(roiend))
+            else:
+                logger.info('current Nexus API version does not support cropping')
 
             eclipse_str = '%s,%s' % (
                 cfg.autoproc.enf_descriptions['ok'],

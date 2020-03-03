@@ -102,28 +102,37 @@ def pid():
     return None
 
 
-def true_ver():
+def _nexus_version():
     """Tries to return the actual version of the running Nexus process
     (API does not do that). Hackish and probably unreliable. Returns dict
-    of major and minor version number"""
+    of major and minor version number if successful, otherwise (None, None)"""
     PROCNAME = "Nexus.exe"
     for proc in psutil.process_iter():
         try:
             if proc.name() == PROCNAME:
                 exname = proc.exe()
-                vind = exname.find('2.')  # assumes ver >2.
+                vstart = exname.find('2.')  # assumes ver >2.
                 vend = exname.find('\\Nexus.exe')
-                if vind == -1 or vend == -1:
-                    return None
+                if vstart == -1 or vend == -1:
+                    return None, None
                 try:
-                    ver_str = exname[vind : vend]
+                    ver_str = exname[vstart:vend]
                     vmaj, vmin = ver_str.split('.')
-                    return {'major': int(vmaj), 'minor': int(vmin)}
+                    return int(vmaj), int(vmin)
                 except ValueError:  # cannot interpret version string
-                    return None
+                    return None, None
         except psutil.AccessDenied:
             pass
-    return None
+    return None, None
+
+
+def _nexus_ver_greater(major, minor):
+    """Checks if running Nexus version is at least the given version"""
+    vmaj, vmin = _nexus_version()
+    if vmaj is None:
+        return False
+    else:
+        return vmaj >= major and vmin >= minor
 
 
 def viconnexus():
@@ -136,10 +145,11 @@ def close_trial():
     """Try to close currently opened Nexus trial"""
     vicon = viconnexus()
     # this was not supported before Nexus 2.8
-    ver = true_ver()
-    if ver is not None and ver['major'] >= 2 and ver['minor'] >= 8:
-        logger.debug('force closing open trial')
+    if _nexus_ver_greater(2, 8):
+        logger.info('force closing open trial')
         vicon.CloseTrial(5000)
+    else:
+        logger.info('current Nexus API version does not support closing trials')
 
 
 def get_subjectnames(single_only=True):

@@ -583,12 +583,14 @@ def plot_trials(
         # constrained_layout does not work well with suptitle
         # (https://github.com/matplotlib/matplotlib/issues/13672)
         # hack: add extra \n to create whitespace
+        # XXX Py3: this hack is no longer necessary in matplotlib 3.x or newer
         if figtitle and figtitle[-1] != '\n':
             figtitle = figtitle + '\n'
         fig.suptitle(figtitle, fontsize=10)
 
     if legend:
         # put legend into its own axis, since constrained_layout does not handle fig.legend yet
+        # see https://github.com/matplotlib/matplotlib/issues/13023
         axleg = fig.add_subplot(gridspec_[i + 1, :])
         axleg.axis('off')
         leg_entries_ = OrderedDict()

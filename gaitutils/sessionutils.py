@@ -52,7 +52,8 @@ def load_info(session):
         with io.open(fname, 'r', encoding='utf-8') as f:
             try:
                 info = json.load(f)
-                extra_keys = set(info.keys()) - set(json_keys)
+                # check extra keys, but do not complain about our obsoleted report_notes key
+                extra_keys = set(info.keys()) - set(json_keys) - set('report_notes')
                 if extra_keys:
                     logger.warning(
                         'Extra keys %s in patient info file %s' % (extra_keys, fname)

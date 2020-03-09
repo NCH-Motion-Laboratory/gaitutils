@@ -99,9 +99,14 @@ def _exception_msg(e):
 class PdfReportDialog(QtWidgets.QDialog):
     """Ask for patient/session info and report options"""
 
-    def __init__(self, info, prompt='Hello', parent=None):
+    def __init__(self, info, comparison=False, prompt='Hello', parent=None):
         super(self.__class__, self).__init__()
-        uifile = resource_filename('gaitutils', 'gui/pdf_report_dialog.ui')
+        if comparison:
+            uifile = resource_filename(
+                'gaitutils', 'gui/pdf_report_dialog_comparison.ui'
+            )
+        else:
+            uifile = resource_filename('gaitutils', 'gui/pdf_report_dialog.ui')
         uic.loadUi(uifile, self)
         # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.prompt.setText(prompt)
@@ -128,7 +133,9 @@ class PdfReportDialog(QtWidgets.QDialog):
         if self.fullname and (check_hetu(self.hetu) or not self.hetu):
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
-            qt_message_dialog('Please enter a name. If hetu (Finnish SSN) is entered, it needs to be valid.')
+            qt_message_dialog(
+                'Please enter a name. If hetu (Finnish SSN) is entered, it needs to be valid.'
+            )
 
 
 class WebReportInfoDialog(QtWidgets.QDialog):
@@ -145,7 +152,6 @@ class WebReportInfoDialog(QtWidgets.QDialog):
                 self.lnFullName.setText(info['fullname'])
             if info['hetu'] is not None:
                 self.lnHetu.setText(info['hetu'])
-
 
     def accept(self):
         """ Update config and close dialog, if widget inputs are ok. Otherwise
@@ -227,15 +233,12 @@ class WebReportDialog(QtWidgets.QDialog):
                 'patient info.'
             )
             info = sessionutils.default_info()
-        
+
         # ask user for info updates
         # dialog will be prepopulated with the values gathered above
         dlg_info = WebReportInfoDialog(info, check_info=False)
         if dlg_info.exec_():
-            new_info = dict(
-                hetu=dlg_info.hetu,
-                fullname=dlg_info.fullname,
-            )
+            new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,)
             recreate_plots = dlg_info.recreate_plots
             force_convert_videos = dlg_info.force_convert_videos
             video_only = dlg_info.video_only
@@ -244,10 +247,7 @@ class WebReportDialog(QtWidgets.QDialog):
             # update info files in all sessions according to the user input
             # exclude the session specific keys
             for session in sessions:
-                update_dict = dict(
-                    fullname=dlg_info.fullname,
-                    hetu=dlg_info.hetu,
-                )
+                update_dict = dict(fullname=dlg_info.fullname, hetu=dlg_info.hetu,)
                 session_infos[session].update(update_dict)
                 sessionutils.save_info(session, session_infos[session])
         else:
@@ -965,54 +965,40 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 return
             sessions = dlg.sessions
         comparison = len(sessions) > 1
-        
+
         # gather patient info files and merge them
         session_infos, info = sessionutils._merge_session_info(sessions)
-        if info is None:
+        if info is None:  # merge failed
             qt_message_dialog(
                 'Patient files do not match. Sessions may be '
                 'from different patients. Continuing with default '
                 'patient info.'
             )
             info = sessionutils.default_info()
+        # compose a default session description for comparison reports
         if comparison:
-            info['session_description'] = None
+            info['session_description'] = ' / '.join(
+                _info['session_description'] for _info in session_infos.values()
+            )
 
         prompt_ = 'Please give additional subject information:'
-        dlg_info = PdfReportDialog(info, prompt=prompt_)
+        dlg_info = PdfReportDialog(info, prompt=prompt_, comparison=comparison)
 
-        if dlg_info.exec_():
-            new_info = dict(
-                hetu=dlg_info.hetu,
-                fullname=dlg_info.fullname,
-            )
+        if dlg_info.exec_():  # dialog was accepted
+            new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,)
             info.update(new_info)
 
-            # update info files (except session specific keys)
+            # update info files in session dirs (except session specific keys)
             for session in sessions:
-                update_dict = dict(
-                    fullname=dlg_info.fullname,
-                    hetu=dlg_info.hetu,
-                )
+                update_dict = dict(fullname=dlg_info.fullname, hetu=dlg_info.hetu,)
+                # for single session reports, update the session description based on
+                # user input
+                if not comparison:
+                    update_dict['session_description'] = info['session_description']
                 session_infos[session].update(update_dict)
                 sessionutils.save_info(session, session_infos[session])
         else:
             return
-
-
-
-
-
-
-        if not dlg_info.exec_():
-            return
-        new_info = dict(
-            hetu=dlg_info.hetu,
-            fullname=dlg_info.fullname,
-            session_description=dlg_info.session_description,
-        )
-        info.update(new_info)
-        sessionutils.save_info(session, info)
 
         # create the report
         if comparison:
@@ -1020,6 +1006,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 pdf.create_comparison_report,
                 finished_func=self._enable_main_ui,
                 sessions=sessions,
+                info=info,
+                pages=dlg_info.pages,
             )
         else:
             self._run_in_thread(

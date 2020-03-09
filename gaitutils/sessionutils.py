@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 
 # the patient info keys
 json_keys = ['fullname', 'hetu', 'session_description', 'report_notes']
+# exceptions that may occur when saving/loading json
+json_exceptions = (UnicodeDecodeError, EOFError, IOError, TypeError, ValueError)
 
 
 def load_quirks(session):
@@ -33,7 +35,7 @@ def load_quirks(session):
         with io.open(fname, 'r', encoding='utf-8') as f:
             try:
                 quirks.update(json.load(f))
-            except (UnicodeDecodeError, EOFError, IOError, TypeError, ValueError):
+            except json_exceptions:
                 logger.warning('cannot load quirks file %s' % fname)
     return quirks
 
@@ -66,7 +68,7 @@ def load_info(session):
                     # supply default values for missing keys
                     for key in missing_keys:
                         info[key] = default_info()[key]
-            except (UnicodeDecodeError, EOFError, IOError, TypeError, ValueError):
+            except json_exceptions:
                 raise GaitDataError('Error loading patient info file %s' % fname)
     else:
         info = None
@@ -79,7 +81,7 @@ def save_info(session, patient_info):
     try:
         with io.open(fname, 'w', encoding='utf-8') as f:
             f.write(str(json.dumps(patient_info, ensure_ascii=False)))
-    except (UnicodeDecodeError, EOFError, IOError, TypeError):
+    except json_exceptions:
         raise GaitDataError('Error saving patient info file %s ' % fname)
 
 

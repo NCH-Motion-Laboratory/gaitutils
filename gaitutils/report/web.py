@@ -301,8 +301,6 @@ def dash_report(
             patient_info_text += '\n\n'
             # if age:
             #     patient_info_text += 'Age at measurement time: %d\n\n' % age
-            if info['report_notes']:
-                patient_info_text += info['report_notes']
 
             model_normaldata = dict()
             avg_trials = list()

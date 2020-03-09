@@ -22,7 +22,7 @@ from . import cfg, GaitDataError
 logger = logging.getLogger(__name__)
 
 # the patient info keys
-json_keys = ['fullname', 'hetu', 'session_description', 'report_notes']
+json_keys = ['fullname', 'hetu', 'session_description']
 # exceptions that may occur when saving/loading json
 json_exceptions = (UnicodeDecodeError, EOFError, IOError, TypeError, ValueError)
 
@@ -102,9 +102,6 @@ def _merge_session_info(sessions):
             if len(allvals) > 1:
                 logger.warning('name / hetu do not match across sessions')
                 return session_infos, None
-        if key == 'report_notes':
-            if len(allvals) > 1:
-                logger.warning('report notes do not match across sessions')
         # in case of conflicts, this just picks from the last session
         info[key] = allvals.pop() if allvals else None
     return session_infos, info

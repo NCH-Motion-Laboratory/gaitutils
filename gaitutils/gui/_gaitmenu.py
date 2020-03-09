@@ -145,8 +145,7 @@ class WebReportInfoDialog(QtWidgets.QDialog):
                 self.lnFullName.setText(info['fullname'])
             if info['hetu'] is not None:
                 self.lnHetu.setText(info['hetu'])
-            if info['report_notes'] is not None:
-                self.txtNotes.setPlainText(info['report_notes'])
+
 
     def accept(self):
         """ Update config and close dialog, if widget inputs are ok. Otherwise
@@ -156,7 +155,6 @@ class WebReportInfoDialog(QtWidgets.QDialog):
         self.video_only = self.xbVideoOnly.checkState()
         self.hetu = self.lnHetu.text().strip()
         self.fullname = self.lnFullName.text().strip()
-        self.report_notes = str(self.txtNotes.toPlainText()).strip()
         if self.check_info:
             ok = self.fullname and check_hetu(self.hetu)
         else:
@@ -237,7 +235,6 @@ class WebReportDialog(QtWidgets.QDialog):
             new_info = dict(
                 hetu=dlg_info.hetu,
                 fullname=dlg_info.fullname,
-                report_notes=dlg_info.report_notes,
             )
             recreate_plots = dlg_info.recreate_plots
             force_convert_videos = dlg_info.force_convert_videos
@@ -248,7 +245,6 @@ class WebReportDialog(QtWidgets.QDialog):
             # exclude the session specific keys
             for session in sessions:
                 update_dict = dict(
-                    report_notes=dlg_info.report_notes,
                     fullname=dlg_info.fullname,
                     hetu=dlg_info.hetu,
                 )
@@ -989,14 +985,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
             new_info = dict(
                 hetu=dlg_info.hetu,
                 fullname=dlg_info.fullname,
-                report_notes=dlg_info.report_notes,
             )
             info.update(new_info)
 
             # update info files (except session specific keys)
             for session in sessions:
                 update_dict = dict(
-                    report_notes=dlg_info.report_notes,
                     fullname=dlg_info.fullname,
                     hetu=dlg_info.hetu,
                 )

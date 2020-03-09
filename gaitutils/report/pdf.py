@@ -220,6 +220,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
         _savefig(pdf, fig_emg_cons, header)
         _savefig(pdf, fig_kin_avg, header)
 
+    # here we sneakily also export the time-distance data in text format
     timedist_txt_file = sessiondir + '_time_distance.txt'
     timedist_txt_path = op.join(destdir, timedist_txt_file)
     with io.open(timedist_txt_path, 'w', encoding='utf8') as f:
@@ -228,7 +229,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
 
 
 def create_comparison_report(sessions, pdfpath, pages=None):
-    """Do a simple comparison report between sessions"""
+    """Create pdf comparison report"""
 
     if pages is None:
         # if no pages specified, do them all
@@ -236,7 +237,7 @@ def create_comparison_report(sessions, pdfpath, pages=None):
     elif not any(pages.values()):
         raise GaitDataError('No pages to print')
 
-    sessions_str = u' vs. '.join([op.split(s)[-1] for s in sessions])
+    sessions_str = u' vs. '.join(op.split(s)[-1] for s in sessions)
 
     # XXX: read model normaldata according to 1st session in list
     # age may be different for different sessions

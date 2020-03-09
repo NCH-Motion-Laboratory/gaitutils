@@ -77,7 +77,7 @@ def _shutdown_server():
 
 def _report_name(sessions, long_name=True):
     """Create a title for the dash report"""
-    sessions_str = ' / '.join([op.split(s)[-1] for s in sessions])
+    sessions_str = ' / '.join(op.split(s)[-1] for s in sessions)
     if long_name:
         report_type = (
             'Single session report' if len(sessions) == 1 else 'Comparison report'

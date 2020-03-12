@@ -19,7 +19,7 @@
      <item row="0" column="0" colspan="2">
       <widget class="QLabel" name="prompt">
        <property name="text">
-        <string>TextLabel</string>
+        <string>Patient details:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -85,7 +85,7 @@
      <item row="6" column="0">
       <widget class="QLabel" name="label_3">
        <property name="text">
-        <string>Choose plots to include:</string>
+        <string>Plots to include:</string>
        </property>
       </widget>
      </item>

@@ -209,6 +209,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
             sessionpath, model_normaldata=model_normaldata, backend=pdf_backend
         )
 
+    # save the pdf file
     logger.debug('creating multipage pdf %s' % pdfpath)
     with PdfPages(pdfpath) as pdf:
         _savefig(pdf, fig_title)
@@ -228,7 +229,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
         f.write(_timedist_txt)
 
 
-def create_comparison_report(sessions, pdfpath, pages=None):
+def create_comparison_report(sessions, report_description, info=None, pages=None):
     """Create pdf comparison report"""
 
     if pages is None:
@@ -237,17 +238,15 @@ def create_comparison_report(sessions, pdfpath, pages=None):
     elif not any(pages.values()):
         raise GaitDataError('No pages to print')
 
-    sessions_str = u' vs. '.join(op.split(s)[-1] for s in sessions)
-
-    # XXX: read model normaldata according to 1st session in list
-    # age may be different for different sessions
+    # read model normaldata according to 1st session in list
+    # age may be different for different sessions but this is probably good enough
     model_normaldata = normaldata.read_session_normaldata(sessions[0])
 
     # make header page
     title_txt = 'HUS Liikelaboratorio\n'
     title_txt += u'Kävelyanalyysin vertailuraportti\n'
     title_txt += '\n'
-    title_txt += sessions_str
+    title_txt += report_description
     fig_title = _make_text_fig(title_txt)
 
     fig_timedist_cmp = None

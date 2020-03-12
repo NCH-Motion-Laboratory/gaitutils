@@ -93,8 +93,8 @@ def _merge_session_info(sessions):
         session: (load_info(session) or default_info()) for session in sessions
     }
     info = default_info()
-    # merging session descriptions does not really make sense, but return it also
-    # in case we only get a single session
+    # merging session descriptions does not really make sense, but do it for
+    # consistency (so we can also call this for single session)
     for key in json_keys:
         allvals = set([session_infos[session][key] for session in sessions])
         if None in allvals:

@@ -229,8 +229,10 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
         f.write(_timedist_txt)
 
 
-def create_comparison_report(sessions, report_description, info=None, pages=None):
+def create_comparison_report(sessions, info=None, pages=None):
     """Create pdf comparison report"""
+
+    pdfpath = r'c:\Temp\foo.pdf'
 
     if pages is None:
         # if no pages specified, do them all
@@ -246,15 +248,15 @@ def create_comparison_report(sessions, report_description, info=None, pages=None
     title_txt = 'HUS Liikelaboratorio\n'
     title_txt += u'Kävelyanalyysin vertailuraportti\n'
     title_txt += '\n'
-    title_txt += report_description
+    title_txt += info['session_description']
     fig_title = _make_text_fig(title_txt)
 
     fig_timedist_cmp = None
-    if pages['TimeDistCmp']:
-        fig_timedist_cmp = do_comparison_plot(sessions)
+    if pages['TimeDist']:
+        fig_timedist_cmp = do_comparison_plot(sessions, backend=pdf_backend)
 
     fig_kin_cmp = None
-    if pages['KinCmp']:
+    if pages['Kinematics']:
         fig_kin_cmp = plot_sessions(
             sessions,
             tags=cfg.eclipse.repr_tags,
@@ -264,7 +266,8 @@ def create_comparison_report(sessions, report_description, info=None, pages=None
             backend=pdf_backend,
         )
 
-    header = u'Comparison %s' % sessions_str
+    #header = u'Comparison %s' % sessions_str
+    header = 'test'
     logger.debug('creating multipage comparison pdf %s' % pdfpath)
     with PdfPages(pdfpath) as pdf:
         _savefig(pdf, fig_title)

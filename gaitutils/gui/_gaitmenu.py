@@ -977,13 +977,16 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         if comparison:
             # compose a default description for comparison reports
+            # we use the session_description field to pass this on to dialog and
+            # report creation function
             descs = [_info['session_description'] for _info in session_infos.values()]
             if all(descs):  # use session descriptions if they exist
                 info['session_description'] = ' vs. '.join(descs)
             else:  # no description for all sessions - use dir names
                 _session_dirs = (op.split(_session)[-1] for _session in sessions)
-                report_description = ' vs. '.join(_session_dirs)
+                info['session_description'] = ' vs. '.join(_session_dirs)
         
+        # get inputs from user
         dlg_info = PdfReportDialog(info, comparison=comparison)
         if dlg_info.exec_():  # dialog was accepted
             new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,)
@@ -992,8 +995,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             # update info files in session dirs (except session specific keys)
             for session in sessions:
                 update_dict = dict(fullname=dlg_info.fullname, hetu=dlg_info.hetu,)
-                # for single session reports, update also the session description based on
-                # user input
+                # for single session reports, update also the session description
                 if not comparison:
                     update_dict['session_description'] = info['session_description']
                 session_infos[session].update(update_dict)
@@ -1003,19 +1005,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         # create the report
         if comparison:
-            logger.debug('creating comparison report:')
-            logger.debug(sessions)
-            logger.debug(info)
-            logger.debug(report_description)
-            logger.debug(dlg_info.pages)
-            # self._run_in_thread(
-            #     pdf.create_comparison_report,
-            #     finished_func=self._enable_main_ui,
-            #     sessions=sessions,
-            #     report_description=report_description,
-            #     info=info,
-            #     pages=dlg_info.pages,
-            # )
+            self._run_in_thread(
+                pdf.create_comparison_report,
+                finished_func=self._enable_main_ui,
+                sessions=sessions,
+                info=info,
+                pages=dlg_info.pages,
+            )
         else:
             self._run_in_thread(
                 pdf.create_report,

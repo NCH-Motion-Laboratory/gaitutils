@@ -985,7 +985,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             else:  # no description for all sessions - use dir names
                 _session_dirs = (op.split(_session)[-1] for _session in sessions)
                 info['session_description'] = ' vs. '.join(_session_dirs)
-        
+
         # get inputs from user
         dlg_info = PdfReportDialog(info, comparison=comparison)
         if dlg_info.exec_():  # dialog was accepted
@@ -1004,22 +1004,18 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
 
         # create the report
+        kwargs = {
+            'info': info,
+            'pages': dlg_info.pages,
+            'finished_func': self._enable_main_ui,
+        }
         if comparison:
-            self._run_in_thread(
-                pdf.create_comparison_report,
-                finished_func=self._enable_main_ui,
-                sessions=sessions,
-                info=info,
-                pages=dlg_info.pages,
-            )
+            fun = pdf.create_comparison_report
+            kwargs['sessions'] = sessions
         else:
-            self._run_in_thread(
-                pdf.create_report,
-                finished_func=self._enable_main_ui,
-                sessionpath=sessions[0],
-                info=info,
-                pages=dlg_info.pages,
-            )
+            fun = pdf.create_report
+            kwargs['sessionpath'] = sessions[0]
+        self._run_in_thread(fun, **kwargs)
 
     def _log_message(self, msg):
         """Logs a message to the log widget"""

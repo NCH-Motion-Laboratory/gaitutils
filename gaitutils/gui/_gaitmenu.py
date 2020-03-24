@@ -101,7 +101,9 @@ class PdfReportDialog(QtWidgets.QDialog):
 
     def __init__(self, info, comparison=False, parent=None):
         super(self.__class__, self).__init__()
-        ui_filename = 'pdf_report_dialog_comparison.ui' if comparison else 'pdf_report_dialog.ui'
+        ui_filename = (
+            'pdf_report_dialog_comparison.ui' if comparison else 'pdf_report_dialog.ui'
+        )
         uifile = resource_filename('gaitutils', 'gui/%s' % ui_filename)
         uic.loadUi(uifile, self)
         # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)

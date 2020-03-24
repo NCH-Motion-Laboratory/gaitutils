@@ -131,5 +131,3 @@ def test_trial_data_read():
             )
             assert_allclose(data[:15], data_truth)
     # read EMG data
-    
-

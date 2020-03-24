@@ -243,7 +243,7 @@ def create_comparison_report(sessionpaths, info=None, pages=None):
 
     # compose a name for the resulting pdf; it will be saved in the first session dir
     sessionpath = sessionpaths[0]
-    # XXX: filenames can become horribly long and confusing here
+    # XXX: filenames can become very long here
     pdfname = ' VS '.join(op.split(sp)[1] for sp in sessionpaths) + '.pdf'
     pdfpath = op.join(sessionpath, pdfname)
 
@@ -252,10 +252,17 @@ def create_comparison_report(sessionpaths, info=None, pages=None):
     model_normaldata = normaldata.read_session_normaldata(sessionpath)
 
     # make header page
+    fullname = info['fullname']
+    hetu = info['hetu']
     title_txt = 'HUS Liikelaboratorio\n'
     title_txt += u'Kävelyanalyysin vertailuraportti\n'
     title_txt += '\n'
     title_txt += info['session_description']
+    title_txt += '\n'
+    if fullname:
+        title_txt += u'Nimi: %s\n' % fullname
+    if hetu:
+        title_txt += u'Henkilötunnus: %s\n' % hetu
     fig_title = _make_text_fig(title_txt)
 
     # make the figures
@@ -321,7 +328,6 @@ def create_comparison_report(sessionpaths, info=None, pages=None):
         else None
     )
 
-
     # header = u'Comparison %s' % sessions_str
     header = 'test'
     logger.debug('creating multipage comparison pdf %s' % pdfpath)
@@ -331,6 +337,6 @@ def create_comparison_report(sessionpaths, info=None, pages=None):
         _savefig(pdf, fig_kinematics, header)
         _savefig(pdf, fig_kinetics, header)
         _savefig(pdf, fig_musclelen, header)
-
+        _savefig(pdf, fig_emg, header)
 
     return 'Created %s\nin %s' % (pdfname, sessionpath)

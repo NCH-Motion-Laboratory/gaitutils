@@ -145,7 +145,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     # time-dist text
     _timedist_txt = session_analysis_text(sessionpath)
 
-    # for next 2 plots, disable the legends (too many cycles)
+    # for next 2 plots, disable the legends (there are typically too many cycles)
     # kin consistency
     fig_kinematics_cons = None
     if pages['KinematicsCons']:
@@ -243,6 +243,7 @@ def create_comparison_report(sessionpaths, info=None, pages=None):
 
     # compose a name for the resulting pdf; it will be saved in the first session dir
     sessionpath = sessionpaths[0]
+    # XXX: filenames can become horribly long and confusing here
     pdfname = ' VS '.join(op.split(sp)[1] for sp in sessionpaths) + '.pdf'
     pdfpath = op.join(sessionpath, pdfname)
 
@@ -258,27 +259,78 @@ def create_comparison_report(sessionpaths, info=None, pages=None):
     fig_title = _make_text_fig(title_txt)
 
     # make the figures
-    fig_timedist_cmp = None
-    if pages['TimeDist']:
-        fig_timedist_cmp = do_comparison_plot(sessionpaths, backend=pdf_backend)
+    fig_timedist = (
+        do_comparison_plot(sessionpaths, backend=pdf_backend)
+        if pages['TimeDist']
+        else None
+    )
 
-    fig_kin_cmp = None
-    if pages['Kinematics']:
-        fig_kin_cmp = plot_sessions(
+    fig_kinematics = (
+        plot_sessions(
             sessionpaths,
             tags=cfg.eclipse.repr_tags,
+            layout_name='lb_kinematics',
             model_normaldata=model_normaldata,
             style_by='session',
             color_by='context',
             backend=pdf_backend,
         )
+        if pages['Kinematics']
+        else None
+    )
 
-    #header = u'Comparison %s' % sessions_str
+    fig_kinetics = (
+        plot_sessions(
+            sessionpaths,
+            tags=cfg.eclipse.repr_tags,
+            layout_name='lb_kinetics',
+            model_normaldata=model_normaldata,
+            style_by='session',
+            color_by='context',
+            backend=pdf_backend,
+        )
+        if pages['Kinetics']
+        else None
+    )
+
+    fig_musclelen = (
+        plot_sessions(
+            sessionpaths,
+            tags=cfg.eclipse.repr_tags,
+            layout_name='musclelen',
+            model_normaldata=model_normaldata,
+            style_by='session',
+            color_by='context',
+            backend=pdf_backend,
+        )
+        if pages['MuscleLen']
+        else None
+    )
+
+    fig_emg = (
+        plot_sessions(
+            sessionpaths,
+            tags=cfg.eclipse.repr_tags,
+            layout_name='std_emg',
+            emg_mode='rms',
+            style_by='session',
+            color_by='context',
+            backend=pdf_backend,
+        )
+        if pages['MuscleLen']
+        else None
+    )
+
+
+    # header = u'Comparison %s' % sessions_str
     header = 'test'
     logger.debug('creating multipage comparison pdf %s' % pdfpath)
     with PdfPages(pdfpath) as pdf:
         _savefig(pdf, fig_title)
-        _savefig(pdf, fig_timedist_cmp, header)
-        _savefig(pdf, fig_kin_cmp, header)
-    
+        _savefig(pdf, fig_timedist, header)
+        _savefig(pdf, fig_kinematics, header)
+        _savefig(pdf, fig_kinetics, header)
+        _savefig(pdf, fig_musclelen, header)
+
+
     return 'Created %s\nin %s' % (pdfname, sessionpath)

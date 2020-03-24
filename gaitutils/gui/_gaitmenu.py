@@ -31,7 +31,6 @@ from .qt_dialogs import (
     ChooseSessionsDialog,
     qt_matplotlib_window,
     qt_dir_chooser,
-    _qt_save_dialog,
 )
 from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ulstools.num import check_hetu
@@ -102,12 +101,8 @@ class PdfReportDialog(QtWidgets.QDialog):
 
     def __init__(self, info, comparison=False, parent=None):
         super(self.__class__, self).__init__()
-        if comparison:
-            uifile = resource_filename(
-                'gaitutils', 'gui/pdf_report_dialog_comparison.ui'
-            )
-        else:
-            uifile = resource_filename('gaitutils', 'gui/pdf_report_dialog.ui')
+        ui_filename = 'pdf_report_dialog_comparison.ui' if comparison else 'pdf_report_dialog.ui'
+        uifile = resource_filename('gaitutils', 'gui/%s' % ui_filename)
         uic.loadUi(uifile, self)
         # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         if info is not None:
@@ -124,7 +119,8 @@ class PdfReportDialog(QtWidgets.QDialog):
         self.hetu = self.lnHetu.text()
         self.fullname = self.lnFullName.text()
         self.session_description = self.lnDescription.text()
-        # get all the report page selections
+        # take the page selections and write them into a dict (keys are named after the
+        # selection widgets)
         self.pages = dict()
         for w in self.findChildren(QtWidgets.QWidget):
             wname = w.objectName()

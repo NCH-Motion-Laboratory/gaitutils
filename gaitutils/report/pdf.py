@@ -53,7 +53,7 @@ def _make_text_fig(txt, titlepage=True):
 
 
 def _savefig(pdf, fig, header=None, footer=None):
-    """add header/footer into page and save as A4"""
+    """Add header/footer into page and save as A4"""
     if fig is None:
         return
     elif not isinstance(fig, Figure):
@@ -126,6 +126,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
         u' Normaalidata: %s' % musclelen_ndata if musclelen_ndata else u''
     )
 
+    # make the figures
     color_by = {'model': 'context', 'emg': 'trial'}
     style_by = {'model': None}
 
@@ -228,11 +229,11 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
         logger.debug('writing timedist text data into %s' % timedist_txt_path)
         f.write(_timedist_txt)
 
+    return 'Created %s' % pdfpath
 
-def create_comparison_report(sessions, info=None, pages=None):
+
+def create_comparison_report(sessionpaths, info=None, pages=None):
     """Create pdf comparison report"""
-
-    pdfpath = r'c:\Temp\foo.pdf'
 
     if pages is None:
         # if no pages specified, do them all
@@ -240,9 +241,14 @@ def create_comparison_report(sessions, info=None, pages=None):
     elif not any(pages.values()):
         raise GaitDataError('No pages to print')
 
-    # read model normaldata according to 1st session in list
+    # compose a name for the resulting pdf; it will be saved in the first session dir
+    sessionpath = sessionpaths[0]
+    pdfname = ' VS '.join(op.split(sp)[1] for sp in sessionpaths) + '.pdf'
+    pdfpath = op.join(sessionpath, pdfname)
+
+    # read model normaldata according to first session
     # age may be different for different sessions but this is probably good enough
-    model_normaldata = normaldata.read_session_normaldata(sessions[0])
+    model_normaldata = normaldata.read_session_normaldata(sessionpath)
 
     # make header page
     title_txt = 'HUS Liikelaboratorio\n'
@@ -251,14 +257,15 @@ def create_comparison_report(sessions, info=None, pages=None):
     title_txt += info['session_description']
     fig_title = _make_text_fig(title_txt)
 
+    # make the figures
     fig_timedist_cmp = None
     if pages['TimeDist']:
-        fig_timedist_cmp = do_comparison_plot(sessions, backend=pdf_backend)
+        fig_timedist_cmp = do_comparison_plot(sessionpaths, backend=pdf_backend)
 
     fig_kin_cmp = None
     if pages['Kinematics']:
         fig_kin_cmp = plot_sessions(
-            sessions,
+            sessionpaths,
             tags=cfg.eclipse.repr_tags,
             model_normaldata=model_normaldata,
             style_by='session',
@@ -273,3 +280,5 @@ def create_comparison_report(sessions, info=None, pages=None):
         _savefig(pdf, fig_title)
         _savefig(pdf, fig_timedist_cmp, header)
         _savefig(pdf, fig_kin_cmp, header)
+    
+    return 'Created %s\nin %s' % (pdfname, sessionpath)

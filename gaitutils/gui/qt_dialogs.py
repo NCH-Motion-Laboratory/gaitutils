@@ -417,4 +417,3 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
             )
         else:
             self.done(QtWidgets.QDialog.Accepted)
-

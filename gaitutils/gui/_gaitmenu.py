@@ -31,6 +31,7 @@ from .qt_dialogs import (
     ChooseSessionsDialog,
     qt_matplotlib_window,
     qt_dir_chooser,
+    _qt_save_dialog,
 )
 from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ulstools.num import check_hetu
@@ -982,7 +983,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             descs = [_info['session_description'] for _info in session_infos.values()]
             if all(descs):  # use session descriptions if they exist
                 info['session_description'] = ' vs. '.join(descs)
-            else:  # no description for all sessions - use dir names
+            else:  # we don't have description for every session - use dir names instead
                 _session_dirs = (op.split(_session)[-1] for _session in sessions)
                 info['session_description'] = ' vs. '.join(_session_dirs)
 
@@ -1008,10 +1009,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
             'info': info,
             'pages': dlg_info.pages,
             'finished_func': self._enable_main_ui,
+            'result_func': qt_message_dialog,  # show a message on success
         }
         if comparison:
             fun = pdf.create_comparison_report
-            kwargs['sessions'] = sessions
+            kwargs['sessionpaths'] = sessions
         else:
             fun = pdf.create_report
             kwargs['sessionpath'] = sessions[0]

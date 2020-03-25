@@ -415,15 +415,15 @@ def dash_report(
             # use session specific line style
             emg_mode = None
             if is_comparison:
-                legend_type = cfg.web_report.comparison_legend_type
-                style_by = cfg.web_report.comparison_style_by
-                color_by = cfg.web_report.comparison_color_by
-                if cfg.web_report.comparison_emg_rms:
+                legend_type = cfg.report.comparison_legend_type
+                style_by = cfg.report.comparison_style_by
+                color_by = cfg.report.comparison_color_by
+                if cfg.report.comparison_emg_rms:
                     emg_mode = 'rms'
             else:
-                legend_type = cfg.web_report.legend_type
-                style_by = cfg.web_report.style_by
-                color_by = cfg.web_report.color_by
+                legend_type = cfg.report.legend_type
+                style_by = cfg.report.style_by
+                color_by = cfg.report.color_by
 
             try:
                 if saved_report_data:

@@ -1,8 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Create pdf gait report.
-Note: specific to the Helsinki gait lab!
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -127,8 +125,9 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     )
 
     # make the figures
-    color_by = {'model': 'context', 'emg': 'trial'}
-    style_by = {'model': None}
+    legend_type = cfg.report.legend_type  # not currently used (legends disabled)
+    style_by = cfg.report.style_by
+    color_by = cfg.report.color_by
 
     # trial velocity plot
     fig_vel = None
@@ -158,6 +157,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
             style_by=style_by,
             backend=pdf_backend,
             figtitle='Kinematics consistency for %s' % sessiondir,
+            legend_type=legend_type,
             legend=False,
         )
 
@@ -173,6 +173,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
             style_by=style_by,
             backend=pdf_backend,
             figtitle='Kinetics consistency for %s' % sessiondir,
+            legend_type=legend_type,
             legend=False,
         )
 
@@ -188,6 +189,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
             model_normaldata=model_normaldata,
             backend=pdf_backend,
             figtitle='Muscle length consistency for %s' % sessiondir,
+            legend_type=legend_type,
             legend=False,
         )
     # EMG consistency
@@ -200,6 +202,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
             color_by=color_by,
             style_by=style_by,
             figtitle='EMG consistency for %s' % sessiondir,
+            legend_type=legend_type,
             legend=False,
             backend=pdf_backend,
         )
@@ -207,7 +210,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     fig_kin_avg = None
     if pages['KinAverage']:
         fig_kin_avg = plot_session_average(
-            sessionpath, model_normaldata=model_normaldata, backend=pdf_backend
+            sessionpath, model_normaldata=model_normaldata, backend=pdf_backend,
         )
 
     # save the pdf file
@@ -266,6 +269,11 @@ def create_comparison_report(sessionpaths, info=None, pages=None):
     fig_title = _make_text_fig(title_txt)
 
     # make the figures
+    legend_type = cfg.report.comparison_legend_type
+    style_by = cfg.report.comparison_style_by
+    color_by = cfg.report.comparison_color_by
+    emg_mode = 'rms' if cfg.report.comparison_emg_rms else None
+
     fig_timedist = (
         do_comparison_plot(sessionpaths, backend=pdf_backend)
         if pages['TimeDist']
@@ -278,9 +286,10 @@ def create_comparison_report(sessionpaths, info=None, pages=None):
             tags=cfg.eclipse.repr_tags,
             layout_name='lb_kinematics',
             model_normaldata=model_normaldata,
-            style_by='session',
-            color_by='context',
+            style_by=style_by,
+            color_by=color_by,
             backend=pdf_backend,
+            legend_type=legend_type,
         )
         if pages['Kinematics']
         else None
@@ -292,8 +301,9 @@ def create_comparison_report(sessionpaths, info=None, pages=None):
             tags=cfg.eclipse.repr_tags,
             layout_name='lb_kinetics',
             model_normaldata=model_normaldata,
-            style_by='session',
-            color_by='context',
+            style_by=style_by,
+            color_by=color_by,
+            legend_type=legend_type,
             backend=pdf_backend,
         )
         if pages['Kinetics']
@@ -306,8 +316,9 @@ def create_comparison_report(sessionpaths, info=None, pages=None):
             tags=cfg.eclipse.repr_tags,
             layout_name='musclelen',
             model_normaldata=model_normaldata,
-            style_by='session',
-            color_by='context',
+            style_by=style_by,
+            color_by=color_by,
+            legend_type=legend_type,
             backend=pdf_backend,
         )
         if pages['MuscleLen']
@@ -319,9 +330,10 @@ def create_comparison_report(sessionpaths, info=None, pages=None):
             sessionpaths,
             tags=cfg.eclipse.repr_tags,
             layout_name='std_emg',
-            emg_mode='rms',
-            style_by='session',
-            color_by='context',
+            emg_mode=emg_mode,
+            style_by=style_by,
+            color_by=color_by,
+            legend_type=legend_type,
             backend=pdf_backend,
         )
         if pages['MuscleLen']

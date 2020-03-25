@@ -118,12 +118,7 @@ def plot_sessions(
         tags = cfg.eclipse.tags
     if not tagged_only:
         tags = None
-    c3ds_all = list()
-    for session in sessions:
-        c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
-        if not c3ds:
-            raise GaitDataError('No tagged trials found for session %s' % session)
-        c3ds_all.extend(c3ds)
+    c3ds_all = sessionutils._get_tagged_dynamic_c3ds_from_sessions(sessions, tags=tags)
     trials = [trial.Trial(c3d) for c3d in c3ds_all]
 
     return plot_trials(

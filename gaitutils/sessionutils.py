@@ -195,3 +195,14 @@ def get_c3ds(sessionpath, tags=None, trial_type=None, check_if_exists=True):
     )
     c3ds = _filter_to_c3ds(enfs)
     return list(c3ds)
+
+
+def _get_tagged_dynamic_c3ds_from_sessions(sessions, tags=None):
+    """Get all tagged c3d from specified sessions"""
+    c3ds_all = list()
+    for session in sessions:
+        c3ds = get_c3ds(session, tags=tags, trial_type='dynamic')
+        if not c3ds:
+            raise GaitDataError('No tagged trials found for session %s' % session)
+        c3ds_all.extend(c3ds)
+    return c3ds_all

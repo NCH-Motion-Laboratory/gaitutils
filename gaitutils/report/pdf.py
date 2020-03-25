@@ -86,12 +86,11 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     pdfname = sessiondir + '.pdf'
     pdfpath = op.join(destdir, pdfname)
 
-    tagged_trials = sessionutils.get_c3ds(
-        sessionpath, tags=cfg.eclipse.tags, trial_type='dynamic'
+    tagged_trials = sessionutils._get_tagged_dynamic_c3ds_from_sessions(
+        [sessionpath], tags=cfg.eclipse.tags
     )
-    if not tagged_trials:
-        raise GaitDataError('No tagged trials found in %s' % sessiondir)
-
+    # XXX: do we unnecessarily load all trials twice (since plotting calls below don't
+    # use the trials loaded here), or is it a non issue due to caching of c3d files?
     trials = (trial.Trial(t) for t in tagged_trials)
     has_kinetics = any(c.on_forceplate for t in trials for c in t.cycles)
 
@@ -244,6 +243,13 @@ def create_comparison_report(sessionpaths, info=None, pages=None):
     elif not any(pages.values()):
         raise GaitDataError('No pages to print')
 
+    # check for kinetics
+    tagged_trials = sessionutils._get_tagged_dynamic_c3ds_from_sessions(
+        sessionpaths, tags=cfg.eclipse.tags
+    )
+    trials = (trial.Trial(t) for t in tagged_trials)
+    any_kinetics = any(c.on_forceplate for t in trials for c in t.cycles)
+
     # compose a name for the resulting pdf; it will be saved in the first session dir
     sessionpath = sessionpaths[0]
     # XXX: filenames can become very long here
@@ -304,7 +310,7 @@ def create_comparison_report(sessionpaths, info=None, pages=None):
             legend_type=legend_type,
             backend=pdf_backend,
         )
-        if pages['Kinetics']
+        if pages['Kinetics'] and any_kinetics
         else None
     )
 

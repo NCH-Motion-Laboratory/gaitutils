@@ -56,8 +56,8 @@ from ..report import web, pdf
 logger = logging.getLogger(__name__)
 
 # setting this disables our internal handling of uncaught exceptions (so that the debugger
-# can catch them) and also enables debugging of launched PyQt threads in VSCode
-DEBUG_MODE = True
+# can catch them) and also enables VSCode debugging of PyQt threads that we launch
+DEBUG_MODE = False
 if DEBUG_MODE:
     import ptvsd
 

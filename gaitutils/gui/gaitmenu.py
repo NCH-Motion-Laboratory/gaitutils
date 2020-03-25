@@ -8,6 +8,5 @@ Start the PyQt graphical interface to gaitutils
 
 from gaitutils.gui import _gaitmenu
 
-
 if __name__ == '__main__':
     _gaitmenu.main()

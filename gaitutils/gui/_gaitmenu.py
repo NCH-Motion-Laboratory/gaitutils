@@ -55,17 +55,11 @@ from ..report import web, pdf
 
 logger = logging.getLogger(__name__)
 
-# currently the VSCode debugger can only detect Python native threads
-# this enables a workaround for Qt threads (works only inside VSCode)
-VSCODE_DEBUG_QT_THREADS = True
-
-if VSCODE_DEBUG_QT_THREADS:
-    try:
-        import ptvsd
-    except ImportError:
-        logger.warning('VSCode thread debug option is ON but running outside VSCode')
-        VSCODE_DEBUG_QT_THREADS = False
-
+# setting this disables our internal handling of uncaught exceptions (so that the debugger
+# can catch them) and also enables debugging of launched PyQt threads in VSCode
+DEBUG_MODE = True
+if DEBUG_MODE:
+    import ptvsd
 
 def _get_nexus_sessionpath():
     """Get Nexus sessionpath, handle exceptions for use outside _run_in_thread"""
@@ -77,7 +71,7 @@ def _get_nexus_sessionpath():
 
 
 def _report_exception(e, title=None):
-    """Report exception via Qt dialog. Show title and exception message"""
+    """Report an exception via Qt dialog. Show title and exception message"""
     logger.debug('caught exception when running task')
     if title is None:
         title = 'There was an error running the operation. Details:'
@@ -1087,16 +1081,22 @@ class Runner(QRunnable):
         self.signals = RunnerSignals()
 
     def run(self):
-        try:
-            if VSCODE_DEBUG_QT_THREADS:
-                ptvsd.debug_this_thread()
+        if DEBUG_MODE:  # do not handle exceptions, so that debugger can catch them
+            # the ptvsd call is currently needed to debug 'native threads'
+            # (apparently PyQt threads are such)
+            ptvsd.debug_this_thread()
             retval = self.fun()
-        except Exception as e:
-            self.signals.error.emit(e)
-        else:
             self.signals.result.emit(retval)
-        finally:
             self.signals.finished.emit()
+        else:  # the regular version - catch all exceptions and report via gui
+            try:
+                retval = self.fun()
+            except Exception as e:
+                self.signals.error.emit(e)
+            else:
+                self.signals.result.emit(retval)
+            finally:
+                self.signals.finished.emit()
 
 
 def main():
@@ -1122,7 +1122,9 @@ def main():
         sys.__excepthook__(type_, value, tback)
         app.quit()
 
-    sys.excepthook = my_excepthook
+    if not DEBUG_MODE:
+        # for normal use, install our own handler for uncaught exceptions
+        sys.excepthook = my_excepthook
 
     # add the Qt logging handler to root logger
     # it shows log messages in our QTextEdit widget

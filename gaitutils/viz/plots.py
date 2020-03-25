@@ -34,24 +34,26 @@ def plot_trials(
 ):
     """Plot gait trials.
 
+    Creates a plot of gait trials using the given layout. Output depends on the backend.
+
     Parameters
     ----------
     trials : list
-        List of Trial objects to plot.
+        List of Trial instances to plot.
     layout_name : str | None
-        Name of the plot layout to use (defined in cfg).
+        Name of the plot layout to use (layouts are defined in cfg).
     backend : str | None
-        Name of backend to use, currently 'plotly' or 'matplotlib'. None for default backend.
+        Name of backend to use, currently 'plotly' or 'matplotlib'. If None, taken from cfg.
     model_normaldata : dict | None
-        Normaldata for model variables. None to use default normaldata (from cfg)
+        Normaldata for model variables. If None, taken from cfg.
     cycles : dict | str | int | tuple | list
-        Cycles to plot. See Trial.get_cycles()
+        Cycles to plot. See Trial.get_cycles() for details.
     max_cycles : dict | None
         Maximum number of cycles to plot for each variable type. If None, taken from cfg.
     emg_mode : str | None
-        Use 'rms' to plot EMG in RMS mode.
+        If 'rms', plot EMG in RMS mode.
     legend_type : str | None
-        Legend type for gait cycles (see _get_cycle_name for options). None to use cfg option.
+        Legend type for gait cycles (see _get_cycle_name for options). If None, taken from cfg.
     style_by : dict | None
         How to style each variable type. If None, taken from cfg.
     color_by : dict | None
@@ -199,7 +201,7 @@ def plot_trial_timedep_velocities(session, backend=None):
     vels = list()
     labels = list()
     for c3d in c3ds:
-        v, vel = utils._trial_median_velocity(c3d, return_curve=True)
+        _, vel = utils._trial_median_velocity(c3d, return_curve=True)
         # vel = signal.medfilt(vel, 3)  # if spikes
         tname = op.split(c3d)[-1]
         vels.append(vel)

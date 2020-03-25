@@ -255,17 +255,15 @@ def create_comparison_report(sessionpaths, info=None, pages=None):
     model_normaldata = normaldata.read_session_normaldata(sessionpath)
 
     # make header page
-    fullname = info['fullname']
-    hetu = info['hetu']
+    fullname = info['fullname'] or ''
+    hetu = info['hetu'] or ''
     title_txt = 'HUS Liikelaboratorio\n'
     title_txt += u'Kävelyanalyysin vertailuraportti\n'
     title_txt += '\n'
     title_txt += info['session_description']
     title_txt += '\n'
-    if fullname:
-        title_txt += u'Nimi: %s\n' % fullname
-    if hetu:
-        title_txt += u'Henkilötunnus: %s\n' % hetu
+    title_txt += u'Nimi: %s\n' % fullname
+    title_txt += u'Henkilötunnus: %s\n' % hetu
     fig_title = _make_text_fig(title_txt)
 
     # make the figures
@@ -340,8 +338,7 @@ def create_comparison_report(sessionpaths, info=None, pages=None):
         else None
     )
 
-    # header = u'Comparison %s' % sessions_str
-    header = 'test'
+    header = u'Nimi: %s Henkilötunnus: %s' % (fullname, hetu)
     logger.debug('creating multipage comparison pdf %s' % pdfpath)
     with PdfPages(pdfpath) as pdf:
         _savefig(pdf, fig_title)

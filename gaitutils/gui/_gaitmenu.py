@@ -101,6 +101,7 @@ class PdfReportDialog(QtWidgets.QDialog):
 
     def __init__(self, info, comparison=False, parent=None):
         super(self.__class__, self).__init__()
+        self.comparison = comparison
         ui_filename = (
             'pdf_report_dialog_comparison.ui' if comparison else 'pdf_report_dialog.ui'
         )
@@ -128,7 +129,11 @@ class PdfReportDialog(QtWidgets.QDialog):
             wname = w.objectName()
             if wname[:2] == 'cb':
                 self.pages[wname[2:]] = w.checkState()
-        if self.fullname and (check_hetu(self.hetu) or not self.hetu):
+        # require patient name if it's not a comparison report (which might compare different
+        # patients); hetu needs to be valid if it's entered
+        if (self.comparison or self.fullname) and (
+            check_hetu(self.hetu) or not self.hetu
+        ):
             self.done(QtWidgets.QDialog.Accepted)  # or call superclass accept
         else:
             qt_message_dialog(

@@ -550,7 +550,6 @@ def plot_trials(
                                 if normalized and var in emg_normaldata:
                                     ndata = emg_normaldata[var][None, :]
                                     # create a color strip below the EMG trace, according to normal data
-                                    logger.debug(_emg_y_extent)
                                     extent_y0 = _emg_y_extent[0]
                                     # strip width is total y scale / 10
                                     extent_y1 = (

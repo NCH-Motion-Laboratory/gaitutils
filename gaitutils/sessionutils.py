@@ -194,6 +194,8 @@ def get_c3ds(sessionpath, tags=None, trial_type=None, check_if_exists=True):
         sessionpath, tags=tags, trial_type=trial_type, check_if_exists=check_if_exists
     )
     c3ds = _filter_to_c3ds(enfs)
+    if check_if_exists:
+        c3ds = _filter_exists(c3ds)
     return list(c3ds)
 
 

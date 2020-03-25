@@ -234,8 +234,10 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     return 'Created %s' % pdfpath
 
 
-def create_comparison_report(sessionpaths, info=None, pages=None):
+def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
     """Create pdf comparison report"""
+    if info is None:
+        info = defaultdict(lambda: '')
 
     if pages is None:
         # if no pages specified, do them all
@@ -252,9 +254,11 @@ def create_comparison_report(sessionpaths, info=None, pages=None):
 
     # compose a name for the resulting pdf; it will be saved in the first session dir
     sessionpath = sessionpaths[0]
+    if destdir is None:
+        destdir = sessionpath
     # XXX: filenames can become very long here
     pdfname = ' VS '.join(op.split(sp)[1] for sp in sessionpaths) + '.pdf'
-    pdfpath = op.join(sessionpath, pdfname)
+    pdfpath = op.join(destdir, pdfname)
 
     # read model normaldata according to first session
     # age may be different for different sessions but this is probably good enough

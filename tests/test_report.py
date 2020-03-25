@@ -43,6 +43,18 @@ def test_pdf_report():
     assert op.isfile(timedist_path)
 
 
+def test_pdf_comparison_report():
+    """Test creation of pdf comparison report"""
+    sessionpaths = [sessiondir_abs, sessiondir2_abs]
+    # resulting pdf name - must be set according to what is defined in the function
+    pdfname = ' VS '.join(op.split(sp)[1] for sp in sessionpaths) + '.pdf'
+    pdfpath = op.join(tmpdir, pdfname)
+    if op.isfile(pdfpath):
+        os.remove(pdfpath)
+    pdf.create_comparison_report(sessionpaths, destdir=tmpdir)
+    assert op.isfile(pdfpath)
+
+
 def test_web_report():
     """Test creation of web report"""
     # fake classes for dash_report progress signaling

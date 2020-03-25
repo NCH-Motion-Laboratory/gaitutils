@@ -61,6 +61,7 @@ DEBUG_MODE = True
 if DEBUG_MODE:
     import ptvsd
 
+
 def _get_nexus_sessionpath():
     """Get Nexus sessionpath, handle exceptions for use outside _run_in_thread"""
     try:

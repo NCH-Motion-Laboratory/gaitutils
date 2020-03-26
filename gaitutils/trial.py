@@ -350,11 +350,12 @@ class Trial(object):
         return self._models_data[model_.desc][var]
 
     def get_emg_data(self, ch, rms=False):
-        """Return trial data for an EMG variable.
+        """Return trial data for an EMG channel.
 
         Uses name matching: if the specified channel is not found in the data,
         partial name matches are considered and data for the shortest match is
-        returned. For example, 'LGas' could be mapped to 'Voltage.LGas8'
+        returned. For example, if ch == 'LGas' and the data has channels
+        'Voltage.LGas8' and 'Voltage.LGas8_dummy', the former is returned.
 
         Parameters
         ----------
@@ -362,6 +363,12 @@ class Trial(object):
             The EMG channel name. Fuzzy name matching is used.
         rms : bool
             Return moving-window RMS instead of raw data.
+
+        Returns
+        -------
+        t_data : tuple
+            Tuple of (t, data) where t is the time axis as 1-dim ndarray, and data
+            is the EMG data as 1-dim ndarray.
         """
         data = self.emg.get_channel_data(ch, rms=rms)
         return self._normalized_analog_data(data)
@@ -373,6 +380,13 @@ class Trial(object):
         ----------
         marker : string
             The marker name.
+
+        Returns
+        -------
+        t_data : tuple
+            Tuple of (t, data) where t is the time axis as 1-dim ndarray, and data
+            is the marker position, velocity and acceleration as a dict
+            (see read_data.get_marker_data for details).
         """
         if marker not in self.markers:
             raise GaitDataError('No such marker')
@@ -405,8 +419,6 @@ class Trial(object):
             raise ValueError('Invalid kind of forceplate data requested')
         return self._normalized_analog_data(data)
 
-    """WIP"""
-
     def get_accelerometer_data(self):
         return read_data.get_accelerometer_data(self.source)
 
@@ -427,7 +439,8 @@ class Trial(object):
     def set_norm_cycle(self, cycle=None):
         """ Set normalization cycle.
 
-        The get_ methods will return data normalized to the given cycle.
+        After calling this, the get_ methods will return data normalized to
+        the given cycle.
 
         Parameters
         ----------
@@ -453,18 +466,18 @@ class Trial(object):
         Parameters
         ----------
         cyclespec : dict | str | int | tuple | list
-            The cycles to get. Can be dict with 'R' and 'L' keys and
-            specification as values to get context specific cycles. If not a
-            dict, the given specification will be applied to both contexts.
+            The cycles to get. For a context specific cyclespec, it can be dict with
+            keys 'R' and 'L' and cyclespec as values. If not a dict, the given
+            cyclespec will be applied to both contexts.
 
-            'all' gets all trial cycles. 'forceplate' gets cycles starting with
-            valid forceplate contact. 'unnormalized' gets a Noncycle that is
-            used as a sentinel for unnormalized data.
-            An int or a list of int gives the specified cycle indices from the
-            trial.
-            A tuple can be used to match conditions one by one. For example,
-            ('forceplate', 0) would return forceplate cycles if any, and the
-            first cycle in case there are none.
+            For string args: 'all' gets all trial cycles. 'forceplate' gets cycles
+            starting with valid forceplate contact. 'unnormalized' (or None) gets a
+            Noncycle that is used as a sentinel for unnormalized data.
+            If int or a list of int, get the specified cycle(s) from the
+            trial. Note that cycle numbering starts from 0.
+            A tuple can be used to try different cyclespecs and return the first
+            one that has matching cycle. For example, ('forceplate', 0) would return
+            forceplate cycles if any, and the first cycle otherwise.
 
         max_cycles_per_context : int | None
             Maximum number of cycles returned per context.
@@ -485,7 +498,7 @@ class Trial(object):
             elif isinstance(cyclespec, list):
                 return [cycles[c] for c in cyclespec if c < len(cycles)]
             elif cyclespec == 'unnormalized':
-                return [Noncycle(context=context)]
+                return [Noncycle(context=context, trial=self)]
             elif cyclespec == 'all':
                 return cycles
             elif cyclespec == 'forceplate':  # all forceplate cycles

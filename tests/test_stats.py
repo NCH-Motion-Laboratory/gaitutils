@@ -114,8 +114,6 @@ def test_avgtrial():
     assert atrial.t.shape == (101,)
     assert len(atrial.cycles) == atrial.ncycles == 2
     assert atrial.cycles[0].trial == atrial
-    with pytest.raises(ValueError):
-        atrial.set_norm_cycle(None)
     adata, t = atrial.get_model_data('RKneeAnglesX')
     assert adata.shape == (101,)
     cycs = atrial.get_cycles('all')
@@ -147,8 +145,6 @@ def test_avgtrial():
     assert atrial.t.shape == (101,)
     assert len(atrial.cycles) == atrial.ncycles == 2
     assert atrial.cycles[0].trial == atrial
-    with pytest.raises(ValueError):
-        atrial.set_norm_cycle(None)
     adata, t = atrial.get_model_data('RKneeAnglesX')
     assert adata.shape == (101,)
     cycs = atrial.get_cycles('all')

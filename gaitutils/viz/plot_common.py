@@ -12,7 +12,7 @@ from builtins import next
 from past.builtins import basestring
 from builtins import object
 from itertools import cycle
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import datetime
 import logging
 import copy
@@ -22,6 +22,26 @@ from gaitutils import models, cfg
 
 
 logger = logging.getLogger(__name__)
+
+
+def _get_trial_cycles(trial, cycles, max_cycles):
+    """Gets the specified cycles from a trial."""
+    model_cycles = trial.get_cycles(
+        cycles['model'], max_cycles_per_context=max_cycles['model']
+    )
+    emg_cycles = trial.get_cycles(
+        cycles['emg'], max_cycles_per_context=max_cycles['emg']
+    )
+    allcycles = list(set.union(set(model_cycles), set(emg_cycles)))
+    allcycles = sorted(allcycles, key=lambda cyc: cyc.name)
+    if not allcycles:
+        logger.debug('trial %s has no cycles of specified type' % trial.trialname)
+    logger.debug(
+        'got total of %d cycles for %s (%d model, %d EMG)'
+        % (len(allcycles), trial.trialname, len(model_cycles), len(emg_cycles))
+    )
+    Cyclebunch = namedtuple('Cyclebunch', 'allcycles, model_cycles, emg_cycles')
+    return Cyclebunch(allcycles, model_cycles, emg_cycles)
 
 
 def _emg_yscale(emg_mode):

@@ -120,7 +120,7 @@ class AvgTrial(Trial):
         self.ncycles = 2
         self.eclipse_data = defaultdict(lambda: '', {})
 
-    def get_model_data(self, var):
+    def get_model_data(self, var, cycle=None):
         """Get averaged model variable.
 
         Parameters
@@ -137,7 +137,7 @@ class AvgTrial(Trial):
             data[:] = np.nan
         return self.t, data
 
-    def get_emg_data(self, ch, rms=None):
+    def get_emg_data(self, ch, rms=None, cycle=None):
         """Get averaged EMG RMS data.
 
         Parameters
@@ -148,12 +148,6 @@ class AvgTrial(Trial):
         if not rms:
             raise ValueError('AvgTrial only supports EMG in RMS mode')
         return self.tn_analog, self.emg.get_channel_data(ch, rms=True)
-
-    def set_norm_cycle(self, cycle=None):
-        if cycle is None:
-            raise ValueError('AvgTrial does not support unnormalized data')
-        else:
-            logger.debug('setting norm. cycle for AvgTrial (no effect)')
 
 
 def _robust_reject_rows(data, p_threshold):
@@ -396,7 +390,6 @@ def collect_trial_data(
         cycles = [None] if trial.is_static else trial.cycles
         for cycle in cycles:
             if not trial.is_static:
-                trial.set_norm_cycle(cycle)
                 context = cycle.context
                 if cycle.on_forceplate:
                     ncycles[context + '_fp'] += 1
@@ -418,7 +411,7 @@ def collect_trial_data(
                             model.is_kinetic_var(var) or fp_cycles_only
                         ) and not cycle.on_forceplate:
                             continue
-                    _, data = trial.get_model_data(var)
+                    _, data = trial.get_model_data(var, cycle)
                     if np.all(np.isnan(data)):
                         logger.debug('no data for %s/%s' % (trial.trialname, var))
                     else:

@@ -34,6 +34,7 @@ from .plot_common import (
     _color_by_params,
     _style_by_params,
     _emg_yscale,
+    _get_trial_cycles,
 )
 
 
@@ -334,26 +335,12 @@ def plot_trials(
 
     # plot the actual data
     for trial in trials:
-        # get Gaitcycle instances from trial according to cycle specs
-        model_cycles_ = trial.get_cycles(
-            cycles['model'], max_cycles_per_context=max_cycles['model']
-        )
-        emg_cycles_ = trial.get_cycles(
-            cycles['emg'], max_cycles_per_context=max_cycles['emg']
-        )
-        allcycles = list(set.union(set(model_cycles_), set(emg_cycles_)))
-        if not allcycles:
-            logger.debug('trial %s has no cycles of specified type' % trial.trialname)
-        logger.debug(
-            'plotting total of %d cycles for %s (%d model, %d EMG)'
-            % (len(allcycles), trial.trialname, len(model_cycles_), len(emg_cycles_))
-        )
 
+        cyclebunch = _get_trial_cycles(trial, cycles, max_cycles)
         subplot_adjusted = defaultdict(lambda: False)
 
-        for cyc_ind, cyc in enumerate(allcycles):
+        for cyc_ind, cyc in enumerate(cyclebunch.allcycles):
 
-            trial.set_norm_cycle(cyc)
             context = cyc.context
 
             for i, row in enumerate(layout):
@@ -377,7 +364,7 @@ def plot_trials(
 
                     mod = models.model_from_var(var)
                     if mod:
-                        do_plot = cyc in model_cycles_
+                        do_plot = cyc in cyclebunch.model_cycles
 
                         if var in mod.varnames_noside:
                             # var context was unspecified, so choose it
@@ -396,7 +383,7 @@ def plot_trials(
                         ):
                             do_plot = False
 
-                        t, y = trial.get_model_data(var)
+                        t, y = trial.get_model_data(var, cycle=cyc)
                         if y is None:
                             do_plot = False
 
@@ -523,7 +510,7 @@ def plot_trials(
                         do_plot = (
                             trial.emg.context_ok(var, cyc.context)
                             and trial.emg.status_ok(var)
-                            and cyc in emg_cycles_
+                            and cyc in cyclebunch.emg_cycles
                         )
                         # FIXME: maybe annotate disconnected chans
                         # _no_ticks_or_labels(ax)
@@ -531,7 +518,7 @@ def plot_trials(
                         if do_plot:
                             tracename_emg = 'EMG:' + tracename
 
-                            t_, y = trial.get_emg_data(var, rms=use_rms)
+                            t_, y = trial.get_emg_data(var, rms=use_rms, cycle=cyc)
                             t = t_ if normalized else t_ / trial.samplesperframe
 
                             col = _color_by_params(

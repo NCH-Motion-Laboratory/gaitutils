@@ -73,17 +73,13 @@ def test_trial_data_read():
     """Test data read from normalized/unnormalized cycles"""
     c3dfile = _trial_path('girl6v', '2015_10_22_girl6v_IN02.c3d')
     tr = Trial(c3dfile)
-    with pytest.raises(ValueError):  # nonexistent cycle
-        tr.set_norm_cycle(10)
     # read marker data
     pig = _pig_markerset(fullbody=True, sacr=True)
     for var in pig:
-        tr.set_norm_cycle(None)  # unnormalized
-        t, data = tr.get_marker_data(var)
+        t, data = tr.get_marker_data(var)  # unnormalized
         assert t.shape == (794,)
         assert data.shape == (794, 3)
-        tr.set_norm_cycle(0)  # unnormalized
-        t, data = tr.get_marker_data(var)
+        t, data = tr.get_marker_data(var, 0)  # 1st cycle
         assert t.shape == (101,)
         assert data.shape == (101, 3)
         # some known values for this cycle
@@ -100,12 +96,10 @@ def test_trial_data_read():
     for var in list(models.pig_lowerbody.varnames) + list(
         models.pig_upperbody.varnames
     ):
-        tr.set_norm_cycle(None)  # unnormalized
-        t, data = tr.get_model_data(var)
+        t, data = tr.get_model_data(var)  # unnormalized
         assert t.shape == (794,)
         assert data.shape == (794,)
-        tr.set_norm_cycle(0)  # unnormalized
-        t, data = tr.get_model_data(var)
+        t, data = tr.get_model_data(var, 0)
         assert t.shape == (101,)
         assert data.shape == (101,)
         # some known values for this cycle

@@ -40,8 +40,8 @@ def _ipython_setup():
     from IPython import get_ipython
 
     ip = get_ipython()
-    #ip.magic("gui qt5")  # needed for mayavi plots
-    #ip.magic("matplotlib qt")  # do mpl plots in separate windows
+    # ip.magic("gui qt5")  # needed for mayavi plots
+    # ip.magic("matplotlib qt")  # do mpl plots in separate windows
     ip.magic("reload_ext autoreload")  # these will enable module autoreloading
     ip.magic("autoreload 2")
     # print('warning: setting precision=3 for numpy array printing')

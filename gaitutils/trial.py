@@ -268,8 +268,6 @@ class Trial(object):
 
         self._models_data = dict()
         self.stddev_data = None  # AvgTrial only
-        # whether to normalize data
-        self._normalize = None
         # frames 0...length
         self.t = np.arange(self.length)
         # analog frames 0...length
@@ -304,20 +302,52 @@ class Trial(object):
             self.eclipse_data['NOTES'],
         )
 
-    def _normalized_frame_data(self, data):
-        """Return time axis and cycle normalized frame data"""
-        if self._normalize is not None:
-            t, data = self._normalize.normalize(data)
-        else:
+    def normalize_to_cycle(self, data, cycle):
+        """Normalize frame-based data to gait cycle.
+
+        Parameters
+        ----------
+        data : (Nxd) ndarray
+            The data, where N is number of frames and d is number of variables.
+        cycle : Gaitcycle | Noncycle | None | int
+            The gait cycle to normalize to. If Noncycle or None, returns unnormalized
+            data. If int, return nth cycle from the trial cycles list.
+        """
+        if isinstance(cycle, int):
+            if cycle >= len(self.cycles) or cycle < 0:
+                raise ValueError('No such cycle')
+            cycle = self.cycles[cycle]
+        if isinstance(cycle, Gaitcycle):
+            t, data = cycle.normalize(data)
+        elif cycle is None or isinstance(cycle, Noncycle):
+            # return unnormalized time axis and data as it is
             t = self.t
+        else:
+            raise ValueError('invalid type for cycle argument')
         return t, data
 
-    def _normalized_analog_data(self, data):
-        """Return time axis and cycle normalized (cropped) analog data"""
-        if self._normalize is not None:
-            t, data = self._normalize.crop_analog(data)
-        else:
+    def normalize_analog_to_cycle(self, data, cycle):
+        """Normalize frame-based data to gait cycle.
+
+        Parameters
+        ----------
+        data : (Nxd) ndarray
+            The data, where N is number of samples and d is number of variables.
+        cycle : Gaitcycle | Noncycle | None
+            The gait cycle to normalize to. If Noncycle or None, returns unnormalized
+            data. If int, return nth cycle from the trial cycles list.
+        """
+        if isinstance(cycle, int):
+            if cycle >= len(self.cycles) or cycle < 0:
+                raise ValueError('No such cycle')
+            cycle = self.cycles[cycle]
+        if isinstance(cycle, Gaitcycle):
+            t, data = cycle.crop_analog(data)
+        elif cycle is None or isinstance(cycle, Noncycle):
+            # return unnormalized time axis and data as it is
             t = self.t_analog
+        else:
+            raise ValueError('invalid type for cycle argument')
         return t, data
 
     @property
@@ -328,7 +358,7 @@ class Trial(object):
         return self._marker_data
 
     def _get_modelvar(self, var):
-        """Return unnormalized data for a model variable."""
+        """Return (unnormalized) data for a model variable."""
         model_ = models.model_from_var(var)
         if not model_:
             raise ValueError('No model found for %s' % var)
@@ -338,13 +368,15 @@ class Trial(object):
             self._models_data[model_.desc] = modeldata
         return self._models_data[model_.desc][var]
 
-    def get_model_data(self, var):
+    def get_model_data(self, var, cycle=None):
         """Return trial data for a model variable.
 
         Parameters
         ----------
         var : string
             The name of the model variable (e.g. 'LHipMomentX')
+        cycle : Gaitcycle
+            The cycle to normalize to. None for no normalization.
 
         Returns
         -------
@@ -353,9 +385,9 @@ class Trial(object):
             is the model variable data as 1-dim ndarray.
         """
         data = self._get_modelvar(var)
-        return self._normalized_frame_data(data)
+        return self.normalize_to_cycle(data, cycle)
 
-    def get_emg_data(self, ch, rms=False):
+    def get_emg_data(self, ch, rms=False, cycle=None):
         """Return trial data for an EMG channel.
 
         Uses name matching: if the specified channel is not found in the data,
@@ -377,9 +409,9 @@ class Trial(object):
             is the EMG data as 1-dim ndarray.
         """
         data = self.emg.get_channel_data(ch, rms=rms)
-        return self._normalized_analog_data(data)
+        return self.normalize_analog_to_cycle(data, cycle)
 
-    def get_marker_data(self, marker):
+    def get_marker_data(self, marker, cycle=None):
         """Return position data for a given marker.
 
         Note that the derivatives (speed, acceleration) can also be obtained by adding
@@ -397,9 +429,9 @@ class Trial(object):
             is the marker data as a (Nt, 3) ndarray.
         """
         data = self.full_marker_data[marker]
-        return self._normalized_frame_data(data)
+        return self.normalize_to_cycle(data, cycle)
 
-    def get_forceplate_data(self, nplate, kind='force'):
+    def get_forceplate_data(self, nplate, kind='force', cycle=None):
         """Return forceplate data.
 
         Parameters
@@ -429,12 +461,11 @@ class Trial(object):
             data = self._forceplate_data[nplate]['CoP']
         else:
             raise ValueError('Invalid kind of forceplate data requested')
-        return self._normalized_analog_data(data)
+        return self.normalize_analog_to_cycle(data, cycle)
 
     def get_accelerometer_data(self):
         """Return accelerometer data."""
         raise NotImplementedError
-        return read_data.get_accelerometer_data(self.source)
 
     def _get_fp_events(self):
         """Read the forceplate events."""
@@ -450,38 +481,17 @@ class Trial(object):
             logger.warning('Could not detect forceplate events')
             return utils.empty_fp_events()
 
-    def set_norm_cycle(self, cycle=None):
-        """ Set normalization cycle.
-
-        After calling this, the get_ methods will return data normalized to
-        the given cycle.
-
-        Parameters
-        ----------
-        cycle : int | Gaitcycle | None
-            The cycle to normalize data to. Can be a Gaitcycle index (obtain
-            cycle by e.g. get_cycles) or a direct index to trial.cycles.
-            If None, do not normalize data to gait cycles.
-        """
-
-        if isinstance(cycle, int):
-            if cycle >= len(self.cycles) or cycle < 0:
-                raise ValueError('No such cycle')
-            cycle = self.cycles[cycle]
-            self._normalize = cycle
-        elif isinstance(cycle, Gaitcycle):
-            self._normalize = cycle
-        elif cycle is None or isinstance(cycle, Noncycle):
-            self._normalize = None
-
     def get_cycles(self, cyclespec, max_cycles_per_context=None):
-        """ Get specified gait cycles from the trial as Gaitcycle instances.
+        """Get specified gait cycles from the trial.
+
+        Takes a specification for the desired gait cycles and returns a list of
+        Gaitcycle instances.
 
         Parameters
         ----------
-        cyclespec : dict | str | int | tuple | list
+        cyclespec : dict | str | int | tuple | list | None
             The cycles to get. For a context specific cyclespec, it can be dict with
-            keys 'R' and 'L' and cyclespec as values. If not a dict, the given
+            keys: 'R' and 'L', values: cyclespec as below. If not a dict, the given
             cyclespec will be applied to both contexts.
 
             For string args: 'all' gets all trial cycles. 'forceplate' gets cycles
@@ -544,10 +554,12 @@ class Trial(object):
         return sorted(cycs_ok, key=lambda cyc: cyc.start)
 
     def _scan_cycles(self):
-        """Create Gaitcycle instances based on trial strike/toeoff markers."""
-        # The events marked in the trial marked events need to be matched
-        # with detected forceplate events, but may not match exactly, so use
-        # a tolerance
+        """Create Gaitcycle instances for this trial.
+        Cycle detection is based on trial strike/toeoff markers.
+        To identify cycles starting with forceplate contact, the foot strike markers
+        need to be matched with forceplate events. A tolerance of STRIKE_TOL is used
+        for the matching.
+        """
         STRIKE_TOL = 7
         sidestrs = {'R': 'right', 'L': 'left'}
         for strikes in [self.lstrikes, self.rstrikes]:

@@ -25,14 +25,14 @@ testdata_root = r'Z:\gaitutils_testdata'
 
 
 def start_nexus():
-    if not nexus.pid():
+    if not nexus._nexus_pid():
         # try to start Nexus for tests...
         exe = op.join(cfg.general.nexus_path, 'Nexus.exe')
         # silence Nexus output
         blackhole = open(os.devnull, 'w')
         subprocess.Popen([exe], stdout=blackhole)
         time.sleep(9)
-        if not nexus.pid():
+        if not nexus._nexus_pid():
             raise Exception('Please start Vicon Nexus first')
 
 

@@ -89,8 +89,8 @@ else:
 sys.stdout.flush()  # make sure import warnings get printed
 
 
-def pid():
-    """ Tries to return the PID of the running Nexus process. """
+def _nexus_pid():
+    """Tries to return the PID of the currently running Nexus process."""
     PROCNAME = "Nexus.exe"
     for proc in psutil.process_iter():
         try:
@@ -169,7 +169,7 @@ def get_subjectnames(single_only=True):
 
 
 def check_nexus():
-    if not pid():
+    if not _nexus_pid():
         raise GaitDataError('Vicon Nexus does not seem to be running')
 
 

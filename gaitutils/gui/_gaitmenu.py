@@ -1146,6 +1146,6 @@ def main():
     logger.debug('Python version: %s' % sys.version)
     if not c3d.BTK_IMPORTED:
         logger.warning('cannot find btk module; unable to read .c3d files')
-    nexus_status = 'Vicon Nexus is %srunning' % ('' if nexus.pid() else 'not ')
+    nexus_status = 'Vicon Nexus is %srunning' % ('' if nexus._nexus_pid() else 'not ')
     logger.debug(nexus_status)
     app.exec_()

@@ -31,6 +31,23 @@ class GaitDataError(Exception):
     pass
 
 
+def _ipython_setup():
+    """Performs some IPython magic if we are running in IPython"""
+    try:
+        __IPYTHON__
+    except NameError:
+        return
+    from IPython import get_ipython
+
+    ip = get_ipython()
+    #ip.magic("gui qt5")  # needed for mayavi plots
+    #ip.magic("matplotlib qt")  # do mpl plots in separate windows
+    ip.magic("reload_ext autoreload")  # these will enable module autoreloading
+    ip.magic("autoreload 2")
+    # print('warning: setting precision=3 for numpy array printing')
+    # np.set_printoptions(precision=3)
+
+
 def make_gaitutils_shortcut():
     """Makes a desktop shortcut to gaitmenu gui."""
     env.make_shortcut('gaitutils', 'gui/gaitmenu.py', 'gaitutils menu')

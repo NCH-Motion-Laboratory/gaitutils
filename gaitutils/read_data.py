@@ -66,8 +66,8 @@ def get_forceplate_data(source):
 
 
 def get_marker_data(source, markers, ignore_edge_gaps=True, ignore_missing=False):
-    """ Get position, velocity and acceleration for a given marker(s)
-    (str or list of str).
+    """Get position, velocity and acceleration for a given marker(s)
+    (specified as str or list of str).
     Returns dict mkrdata keyed with marker names followed by _P, _V or _A
     (position, velocity, acceleration). Values are Nx3 matrices
     data, e.g. mkrdata['RHEE_V'] is a Nx3 matrix with velocity x, y and z

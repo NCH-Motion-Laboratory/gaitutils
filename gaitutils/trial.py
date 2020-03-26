@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 def nexus_trial(from_c3d=False):
-    """Return Trial instance from currently open Nexus trial.
+    """Return Trial instance created from the currently open Nexus trial.
    
     Parameters
     ----------
@@ -198,7 +198,7 @@ class Trial(object):
         ----------
         source : str | instance of ViconNexus
             Source to read data from. Can be a c3d filename or a ViconNexus
-            connection.
+            connection. 
     """
 
     def __repr__(self):
@@ -327,17 +327,6 @@ class Trial(object):
             self._marker_data = read_data.get_marker_data(self.source, self.markers)
         return self._marker_data
 
-    def get_model_data(self, var):
-        """Return trial data for a model variable.
-
-        Parameters
-        ----------
-        var : string
-            The model variable name.
-        """
-        data = self._get_modelvar(var)
-        return self._normalized_frame_data(data)
-
     def _get_modelvar(self, var):
         """Return unnormalized data for a model variable."""
         model_ = models.model_from_var(var)
@@ -348,6 +337,23 @@ class Trial(object):
             modeldata = read_data.get_model_data(self.source, model_)
             self._models_data[model_.desc] = modeldata
         return self._models_data[model_.desc][var]
+
+    def get_model_data(self, var):
+        """Return trial data for a model variable.
+
+        Parameters
+        ----------
+        var : string
+            The name of the model variable (e.g. 'LHipMomentX')
+
+        Returns
+        -------
+        t_data : tuple
+            Tuple of (t, data) where t is the time axis as 1-dim ndarray, and data
+            is the model variable data as 1-dim ndarray.
+        """
+        data = self._get_modelvar(var)
+        return self._normalized_frame_data(data)
 
     def get_emg_data(self, ch, rms=False):
         """Return trial data for an EMG channel.
@@ -374,7 +380,10 @@ class Trial(object):
         return self._normalized_analog_data(data)
 
     def get_marker_data(self, marker):
-        """Return trial data for a given marker.
+        """Return position data for a given marker.
+
+        Note that the derivatives (speed, acceleration) can also be obtained by adding
+        a suffix '_V' or '_A' to the marker name.
 
         Parameters
         ----------
@@ -384,17 +393,14 @@ class Trial(object):
         Returns
         -------
         t_data : tuple
-            Tuple of (t, data) where t is the time axis as 1-dim ndarray, and data
-            is the marker position, velocity and acceleration as a dict
-            (see read_data.get_marker_data for details).
+            Tuple of (t, data) where t is the time axis as (Nt,) -shape ndarray, and data
+            is the marker data as a (Nt, 3) ndarray.
         """
-        if marker not in self.markers:
-            raise GaitDataError('No such marker')
         data = self.full_marker_data[marker]
         return self._normalized_frame_data(data)
 
     def get_forceplate_data(self, nplate, kind='force'):
-        """Return trial data for a forceplate.
+        """Return forceplate data.
 
         Parameters
         ----------
@@ -404,6 +410,12 @@ class Trial(object):
         kind : str
             The type of data to return. Can be 'force', 'moment', or 'cop'
             (center of pressure).
+
+        Returns
+        -------
+        t_data : tuple
+            Tuple of (t, data) where t is the time axis as (Nt,) -shape ndarray, and data
+            is the marker data as a (Nt, 3) ndarray.
         """
         if not self._forceplate_data:
             self._forceplate_data = read_data.get_forceplate_data(self.source)
@@ -420,6 +432,8 @@ class Trial(object):
         return self._normalized_analog_data(data)
 
     def get_accelerometer_data(self):
+        """Return accelerometer data."""
+        raise NotImplementedError
         return read_data.get_accelerometer_data(self.source)
 
     def _get_fp_events(self):

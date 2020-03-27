@@ -9,7 +9,7 @@ from __future__ import division
 
 from builtins import zip
 from builtins import range
-from itertools import cycle
+from functools import partial
 from collections import OrderedDict, defaultdict
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_pdf import PdfPages
@@ -291,8 +291,12 @@ def plot_trials(
     for trial_ind, trial in enumerate(trials):
 
         cyclebunch = _get_trial_cycles(trial, cycles, max_cycles)
+        # the idea here is to sort the trial cycles by their legend key, so they
+        # appear in the legend in correct order
+        sorter = partial(_get_cycle_name, trial, name_type=legend_type)
+        allcycles = sorted(cyclebunch.allcycles, key=sorter)
 
-        for cyc_ind, cyc in enumerate(cyclebunch.allcycles):
+        for cyc_ind, cyc in enumerate(allcycles):
             first_cyc = trial_ind == 0 and cyc_ind == 0
             context = cyc.context
 
@@ -504,7 +508,7 @@ def plot_trials(
                         # keeps track of whether any trials have valid EMG data for this
                         # variable; otherwise, we annotatate channel as disconnected
                         emg_any_ok[var] |= trial.emg.status_ok(var)
-                        remaining = cyclebunch.allcycles[cyc_ind + 1 :]
+                        remaining = allcycles[cyc_ind + 1 :]
                         last_emg = trial == trials[-1] and not any(
                             c in remaining for c in cyclebunch.emg_cycles
                         )

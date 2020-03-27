@@ -33,7 +33,6 @@ def _get_trial_cycles(trial, cycles, max_cycles):
         cycles['emg'], max_cycles_per_context=max_cycles['emg']
     )
     allcycles = list(set.union(set(model_cycles), set(emg_cycles)))
-    allcycles = sorted(allcycles, key=lambda cyc: cyc.name)
     if not allcycles:
         logger.debug('trial %s has no cycles of specified type' % trial.trialname)
     logger.debug(

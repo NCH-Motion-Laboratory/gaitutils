@@ -10,7 +10,7 @@ from builtins import zip
 import logging
 from builtins import range
 from collections import defaultdict
-from itertools import cycle
+from functools import partial
 import sys
 
 import numpy as np
@@ -335,11 +335,14 @@ def plot_trials(
 
     # plot the actual data
     for trial in trials:
-
-        cyclebunch = _get_trial_cycles(trial, cycles, max_cycles)
         subplot_adjusted = defaultdict(lambda: False)
+        cyclebunch = _get_trial_cycles(trial, cycles, max_cycles)
+        # the idea here is to sort the trial cycles by their legend key, so they
+        # appear in the legend in correct order
+        sorter = partial(_get_cycle_name, trial, name_type=legend_type)
+        allcycles = sorted(cyclebunch.allcycles, key=sorter)
 
-        for cyc_ind, cyc in enumerate(cyclebunch.allcycles):
+        for cyc_ind, cyc in enumerate(allcycles):
 
             context = cyc.context
 

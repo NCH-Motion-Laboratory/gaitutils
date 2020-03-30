@@ -91,7 +91,7 @@ def _step_width(source):
     tr = Trial(source)
     sw = dict()
     mkr = 'TOE'  # marker name without context
-    mkrdata = tr.full_marker_data
+    mkrdata = tr._full_marker_data
     # FIXME: why not use cycles here?
     for context, strikes in zip(['L', 'R'], [tr.lstrikes, tr.rstrikes]):
         sw[context] = list()

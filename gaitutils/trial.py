@@ -45,8 +45,8 @@ def nexus_trial(from_c3d=False):
 
     Returns
     -------
+    Trial
         A Trial instance.
-
     """
     vicon = nexus.viconnexus()
     trname = vicon.GetTrialName()  # 2-tuple of (path, name)
@@ -67,7 +67,18 @@ def nexus_trial(from_c3d=False):
 
 
 class Noncycle(object):
-    """Used in place of Gaitcycle when requesting unnormalized data."""
+    """Used in place of Gaitcycle when requesting unnormalized data.
+
+    Has a context parameter, to facilitate plotting unnormalized data for left
+    and right separately.
+
+    Parameters
+    ----------
+    context : str
+        Cycle context: 'R' or 'L' for right and left, respectively.
+    trial : Trial
+        The trial instance owning this cycle. Does not need to be set.
+    """
 
     def __init__(self, context, trial=None):
         self.context = context
@@ -80,7 +91,7 @@ class Noncycle(object):
 
 
 class Gaitcycle(object):
-    """ Gait cycle class.
+    """Gait cycle class.
 
         Parameters
         ----------
@@ -160,13 +171,14 @@ class Gaitcycle(object):
 
         Parameters
         ----------
-        var : array
-            NxM array of frame-based data to normalize.
+        var : ndarray
+            NxM array of frame-based data to normalize. N is the number of frames.
 
         Returns
         -------
-        tn, ndata
-        
+        tuple
+            A tuple of (tn, ndata) where tn is the normalized time (0..100%) and ndata
+            is the normalized data.
         """
         # convert 1D arrays to 2D
         if len(var.shape) == 1:
@@ -185,7 +197,7 @@ class Gaitcycle(object):
 
         Parameters
         ----------
-        var : array
+        var : ndarray
             NxM array of analog data to normalize.
         """
         return self.tn_analog, var[self.start_smp : self.end_smp]
@@ -280,13 +292,28 @@ class Trial(object):
 
     @property
     def videos(self):
-        """Get all trial videos"""
+        """Returns names of trial video files.
+        
+        Returns
+        -------
+        vidfiles : list
+            List of filenames.
+        """
         trialbase = op.join(self.sessionpath, self.trialname)
         return videos.get_trial_videos(trialbase)
 
     @property
     def eclipse_tag(self):
-        """Return the first matching Eclipse tag for this trial."""
+        """Return the first matching Eclipse tag for the trial.
+
+        The configured Eclipse fields (e.g. DESCRIPTION) are searched for the configured
+        tags. If a configured tag is found, the it will be returned.
+        
+        Returns
+        -------
+        tag : str
+            The tag.
+        """
         for tag in cfg.eclipse.tags:
             if any([tag in self.eclipse_data[fld] for fld in cfg.eclipse.tag_keys]):
                 return tag
@@ -294,8 +321,13 @@ class Trial(object):
 
     @property
     def name_with_description(self):
-        """Return string consisting of trial name and some Eclipse info."""
-        # FIXME: Eclipse keys hardcoded
+        """Return the trial name with Eclipse DESCRIPTION and NOTES keys.
+        
+        Returns
+        -------
+        desc : str
+            The trial name and description.
+        """
         return '%s (%s, %s)' % (
             self.trialname,
             self.eclipse_data['DESCRIPTION'],
@@ -303,12 +335,12 @@ class Trial(object):
         )
 
     def normalize_to_cycle(self, data, cycle):
-        """Normalize frame-based data to gait cycle.
+        """Normalize frame-based data to a gait cycle.
 
         Parameters
         ----------
-        data : (Nxd) ndarray
-            The data, where N is number of frames and d is number of variables.
+        data : ndarray
+            A Nxd ndarray, where N is number of frames and d is number of variables.
         cycle : Gaitcycle | Noncycle | None | int
             The gait cycle to normalize to. If Noncycle or None, returns unnormalized
             data. If int, return nth cycle from the trial cycles list.
@@ -327,7 +359,7 @@ class Trial(object):
         return t, data
 
     def normalize_analog_to_cycle(self, data, cycle):
-        """Normalize frame-based data to gait cycle.
+        """Normalize analog data to a gait cycle.
 
         Parameters
         ----------
@@ -351,7 +383,7 @@ class Trial(object):
         return t, data
 
     @property
-    def full_marker_data(self):
+    def _full_marker_data(self):
         """Return the full marker data dict."""
         if not self._marker_data:
             self._marker_data = read_data.get_marker_data(self.source, self.markers)
@@ -390,10 +422,11 @@ class Trial(object):
     def get_emg_data(self, ch, rms=False, cycle=None):
         """Return trial data for an EMG channel.
 
-        Uses name matching: if the specified channel is not found in the data,
-        partial name matches are considered and data for the shortest match is
-        returned. For example, if ch == 'LGas' and the data has channels
-        'Voltage.LGas8' and 'Voltage.LGas8_dummy', the former is returned.
+        Uses 'fuzzy' name matching: if the specified channel is not found in the
+        data, partial name matches are considered and data for the shortest
+        match is returned. For example, if ch == 'LGas' and the data has
+        channels 'Voltage.LGas8' and 'Voltage.LGas8_dummy', the former is
+        returned.
 
         Parameters
         ----------
@@ -405,8 +438,8 @@ class Trial(object):
         Returns
         -------
         t_data : tuple
-            Tuple of (t, data) where t is the time axis as 1-dim ndarray, and data
-            is the EMG data as 1-dim ndarray.
+            Tuple of (t, data) where t is the time axis as 1-dim ndarray, and
+            data is the EMG data as 1-dim ndarray.
         """
         data = self.emg.get_channel_data(ch, rms=rms)
         return self.normalize_analog_to_cycle(data, cycle)
@@ -414,8 +447,8 @@ class Trial(object):
     def get_marker_data(self, marker, cycle=None):
         """Return position data for a given marker.
 
-        Note that the derivatives (speed, acceleration) can also be obtained by adding
-        a suffix '_V' or '_A' to the marker name.
+        Note that the derivatives (speed, acceleration) can also be obtained by
+        adding a suffix '_V' or '_A' to the marker name.
 
         Parameters
         ----------
@@ -428,7 +461,7 @@ class Trial(object):
             Tuple of (t, data) where t is the time axis as (Nt,) -shape ndarray, and data
             is the marker data as a (Nt, 3) ndarray.
         """
-        data = self.full_marker_data[marker]
+        data = self._full_marker_data[marker]
         return self.normalize_to_cycle(data, cycle)
 
     def get_forceplate_data(self, nplate, kind='force', cycle=None):
@@ -446,8 +479,8 @@ class Trial(object):
         Returns
         -------
         t_data : tuple
-            Tuple of (t, data) where t is the time axis as (Nt,) -shape ndarray, and data
-            is the marker data as a (Nt, 3) ndarray.
+            Tuple of (t, data) where t is the time axis as (Nt,) -shape ndarray,
+            and data is the marker data as a (Nt, 3) ndarray.
         """
         if not self._forceplate_data:
             self._forceplate_data = read_data.get_forceplate_data(self.source)
@@ -508,7 +541,7 @@ class Trial(object):
 
         Returns
         -------
-        cycles : list
+        list
             List of Gaitcycle instances, sorted by starting frame.
         """
 
@@ -555,10 +588,11 @@ class Trial(object):
 
     def _scan_cycles(self):
         """Create Gaitcycle instances for this trial.
-        Cycle detection is based on trial strike/toeoff markers.
-        To identify cycles starting with forceplate contact, the foot strike markers
-        need to be matched with forceplate events. A tolerance of STRIKE_TOL is used
-        for the matching.
+
+        Cycle detection is based on trial strike/toeoff markers. To identify
+        cycles starting with forceplate contact, the foot strike markers need to
+        be matched with forceplate events. A tolerance of STRIKE_TOL is used for
+        the matching.
         """
         STRIKE_TOL = 7
         sidestrs = {'R': 'right', 'L': 'left'}

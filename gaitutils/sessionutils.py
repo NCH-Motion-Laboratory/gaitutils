@@ -110,7 +110,7 @@ def _merge_session_info(sessions):
 
 def enf_to_trialfile(fname, ext):
     """Converts name of trial .enf file to corresponding .c3d or other
-    trial file"""
+    trial file. Does not check existence"""
     if ext[0] == '.':
         ext = ext[1:]
     enfre = r'\.*.Trial\d*.enf'  # .Trial followed by zero or more digits

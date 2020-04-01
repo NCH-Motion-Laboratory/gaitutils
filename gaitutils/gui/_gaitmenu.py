@@ -896,10 +896,13 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if session is None:
             return
         # XXX: run for tagged + static - maybe this should be configurable
-        trials = sessionutils.get_c3ds(
+        trials = sessionutils.get_enfs(
             session, tags=cfg.eclipse.tags, trial_type='dynamic'
         )
-        trials += sessionutils.get_c3ds(session, trial_type='static')
+        trials += sessionutils.get_enfs(session, trial_type='static')
+        # the c3ds don't actually need to exist, the conversion is just for
+        # the purpose of feeding correct trial names to Nexus
+        trials = [sessionutils.enf_to_trialfile(fn, '.c3d') for fn in trials]
         if trials and cfg.autoproc.postproc_pipelines:
             logger.debug('running postprocessing for %s' % trials)
             vicon = nexus.viconnexus()

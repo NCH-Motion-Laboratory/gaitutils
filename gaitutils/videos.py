@@ -20,12 +20,19 @@ logger = logging.getLogger(__name__)
 
 
 def convert_videos(vidfiles, check_only=False):
-    """Convert video files using command and options defined in cfg.
-    If check_only, return True if all files were already converted.
-    Instantly starts as many converter processes as there are files and
+    """Convert video files using an external command.
+
+    Command and args are defined in cfg.
+    NB: Instantly starts as many converter processes as there are files and
     returns. This has the disadvantage of potentially starting dozens of
     processes, causing slowdown.
-    """
+
+    Parameters
+    ----------
+    vidfiles : list | str list of video filenames, or a single filename
+        check_only : bool, optional Instead of converting, return True if all
+        files are already converted (target exists).
+    """    
     CONV_EXT = '.ogv'  # extension for converted files
     if not isinstance(vidfiles, list):
         vidfiles = [vidfiles]
@@ -83,9 +90,30 @@ def _collect_session_videos(session, tags):
 def get_trial_videos(
     trialfile, camera_label=None, vid_ext=None, overlay=None, single_file=False
 ):
-    """Return list of video files for trial file. File may be c3d or x1d etc.
-    Note that the filename extension is directly appended, so finding videos for
-    .enf files (which are named differently from c3d etc.) will not work"""
+    """Gets list of video files associated with a trial file.
+
+    Trial file must be e.g. c3d, x1d or x2d (enf files won't work, since they
+    are named according to different logic).
+    
+    Parameters
+    ----------
+    trialfile : str
+        The name of the file.
+    camera_label : [type], optional
+        If not None, return only videos corresponding to given camera label.
+    vid_ext : str
+        If not None, return only video files with given extension, e.g. '.avi'
+    overlay : bool
+        If not None, return only overlay or non-overlay videos, for True and False
+        respectively
+    single_file : bool
+        If True, return only one file.
+    
+    Returns
+    -------
+    list
+        The list of video filenames.
+    """
     trialbase = op.splitext(trialfile)[0]
     # XXX: should really be case insensitive, but it does not matter on Windows
     vid_exts = ['.avi', '.ogv']
@@ -103,15 +131,15 @@ def get_trial_videos(
 
 
 def _filter_by_label(vids, camera_label):
-    """Filter videos by camera label"""
+    """Filter videos by given camera label"""
     if camera_label not in cfg.general.camera_labels.values():
         raise ValueError('unconfigured camera label %s' % camera_label)
     ids = [
-        id for id, label in cfg.general.camera_labels.items() if camera_label == label
+        id_ for id_, label in cfg.general.camera_labels.items() if camera_label == label
     ]
     vid_its = itertools.tee(vids, len(ids))  # need to reuse vids iterator
-    for id, vids_ in zip(ids, vid_its):
-        for vid in _filter_by_id(vids_, id):
+    for id_, vids_ in zip(ids, vid_its):
+        for vid in _filter_by_id(vids_, id_):
             yield vid
 
 
@@ -123,7 +151,7 @@ def _filter_by_extension(vids, ext):
 
 
 def _filter_by_id(vids, camera_id):
-    """Filter videos by id"""
+    """Filter videos by camera id"""
     for vid in vids:
         if _camera_id(vid) == camera_id:
             yield vid
@@ -139,10 +167,10 @@ def _filter_by_overlay(vids, overlay=True):
 
 
 def _camera_id(fname):
-    """ Returns camera id for a video file """
+    """Return camera id for a video file"""
     # camera id should be the second component of dot-separated filename
     fn_split = op.split(fname)[-1].split('.')
-    id = fn_split[1]
-    if not numutils.isint(id):
+    id_ = fn_split[1]
+    if not numutils.isint(id_):
         raise RuntimeError('Cannot parse video id from filename %s' % fname)
-    return id
+    return id_

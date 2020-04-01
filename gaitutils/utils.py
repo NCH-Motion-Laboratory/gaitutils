@@ -23,29 +23,8 @@ from .numutils import rising_zerocross, best_match, falling_zerocross, _baseline
 logger = logging.getLogger(__name__)
 
 
-def get_crossing_frame(mP, dim=1, p0=0):
-    """ Return frame(s) where marker position (dimension dim) crosses p0
-    (units are as returned by Nexus, usually mm).
-    Dims are x=0, y=1, z=2. """
-    y = mP[:, dim]
-    nzind = np.where(y != 0)  # nonzero elements == valid data (not nice)
-    y[nzind] -= p0
-    zx = np.append(rising_zerocross(y), falling_zerocross(y))
-    ycross = list()
-    # sanity checks
-    for p in zx:
-        # y must be nonzero on either side of crossing (valid data)
-        if p - 10 > 0 and p + 10 < len(y):
-            if y[p - 10] != 0 and y[p + 10] != 0:
-                # y must change sign also around p
-                if np.sign(y[p - 10]) != np.sign(y[p + 10]):
-                    ycross.append(p)
-    return ycross
-
-
 def avg_markerdata(mkrdata, markers, var_type='_P', roi=None, fail_on_gaps=True):
-    """ Average marker data.
-    """
+    """Average marker data."""
     data_shape = mkrdata[markers[0] + var_type].shape
     mP = np.zeros(data_shape)
     if roi is None:

@@ -897,9 +897,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         # XXX: run for tagged + static - maybe this should be configurable
         trials = sessionutils.get_c3ds(
-            session, tags=cfg.eclipse.tags, trial_type='dynamic'
+            session, tags=cfg.eclipse.tags, trial_type='dynamic', check_if_exists=False
         )
-        trials += sessionutils.get_c3ds(session, trial_type='static')
+        trials += sessionutils.get_c3ds(
+            session, trial_type='static', check_if_exists=False
+        )
         if trials and cfg.autoproc.postproc_pipelines:
             logger.debug('running postprocessing for %s' % trials)
             vicon = nexus.viconnexus()

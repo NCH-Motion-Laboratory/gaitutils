@@ -16,7 +16,7 @@ from collections import defaultdict
 from .. import cfg, sessionutils, normaldata, GaitDataError, trial
 from ulstools.num import age_from_hetu
 from ..viz.timedist import do_session_average_plot, do_comparison_plot
-from ..timedist import session_analysis_text
+from ..timedist import _session_analysis_text
 from ..viz.plots import plot_sessions, plot_session_average, plot_trial_velocities
 
 
@@ -141,7 +141,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
         fig_timedist_avg = do_session_average_plot(sessionpath, backend=pdf_backend)
 
     # time-dist text
-    _timedist_txt = session_analysis_text(sessionpath)
+    _timedist_txt = _session_analysis_text(sessionpath)
 
     # for next 2 plots, disable the legends (there are typically too many cycles)
     # kin consistency

@@ -34,10 +34,10 @@ _timedist_vars = [
 
 def _print_analysis_table(trials):
     """Print analysis vars as text table"""
-    res_avg_all, res_std_all = _multitrial_analysis(trials)
+    res_avg_all, _ = _multitrial_analysis(trials)
     hdr = '%-25s%-9s%-9s\n' % ('Variable', 'Right', 'Left')
     yield hdr
-    for cond, cond_data in res_avg_all.items():
+    for _, cond_data in res_avg_all.items():
         for var, val in cond_data.items():
             li = '%-25s%-9.2f%-9.2f%s' % (var, val['Right'], val['Left'], val['unit'])
             yield li
@@ -45,11 +45,11 @@ def _print_analysis_table(trials):
 
 def _print_analysis_text(trials, main_label=None):
     """Print analysis vars as text"""
-    res_avg_all, res_std_all = _multitrial_analysis(trials)
+    res_avg_all, _ = _multitrial_analysis(trials)
     hdr = 'Time-distance variables (R/L)'
     hdr += ' for %s:\n' % main_label if main_label else ':\n'
     yield hdr
-    for cond, cond_data in res_avg_all.items():
+    for _, cond_data in res_avg_all.items():
         for var, val in cond_data.items():
             li = u'%s: %.2f/%.2f %s' % (var, val['Right'], val['Left'], val['unit'])
             yield li
@@ -100,7 +100,7 @@ def _print_analysis_text_finnish(trials, vars_=None, main_label=None):
     yield ''
 
 
-def session_analysis_text(sessionpath):
+def _session_analysis_text(sessionpath):
     """Return session time-distance vars as text"""
     sessiondir = op.split(sessionpath)[-1]
     tagged_trials = sessionutils.get_c3ds(

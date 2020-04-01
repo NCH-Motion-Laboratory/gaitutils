@@ -231,7 +231,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             logger.debug('gaps in tracking markers')
             _fail(trial, 'label_failure')
             continue
-        gait_dim = utils.principal_movement_direction(subj_pos)
+        gait_dim = utils._principal_movement_direction(subj_pos)
         # our roi (in frames) according to events_range (which is in lab coords)
         # this is not the same as Nexus ROI, which is unset at this point
         try:
@@ -261,7 +261,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             continue
         # get foot velocity info for all events (do not reduce to median)
         try:
-            vel = utils.get_foot_contact_velocity(mkrdata, fpev, medians=False, roi=roi)
+            vel = utils._get_foot_contact_vel(mkrdata, fpev, medians=False, roi=roi)
         except GaitDataError:
             logger.warning('cannot determine foot velocity, possibly due to ' 'gaps')
             _fail(trial, 'gaps')
@@ -495,7 +495,7 @@ def automark_trial(plot=False):
     mkrs = foot_markers + utils._pig_pelvis_markers()
     mkrdata = read_data.get_marker_data(vicon, mkrs, ignore_missing=True)
     fpe = utils.detect_forceplate_events(vicon, mkrdata, roi=roi)
-    vel = utils.get_foot_contact_velocity(mkrdata, fpe, roi=roi)
+    vel = utils._get_foot_contact_vel(mkrdata, fpe, roi=roi)
     utils.automark_events(vicon, vel_thresholds=vel, fp_events=fpe, roi=roi, plot=plot)
 
 

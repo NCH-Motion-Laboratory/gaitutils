@@ -24,7 +24,28 @@ logger = logging.getLogger(__name__)
 
 
 def avg_markerdata(mkrdata, markers, var_type='_P', roi=None, fail_on_gaps=True):
-    """Average marker data."""
+    """Average marker data.
+   
+    Parameters
+    ----------
+    mkrdata : dict
+        The markerdata dict.
+    markers : list
+        Markers to average.
+    var_type : str, optional
+        Type of data to average, by default '_P' (position). Other options are
+        '_V' and '_A'.
+    roi : array-like
+        If given, specified a ROI. Gaps outside the ROI will be ignored.
+    fail_on_gaps : bool, optional
+        If True, fail the averaging on ANY gaps. Otherwise, markers with gaps
+        will not be included in the average.
+    
+    Returns
+    -------
+    ndarray
+        The averaged data (Nx3).
+    """
     data_shape = mkrdata[markers[0] + var_type].shape
     mP = np.zeros(data_shape)
     if roi is None:
@@ -101,8 +122,8 @@ def _pig_pelvis_markers():
 
 
 def is_plugingait_set(mkrdata):
-    """ Check whether marker data set corresponds to Plug-in Gait (full body or
-    lower body only). Extra markers are accepted. """
+    """Check whether marker data set corresponds to Plug-in Gait (full body or
+    lower body only). Extra markers are accepted."""
     mkrs = set(mkrdata.keys())
     # required markers
     lb_mkrs_sacr = set(_pig_markerset(fullbody=False).keys())
@@ -111,7 +132,7 @@ def is_plugingait_set(mkrdata):
 
 
 def _check_markers_flipped(mkrdata):
-    """Checks for markers that may typically get flipped in labeling.
+    """Check for markers that may typically get flipped in labeling.
     Yields pairs of flipped markers"""
     MAX_ANGLE = 90  # max angle to consider vectors 'similarly oriented'
     # HEE-TOE checks
@@ -128,16 +149,16 @@ def _check_markers_flipped(mkrdata):
             yield mkr_toe, mkr_hee
 
 
-def principal_movement_direction(mP):
-    """ Return principal movement direction (dimension of maximum variance) """
+def _principal_movement_direction(mP):
+    """Return principal movement direction (dimension of maximum variance)"""
     inds_ok = np.where(np.any(mP, axis=1))  # make sure that gaps are ignored
     return np.argmax(np.var(mP[inds_ok], axis=0))
 
 
-def get_foot_contact_velocity(mkrdata, fp_events, medians=True, roi=None):
-    """ Return foot velocities during forceplate strike/toeoff frames.
-    fp_events is from detect_forceplate_events()
-    If medians=True, return median values. """
+def _get_foot_contact_vel(mkrdata, fp_events, medians=True, roi=None):
+    """Return foot velocities during forceplate strike/toeoff frames.
+    fp_events is from detect_forceplate_events() If medians=True, return median
+    values."""
     results = dict()
     for context, markers in zip(
         ('R', 'L'), [cfg.autoproc.right_foot_markers, cfg.autoproc.left_foot_markers]
@@ -228,7 +249,7 @@ def _leading_foot(mkrdata, roi=None):
         mkrdata, cfg.autoproc.track_markers, roi=roi, fail_on_gaps=False
     )
     # FIXME: should not use a single dim here
-    gait_dim = principal_movement_direction(subj_pos)
+    gait_dim = _principal_movement_direction(subj_pos)
     gait_dir = np.median(np.diff(subj_pos, axis=0), axis=0)[gait_dim]
     lfoot = avg_markerdata(
         mkrdata, cfg.autoproc.left_foot_markers, roi=roi, fail_on_gaps=False
@@ -511,39 +532,45 @@ def automark_events(
     plot=False,
     mark=True,
 ):
+    """Automatically mark foot strike and toeoff events.
 
-    """ Mark events based on velocity thresholding. Absolute thresholds
-    can be specified as arguments. Otherwise, relative thresholds will be
-    calculated based on the data. Optimal results will be obtained when
-    thresholds based on force plate data are precomputed.
+    Events are marked based on velocity thresholding. Absolute thresholds can be
+    specified as arguments. Otherwise, relative thresholds will be calculated
+    based on the data. Optimal results will be obtained when thresholds are
+    predetermined based on forceplate data, but it is not necessary.
 
-    If mkrdata is None, it will be read from source. Otherwise mkrdata must
-    include both foot markers and the body tracking markers (see config)
+    Before running automark, run reconstruct, label, gap fill and filter
+    pipelines. Filtering is important to get reasonably smooth derivatives.
 
-    vel_thresholds gives velocity thresholds for identifying events. These
-    can be obtained from forceplate data (utils.check_forceplate_contact).
-    Separate thresholds for left and right side.
-
-    fp_events is dict specifying the forceplate detected strikes and toeoffs
-    (see utils.detect_forceplate_events). These will be used instead of
-    (nearby) autodetected events.
-
-    If events_range is specified, the events will be restricted to given
-    coordinate range in the principal gait direction.
-    E.g. events_range=[-1000, 1000]
-    
-    If roi is specified, events will be restricted to roi.
-
-    If start_on_forceplate is True, the first cycle will start on forceplate
-    (i.e. events earlier than the first foot strike events in fp_events will
-    not be marked for the corresponding side(s)).
-
-    If plot=True, velocity curves and events are plotted.
-
-    If mark=False, no events will actually be marked in Nexus.
-
-    Before automark, run reconstruct, label, gap fill and filter pipelines.
-    Filtering is important to get reasonably smooth derivatives.
+    Parameters
+    ----------
+    source : str | ViconNexus
+        The data source, either c3d filename or ViconNexus connection. For Nexus
+        connections, the events can automatically be inserted into Nexus. For c3d
+        files, the events are returned but not actually written to the c3d file.
+    mkrdata : dict, optional
+        The marker data dict. If not given, it will be read from the source. If
+        given, it must include foot markers and subject tracking markers (see cfg).
+    events_range : array_like, optional
+        If specified, the events will be restricted to given coordinate range in
+        the principal gait direction. E.g. [-1000, 1000]
+    fp_events : dict, optional
+        If not None, specifies the forceplate detected strikes and toeoffs
+        (see utils.detect_forceplate_events). These will be then considered the
+        ground truth and will replace nearby autodetected events.
+    vel_thresholds : dict, optional
+        Absolute velocity thresholds for identifying events. These can be obtained
+        from forceplate data (utils.check_forceplate_contact). If None, relative
+        thresholds will be computed based on marker data.
+    roi : array_like, optional
+        If not None, specifies a ROI (in frames) inside which to mark events.
+    start_on_forceplate : bool, optional
+        If True, try to start the first gait cycle on forceplate, i.e. events
+        earlier than the first forceplate contact will not be marked.
+    plot : bool, optional
+        Plot velocity curves and events using matplotlib. Mostly for debug purposes.
+    mark : bool, optional
+        If False, do not actually insert the marker events into Nexus.
     """
 
     from .read_data import get_metadata, get_marker_data
@@ -709,7 +736,7 @@ def automark_events(
         # select events for which the foot is close enough to center frame
         if events_range:
             mP = avg_markerdata(mkrdata, cfg.autoproc.track_markers, roi=roi)
-            fwd_dim = principal_movement_direction(mP)
+            fwd_dim = _principal_movement_direction(mP)
             strike_pos = footctrP[strikes, fwd_dim]
             dist_ok = np.logical_and(
                 strike_pos > events_range[0], strike_pos < events_range[1]

@@ -209,7 +209,7 @@ def test_event_marking():
     mkrdata = read_data.get_marker_data(
         vicon, cfg.autoproc.left_foot_markers + cfg.autoproc.right_foot_markers
     )
-    vel = utils.get_foot_contact_velocity(mkrdata, fpe)
+    vel = utils._get_foot_contact_vel(mkrdata, fpe)
     nexus.automark_events(
         vicon, vel_thresholds=vel, events_range=[-1500, 1500], fp_events=fpe
     )

@@ -64,9 +64,14 @@ def convert_videos(vidfiles, check_only=False):
 def _collect_session_videos(session, tags):
     """Collect session .avi files (trial videos). This only collects
     files for tagged dynamic trials, extra video-only trials and static trials."""
-    c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
+    c3ds = sessionutils.get_c3ds(
+        session, tags=tags, trial_type='dynamic', check_if_exists=False
+    )
     c3ds += sessionutils.get_c3ds(
-        session, tags=cfg.eclipse.video_tags, trial_type='dynamic'
+        session,
+        tags=cfg.eclipse.video_tags,
+        trial_type='dynamic',
+        check_if_exists=False,
     )
     c3ds += sessionutils.get_c3ds(session, trial_type='static')
     camlabels = set(cfg.general.camera_labels.values())

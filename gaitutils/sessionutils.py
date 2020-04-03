@@ -28,7 +28,30 @@ json_exceptions = (UnicodeDecodeError, EOFError, IOError, TypeError, ValueError)
 
 
 def load_quirks(session):
-    """Load session quirks"""
+    """Load quirks JSON file.
+
+    Quirks represent session-specific oddities that have to be taken into account
+    when loading trials, e.g. wrong EMG scaling etc.
+
+    Currently supported quirks are:
+
+    emg_correction_factor : float
+        All EMG data will be multiplied by this factor after reading.
+    ignore_eclipse_fp_info : bool
+        If True, Eclipse forceplate fields will be ignored when loading trials from
+        the session.
+    
+    Parameters
+    ----------
+    session : str
+        The session path.
+    
+    Returns
+    -------
+    dict
+        The quirks in a dict.
+    """
+
     quirks = dict()
     fname = op.join(session, 'quirks.json')
     if op.isfile(fname):
@@ -41,12 +64,29 @@ def load_quirks(session):
 
 
 def default_info():
-    """Return info dict with placeholder values"""
+    """Return a default patient info dict.
+    
+    Returns
+    -------
+    dict
+        The info dict with all keys set to None.
+    """
     return {key: None for key in json_keys}
 
 
 def load_info(session):
-    """Return the patient info dict from the given session"""
+    """Load the patient info dict from a given session
+    
+    Parameters
+    ----------
+    session : str
+        The session path.
+    
+    Returns
+    -------
+    dict
+        The patient info.
+    """
     fname = op.join(session, 'patient_info.json')
     if op.isfile(fname):
         with io.open(fname, 'r', encoding='utf-8') as f:
@@ -77,7 +117,15 @@ def load_info(session):
 
 
 def save_info(session, patient_info):
-    """Save patient info."""
+    """Save an info dict into a session.
+    
+    Parameters
+    ----------
+    session : str
+        The session path.
+    patient_info : dict
+        The patient info.
+    """
     fname = op.join(session, 'patient_info.json')
     try:
         with io.open(fname, 'w', encoding='utf-8') as f:
@@ -87,8 +135,9 @@ def save_info(session, patient_info):
 
 
 def _merge_session_info(sessions):
-    """Merge patient info files across sessions. fullname and hetu must match.
-    Returns dict of individual session infos and the merged info"""
+    """Merge patient info files across sessions.
+    The fullname and hetu keys must match.
+    Returns a 2-tuple with: dict of individual session infos, merged info"""
     session_infos = {
         session: (load_info(session) or default_info()) for session in sessions
     }
@@ -109,8 +158,20 @@ def _merge_session_info(sessions):
 
 
 def enf_to_trialfile(fname, ext):
-    """Converts name of trial .enf file to corresponding .c3d or other
-    trial file"""
+    """Convert the name of a trial .enf file to another type trial file
+    
+    Parameters
+    ----------
+    fname : str
+        The .enf file name.
+    ext : str
+        File extension, e.g. 'c3d'. Can be supplied with a leading dot.
+    
+    Returns
+    -------
+    str
+        The converted filename.
+    """
     if ext[0] == '.':
         ext = ext[1:]
     enfre = r'\.*.Trial\d*.enf'  # .Trial followed by zero or more digits
@@ -121,7 +182,18 @@ def enf_to_trialfile(fname, ext):
 
 
 def get_session_date(sessionpath):
-    """Return date when session was recorded (datetime.datetime object)"""
+    """Get the date when the session was recorded (datetime.datetime object).
+
+    Parameters
+    ----------
+    sessionpath : str
+        The session path.
+    
+    Returns
+    -------
+    datetime.datetime
+        The datetime.
+    """
     enfs = get_enfs(sessionpath)
     x1ds = [enf_to_trialfile(fn, 'x1d') for fn in enfs]
     if not x1ds:
@@ -177,7 +249,26 @@ def _filter_exists(files):
 
 
 def get_enfs(sessionpath, tags=None, trial_type=None, check_if_exists=True):
-    """Get specified enf files for session."""
+    """Get specified enf files for a session.
+    
+    Parameters
+    ----------
+    sessionpath : str
+        The session path.
+    tags : list, optional
+        List of Eclipse tags to filter for. E.g. ['T1'] would return only .enf
+        files that are tagged with 'T1' in Eclipse.
+    trial_type : str, optional
+        Trial type, may be 'static' or 'dynamic'.
+    check_if_exists : bool, optional
+        If True, return only enf files that actually exist.
+    
+    Returns
+    -------
+    list
+        List of enf files.
+    """
+
     enfs = _get_session_enfs(sessionpath)
     if trial_type is not None:
         enfs = _filter_by_type(enfs, trial_type)
@@ -189,7 +280,26 @@ def get_enfs(sessionpath, tags=None, trial_type=None, check_if_exists=True):
 
 
 def get_c3ds(sessionpath, tags=None, trial_type=None, check_if_exists=True):
-    """Get specified c3d files for session."""
+    """Get c3d files for a session. Similar to get_enfs above.
+
+    Parameters
+    ----------
+    sessionpath : str
+        The session path.
+    tags : list, optional
+        List of Eclipse tags to filter for. E.g. ['T1'] would return only .enf
+        files that are tagged with 'T1' in Eclipse.
+    trial_type : str, optional
+        Trial type, may be 'static' or 'dynamic'.
+    check_if_exists : bool, optional
+        If True, return only c3d files that actually exist.
+    
+    Returns
+    -------
+    list
+        List of c3d files.
+    """
+
     enfs = get_enfs(
         sessionpath, tags=tags, trial_type=trial_type, check_if_exists=check_if_exists
     )
@@ -200,7 +310,7 @@ def get_c3ds(sessionpath, tags=None, trial_type=None, check_if_exists=True):
 
 
 def _get_tagged_dynamic_c3ds_from_sessions(sessions, tags=None):
-    """Get all tagged c3d from specified sessions"""
+    """Convenience to get all tagged c3d files from given sessions"""
     c3ds_all = list()
     for session in sessions:
         c3ds = get_c3ds(session, tags=tags, trial_type='dynamic')

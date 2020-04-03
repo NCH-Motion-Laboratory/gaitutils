@@ -345,9 +345,11 @@ def collect_trial_data(
     -------
     data_all : dict
         dict keyed by variable type. Each value is a dict keyed by variable, whose values are numpy arrays of data.
+
     ncycles : dict
         Total number of collected cycles for 'R', 'L', 'R_fp', 'L_fp'
         (last two are for forceplate cycles)
+        
     """
     data_all = dict()
     ncycles = defaultdict(lambda: 0)

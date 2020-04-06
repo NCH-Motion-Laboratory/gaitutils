@@ -41,15 +41,6 @@ except ImportError:
         logger.warning('cannot import btk module; unable to read .c3d files')
 
 
-def is_c3dfile(obj):
-    """ Check whether obj is a valid c3d file. Currently just checks
-    existence. """
-    try:
-        return os.path.isfile(obj)
-    except TypeError:
-        return False
-
-
 def _get_c3d_metadata_subfields(acq, field):
     """ Return names of metadata subfields for a given field"""
     meta = acq.GetMetaData()

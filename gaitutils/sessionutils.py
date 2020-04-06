@@ -158,7 +158,7 @@ def _merge_session_info(sessions):
 
 
 def enf_to_trialfile(fname, ext):
-    """Convert the name of a trial .enf file to another type trial file
+    """Convert the name of a trial .enf file to another type of trial file.
     
     Parameters
     ----------

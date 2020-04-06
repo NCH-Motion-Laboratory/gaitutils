@@ -9,32 +9,49 @@ a path to a c3d file.
 @author: Jussi (jnu@iki.fi)
 
 """
+from past.builtins import basestring
+import os.path as op
 
-from . import nexus, c3d, cfg
+from . import nexus, c3d
 
 
 def _reader_module(source):
-    """ Determine the appropriate module to use """
+    """Determine the appropriate data reader module to use"""
     if nexus.is_vicon_instance(source):
         return nexus
-    elif c3d.is_c3dfile(source):
-        return c3d
+    elif isinstance(source, basestring):
+        # currently we just check c3d existence, without checking
+        # headers etc.
+        if op.isfile(source):
+            return c3d
+        else:
+            raise RuntimeError('File %s does not exist' % source)
     else:
-        raise RuntimeError('Error reading from source: %s' % source)
+        raise RuntimeError('Unknown type for data source %s' % source)
 
 
 def get_metadata(source):
-    """ Get trial and subject info. Returns dict with:
-    trialname: name of trial
-    sessionpath: full path to directory where session is contained
-    length: trial length in frames
-    offset: frame offset of returned data from beginning of trial
-    framerate: capture framerate
-    analograte: sampling rate for analog devices
-    name: subject name
-    subj_params: subject parameters (bodymass etc.)
-    lstrikes, rstrikes: foot strike events l/r
-    ltoeoffs, rtoeoffs: toeoffs l/r
+    """Get trial metadata from a source.
+    
+    Parameters
+    ----------
+    source : ViconNexus | str
+        The data source. Can be a c3d filename or a ViconNexus instance.
+    
+    Returns
+    -------
+    dict
+        The metadata dict with the following keys:
+        trialname: name of trial
+        sessionpath: full path to directory where session is contained
+        length: trial length in frames
+        offset: frame offset of returned data from beginning of trial
+        framerate: capture framerate
+        analograte: sampling rate for analog devices
+        name: subject name
+        subj_params: subject parameters (bodymass etc.)
+        lstrikes, rstrikes: foot strike events l/r
+        ltoeoffs, rtoeoffs: toeoffs l/r
     """
     meta = _reader_module(source).get_metadata(source)
     # Nexus uses slightly different metadata field names as c3d,
@@ -54,13 +71,23 @@ def get_metadata(source):
 
 
 def get_forceplate_data(source):
-    """ Get forceplate data. Returns dict with:
-    F: Nx3 array with force x,y,z components
-    M: Nx3 array with moment x,y,z components
-    Ftot: Nx1 array of total force
-    CoP:  Nx3 array, center of pressure
-    analograte: sampling rate
-    samplesperframe: samples per capture frame
+    """Get forceplate data.
+
+    Parameters
+    ----------
+    source : ViconNexus | str
+        The data source. Can be a c3d filename or a ViconNexus instance.
+
+    Returns
+    -------
+    dict
+        The forceplate data dict with the following keys:
+        F: Nx3 array with force x,y,z components
+        M: Nx3 array with moment x,y,z components
+        Ftot: Nx1 array of total force
+        CoP:  Nx3 array, center of pressure
+        analograte: sampling rate
+        samplesperframe: samples per capture frame
     """
     return _reader_module(source).get_forceplate_data(source)
 

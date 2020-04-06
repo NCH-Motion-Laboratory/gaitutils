@@ -81,7 +81,7 @@ class EMG(object):
         if rms:
             data = numutils.rms(data, cfg.emg.rms_win)
         elif self.passband:  # no filtering for RMS data
-            data = numutils.filtfilt(data, self.passband, self.sfrate)
+            data = numutils._filtfilt(data, self.passband, self.sfrate)
         data *= self.correction_factor
         return data
 
@@ -130,13 +130,13 @@ class EMG(object):
         linefreqs = (np.arange(nharm + 1) + 1) * self.linefreq
         intvar = 0
         for f in linefreqs:
-            data_filt = numutils.filtfilt(
+            data_filt = numutils._filtfilt(
                 data, [f - power_bw / 2.0, f + power_bw / 2.0], self.sfrate
             )
             intvar += np.var(data_filt) / power_bw
         # broadband signal
         band = [self.linefreq + 10, self.linefreq + 10 + broadband_bw]
-        emgvar = np.var(numutils.filtfilt(data, band, self.sfrate)) / broadband_bw
+        emgvar = np.var(numutils._filtfilt(data, band, self.sfrate)) / broadband_bw
         intrel = 10 * np.log10(intvar / emgvar)
         return intrel < cfg.emg.max_interference
 

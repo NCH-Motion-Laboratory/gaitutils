@@ -98,7 +98,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     logger.debug('session timestamp: %s', session_t)
     age = age_from_hetu(hetu, session_t) if hetu else None
 
-    model_normaldata = normaldata.read_session_normaldata(sessionpath)
+    model_normaldata = normaldata._read_session_normaldata(sessionpath)
 
     # make header page
     # timestr = time.strftime('%d.%m.%Y')  # current time, not currently used
@@ -262,7 +262,7 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
 
     # read model normaldata according to first session
     # age may be different for different sessions but this is probably good enough
-    model_normaldata = normaldata.read_session_normaldata(sessionpath)
+    model_normaldata = normaldata._read_session_normaldata(sessionpath)
 
     # make header page
     fullname = info['fullname'] or ''

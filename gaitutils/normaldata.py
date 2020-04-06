@@ -25,10 +25,11 @@ from .envutils import lru_cache_checkfile
 logger = logging.getLogger(__name__)
 
 
-def read_default_normaldata(age=None):
-    """Read all normal data defined in config.
+def _read_default_normaldata(age=None):
+    """Read all model normaldata defined in config.
     
-    If age is specified, include age specific normaldata.
+    If age is specified, include also age specific normaldata, which will take
+    preference over other data in case of duplicate values.
     """
     model_normaldata = dict()
     # we generously accept both list and string
@@ -47,26 +48,26 @@ def read_default_normaldata(age=None):
     return model_normaldata
 
 
-def read_session_normaldata(session):
-    """Read normal data according to patient info in current session"""
+def _read_session_normaldata(session):
+    """Read normal data according to patient info in given session."""
     info = sessionutils.load_info(session)
     if info is not None and 'hetu' in info:
         age = age_from_hetu(info['hetu'])
     else:
         age = None
-    return read_default_normaldata(age)
+    return _read_default_normaldata(age)
 
 
-def read_emg_normaldata(filename=None):
-    """Read JSON formatted EMG normal data.
+def _read_emg_normaldata(filename=None):
+    """Read JSON formatted EMG normaldata.
 
-    The normal data is stored as a dict, where keys correspond to electrode names
-    and values are 101-element lists (returned as numpy arrays). The values correspond
-    to EMG activation in the range 0..1 and the index corresponds to % of the gait cycle.
+    The normaldata is stored as a dict, where keys correspond to electrode names
+    and values are 101-element lists (returned as numpy arrays). The values
+    correspond to EMG activation in the range 0..1 and the index corresponds to
+    % of the gait cycle.
     """
     if filename is None:
         filename = cfg.emg.normaldata_file
-        # filename = r"C:\Users\hus20664877\gaitutils\emg_normaldata.json"
     logger.debug('reading EMG normal data from %s' % filename)
     if not op.isfile(filename):
         raise GaitDataError('No such file %s' % filename)
@@ -81,11 +82,12 @@ def read_emg_normaldata(filename=None):
 
 @lru_cache_checkfile
 def read_normaldata(filename):
-    """ Read normal data into dict. Dict keys are variables and values
-    are Numpy arrays of shape (n, 2). n is either 1 (scalar variable)
-    or 51 (data on 0..100% gait cycle, defined every 2% of cycle).
-    The first and second columns are min and max values, respectively.
-    (May be e.g. mean-stddev and mean+stddev)
+    """Read model normaldata into a dict. Dict keys will be variables and values
+    are ndarrays of shape (n,2). n is either 1 (scalar variable) or 51 (data on
+    0..100% gait cycle, defined every 2% of cycle). The first and second columns
+    are min and max values, respectively. (Typically mean-stddev and
+    mean+stddev).
+    GCD and XLSX (Polygon) formats are currently supported.
     """
     logger.debug('reading normal data from %s' % filename)
     if not op.isfile(filename):
@@ -100,7 +102,7 @@ def read_normaldata(filename):
 
 
 def normaldata_age(age):
-    """ Return age specific normal data file """
+    """Return name of age specific normaldata file"""
     if not age:
         return None
     for age_range, filename in cfg.general.normaldata_age.items():
@@ -110,7 +112,7 @@ def normaldata_age(age):
 
 
 def _check_normaldata(ndata):
-    """ Sanity checks """
+    """Sanity checks for model normaldata"""
     for val in ndata.values():
         if not all(np.diff(val) >= 0):
             raise ValueError('Normal data not in min/max format')
@@ -120,12 +122,13 @@ def _check_normaldata(ndata):
 
 
 def _read_gcd(filename):
-    """ Read normal data from a gcd file.
-        -gcd data is assumed to be in (mean, dev) 2-column format and is
-         converted to (min, max) (Polygon normal data format) as
-         mean-dev, mean+dev
-        -gcd variable names are different and will be translated according
-        to each models translation table """
+    """Read normaldata from a GCD file.
+
+    gcd data is assumed to be in (mean, dev) 2-column format and will converted
+    to (min, max) (Polygon normal data format) as (mean-dev, mean+dev). GCD
+    variable names are different from models.py and will be translated according
+    to each models translation table.
+    """
     ndata = dict()
     with open(filename, 'r') as f:
         lines = f.readlines()
@@ -158,7 +161,7 @@ def _read_gcd(filename):
 
 
 def _read_xlsx(filename):
-    """ Read normal data exported from Polygon (xlsx format). """
+    """Read normal data exported from Polygon (xlsx format)."""
     wb = openpyxl.load_workbook(filename)
     ws = wb['Normal']
     colnames = (cell.value for cell in next(ws.rows))  # first row: col names
@@ -198,7 +201,7 @@ def _write_xlsx(normaldata, filename):
         nrows, ncols = data.shape
         if nrows not in (51, 1) or ncols != 2:
             raise ValueError(
-                'normaldata has unexpected dimensions: %d x %d' % (nrows, ncols)
+                'normal data has unexpected dimensions: %d x %d' % (nrows, ncols)
             )
         # convert trailing dimension to number
         if var[-1] in 'XYZ':
@@ -223,7 +226,7 @@ def _write_xlsx(normaldata, filename):
 
 
 def normals_from_data(data):
-    """Compute normaldata from data dict output by get_model_data"""
+    """Compute normaldata from data dict output by stats.collect_trial_data"""
     normaldata = dict()
     for mod in models_all:
         thevars = mod.varlabels_noside

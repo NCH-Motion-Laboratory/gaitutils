@@ -11,7 +11,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 import logging
 
-from gaitutils.numutils import segment_angles, digitize_array, rms
+from gaitutils.numutils import _segment_angles, digitize_array, rms
 
 # from utils import _file_path, cfg
 
@@ -22,14 +22,14 @@ logger = logging.getLogger(__name__)
 def test_segment_angles():
     P = np.random.randn(1000, 4)  # invalid dims
     with pytest.raises(ValueError):
-        segment_angles(P)
+        _segment_angles(P)
     P = np.random.randn(1000, 5, 3)
-    a = segment_angles(P)
+    a = _segment_angles(P)
     assert a.shape == (1000, 3)
     # singular (identical successive points)
     P = np.array([0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 3, 0]).reshape(4, 3)
     ang = np.array([np.nan, 135.0])
-    assert_allclose(ang, segment_angles(P) / np.pi * 180)
+    assert_allclose(ang, _segment_angles(P) / np.pi * 180)
 
 
 def test_digitize():

@@ -15,7 +15,7 @@ import numpy as np
 import os
 import sys
 
-from .numutils import center_of_pressure, change_coords, _file_digest
+from .numutils import center_of_pressure, _change_coords, _file_digest
 from .envutils import lru_cache_checkfile
 from . import GaitDataError
 
@@ -337,7 +337,7 @@ def get_forceplate_data(c3dfile):
         P = np.stack([px, py, pz], axis=1)
         wR = P / np.linalg.norm(P, axis=0)  # rotation matrix, plate -> world
         # check whether cop stays inside forceplate area and clip if necessary
-        cop_w = change_coords(cop, wR, wT)
+        cop_w = _change_coords(cop, wR, wT)
         cop_wx = np.clip(cop_w[:, 0], lb[0], ub[0])
         cop_wy = np.clip(cop_w[:, 1], lb[1], ub[1])
         if not (cop_wx == cop_w[:, 0]).all() and (cop_wy == cop_w[:, 1]).all():
@@ -347,9 +347,9 @@ def get_forceplate_data(c3dfile):
             cop[:, 0] = cop_wx
             cop[:, 1] = cop_wy
         # XXX moment and force transformations may still be wrong
-        data['F'] = change_coords(-F, wR, 0)  # not sure why sign flip needed
+        data['F'] = _change_coords(-F, wR, 0)  # not sure why sign flip needed
         data['Ftot'] = Ftot
-        data['M'] = change_coords(-M, wR, 0)  # not sure why sign flip needed
+        data['M'] = _change_coords(-M, wR, 0)  # not sure why sign flip needed
         data['CoP'] = cop_w
         data['upperbounds'] = ub
         data['lowerbounds'] = lb

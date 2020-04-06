@@ -8,14 +8,16 @@ Unit tests on a running instance of Vicon Nexus.
 
 
 import numpy as np
-from numpy.testing import assert_allclose, assert_array_equal, assert_array_almost_equal
+from numpy.testing import assert_allclose, assert_array_equal, assert_array_almost_equal, assert_equal
 
 import gaitutils
 from gaitutils import nexus, utils, models, read_data
-from gaitutils import Trial
+from gaitutils.trial import Trial
 from gaitutils.utils import detect_forceplate_events
 from utils import _nexus_open_trial, _trial_path, start_nexus, cfg
 
+
+vicon = nexus.viconnexus()
 
 def test_nexus_reader():
     """Test loading & trial instance creation"""

@@ -17,7 +17,7 @@ import logging
 import time
 import multiprocessing
 
-from .numutils import change_coords
+from .numutils import _change_coords
 from . import GaitDataError, cfg
 
 
@@ -75,7 +75,7 @@ def _add_nexus_path(vicon_path):
     else:
         logger.debug('%s already in sys.path' % _win_sdk_path)
 
-
+# try to add Nexus SDK to sys.path and import ViconNexus
 if sys.version_info.major >= 3:
     logger.debug('running on Python 3 or newer, cannot import Nexus API (yet)')
 else:
@@ -85,7 +85,6 @@ else:
         import ViconNexus
     except ImportError:
         logger.debug('cannot import Vicon Nexus SDK')
-
 sys.stdout.flush()  # make sure import warnings get printed
 
 
@@ -402,7 +401,7 @@ def _get_1_forceplate_data(vicon, devid):
     wT = np.array(nfp.WorldT)
     # plate corners -> world coords
     cor = np.stack([nfp.LowerBounds, nfp.UpperBounds])
-    cor_w = change_coords(cor, wR, wT)
+    cor_w = _change_coords(cor, wR, wT)
     cor_full = np.array(
         [
             cor_w[0, :],

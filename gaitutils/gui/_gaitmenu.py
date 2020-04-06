@@ -34,7 +34,7 @@ from .qt_dialogs import (
 )
 from .qt_widgets import QtHandler, ProgressBar, ProgressSignals, XStream
 from ulstools.num import check_hetu
-from ..normaldata import read_default_normaldata
+from ..normaldata import _read_default_normaldata
 from ..videos import _collect_session_videos, convert_videos
 from .. import GaitDataError, nexus, cfg, sessionutils, envutils, c3d, stats, trial
 from . import _tardieu
@@ -758,7 +758,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             cycles = 'unnormalized'
         else:
             cycles = None
-        model_normaldata = read_default_normaldata()
+        model_normaldata = _read_default_normaldata()
         layout_desc = self.cbLayout.currentText()
         layout_name = self.layouts_map[layout_desc]
         backend = self._get_plotting_backend_ui()

@@ -21,25 +21,31 @@ logger = logging.getLogger(__name__)
 
 
 def mad(data, axis=None, scale=1.4826, keepdims=False):
-    """Median absolute deviation or MAD. Defined as the median absolute
-    deviation from the median of the data. A robust alternative to stddev.
-    Identical to scipy.stats.median_absolute_deviation(), which does
-    not take a keepdims argument.
+    """Median absolute deviation (MAD).
+    
+    Defined as the median absolute deviation from the median of the data. A
+    robust alternative to stddev. Results should be identical to
+    scipy.stats.median_absolute_deviation(), which does not take a keepdims
+    argument.
 
     Parameters
     ----------
     data : array_like
-        The data
-    scale : float
+        The data.
+    scale : float, optional
         Scaling of the result. By default, it is scaled to give a consistent
         estimate of the standard deviation of values from a normal
         distribution.
-    axis : Axis or axes along which to compute MAD.
+    axis : numpy axis spec, optional
+        Axis or axes along which to compute MAD.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left in the
+        result as dimensions with size one.
 
     Returns
     -------
-    res : ndarray
-        The result
+    ndarray
+        The MAD.
     """
     # keep dims here so that broadcasting works
     med = np.median(data, axis=axis, keepdims=True)
@@ -56,15 +62,16 @@ def modified_zscore(data, axis=None, single_mad=None):
     ----------
     data : array_like
         The data
-    axis : Axis or axes along which to compute the statistic.
-    single_mad : bool
+    axis : numpy axis spec, optional
+        Axis or axes along which to compute the statistic.
+    single_mad : bool, optional
         Use a single MAD estimate computed all over the data. If False, MAD
         will be computed along given axis (e.g. separately for each variable).
 
     Returns
     -------
-    res : ndarray
-        The result
+    ndarray
+        The modified Z-score.
     """
     med_ = np.median(data, axis=axis, keepdims=True)
     mad_ = mad(data, axis=axis, keepdims=True)
@@ -77,24 +84,27 @@ def outliers(x, axis=0, single_mad=None, p_threshold=1e-3):
     """Robustly detect outliers assuming a normal distribution.
     
     A modified Z-score is first computed based on the data. Then a threshold
-    Z is computed according to p_threshold, and values that exceed it
-    are rejected. p_threshold is the probability of rejection for strictly
+    value Zlim is computed from p_threshold, and values that exceed Zlim are
+    rejected. p_threshold is the probability of rejection assuming strictly
     normally distributed data, i.e. probability for "false outlier"
 
     Parameters
     ----------
     data : array_like
-        The data
-    axis : Axis or axes along which to compute the Z scores. E.g. axis=0
+        The data.
+    axis : numpy axis spec, optional
+        Axis or axes along which to compute the Z scores. E.g. axis=0
         computes row-wise Z scores and rejects based on those.
     single_mad : bool
-        Use a single MAD estimate computed all over the data. If False, MAD
+        Use a single MAD estimate computed all over the data. If False, the MAD
         will be computed along given axis (e.g. separately for each variable).
+    p_threshold : float
+        The P threshold for rejection.
 
     Returns
     -------
-    idx : tuple
-        Indexes of rejected values (as in np.where output)
+    tuple
+        Indexes of rejected values (np.where output)
     """
     zs = modified_zscore(x, axis=axis, single_mad=single_mad)
     z_threshold = np.sqrt(2) * erfcinv(p_threshold)

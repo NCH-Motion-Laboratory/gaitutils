@@ -244,7 +244,7 @@ def dash_report(
     if not video_only:
         # see whether we can load report figures from disk
         data_c3ds = [enf_to_trialfile(enffile, 'c3d') for enffile in data_enfs]
-        digest = numutils.files_digest(data_c3ds)
+        digest = numutils._files_digest(data_c3ds)
         logger.debug('report data digest: %s' % digest)
         # data is always saved into alphabetically first session
         data_dir = sorted(sessions)[0]

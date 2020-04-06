@@ -11,7 +11,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 import logging
 
-from gaitutils.numutils import segment_angles, best_match, rms
+from gaitutils.numutils import segment_angles, digitize_array, rms
 
 # from utils import _file_path, cfg
 
@@ -32,13 +32,13 @@ def test_segment_angles():
     assert_allclose(ang, segment_angles(P) / np.pi * 180)
 
 
-def test_best_match():
+def test_digitize():
     v = [1, 2, 3, 2]
     b = [1, 2.1, 3.1]
     r = [1, 2.1, 3.1, 2.1]
-    assert_allclose(best_match(v, b), r)
+    assert_allclose(digitize_array(v, b), r)
     b = []
-    assert_allclose(best_match(v, b), v)
+    assert_allclose(digitize_array(v, b), v)
 
 
 def test_rms():

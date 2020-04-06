@@ -16,7 +16,7 @@ import io
 import logging
 
 from . import cfg, sessionutils, GaitDataError, numutils
-from .numutils import isfloat
+from .numutils import _isfloat
 from ulstools.num import age_from_hetu
 from .models import models_all
 from .envutils import lru_cache_checkfile
@@ -135,7 +135,7 @@ def _read_gcd(filename):
         if li[0] == '!':  # new variable
             varname = lis[0][1:]
             ndata[varname] = list()
-        elif varname and isfloat(lis[0]):  # actual data
+        elif varname and _isfloat(lis[0]):  # actual data
             # assume mean, dev format
             mean, dev = np.array(lis, dtype=float)
             ndata[varname].append([mean - dev, mean + dev])

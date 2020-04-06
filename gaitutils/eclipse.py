@@ -14,7 +14,7 @@ import configobj
 from configobj import ConfigObj
 from collections import defaultdict, OrderedDict
 
-from .numutils import isint
+from .numutils import _isint
 from . import GaitDataError
 
 logger = logging.getLogger(__name__)
@@ -85,7 +85,7 @@ def eclipse_fp_keys(eclipse_keys):
     return {
         key: val
         for key, val in eclipse_keys.items()
-        if key[:2] == 'FP' and len(key) == 3 and isint(key[2])
+        if key[:2] == 'FP' and len(key) == 3 and _isint(key[2])
     }
 
 

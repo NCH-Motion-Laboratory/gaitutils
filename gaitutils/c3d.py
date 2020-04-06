@@ -15,7 +15,7 @@ import numpy as np
 import os
 import sys
 
-from .numutils import center_of_pressure, change_coords, file_digest
+from .numutils import center_of_pressure, change_coords, _file_digest
 from .envutils import lru_cache_checkfile
 from . import GaitDataError
 
@@ -317,6 +317,7 @@ def get_forceplate_data(c3dfile):
             continue
         F = np.stack([rawdata['Fx'], rawdata['Fy'], rawdata['Fz']], axis=1)
         M = np.stack([rawdata['Mx'], rawdata['My'], rawdata['Mz']], axis=1)
+        # we need to calculate center of pressure, since it's not in the c3d
         # this should be the plate thickness (from moment origin to physical
         # origin) needed for center of pressure calculations
         dz = np.abs(plate.GetOrigin()[2])

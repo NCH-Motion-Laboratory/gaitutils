@@ -18,7 +18,7 @@ import numpy as np
 import logging
 
 from . import GaitDataError, cfg
-from .numutils import rising_zerocross, best_match, falling_zerocross, _baseline
+from .numutils import rising_zerocross, digitize_array, falling_zerocross, _baseline
 
 logger = logging.getLogger(__name__)
 
@@ -751,7 +751,7 @@ def automark_events(
             fp_strikes = fp_events[context + '_strikes']
             logger.debug('forceplate strikes: %s' % fp_strikes)
             # find best fp matches for all strikes
-            fpc = best_match(strikes, fp_strikes)
+            fpc = digitize_array(strikes, fp_strikes)
             ok_ind = np.where(np.abs(fpc - strikes) < FP_EVENT_TOL)[0]
             if ok_ind.size == 0:
                 logger.warning(
@@ -764,7 +764,7 @@ def automark_events(
             # toeoffs
             fp_toeoffs = fp_events[context + '_toeoffs']
             logger.debug('forceplate toeoffs: %s' % fp_toeoffs)
-            fpc = best_match(toeoffs, fp_toeoffs)
+            fpc = digitize_array(toeoffs, fp_toeoffs)
             ok_ind = np.where(np.abs(fpc - toeoffs) < FP_EVENT_TOL)[0]
             if ok_ind.size == 0:
                 logger.warning(

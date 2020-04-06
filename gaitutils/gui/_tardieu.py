@@ -42,7 +42,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 from .. import nexus, cfg, read_data, GaitDataError
 from ..trial import Trial
-from ..numutils import segment_angles, rms
+from ..numutils import _segment_angles, rms
 from .qt_dialogs import qt_message_dialog, qt_yesno_dialog
 
 
@@ -532,7 +532,7 @@ class TardieuPlot(object):
         # stack so that marker changes along 2nd dim for segment_angles
         Pall = np.stack([P0, P1, P2], axis=1)
         # compute segment angles (deg)
-        self.angd = segment_angles(Pall) / np.pi * 180
+        self.angd = _segment_angles(Pall) / np.pi * 180
         # this is our calculated starting angle
         ang0_our = np.median(self.angd[~np.isnan(self.angd)][:10])
         # normalize: plantarflexion negative, our starting angle equals

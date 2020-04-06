@@ -112,59 +112,77 @@ def outliers(x, axis=0, single_mad=None, p_threshold=1e-3):
     return np.where(abs(zs) > z_threshold)
 
 
-def files_digest(files):
-    """Create total md5 digest for a list of files"""
-    hashes = sorted(file_digest(fn) for fn in files)
-    # concat as unicode and encode to get a definite byte representation
-    # in both py2 and py3
+def _files_digest(files):
+    """Create overall md5 digest for a sequence of files (filenames)"""
+    hashes = sorted(_file_digest(fn) for fn in files)
+    # concat as unicode and encode to get a well defined byte representation in
+    # both py2 and py3
     hash_str = u''.join(hashes).encode('utf-8')
     return hashlib.md5(hash_str).hexdigest()
 
 
-def file_digest(fn):
+def _file_digest(fn):
     """Return md5 digest for file"""
     with open(fn, 'rb') as f:
         data = f.read()
     return hashlib.md5(data).hexdigest()
 
 
-def rolling_fun_strided(m, fun, win, axis=None):
-    """ Window array along given axis and apply fun() to the windowed data.
-    No padding, i.e. returned array is shorter in the axis dim by (win-1) """
-    if axis is None:
-        m = m.flatten()
-        axis = 0
-    sh = m.shape
-    st = m.strides
-    # break up the given dim into windows, insert a new dim
-    sh_ = sh[:axis] + (sh[axis] - win + 1, win) + sh[axis + 1 :]
-    # insert a stride for the new dim, same as for the given dim
-    st_ = st[:axis] + (st[axis], st[axis]) + st[axis + 1 :]
-    # apply fun on the new dimension
-    return fun(as_strided(m, sh_, st_), axis=axis + 1)
-
-
 def rising_zerocross(x):
-    """ Return indices of rising zero crossings in sequence,
-    i.e. n where x[n] >= 0 and x[n-1] < 0 """
-    x = np.array(x)  # this should not hurt
+    """Find indices of rising zero crossings in array.
+    
+    The indices are defined as n for which x[n] >= 0 and x[n-1] < 0.
+    
+    Parameters
+    ----------
+    x : array_like
+        The data.
+    
+    Returns
+    -------
+    tuple
+        The indices (np.where output)
+    """
+    x = np.array(x)  # we can also handle lists etc.
     return np.where(np.logical_and(x[1:] >= 0, x[:-1] < 0))[0] + 1
 
 
 def falling_zerocross(x):
+    """Find indices of falling zero crossings in array.
+    
+    The indices are defined as n for which x[n] <= 0 and x[n-1] > 0.
+    
+    Parameters
+    ----------
+    x : array_like
+        The data.
+    
+    Returns
+    -------
+    tuple
+        The indices (np.where output)
+    """
     return rising_zerocross(-x)
 
 
-def _padded_shift(x, n):
-    """Shift x right by n samples (or left if negative) and zero pad so
-    that original length is kept"""
-    pads = (n, 0) if n > 0 else (0, -n)
-    x_ = np.pad(x, pads, mode='constant')
-    return x_[:-n] if n > 0 else x_[-n:]
+def digitize_array(v, b):
+    """Replace all elements of v with their closest matches in b.
+    
+    Uses abs(x-y) as the distance metric. This function is similar to
+    np.digitize(), but simpler in usage and implementation.
 
-
-def best_match(v, b):
-    """ Replace elements of v using their closest matches in b """
+    Parameters
+    ----------
+    v : array_like
+        Array to make replacements in.
+    b : array_like
+        Array to pick replacements from.
+    
+    Returns
+    -------
+    ndarray
+        The result.
+    """
     v = np.array(v)
     b = np.array(b)
     if b.size == 0:
@@ -173,8 +191,8 @@ def best_match(v, b):
     return b[inds]
 
 
-def isfloat(x):
-    """ Return True for float-conversible values, False otherwise """
+def _isfloat(x):
+    """Test for float-conversible value"""
     try:
         float(x)
         return True
@@ -182,8 +200,8 @@ def isfloat(x):
         return False
 
 
-def isint(x):
-    """ Return True for int-conversible values, False otherwise """
+def _isint(x):
+    """Test for int-conversible value"""
     try:
         int(x)
         return True
@@ -192,26 +210,45 @@ def isint(x):
 
 
 def _baseline(v):
-    """ Baseline v using histogram. Subtracts the most prominent
-    signal level """
+    """Baseline v using histogram.
+
+    Subtracts the most prominent signal level.
+    """
+    v = np.array(v)
     v = v.squeeze()
     if len(v.shape) != 1:
         raise ValueError('Need 1-dim input')
-    v = np.array(v)
-    nbins = int(len(v) / 10)  # exact n of bins should not matter
+    nbins = max(int(len(v) / 10), 1000)  # exact n of bins should not matter
     ns, edges = np.histogram(v, bins=nbins)
     peak_ind = np.where(ns == np.max(ns))[0][0]
     return v - np.mean(edges[peak_ind : peak_ind + 2])
 
 
 def center_of_pressure(F, M, dz):
-    """ Compute CoP according to AMTI instructions. The results differ
-    slightly (few mm) from Nexus, for unknown reasons (different filter?)
-    See http://health.uottawa.ca/biomech/courses/apa6903/amticalc.pdf """
-    FP_FILTFUN = medfilt  # filter function
+    """Compute center of pressure from forceplate data.
+    
+    Computes CoP according to AMTI formula. The results differ slightly
+    (typically few mm) from those given by Nexus, for unknown reasons (different
+    filter?) See http://health.uottawa.ca/biomech/courses/apa6903/amticalc.pdf
+
+    Parameters
+    ----------
+    F : ndarray
+        The force vector (Nx3). N is the number of observations.
+    M : ndarray
+        The moment vector (Nx3)
+    dz : float
+        The thickness of the plate, or the distance from moment origin to physical origin.
+    
+    Returns
+    -------
+    ndarray
+        The center of pressure (Nx3)
+    """    
+    FP_FILTFUN = medfilt  # the filter function
     FP_FILTW = 5  # median filter width
     fx, fy, fz = tuple(F.T)  # split columns into separate vars
-    mx, my, mz = tuple(M.T)
+    mx, my, _ = tuple(M.T)
     fz = FP_FILTFUN(fz, FP_FILTW)
     nz_inds = np.where(np.abs(fz) > 0)[0]  # only divide on nonzero inds
     cop = np.zeros((fx.shape[0], 3))
@@ -220,19 +257,21 @@ def center_of_pressure(F, M, dz):
     return cop
 
 
-def change_coords(pts, wR, wT):
-    """ Translate pts (N x 3) into a new coordinate system described by
-    rotation matrix wR and translation vector wT """
+def _change_coords(pts, wR, wT):
+    """Translate pts (Nx3) into a new coordinate system described by
+    rotation matrix wR and translation vector wT"""
     pts = np.array(pts)
     return np.dot(wR, pts.T).T + wT
 
 
-def segment_angles(P):
-    """ Compute angles between segments defined by ordered points in P
-    (N x 3 array). Can also be 3-d matrix of T x N x 3 to get time-dependent
-    data. Output will be (N-2) vector or T x (N-2) matrix of angles in radians.
-    If successive points are identical, nan:s will be output for the
-    corresponding angles.
+def _segment_angles(P):
+    """Compute angles between line segments.
+
+    The segments are defined by ordered points in P (Nx3 array). For N points,
+    there will be N-1 segments and N-2 angles between those. It can also be 3-d
+    matrix of (TxNx3) to get time-dependent data. Output will be (N-2) vector or
+    Tx(N-2) matrix of angles in radians. If successive points are identical,
+    nan:s will be output for the corresponding angles.
     """
     if P.shape[-1] != 3 or len(P.shape) not in [2, 3]:
         raise ValueError('Invalid shape of input matrix')
@@ -249,10 +288,12 @@ def segment_angles(P):
     return np.pi - np.arccos(dots)
 
 
-def running_sum(M, win, axis=None):
-    """ Running (windowed) sum of sequence M using cumulative sum,
-        along given axis. Inspired by
-        http://arogozhnikov.github.io/2015/09/30/NumpyTipsAndTricks2.html """
+def _running_sum(M, win, axis=None):
+    """Calculate running sum for given window length.
+    
+    M is the data (ndarray) and sum will be along given axis. win is the window
+    length. Uses cumulative sum, inspired by:
+    http://arogozhnikov.github.io/2015/09/30/NumpyTipsAndTricks2.html """
     if axis is None:
         M = M.flatten()
     s = np.cumsum(M, axis=axis)
@@ -264,7 +305,24 @@ def running_sum(M, win, axis=None):
 
 
 def rms(data, win, axis=None, pad_mode=None):
-    """Return rolling window RMS for a numpy array."""
+    """Calculate rolling window RMS.
+    
+    Parameters
+    ----------
+    data : ndarray
+        The data.
+    win : int
+        Window length.
+    axis : numpy axis spec, optional
+        Axis along which to compute rms.
+    pad_mode : str or function, optional
+        Padding mode. See np.pad for details.
+    
+    Returns
+    -------
+    ndarray
+        The rms data.
+    """    
     if pad_mode is None:
         pad_mode = 'edge'
     if win % 2 != 1:
@@ -272,7 +330,7 @@ def rms(data, win, axis=None, pad_mode=None):
     datalen = len(data) if axis is None else data.shape[axis]
     if win > datalen:
         raise ValueError('Need win length < data length')
-    rms_ = np.sqrt(running_sum(data ** 2, win, axis=axis) / win)
+    rms_ = np.sqrt(_running_sum(data ** 2, win, axis=axis) / win)
     # pad RMS data so that lengths are matched
     padw = int((win - 1) / 2)
     padarg_axis = (padw, padw)
@@ -286,9 +344,12 @@ def rms(data, win, axis=None, pad_mode=None):
     return np.pad(rms_, padarg, mode=pad_mode)
 
 
-def filtfilt(data, passband, sfrate, buttord=5):
-    """Filter given data to passband, e.g. [1, 40] (in Hz)
-    Implemented as pure lowpass, if highpass freq = 0 """
+def _filtfilt(data, passband, sfrate, buttord=5):
+    """Forward-backward filter.
+    Filter data into given passband, e.g. [1, 40].
+    Frequencies are given in Hz along with sfrate (sampling rate).
+    Implemented as pure lowpass, if highpass freq = 0.
+    """
     if passband is None:
         return data
     passbandn = 2 * np.array(passband) / sfrate

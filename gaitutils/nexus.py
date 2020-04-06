@@ -135,15 +135,23 @@ def _nexus_ver_greater(major, minor):
 
 
 def viconnexus():
-    """ Return a ViconNexus instance. """
-    check_nexus()
+    """Return a ViconNexus SDK instance.
+
+    Raises an exception if Nexus is not running.
+
+    Returns
+    -------
+    ViconNexus
+        The instance.
+    """    
+    _check_nexus()
     return ViconNexus.ViconNexus()
 
 
 def close_trial():
     """Try to close currently opened Nexus trial"""
     vicon = viconnexus()
-    # this was not supported before Nexus 2.8
+    # this op was not supported before Nexus 2.8
     if _nexus_ver_greater(2, 8):
         logger.info('force closing open trial')
         vicon.CloseTrial(5000)
@@ -152,7 +160,7 @@ def close_trial():
 
 
 def get_subjectnames(single_only=True):
-    """ Get subject name(s) from Nexus """
+    """Get subject name(s) from Nexus."""
     vicon = viconnexus()
     get_sessionpath()  # check whether we can get data
     names_ = vicon.GetSubjectNames()
@@ -161,19 +169,26 @@ def get_subjectnames(single_only=True):
     if single_only:
         if len(names_) > 1:
             raise GaitDataError('Nexus returns multiple subjects')
-    """ Workaround a Nexus 2.6 bug (?) that creates extra names with
-    weird unicode strings """
+    # workaround a Nexus 2.6 bug (?) that creates extra names with weird unicode
+    # strings
     names_ = [name for name in names_ if u'\ufffd1' not in name]
     return names_[0] if single_only else names_
 
 
-def check_nexus():
+def _check_nexus():
+    """Check whether Nexus is currently running"""
     if not _nexus_pid():
         raise GaitDataError('Vicon Nexus does not seem to be running')
 
 
 def get_sessionpath():
-    """ Get path to current session """
+    """Get path to current Nexus session.
+    
+    Returns
+    -------
+    str
+        The path.
+    """
     try:
         vicon = viconnexus()
         sessionpath = vicon.GetTrialName()[0]
@@ -187,12 +202,12 @@ def get_sessionpath():
 
 
 def _run_pipeline(pipeline, foo, timeout):
-    """Wrapper needed for multiprocessing due to pickle limitations"""
+    """Wrapper needed for multiprocessing module due to pickle limitations"""
     vicon = viconnexus()
     return vicon.Client.RunPipeline(pipeline, foo, timeout)
 
 
-def run_pipelines(pipelines):
+def _run_pipelines(pipelines):
     """Run given Nexus pipeline(s)"""
     if type(pipelines) != list:
         pipelines = [pipelines]
@@ -203,11 +218,13 @@ def run_pipelines(pipelines):
             logger.warning('error while trying to run Nexus pipeline: %s' % pipeline)
 
 
-def run_pipelines_multiprocessing(pipelines):
-    """Run given Nexus pipeline(s) via multiprocessing module. The idea
-    is to work around the GIL, since the Nexus API does not release it.
-    This version causes the invoking thread to sleep and thus release the GIL
-    while the pipeline is running"""
+def _run_pipelines_multiprocessing(pipelines):
+    """Run given Nexus pipeline(s) via the multiprocessing module.
+    
+    The idea is to work around the Python global interpreter lock, since the
+    Nexus API does not release it. This version causes the invoking thread to
+    sleep and thus release the GIL while the pipeline is running
+    """
     if type(pipelines) != list:
         pipelines = [pipelines]
     for pipeline in pipelines:
@@ -220,7 +237,7 @@ def run_pipelines_multiprocessing(pipelines):
 
 
 def get_trialname():
-    """ Get trial name without session path """
+    """Get current Nexus trialname (without the session path)."""
     vicon = viconnexus()
     trialname_ = vicon.GetTrialName()
     return trialname_[1]
@@ -255,7 +272,7 @@ def _get_marker_names(vicon, trajs_only=True):
 # so underscore them
 def get_metadata(vicon):
     """ Read trial and subject metadata """
-    check_nexus()
+    _check_nexus()
     logger.debug('reading metadata from Vicon Nexus')
     subjname = get_subjectnames()
     params_available = vicon.GetSubjectParamNames(subjname)

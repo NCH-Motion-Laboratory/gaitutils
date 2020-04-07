@@ -53,9 +53,9 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
 
     # whether to run Nexus pipelines in separate processes
     run_pipelines = (
-        nexus.run_pipelines_multiprocessing
+        nexus._run_pipelines_multiprocessing
         if pipelines_in_proc
-        else nexus.run_pipelines
+        else nexus._run_pipelines
     )
 
     def _save_trial():
@@ -147,7 +147,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         logger.debug('loading in Nexus: %s' % filename)
         vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
         try:
-            nexus.get_metadata(vicon)
+            nexus._get_metadata(vicon)
         except GaitDataError:
             # may indicate broken or video-only trial
             logger.warning('cannot read metadata')
@@ -175,14 +175,14 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             # run preprocessing + save even for skipped trials, to mark
             # them as processed - mostly so that Eclipse export to Polygon
             # will work
-            run_pipelines(cfg.autoproc.pre_pipelines)
+            _run_pipelines_multiprocessing(cfg.autoproc.pre_pipelines)
             _save_trial()
             trial['recon_ok'] = False
             trial['description'] = 'skipped'
             continue
 
         # try to run preprocessing pipelines
-        run_pipelines(cfg.autoproc.pre_pipelines)
+        _run_pipelines_multiprocessing(cfg.autoproc.pre_pipelines)
 
         # check trial length
         trange = vicon.GetTrialRange()
@@ -476,7 +476,7 @@ def autoproc_session(patterns=None, signals=None):
 
 
 def autoproc_trial(signals=None):
-    fn = nexus.get_trialname()
+    fn = nexus._get_trialname()
     if not fn:
         raise GaitDataError('No trial open in Nexus')
     # XXX: this may fail with old-style enf naming (2015 and pre)
@@ -501,7 +501,7 @@ def automark_trial(plot=False):
 
 def copy_session_videos():
     """Copy Nexus session videos to desktop"""
-    nexus.check_nexus()
+    nexus._check_nexus()
 
     dest_dir = op.join(op.expanduser('~'), 'Desktop', 'nexus_videos')
     if not op.isdir(dest_dir):

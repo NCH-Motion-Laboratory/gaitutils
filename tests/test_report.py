@@ -55,6 +55,7 @@ def test_pdf_comparison_report():
     assert op.isfile(pdfpath)
 
 
+@pytest.mark.slow
 def test_web_report():
     """Test creation of web report"""
     # fake classes for dash_report progress signaling

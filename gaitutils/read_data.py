@@ -17,7 +17,7 @@ from . import nexus, c3d
 
 def _reader_module(source):
     """Determine the appropriate data reader module to use"""
-    if nexus.is_vicon_instance(source):
+    if nexus._is_vicon_instance(source):
         return nexus
     elif isinstance(source, basestring):
         # currently we just check c3d existence, without checking
@@ -53,12 +53,12 @@ def get_metadata(source):
         lstrikes, rstrikes: foot strike events l/r
         ltoeoffs, rtoeoffs: toeoffs l/r
     """
-    meta = _reader_module(source).get_metadata(source)
+    meta = _reader_module(source)._get_metadata(source)
     # Nexus uses slightly different metadata field names as c3d,
     # so translate here into c3d naming convention
     # XXX: c3d angle params are apparently in radians while Nexus uses degrees
     # - NOT translated here!
-    if nexus.is_vicon_instance(source):
+    if nexus._is_vicon_instance(source):
         pars = meta['subj_params']
         for par in pars.keys():
             if 'Right' in par:
@@ -116,18 +116,18 @@ def get_marker_data(source, markers, ignore_edge_gaps=True, ignore_missing=False
 
 def get_emg_data(source):
     """ Get EMG data. Returns dict with keys """
-    return _reader_module(source).get_emg_data(source)
+    return _reader_module(source)._get_emg_data(source)
 
 
 def get_analysis(source, condition='unknown'):
-    if nexus.is_vicon_instance(source):
+    if nexus._is_vicon_instance(source):
         raise Exception('Analysis var reads from Nexus not supported yet')
     return _reader_module(source).get_analysis(source, condition)
 
 
 def get_accelerometer_data(source):
     """ Get accelerometer data. Returns dict with keys """
-    return _reader_module(source).get_accelerometer_data(source)
+    return _reader_module(source)._get_accelerometer_data(source)
 
 
 def get_model_data(source, model):

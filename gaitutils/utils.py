@@ -806,7 +806,7 @@ def automark_events(
         logger.debug('final toeoff events: %s' % toeoffs)
 
         if mark:
-            if not nexus.is_vicon_instance(source):
+            if not nexus._is_vicon_instance(source):
                 raise ValueError('event marking supported only for Nexus')
             vicon = nexus.viconnexus()
             nexus.create_events(vicon, context, strikes, toeoffs)

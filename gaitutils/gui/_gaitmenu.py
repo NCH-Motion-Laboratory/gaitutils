@@ -881,7 +881,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             for k, tr in enumerate(trials, 1):
                 trbase = op.splitext(tr)[0]
                 vicon.OpenTrial(trbase, cfg.autoproc.nexus_timeout)
-                nexus.run_pipelines_multiprocessing(cfg.autoproc.postproc_pipelines)
+                nexus._run_pipelines_multiprocessing(cfg.autoproc.postproc_pipelines)
                 prog_txt = 'Running postprocessing pipelines: %s for %d trials' % (
                     cfg.autoproc.postproc_pipelines,
                     len(trials),

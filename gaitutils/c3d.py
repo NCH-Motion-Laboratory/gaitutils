@@ -113,13 +113,13 @@ def get_analysis(c3dfile, condition='unknown'):
     return di
 
 
-def get_emg_data(c3dfile):
-    """ Read EMG data from a c3d file. """
+def _get_emg_data(c3dfile):
+    """Read EMG data from a c3d file."""
     return _get_analog_data(c3dfile, 'EMG')
 
 
-def get_accelerometer_data(c3dfile):
-    """ Read accelerometer data from a c3d file. """
+def _get_accelerometer_data(c3dfile):
+    """Read accelerometer data from a c3d file."""
     data = _get_analog_data(c3dfile, 'Accelerometer')
     # Remove the 'Acceleration.' prefix if inserted by Nexus, so that channel
     # names match Nexus. This is a bit ugly (not done for EMG which uses fuzzy
@@ -191,8 +191,8 @@ def _get_c3d_subject_param(acq, param):
     return param
 
 
-def get_metadata(c3dfile):
-    """ Read trial and subject metadata """
+def _get_metadata(c3dfile):
+    """Read trial and subject metadata from c3d file."""
     trialname = os.path.basename(os.path.splitext(c3dfile)[0])
     sessionpath = os.path.dirname(c3dfile)
     acq = _get_c3dacq(c3dfile)

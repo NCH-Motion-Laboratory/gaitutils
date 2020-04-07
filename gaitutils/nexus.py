@@ -222,13 +222,14 @@ def _run_pipelines_multiprocessing(pipelines):
     """Run given Nexus pipeline(s) via the multiprocessing module.
     
     The idea is to work around the Python global interpreter lock, since the
-    Nexus API does not release it. This version causes the invoking thread to
-    sleep and thus release the GIL while the pipeline is running
+    Nexus SDK does not release it. By starting a new interpreter process for the
+    pipeline, this version causes the invoking thread to sleep and release the
+    GIL while the pipeline is running.
     """
     if type(pipelines) != list:
         pipelines = [pipelines]
     for pipeline in pipelines:
-        logger.debug('running pipeline: %s' % pipeline)
+        logger.debug('running pipeline via multiprocessing module: %s' % pipeline)
         args = (pipeline.encode('utf-8'), '', cfg.autoproc.nexus_timeout)
         p = multiprocessing.Process(target=_run_pipeline, args=args)
         p.start()
@@ -236,20 +237,20 @@ def _run_pipelines_multiprocessing(pipelines):
             time.sleep(0.1)
 
 
-def get_trialname():
+def _get_trialname():
     """Get current Nexus trialname (without the session path)."""
     vicon = viconnexus()
     trialname_ = vicon.GetTrialName()
     return trialname_[1]
 
 
-def is_vicon_instance(obj):
+def _is_vicon_instance(obj):
     """ Check if obj is an instance of ViconNexus """
     return obj.__class__.__name__ == 'ViconNexus'
 
 
 def _get_nexus_subject_param(vicon, name, param):
-    """Get subject parameter from Nexus."""
+    """Wrapper to get subject parameter from Nexus."""
     value = vicon.GetSubjectParam(name, param)
     # for unknown reasons, above method may return tuple or float
     # depending on whether script is run from Nexus or outside
@@ -268,10 +269,10 @@ def _get_marker_names(vicon, trajs_only=True):
     return markers
 
 
-# FIXME: most of get_ methods below are intended to be called via read_data
-# so underscore them
-def get_metadata(vicon):
-    """ Read trial and subject metadata """
+def _get_metadata(vicon):
+    """Read trial and subject metadata from Nexus.
+    
+    See read.data.get_metadata for details."""
     _check_nexus()
     logger.debug('reading metadata from Vicon Nexus')
     subjname = get_subjectnames()
@@ -283,24 +284,24 @@ def get_metadata(vicon):
             for par in params_available
         }
     )
-    trialname = get_trialname()
+    trialname = _get_trialname()
     if not trialname:
         raise GaitDataError('No trial loaded in Nexus')
     sessionpath = get_sessionpath()
     markers = _get_marker_names(vicon)
-    # get events - GetEvents() indices seem to often be 1 frame less than on
-    # Nexus display - only happens with ROI?
+    # get foot strike and toeoffevents. GetEvents() indices seem to often be 1
+    # frame less than on Nexus display - only happens with ROI?
     lstrikes = vicon.GetEvents(subjname, "Left", "Foot Strike")[0]
     rstrikes = vicon.GetEvents(subjname, "Right", "Foot Strike")[0]
     ltoeoffs = vicon.GetEvents(subjname, "Left", "Foot Off")[0]
     rtoeoffs = vicon.GetEvents(subjname, "Right", "Foot Off")[0]
-    # Offset will be subtracted from event frame numbers to get correct
-    # 0-based index for frame data. For Nexus, it is always 1 (Nexus uses
+    # offset will be subtracted from event frame numbers to get correct
+    # 0-based index for frame data. for Nexus, it is always 1 (Nexus uses
     # 1-based frame numbering)
     offset = 1
     length = vicon.GetFrameCount()
     framerate = vicon.GetFrameRate()
-    # Get analog rate. This may not be mandatory if analog devices
+    # get analog rate. this may not be mandatory if analog devices
     # are not used, but currently it needs to succeed.
     devids = vicon.GetDeviceIDs()
     if not devids:
@@ -318,7 +319,7 @@ def get_metadata(vicon):
         id_ for id_ in devids if vicon.GetDeviceDetails(id_)[1].lower() == 'forceplate'
     ]
 
-    # sort events (may be in wrong temporal order, at least in c3d files)
+    # sort events to make sure they're in right temporal order
     for li in [lstrikes, rstrikes, ltoeoffs, rtoeoffs]:
         li.sort()
 
@@ -341,27 +342,27 @@ def get_metadata(vicon):
     }
 
 
-def get_emg_data(vicon):
-    """ Read EMG data from Nexus. This uses the configured EMG device name. """
+def _get_emg_data(vicon):
+    """Read EMG data from Nexus. Uses the configured EMG device name."""
     return _get_analog_data(vicon, cfg.emg.devname)
 
 
-def get_accelerometer_data(vicon):
-    """ Read EMG data from Nexus. This uses the configured EMG device name. """
+def _get_accelerometer_data(vicon):
+    """Read accelerometer data from Nexus. Uses the configured acc device name."""
     return _get_analog_data(vicon, cfg.analog.accelerometer_devname)
 
 
 def _get_analog_data(vicon, devname):
-    """ Read analog data from Nexus """
+    """Read analog data from Nexus."""
     ids = [
         id_
         for id_ in vicon.GetDeviceIDs()
         if vicon.GetDeviceDetails(id_)[0].lower() == devname.lower()
     ]
     if len(ids) > 1:
-        raise GaitDataError('Multiple matching analog devices')
+        raise GaitDataError('Multiple matching analog devices for %s' % devname)
     elif len(ids) == 0:
-        raise GaitDataError('No matching analog devices')
+        raise GaitDataError('No matching analog devices for %s' % devname)
     dev_id = ids[0]
     dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(dev_id)
     # not handling multiple output ids yet

@@ -14,7 +14,7 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "slow: mark test as slow to run")
-    config.addinivalue_line("nexus", "nexus: mark test as requiring nexus")
+    config.addinivalue_line("markers", "nexus: mark test as requiring nexus")
 
 
 def pytest_collection_modifyitems(config, items):

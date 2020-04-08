@@ -353,7 +353,22 @@ def _get_accelerometer_data(vicon):
 
 
 def _get_analog_data(vicon, devname):
-    """Read analog data from Nexus."""
+    """Read analog data from Vicon Nexus.
+    
+    Parameters
+    ----------
+    vicon : ViconNexus
+        The SDK object.
+    devname : str
+        The analog device name, set in Nexus configuration. E.g. 'Myon EMG'.
+    
+    Returns
+    -------
+    dict
+        Dict with keys 't' (time points corresponding to data samples) and
+        'data' (the analog data as ndarray, for each output channel).
+    """
+    # match devname exactly (not case-sensitive though)
     ids = [
         id_
         for id_ in vicon.GetDeviceIDs()
@@ -365,9 +380,8 @@ def _get_analog_data(vicon, devname):
         raise GaitDataError('No matching analog devices for %s' % devname)
     dev_id = ids[0]
     dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(dev_id)
-    # not handling multiple output ids yet
-    if len(outputids) != 1:
-        raise GaitDataError('Expected single output for device')
+    if len(outputids) != 1:  # not handling multiple output ids yet
+        raise GaitDataError('Expected single output for device %s' % devname)
     outputid = outputids[0]
     # get list of channel names and IDs
     _, _, _, _, chnames, chids = vicon.GetDeviceOutputDetails(dev_id, outputid)
@@ -376,16 +390,17 @@ def _get_analog_data(vicon, devname):
         chdata, _, chrate = vicon.GetDeviceChannel(dev_id, outputid, chid)
         chname = chnames[chid - 1]  # chids start from 1
         data[chname] = np.array(chdata)
-    return {'t': np.arange(len(chdata)) / drate, 'data': data}
+    t = np.arange(len(chdata)) / drate  # time axis
+    return {'t': t, 'data': data}
 
 
 def _get_1_forceplate_data(vicon, devid):
-    """ Read data of single forceplate from Nexus.
-    Data is returned in global coordinate frame """
-    # get forceplate ids
+    """Read data of single forceplate from Nexus.
+    Data is returned in global (laboratory) coordinate frame."""
+    # get available forceplate ids
     logger.debug('reading forceplate data from devid %d' % devid)
     dname, dtype, drate, outputids, nfp, _ = vicon.GetDeviceDetails(devid)
-    # outputs should be force, moment, cop. select force
+    # outputs should be force, moment, cop. read them one by one
     outputid = outputids[0]
     chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Fx')
     fx, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)

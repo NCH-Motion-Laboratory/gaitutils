@@ -25,7 +25,7 @@ from .envutils import lru_cache_checkfile
 logger = logging.getLogger(__name__)
 
 
-def _read_configured_normaldata(age=None):
+def _read_configured_model_normaldata(age=None):
     """Read all model normal data defined in config.
     
     If age is specified, include also age specific normal data, which will take
@@ -48,6 +48,11 @@ def _read_configured_normaldata(age=None):
     return model_normaldata
 
 
+def _read_configured_emg_normaldata():
+    """Read the EMG normal data defined in config."""
+    return _read_emg_normaldata_file(cfg.emg.normaldata_file)
+        
+
 def _read_session_normaldata(session):
     """Read model normal data according to patient in given session.
     
@@ -58,10 +63,11 @@ def _read_session_normaldata(session):
         age = age_from_hetu(info['hetu'])
     else:
         age = None
-    return _read_configured_normaldata(age)
+    return _read_configured_model_normaldata(age)
 
 
-def _read_emg_normaldata_file(filename=None):
+@lru_cache_checkfile
+def _read_emg_normaldata_file(filename):
     """Read JSON formatted EMG normal data.
 
     The normaldata is stored as a dict, where keys correspond to electrode names

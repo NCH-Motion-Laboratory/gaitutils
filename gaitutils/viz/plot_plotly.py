@@ -210,6 +210,7 @@ def plot_trials(
     trials,
     layout,
     model_normaldata=None,
+    emg_normaldata=None,
     cycles=None,
     max_cycles=None,
     emg_mode=None,
@@ -238,9 +239,10 @@ def plot_trials(
         supplementary_data = dict()
 
     if model_normaldata is None:
-        model_normaldata = normaldata._read_configured_normaldata()
+        model_normaldata = normaldata._read_configured_model_normaldata()
 
-    emg_normaldata = normaldata._read_emg_normaldata_file()
+    if emg_normaldata is None:
+        emg_normaldata = normaldata._read_configured_emg_normaldata()
 
     use_rms = emg_mode == 'rms'
 

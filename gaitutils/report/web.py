@@ -302,19 +302,9 @@ def dash_report(
             # if age:
             #     patient_info_text += 'Age at measurement time: %d\n\n' % age
 
-            model_normaldata = dict()
-            avg_trials = list()
-
             # load normal data for gait models
             signals.progress.emit('Loading normal data...', 0)
-            for fn in cfg.general.normaldata_files:
-                ndata = normaldata.read_normaldata(fn)
-                model_normaldata.update(ndata)
-            if age is not None:
-                age_ndata_file = normaldata.normaldata_age(age)
-                if age_ndata_file:
-                    age_ndata = normaldata.read_normaldata(age_ndata_file)
-                    model_normaldata.update(age_ndata)
+            model_normaldata = normaldata._read_configured_normaldata(age)
 
             # make average trials for each session
             avg_trials = [

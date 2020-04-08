@@ -25,10 +25,10 @@ from .envutils import lru_cache_checkfile
 logger = logging.getLogger(__name__)
 
 
-def _read_default_normaldata(age=None):
-    """Read all model normaldata defined in config.
+def _read_configured_normaldata(age=None):
+    """Read all model normal data defined in config.
     
-    If age is specified, include also age specific normaldata, which will take
+    If age is specified, include also age specific normal data, which will take
     preference over other data in case of duplicate values.
     """
     model_normaldata = dict()
@@ -38,28 +38,31 @@ def _read_default_normaldata(age=None):
     else:
         normaldata_files = [cfg.general.normaldata_files]
     for fn in normaldata_files:
-        ndata = read_normaldata(fn)
+        ndata = _read_model_normaldata_file(fn)
         model_normaldata.update(ndata)
     if age is not None:
-        age_ndata_file = normaldata_age(age)
+        age_ndata_file = _find_normaldata_for_age(age)
         if age_ndata_file:
-            age_ndata = read_normaldata(age_ndata_file)
+            age_ndata = _read_model_normaldata_file(age_ndata_file)
             model_normaldata.update(age_ndata)
     return model_normaldata
 
 
 def _read_session_normaldata(session):
-    """Read normal data according to patient info in given session."""
+    """Read model normal data according to patient in given session.
+    
+    This is a convenience that figures out the age of the patient
+    and calls _read_default_normaldata"""
     info = sessionutils.load_info(session)
     if info is not None and 'hetu' in info:
         age = age_from_hetu(info['hetu'])
     else:
         age = None
-    return _read_default_normaldata(age)
+    return _read_configured_normaldata(age)
 
 
-def _read_emg_normaldata(filename=None):
-    """Read JSON formatted EMG normaldata.
+def _read_emg_normaldata_file(filename=None):
+    """Read JSON formatted EMG normal data.
 
     The normaldata is stored as a dict, where keys correspond to electrode names
     and values are 101-element lists (returned as numpy arrays). The values
@@ -81,12 +84,13 @@ def _read_emg_normaldata(filename=None):
 
 
 @lru_cache_checkfile
-def read_normaldata(filename):
-    """Read model normaldata into a dict. Dict keys will be variables and values
-    are ndarrays of shape (n,2). n is either 1 (scalar variable) or 51 (data on
-    0..100% gait cycle, defined every 2% of cycle). The first and second columns
-    are min and max values, respectively. (Typically mean-stddev and
-    mean+stddev).
+def _read_model_normaldata_file(filename):
+    """Read model normaldata from a file.
+    
+    Returns a dict, where keys are variables and values are ndarrays of shape
+    (n,2). n is either 1 (for scalar variables) or 51 (data on 0..100% gait
+    cycle, defined every 2% of cycle). The first and second columns are min and
+    max values, respectively. (Typically mean-stddev and mean+stddev).
     GCD and XLSX (Polygon) formats are currently supported.
     """
     logger.debug('reading normal data from %s' % filename)
@@ -101,8 +105,8 @@ def read_normaldata(filename):
         raise GaitDataError('Only .gcd or .xlsx file formats are supported')
 
 
-def normaldata_age(age):
-    """Return name of age specific normaldata file"""
+def _find_normaldata_for_age(age):
+    """Find age specific normaldata file"""
     if not age:
         return None
     for age_range, filename in cfg.general.normaldata_age.items():

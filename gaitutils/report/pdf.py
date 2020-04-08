@@ -118,7 +118,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     fig_title = _make_text_fig(title_txt)
 
     header = u'Nimi: %s Henkilötunnus: %s' % (fullname, hetu)
-    musclelen_ndata = normaldata.normaldata_age(age)
+    musclelen_ndata = normaldata._find_normaldata_for_age(age)
     footer_musclelen = (
         u' Normaalidata: %s' % musclelen_ndata if musclelen_ndata else u''
     )

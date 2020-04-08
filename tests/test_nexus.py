@@ -17,7 +17,15 @@ from gaitutils.utils import detect_forceplate_events
 from utils import _nexus_open_trial, _trial_path, start_nexus, cfg
 
 
-vicon = nexus.viconnexus()
+
+
+vicon = None
+
+@pytest.mark.nexus
+def test_nexus_init_for_tests():
+    global vicon
+    vicon = nexus.viconnexus()
+
 
 @pytest.mark.nexus
 def test_nexus_reader():

@@ -302,7 +302,8 @@ def dash_report(
             # if age:
             #     patient_info_text += 'Age at measurement time: %d\n\n' % age
 
-            # load normal data for gait models
+            # load normal data for gait models; we have to do it here instead of
+            # leaving it up to plot_trials, since it's session (age) specific
             signals.progress.emit('Loading normal data...', 0)
             model_normaldata = normaldata._read_configured_normaldata(age)
 

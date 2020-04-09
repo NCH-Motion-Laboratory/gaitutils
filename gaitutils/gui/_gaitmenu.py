@@ -56,6 +56,7 @@ logger = logging.getLogger(__name__)
 
 # setting this disables our internal handling of uncaught exceptions (so that the debugger
 # can catch them) and also enables VSCode debugging of PyQt threads that we launch
+# (ptvsd package is needed)
 DEBUG_MODE = False
 if DEBUG_MODE:
     import ptvsd

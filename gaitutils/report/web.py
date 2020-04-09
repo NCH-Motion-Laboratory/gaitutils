@@ -121,7 +121,7 @@ def dash_report(
         video_only = False
 
     # relative width of left panel (1-12)
-    # 3-session comparison uses narrower video panel
+    # uncomment to use narrower video panel for 3-session comparison
     # LEFT_WIDTH = 8 if len(sessions) == 3 else 7
     LEFT_WIDTH = 8
     VIDS_TOTAL_HEIGHT = 88  # % of browser window height
@@ -142,7 +142,7 @@ def dash_report(
     # reduce to a set, since there may be several labels for given id
     camera_labels = set(cfg.general.camera_labels.values())
     # add camera labels for overlay videos
-    # XXX: may cause trouble if labels already contain the string 'overlay'
+    # XXX: may cause trouble if camera labels already contain the string 'overlay'
     camera_labels_overlay = [lbl + ' overlay' for lbl in camera_labels]
     camera_labels.update(camera_labels_overlay)
     # build dict of videos for given tag / camera label
@@ -213,6 +213,8 @@ def dash_report(
                             if overlay
                             else camera_label
                         )
+                        # need to convert filename, since get_trial_videos cannot
+                        # deal with enf names
                         c3d = enf_to_trialfile(enf, 'c3d')
                         vids_this = videos.get_trial_videos(
                             c3d,
@@ -242,8 +244,12 @@ def dash_report(
 
     # this whole section is only needed if we have c3d data
     if not video_only:
-        # see whether we can load report figures from disk
         data_c3ds = [enf_to_trialfile(enffile, 'c3d') for enffile in data_enfs]
+        # at this point, all the c3ds need to exist
+        for fn in data_c3ds:
+            if not op.isfile(fn):
+                raise GaitDataError('Missing C3D file for trial %s' % op.splitext(fn)[0])
+        # see whether we can load report figures from disk
         digest = numutils._files_digest(data_c3ds)
         logger.debug('report data digest: %s' % digest)
         # data is always saved into alphabetically first session

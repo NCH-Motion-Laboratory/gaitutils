@@ -273,7 +273,7 @@ def _get_metadata(c3dfile):
     }
 
 
-def get_model_data(c3dfile, model):
+def _get_model_data(c3dfile, model):
     modeldata = dict()
     acq = _get_c3dacq(c3dfile)
     var_dims = (3, acq.GetPointFrameNumber())

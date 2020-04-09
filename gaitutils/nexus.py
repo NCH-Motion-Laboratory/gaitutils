@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-
-Data readers & processing utils, Nexus specific
+Vicon Nexus utils & data readers
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -468,7 +467,7 @@ def _get_1_forceplate_data(vicon, devid):
 
 
 def get_forceplate_data(vicon):
-    """ Read all forceplate data from Nexus. """
+    """Read all forceplates from Nexus."""
     # get forceplate ids
     logger.debug('reading forceplate data from Vicon Nexus')
     devids = [
@@ -484,7 +483,7 @@ def get_forceplate_data(vicon):
 
 
 def _swap_markers(vicon, marker1, marker2):
-    """Swap two marker trajectories in currently loaded trial."""
+    """Swap trajectories of given two markers in the current trial."""
     subj = get_subjectnames()
     m1 = vicon.GetTrajectory(subj, marker1)
     m2 = vicon.GetTrajectory(subj, marker2)
@@ -525,13 +524,7 @@ def _get_marker_data(vicon, markers, ignore_edge_gaps=True, ignore_missing=False
     return mkrdata
 
 
-def get_roi(vicon):
-    """ Return array of frames corresponding to Nexus ROI """
-    roi = vicon.GetTrialRegionOfInterest()
-    return np.arange(roi[0], roi[1])
-
-
-def get_model_data(vicon, model):
+def _get_model_data(vicon, model):
     """ Read model output variables (e.g. Plug-in Gait) """
     modeldata = dict()
     var_dims = (3, vicon.GetFrameCount())
@@ -548,8 +541,8 @@ def get_model_data(vicon, model):
     return modeldata
 
 
-def create_events(vicon, context, strikes, toeoffs):
-    """ Create foot strike and toeoff events in Nexus. """
+def _create_events(vicon, context, strikes, toeoffs):
+    """Create foot strike and toeoff events in Nexus."""
     logger.debug('marking events in Nexus')
     side_str = 'Right' if context == 'R' else 'Left'
     subjectname = get_subjectnames()

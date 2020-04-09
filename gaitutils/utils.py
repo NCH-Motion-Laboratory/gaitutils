@@ -809,7 +809,7 @@ def automark_events(
             if not nexus._is_vicon_instance(source):
                 raise ValueError('event marking supported only for Nexus')
             vicon = nexus.viconnexus()
-            nexus.create_events(vicon, context, strikes, toeoffs)
+            nexus._create_events(vicon, context, strikes, toeoffs)
 
         strikes_all[context] = strikes
         toeoffs_all[context] = toeoffs

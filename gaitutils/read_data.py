@@ -132,7 +132,7 @@ def get_accelerometer_data(source):
 
 def get_model_data(source, model):
     """ Get other variables such as model outputs """
-    modeldata = _reader_module(source).get_model_data(source, model)
+    modeldata = _reader_module(source)._get_model_data(source, model)
     for var in model.read_vars:
         # convert Moment variables into SI units
         if var.find('Moment') > 0:

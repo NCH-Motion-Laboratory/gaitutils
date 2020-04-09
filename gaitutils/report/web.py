@@ -305,7 +305,7 @@ def dash_report(
             # load normal data for gait models; we have to do it here instead of
             # leaving it up to plot_trials, since it's session (age) specific
             signals.progress.emit('Loading normal data...', 0)
-            model_normaldata = normaldata._read_configured_normaldata(age)
+            model_normaldata = normaldata._read_configured_model_normaldata(age)
 
             # make average trials for each session
             avg_trials = [

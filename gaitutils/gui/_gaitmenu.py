@@ -990,7 +990,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # get inputs from user
         dlg_info = PdfReportDialog(info, comparison=comparison)
         if dlg_info.exec_():  # dialog was accepted
-            new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,)
+            new_info = dict(
+                hetu=dlg_info.hetu,
+                fullname=dlg_info.fullname,
+                session_description=dlg_info.session_description,
+            )
             info.update(new_info)
 
             # update info files in session dirs (except session specific keys)

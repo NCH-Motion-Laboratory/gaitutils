@@ -555,17 +555,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
             colorstyleby_choice = None
         cfg_item[vartype] = colorstyleby_choice
 
-    def _get_plotting_backend_ui(self):
+    @property
+    def _plotting_backend(self):
         """Get backend selection from UI"""
         for backend, rb in self.rb_map_backend.items():
             if rb.isChecked():
                 return backend
-
-    def _get_trial_sel(self):
-        """Get trials selection from UI"""
-        for trial_sel, rb in self.rb_map_trials.items():
-            if rb.isChecked():
-                return trial_sel
 
     def _automark_trial(self):
         session = _get_nexus_sessionpath()
@@ -614,13 +609,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         session = _get_nexus_sessionpath()
         if session is None:
             return
-        backend = self._get_plotting_backend_ui()
         self._run_in_thread(
             do_session_average_plot,
             finished_func=self._enable_main_ui,
             result_func=self._show_plots,
             session=session,
-            backend=backend,
+            backend=self._plotting_backend,
         )
 
     def _plot_trial_median_velocities(self):
@@ -628,13 +622,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         session = _get_nexus_sessionpath()
         if session is None:
             return
-        backend = self._get_plotting_backend_ui()
         self._run_in_thread(
             plot_trial_velocities,
             finished_func=self._enable_main_ui,
             result_func=self._show_plots,
             session=session,
-            backend=backend,
+            backend=self._plotting_backend,
         )
 
     def _plot_trial_timedep_velocities(self):
@@ -642,13 +635,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         session = _get_nexus_sessionpath()
         if session is None:
             return
-        backend = self._get_plotting_backend_ui()
         self._run_in_thread(
             plot_trial_timedep_velocities,
             finished_func=self._enable_main_ui,
             result_func=self._show_plots,
             session=session,
-            backend=backend,
+            backend=self._plotting_backend,
         )
 
     def _add_trial_to_table(self, tr):
@@ -760,8 +752,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
             cycles = None
         layout_desc = self.cbLayout.currentText()
         layout_name = self.layouts_map[layout_desc]
-        backend = self._get_plotting_backend_ui()
-
         if self.xbEMGRMS.checkState():
             emg_mode = 'rms'
         elif have_avgtrials and 'EMG' in layout_name.upper():
@@ -769,8 +759,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         else:
             emg_mode = None
-
-        backend = self._get_plotting_backend_ui()
         # FIXME: hardcoded legend type
         self._run_in_thread(
             plot_trials,
@@ -778,7 +766,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             result_func=self._show_plots,
             trials=trials,
             layout_name=layout_name,
-            backend=backend,
+            backend=self._plotting_backend,
             cycles=cycles,
             emg_mode=emg_mode,
             legend_type='short_name_with_tag_and_cycle',
@@ -810,8 +798,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _show_plots(self, fig, backend=None):
         """Shows fig"""
+        # use UI backend selection if unspecified
         if backend is None:
-            backend = self._get_plotting_backend_ui()
+            backend = self._plotting_backend
         if backend == 'matplotlib':
             _mpl_win = qt_matplotlib_window(fig)
             self._mpl_windows.append(_mpl_win)

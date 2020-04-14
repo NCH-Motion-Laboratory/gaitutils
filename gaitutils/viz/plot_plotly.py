@@ -167,7 +167,7 @@ def time_dist_barchart(
 def _plot_vels(vels, labels):
     """Plot trial velocities as a stem plot"""
     trace = dict(y=vels, x=labels, mode='markers')
-    layout = go.Layout(
+    layout = dict(
         xaxis=dict(title='Trial', automargin=True), yaxis=dict(title='Velocity (m/s)')
     )
     return dict(data=[trace], layout=layout)
@@ -180,7 +180,7 @@ def _plot_timedep_vels(vels, labels):
         trace = dict(y=vel, text=label, name=label, hoverinfo='x+y+text')
         traces.append(trace)
     # FIXME: labels get truncated, not fixed by automargin
-    layout = go.Layout(
+    layout = dict(
         xaxis=dict(title='% of trial', automargin=True),
         yaxis=dict(title='Velocity (m/s)'),
     )

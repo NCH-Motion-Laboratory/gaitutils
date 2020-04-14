@@ -7,14 +7,13 @@ Test reporting functions.
 """
 
 import pytest
-import numpy as np
 import logging
 import tempfile
 import os
 import os.path as op
 
 from gaitutils.report import pdf, web
-from utils import _file_path, cfg
+from utils import _file_path
 
 logger = logging.getLogger(__name__)
 

@@ -20,8 +20,13 @@ from gaitutils import nexus, config
 
 # reset the config so that user settings do not affect testing
 cfg = parse_config(config.cfg_template_fn)
-# where test data is held
-testdata_root = r'Z:\gaitutils_testdata'
+homedir = op.expanduser('~')
+LOCAL_TESTDATA = op.join(homedir, 'gaitutils/tests/gaitutils_testdata')
+if op.isdir(LOCAL_TESTDATA):
+    testdata_root = LOCAL_TESTDATA  # local version for faster tests
+else:
+    testdata_root = r'Z:\gaitutils_testdata'  # authoritative version on network drive
+
 
 
 def start_nexus():

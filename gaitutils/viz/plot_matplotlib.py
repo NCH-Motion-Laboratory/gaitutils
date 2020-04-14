@@ -36,7 +36,7 @@ from . import layouts
 logger = logging.getLogger(__name__)
 
 
-def _plot_vels(vels, labels):
+def _plot_vels(vels, labels, title=None):
     """Stem plot of trial velocities"""
     fig = Figure()
     ax = fig.add_subplot(111)
@@ -45,21 +45,25 @@ def _plot_vels(vels, labels):
     ax.set_xticklabels(labels, rotation='vertical')
     ax.set_ylabel('Speed (m/s)')
     ax.tick_params(axis='both', which='major', labelsize=8)
-    vavg = np.nanmean(vels)
-    ax.set_title('Walking speed for dynamic trials (average %.2f m/s)' % vavg)
     fig.set_tight_layout(True)
+    if title:
+        fig.suptitle(title)
     return fig
 
 
-def _plot_timedep_vels(vels, labels):
+def _plot_timedep_vels(vels, labels, title=None):
     """Time-dependent velocity curves"""
     fig = Figure()
     ax = fig.add_subplot(111)
     ax.set_ylabel('Speed (m/s)')
     ax.set_xlabel('% of trial')
-    for vel in vels:
-        ax.plot(vel)
+    for vel, label in zip(vels, labels):
+        ax.plot(vel, label=label)
     fig.set_tight_layout(True)
+    if title:
+        fig.suptitle(title)
+    # for legend, maybe wait for matplotlib 3
+    #ax.legend()
     return fig
 
 

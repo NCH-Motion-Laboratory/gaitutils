@@ -164,16 +164,18 @@ def time_dist_barchart(
     return fig
 
 
-def _plot_vels(vels, labels):
+def _plot_vels(vels, labels, title=None):
     """Plot trial velocities as a stem plot"""
     trace = dict(y=vels, x=labels, mode='markers')
     layout = dict(
-        xaxis=dict(title='Trial', automargin=True), yaxis=dict(title='Velocity (m/s)')
+        title=title,
+        xaxis=dict(title='Trial', automargin=True),
+        yaxis=dict(title='Speed (m/s)'),
     )
     return dict(data=[trace], layout=layout)
 
 
-def _plot_timedep_vels(vels, labels):
+def _plot_timedep_vels(vels, labels, title=None):
     """Plot trial time-dependent velocities"""
     traces = list()
     for vel, label in zip(vels, labels):
@@ -181,6 +183,7 @@ def _plot_timedep_vels(vels, labels):
         traces.append(trace)
     # FIXME: labels get truncated, not fixed by automargin
     layout = dict(
+        title=title,
         xaxis=dict(title='% of trial', automargin=True),
         yaxis=dict(title='Velocity (m/s)'),
     )

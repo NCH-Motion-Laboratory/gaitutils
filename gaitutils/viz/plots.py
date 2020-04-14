@@ -180,11 +180,13 @@ def plot_trial_velocities(session, backend=None):
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
     if not c3ds:
         raise GaitDataError('No dynamic trials found for %s' % session)
-
     labels = [op.splitext(op.split(f)[1])[0] for f in c3ds]
-    vels = np.array([utils._trial_median_velocity(trial) for trial in c3ds])
-
-    return get_backend(backend)._plot_vels(vels, labels)
+    vels = np.array([utils._trial_median_velocity(tr) for tr in c3ds])
+    figtitle = 'Walking speed for %s (average %.2f m/s)' % (
+        op.split(session)[-1],
+        np.nanmean(vels),
+    )
+    return get_backend(backend)._plot_vels(vels, labels, title=figtitle)
 
 
 def plot_trial_timedep_velocities(session, backend=None):
@@ -192,14 +194,12 @@ def plot_trial_timedep_velocities(session, backend=None):
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
     if not c3ds:
         raise GaitDataError('No dynamic trials found for %s' % session)
-
     vels = list()
-    labels = list()
+    labels = [op.splitext(op.split(f)[1])[0] for f in c3ds]
+    # get velocity curves
     for c3d in c3ds:
         _, vel = utils._trial_median_velocity(c3d, return_curve=True)
         # vel = signal.medfilt(vel, 3)  # if spikes
-        tname = op.split(c3d)[-1]
         vels.append(vel)
-        labels.append(tname)
-
-    return get_backend(backend)._plot_timedep_vels(vels, labels)
+    figtitle = 'Time-dependent trial velocities for %s' % op.split(session)[-1]
+    return get_backend(backend)._plot_timedep_vels(vels, labels, title=figtitle)

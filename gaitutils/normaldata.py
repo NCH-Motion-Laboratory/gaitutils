@@ -29,7 +29,7 @@ def _read_configured_model_normaldata(age=None):
     """Read all model normal data defined in config.
     
     If age is specified, include also age specific normal data, which will take
-    preference over other data in case of duplicate values.
+    preference over other data.
     """
     model_normaldata = dict()
     # we generously accept both list and string

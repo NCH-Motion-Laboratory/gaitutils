@@ -910,7 +910,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog('No postprocessing pipelines defined')
 
     def closeEvent(self, event):
-        """ Confirm and close application. """
+        """Confirm and close application."""
 
         if self._web_report_dialog.active_reports:
             reply = qt_yesno_dialog(
@@ -929,6 +929,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             event.accept()
 
     def _close_mpl_windows(self):
+        """Close all matplotlib windows"""
         for win in self._mpl_windows:
             win.close()
 
@@ -938,6 +939,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         dlg.exec_()
 
     def _create_pdf_report_nexus(self):
+        """Create PDF report from Nexus session"""
         session = _get_nexus_sessionpath()
         if session is None:
             return
@@ -1011,7 +1013,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._run_in_thread(fun, **kwargs)
 
     def _log_message(self, msg):
-        """Logs a message to the log widget"""
+        """Log a message to the log widget"""
         c = self.txtOutput.textCursor()
         c.movePosition(QtGui.QTextCursor.End)
         self.txtOutput.setTextCursor(c)
@@ -1019,7 +1021,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.txtOutput.ensureCursorVisible()
 
     def _disable_main_ui(self):
-        """ Disable all operation buttons """
+        """Disable all operation buttons"""
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         self.setEnabled(False)  # disables whole main window
         # update display immediately in case thread gets blocked
@@ -1042,6 +1044,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self, fun, block_ui=True, finished_func=None, result_func=None, **kwargs
     ):
         """Run function fun with args kwargs in a worker thread.
+        
         If block_ui==True, disable main ui until worker thread is finished.
         finished_func will be called when thread is finished. result_func
         will be called with the function return value as its single argument,

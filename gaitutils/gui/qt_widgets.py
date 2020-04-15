@@ -12,8 +12,7 @@ import sys
 
 
 class NiceListWidgetItem(QtWidgets.QListWidgetItem):
-    """ Make list items more pythonic - otherwise would have to do horrible and
-    bug-prone things like checkState() """
+    """Make list items more pythonic"""
 
     def __init__(self, *args, **kwargs):
         # don't pass this arg to superclass __init__
@@ -46,36 +45,38 @@ class NiceListWidgetItem(QtWidgets.QListWidgetItem):
 
 
 class NiceListWidget(QtWidgets.QListWidget):
-    """ Adds some convenience to QListWidget """
+    """Adds some conveniences to QListWidget"""
 
     def __init__(self, parent=None):
         super(NiceListWidget, self).__init__(parent)
 
     @property
     def items(self):
-        """ Yield all items. NB: be careful when modifying list items in
-        a loop with the generator - count() is evaluated only once, so the
-        generator may return items that have already been deleted """
+        """Yield all list items.
+        
+        NB: be careful when modifying list items in a loop with the generator -
+        count() is evaluated only once, so the generator may return items that
+        have already been deleted"""
         for i in range(self.count()):
             yield self.item(i)
 
     @property
     def checked_items(self):
-        """ Yield checked items """
+        """Yield checked items"""
         return (item for item in self.items if item.checkstate)
 
     def check_all(self):
-        """ Check all items """
+        """Check all items"""
         for item in self.items:
             item.checkstate = True
 
     def check_none(self):
-        """ Uncheck all items """
+        """Uncheck all items"""
         for item in self.items:
             item.checkstate = False
 
     def add_item(self, txt, data=None, checkable=False, checked=False):
-        """ Add checkable item with data. Select new item. """
+        """Add checkable item with data. Select new item."""
         item = NiceListWidgetItem(txt, self, checkable=checkable)
         item.userdata = data
         if checkable:
@@ -83,7 +84,7 @@ class NiceListWidget(QtWidgets.QListWidget):
         self.setCurrentItem(item)
 
     def rm_current_item(self):
-        """ Remove currently selected item """
+        """Remove currently selected item"""
         return self.takeItem(self.row(self.currentItem()))
 
 
@@ -132,7 +133,7 @@ class XStream(QtCore.QObject):
 
 
 class ProgressBar(QtWidgets.QProgressDialog):
-    """ Qt progress bar with reasonable defaults """
+    """Qt progress bar with reasonable defaults"""
 
     # custom signal to indicate that the operation was canceled
     _canceled = pyqtSignal()
@@ -161,7 +162,7 @@ class ProgressBar(QtWidgets.QProgressDialog):
         self._canceled.emit()
 
     def update(self, text, p):
-        """ Update bar, showing text and bar at p% """
+        """Update bar, showing text and bar at p%"""
         self.setLabelText(text)
         self.setValue(p)
         # update right away in case that thread is blocked

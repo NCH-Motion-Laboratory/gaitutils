@@ -65,6 +65,20 @@ class EMG(object):
         self._data = emgdi['data']
         self.t = emgdi['t']
 
+    def _edf_export(self):
+        """Export the EMG data to EDF format."""
+        try:
+            import pyedflib
+        except ImportError:
+            raise RuntimeError(
+                'You need to install the pyedflib package to use this function'
+            )
+        raise RuntimeError('WIP')
+        #writer = pyedflib.EdfWriter('test.edf', 10)
+        #writer.setSamplefrequency(1000)
+        #writer.blockWriteDigitalSamples(data)
+        #writer.close()
+
     def _match_name(self, chname):
         """Fuzzily match channel name"""
         if not (isinstance(chname, basestring) and len(chname)) >= 2:

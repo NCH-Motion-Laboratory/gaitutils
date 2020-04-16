@@ -25,19 +25,22 @@ logger = logging.getLogger(__name__)
 
 def _find_nexus_path(vicon_path=None):
     """Return path to most recent Nexus version"""
-
     if vicon_path is None:
         vicon_path = r'C:\Program Files (x86)\Vicon'  # educated guess
-
     if not op.isdir(vicon_path):
         return None
-
     nexus_glob = op.join(vicon_path, 'Nexus?.*')
     nexus_dirs = glob.glob(nexus_glob)
     if not nexus_dirs:
         return None
     nexus_vers = [op.split(dir_)[1][5:] for dir_ in nexus_dirs]
-    idx = nexus_vers.index(max(nexus_vers))
+    # convert into major,minor lists: [[2,1], [2,10]] etc.
+    try:
+        nexus_vers = [[int(s) for s in v.split('.')] for v in vers]
+    except ValueError:
+        return None
+    # 2-key sort using first major and then minor version number
+    idx = nexus_vers.index(max(nexus_vers, key=lambda l: (l[0], l[1])))
     return nexus_dirs[idx]
 
 
@@ -46,7 +49,7 @@ def _add_nexus_path(vicon_path):
 
     nexus_path = _find_nexus_path(vicon_path)
     if nexus_path is None:
-        logger.debug('cannot locate Nexus installation directory under %s' % vicon_path)
+        logger.warning('cannot locate Nexus installation directory under %s' % vicon_path)
         return
 
     sdk_path = op.join(nexus_path, 'SDK', 'Python')
@@ -73,6 +76,7 @@ def _add_nexus_path(vicon_path):
         sys.path.append(_win_sdk_path)
     else:
         logger.debug('%s already in sys.path' % _win_sdk_path)
+
 
 # try to add Nexus SDK to sys.path and import ViconNexus
 if sys.version_info.major >= 3:
@@ -142,7 +146,7 @@ def viconnexus():
     -------
     ViconNexus
         The instance.
-    """    
+    """
     _check_nexus()
     return ViconNexus.ViconNexus()
 

@@ -434,7 +434,7 @@ def dash_report(
                     logger.debug('creating figure data for %s' % label)
                     if isinstance(layout, basestring):  # handle special layout codes
                         if layout == 'time_dist':
-                            figdata = timedist.do_comparison_plot(
+                            figdata = timedist.plot_comparison(
                                 sessions, big_fonts=True, backend='plotly'
                             )
                         elif layout == 'patient_info':

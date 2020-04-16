@@ -257,9 +257,10 @@ def get_enfs(sessionpath, tags=None, trial_type=None, check_if_exists=True):
         The session path.
     tags : list, optional
         List of Eclipse tags to filter for. E.g. ['T1'] would return only .enf
-        files that are tagged with 'T1' in Eclipse.
+        files that are tagged with 'T1' in Eclipse. An empty list or None
+        disables filtering by tags.
     trial_type : str, optional
-        Trial type, may be 'static' or 'dynamic'.
+        Trial type (Eclipse TYPE field), e.g. 'static' or 'dynamic'.
     check_if_exists : bool, optional
         If True, return only enf files that actually exist.
     
@@ -272,7 +273,7 @@ def get_enfs(sessionpath, tags=None, trial_type=None, check_if_exists=True):
     enfs = _get_session_enfs(sessionpath)
     if trial_type is not None:
         enfs = _filter_by_type(enfs, trial_type)
-    if tags is not None:
+    if tags:
         enfs = _filter_by_tags(enfs, tags)
     if check_if_exists:
         enfs = _filter_exists(enfs)
@@ -288,9 +289,10 @@ def get_c3ds(sessionpath, tags=None, trial_type=None, check_if_exists=True):
         The session path.
     tags : list, optional
         List of Eclipse tags to filter for. E.g. ['T1'] would return only .enf
-        files that are tagged with 'T1' in Eclipse.
+        files that are tagged with 'T1' in Eclipse. An empty list or None
+        disables filtering by tags.
     trial_type : str, optional
-        Trial type, may be 'static' or 'dynamic'.
+        Trial type (Eclipse TYPE field), e.g. 'static' or 'dynamic'.    
     check_if_exists : bool, optional
         If True, return only c3d files that actually exist.
     

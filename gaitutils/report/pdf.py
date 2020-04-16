@@ -15,7 +15,7 @@ from collections import defaultdict
 
 from .. import cfg, sessionutils, normaldata, GaitDataError, trial
 from ulstools.num import age_from_hetu
-from ..viz.timedist import do_session_average_plot, do_comparison_plot
+from ..viz.timedist import plot_session_average, plot_comparison
 from ..timedist import _session_analysis_text
 from ..viz.plots import plot_sessions, plot_session_average, plot_trial_velocities
 
@@ -138,7 +138,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     fig_timedist_avg = None
     if pages['TimeDistAverage']:
         logger.debug('creating time-distance plot')
-        fig_timedist_avg = do_session_average_plot(sessionpath, backend=pdf_backend)
+        fig_timedist_avg = plot_session_average(sessionpath, backend=pdf_backend)
 
     # time-dist text
     _timedist_txt = _session_analysis_text(sessionpath)
@@ -283,7 +283,7 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
     emg_mode = 'rms' if cfg.report.comparison_emg_rms else None
 
     fig_timedist = (
-        do_comparison_plot(sessionpaths, backend=pdf_backend)
+        plot_comparison(sessionpaths, backend=pdf_backend)
         if pages['TimeDist']
         else None
     )

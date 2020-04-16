@@ -43,17 +43,20 @@ def plot_trials(
     layout_name : str | None
         Name of the plot layout to use (layouts are defined in cfg).
     backend : str | None
-        Name of backend to use, currently 'plotly' or 'matplotlib'. If None, taken from cfg.
+        Name of backend to use, currently 'plotly' or 'matplotlib'. If None,
+        taken from cfg.
     model_normaldata : dict | None
         Normaldata for model variables. If None, taken from cfg.
     cycles : dict | str | int | tuple | list
         Cycles to plot. See Trial.get_cycles() for details.
     max_cycles : dict | None
-        Maximum number of cycles to plot for each variable type. If None, taken from cfg.
+        Maximum number of cycles to plot for each variable type. If None, taken
+        from cfg.
     emg_mode : str | None
         If 'rms', plot EMG in RMS mode.
     legend_type : str | None
-        Legend type for gait cycles (see _get_cycle_name for options). If None, taken from cfg.
+        Legend type for gait cycles (see _get_cycle_name for options). If None,
+        taken from cfg.
     style_by : dict | None
         How to style each variable type. If None, taken from cfg.
     color_by : dict | None

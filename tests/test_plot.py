@@ -9,10 +9,8 @@ Test plotting functions.
 import pytest
 import logging
 import tempfile
-import os
 import os.path as op
 
-from gaitutils.report import pdf, web
 from gaitutils.viz import plots, timedist
 from gaitutils import sessionutils, trial
 from utils import _file_path
@@ -56,10 +54,10 @@ def test_plot_trial_timedep_velocities():
 
 
 def test_timedist_average():
-    timedist.do_comparison_plot(sessions)
+    fig = timedist.plot_session_average(sessiondir2_abs, backend='matplotlib')
 
 
 def test_timedist_comparison():
-    timedist.do_comparison_plot(sessions)
+    fig = timedist.plot_comparison(sessions, backend='matplotlib')
 
 

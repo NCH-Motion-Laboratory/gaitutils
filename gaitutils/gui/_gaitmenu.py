@@ -48,7 +48,7 @@ from ..viz.plots import (
     plot_trial_timedep_velocities,
     plot_trial_velocities,
 )
-from ..viz.timedist import do_session_average_plot
+from ..viz.timedist import plot_session_average
 from ..viz.plot_misc import _browse_localhost, _show_plotly_fig
 from ..report import web, pdf
 
@@ -610,7 +610,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if session is None:
             return
         self._run_in_thread(
-            do_session_average_plot,
+            plot_session_average,
             finished_func=self._enable_main_ui,
             result_func=self._show_plots,
             session=session,

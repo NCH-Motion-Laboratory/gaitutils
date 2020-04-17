@@ -36,7 +36,7 @@ def _find_nexus_path(vicon_path=None):
     nexus_vers = [op.split(dir_)[1][5:] for dir_ in nexus_dirs]
     # convert into major,minor lists: [[2,1], [2,10]] etc.
     try:
-        nexus_vers = [[int(s) for s in v.split('.')] for v in vers]
+        nexus_vers = [[int(s) for s in v.split('.')] for v in nexus_vers]
     except ValueError:
         return None
     # 2-key sort using first major and then minor version number
@@ -76,18 +76,21 @@ def _add_nexus_path(vicon_path):
         sys.path.append(_win_sdk_path)
     else:
         logger.debug('%s already in sys.path' % _win_sdk_path)
+    return _win_sdk_path
 
 
 # try to add Nexus SDK to sys.path and import ViconNexus
 if sys.version_info.major >= 3:
     logger.debug('running on Python 3 or newer, cannot import Nexus API (yet)')
+    nexus_path = ''
 else:
     vicon_path = op.normpath(cfg.general.vicon_path)
-    _add_nexus_path(vicon_path)
+    nexus_path = _add_nexus_path(vicon_path)
     try:
         import ViconNexus
     except ImportError:
         logger.debug('cannot import Vicon Nexus SDK')
+        nexus_path = ''
 sys.stdout.flush()  # make sure import warnings get printed
 
 

@@ -34,7 +34,8 @@ def plot_trials(
 ):
     """Plot gait trials.
 
-    Creates a plot of gait trials using the given layout. Output depends on the backend.
+    Creates a plot of gait trials using the given layout. Output depends on the
+    backend.
 
     Parameters
     ----------

@@ -8,7 +8,12 @@ Unit tests on a running instance of Vicon Nexus.
 
 import pytest
 import numpy as np
-from numpy.testing import assert_allclose, assert_array_equal, assert_array_almost_equal, assert_equal
+from numpy.testing import (
+    assert_allclose,
+    assert_array_equal,
+    assert_array_almost_equal,
+    assert_equal,
+)
 
 import gaitutils
 from gaitutils import nexus, utils, models, read_data
@@ -17,13 +22,17 @@ from gaitutils.utils import detect_forceplate_events
 from utils import _nexus_open_trial, _trial_path, start_nexus, cfg
 
 
-
-
 vicon = None
+
 
 @pytest.mark.nexus
 def test_nexus_init_for_tests():
+    """This is not really a test, it is initialization. However by marking it as
+    Nexus test, we ensure that it only runs when we are running Nexus test
+    (otherwise, we don't want to init Nexus)
+    """
     global vicon
+    start_nexus()
     vicon = nexus.viconnexus()
 
 
@@ -100,6 +109,7 @@ def test_fp_detection():
     _nexus_open_trial('girl6v', '2015_10_22_girl6v_IN06')
     valid = detect_forceplate_events(vicon)['valid']
     assert_equal(valid, NOT_OK)
+
 
 @pytest.mark.nexus
 def test_read_data_compare_nexus_and_c3d():

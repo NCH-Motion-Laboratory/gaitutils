@@ -28,11 +28,10 @@ else:
     testdata_root = r'Z:\gaitutils_testdata'  # authoritative version on network drive
 
 
-
 def start_nexus():
     if not nexus._nexus_pid():
         # try to start Nexus for tests...
-        exe = op.join(cfg.general.nexus_path, 'Nexus.exe')
+        exe = op.join(nexus._find_nexus_path(), 'Nexus.exe')
         # silence Nexus output
         blackhole = open(os.devnull, 'w')
         subprocess.Popen([exe], stdout=blackhole)

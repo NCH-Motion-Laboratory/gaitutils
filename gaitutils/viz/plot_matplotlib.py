@@ -63,7 +63,7 @@ def _plot_timedep_vels(vels, labels, title=None):
     if title:
         fig.suptitle(title)
     # for legend, maybe wait for matplotlib 3
-    #ax.legend()
+    # ax.legend()
     return fig
 
 

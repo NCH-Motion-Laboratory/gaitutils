@@ -12,6 +12,7 @@ def pytest_addoption(parser):
         "--runnexus", action="store_true", default=False, help="run Nexus tests"
     )
 
+
 def pytest_configure(config):
     config.addinivalue_line("markers", "slow: mark test as slow to run")
     config.addinivalue_line("markers", "nexus: mark test as requiring nexus")
@@ -28,4 +29,3 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if "nexus" in item.keywords:
                 item.add_marker(skip_nexus)
-    

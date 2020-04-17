@@ -33,7 +33,7 @@ def test_plot_trials():
     c3ds = sessionutils.get_c3ds(sessiondir_abs)
     trials = [trial.Trial(fn) for fn in c3ds]
     fig = plots.plot_trials(trials, backend='matplotlib')
-    #fig = plots.plot_trials(trials, backend='plotly')
+    # fig = plots.plot_trials(trials, backend='plotly')
 
 
 def test_plot_sessions():
@@ -59,5 +59,3 @@ def test_timedist_average():
 
 def test_timedist_comparison():
     fig = timedist.plot_comparison(sessions, backend='matplotlib')
-
-

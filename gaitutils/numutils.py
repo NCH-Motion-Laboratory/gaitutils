@@ -244,7 +244,7 @@ def center_of_pressure(F, M, dz):
     -------
     ndarray
         The center of pressure (Nx3)
-    """    
+    """
     FP_FILTFUN = medfilt  # the filter function
     FP_FILTW = 5  # median filter width
     fx, fy, fz = tuple(F.T)  # split columns into separate vars
@@ -322,7 +322,7 @@ def rms(data, win, axis=None, pad_mode=None):
     -------
     ndarray
         The rms data.
-    """    
+    """
     if pad_mode is None:
         pad_mode = 'edge'
     if win % 2 != 1:

@@ -51,7 +51,7 @@ def _read_configured_model_normaldata(age=None):
 def _read_configured_emg_normaldata():
     """Read the EMG normal data defined in config."""
     return _read_emg_normaldata_file(cfg.emg.normaldata_file)
-        
+
 
 def _read_session_normaldata(session):
     """Read model normal data according to patient in given session.

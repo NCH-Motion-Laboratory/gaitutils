@@ -248,7 +248,9 @@ def dash_report(
         # at this point, all the c3ds need to exist
         for fn in data_c3ds:
             if not op.isfile(fn):
-                raise GaitDataError('Missing C3D file for trial %s' % op.splitext(fn)[0])
+                raise GaitDataError(
+                    'Missing C3D file for trial %s' % op.splitext(fn)[0]
+                )
         # see whether we can load report figures from disk
         digest = numutils._files_digest(data_c3ds)
         logger.debug('report data digest: %s' % digest)

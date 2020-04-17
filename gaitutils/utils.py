@@ -201,8 +201,10 @@ def _normalize(V):
 
 
 def _get_foot_points(mkrdata, context, footlen=None):
-    """Estimate points in the xy plane enclosing the foot. Foot is modeled
-    as a triangle"""
+    """Estimate points in the xy plane enclosing the foot.
+    
+    Foot is modeled as a triangle with three points: heel, lateral leading edge
+    (small toe) and medial leading edge (hallux)"""
     # marker data as N x 3 matrices
     heeP = mkrdata[context + 'HEE']
     toeP = mkrdata[context + 'TOE']
@@ -221,14 +223,14 @@ def _get_foot_points(mkrdata, context, footlen=None):
     foot_end = heeP + htVn * footlen
     # projection of HEE-ANK to HEE-TOE line
     ha_htV = htVn * np.sum(haV * htVn, axis=1)[:, np.newaxis]
-    # lateral ANK vector (HEE-TOE line to ANK)
+    # lateral ANK vector (from HEE-TOE line to ANK)
     lankV = haV - ha_htV
     # edge points are coplanar with markers but not with the foot
     # lateral foot edge
     lat_edge = foot_end + lankV
     # medial foot edge
     med_edge = foot_end - lankV
-    # heel edge (compensate for marked position)
+    # heel edge (compensate for marker diameter)
     heel_edge = heeP + htVn * cfg.autoproc.marker_diam / 2
     logger.debug(
         'foot length: %.1f mm width: %.1f mm'

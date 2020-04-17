@@ -37,7 +37,8 @@ def start_nexus():
         subprocess.Popen([exe], stdout=blackhole)
         time.sleep(9)
         if not nexus._nexus_pid():
-            raise Exception('Please start Vicon Nexus first')
+            raise Exception('Failed to start Nexus, please start it manually')
+    return nexus.viconnexus()
 
 
 def _file_path(filename):

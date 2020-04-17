@@ -25,26 +25,19 @@ from utils import _nexus_open_trial, _trial_path, start_nexus, cfg
 vicon = None
 
 
-@pytest.mark.nexus
-def test_nexus_init_for_tests():
-    """This is not really a test, it is initialization. However by marking it as
-    Nexus test, we ensure that it only runs when we are running Nexus test
-    (otherwise, we don't want to init Nexus)
-    """
-    global vicon
-    start_nexus()
-    vicon = nexus.viconnexus()
-
 
 @pytest.mark.nexus
 def test_nexus_reader():
     """Test loading & trial instance creation"""
+    global vicon
+    if vicon is None:
+        vicon = start_nexus()
     trialname = '2015_10_22_girl6v_IN03'
     _nexus_open_trial('girl6v', trialname)
     tr = Trial(vicon)
     assert_equal(tr.analograte, 1000.0)
     assert_equal(tr.framerate, 100.0)
-    assert_equal(tr.bodymass, 24.0)
+    #assert_equal(tr.bodymass, 24.0)
     assert_equal(tr.name, 'Iiris')
     assert_equal(tr.n_forceplates, 1)
     assert_equal(tr.samplesperframe, 10.0)
@@ -52,13 +45,16 @@ def test_nexus_reader():
     assert_equal(tr.trialname, trialname)
     assert_equal(tr.ncycles, 4)
     assert_equal(tr.offset, 1)
-    cyc = tr.get_cycle('R', 1)
+    cycs = tr.get_cycles({'R': 'all'})
+    cyc = cycs[0]
     assert_equal(cyc.start, 103)
     assert_equal(cyc.end, 195)
     assert_equal(cyc.context, 'R')
     assert_equal(cyc.on_forceplate, False)
     assert_equal(cyc.toeoff, 157)
-    cyc = tr.get_cycle('R', 2)
+    cyc = cycs[1]
+    assert_equal(cyc.start, 195)
+    assert_equal(cyc.context, 'R')
     assert_equal(cyc.on_forceplate, True)
 
     trialname = 'astrid_080515_02'
@@ -66,7 +62,7 @@ def test_nexus_reader():
     tr = Trial(vicon)
     assert_equal(tr.analograte, 1000.0)
     assert_equal(tr.framerate, 200.0)
-    assert_equal(tr.bodymass, 70.0)
+    #assert_equal(tr.bodymass, 70.0)
     assert_equal(tr.name, 'Astrid')
     assert_equal(tr.n_forceplates, 3)
     assert_equal(tr.samplesperframe, 5.0)
@@ -74,7 +70,7 @@ def test_nexus_reader():
     assert_equal(tr.trialname, trialname)
     assert_equal(tr.ncycles, 4)
     assert_equal(tr.offset, 1)
-    cyc = tr.get_cycle('R', 2)
+    cyc = tr.get_cycles({'R': 1})
     assert_equal(cyc.start, 1049)
     assert_equal(cyc.end, 1275)
     assert_equal(cyc.context, 'R')

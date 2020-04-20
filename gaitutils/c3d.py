@@ -22,10 +22,11 @@ from . import GaitDataError
 
 logger = logging.getLogger(__name__)
 
-# import btk either from btk or pyBTK
+# try the import the bundled btk version first
+# (currently Python 2.7 64-bit only)
+# if that fails, also try pyBTK
 try:
-    import btk
-
+    from .thirdparty import btk
     BTK_IMPORTED = True
 except ImportError:
     try:

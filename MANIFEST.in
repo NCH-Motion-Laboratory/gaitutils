@@ -5,5 +5,6 @@ graft gaitutils/gui
 graft gaitutils/assets
 graft gaitutils/data
 graft gaitutils/thirdparty
+graft gaitutils/thirdparty/btk
 global-exclude *.py[co]
 global-exclude __pycache__

@@ -19,7 +19,7 @@ console_entries = [
 
 setup(
     name='gaitutils',
-    version='0.12.9',
+    version='0.13',
     description='Utilities for processing and plotting gait data',
     author='Jussi Nurminen',
     author_email='jnu@iki.fi',

@@ -165,6 +165,14 @@ def close_trial():
         logger.info('current Nexus API version does not support closing trials')
 
 
+def _open_trial(trialpath, close_first=True):
+    """Open trial in Nexus"""
+    vicon = viconnexus()
+    if close_first:
+        close_trial()
+    vicon.OpenTrial(trialpath, 60)
+
+
 def get_subjectnames(single_only=True):
     """Get subject name(s) from Nexus."""
     vicon = viconnexus()

@@ -14,26 +14,32 @@ from numpy.testing import (
     assert_array_almost_equal,
     assert_equal,
 )
+from matplotlib.figure import Figure
 
 import gaitutils
 from gaitutils import nexus, utils, models, read_data
 from gaitutils.trial import Trial
+from gaitutils.viz import plots
 from gaitutils.utils import detect_forceplate_events
-from utils import _nexus_open_trial, _trial_path, start_nexus, cfg
+from utils import _trial_path, start_nexus, cfg
 
-
+# this global is a 'caching' mechanism for starting Nexus and acquiring the
+# ViconNexus control object
 vicon = None
 
 
 
 @pytest.mark.nexus
 def test_nexus_reader():
-    """Test loading & trial instance creation"""
+    """Test basic data reading and Trial instance creation"""
     global vicon
     if vicon is None:
         vicon = start_nexus()
-    trialname = '2015_10_22_girl6v_IN03'
-    _nexus_open_trial('girl6v', trialname)
+    # from old Helsinki lab
+    trialname = '2015_10_22_girl6v_IN13'
+    subject = 'girl6v'
+    trialpath = _trial_path(subject, trialname)
+    nexus._open_trial(trialpath)
     tr = Trial(vicon)
     assert_equal(tr.analograte, 1000.0)
     assert_equal(tr.framerate, 100.0)
@@ -41,24 +47,26 @@ def test_nexus_reader():
     assert_equal(tr.name, 'Iiris')
     assert_equal(tr.n_forceplates, 1)
     assert_equal(tr.samplesperframe, 10.0)
-    assert_equal(tr.length, 418)
+    assert_equal(tr.length, 488)
     assert_equal(tr.trialname, trialname)
-    assert_equal(tr.ncycles, 4)
+    assert_equal(tr.ncycles, 5)
     assert_equal(tr.offset, 1)
     cycs = tr.get_cycles({'R': 'all'})
-    cyc = cycs[0]
-    assert_equal(cyc.start, 103)
-    assert_equal(cyc.end, 195)
-    assert_equal(cyc.context, 'R')
-    assert_equal(cyc.on_forceplate, False)
-    assert_equal(cyc.toeoff, 157)
     cyc = cycs[1]
-    assert_equal(cyc.start, 195)
+    assert_equal(cyc.start, 230)
+    assert_equal(cyc.end, 321)
     assert_equal(cyc.context, 'R')
     assert_equal(cyc.on_forceplate, True)
-
+    assert_equal(cyc.toeoff, 282)
+    cyc = cycs[0]
+    assert_equal(cyc.start, 145)
+    assert_equal(cyc.context, 'R')
+    assert_equal(cyc.on_forceplate, False)
+    # from Trondheim
     trialname = 'astrid_080515_02'
-    _nexus_open_trial('adult_3fp', trialname)
+    subject = 'adult_3fp'
+    trialpath = _trial_path(subject, trialname)
+    nexus._open_trial(trialpath)
     tr = Trial(vicon)
     assert_equal(tr.analograte, 1000.0)
     assert_equal(tr.framerate, 200.0)
@@ -70,23 +78,29 @@ def test_nexus_reader():
     assert_equal(tr.trialname, trialname)
     assert_equal(tr.ncycles, 4)
     assert_equal(tr.offset, 1)
-    cyc = tr.get_cycles({'R': 1})
-    assert_equal(cyc.start, 1049)
-    assert_equal(cyc.end, 1275)
-    assert_equal(cyc.context, 'R')
+    cycs = tr.get_cycles({'L': 'all'})
+    cyc = cycs[1]
+    assert_equal(cyc.start, 1161)
+    assert_equal(cyc.end, 1387)
+    assert_equal(cyc.context, 'L')
     assert_equal(cyc.on_forceplate, True)
-    assert_equal(cyc.toeoff, 1186)
+    assert_equal(cyc.toeoff, 1303)
 
 
 @pytest.mark.nexus
 def test_nexus_plot():
     """Test basic plot from Nexus"""
-    trialname = '2015_10_22_girl6v_IN03'
-    _nexus_open_trial('girl6v', trialname)
-    pl = gaitutils.Plotter(interactive=False)
-    pl.open_nexus_trial()
-    pl.layout = [['HipAnglesX']]
-    pl.plot_trial(model_cycles='all')
+    global vicon
+    if vicon is None:
+        vicon = start_nexus()
+    trialname = '2015_10_22_girl6v_IN13'
+    subject = 'girl6v'
+    trialpath = _trial_path(subject, trialname)
+    nexus._open_trial(trialpath)
+    tr = Trial(vicon)
+    pl = plots.plot_trials([tr], backend='matplotlib')
+    assert isinstance(pl, Figure)
+
 
 
 @pytest.mark.nexus

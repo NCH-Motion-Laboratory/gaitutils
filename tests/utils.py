@@ -58,8 +58,3 @@ def _c3d_path(filename):
     return op.abspath(op.join(testdata_root, 'test_c3ds', filename))
 
 
-def _nexus_open_trial(subject, trial):
-    """Open trial in Nexus"""
-    vicon = nexus.viconnexus()
-    tpath = op.splitext(_trial_path(subject, trial))[0]  # strip .c3d
-    vicon.OpenTrial(tpath, 60)

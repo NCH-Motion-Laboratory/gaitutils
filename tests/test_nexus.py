@@ -28,7 +28,6 @@ from utils import _trial_path, start_nexus, cfg
 vicon = None
 
 
-
 @pytest.mark.nexus
 def test_nexus_reader():
     """Test basic data reading and Trial instance creation"""
@@ -43,7 +42,7 @@ def test_nexus_reader():
     tr = Trial(vicon)
     assert_equal(tr.analograte, 1000.0)
     assert_equal(tr.framerate, 100.0)
-    #assert_equal(tr.bodymass, 24.0)
+    # assert_equal(tr.bodymass, 24.0)
     assert_equal(tr.name, 'Iiris')
     assert_equal(tr.n_forceplates, 1)
     assert_equal(tr.samplesperframe, 10.0)
@@ -70,7 +69,7 @@ def test_nexus_reader():
     tr = Trial(vicon)
     assert_equal(tr.analograte, 1000.0)
     assert_equal(tr.framerate, 200.0)
-    #assert_equal(tr.bodymass, 70.0)
+    # assert_equal(tr.bodymass, 70.0)
     assert_equal(tr.name, 'Astrid')
     assert_equal(tr.n_forceplates, 3)
     assert_equal(tr.samplesperframe, 5.0)
@@ -100,7 +99,6 @@ def test_nexus_plot():
     tr = Trial(vicon)
     pl = plots.plot_trials([tr], backend='matplotlib')
     assert isinstance(pl, Figure)
-
 
 
 @pytest.mark.nexus

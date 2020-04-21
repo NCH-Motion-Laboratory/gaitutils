@@ -49,7 +49,9 @@ def _add_nexus_path(vicon_path):
 
     nexus_path = _find_nexus_path(vicon_path)
     if nexus_path is None:
-        logger.warning('cannot locate Nexus installation directory under %s' % vicon_path)
+        logger.warning(
+            'cannot locate Nexus installation directory under %s' % vicon_path
+        )
         return
 
     sdk_path = op.join(nexus_path, 'SDK', 'Python')

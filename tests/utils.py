@@ -56,5 +56,3 @@ def _trial_path(subject, trial):
 def _c3d_path(filename):
     """Return path to c3d test file"""
     return op.abspath(op.join(testdata_root, 'test_c3ds', filename))
-
-

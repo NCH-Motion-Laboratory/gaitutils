@@ -5,8 +5,6 @@
 # the SWIG interface file instead.
 
 
-
-
 """
 Biomechanical ToolKit (BTK) for Python
 High level classes and functions to open, edit and modify biomechanical acquisitions.
@@ -14,15 +12,19 @@ High level classes and functions to open, edit and modify biomechanical acquisit
 
 
 from sys import version_info
-if version_info >= (2,6,0):
+
+if version_info >= (2, 6, 0):
+
     def swig_import_helper():
         from os.path import dirname
         import imp
+
         fp = None
         try:
             fp, pathname, description = imp.find_module('_btk', [dirname(__file__)])
         except ImportError:
             import _btk
+
             return _btk
         if fp is not None:
             try:
@@ -30,6 +32,7 @@ if version_info >= (2,6,0):
             finally:
                 fp.close()
             return _mod
+
     _btk = swig_import_helper()
     del swig_import_helper
 else:
@@ -38,39 +41,58 @@ del version_info
 try:
     _swig_property = property
 except NameError:
-    pass # Python < 2.2 doesn't have 'property'.
-def _swig_setattr_nondynamic(self,class_type,name,value,static=1):
-    if (name == "thisown"): return self.this.own(value)
-    if (name == "this"):
+    pass  # Python < 2.2 doesn't have 'property'.
+
+
+def _swig_setattr_nondynamic(self, class_type, name, value, static=1):
+    if name == "thisown":
+        return self.this.own(value)
+    if name == "this":
         if type(value).__name__ == 'SwigPyObject':
             self.__dict__[name] = value
             return
-    method = class_type.__swig_setmethods__.get(name,None)
-    if method: return method(self,value)
-    if (not static):
+    method = class_type.__swig_setmethods__.get(name, None)
+    if method:
+        return method(self, value)
+    if not static:
         self.__dict__[name] = value
     else:
         raise AttributeError("You cannot add attributes to %s" % self)
 
-def _swig_setattr(self,class_type,name,value):
-    return _swig_setattr_nondynamic(self,class_type,name,value,0)
 
-def _swig_getattr(self,class_type,name):
-    if (name == "thisown"): return self.this.own()
-    method = class_type.__swig_getmethods__.get(name,None)
-    if method: return method(self)
+def _swig_setattr(self, class_type, name, value):
+    return _swig_setattr_nondynamic(self, class_type, name, value, 0)
+
+
+def _swig_getattr(self, class_type, name):
+    if name == "thisown":
+        return self.this.own()
+    method = class_type.__swig_getmethods__.get(name, None)
+    if method:
+        return method(self)
     raise AttributeError(name)
 
+
 def _swig_repr(self):
-    try: strthis = "proxy of " + self.this.__repr__()
-    except: strthis = ""
-    return "<%s.%s; %s >" % (self.__class__.__module__, self.__class__.__name__, strthis,)
+    try:
+        strthis = "proxy of " + self.this.__repr__()
+    except:
+        strthis = ""
+    return "<%s.%s; %s >" % (
+        self.__class__.__module__,
+        self.__class__.__name__,
+        strthis,
+    )
+
 
 try:
     _object = object
     _newclass = 1
 except AttributeError:
-    class _object : pass
+
+    class _object:
+        pass
+
     _newclass = 0
 
 
@@ -88,16 +110,24 @@ def Iterate(c):
         yield i.value()
         i.incr()
 
+
 class SwigPyIterator(_object):
     """Proxy of C++ swig::SwigPyIterator class"""
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, SwigPyIterator, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, SwigPyIterator, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, SwigPyIterator, name)
-    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined - class is abstract")
+
+    def __init__(self, *args, **kwargs):
+        raise AttributeError("No constructor defined - class is abstract")
+
     __repr__ = _swig_repr
     __swig_destroy__ = _btk.delete_SwigPyIterator
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def value(self):
         """value(self) -> PyObject *"""
         return _btk.SwigPyIterator_value(self)
@@ -171,9 +201,13 @@ class SwigPyIterator(_object):
         """
         return _btk.SwigPyIterator___sub__(self, *args)
 
-    def __iter__(self): return self
+    def __iter__(self):
+        return self
+
+
 SwigPyIterator_swigregister = _btk.SwigPyIterator_swigregister
 SwigPyIterator_swigregister(SwigPyIterator)
+
 
 class btkEvent(_object):
     """
@@ -202,6 +236,7 @@ class btkEvent(_object):
     For example, a Heel Strike event on the left leg or the subject John Doe at frame 143 can be set by
     evt = btk.btkEvent('FootStrike', 143, 'Right', btk.btkEvent.Manual, 'John Doe', 'Heel strike event', 2)
     """
+
     __swig_setmethods__ = {}
     __setattr__ = lambda self, name, value: _swig_setattr(self, btkEvent, name, value)
     __swig_getmethods__ = {}
@@ -211,7 +246,8 @@ class btkEvent(_object):
     Manual = _btk.btkEvent_Manual
     Automatic = _btk.btkEvent_Automatic
     FromForcePlatform = _btk.btkEvent_FromForcePlatform
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkEvent
         __init__(self, label, t, context="", detectionFlags=Unknown, subject="", desc="", id=0) -> btkEvent
@@ -259,8 +295,11 @@ class btkEvent(_object):
         evt = btk.btkEvent('FootStrike', 143, 'Right', btk.btkEvent.Manual, 'John Doe', 'Heel strike event', 2)
         """
         this = _btk.new_btkEvent(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def Clone(self):
         """
         Clone(self) -> btkEvent
@@ -274,7 +313,8 @@ class btkEvent(_object):
         return _btk.btkEvent___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkEvent
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetLabel(self):
         """
         GetLabel(self) -> std::string const &
@@ -427,8 +467,10 @@ class btkEvent(_object):
         """
         return _btk.btkEvent_GetTimestamp(self)
 
+
 btkEvent_swigregister = _btk.btkEvent_swigregister
 btkEvent_swigregister(btkEvent)
+
 
 class btkAnalog(_object):
     """
@@ -451,6 +493,7 @@ class btkAnalog(_object):
     For example, when you save an acquisition in a file, analog's data are generally unscaled and written as integer, 
     then the scale and offset are important.
     """
+
     __swig_setmethods__ = {}
     __setattr__ = lambda self, name, value: _swig_setattr(self, btkAnalog, name, value)
     __swig_getmethods__ = {}
@@ -466,7 +509,8 @@ class btkAnalog(_object):
     PlusMinus0Dot25 = _btk.btkAnalog_PlusMinus0Dot25
     PlusMinus0Dot1 = _btk.btkAnalog_PlusMinus0Dot1
     PlusMinus0Dot05 = _btk.btkAnalog_PlusMinus0Dot05
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self, label="", desc="") -> btkAnalog
         __init__(self, label="") -> btkAnalog
@@ -494,8 +538,11 @@ class btkAnalog(_object):
         then the scale and offset are important.
         """
         this = _btk.new_btkAnalog(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def Clone(self):
         """
         Clone(self) -> btkAnalog
@@ -525,7 +572,8 @@ class btkAnalog(_object):
         return _btk.btkAnalog_SetValue(self, *args)
 
     __swig_destroy__ = _btk.delete_btkAnalog
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetLabel(self):
         """
         GetLabel(self) -> std::string const &
@@ -676,20 +724,26 @@ class btkAnalog(_object):
         """
         return _btk.btkAnalog_GetTimestamp(self)
 
+
 btkAnalog_swigregister = _btk.btkAnalog_swigregister
 btkAnalog_swigregister(btkAnalog)
+
 
 class btkAnalogData(_object):
     """
     Class storing the measures for one analog channel.
 
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkAnalogData, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkAnalogData, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkAnalogData, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self, frameNumber) -> btkAnalogData
 
@@ -697,8 +751,11 @@ class btkAnalogData(_object):
 
         """
         this = _btk.new_btkAnalogData(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def Clone(self):
         """
         Clone(self) -> btkAnalogData
@@ -728,7 +785,8 @@ class btkAnalogData(_object):
         return _btk.btkAnalogData_SetValue(self, *args)
 
     __swig_destroy__ = _btk.delete_btkAnalogData
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetValues(self):
         """
         GetValues(self) -> array (NumPy)
@@ -770,8 +828,10 @@ class btkAnalogData(_object):
         """
         return _btk.btkAnalogData_GetTimestamp(self)
 
+
 btkAnalogData_swigregister = _btk.btkAnalogData_swigregister
 btkAnalogData_swigregister(btkAnalogData)
+
 
 class btkPoint(_object):
     """
@@ -798,6 +858,7 @@ class btkPoint(_object):
 
     Note: A residual with a value equal to 0 means that this frame has been post-processed (interpolation, filtering, etc.).
     """
+
     __swig_setmethods__ = {}
     __setattr__ = lambda self, name, value: _swig_setattr(self, btkPoint, name, value)
     __swig_getmethods__ = {}
@@ -810,7 +871,8 @@ class btkPoint(_object):
     Power = _btk.btkPoint_Power
     Scalar = _btk.btkPoint_Scalar
     Reaction = _btk.btkPoint_Reaction
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self, frameNumber) -> btkPoint
         __init__(self, label, frameNumber, t=Marker, desc="") -> btkPoint
@@ -841,8 +903,11 @@ class btkPoint(_object):
         Note: A residual with a value equal to 0 means that this frame has been post-processed (interpolation, filtering, etc.).
         """
         this = _btk.new_btkPoint(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def Clone(self):
         """
         Clone(self) -> btkPoint
@@ -888,7 +953,8 @@ class btkPoint(_object):
         return _btk.btkPoint_SetResidual(self, *args)
 
     __swig_destroy__ = _btk.delete_btkPoint
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetLabel(self):
         """
         GetLabel(self) -> std::string const &
@@ -1029,20 +1095,26 @@ class btkPoint(_object):
         """
         return _btk.btkPoint_GetTimestamp(self)
 
+
 btkPoint_swigregister = _btk.btkPoint_swigregister
 btkPoint_swigregister(btkPoint)
+
 
 class btkPointData(_object):
     """
     Class storing the measures for a point (3D values and residuals along the time).
 
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkPointData, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkPointData, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkPointData, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self, frameNumber) -> btkPointData
 
@@ -1050,8 +1122,11 @@ class btkPointData(_object):
 
         """
         this = _btk.new_btkPointData(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def Clone(self):
         """
         Clone(self) -> btkPointData
@@ -1081,7 +1156,8 @@ class btkPointData(_object):
         return _btk.btkPointData_SetResidual(self, *args)
 
     __swig_destroy__ = _btk.delete_btkPointData
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetValues(self):
         """
         GetValues(self) -> array (NumPy)
@@ -1139,8 +1215,10 @@ class btkPointData(_object):
         """
         return _btk.btkPointData_GetTimestamp(self)
 
+
 btkPointData_swigregister = _btk.btkPointData_swigregister
 btkPointData_swigregister(btkPointData)
+
 
 class btkForcePlatform(_object):
     """
@@ -1153,12 +1231,19 @@ class btkForcePlatform(_object):
      - btk::ForcePlatformType5: Same as Type-3 + calibration matrix 6 (columns) by 8 (rows);
      - btk::ForcePlatformType6: 12 channels (FX[1,2,3,4], FY[1,2,3,4], FZ[1,2,3,4] + calibration matrix 12 by 12).
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkForcePlatform, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkForcePlatform, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkForcePlatform, name)
-    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
+
+    def __init__(self, *args, **kwargs):
+        raise AttributeError("No constructor defined")
+
     __repr__ = _swig_repr
+
     def Clone(self):
         """
         Clone(self) -> btkForcePlatform
@@ -1178,11 +1263,11 @@ class btkForcePlatform(_object):
       
         Sets the origin.
         """
-        if (len(args) == 1):
+        if len(args) == 1:
             self._set_origin_1(*args)
         else:
             self._set_origin_2(*args)
-      
+
     def SetCorner(self, *args):
         """
         SetCorner(self, int, int, double)
@@ -1191,15 +1276,16 @@ class btkForcePlatform(_object):
         
         Sets the corner for the given index.
         """
-        if (len(args) == 2):
+        if len(args) == 2:
             self._set_corner_1(*args)
-        elif (len(args) == 3):
+        elif len(args) == 3:
             self._set_corner_2(*args)
         else:
-            self._set_corner_3(*args) 
+            self._set_corner_3(*args)
 
     __swig_destroy__ = _btk.delete_btkForcePlatform
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def Begin(self):
         """
         Begin(self) -> btkAnalogIterator
@@ -1360,12 +1446,13 @@ class btkForcePlatform(_object):
         """
         return _btk.btkForcePlatform_GetTimestamp(self)
 
+
 btkForcePlatform_swigregister = _btk.btkForcePlatform_swigregister
 btkForcePlatform_swigregister(btkForcePlatform)
 
 
 def btkForcePlatformType1():
-  """
+    """
     btkForcePlatformType1() -> btkForcePlatform
 
     Force platform composed of 6 channels:
@@ -1376,10 +1463,11 @@ def btkForcePlatformType1():
      - PY: Position of the centre of pressure (CoP) on the axis Y of the platform;
      - MZ: Vertical moment on the axis Z of the platform.
     """
-  return _btk.btkForcePlatformType1()
+    return _btk.btkForcePlatformType1()
+
 
 def btkForcePlatformType2():
-  """
+    """
     btkForcePlatformType2() -> btkForcePlatform
 
     Force platform composed of 6 channels:
@@ -1390,10 +1478,11 @@ def btkForcePlatformType2():
      - MY: Horizontal moment on the axis Y of the platform;
      - MZ: Vertical moment on the axis Z of the platform.
     """
-  return _btk.btkForcePlatformType2()
+    return _btk.btkForcePlatformType2()
+
 
 def btkForcePlatformType3():
-  """
+    """
     btkForcePlatformType3() -> btkForcePlatform
 
     Force platform composed of 8 channels:
@@ -1406,28 +1495,31 @@ def btkForcePlatformType3():
      - FY14: Horizontal forces measured by the sensors 1 & 4;
      - FY23: Horizontal forces measured by the sensors 2 & 3.
     """
-  return _btk.btkForcePlatformType3()
+    return _btk.btkForcePlatformType3()
+
 
 def btkForcePlatformType4():
-  """
+    """
     btkForcePlatformType4() -> btkForcePlatform
 
     Force platform composed of 6 channels and a 6 columns by 6 rows calibration matrix. 
     The definition of the channels are the same than the force platform Type 2.
     """
-  return _btk.btkForcePlatformType4()
+    return _btk.btkForcePlatformType4()
+
 
 def btkForcePlatformType5():
-  """
+    """
     btkForcePlatformType5() -> btkForcePlatform
 
     Force platform composed of 8 channels and a 8 columns by 6 rows calibration matrix. 
     The definition of the channels are the same than the force platform Type 3.
     """
-  return _btk.btkForcePlatformType5()
+    return _btk.btkForcePlatformType5()
+
 
 def btkForcePlatformType6():
-  """
+    """
     btkForcePlatformType6() -> btkForcePlatform
 
     Force platform composed of 12 channels and a 12 columns by 12 rows calibration matrix:
@@ -1444,7 +1536,9 @@ def btkForcePlatformType6():
      - FZ3: Vertical forces measured by the sensor on the corner 3;
      - FZ4: Vertical forces measured by the sensor on the corner 4.
     """
-  return _btk.btkForcePlatformType6()
+    return _btk.btkForcePlatformType6()
+
+
 class btkWrench(_object):
     """
     Represents a wrench as position, force and moment varying during the time.
@@ -1456,12 +1550,14 @@ class btkWrench(_object):
 
     Warning: The call of the constructor btkWrench(label) must be followed by the use of the method btkWrench::SetFrameNumber as it creates a null matrix for the values.
     """
+
     __swig_setmethods__ = {}
     __setattr__ = lambda self, name, value: _swig_setattr(self, btkWrench, name, value)
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkWrench, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self, label="") -> btkWrench
         __init__(self) -> btkWrench
@@ -1478,8 +1574,11 @@ class btkWrench(_object):
         Warning: The call of the constructor btkWrench(label) must be followed by the use of the method btkWrench::SetFrameNumber as it creates a null matrix for the values.
         """
         this = _btk.new_btkWrench(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def Clone(self):
         """Clone(self) -> btkWrench"""
         return _btk.btkWrench_Clone(self)
@@ -1489,7 +1588,8 @@ class btkWrench(_object):
         return _btk.btkWrench___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkWrench
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetPosition(self):
         """
         GetPosition(self) -> btkPoint
@@ -1566,8 +1666,10 @@ class btkWrench(_object):
         """
         return _btk.btkWrench_GetTimestamp(self)
 
+
 btkWrench_swigregister = _btk.btkWrench_swigregister
 btkWrench_swigregister(btkWrench)
+
 
 class btkIMU(_object):
     """
@@ -1581,12 +1683,17 @@ class btkIMU(_object):
 
     Note: This class is still experimental and could be modified in a new release.
     """
+
     __swig_setmethods__ = {}
     __setattr__ = lambda self, name, value: _swig_setattr(self, btkIMU, name, value)
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkIMU, name)
-    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
+
+    def __init__(self, *args, **kwargs):
+        raise AttributeError("No constructor defined")
+
     __repr__ = _swig_repr
+
     def Clone(self):
         """Clone(self) -> btkIMU"""
         return _btk.btkIMU_Clone(self)
@@ -1596,7 +1703,8 @@ class btkIMU(_object):
         return _btk.btkIMU___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkIMU
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetLabel(self):
         """GetLabel(self) -> std::string const &"""
         return _btk.btkIMU_GetLabel(self)
@@ -1774,12 +1882,13 @@ class btkIMU(_object):
         """
         return _btk.btkIMU_GetTimestamp(self)
 
+
 btkIMU_swigregister = _btk.btkIMU_swigregister
 btkIMU_swigregister(btkIMU)
 
 
 def btkIMUType1(label="IMU", desc="", init=True):
-  """
+    """
     btkIMUType1(label="IMU", desc="", init=True) -> btkIMU
     btkIMUType1(label="IMU", desc="") -> btkIMU
     btkIMUType1(label="IMU") -> btkIMU
@@ -1787,10 +1896,11 @@ def btkIMUType1(label="IMU", desc="", init=True):
 
     IMU 6D (3 accelerometers and 3 gyroscopes).
     """
-  return _btk.btkIMUType1(label, desc, init)
+    return _btk.btkIMUType1(label, desc, init)
+
 
 def btkIMUType2(label="IMU", desc="", init=True):
-  """
+    """
     btkIMUType2(label="IMU", desc="", init=True) -> btkIMU
     btkIMUType2(label="IMU", desc="") -> btkIMU
     btkIMUType2(label="IMU") -> btkIMU
@@ -1798,19 +1908,30 @@ def btkIMUType2(label="IMU", desc="", init=True):
 
     IMU 6D (same as Type 1) with a calibration matrix used to align sensors (accelerometers and gyroscopes) on the same inertial reference frame.
     """
-  return _btk.btkIMUType2(label, desc, init)
+    return _btk.btkIMUType2(label, desc, init)
+
+
 class btkEventCollectionIterator(_object):
     """Proxy of C++ btkEventCollectionIterator class"""
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkEventCollectionIterator, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkEventCollectionIterator, name, value
+    )
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, btkEventCollectionIterator, name)
+    __getattr__ = lambda self, name: _swig_getattr(
+        self, btkEventCollectionIterator, name
+    )
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """__init__(self) -> btkEventCollectionIterator"""
         this = _btk.new_btkEventCollectionIterator()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def incr(self):
         """incr(self)"""
         return _btk.btkEventCollectionIterator_incr(self)
@@ -1832,28 +1953,38 @@ class btkEventCollectionIterator(_object):
         return _btk.btkEventCollectionIterator___ne__(self, *args)
 
     __swig_destroy__ = _btk.delete_btkEventCollectionIterator
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
+
 btkEventCollectionIterator_swigregister = _btk.btkEventCollectionIterator_swigregister
 btkEventCollectionIterator_swigregister(btkEventCollectionIterator)
+
 
 class btkEventCollection(_object):
     """
     Collection of events stored in a list.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkEventCollection, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkEventCollection, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkEventCollection, name)
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkEventCollection
 
         Collection of events stored in a list.
         """
         this = _btk.new_btkEventCollection()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def Clone(self):
         """
         Clone(self) -> btkEventCollection
@@ -1867,7 +1998,8 @@ class btkEventCollection(_object):
         return _btk.btkEventCollection___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkEventCollection
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def Begin(self):
         """
         Begin(self) -> btkEventIterator
@@ -1984,21 +2116,32 @@ class btkEventCollection(_object):
         """
         return _btk.btkEventCollection_GetTimestamp(self)
 
+
 btkEventCollection_swigregister = _btk.btkEventCollection_swigregister
 btkEventCollection_swigregister(btkEventCollection)
 
+
 class btkAnalogCollectionIterator(_object):
     """Proxy of C++ btkAnalogCollectionIterator class"""
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkAnalogCollectionIterator, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkAnalogCollectionIterator, name, value
+    )
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, btkAnalogCollectionIterator, name)
+    __getattr__ = lambda self, name: _swig_getattr(
+        self, btkAnalogCollectionIterator, name
+    )
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """__init__(self) -> btkAnalogCollectionIterator"""
         this = _btk.new_btkAnalogCollectionIterator()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def incr(self):
         """incr(self)"""
         return _btk.btkAnalogCollectionIterator_incr(self)
@@ -2020,28 +2163,38 @@ class btkAnalogCollectionIterator(_object):
         return _btk.btkAnalogCollectionIterator___ne__(self, *args)
 
     __swig_destroy__ = _btk.delete_btkAnalogCollectionIterator
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
+
 btkAnalogCollectionIterator_swigregister = _btk.btkAnalogCollectionIterator_swigregister
 btkAnalogCollectionIterator_swigregister(btkAnalogCollectionIterator)
+
 
 class btkAnalogCollection(_object):
     """
     Collection of analog channels stored in a list.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkAnalogCollection, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkAnalogCollection, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkAnalogCollection, name)
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkAnalogCollection
 
         Collection of analog channels stored in a list.
         """
         this = _btk.new_btkAnalogCollection()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def Clone(self):
         """
         Clone(self) -> btkAnalogCollection
@@ -2055,7 +2208,8 @@ class btkAnalogCollection(_object):
         return _btk.btkAnalogCollection___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkAnalogCollection
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def Begin(self):
         """
         Begin(self) -> btkAnalogIterator
@@ -2172,21 +2326,32 @@ class btkAnalogCollection(_object):
         """
         return _btk.btkAnalogCollection_GetTimestamp(self)
 
+
 btkAnalogCollection_swigregister = _btk.btkAnalogCollection_swigregister
 btkAnalogCollection_swigregister(btkAnalogCollection)
 
+
 class btkPointCollectionIterator(_object):
     """Proxy of C++ btkPointCollectionIterator class"""
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkPointCollectionIterator, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkPointCollectionIterator, name, value
+    )
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, btkPointCollectionIterator, name)
+    __getattr__ = lambda self, name: _swig_getattr(
+        self, btkPointCollectionIterator, name
+    )
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """__init__(self) -> btkPointCollectionIterator"""
         this = _btk.new_btkPointCollectionIterator()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def incr(self):
         """incr(self)"""
         return _btk.btkPointCollectionIterator_incr(self)
@@ -2208,28 +2373,38 @@ class btkPointCollectionIterator(_object):
         return _btk.btkPointCollectionIterator___ne__(self, *args)
 
     __swig_destroy__ = _btk.delete_btkPointCollectionIterator
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
+
 btkPointCollectionIterator_swigregister = _btk.btkPointCollectionIterator_swigregister
 btkPointCollectionIterator_swigregister(btkPointCollectionIterator)
+
 
 class btkPointCollection(_object):
     """
     Collection of point stored in a list.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkPointCollection, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkPointCollection, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkPointCollection, name)
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkPointCollection
 
         Collection of point stored in a list.
         """
         this = _btk.new_btkPointCollection()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def Clone(self):
         """
         Clone(self) -> btkPointCollection
@@ -2243,7 +2418,8 @@ class btkPointCollection(_object):
         return _btk.btkPointCollection___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkPointCollection
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def Begin(self):
         """
         Begin(self) -> btkPointIterator
@@ -2360,21 +2536,32 @@ class btkPointCollection(_object):
         """
         return _btk.btkPointCollection_GetTimestamp(self)
 
+
 btkPointCollection_swigregister = _btk.btkPointCollection_swigregister
 btkPointCollection_swigregister(btkPointCollection)
 
+
 class btkForcePlatformCollectionIterator(_object):
     """Proxy of C++ btkForcePlatformCollectionIterator class"""
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkForcePlatformCollectionIterator, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkForcePlatformCollectionIterator, name, value
+    )
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, btkForcePlatformCollectionIterator, name)
+    __getattr__ = lambda self, name: _swig_getattr(
+        self, btkForcePlatformCollectionIterator, name
+    )
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """__init__(self) -> btkForcePlatformCollectionIterator"""
         this = _btk.new_btkForcePlatformCollectionIterator()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def incr(self):
         """incr(self)"""
         return _btk.btkForcePlatformCollectionIterator_incr(self)
@@ -2396,28 +2583,42 @@ class btkForcePlatformCollectionIterator(_object):
         return _btk.btkForcePlatformCollectionIterator___ne__(self, *args)
 
     __swig_destroy__ = _btk.delete_btkForcePlatformCollectionIterator
-    __del__ = lambda self : None;
-btkForcePlatformCollectionIterator_swigregister = _btk.btkForcePlatformCollectionIterator_swigregister
+    __del__ = lambda self: None
+
+
+btkForcePlatformCollectionIterator_swigregister = (
+    _btk.btkForcePlatformCollectionIterator_swigregister
+)
 btkForcePlatformCollectionIterator_swigregister(btkForcePlatformCollectionIterator)
+
 
 class btkForcePlatformCollection(_object):
     """
     Collection of force platforms stored in a list.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkForcePlatformCollection, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkForcePlatformCollection, name, value
+    )
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, btkForcePlatformCollection, name)
+    __getattr__ = lambda self, name: _swig_getattr(
+        self, btkForcePlatformCollection, name
+    )
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkForcePlatformCollection
 
         Collection of force platforms stored in a list.
         """
         this = _btk.new_btkForcePlatformCollection()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def Clone(self):
         """
         Clone(self) -> btkForcePlatformCollection
@@ -2431,7 +2632,8 @@ class btkForcePlatformCollection(_object):
         return _btk.btkForcePlatformCollection___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkForcePlatformCollection
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def Begin(self):
         """
         Begin(self) -> btkForcePlatformIterator
@@ -2548,21 +2750,32 @@ class btkForcePlatformCollection(_object):
         """
         return _btk.btkForcePlatformCollection_GetTimestamp(self)
 
+
 btkForcePlatformCollection_swigregister = _btk.btkForcePlatformCollection_swigregister
 btkForcePlatformCollection_swigregister(btkForcePlatformCollection)
 
+
 class btkWrenchCollectionIterator(_object):
     """Proxy of C++ btkWrenchCollectionIterator class"""
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkWrenchCollectionIterator, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkWrenchCollectionIterator, name, value
+    )
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, btkWrenchCollectionIterator, name)
+    __getattr__ = lambda self, name: _swig_getattr(
+        self, btkWrenchCollectionIterator, name
+    )
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """__init__(self) -> btkWrenchCollectionIterator"""
         this = _btk.new_btkWrenchCollectionIterator()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def incr(self):
         """incr(self)"""
         return _btk.btkWrenchCollectionIterator_incr(self)
@@ -2584,28 +2797,38 @@ class btkWrenchCollectionIterator(_object):
         return _btk.btkWrenchCollectionIterator___ne__(self, *args)
 
     __swig_destroy__ = _btk.delete_btkWrenchCollectionIterator
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
+
 btkWrenchCollectionIterator_swigregister = _btk.btkWrenchCollectionIterator_swigregister
 btkWrenchCollectionIterator_swigregister(btkWrenchCollectionIterator)
+
 
 class btkWrenchCollection(_object):
     """
     Collection of wrenchs stored in a list.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkWrenchCollection, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkWrenchCollection, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkWrenchCollection, name)
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkWrenchCollection
 
         Collection of wrenchs stored in a list.
         """
         this = _btk.new_btkWrenchCollection()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def Clone(self):
         """
         Clone(self) -> btkWrenchCollection
@@ -2619,7 +2842,8 @@ class btkWrenchCollection(_object):
         return _btk.btkWrenchCollection___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkWrenchCollection
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def Begin(self):
         """
         Begin(self) -> btkWrenchIterator
@@ -2736,21 +2960,30 @@ class btkWrenchCollection(_object):
         """
         return _btk.btkWrenchCollection_GetTimestamp(self)
 
+
 btkWrenchCollection_swigregister = _btk.btkWrenchCollection_swigregister
 btkWrenchCollection_swigregister(btkWrenchCollection)
 
+
 class btkIMUCollectionIterator(_object):
     """Proxy of C++ btkIMUCollectionIterator class"""
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkIMUCollectionIterator, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkIMUCollectionIterator, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkIMUCollectionIterator, name)
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """__init__(self) -> btkIMUCollectionIterator"""
         this = _btk.new_btkIMUCollectionIterator()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def incr(self):
         """incr(self)"""
         return _btk.btkIMUCollectionIterator_incr(self)
@@ -2772,28 +3005,38 @@ class btkIMUCollectionIterator(_object):
         return _btk.btkIMUCollectionIterator___ne__(self, *args)
 
     __swig_destroy__ = _btk.delete_btkIMUCollectionIterator
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
+
 btkIMUCollectionIterator_swigregister = _btk.btkIMUCollectionIterator_swigregister
 btkIMUCollectionIterator_swigregister(btkIMUCollectionIterator)
+
 
 class btkIMUCollection(_object):
     """
     Collection of IMUs stored in a list.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkIMUCollection, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkIMUCollection, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkIMUCollection, name)
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkIMUCollection
 
         Collection of IMUs stored in a list.
         """
         this = _btk.new_btkIMUCollection()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def Clone(self):
         """
         Clone(self) -> btkIMUCollection
@@ -2807,7 +3050,8 @@ class btkIMUCollection(_object):
         return _btk.btkIMUCollection___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkIMUCollection
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def Begin(self):
         """
         Begin(self) -> btkIMUIterator
@@ -2924,21 +3168,29 @@ class btkIMUCollection(_object):
         """
         return _btk.btkIMUCollection_GetTimestamp(self)
 
+
 btkIMUCollection_swigregister = _btk.btkIMUCollection_swigregister
 btkIMUCollection_swigregister(btkIMUCollection)
 
+
 class btkStringArray(_object):
     """Proxy of C++ std::vector<(std::string)> class"""
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkStringArray, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkStringArray, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkStringArray, name)
     __repr__ = _swig_repr
+
     def iterator(self):
         """iterator(self) -> SwigPyIterator"""
         return _btk.btkStringArray_iterator(self)
 
-    def __iter__(self): return self.iterator()
+    def __iter__(self):
+        return self.iterator()
+
     def __nonzero__(self):
         """__nonzero__(self) -> bool"""
         return _btk.btkStringArray___nonzero__(self)
@@ -3043,7 +3295,7 @@ class btkStringArray(_object):
         """
         return _btk.btkStringArray_erase(self, *args)
 
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """
         __init__(self) -> btkStringArray
         __init__(self, arg2) -> btkStringArray
@@ -3051,8 +3303,11 @@ class btkStringArray(_object):
         __init__(self, size, value) -> btkStringArray
         """
         this = _btk.new_btkStringArray(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def push_back(self, *args):
         """push_back(self, x)"""
         return _btk.btkStringArray_push_back(self, *args)
@@ -3092,22 +3347,31 @@ class btkStringArray(_object):
         return _btk.btkStringArray_capacity(self)
 
     __swig_destroy__ = _btk.delete_btkStringArray
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
+
 btkStringArray_swigregister = _btk.btkStringArray_swigregister
 btkStringArray_swigregister(btkStringArray)
 
+
 class btkIntArray(_object):
     """Proxy of C++ std::vector<(int)> class"""
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkIntArray, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkIntArray, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkIntArray, name)
     __repr__ = _swig_repr
+
     def iterator(self):
         """iterator(self) -> SwigPyIterator"""
         return _btk.btkIntArray_iterator(self)
 
-    def __iter__(self): return self.iterator()
+    def __iter__(self):
+        return self.iterator()
+
     def __nonzero__(self):
         """__nonzero__(self) -> bool"""
         return _btk.btkIntArray___nonzero__(self)
@@ -3212,7 +3476,7 @@ class btkIntArray(_object):
         """
         return _btk.btkIntArray_erase(self, *args)
 
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """
         __init__(self) -> btkIntArray
         __init__(self, arg2) -> btkIntArray
@@ -3220,8 +3484,11 @@ class btkIntArray(_object):
         __init__(self, size, value) -> btkIntArray
         """
         this = _btk.new_btkIntArray(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def push_back(self, *args):
         """push_back(self, x)"""
         return _btk.btkIntArray_push_back(self, *args)
@@ -3261,22 +3528,31 @@ class btkIntArray(_object):
         return _btk.btkIntArray_capacity(self)
 
     __swig_destroy__ = _btk.delete_btkIntArray
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
+
 btkIntArray_swigregister = _btk.btkIntArray_swigregister
 btkIntArray_swigregister(btkIntArray)
 
+
 class btkDoubleArray(_object):
     """Proxy of C++ std::vector<(double)> class"""
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkDoubleArray, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkDoubleArray, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkDoubleArray, name)
     __repr__ = _swig_repr
+
     def iterator(self):
         """iterator(self) -> SwigPyIterator"""
         return _btk.btkDoubleArray_iterator(self)
 
-    def __iter__(self): return self.iterator()
+    def __iter__(self):
+        return self.iterator()
+
     def __nonzero__(self):
         """__nonzero__(self) -> bool"""
         return _btk.btkDoubleArray___nonzero__(self)
@@ -3381,7 +3657,7 @@ class btkDoubleArray(_object):
         """
         return _btk.btkDoubleArray_erase(self, *args)
 
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """
         __init__(self) -> btkDoubleArray
         __init__(self, arg2) -> btkDoubleArray
@@ -3389,8 +3665,11 @@ class btkDoubleArray(_object):
         __init__(self, size, value) -> btkDoubleArray
         """
         this = _btk.new_btkDoubleArray(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def push_back(self, *args):
         """push_back(self, x)"""
         return _btk.btkDoubleArray_push_back(self, *args)
@@ -3430,9 +3709,12 @@ class btkDoubleArray(_object):
         return _btk.btkDoubleArray_capacity(self)
 
     __swig_destroy__ = _btk.delete_btkDoubleArray
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
+
 btkDoubleArray_swigregister = _btk.btkDoubleArray_swigregister
 btkDoubleArray_swigregister(btkDoubleArray)
+
 
 class btkMetaDataInfo(_object):
     """
@@ -3448,8 +3730,11 @@ class btkMetaDataInfo(_object):
      
     Note: The format btk.btkMetaDataInfo.Byte cannot be set using the method SetValues() do the impossibility to differentiate an integer. You need to use explicitly the method SetFormat().
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkMetaDataInfo, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkMetaDataInfo, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkMetaDataInfo, name)
     __repr__ = _swig_repr
@@ -3457,7 +3742,8 @@ class btkMetaDataInfo(_object):
     Byte = _btk.btkMetaDataInfo_Byte
     Integer = _btk.btkMetaDataInfo_Integer
     Real = _btk.btkMetaDataInfo_Real
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self, val) -> btkMetaDataInfo
         __init__(self, val) -> btkMetaDataInfo
@@ -3482,8 +3768,11 @@ class btkMetaDataInfo(_object):
         Note: The format btk.btkMetaDataInfo.Byte cannot be set using the method SetValues() do the impossibility to differentiate an integer. You need to use explicitly the method SetFormat().
         """
         this = _btk.new_btkMetaDataInfo(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def Clone(self):
         """
         Clone(self) -> btkMetaDataInfo
@@ -3547,7 +3836,8 @@ class btkMetaDataInfo(_object):
         return _btk.btkMetaDataInfo___ne__(self, *args)
 
     __swig_destroy__ = _btk.delete_btkMetaDataInfo
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFormat(self):
         """
         GetFormat(self) -> btkMetaDataInfo_impl::Format
@@ -3616,8 +3906,10 @@ class btkMetaDataInfo(_object):
         """
         return _btk.btkMetaDataInfo_ToDouble(self, *args)
 
+
 btkMetaDataInfo_swigregister = _btk.btkMetaDataInfo_swigregister
 btkMetaDataInfo_swigregister(btkMetaDataInfo)
+
 
 class btkMetaData(_object):
     """
@@ -3628,12 +3920,16 @@ class btkMetaData(_object):
 
     The unlock member accessible using the methods GetUnlock() and SetUnlock() doesn't affect the setting of the values, but is used only to inform the user/developer.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkMetaData, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkMetaData, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkMetaData, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self, label) -> btkMetaData
         __init__(self, label, val, desc="", isUnlocked=True) -> btkMetaData
@@ -3672,8 +3968,11 @@ class btkMetaData(_object):
         The unlock member accessible using the methods GetUnlock() and SetUnlock() doesn't affect the setting of the values, but is used only to inform the user/developer.
         """
         this = _btk.new_btkMetaData(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def Clone(self):
         """
         Clone(self) -> btkMetaData
@@ -3695,7 +3994,8 @@ class btkMetaData(_object):
         return _btk.btkMetaData___ne__(self, *args)
 
     __swig_destroy__ = _btk.delete_btkMetaData
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetLabel(self):
         """GetLabel(self) -> std::string const &"""
         return _btk.btkMetaData_GetLabel(self)
@@ -3891,21 +4191,30 @@ class btkMetaData(_object):
         """
         return _btk.btkMetaData_GetTimestamp(self)
 
+
 btkMetaData_swigregister = _btk.btkMetaData_swigregister
 btkMetaData_swigregister(btkMetaData)
 
+
 class btkMetaDataIterator(_object):
     """Proxy of C++ btkMetaDataIterator class"""
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkMetaDataIterator, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkMetaDataIterator, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkMetaDataIterator, name)
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """__init__(self) -> btkMetaDataIterator"""
         this = _btk.new_btkMetaDataIterator()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def incr(self):
         """incr(self)"""
         return _btk.btkMetaDataIterator_incr(self)
@@ -3927,13 +4236,15 @@ class btkMetaDataIterator(_object):
         return _btk.btkMetaDataIterator___ne__(self, *args)
 
     __swig_destroy__ = _btk.delete_btkMetaDataIterator
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
+
 btkMetaDataIterator_swigregister = _btk.btkMetaDataIterator_swigregister
 btkMetaDataIterator_swigregister(btkMetaDataIterator)
 
 
 def btkMetaDataCreateChild(*args):
-  """
+    """
     btkMetaDataCreateChild(parent, label) -> btkMetaData
     btkMetaDataCreateChild(parent , label , int )
     btkMetaDataCreateChild(parent , label , double )
@@ -3947,10 +4258,11 @@ def btkMetaDataCreateChild(*args):
 
     Function to create/set easily a metadata containing a 2D array as value, from a given label into a given parent.
     """
-  return _btk.btkMetaDataCreateChild(*args)
+    return _btk.btkMetaDataCreateChild(*args)
+
 
 def btkMetaDataCollapseChildrenValuesInt(*args):
-  """
+    """
     btkMetaDataCollapseChildrenValuesInt(parent, baselabel, targetFinalSize=-1, blankReplacement=0) -> btkIntArray
     btkMetaDataCollapseChildrenValuesInt(parent, baselabel, targetFinalSize=-1) -> btkIntArray
     btkMetaDataCollapseChildrenValuesInt(parent, baselabel) -> btkIntArray
@@ -3958,10 +4270,11 @@ def btkMetaDataCollapseChildrenValuesInt(*args):
     Convenient method to extract the values of a metadata as an array of integers.
     Collapse the parent children entries' values starting with the string 'baselabel' and incrementing (for example: LABELS, LABELS2, LABELS3).
     """
-  return _btk.btkMetaDataCollapseChildrenValuesInt(*args)
+    return _btk.btkMetaDataCollapseChildrenValuesInt(*args)
+
 
 def btkMetaDataCollapseChildrenValuesDouble(*args):
-  """
+    """
     btkMetaDataCollapseChildrenValuesDouble(parent, baselabel, targetFinalSize=-1, blankReplacement=0.0) -> btkDoubleArray
     btkMetaDataCollapseChildrenValuesDouble(parent, baselabel, targetFinalSize=-1) -> btkDoubleArray
     btkMetaDataCollapseChildrenValuesDouble(parent, baselabel) -> btkDoubleArray
@@ -3969,10 +4282,11 @@ def btkMetaDataCollapseChildrenValuesDouble(*args):
     Convenient method to extract the values of a metadata as an array of doubles.
     Collapse the parent children entries' values starting with the string 'baselabel' and incrementing (for example: LABELS, LABELS2, LABELS3).
     """
-  return _btk.btkMetaDataCollapseChildrenValuesDouble(*args)
+    return _btk.btkMetaDataCollapseChildrenValuesDouble(*args)
+
 
 def btkMetaDataCollapseChildrenValuesString(*args):
-  """
+    """
     btkMetaDataCollapseChildrenValuesString(parent, baselabel, targetFinalSize=-1, blankReplacement="") -> btkStringArray
     btkMetaDataCollapseChildrenValuesString(parent, baselabel, targetFinalSize=-1) -> btkStringArray
     btkMetaDataCollapseChildrenValuesString(parent, baselabel) -> btkStringArray
@@ -3980,7 +4294,9 @@ def btkMetaDataCollapseChildrenValuesString(*args):
     Convenient method to extract the values of a metadata as an array of strings.
     Collapse the parent children entries' values starting with the string 'baselabel' and incrementing (for example: LABELS, LABELS2, LABELS3).
     """
-  return _btk.btkMetaDataCollapseChildrenValuesString(*args)
+    return _btk.btkMetaDataCollapseChildrenValuesString(*args)
+
+
 class btkAcquisition(_object):
     """
     Contains the data related to a biomechanical acquisition.
@@ -4012,8 +4328,11 @@ class btkAcquisition(_object):
      - btk.btkAcquisition.Bit14 ;
      - btk.btkAcquisition.Bit16.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkAcquisition, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkAcquisition, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkAcquisition, name)
     __repr__ = _swig_repr
@@ -4022,7 +4341,8 @@ class btkAcquisition(_object):
     Bit12 = _btk.btkAcquisition_Bit12
     Bit14 = _btk.btkAcquisition_Bit14
     Bit16 = _btk.btkAcquisition_Bit16
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkAcquisition
 
@@ -4056,8 +4376,11 @@ class btkAcquisition(_object):
          - btk.btkAcquisition.Bit16.
         """
         this = _btk.new_btkAcquisition()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def Clone(self):
         """
         Clone(self) -> btkAcquisition
@@ -4071,7 +4394,8 @@ class btkAcquisition(_object):
         return _btk.btkAcquisition___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkAcquisition
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def BeginMetaData(self):
         """
         BeginMetaData(self) -> btkMetaDataIterator
@@ -4639,15 +4963,20 @@ class btkAcquisition(_object):
         """
         return _btk.btkAcquisition_GetTimestamp(self)
 
+
 btkAcquisition_swigregister = _btk.btkAcquisition_swigregister
 btkAcquisition_swigregister(btkAcquisition)
+
 
 class btkAcquisitionFileIO(_object):
     """
     Interface to read/write acquisition's files, cannot be instanced.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkAcquisitionFileIO, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkAcquisitionFileIO, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkAcquisitionFileIO, name)
     __repr__ = _swig_repr
@@ -4666,21 +4995,26 @@ class btkAcquisitionFileIO(_object):
     DataBasedUpdate = _btk.btkAcquisitionFileIO_DataBasedUpdate
     MetaDataBasedUpdate = _btk.btkAcquisitionFileIO_MetaDataBasedUpdate
     FileFormatOption = _btk.btkAcquisitionFileIO_FileFormatOption
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self, toCopy) -> btkAcquisitionFileIO
 
         Interface to read/write acquisition's files, cannot be instanced.
         """
         this = _btk.new_btkAcquisitionFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkAcquisitionFileIO_impl *"""
         return _btk.btkAcquisitionFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkAcquisitionFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -4794,8 +5128,10 @@ class btkAcquisitionFileIO(_object):
         """
         return _btk.btkAcquisitionFileIO_Write(self, *args)
 
+
 btkAcquisitionFileIO_swigregister = _btk.btkAcquisitionFileIO_swigregister
 btkAcquisitionFileIO_swigregister(btkAcquisitionFileIO)
+
 
 class btkAcquisitionFileReader(_object):
     """
@@ -4809,12 +5145,16 @@ class btkAcquisitionFileReader(_object):
     The use of the manual setting should be only used if you want to read a file with a selected file format. To go back to the automatic mode 
     from the manual mode, you only have to use the method btkAcquisitionFileReader::SetAcquisitionIO() without any argument.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkAcquisitionFileReader, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkAcquisitionFileReader, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkAcquisitionFileReader, name)
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkAcquisitionFileReader
 
@@ -4829,8 +5169,11 @@ class btkAcquisitionFileReader(_object):
         from the manual mode, you only have to use the method btkAcquisitionFileReader::SetAcquisitionIO() without any argument.
         """
         this = _btk.new_btkAcquisitionFileReader()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkAcquisitionFileReader_impl *"""
         return _btk.btkAcquisitionFileReader___deref__(self)
@@ -4848,7 +5191,8 @@ class btkAcquisitionFileReader(_object):
         return _btk.btkAcquisitionFileReader__reset(self)
 
     __swig_destroy__ = _btk.delete_btkAcquisitionFileReader
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetOutput(self):
         """
         GetOutput(self) -> btkAcquisition
@@ -4871,7 +5215,9 @@ class btkAcquisitionFileReader(_object):
 
         Enable/disable exception for the missing of the filename.
         """
-        return _btk.btkAcquisitionFileReader_SetDisableFilenameExceptionState(self, *args)
+        return _btk.btkAcquisitionFileReader_SetDisableFilenameExceptionState(
+            self, *args
+        )
 
     def GetFilename(self):
         """
@@ -4949,27 +5295,36 @@ class btkAcquisitionFileReader(_object):
         """
         return _btk.btkAcquisitionFileReader_GetTimestamp(self)
 
+
 btkAcquisitionFileReader_swigregister = _btk.btkAcquisitionFileReader_swigregister
 btkAcquisitionFileReader_swigregister(btkAcquisitionFileReader)
+
 
 class btkAcquisitionFileWriter(_object):
     """
     Writer of acquisition data into acquisition file (C3D, TRC, ...).
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkAcquisitionFileWriter, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkAcquisitionFileWriter, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkAcquisitionFileWriter, name)
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkAcquisitionFileWriter
 
         Writer of acquisition data into acquisition file (C3D, TRC, ...).
         """
         this = _btk.new_btkAcquisitionFileWriter()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkAcquisitionFileWriter_impl *"""
         return _btk.btkAcquisitionFileWriter___deref__(self)
@@ -4983,7 +5338,8 @@ class btkAcquisitionFileWriter(_object):
         return _btk.btkAcquisitionFileWriter_GetAcquisitionIO(self)
 
     __swig_destroy__ = _btk.delete_btkAcquisitionFileWriter
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetInput(self):
         """
         GetInput(self) -> btkAcquisition
@@ -5076,8 +5432,10 @@ class btkAcquisitionFileWriter(_object):
         """
         return _btk.btkAcquisitionFileWriter_GetTimestamp(self)
 
+
 btkAcquisitionFileWriter_swigregister = _btk.btkAcquisitionFileWriter_swigregister
 btkAcquisitionFileWriter_swigregister(btkAcquisitionFileWriter)
+
 
 class btkC3DFileIO(btkAcquisitionFileIO):
     """
@@ -5105,17 +5463,23 @@ class btkC3DFileIO(btkAcquisitionFileIO):
 
     For more informations on this file's format: http:://www.c3d.org
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkC3DFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkC3DFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkC3DFileIO, name)
     __repr__ = _swig_repr
     Signed = _btk.btkC3DFileIO_Signed
     Unsigned = _btk.btkC3DFileIO_Unsigned
     CompatibleVicon = _btk.btkC3DFileIO_CompatibleVicon
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkC3DFileIO
         __init__(self, toCopy) -> btkC3DFileIO
@@ -5145,14 +5509,18 @@ class btkC3DFileIO(btkAcquisitionFileIO):
         For more informations on this file's format: http:://www.c3d.org
         """
         this = _btk.new_btkC3DFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkC3DFileIO_impl *"""
         return _btk.btkC3DFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkC3DFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetPointScale(self):
         """
         GetPointScale(self) -> double
@@ -5346,21 +5714,29 @@ class btkC3DFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkC3DFileIO_Write(self, *args)
 
+
 btkC3DFileIO_swigregister = _btk.btkC3DFileIO_swigregister
 btkC3DFileIO_swigregister(btkC3DFileIO)
+
 
 class btkANBFileIO(btkAcquisitionFileIO):
     """
     Interface to read/write ANB files (Motion Analysis Corp.).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkANBFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkANBFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkANBFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkANBFileIO
         __init__(self, toCopy) -> btkANBFileIO
@@ -5368,14 +5744,18 @@ class btkANBFileIO(btkAcquisitionFileIO):
         Interface to read/write ANB files (Motion Analysis Corp.).
         """
         this = _btk.new_btkANBFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkANBFileIO_impl *"""
         return _btk.btkANBFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkANBFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -5489,21 +5869,29 @@ class btkANBFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkANBFileIO_Write(self, *args)
 
+
 btkANBFileIO_swigregister = _btk.btkANBFileIO_swigregister
 btkANBFileIO_swigregister(btkANBFileIO)
+
 
 class btkANCFileIO(btkAcquisitionFileIO):
     """
     Interface to read/write ANC files (Motion Analysis Corp.).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkANCFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkANCFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkANCFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkANCFileIO
         __init__(self, toCopy) -> btkANCFileIO
@@ -5511,14 +5899,18 @@ class btkANCFileIO(btkAcquisitionFileIO):
         Interface to read/write ANC files (Motion Analysis Corp.).
         """
         this = _btk.new_btkANCFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkANCFileIO_impl *"""
         return _btk.btkANCFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkANCFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileGeneration(self):
         """
         GetFileGeneration(self) -> int
@@ -5648,21 +6040,29 @@ class btkANCFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkANCFileIO_Write(self, *args)
 
+
 btkANCFileIO_swigregister = _btk.btkANCFileIO_swigregister
 btkANCFileIO_swigregister(btkANCFileIO)
+
 
 class btkANGFileIO(btkAcquisitionFileIO):
     """
     Interface to read ANG files (Elite - BTS Bioengineering).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkANGFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkANGFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkANGFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkANGFileIO
         __init__(self, toCopy) -> btkANGFileIO
@@ -5670,14 +6070,18 @@ class btkANGFileIO(btkAcquisitionFileIO):
         Interface to read ANG files (Elite - BTS Bioengineering).
         """
         this = _btk.new_btkANGFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkANGFileIO_impl *"""
         return _btk.btkANGFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkANGFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -5791,21 +6195,29 @@ class btkANGFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkANGFileIO_Write(self, *args)
 
+
 btkANGFileIO_swigregister = _btk.btkANGFileIO_swigregister
 btkANGFileIO_swigregister(btkANGFileIO)
+
 
 class btkCALForcePlateFileIO(btkAcquisitionFileIO):
     """
     Interface to read/write force platform calibration CAL files (Motion Analysis Corp.).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkCALForcePlateFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkCALForcePlateFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkCALForcePlateFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkCALForcePlateFileIO
         __init__(self, toCopy) -> btkCALForcePlateFileIO
@@ -5813,14 +6225,18 @@ class btkCALForcePlateFileIO(btkAcquisitionFileIO):
         Interface to read/write force platform calibration CAL files (Motion Analysis Corp.).
         """
         this = _btk.new_btkCALForcePlateFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkCALForcePlateFileIO_impl *"""
         return _btk.btkCALForcePlateFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkCALForcePlateFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -5934,21 +6350,29 @@ class btkCALForcePlateFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkCALForcePlateFileIO_Write(self, *args)
 
+
 btkCALForcePlateFileIO_swigregister = _btk.btkCALForcePlateFileIO_swigregister
 btkCALForcePlateFileIO_swigregister(btkCALForcePlateFileIO)
+
 
 class btkCLBFileIO(btkAcquisitionFileIO):
     """
     Interface to read CLB files (Contec Inc.).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkCLBFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkCLBFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkCLBFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkCLBFileIO
         __init__(self, toCopy) -> btkCLBFileIO
@@ -5956,14 +6380,18 @@ class btkCLBFileIO(btkAcquisitionFileIO):
         Interface to read CLB files (Contec Inc.).
         """
         this = _btk.new_btkCLBFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkCLBFileIO_impl *"""
         return _btk.btkCLBFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkCLBFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -6077,21 +6505,29 @@ class btkCLBFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkCLBFileIO_Write(self, *args)
 
+
 btkCLBFileIO_swigregister = _btk.btkCLBFileIO_swigregister
 btkCLBFileIO_swigregister(btkCLBFileIO)
+
 
 class btkDelsysEMGFileIO(btkAcquisitionFileIO):
     """
     Interface to read EMG file (Delsys Inc.).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkDelsysEMGFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkDelsysEMGFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkDelsysEMGFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkDelsysEMGFileIO
         __init__(self, toCopy) -> btkDelsysEMGFileIO
@@ -6099,14 +6535,18 @@ class btkDelsysEMGFileIO(btkAcquisitionFileIO):
         Interface to read EMG file (Delsys Inc.).
         """
         this = _btk.new_btkDelsysEMGFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkDelsysEMGFileIO_impl *"""
         return _btk.btkDelsysEMGFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkDelsysEMGFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -6220,21 +6660,29 @@ class btkDelsysEMGFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkDelsysEMGFileIO_Write(self, *args)
 
+
 btkDelsysEMGFileIO_swigregister = _btk.btkDelsysEMGFileIO_swigregister
 btkDelsysEMGFileIO_swigregister(btkDelsysEMGFileIO)
+
 
 class btkMDFFileIO(btkAcquisitionFileIO):
     """
     Interface to read MDF files (Codamotion).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkMDFFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkMDFFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkMDFFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkMDFFileIO
         __init__(self, toCopy) -> btkMDFFileIO
@@ -6242,14 +6690,18 @@ class btkMDFFileIO(btkAcquisitionFileIO):
         Interface to read MDF files (Codamotion).
         """
         this = _btk.new_btkMDFFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkMDFFileIO_impl *"""
         return _btk.btkMDFFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkMDFFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -6363,21 +6815,29 @@ class btkMDFFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkMDFFileIO_Write(self, *args)
 
+
 btkMDFFileIO_swigregister = _btk.btkMDFFileIO_swigregister
 btkMDFFileIO_swigregister(btkMDFFileIO)
+
 
 class btkEMFFileIO(btkAcquisitionFileIO):
     """
     Interface to read EMF files (Ascension Technology Corporation).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkEMFFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkEMFFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkEMFFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkEMFFileIO
         __init__(self, toCopy) -> btkEMFFileIO
@@ -6385,14 +6845,18 @@ class btkEMFFileIO(btkAcquisitionFileIO):
         Interface to read EMF files (Ascension Technology Corporation).
         """
         this = _btk.new_btkEMFFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkEMFFileIO_impl *"""
         return _btk.btkEMFFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkEMFFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -6506,21 +6970,29 @@ class btkEMFFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkEMFFileIO_Write(self, *args)
 
+
 btkEMFFileIO_swigregister = _btk.btkEMFFileIO_swigregister
 btkEMFFileIO_swigregister(btkEMFFileIO)
+
 
 class btkEMxFileIO(btkAcquisitionFileIO):
     """
     Interface to read EMG files (Elite - BTS Bioengineering).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkEMxFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkEMxFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkEMxFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkEMxFileIO
         __init__(self, toCopy) -> btkEMxFileIO
@@ -6528,14 +7000,18 @@ class btkEMxFileIO(btkAcquisitionFileIO):
         Interface to read EMG files (Elite - BTS Bioengineering).
         """
         this = _btk.new_btkEMxFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkEMxFileIO_impl *"""
         return _btk.btkEMxFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkEMxFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -6649,21 +7125,29 @@ class btkEMxFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkEMxFileIO_Write(self, *args)
 
+
 btkEMxFileIO_swigregister = _btk.btkEMxFileIO_swigregister
 btkEMxFileIO_swigregister(btkEMxFileIO)
+
 
 class btkGRxFileIO(btkAcquisitionFileIO):
     """
     Interface to read GR* (GR1, GR2, ...) files (Elite - BTS Bioengineering).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkGRxFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkGRxFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkGRxFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkGRxFileIO
         __init__(self, toCopy) -> btkGRxFileIO
@@ -6671,14 +7155,18 @@ class btkGRxFileIO(btkAcquisitionFileIO):
         Interface to read GR* (GR1, GR2, ...) files (Elite - BTS Bioengineering).
         """
         this = _btk.new_btkGRxFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkGRxFileIO_impl *"""
         return _btk.btkGRxFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkGRxFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -6792,21 +7280,29 @@ class btkGRxFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkGRxFileIO_Write(self, *args)
 
+
 btkGRxFileIO_swigregister = _btk.btkGRxFileIO_swigregister
 btkGRxFileIO_swigregister(btkGRxFileIO)
+
 
 class btkMOMFileIO(btkAcquisitionFileIO):
     """
     Interface to read MOM files (Elite - BTS Bioengineering).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkMOMFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkMOMFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkMOMFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkMOMFileIO
         __init__(self, toCopy) -> btkMOMFileIO
@@ -6814,14 +7310,18 @@ class btkMOMFileIO(btkAcquisitionFileIO):
         Interface to read MOM files (Elite - BTS Bioengineering).
         """
         this = _btk.new_btkMOMFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkMOMFileIO_impl *"""
         return _btk.btkMOMFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkMOMFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -6935,21 +7435,29 @@ class btkMOMFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkMOMFileIO_Write(self, *args)
 
+
 btkMOMFileIO_swigregister = _btk.btkMOMFileIO_swigregister
 btkMOMFileIO_swigregister(btkMOMFileIO)
+
 
 class btkPWRFileIO(btkAcquisitionFileIO):
     """
     Interface to read PWR files (Elite - BTS Bioengineering).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkPWRFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkPWRFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkPWRFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkPWRFileIO
         __init__(self, toCopy) -> btkPWRFileIO
@@ -6957,14 +7465,18 @@ class btkPWRFileIO(btkAcquisitionFileIO):
         Interface to read PWR files (Elite - BTS Bioengineering).
         """
         this = _btk.new_btkPWRFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkPWRFileIO_impl *"""
         return _btk.btkPWRFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkPWRFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -7078,21 +7590,29 @@ class btkPWRFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkPWRFileIO_Write(self, *args)
 
+
 btkPWRFileIO_swigregister = _btk.btkPWRFileIO_swigregister
 btkPWRFileIO_swigregister(btkPWRFileIO)
+
 
 class btkRAxFileIO(btkAcquisitionFileIO):
     """
     Interface to read RAW, RAH files (Elite - BTS Bioengineering).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkRAxFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkRAxFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkRAxFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkRAxFileIO
         __init__(self, toCopy) -> btkRAxFileIO
@@ -7100,14 +7620,18 @@ class btkRAxFileIO(btkAcquisitionFileIO):
         Interface to read RAW, RAH files (Elite - BTS Bioengineering).
         """
         this = _btk.new_btkRAxFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkRAxFileIO_impl *"""
         return _btk.btkRAxFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkRAxFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -7221,21 +7745,29 @@ class btkRAxFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkRAxFileIO_Write(self, *args)
 
+
 btkRAxFileIO_swigregister = _btk.btkRAxFileIO_swigregister
 btkRAxFileIO_swigregister(btkRAxFileIO)
+
 
 class btkRICFileIO(btkAcquisitionFileIO):
     """
     Interface to read RIC files (Elite - BTS Bioengineering).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkRICFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkRICFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkRICFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkRICFileIO
         __init__(self, toCopy) -> btkRICFileIO
@@ -7243,14 +7775,18 @@ class btkRICFileIO(btkAcquisitionFileIO):
         Interface to read RIC files (Elite - BTS Bioengineering).
         """
         this = _btk.new_btkRICFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkRICFileIO_impl *"""
         return _btk.btkRICFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkRICFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -7364,21 +7900,29 @@ class btkRICFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkRICFileIO_Write(self, *args)
 
+
 btkRICFileIO_swigregister = _btk.btkRICFileIO_swigregister
 btkRICFileIO_swigregister(btkRICFileIO)
+
 
 class btkTDFFileIO(btkAcquisitionFileIO):
     """
     Interface to read TDF files (BTS Bioengineering).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkTDFFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkTDFFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkTDFFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkTDFFileIO
         __init__(self, toCopy) -> btkTDFFileIO
@@ -7386,14 +7930,18 @@ class btkTDFFileIO(btkAcquisitionFileIO):
         Interface to read TDF files (BTS Bioengineering).
         """
         this = _btk.new_btkTDFFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkTDFFileIO_impl *"""
         return _btk.btkTDFFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkTDFFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -7507,21 +8055,29 @@ class btkTDFFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkTDFFileIO_Write(self, *args)
 
+
 btkTDFFileIO_swigregister = _btk.btkTDFFileIO_swigregister
 btkTDFFileIO_swigregister(btkTDFFileIO)
+
 
 class btkTRBFileIO(btkAcquisitionFileIO):
     """
     Interface to read/write TRB files (Motion Analysis Corp.).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkTRBFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkTRBFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkTRBFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkTRBFileIO
         __init__(self, toCopy) -> btkTRBFileIO
@@ -7529,14 +8085,18 @@ class btkTRBFileIO(btkAcquisitionFileIO):
         Interface to read/write TRB files (Motion Analysis Corp.).
         """
         this = _btk.new_btkTRBFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkTRBFileIO_impl *"""
         return _btk.btkTRBFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkTRBFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -7650,21 +8210,29 @@ class btkTRBFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkTRBFileIO_Write(self, *args)
 
+
 btkTRBFileIO_swigregister = _btk.btkTRBFileIO_swigregister
 btkTRBFileIO_swigregister(btkTRBFileIO)
+
 
 class btkTRCFileIO(btkAcquisitionFileIO):
     """
     Interface to read/write TRC files (Motion Analysis Corp.).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkTRCFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkTRCFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkTRCFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkTRCFileIO
         __init__(self, toCopy) -> btkTRCFileIO
@@ -7672,14 +8240,18 @@ class btkTRCFileIO(btkAcquisitionFileIO):
         Interface to read/write TRC files (Motion Analysis Corp.).
         """
         this = _btk.new_btkTRCFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkTRCFileIO_impl *"""
         return _btk.btkTRCFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkTRCFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -7793,21 +8365,29 @@ class btkTRCFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkTRCFileIO_Write(self, *args)
 
+
 btkTRCFileIO_swigregister = _btk.btkTRCFileIO_swigregister
 btkTRCFileIO_swigregister(btkTRCFileIO)
+
 
 class btkXLSOrthoTrakFileIO(btkAcquisitionFileIO):
     """
     Interface to read XLS OrthoTrak files (Motion Analysis Corp.).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkXLSOrthoTrakFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkXLSOrthoTrakFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkXLSOrthoTrakFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkXLSOrthoTrakFileIO
         __init__(self, toCopy) -> btkXLSOrthoTrakFileIO
@@ -7815,14 +8395,18 @@ class btkXLSOrthoTrakFileIO(btkAcquisitionFileIO):
         Interface to read XLS OrthoTrak files (Motion Analysis Corp.).
         """
         this = _btk.new_btkXLSOrthoTrakFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkXLSOrthoTrakFileIO_impl *"""
         return _btk.btkXLSOrthoTrakFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkXLSOrthoTrakFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -7936,21 +8520,29 @@ class btkXLSOrthoTrakFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkXLSOrthoTrakFileIO_Write(self, *args)
 
+
 btkXLSOrthoTrakFileIO_swigregister = _btk.btkXLSOrthoTrakFileIO_swigregister
 btkXLSOrthoTrakFileIO_swigregister(btkXLSOrthoTrakFileIO)
+
 
 class btkXMOVEFileIO(btkAcquisitionFileIO):
     """
     Interface to read XMOVE files (Codamotion).
     """
+
     __swig_setmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkXMOVEFileIO, name, value)
+    for _s in [btkAcquisitionFileIO]:
+        __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkXMOVEFileIO, name, value
+    )
     __swig_getmethods__ = {}
-    for _s in [btkAcquisitionFileIO]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [btkAcquisitionFileIO]:
+        __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, btkXMOVEFileIO, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self) -> btkXMOVEFileIO
         __init__(self, toCopy) -> btkXMOVEFileIO
@@ -7958,14 +8550,18 @@ class btkXMOVEFileIO(btkAcquisitionFileIO):
         Interface to read XMOVE files (Codamotion).
         """
         this = _btk.new_btkXMOVEFileIO(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkXMOVEFileIO_impl *"""
         return _btk.btkXMOVEFileIO___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkXMOVEFileIO
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFileType(self):
         """
         GetFileType(self) -> btkAcquisitionFileIO_impl::FileType
@@ -8079,8 +8675,10 @@ class btkXMOVEFileIO(btkAcquisitionFileIO):
         """
         return _btk.btkXMOVEFileIO_Write(self, *args)
 
+
 btkXMOVEFileIO_swigregister = _btk.btkXMOVEFileIO_swigregister
 btkXMOVEFileIO_swigregister(btkXMOVEFileIO)
+
 
 class btkAcquisitionUnitConverter(_object):
     """
@@ -8120,17 +8718,23 @@ class btkAcquisitionUnitConverter(_object):
     degree and watt. Even if you could convert trajectories and moments with the desired 
     units, it is recommended to use the same length unit (i.e. mm and Nmm or m with Nm).
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkAcquisitionUnitConverter, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkAcquisitionUnitConverter, name, value
+    )
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, btkAcquisitionUnitConverter, name)
+    __getattr__ = lambda self, name: _swig_getattr(
+        self, btkAcquisitionUnitConverter, name
+    )
     __repr__ = _swig_repr
     Length = _btk.btkAcquisitionUnitConverter_Length
     Angle = _btk.btkAcquisitionUnitConverter_Angle
     Force = _btk.btkAcquisitionUnitConverter_Force
     Moment = _btk.btkAcquisitionUnitConverter_Moment
     Power = _btk.btkAcquisitionUnitConverter_Power
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkAcquisitionUnitConverter
 
@@ -8171,14 +8775,18 @@ class btkAcquisitionUnitConverter(_object):
         units, it is recommended to use the same length unit (i.e. mm and Nmm or m with Nm).
         """
         this = _btk.new_btkAcquisitionUnitConverter()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkAcquisitionUnitConverter_impl *"""
         return _btk.btkAcquisitionUnitConverter___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkAcquisitionUnitConverter
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetInput(self):
         """
         GetInput(self) -> btkAcquisition
@@ -8269,8 +8877,10 @@ class btkAcquisitionUnitConverter(_object):
         """
         return _btk.btkAcquisitionUnitConverter_GetTimestamp(self)
 
+
 btkAcquisitionUnitConverter_swigregister = _btk.btkAcquisitionUnitConverter_swigregister
 btkAcquisitionUnitConverter_swigregister(btkAcquisitionUnitConverter)
+
 
 class btkAnalogOffsetRemover(_object):
     """
@@ -8280,12 +8890,16 @@ class btkAnalogOffsetRemover(_object):
     are averaged and removed from the raw input (see the method SetRawInput()). The analog signals set in the raw input which
     are not given to the offset input are not processed but will be available in the output.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkAnalogOffsetRemover, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkAnalogOffsetRemover, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkAnalogOffsetRemover, name)
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkAnalogOffsetRemover
 
@@ -8296,14 +8910,18 @@ class btkAnalogOffsetRemover(_object):
         are not given to the offset input are not processed but will be available in the output.
         """
         this = _btk.new_btkAnalogOffsetRemover()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkAnalogOffsetRemover_impl *"""
         return _btk.btkAnalogOffsetRemover___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkAnalogOffsetRemover
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def SetRawInput(self, *args):
         """
         SetRawInput(self, btkAcquisition)
@@ -8394,8 +9012,10 @@ class btkAnalogOffsetRemover(_object):
         """
         return _btk.btkAnalogOffsetRemover_GetTimestamp(self)
 
+
 btkAnalogOffsetRemover_swigregister = _btk.btkAnalogOffsetRemover_swigregister
 btkAnalogOffsetRemover_swigregister(btkAnalogOffsetRemover)
+
 
 class btkWrenchDownsampleFilter(_object):
     """
@@ -8405,12 +9025,18 @@ class btkWrenchDownsampleFilter(_object):
     The given value is an integer corresponding to the ratio used to extract only the value of interest.
     For example, if you have 200 frames and a ratio of 10, then 20 frames will be extracted (one frame each 10 frames).
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkWrenchDownsampleFilter, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkWrenchDownsampleFilter, name, value
+    )
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, btkWrenchDownsampleFilter, name)
+    __getattr__ = lambda self, name: _swig_getattr(
+        self, btkWrenchDownsampleFilter, name
+    )
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkWrenchDownsampleFilter
 
@@ -8421,14 +9047,18 @@ class btkWrenchDownsampleFilter(_object):
         For example, if you have 200 frames and a ratio of 10, then 20 frames will be extracted (one frame each 10 frames).
         """
         this = _btk.new_btkWrenchDownsampleFilter()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkWrenchDownsampleFilter_impl *"""
         return _btk.btkWrenchDownsampleFilter___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkWrenchDownsampleFilter
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetInput(self):
         """
         GetInput(self) -> btkWrench
@@ -8519,8 +9149,10 @@ class btkWrenchDownsampleFilter(_object):
         """
         return _btk.btkWrenchDownsampleFilter_GetTimestamp(self)
 
+
 btkWrenchDownsampleFilter_swigregister = _btk.btkWrenchDownsampleFilter_swigregister
 btkWrenchDownsampleFilter_swigregister(btkWrenchDownsampleFilter)
+
 
 class btkWrenchCollectionDownsampleFilter(_object):
     """
@@ -8530,12 +9162,18 @@ class btkWrenchCollectionDownsampleFilter(_object):
     The given value is an integer corresponding to the ratio used to extract only the value of interest.
     For example, if you have 200 frames and a ratio of 10, then 20 frames will be extracted (one frame each 10 frames).
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkWrenchCollectionDownsampleFilter, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkWrenchCollectionDownsampleFilter, name, value
+    )
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, btkWrenchCollectionDownsampleFilter, name)
+    __getattr__ = lambda self, name: _swig_getattr(
+        self, btkWrenchCollectionDownsampleFilter, name
+    )
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkWrenchCollectionDownsampleFilter
 
@@ -8546,14 +9184,18 @@ class btkWrenchCollectionDownsampleFilter(_object):
         For example, if you have 200 frames and a ratio of 10, then 20 frames will be extracted (one frame each 10 frames).
         """
         this = _btk.new_btkWrenchCollectionDownsampleFilter()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkWrenchCollectionDownsampleFilter_impl *"""
         return _btk.btkWrenchCollectionDownsampleFilter___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkWrenchCollectionDownsampleFilter
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetInput(self):
         """
         GetInput(self) -> btkWrenchCollection
@@ -8644,8 +9286,12 @@ class btkWrenchCollectionDownsampleFilter(_object):
         """
         return _btk.btkWrenchCollectionDownsampleFilter_GetTimestamp(self)
 
-btkWrenchCollectionDownsampleFilter_swigregister = _btk.btkWrenchCollectionDownsampleFilter_swigregister
+
+btkWrenchCollectionDownsampleFilter_swigregister = (
+    _btk.btkWrenchCollectionDownsampleFilter_swigregister
+)
 btkWrenchCollectionDownsampleFilter_swigregister(btkWrenchCollectionDownsampleFilter)
+
 
 class btkForcePlatformsExtractor(_object):
     """
@@ -8679,12 +9325,18 @@ class btkForcePlatformsExtractor(_object):
      - Type 12: Gaitway treadmill: 8 channels (Fz11, Fz12, Fz13, Fz14, Fz21, Fz22, Fz23, and Fz24) + calibration matrix 8X8 ;
      - Type 21: AMTI-Stairs: 2 force plates with 6 channels + a calibration matrix 6x6 + data to locate the corners of the 4 steps.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkForcePlatformsExtractor, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkForcePlatformsExtractor, name, value
+    )
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, btkForcePlatformsExtractor, name)
+    __getattr__ = lambda self, name: _swig_getattr(
+        self, btkForcePlatformsExtractor, name
+    )
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkForcePlatformsExtractor
 
@@ -8719,14 +9371,18 @@ class btkForcePlatformsExtractor(_object):
          - Type 21: AMTI-Stairs: 2 force plates with 6 channels + a calibration matrix 6x6 + data to locate the corners of the 4 steps.
         """
         this = _btk.new_btkForcePlatformsExtractor()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkForcePlatformsExtractor_impl *"""
         return _btk.btkForcePlatformsExtractor___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkForcePlatformsExtractor
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetInput(self):
         """
         GetInput(self) -> btkAcquisition
@@ -8801,8 +9457,10 @@ class btkForcePlatformsExtractor(_object):
         """
         return _btk.btkForcePlatformsExtractor_GetTimestamp(self)
 
+
 btkForcePlatformsExtractor_swigregister = _btk.btkForcePlatformsExtractor_swigregister
 btkForcePlatformsExtractor_swigregister(btkForcePlatformsExtractor)
+
 
 class btkForcePlatformWrenchFilter(_object):
     """
@@ -8811,12 +9469,18 @@ class btkForcePlatformWrenchFilter(_object):
 
     You can use the method btkForcePlatformWrenchFilter::SetTransformToGlobalFrame() to have the wrench expressed in the frame of the force platform.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkForcePlatformWrenchFilter, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkForcePlatformWrenchFilter, name, value
+    )
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, btkForcePlatformWrenchFilter, name)
+    __getattr__ = lambda self, name: _swig_getattr(
+        self, btkForcePlatformWrenchFilter, name
+    )
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkForcePlatformWrenchFilter
 
@@ -8826,14 +9490,18 @@ class btkForcePlatformWrenchFilter(_object):
         You can use the method btkForcePlatformWrenchFilter::SetTransformToGlobalFrame() to have the wrench expressed in the frame of the force platform.
         """
         this = _btk.new_btkForcePlatformWrenchFilter()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkForcePlatformWrenchFilter_impl *"""
         return _btk.btkForcePlatformWrenchFilter___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkForcePlatformWrenchFilter
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetInput(self):
         """
         GetInput(self) -> btkForcePlatformCollection
@@ -8866,7 +9534,9 @@ class btkForcePlatformWrenchFilter(_object):
 
         Activate or deactivate the computation of the wrenches in the global frame.
         """
-        return _btk.btkForcePlatformWrenchFilter_SetTransformToGlobalFrame(self, activation)
+        return _btk.btkForcePlatformWrenchFilter_SetTransformToGlobalFrame(
+            self, activation
+        )
 
     def GetTransformToGlobalFrame(self):
         """
@@ -8926,8 +9596,12 @@ class btkForcePlatformWrenchFilter(_object):
         """
         return _btk.btkForcePlatformWrenchFilter_GetTimestamp(self)
 
-btkForcePlatformWrenchFilter_swigregister = _btk.btkForcePlatformWrenchFilter_swigregister
+
+btkForcePlatformWrenchFilter_swigregister = (
+    _btk.btkForcePlatformWrenchFilter_swigregister
+)
 btkForcePlatformWrenchFilter_swigregister(btkForcePlatformWrenchFilter)
+
 
 class btkGroundReactionWrenchFilter(_object):
     """
@@ -8951,12 +9625,18 @@ class btkGroundReactionWrenchFilter(_object):
 
     Finally, you can also use the method btkGroundReactionWrenchFilter::SetTransformToGlobalFrame() to have the wrench expressed in the frame of the force platform.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkGroundReactionWrenchFilter, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkGroundReactionWrenchFilter, name, value
+    )
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, btkGroundReactionWrenchFilter, name)
+    __getattr__ = lambda self, name: _swig_getattr(
+        self, btkGroundReactionWrenchFilter, name
+    )
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkGroundReactionWrenchFilter
 
@@ -8981,14 +9661,18 @@ class btkGroundReactionWrenchFilter(_object):
         Finally, you can also use the method btkGroundReactionWrenchFilter::SetTransformToGlobalFrame() to have the wrench expressed in the frame of the force platform.
         """
         this = _btk.new_btkGroundReactionWrenchFilter()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkGroundReactionWrenchFilter_impl *"""
         return _btk.btkGroundReactionWrenchFilter___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkGroundReactionWrenchFilter
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetInput(self):
         """
         GetInput(self) -> btkForcePlatformCollection
@@ -9021,7 +9705,9 @@ class btkGroundReactionWrenchFilter(_object):
 
         Activate or deactivate the computation of the wrenches in the global frame.
         """
-        return _btk.btkGroundReactionWrenchFilter_SetTransformToGlobalFrame(self, activation)
+        return _btk.btkGroundReactionWrenchFilter_SetTransformToGlobalFrame(
+            self, activation
+        )
 
     def GetTransformToGlobalFrame(self):
         """
@@ -9114,8 +9800,12 @@ class btkGroundReactionWrenchFilter(_object):
         """
         return _btk.btkGroundReactionWrenchFilter_GetTimestamp(self)
 
-btkGroundReactionWrenchFilter_swigregister = _btk.btkGroundReactionWrenchFilter_swigregister
+
+btkGroundReactionWrenchFilter_swigregister = (
+    _btk.btkGroundReactionWrenchFilter_swigregister
+)
 btkGroundReactionWrenchFilter_swigregister(btkGroundReactionWrenchFilter)
+
 
 class btkIMUsExtractor(_object):
     """
@@ -9136,12 +9826,16 @@ class btkIMUsExtractor(_object):
 
     Note: This class is still experimental and could be modified in the next release.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkIMUsExtractor, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkIMUsExtractor, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkIMUsExtractor, name)
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkIMUsExtractor
 
@@ -9163,14 +9857,18 @@ class btkIMUsExtractor(_object):
         Note: This class is still experimental and could be modified in the next release.
         """
         this = _btk.new_btkIMUsExtractor()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkIMUsExtractor_impl *"""
         return _btk.btkIMUsExtractor___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkIMUsExtractor
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetInput(self, *args):
         """
         GetInput(self) -> btkAcquisition
@@ -9247,8 +9945,10 @@ class btkIMUsExtractor(_object):
         """
         return _btk.btkIMUsExtractor_GetTimestamp(self)
 
+
 btkIMUsExtractor_swigregister = _btk.btkIMUsExtractor_swigregister
 btkIMUsExtractor_swigregister(btkIMUsExtractor)
+
 
 class btkMergeAcquisitionFilter(_object):
     """
@@ -9287,14 +9987,20 @@ class btkMergeAcquisitionFilter(_object):
     Moreover, you can set a rule to keep only the data from the higher or the lower first frame.
     Use the method SetFirstFrameRule() with the values KeepAllFrames or KeepFromHighestFirstFrame.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkMergeAcquisitionFilter, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkMergeAcquisitionFilter, name, value
+    )
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, btkMergeAcquisitionFilter, name)
+    __getattr__ = lambda self, name: _swig_getattr(
+        self, btkMergeAcquisitionFilter, name
+    )
     __repr__ = _swig_repr
     KeepAllFrames = _btk.btkMergeAcquisitionFilter_KeepAllFrames
     KeepFromHighestFirstFrame = _btk.btkMergeAcquisitionFilter_KeepFromHighestFirstFrame
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkMergeAcquisitionFilter
 
@@ -9334,14 +10040,18 @@ class btkMergeAcquisitionFilter(_object):
         Use the method SetFirstFrameRule() with the values KeepAllFrames or KeepFromHighestFirstFrame.
         """
         this = _btk.new_btkMergeAcquisitionFilter()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkMergeAcquisitionFilter_impl *"""
         return _btk.btkMergeAcquisitionFilter___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkMergeAcquisitionFilter
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetFirstFrameRule(self):
         """
         GetFirstFrameRule(self) -> int
@@ -9434,8 +10144,10 @@ class btkMergeAcquisitionFilter(_object):
         """
         return _btk.btkMergeAcquisitionFilter_GetTimestamp(self)
 
+
 btkMergeAcquisitionFilter_swigregister = _btk.btkMergeAcquisitionFilter_swigregister
 btkMergeAcquisitionFilter_swigregister(btkMergeAcquisitionFilter)
+
 
 class btkSeparateKnownVirtualMarkersFilter(_object):
     """
@@ -9480,17 +10192,25 @@ class btkSeparateKnownVirtualMarkersFilter(_object):
 
     This filter only copies the pointer associated which each point instead of using a deep copy of it.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkSeparateKnownVirtualMarkersFilter, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkSeparateKnownVirtualMarkersFilter, name, value
+    )
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, btkSeparateKnownVirtualMarkersFilter, name)
+    __getattr__ = lambda self, name: _swig_getattr(
+        self, btkSeparateKnownVirtualMarkersFilter, name
+    )
     __repr__ = _swig_repr
     AllMarkers = _btk.btkSeparateKnownVirtualMarkersFilter_AllMarkers
     Markers = _btk.btkSeparateKnownVirtualMarkersFilter_Markers
-    VirtualReferenceFrames = _btk.btkSeparateKnownVirtualMarkersFilter_VirtualReferenceFrames
+    VirtualReferenceFrames = (
+        _btk.btkSeparateKnownVirtualMarkersFilter_VirtualReferenceFrames
+    )
     VirtualMarkers = _btk.btkSeparateKnownVirtualMarkersFilter_VirtualMarkers
     OtherPoints = _btk.btkSeparateKnownVirtualMarkersFilter_OtherPoints
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkSeparateKnownVirtualMarkersFilter
 
@@ -9536,14 +10256,18 @@ class btkSeparateKnownVirtualMarkersFilter(_object):
         This filter only copies the pointer associated which each point instead of using a deep copy of it.
         """
         this = _btk.new_btkSeparateKnownVirtualMarkersFilter()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkSeparateKnownVirtualMarkersFilter_impl *"""
         return _btk.btkSeparateKnownVirtualMarkersFilter___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkSeparateKnownVirtualMarkersFilter
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def AppendVirtualReferenceFrame(self, *args):
         """
         AppendVirtualReferenceFrame(self, string, string, string, string)
@@ -9551,7 +10275,9 @@ class btkSeparateKnownVirtualMarkersFilter(_object):
 
         Append a new set of labels for a virtual frame.
         """
-        return _btk.btkSeparateKnownVirtualMarkersFilter_AppendVirtualReferenceFrame(self, *args)
+        return _btk.btkSeparateKnownVirtualMarkersFilter_AppendVirtualReferenceFrame(
+            self, *args
+        )
 
     def AppendVirtualReferenceFrames(self, *args):
         """
@@ -9559,7 +10285,9 @@ class btkSeparateKnownVirtualMarkersFilter(_object):
 
         Append a list of axes' definition in the category of the virtual markers used to defined frames.
         """
-        return _btk.btkSeparateKnownVirtualMarkersFilter_AppendVirtualReferenceFrames(self, *args)
+        return _btk.btkSeparateKnownVirtualMarkersFilter_AppendVirtualReferenceFrames(
+            self, *args
+        )
 
     def SetVirtualReferenceFrames(self, *args):
         """
@@ -9567,7 +10295,9 @@ class btkSeparateKnownVirtualMarkersFilter(_object):
 
         Sets the list of labels for the virtual markers used to create frames.
         """
-        return _btk.btkSeparateKnownVirtualMarkersFilter_SetVirtualReferenceFrames(self, *args)
+        return _btk.btkSeparateKnownVirtualMarkersFilter_SetVirtualReferenceFrames(
+            self, *args
+        )
 
     def GetVirtualReferenceFrames(self):
         """
@@ -9583,7 +10313,9 @@ class btkSeparateKnownVirtualMarkersFilter(_object):
 
         Append a label in the category of the other virtual markers.
         """
-        return _btk.btkSeparateKnownVirtualMarkersFilter_AppendVirtualMarker(self, *args)
+        return _btk.btkSeparateKnownVirtualMarkersFilter_AppendVirtualMarker(
+            self, *args
+        )
 
     def AppendVirtualMarkers(self, *args):
         """
@@ -9591,7 +10323,9 @@ class btkSeparateKnownVirtualMarkersFilter(_object):
 
         Append a list of labels in the category of the other virtual markers.
         """
-        return _btk.btkSeparateKnownVirtualMarkersFilter_AppendVirtualMarkers(self, *args)
+        return _btk.btkSeparateKnownVirtualMarkersFilter_AppendVirtualMarkers(
+            self, *args
+        )
 
     def SetVirtualMarkers(self, *args):
         """
@@ -9699,8 +10433,12 @@ class btkSeparateKnownVirtualMarkersFilter(_object):
         """
         return _btk.btkSeparateKnownVirtualMarkersFilter_GetTimestamp(self)
 
-btkSeparateKnownVirtualMarkersFilter_swigregister = _btk.btkSeparateKnownVirtualMarkersFilter_swigregister
+
+btkSeparateKnownVirtualMarkersFilter_swigregister = (
+    _btk.btkSeparateKnownVirtualMarkersFilter_swigregister
+)
 btkSeparateKnownVirtualMarkersFilter_swigregister(btkSeparateKnownVirtualMarkersFilter)
+
 
 class btkSpecializedPointsExtractor(_object):
     """
@@ -9708,12 +10446,18 @@ class btkSpecializedPointsExtractor(_object):
 
     The type is set by the SetPointType() method. By default, if no type is set, this filter extract markers.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkSpecializedPointsExtractor, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkSpecializedPointsExtractor, name, value
+    )
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, btkSpecializedPointsExtractor, name)
+    __getattr__ = lambda self, name: _swig_getattr(
+        self, btkSpecializedPointsExtractor, name
+    )
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkSpecializedPointsExtractor
 
@@ -9722,14 +10466,18 @@ class btkSpecializedPointsExtractor(_object):
         The type is set by the SetPointType() method. By default, if no type is set, this filter extract markers.
         """
         this = _btk.new_btkSpecializedPointsExtractor()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkSpecializedPointsExtractor_impl *"""
         return _btk.btkSpecializedPointsExtractor___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkSpecializedPointsExtractor
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetInput(self):
         """
         GetInput(self) -> btkAcquisition
@@ -9820,8 +10568,12 @@ class btkSpecializedPointsExtractor(_object):
         """
         return _btk.btkSpecializedPointsExtractor_GetTimestamp(self)
 
-btkSpecializedPointsExtractor_swigregister = _btk.btkSpecializedPointsExtractor_swigregister
+
+btkSpecializedPointsExtractor_swigregister = (
+    _btk.btkSpecializedPointsExtractor_swigregister
+)
 btkSpecializedPointsExtractor_swigregister(btkSpecializedPointsExtractor)
+
 
 class btkSubAcquisitionFilter(_object):
     """
@@ -9847,8 +10599,11 @@ class btkSubAcquisitionFilter(_object):
     to update the part before to know some acquisition's information (first frame, sample frequency, subject's name).
     This class (or the pipeline mechanism) could be modified in a future version of BTK to make up this problem.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkSubAcquisitionFilter, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkSubAcquisitionFilter, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkSubAcquisitionFilter, name)
     __repr__ = _swig_repr
@@ -9856,7 +10611,8 @@ class btkSubAcquisitionFilter(_object):
     PointsOnly = _btk.btkSubAcquisitionFilter_PointsOnly
     AnalogsOnly = _btk.btkSubAcquisitionFilter_AnalogsOnly
     EventsOnly = _btk.btkSubAcquisitionFilter_EventsOnly
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkSubAcquisitionFilter
 
@@ -9883,8 +10639,11 @@ class btkSubAcquisitionFilter(_object):
         This class (or the pipeline mechanism) could be modified in a future version of BTK to make up this problem.
         """
         this = _btk.new_btkSubAcquisitionFilter()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkSubAcquisitionFilter_impl *"""
         return _btk.btkSubAcquisitionFilter___deref__(self)
@@ -9904,7 +10663,8 @@ class btkSubAcquisitionFilter(_object):
         return _btk.btkSubAcquisitionFilter_SetExtractionOption(self, *args)
 
     __swig_destroy__ = _btk.delete_btkSubAcquisitionFilter
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def SetInput(self, *args):
         """
         SetInput(self, btkAcquisition)
@@ -9998,27 +10758,39 @@ class btkSubAcquisitionFilter(_object):
         """
         return _btk.btkSubAcquisitionFilter_GetTimestamp(self)
 
+
 btkSubAcquisitionFilter_swigregister = _btk.btkSubAcquisitionFilter_swigregister
 btkSubAcquisitionFilter_swigregister(btkSubAcquisitionFilter)
 
+
 class btkVerticalGroundReactionForceGaitEventDetector(_object):
     """Proxy of C++ btkVerticalGroundReactionForceGaitEventDetector class"""
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkVerticalGroundReactionForceGaitEventDetector, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkVerticalGroundReactionForceGaitEventDetector, name, value
+    )
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, btkVerticalGroundReactionForceGaitEventDetector, name)
+    __getattr__ = lambda self, name: _swig_getattr(
+        self, btkVerticalGroundReactionForceGaitEventDetector, name
+    )
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """__init__(self) -> btkVerticalGroundReactionForceGaitEventDetector"""
         this = _btk.new_btkVerticalGroundReactionForceGaitEventDetector()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkVerticalGroundReactionForceGaitEventDetector_impl *"""
         return _btk.btkVerticalGroundReactionForceGaitEventDetector___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkVerticalGroundReactionForceGaitEventDetector
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetInput(self):
         """
         GetInput(self) -> btkWrenchCollection
@@ -10034,7 +10806,9 @@ class btkVerticalGroundReactionForceGaitEventDetector(_object):
 
         Sets the input required with this process.
         """
-        return _btk.btkVerticalGroundReactionForceGaitEventDetector_SetInput(self, *args)
+        return _btk.btkVerticalGroundReactionForceGaitEventDetector_SetInput(
+            self, *args
+        )
 
     def GetOutput(self):
         """
@@ -10050,7 +10824,9 @@ class btkVerticalGroundReactionForceGaitEventDetector(_object):
 
         Sets the threshold used to detect gait events.
         """
-        return _btk.btkVerticalGroundReactionForceGaitEventDetector_SetThresholdValue(self, *args)
+        return _btk.btkVerticalGroundReactionForceGaitEventDetector_SetThresholdValue(
+            self, *args
+        )
 
     def GetThresholdValue(self):
         """
@@ -10058,7 +10834,9 @@ class btkVerticalGroundReactionForceGaitEventDetector(_object):
 
         Returns the threshold used to detect gait events.
         """
-        return _btk.btkVerticalGroundReactionForceGaitEventDetector_GetThresholdValue(self)
+        return _btk.btkVerticalGroundReactionForceGaitEventDetector_GetThresholdValue(
+            self
+        )
 
     def SetForceplateContextMapping(self, *args):
         """
@@ -10066,7 +10844,9 @@ class btkVerticalGroundReactionForceGaitEventDetector(_object):
 
         Sets the mapping between the given wrenches and the side of the detected events. If no mapping is given, then all the detected events will be set as 'General' events.
         """
-        return _btk.btkVerticalGroundReactionForceGaitEventDetector_SetForceplateContextMapping(self, *args)
+        return _btk.btkVerticalGroundReactionForceGaitEventDetector_SetForceplateContextMapping(
+            self, *args
+        )
 
     def GetForceplateContextMapping(self):
         """
@@ -10074,7 +10854,9 @@ class btkVerticalGroundReactionForceGaitEventDetector(_object):
 
         Returns the mapping between the wrenches in the input and the gait events to detect.
         """
-        return _btk.btkVerticalGroundReactionForceGaitEventDetector_GetForceplateContextMapping(self)
+        return _btk.btkVerticalGroundReactionForceGaitEventDetector_GetForceplateContextMapping(
+            self
+        )
 
     def SetRegionOfInterest(self, *args):
         """
@@ -10085,7 +10867,9 @@ class btkVerticalGroundReactionForceGaitEventDetector(_object):
         Sets the region of interest to use to detect gait events.
         WARNING: The boundaries must be set using zero-based indices.
         """
-        return _btk.btkVerticalGroundReactionForceGaitEventDetector_SetRegionOfInterest(self, *args)
+        return _btk.btkVerticalGroundReactionForceGaitEventDetector_SetRegionOfInterest(
+            self, *args
+        )
 
     def GetRegionOfInterest(self):
         """
@@ -10093,7 +10877,9 @@ class btkVerticalGroundReactionForceGaitEventDetector(_object):
 
         Returns the region of interest to use to detect gait events.
         """
-        return _btk.btkVerticalGroundReactionForceGaitEventDetector_GetRegionOfInterest(self)
+        return _btk.btkVerticalGroundReactionForceGaitEventDetector_GetRegionOfInterest(
+            self
+        )
 
     def SetAcquisitionInformation(self, *args):
         """
@@ -10101,7 +10887,9 @@ class btkVerticalGroundReactionForceGaitEventDetector(_object):
 
         Set the informations required to set correctly the detected events.
         """
-        return _btk.btkVerticalGroundReactionForceGaitEventDetector_SetAcquisitionInformation(self, *args)
+        return _btk.btkVerticalGroundReactionForceGaitEventDetector_SetAcquisitionInformation(
+            self, *args
+        )
 
     def GetAcquisitionInformation(self, *args):
         """
@@ -10109,7 +10897,9 @@ class btkVerticalGroundReactionForceGaitEventDetector(_object):
 
         Returns the informations required to set correctly the detected events.
         """
-        return _btk.btkVerticalGroundReactionForceGaitEventDetector_GetAcquisitionInformation(self, *args)
+        return _btk.btkVerticalGroundReactionForceGaitEventDetector_GetAcquisitionInformation(
+            self, *args
+        )
 
     def GetInputNumber(self):
         """
@@ -10125,7 +10915,9 @@ class btkVerticalGroundReactionForceGaitEventDetector(_object):
 
         Returns the number of inputs which are valid (i.e. not null).
         """
-        return _btk.btkVerticalGroundReactionForceGaitEventDetector_GetValidInputNumber(self)
+        return _btk.btkVerticalGroundReactionForceGaitEventDetector_GetValidInputNumber(
+            self
+        )
 
     def GetOutputNumber(self):
         """
@@ -10133,7 +10925,9 @@ class btkVerticalGroundReactionForceGaitEventDetector(_object):
 
         Returns the number of outputs.
         """
-        return _btk.btkVerticalGroundReactionForceGaitEventDetector_GetOutputNumber(self)
+        return _btk.btkVerticalGroundReactionForceGaitEventDetector_GetOutputNumber(
+            self
+        )
 
     def ResetState(self):
         """
@@ -10161,8 +10955,14 @@ class btkVerticalGroundReactionForceGaitEventDetector(_object):
         """
         return _btk.btkVerticalGroundReactionForceGaitEventDetector_GetTimestamp(self)
 
-btkVerticalGroundReactionForceGaitEventDetector_swigregister = _btk.btkVerticalGroundReactionForceGaitEventDetector_swigregister
-btkVerticalGroundReactionForceGaitEventDetector_swigregister(btkVerticalGroundReactionForceGaitEventDetector)
+
+btkVerticalGroundReactionForceGaitEventDetector_swigregister = (
+    _btk.btkVerticalGroundReactionForceGaitEventDetector_swigregister
+)
+btkVerticalGroundReactionForceGaitEventDetector_swigregister(
+    btkVerticalGroundReactionForceGaitEventDetector
+)
+
 
 class btkWrenchDirectionAngleFilter(_object):
     """
@@ -10176,12 +10976,18 @@ class btkWrenchDirectionAngleFilter(_object):
     The output angles are expressed in degrees and the range is between 0 and 360 degrees. 
     Then a shift from 360 to 0 is possible if the force turns around itself.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkWrenchDirectionAngleFilter, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkWrenchDirectionAngleFilter, name, value
+    )
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, btkWrenchDirectionAngleFilter, name)
+    __getattr__ = lambda self, name: _swig_getattr(
+        self, btkWrenchDirectionAngleFilter, name
+    )
     __repr__ = _swig_repr
-    def __init__(self): 
+
+    def __init__(self):
         """
         __init__(self) -> btkWrenchDirectionAngleFilter
 
@@ -10196,14 +11002,18 @@ class btkWrenchDirectionAngleFilter(_object):
         Then a shift from 360 to 0 is possible if the force turns around itself.
         """
         this = _btk.new_btkWrenchDirectionAngleFilter()
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def __deref__(self):
         """__deref__(self) -> btkWrenchDirectionAngleFilter_impl *"""
         return _btk.btkWrenchDirectionAngleFilter___deref__(self)
 
     __swig_destroy__ = _btk.delete_btkWrenchDirectionAngleFilter
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
     def GetInput(self):
         """
         GetInput(self) -> btkWrenchCollection
@@ -10278,8 +11088,12 @@ class btkWrenchDirectionAngleFilter(_object):
         """
         return _btk.btkWrenchDirectionAngleFilter_GetTimestamp(self)
 
-btkWrenchDirectionAngleFilter_swigregister = _btk.btkWrenchDirectionAngleFilter_swigregister
+
+btkWrenchDirectionAngleFilter_swigregister = (
+    _btk.btkWrenchDirectionAngleFilter_swigregister
+)
 btkWrenchDirectionAngleFilter_swigregister(btkWrenchDirectionAngleFilter)
+
 
 class btkStringAxes(_object):
     """
@@ -10287,12 +11101,16 @@ class btkStringAxes(_object):
 
     Store four labels corresponding to markers used to define a frame.
     """
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkStringAxes, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkStringAxes, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkStringAxes, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
+
+    def __init__(self, *args):
         """
         __init__(self, o, a1, a2, a3) -> btkStringAxes
 
@@ -10301,37 +11119,61 @@ class btkStringAxes(_object):
         Store four labels corresponding to markers used to define a frame.
         """
         this = _btk.new_btkStringAxes(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     __swig_setmethods__["Origin"] = _btk.btkStringAxes_Origin_set
     __swig_getmethods__["Origin"] = _btk.btkStringAxes_Origin_get
-    if _newclass:Origin = _swig_property(_btk.btkStringAxes_Origin_get, _btk.btkStringAxes_Origin_set)
+    if _newclass:
+        Origin = _swig_property(
+            _btk.btkStringAxes_Origin_get, _btk.btkStringAxes_Origin_set
+        )
     __swig_setmethods__["Axis1"] = _btk.btkStringAxes_Axis1_set
     __swig_getmethods__["Axis1"] = _btk.btkStringAxes_Axis1_get
-    if _newclass:Axis1 = _swig_property(_btk.btkStringAxes_Axis1_get, _btk.btkStringAxes_Axis1_set)
+    if _newclass:
+        Axis1 = _swig_property(
+            _btk.btkStringAxes_Axis1_get, _btk.btkStringAxes_Axis1_set
+        )
     __swig_setmethods__["Axis2"] = _btk.btkStringAxes_Axis2_set
     __swig_getmethods__["Axis2"] = _btk.btkStringAxes_Axis2_get
-    if _newclass:Axis2 = _swig_property(_btk.btkStringAxes_Axis2_get, _btk.btkStringAxes_Axis2_set)
+    if _newclass:
+        Axis2 = _swig_property(
+            _btk.btkStringAxes_Axis2_get, _btk.btkStringAxes_Axis2_set
+        )
     __swig_setmethods__["Axis3"] = _btk.btkStringAxes_Axis3_set
     __swig_getmethods__["Axis3"] = _btk.btkStringAxes_Axis3_get
-    if _newclass:Axis3 = _swig_property(_btk.btkStringAxes_Axis3_get, _btk.btkStringAxes_Axis3_set)
+    if _newclass:
+        Axis3 = _swig_property(
+            _btk.btkStringAxes_Axis3_get, _btk.btkStringAxes_Axis3_set
+        )
     __swig_destroy__ = _btk.delete_btkStringAxes
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
+
 btkStringAxes_swigregister = _btk.btkStringAxes_swigregister
 btkStringAxes_swigregister(btkStringAxes)
 
+
 class btkStringAxesList(_object):
     """Proxy of C++ std::list<(btkStringAxes)> class"""
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkStringAxesList, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkStringAxesList, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkStringAxesList, name)
     __repr__ = _swig_repr
+
     def iterator(self):
         """iterator(self) -> SwigPyIterator"""
         return _btk.btkStringAxesList_iterator(self)
 
-    def __iter__(self): return self.iterator()
+    def __iter__(self):
+        return self.iterator()
+
     def __nonzero__(self):
         """__nonzero__(self) -> bool"""
         return _btk.btkStringAxesList___nonzero__(self)
@@ -10436,7 +11278,7 @@ class btkStringAxesList(_object):
         """
         return _btk.btkStringAxesList_erase(self, *args)
 
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """
         __init__(self) -> btkStringAxesList
         __init__(self, arg2) -> btkStringAxesList
@@ -10444,8 +11286,11 @@ class btkStringAxesList(_object):
         __init__(self, size, value) -> btkStringAxesList
         """
         this = _btk.new_btkStringAxesList(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def push_back(self, *args):
         """push_back(self, x)"""
         return _btk.btkStringAxesList_push_back(self, *args)
@@ -10489,22 +11334,31 @@ class btkStringAxesList(_object):
         return _btk.btkStringAxesList_reverse(self)
 
     __swig_destroy__ = _btk.delete_btkStringAxesList
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
+
 btkStringAxesList_swigregister = _btk.btkStringAxesList_swigregister
 btkStringAxesList_swigregister(btkStringAxesList)
 
+
 class btkStringList(_object):
     """Proxy of C++ std::list<(std::string)> class"""
+
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, btkStringList, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(
+        self, btkStringList, name, value
+    )
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, btkStringList, name)
     __repr__ = _swig_repr
+
     def iterator(self):
         """iterator(self) -> SwigPyIterator"""
         return _btk.btkStringList_iterator(self)
 
-    def __iter__(self): return self.iterator()
+    def __iter__(self):
+        return self.iterator()
+
     def __nonzero__(self):
         """__nonzero__(self) -> bool"""
         return _btk.btkStringList___nonzero__(self)
@@ -10609,7 +11463,7 @@ class btkStringList(_object):
         """
         return _btk.btkStringList_erase(self, *args)
 
-    def __init__(self, *args): 
+    def __init__(self, *args):
         """
         __init__(self) -> btkStringList
         __init__(self, arg2) -> btkStringList
@@ -10617,8 +11471,11 @@ class btkStringList(_object):
         __init__(self, size, value) -> btkStringList
         """
         this = _btk.new_btkStringList(*args)
-        try: self.this.append(this)
-        except: self.this = this
+        try:
+            self.this.append(this)
+        except:
+            self.this = this
+
     def push_back(self, *args):
         """push_back(self, x)"""
         return _btk.btkStringList_push_back(self, *args)
@@ -10662,10 +11519,10 @@ class btkStringList(_object):
         return _btk.btkStringList_reverse(self)
 
     __swig_destroy__ = _btk.delete_btkStringList
-    __del__ = lambda self : None;
+    __del__ = lambda self: None
+
+
 btkStringList_swigregister = _btk.btkStringList_swigregister
 btkStringList_swigregister(btkStringList)
 
 # This file is compatible with both classic and new-style classes.
-
-

@@ -163,7 +163,11 @@ def _get_foot_contact_vel(mkrdata, fp_events, medians=True, roi=None):
     for context, markers in zip(
         ('R', 'L'), [cfg.autoproc.right_foot_markers, cfg.autoproc.left_foot_markers]
     ):
-        footctrv_ = avg_markerdata(mkrdata, markers, var_type='_V', roi=roi)
+        # we can be less strict about gaps here, since missing a marker or two
+        # probably won't really affect the velocity
+        footctrv_ = avg_markerdata(
+            mkrdata, markers, var_type='_V', roi=roi, fail_on_gaps=False
+        )
         footctrv = np.linalg.norm(footctrv_, axis=1)
         strikes = fp_events[context + '_strikes']
         toeoffs = fp_events[context + '_toeoffs']

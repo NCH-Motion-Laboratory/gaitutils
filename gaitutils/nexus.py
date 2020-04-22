@@ -172,7 +172,9 @@ def _open_trial(trialpath, close_first=True):
     vicon = viconnexus()
     if close_first:
         close_trial()
-    vicon.OpenTrial(trialpath, 60)
+    # Nexus wants the path without filename extension (e.g. .c3d)
+    trialpath_ = op.splitext(trialpath)[0]
+    vicon.OpenTrial(trialpath_, 60)
 
 
 def get_subjectnames(single_only=True):

@@ -9,7 +9,6 @@ from __future__ import print_function
 from builtins import str
 import os.path as op
 import io
-import sys
 import logging
 from pkg_resources import resource_filename
 
@@ -28,15 +27,15 @@ def _handle_cfg_defaults(cfg):
         cfg.plot.emg_yscale = str(cfg.plot.emg_yscale[1])
     if cfg.general.normaldata_files == 'default':
         fn = resource_filename('gaitutils', 'data/normal.gcd')
-        cfg.general['normaldata_files'].value = [fn]
+        cfg.general.normaldata_files = [fn]
     if cfg.emg.normaldata_file == 'default':
         fn = resource_filename('gaitutils', 'data/emg_normaldata.json')
-        cfg.emg['normaldata_file'].value = fn
+        cfg.emg.normaldata_file = fn
     if cfg.general.videoconv_path == 'default':
         fn = resource_filename('gaitutils', 'thirdparty/ffmpeg2theora.exe')
-        cfg.general['videoconv_path'].value = fn
+        cfg.general.videoconv_path = fn
     if cfg.autoproc.write_eclipse_fp_info is True:
-        cfg.autoproc['write_eclipse_fp_info'].value = 'write'
+        cfg.autoproc.write_eclipse_fp_info = 'write'
 
 
 # default config

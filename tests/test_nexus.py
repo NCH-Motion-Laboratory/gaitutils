@@ -17,11 +17,11 @@ from numpy.testing import (
 from matplotlib.figure import Figure
 
 import gaitutils
-from gaitutils import nexus, utils, models, read_data
+from gaitutils import nexus, utils, models, read_data, cfg
 from gaitutils.trial import Trial
 from gaitutils.viz import plots
 from gaitutils.utils import detect_forceplate_events
-from utils import _trial_path, start_nexus, cfg
+from utils import _trial_path, start_nexus
 
 # this global is a 'caching' mechanism for starting Nexus and acquiring the
 # ViconNexus control object
@@ -102,43 +102,28 @@ def test_nexus_plot():
 
 
 @pytest.mark.nexus
-def test_fp_detection():
-    """Test autodetection of forceplate contact"""
-    BOTH_OK = set(['L', 'R'])
-    L_OK = set(['L'])
-    R_OK = set(['R'])
-    NOT_OK = set()
-    _nexus_open_trial('girl6v', '2015_10_22_girl6v_IN02')
-    valid = detect_forceplate_events(vicon)['valid']
-    assert_equal(valid, R_OK)
-    _nexus_open_trial('girl6v', '2015_10_22_girl6v_IN03')
-    valid = detect_forceplate_events(vicon)['valid']
-    assert_equal(valid, R_OK)
-    _nexus_open_trial('girl6v', '2015_10_22_girl6v_IN06')
-    valid = detect_forceplate_events(vicon)['valid']
-    assert_equal(valid, NOT_OK)
-
-
-@pytest.mark.nexus
-def test_read_data_compare_nexus_and_c3d():
-    """Compare data reads from Nexus and corresponding Nexus written .c3d """
+def test_compare_to_c3d():
+    """Compare data reads from Nexus and corresponding Nexus written .c3d"""
+    global vicon
+    if vicon is None:
+        vicon = start_nexus()
+    # set the correct EMG device name for the old data
+    cfg.emg.devname = 'Myon'
     # can only get 3 decimals of agreement between Nexus/c3d model vars (??)
     NDEC = 3
     # vars to test
     modelvars = models.pig_lowerbody.varlabels.keys()
     emg_chs = cfg.emg.channel_labels.keys()
-
     subj = 'girl6v'
     trialname = '2015_10_22_girl6v_IN03.c3d'
-    _nexus_open_trial(subj, trialname)
-    c3dfile = _trial_path(subj, trialname)
+    trialpath = _trial_path(subj, trialname)
+    nexus._open_trial(trialpath)
     tr_nexus = Trial(vicon)
-    tr_c3d = Trial(c3dfile)
+    tr_c3d = Trial(trialpath)
     # metadata
     attrs = [
         'analograte',
         'framerate',
-        'bodymass',
         'name',
         'n_forceplates',
         'samplesperframe',
@@ -151,37 +136,31 @@ def test_read_data_compare_nexus_and_c3d():
     # model data
     for var in modelvars:
         # read unnormalized model and compare
-        xn, dn = tr_nexus[var]
+        xn, dn = tr_nexus.get_model_data(var)
         assert_array_equal(xn, range(tr_nexus.length))
-        xc, dc = tr_c3d[var]
+        xc, dc = tr_c3d.get_model_data(var)
         assert_array_equal(xc, range(tr_nexus.length))
         assert_array_almost_equal(dn, dc, decimal=NDEC)
     # read normalized model and compare
     for j in range(4):
-        tr_nexus.set_norm_cycle(j)
-        tr_c3d.set_norm_cycle(j)
         for var in modelvars:
-            xn, dn = tr_nexus[var]
-            xc, dc = tr_c3d[var]
+            xn, dn = tr_nexus.get_model_data(var, j)
+            xc, dc = tr_c3d.get_model_data(var, j)
             assert_array_equal(xn, np.arange(101))
             assert_array_equal(xc, np.arange(101))
             assert_array_almost_equal(dn, dc, decimal=NDEC)
     # read unnormalized EMG and compare
-    tr_nexus.set_norm_cycle(None)
-    tr_c3d.set_norm_cycle(None)
     for ch in emg_chs:
-        xn, dn = tr_nexus[ch]
-        xc, dc = tr_c3d[ch]
+        xn, dn = tr_nexus.get_emg_data(ch)
+        xc, dc = tr_c3d.get_emg_data(ch)
         assert_array_equal(xn, np.arange(tr_nexus.length * tr_nexus.samplesperframe))
         assert_array_equal(xn, xc)
         assert_array_almost_equal(dn, dc, decimal=NDEC)
     # read normalized EMG and compare
     for j in range(4):
-        tr_nexus.set_norm_cycle(j)
-        tr_c3d.set_norm_cycle(j)
         for ch in emg_chs:
-            xn, dn = tr_nexus[ch]
-            xc, dc = tr_c3d[ch]
+            xn, dn = tr_nexus.get_emg_data(ch, j)
+            xc, dc = tr_c3d.get_emg_data(ch, j)
             assert_array_equal(xn, xc)
             assert_array_almost_equal(dn, dc, decimal=NDEC)
 

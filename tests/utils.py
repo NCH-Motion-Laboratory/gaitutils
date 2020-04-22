@@ -6,20 +6,22 @@ Utils for unit tests.
 @author: jussi (jnu@iki.fi)
 """
 
-import inspect
-import sys
 import os.path as op
 import os
 import subprocess
 import time
-import logging
-from ulstools.configdot import parse_config
 
-from gaitutils import nexus, config
+from gaitutils import nexus, config, cfg
 
 
 # reset the config so that user settings do not affect testing
-cfg = parse_config(config.cfg_template_fn)
+# works by mutating the singleton cfg object
+# note that the reset occurs whenever this file is imported, so be
+# careful about importing it
+cfg_default = config.parse_config(config.cfg_template_fn)
+config.update_config(cfg, cfg_default)
+config._handle_cfg_defaults(cfg)
+
 homedir = op.expanduser('~')
 LOCAL_TESTDATA = op.join(homedir, 'gaitutils/tests/gaitutils_testdata')
 if op.isdir(LOCAL_TESTDATA):

@@ -166,21 +166,11 @@ def test_compare_to_c3d():
 
 
 @pytest.mark.nexus
-def test_read_data_errors():
-    """Test exceptions raised by invalid reads"""
-    subj = 'girl6v'
-    trialname = '2015_10_22_girl6v_IN03.c3d'
-    _nexus_open_trial(subj, trialname)
-    c3dfile = _trial_path(subj, trialname)
-    tr_nexus = Trial(vicon)
-    tr_c3d = Trial(c3dfile)
-    assert_raises(KeyError, tr_nexus.__getitem__, 'foo')
-    assert_raises(KeyError, tr_c3d.__getitem__, 'foo')
-
-
-@pytest.mark.nexus
 def test_event_marking():
     """Test automarking of events"""
+    global vicon
+    if vicon is None:
+        vicon = start_nexus()
     ev_tol = 4  # tolerance for event marking (frames)
     events_dict = dict()  # ground truth with forceplate info
     events_dict['Right'] = dict()
@@ -206,13 +196,16 @@ def test_event_marking():
                 )[0]
                 assert_equal(len(events), len(nexus_events))
                 for j, ev in enumerate(nexus_events):
-                    assert_less_equal(abs(ev - events[j]), ev_tol)
+                    assert abs(ev - events[j]) <= ev_tol
 
-    _nexus_open_trial('girl6v', '2015_10_22_girl6v_IN02')
+    subj = 'girl6v'
+    trialname = '2015_10_22_girl6v_IN02.c3d'
+    trialpath = _trial_path(subj, trialname)
+    nexus._open_trial(trialpath)
 
     # automatic thresholding (do not respect fp events)
     vicon.ClearAllEvents()
-    nexus.automark_events(vicon, events_range=[-1500, 1500])
+    utils.automark_events(vicon, events_range=[-1500, 1500])
     _events_check(events_dict_nofp)
 
     # using forceplate thresholds
@@ -222,8 +215,7 @@ def test_event_marking():
         vicon, cfg.autoproc.left_foot_markers + cfg.autoproc.right_foot_markers
     )
     vel = utils._get_foot_contact_vel(mkrdata, fpe)
-    nexus.automark_events(
+    utils.automark_events(
         vicon, vel_thresholds=vel, events_range=[-1500, 1500], fp_events=fpe
     )
     _events_check(events_dict)
-    vicon.SaveTrial(60)  # to prevent 'Save trial?' dialog on subsequent loads

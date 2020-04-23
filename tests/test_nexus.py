@@ -8,6 +8,7 @@ Unit tests on a running instance of Vicon Nexus.
 
 import pytest
 import numpy as np
+import os.path as op
 from numpy.testing import (
     assert_allclose,
     assert_array_equal,
@@ -15,9 +16,10 @@ from numpy.testing import (
     assert_equal,
 )
 from matplotlib.figure import Figure
+from datetime import datetime
 
 import gaitutils
-from gaitutils import nexus, utils, models, read_data, cfg
+from gaitutils import nexus, utils, models, read_data, cfg, autoprocess
 from gaitutils.trial import Trial
 from gaitutils.viz import plots
 from gaitutils.utils import detect_forceplate_events
@@ -219,3 +221,35 @@ def test_event_marking():
         vicon, vel_thresholds=vel, events_range=[-1500, 1500], fp_events=fpe
     )
     _events_check(events_dict)
+
+
+@pytest.mark.nexus
+@pytest.mark.slow
+def test_autoproc():
+    """Test autoprocessing"""
+    global vicon
+    if vicon is None:
+        vicon = start_nexus()
+    # SDK does not have open_session(), so we need to open a trial
+    subj = 'D0063_RR'
+    trialname = '2018_12_17_preOp_RR04.c3d'
+    session = 'autoproc_session'
+    trialpath = _trial_path(subj, trialname, session=session)
+    sessionpath = op.split(trialpath)[0]
+    nexus._open_trial(trialpath)
+    # check that we ended up in correct session
+    # (otherwise autoproc could take forever, or cause damage)
+    assert 'autoproc' in nexus.get_sessionpath()
+    autoprocess.autoproc_session()
+    # check the resulting c3d files
+    for c3dn in [1, 4, 5, 6]:
+        c3dname = '2018_12_17_preOp_RR0%d.c3d' % c3dn
+        c3dpath = op.join(sessionpath, c3dname)
+        assert op.isfile(c3dpath)
+        # check that dynamic files was modified in the last 5 minutes,
+        # and static is older
+        mtime = datetime.fromtimestamp(op.getmtime(c3dpath))
+        if c3dn == 4:
+            assert (datetime.now() - mtime).seconds > 3600
+        else:
+            assert (datetime.now() - mtime).seconds < 300

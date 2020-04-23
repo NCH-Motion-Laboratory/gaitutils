@@ -157,8 +157,8 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
 
         edata = eclipse.get_eclipse_keys(enffile, return_empty=True)
         logger.debug('type: %s' % edata['TYPE'])
-        logger.debug('description: %s' % edata['DESCRIPTION'])
-        logger.debug('notes: %s' % edata['NOTES'])
+        logger.debug('current description: %s' % edata['DESCRIPTION'])
+        logger.debug('current notes: %s' % edata['NOTES'])
         eclipse_str = ''
 
         # check whether to skip trial

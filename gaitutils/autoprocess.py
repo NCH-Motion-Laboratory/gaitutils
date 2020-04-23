@@ -175,14 +175,14 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             # run preprocessing + save even for skipped trials, to mark
             # them as processed - mostly so that Eclipse export to Polygon
             # will work
-            _run_pipelines_multiprocessing(cfg.autoproc.pre_pipelines)
+            run_pipelines(cfg.autoproc.pre_pipelines)
             _save_trial()
             trial['recon_ok'] = False
             trial['description'] = 'skipped'
             continue
 
         # try to run preprocessing pipelines
-        _run_pipelines_multiprocessing(cfg.autoproc.pre_pipelines)
+        run_pipelines(cfg.autoproc.pre_pipelines)
 
         # check trial length
         trange = vicon.GetTrialRange()

@@ -48,10 +48,10 @@ def _file_path(filename):
     return op.abspath(op.join(testdata_root, filename))
 
 
-def _trial_path(subject, trial):
+def _trial_path(subject, session, trial):
     """Return path to subject trial file (in session dir)"""
     return op.abspath(
-        op.join(testdata_root, 'test_subjects', subject, 'test_session', trial)
+        op.join(testdata_root, 'test_subjects', subject, session, trial)
     )
 
 

@@ -10,7 +10,6 @@ import pytest
 import numpy as np
 import os.path as op
 from numpy.testing import (
-    assert_allclose,
     assert_array_equal,
     assert_array_almost_equal,
     assert_equal,
@@ -18,11 +17,9 @@ from numpy.testing import (
 from matplotlib.figure import Figure
 from datetime import datetime
 
-import gaitutils
 from gaitutils import nexus, utils, models, read_data, cfg, autoprocess
 from gaitutils.trial import Trial
 from gaitutils.viz import plots
-from gaitutils.utils import detect_forceplate_events
 from utils import _trial_path, start_nexus
 
 # this global is a 'caching' mechanism for starting Nexus and acquiring the
@@ -42,6 +39,7 @@ def test_nexus_reader():
     trialpath = _trial_path(subject, trialname)
     nexus._open_trial(trialpath)
     tr = Trial(vicon)
+    # XXX: probably with pytest, there is no benefit in using assert_equal
     assert_equal(tr.analograte, 1000.0)
     assert_equal(tr.framerate, 100.0)
     # assert_equal(tr.bodymass, 24.0)
@@ -226,7 +224,11 @@ def test_event_marking():
 @pytest.mark.nexus
 @pytest.mark.slow
 def test_autoproc():
-    """Test autoprocessing"""
+    """Test autoprocessing.
+   
+    This requires preprocessing and model pipelines to be set up correctly in
+    Nexus.
+    """
     global vicon
     if vicon is None:
         vicon = start_nexus()
@@ -240,14 +242,15 @@ def test_autoproc():
     # check that we ended up in correct session
     # (otherwise autoproc could take forever, or cause damage)
     assert 'autoproc' in nexus.get_sessionpath()
+    # run the autoprocessing
     autoprocess.autoproc_session()
     # check the resulting c3d files
     for c3dn in [1, 4, 5, 6]:
         c3dname = '2018_12_17_preOp_RR0%d.c3d' % c3dn
         c3dpath = op.join(sessionpath, c3dname)
         assert op.isfile(c3dpath)
-        # check that dynamic files was modified in the last 5 minutes,
-        # and static is older
+        # check that dynamic files were modified in the last 5 minutes,
+        # and static is older (unmodified by processing)
         mtime = datetime.fromtimestamp(op.getmtime(c3dpath))
         if c3dn == 4:
             assert (datetime.now() - mtime).seconds > 3600

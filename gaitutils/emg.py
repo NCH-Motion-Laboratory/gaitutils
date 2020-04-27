@@ -146,10 +146,10 @@ class EMG(object):
             return False
         elif (
             cfg.emg.chs_disabled and chname in cfg.emg.chs_disabled
-        ):  # deal with None also
+        ):
             return False
         data = self.get_channel_data(chname)
-        return self._is_valid_emg(data)
+        return self._is_valid_emg(data) if cfg.emg.autodetect_bads else True
 
     @staticmethod
     def context_ok(chname, context):

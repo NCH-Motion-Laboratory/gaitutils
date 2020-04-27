@@ -213,6 +213,8 @@ class OptionsDialog(QtWidgets.QDialog):
         for item in items:
             _save_widget = True
             desc = configdot.get_description(item)
+            if not desc:
+                raise RuntimeError('Config item %s missing a description' % item)
             if isinstance(item.value, bool):  # use simple checkbox for boolean items
                 input_widget = QtWidgets.QCheckBox()
                 input_widget.setChecked(item.value)

@@ -21,6 +21,7 @@ import time
 import requests
 import logging
 import traceback
+import socket
 import ulstools
 from ulstools import configdot
 
@@ -352,21 +353,20 @@ class WebReportDialog(QtWidgets.QDialog):
             # this should only happen when the report was cancelled, so we
             # exit quietly
             return
-        # figure out first free TCP port
-        ports_taken = [item.userdata for item in self.listActiveReports.items]
-        port = cfg.web_report.tcp_port
-        while port in ports_taken:  # find first port not taken by us
-            port += 1
-        """
-        Web servers need to go into separate threads/processes so that the rest
-        of the app can continue running. It's hard to use processes because of
-        problems with multiprocessing/pickle, so the Qt threadpool is used to
-        launch the servers. However since each running server occupies a
-        thread, this means that we need to increase the threadpool max threads
-        limit; otherwise new servers will get queued by the threadpool and will
-        not run.
-        Serving is a bit flaky in py2 (multiple requests cause exceptions)
-        """
+        # this code should automatically get a random port from the OS
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(('', 0))
+        s.listen(1)
+        port = s.getsockname()[1]
+        logging.debug('got port %d' % port)
+        s.close()
+        # The web servers need to go into separate threads/processes so that the
+        # rest of the app can continue running. Due to difficulties of passing
+        # data to processes, we use threads instead (the Qt threadpool). Each
+        # running server then occupies a thread, this means that we need to
+        # increase the threadpool max threads limit; otherwise new servers will
+        # get queued by the threadpool and will not run.
+        # Serving is a bit flaky in py2 (multiple requests cause exceptions)
         self.parent._run_in_thread(
             app.server.run, block_ui=False, debug=False, port=port, threaded=True
         )

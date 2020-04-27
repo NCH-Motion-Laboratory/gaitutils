@@ -20,7 +20,15 @@ logger = logging.getLogger(__name__)
 
 
 class EMG(object):
-    """ Class for handling EMG data. """
+    """Class for processing and storing EMG data.
+
+    Parameters
+    ----------
+    source : ViconNexus | str
+        The data source. Can be a c3d filename or a ViconNexus instance.
+    correction_factor : int, optional
+        After read, the EMG data is multiplied by this factor.
+     """
 
     def __init__(self, source, correction_factor=1):
         logger.debug('new EMG instance from %s' % source)
@@ -34,12 +42,23 @@ class EMG(object):
 
     @property
     def data(self):
+        """Get the EMG data.
+
+        The data is cached in an instance variable, so it's read only once
+        during the lifetime of the instance.
+
+        Returns
+        -------
+        dict
+            The EMG data, keyed by channel name. Values are shape (N,) ndarrays
+            of sample values.
+        """        
         if self._data is None:
             self._read_data()
         return self._data
 
     def _read_data(self):
-        """Read the EMG data from source"""
+        """Actually read the EMG data from source"""
         meta = read_data.get_metadata(self.source)
         logger.debug('reading EMG from %s' % meta['trialname'])
         self.sfrate = meta['analograte']
@@ -63,16 +82,20 @@ class EMG(object):
         return ch
 
     def get_channel_data(self, chname, rms=False):
-        """Return data for a channel (filtered if self.passband is set).
-       
-        Uses name matching: if the specified channel is not found in the data,
-        partial name matches are considered and data for the shortest match is
-        returned. For example, 'LGas' could be mapped to 'Voltage.LGas8'
+        """Return EMG data for a given channel.
+
+        Uses name matching. The given chname is matched (case sensitive) against
+        the channel names in the data source and the shortest match is returned.
+        For example, with chname=='LGas', 'Voltage.LGas8' and
+        'Voltage.LGas8_filtered' would be matches, and the former would be
+        returned.
+
+        Data is returned filtered if self.passband is set.
 
         Parameters
         ----------
         ch : string
-            The EMG channel name. Fuzzy name matching is used.
+            The EMG channel name. Name matching is used (see above).
         rms : bool
             Return moving-window RMS instead of raw data.
         """
@@ -86,7 +109,19 @@ class EMG(object):
         return data
 
     def has_channel(self, chname):
-        """Check whether a channel exists"""
+        """Check whether a channel exists in the data.
+
+        Parameters
+        ----------
+        chname : str
+            The desired channel name. Name matching is used (see docstring for
+            get_channel_data)
+
+        Returns
+        -------
+        bool
+            True if the channel exists, False otherwise.
+        """
         try:
             self._match_name(chname)
         except KeyError:
@@ -94,7 +129,19 @@ class EMG(object):
         return True
 
     def status_ok(self, chname):
-        """Check whether a channel exists and has valid signal"""
+        """Check whether a channel exists and has valid EMG signal.
+
+        Parameters
+        ----------
+        chname : str
+            The desired channel name. Name matching is used (see docstring for
+            get_channel_data)
+
+        Returns
+        -------
+        bool
+            True if the channel exists and has valid data, False otherwise.
+        """
         if not self.has_channel(chname):
             return False
         elif (
@@ -105,22 +152,36 @@ class EMG(object):
         return self._is_valid_emg(data)
 
     @staticmethod
-    def context_ok(ch, context):
-        """Check if channel context matches given context. Returns True if
-        channel does not have a context"""
+    def context_ok(chname, context):
+        """Check if the channel context matches given context.
+
+        Parameters
+        ----------
+        chname : str
+            A configured channel name. (Name matching is not applied here.)
+        context : str
+            Context ('L' or 'R').
+
+        Returns
+        -------
+        bool
+            False if context does not match. True if the context matches or is unknown.
+        """
         if (
-            ch in cfg.emg.channel_context
-            and context.upper() != cfg.emg.channel_context[ch].upper()
+            chname in cfg.emg.channel_context
+            and context.upper() != cfg.emg.channel_context[chname].upper()
         ):
             return False
         return True
 
     def _is_valid_emg(self, data):
-        """ Check whether channel contains a valid EMG signal. Usually, an invalid
-        signal can be identified by the presence of large powerline (harmonics)
-        compared to broadband signal. Cause is typically disconnected or badly
-        connected electrodes.
-        TODO: should use multiple-zero IIR notch filter """
+        """Check whether channel contains a valid EMG signal.
+        
+        Usually, an invalid signal can be identified by the presence of large
+        powerline (harmonics) compared to broadband signal. Cause is typically
+        disconnected or badly connected electrodes.
+        TODO: should use multiple-zero IIR notch filter.
+        """
         # bandwidth of broadband signal. should be less than dist between
         # the powerline harmonics
         broadband_bw = 30

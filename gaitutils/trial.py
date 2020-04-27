@@ -28,7 +28,6 @@ from . import (
     models,
     videos,
     sessionutils,
-    numutils,
 )
 
 logger = logging.getLogger(__name__)
@@ -206,11 +205,11 @@ class Gaitcycle(object):
 class Trial(object):
     """Gait trial class.
 
-        Parameters
-        ----------
-        source : str | instance of ViconNexus
-            Source to read data from. Can be a c3d filename or a ViconNexus
-            connection. 
+    Parameters
+    ----------
+    source : str | instance of ViconNexus
+        Source to read data from. Can be a c3d filename or a ViconNexus
+        connection. 
     """
 
     def __repr__(self):

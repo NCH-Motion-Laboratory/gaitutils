@@ -384,7 +384,7 @@ def _get_analog_data(vicon, devname):
     -------
     dict
         Dict with keys 't' (time points corresponding to data samples) and
-        'data' (the analog data as ndarray, for each output channel).
+        'data' (the analog data as shape (N,) ndarray, for each output channel).
     """
     # match devname exactly (not case-sensitive though)
     ids = [

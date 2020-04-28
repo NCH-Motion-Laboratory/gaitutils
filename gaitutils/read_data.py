@@ -41,17 +41,37 @@ def get_metadata(source):
     Returns
     -------
     dict
-        The metadata dict with the following keys:
-        trialname: name of trial
-        sessionpath: full path to directory where session is contained
-        length: trial length in frames
-        offset: frame offset of returned data from beginning of trial
-        framerate: capture framerate
-        analograte: sampling rate for analog devices
-        name: subject name
-        subj_params: subject parameters (bodymass etc.)
-        lstrikes, rstrikes: foot strike events l/r
-        ltoeoffs, rtoeoffs: toeoffs l/r
+        Metadata dict with the following keys and values:
+
+        trialname : str
+            Name of trial.
+        eclipse_data : dict
+            The Eclipse data for the trial. Keys are Eclipse fields and values are
+            the corresponding data.
+        sessionpath : str
+            Full path to session directory.
+        length : int
+            Trial length in frames.
+        offset : int
+            Frame offset of data from beginning of trial. The event numbers will be
+            interpreted relative to the offset, e.g. if the trial offset is 100 and
+            an event occurs at frame 150, its index in the frame data array is 50.
+        framerate : float
+            Frame rate for capture (frames / sec).
+        analograte : float
+            Sampling rate for analog devices (samples / sec)-
+        name : str
+            Subject name.
+        subj_params : dict
+            Other subject parameters (bodymass etc.)
+        lstrikes : list
+            Left foot strike events.
+        rstrikes : list
+            Right foot strike events.
+        ltoeoffs : list
+            Left foot toeoff events.
+        rtoeoffs : list
+            Right foot toeoff events.
     """
     meta = _reader_module(source)._get_metadata(source)
     # Nexus uses slightly different metadata field names as c3d,

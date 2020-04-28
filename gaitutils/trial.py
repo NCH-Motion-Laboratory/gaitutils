@@ -209,7 +209,39 @@ class Trial(object):
     ----------
     source : str | instance of ViconNexus
         Source to read data from. Can be a c3d filename or a ViconNexus
-        connection. 
+        connection.
+
+    Attributes
+    ----------
+    trialname : str
+        Name of trial.
+    eclipse_data : dict
+        The Eclipse data for the trial. Keys are Eclipse fields and values are
+        the corresponding data.
+    sessionpath : str
+        Full path to session directory.
+    length : int
+        Trial length in frames.
+    offset : int
+        Frame offset of data from beginning of trial. The event numbers will be
+        interpreted relative to the offset, e.g. if the trial offset is 100 and
+        an event occurs at frame 150, its index in the frame data array is 50.
+    framerate : float
+        Frame rate for capture (frames / sec).
+    analograte : float
+        Sampling rate for analog devices (samples / sec)-
+    name : str
+        Subject name.
+    subj_params : dict
+        Other subject parameters (bodymass etc.)
+    lstrikes : list
+        Left foot strike events.
+    rstrikes : list
+        Right foot strike events.
+    ltoeoffs : list
+        Left foot toeoff events.
+    rtoeoffs : list
+        Right foot toeoff events.
     """
 
     def __repr__(self):

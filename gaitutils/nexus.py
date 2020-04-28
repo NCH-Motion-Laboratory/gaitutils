@@ -17,6 +17,7 @@ import time
 import multiprocessing
 
 from .numutils import _change_coords
+from .utils import TrialEvents
 from . import GaitDataError, cfg
 
 
@@ -313,6 +314,8 @@ def _get_metadata(vicon):
     rstrikes = vicon.GetEvents(subjname, "Right", "Foot Strike")[0]
     ltoeoffs = vicon.GetEvents(subjname, "Left", "Foot Off")[0]
     rtoeoffs = vicon.GetEvents(subjname, "Right", "Foot Off")[0]
+    events = TrialEvents(rstrikes, lstrikes, rtoeoffs, ltoeoffs)
+    
     # offset will be subtracted from event frame numbers to get correct
     # 0-based index for frame data. for Nexus, it is always 1 (Nexus uses
     # 1-based frame numbering)
@@ -337,10 +340,6 @@ def _get_metadata(vicon):
         id_ for id_ in devids if vicon.GetDeviceDetails(id_)[1].lower() == 'forceplate'
     ]
 
-    # sort events to make sure they're in right temporal order
-    for li in [lstrikes, rstrikes, ltoeoffs, rtoeoffs]:
-        li.sort()
-
     return {
         'trialname': trialname,
         'sessionpath': sessionpath,
@@ -349,10 +348,7 @@ def _get_metadata(vicon):
         'analograte': analograte,
         'name': subjname,
         'subj_params': subj_params,
-        'lstrikes': lstrikes,
-        'rstrikes': rstrikes,
-        'ltoeoffs': ltoeoffs,
-        'rtoeoffs': rtoeoffs,
+        'events': events,
         'length': length,
         'samplesperframe': samplesperframe,
         'n_forceplates': len(fp_devids),

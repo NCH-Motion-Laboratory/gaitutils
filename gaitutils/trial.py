@@ -234,14 +234,9 @@ class Trial(object):
         Subject name.
     subj_params : dict
         Other subject parameters (bodymass etc.)
-    lstrikes : list
-        Left foot strike events.
-    rstrikes : list
-        Right foot strike events.
-    ltoeoffs : list
-        Left foot toeoff events.
-    rtoeoffs : list
-        Right foot toeoff events.
+    events : TrialEvents
+        Trial events (foot strikes, toeoffs etc.). These events are read from
+        the trial data (i.e. not autodetected).
     """
 
     def __repr__(self):
@@ -257,17 +252,13 @@ class Trial(object):
         logger.debug('new trial instance from %s' % source)
         self.source = source
         meta = read_data.get_metadata(source)
-        # insert metadata dict directly as instance attributes
+        # insert metadata dict directly as instance attributes (those are
+        # documented above)
         self.__dict__.update(meta)
-
-        # sort events and make them 0-based so that indexing matches frame data
-        self.lstrikes = [e - self.offset for e in sorted(self.lstrikes)]
-        self.rstrikes = [e - self.offset for e in sorted(self.rstrikes)]
-        self.ltoeoffs = [e - self.offset for e in sorted(self.ltoeoffs)]
-        self.rtoeoffs = [e - self.offset for e in sorted(self.rtoeoffs)]
-
+        # match events with frame data
+        self.events.subtract_offset(self.offset)
         self.sessiondir = op.split(self.sessionpath)[-1]
-
+        # try to locate trial .enf (we do not require it)
         enfpath = op.join(self.sessionpath, '%s.Trial.enf' % self.trialname)
         # also look for alternative (older style?) enf name
         if not op.isfile(enfpath):
@@ -308,7 +299,6 @@ class Trial(object):
             self.fp_events = self._get_fp_events()
         else:
             self.fp_events = utils.empty_fp_events()
-
         self._models_data = dict()
         self.stddev_data = None  # AvgTrial only
         # frames 0...length
@@ -627,15 +617,15 @@ class Trial(object):
         """
         STRIKE_TOL = 7
         sidestrs = {'R': 'right', 'L': 'left'}
-        for strikes in [self.lstrikes, self.rstrikes]:
+        for strikes in [self.events.lstrikes, self.events.rstrikes]:
             len_s = len(strikes)
             if len_s < 2:
                 continue
-            if strikes == self.lstrikes:
-                toeoffs = self.ltoeoffs
+            if strikes == self.events.lstrikes:
+                toeoffs = self.events.ltoeoffs
                 context = 'L'
             else:
-                toeoffs = self.rtoeoffs
+                toeoffs = self.events.rtoeoffs
                 context = 'R'
             for k in range(0, len_s - 1):
                 start = strikes[k]

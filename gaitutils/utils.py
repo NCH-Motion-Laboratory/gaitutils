@@ -23,6 +23,72 @@ from .numutils import rising_zerocross, digitize_array, falling_zerocross, _base
 logger = logging.getLogger(__name__)
 
 
+class TrialEvents(object):
+    """A struct-like container for gait event data.
+    A dataclass would be better, but requires Python 3.7.
+    """
+    # these are the event types we accept
+    event_types = ['rstrikes', 'lstrikes', 'rtoeoffs', 'ltoeoffs', 'general']
+    # these are our internal stuff
+    secret_stuff = ['_offset']
+
+    def __init__(self, **kwargs):
+        self._offset = None
+        # init empty lists for all event types
+        for evtype in TrialEvents.event_types:
+            setattr(self, evtype, list())
+        # init event lists via kwargs
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
+    def __repr__(self):
+        s = '<TrialEvents |'
+        for k, evtype in enumerate(TrialEvents.event_types):
+            if k > 0:
+                s += ','
+            ev_vals = getattr(self, evtype)
+            s += ' %s: %s' % (evtype, ev_vals)
+        s += '>'
+        return s
+
+    def __setattr__(self, attr, value):
+        if attr in TrialEvents.event_types:  # regular event list
+            if not isinstance(value, list):
+                raise AttributeError('attribute must be a list')
+            else:
+                # sort to make sure that event frames are in increasing order
+                super(TrialEvents, self).__setattr__(attr, sorted(value))
+        elif attr in TrialEvents.secret_stuff:
+            super(TrialEvents, self).__setattr__(attr, value)
+        else:
+            raise AttributeError('%s is not a valid attribute' % attr)
+
+    def subtract_offset(self, offset):
+        """Subtract given offset from events."""
+        if self._offset:
+            raise RuntimeError('offset can be subtracted only once')
+        for evtype in TrialEvents.event_types:
+            events = getattr(self, evtype)
+            events_offset = [e - offset for e in events]
+            setattr(self, evtype, events_offset)
+        self._offset = offset
+
+
+def _empty_fp_events():
+    """Container for forceplate events"""
+    return dict(
+        R_strikes=[],
+        R_toeoffs=[],
+        L_strikes=[],
+        L_toeoffs=[],
+        valid=set(),
+        R_strikes_plate=[],
+        L_strikes_plate=[],
+        our_fp_info={},
+        coded='',
+    )
+
+
 def avg_markerdata(mkrdata, markers, var_type='_P', roi=None, fail_on_gaps=True):
     """Average marker data.
    
@@ -307,21 +373,6 @@ def _point_in_poly(poly, pt):
     return p.contains_point(pt)
 
 
-def empty_fp_events():
-    """Helper to return no forceplate events"""
-    return dict(
-        R_strikes=[],
-        R_toeoffs=[],
-        L_strikes=[],
-        L_toeoffs=[],
-        valid=set(),
-        R_strikes_plate=[],
-        L_strikes_plate=[],
-        our_fp_info={},
-        coded='',
-    )
-
-
 def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
     """ Detect frames where valid forceplate strikes and toeoffs occur.
     Uses forceplate data and estimated foot shape.
@@ -364,7 +415,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
     logger.debug('detect forceplate events from %s' % source)
     info = read_data.get_metadata(source)
     fpdata = read_data.get_forceplate_data(source)
-    results = empty_fp_events()
+    results = _empty_fp_events()
 
     # get marker data and find "forward" direction (by max variance)
     if mkrdata is None:

@@ -15,7 +15,8 @@ import numpy as np
 import os
 import sys
 
-from .numutils import center_of_pressure, _change_coords, _file_digest
+from .numutils import center_of_pressure, _change_coords
+from .utils import TrialEvents
 from .envutils import lru_cache_checkfile
 from . import GaitDataError
 
@@ -237,6 +238,7 @@ def _get_metadata(c3dfile):
                 ltoeoffs.append(i.GetFrame())
             else:
                 raise GaitDataError("Unknown context on foot strike event")
+    events = TrialEvents(rstrikes, lstrikes, rtoeoffs, ltoeoffs)
 
     # get subject info
     try:
@@ -252,10 +254,6 @@ def _get_metadata(c3dfile):
     subj_params = defaultdict(lambda: None)
     subj_params.update({par: _get_c3d_subject_param(acq, par) for par in par_names})
 
-    # sort events (may be in wrong temporal order, at least in c3d files)
-    for li in [lstrikes, rstrikes, ltoeoffs, rtoeoffs]:
-        li.sort()
-
     return {
         'trialname': trialname,
         'sessionpath': sessionpath,
@@ -264,10 +262,7 @@ def _get_metadata(c3dfile):
         'analograte': analograte,
         'name': name,
         'subj_params': subj_params,
-        'lstrikes': lstrikes,
-        'rstrikes': rstrikes,
-        'ltoeoffs': ltoeoffs,
-        'rtoeoffs': rtoeoffs,
+        'events': events,
         'length': length,
         'samplesperframe': samplesperframe,
         'n_forceplates': n_forceplates,

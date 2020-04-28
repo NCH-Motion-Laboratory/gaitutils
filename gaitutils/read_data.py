@@ -64,14 +64,8 @@ def get_metadata(source):
             Subject name.
         subj_params : dict
             Other subject parameters (bodymass etc.)
-        lstrikes : list
-            Left foot strike events.
-        rstrikes : list
-            Right foot strike events.
-        ltoeoffs : list
-            Left foot toeoff events.
-        rtoeoffs : list
-            Right foot toeoff events.
+        events : TrialEvents
+            Trial events (foot strikes, toeoffs etc.)
     """
     meta = _reader_module(source)._get_metadata(source)
     # Nexus uses slightly different metadata field names as c3d,

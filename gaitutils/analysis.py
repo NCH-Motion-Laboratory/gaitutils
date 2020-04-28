@@ -93,14 +93,14 @@ def _step_width(source):
     mkr = 'TOE'  # marker name without context
     mkrdata = tr._full_marker_data
     # FIXME: why not use cycles here?
-    for context, strikes in zip(['L', 'R'], [tr.lstrikes, tr.rstrikes]):
+    for context, strikes in zip(['L', 'R'], [tr.events.lstrikes, tr.events.rstrikes]):
         sw[context] = list()
         nstrikes = len(strikes)
         if nstrikes < 2:
             continue
         # contralateral vars
         context_co = 'L' if context == 'R' else 'R'
-        strikes_co = tr.lstrikes if context == 'R' else tr.rstrikes
+        strikes_co = tr.events.lstrikes if context == 'R' else tr.events.rstrikes
         mname = context + mkr
         mname_co = context_co + mkr
         for j, strike in enumerate(strikes):

@@ -6,24 +6,42 @@ Misc unit tests.
 @author: jussi (jnu@iki.fi)
 """
 
-import pytest
 import numpy as np
-from numpy.testing import assert_allclose
 import logging
+import pytest
 
 from gaitutils.utils import (
+    TrialEvents,
     is_plugingait_set,
     _point_in_poly,
     _pig_markerset,
     _check_markers_flipped,
 )
-from utils import _file_path, cfg
+from utils import _file_path
 
 
 logger = logging.getLogger(__name__)
 
 trial_enf = _file_path('anon.Trial.enf')
 trial_enf_write = _file_path('writetest.enf')
+
+
+def test_trialevents():
+    """Test TrialEvents class"""
+    with pytest.raises(AttributeError):
+        te = TrialEvents(rtoeoff=[])  # invalid attribute name
+    rstrikes, lstrikes, rtoeoffs, ltoeoffs = [5], [50], [25], [75]
+    te = TrialEvents(
+        rstrikes=rstrikes, lstrikes=lstrikes, rtoeoffs=rtoeoffs, ltoeoffs=ltoeoffs
+    )
+    te.subtract_offset(5)
+    assert te.rstrikes == [0]
+    with pytest.raises(RuntimeError):
+        te.subtract_offset(5)
+    with pytest.raises(AttributeError):
+        te.foo = None  # invalid attribute name
+    with pytest.raises(AttributeError):
+        te.rstrikes = 10  # invalid type
 
 
 def test_is_plugingait_set():

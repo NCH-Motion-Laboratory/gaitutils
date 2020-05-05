@@ -52,7 +52,7 @@ class EMG(object):
         dict
             The EMG data, keyed by channel name. Values are shape (N,) ndarrays
             of sample values.
-        """        
+        """
         if self._data is None:
             self._read_data()
         return self._data
@@ -144,9 +144,7 @@ class EMG(object):
         """
         if not self.has_channel(chname):
             return False
-        elif (
-            cfg.emg.chs_disabled and chname in cfg.emg.chs_disabled
-        ):
+        elif cfg.emg.chs_disabled and chname in cfg.emg.chs_disabled:
             return False
         data = self.get_channel_data(chname)
         return self._is_valid_emg(data) if cfg.emg.autodetect_bads else True

@@ -11,7 +11,7 @@ import logging
 import tempfile
 import os.path as op
 
-from gaitutils.viz import plots, timedist
+from gaitutils.viz import plots, timedist, layouts
 from gaitutils import sessionutils, trial
 from utils import _file_path
 
@@ -26,6 +26,54 @@ sessiondir2_abs = _file_path(sessiondir2_)
 sessiondir__ = op.split(sessiondir_)[-1]
 sessions = [sessiondir_abs, sessiondir2_abs]
 tmpdir = tempfile.gettempdir()
+
+
+def test_check_layout():
+    """Check layout checker"""
+    with pytest.raises(TypeError):
+        layouts.check_layout('a')
+    with pytest.raises(TypeError):
+        layouts.check_layout(['foo'])
+    with pytest.raises(TypeError):
+        layouts.check_layout([['foo'], []])
+    with pytest.raises(TypeError):
+        layouts.check_layout([['foo'], 'a'])
+    lout = [['a', 'b'], ['c', 'd'], ['e', 'f']]  # being unimaginative here
+    assert layouts.check_layout(lout) == (3, 2)
+
+
+def test_rm_dead_channels():
+    """Test removing dead chs from EMG layout"""
+    c3ds = sessionutils.get_c3ds(sessiondir2_abs, trial_type='dynamic')
+    emgs = [trial.Trial(fn).emg for fn in c3ds]
+    emg = emgs[0]
+    lout = [
+        ['LGlut', 'RGlut'],
+        ['LHam', 'RHam'],
+        ['LRec', 'RRec'],
+        ['LVas', 'RVas'],
+        ['LTibA', 'RTibA'],
+        ['LPer', 'RPer'],
+        ['LGas', 'RGas'],
+        ['LSol', 'RSol'],
+    ]
+    lout_ = [
+        ['LHam', 'RHam'],
+        ['LRec', 'RRec'],
+        ['LTibA', 'RTibA'],
+        ['LPer', 'RPer'],
+        ['LGas', 'RGas'],
+        ['LSol', 'RSol'],
+    ]
+    # assert that Glut and Vas get removed for both single and multiple EMG
+    # instances
+    assert layouts.rm_dead_channels(emg, lout) == lout_
+    assert layouts.rm_dead_channels(emgs, lout) == lout_
+
+
+# XXX: currently we only test that the plotting funcs run without errors
+# matplotlib backend; would be good to test also other backends and check the
+# resulting plots are ok
 
 
 def test_plot_trials():

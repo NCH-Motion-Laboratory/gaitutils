@@ -314,7 +314,9 @@ def _get_metadata(vicon):
     rstrikes = vicon.GetEvents(subjname, "Right", "Foot Strike")[0]
     ltoeoffs = vicon.GetEvents(subjname, "Left", "Foot Off")[0]
     rtoeoffs = vicon.GetEvents(subjname, "Right", "Foot Off")[0]
-    events = TrialEvents(rstrikes=rstrikes, lstrikes=lstrikes, rtoeoffs=rtoeoffs, ltoeoffs=ltoeoffs)
+    events = TrialEvents(
+        rstrikes=rstrikes, lstrikes=lstrikes, rtoeoffs=rtoeoffs, ltoeoffs=ltoeoffs
+    )
 
     # offset will be subtracted from event frame numbers to get correct
     # 0-based index for frame data. for Nexus, it is always 1 (Nexus uses

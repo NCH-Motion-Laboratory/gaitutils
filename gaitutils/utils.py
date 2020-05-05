@@ -27,6 +27,7 @@ class TrialEvents(object):
     """A struct-like container for gait event data.
     A dataclass would be better, but requires Python 3.7.
     """
+
     # these are the event types we accept
     event_types = ['rstrikes', 'lstrikes', 'rtoeoffs', 'ltoeoffs', 'general']
     # these are our internal stuff

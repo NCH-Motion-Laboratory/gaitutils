@@ -37,29 +37,15 @@ def check_layout(layout):
         raise TypeError('Invalid layout: %s' % layout)
     for col in layout:
         if not isinstance(col, list) or len(col) != ncols:
-            raise ValueError('Inconsistent layout: %s' % layout)
+            raise TypeError('Inconsistent layout: %s' % layout)
     return nrows, ncols
 
 
-def rm_dead_channels(emg, layout):
-    """From EMG layout, remove rows where none of the channels has valid data"""
-    # XXX: can deprecate in favor of _multitrial version?
-    layout_ = list()
-    for row in layout:
-        # accept channels w/ status ok, or anything that is NOT a
-        # preconfigured EMG channel
-        if any([ch not in cfg.emg.channel_labels or emg.status_ok(ch) for ch in row]):
-            layout_.append(row)
-        else:
-            logger.debug('no valid data for %s, removed row' % str(row))
-    if not layout_:
-        logger.warning('removed all - no valid EMG channels')
-    return layout_
-
-
-def rm_dead_channels_multitrial(emgs, layout):
+def rm_dead_channels(emgs, layout):
     """From layout, drop rows that do not have good data in any of the
     EMG() instances given """
+    if not isinstance(emgs, list):
+        emgs = [emgs]
     chs_ok = None
     for i, emg in enumerate(emgs):
         # accept channels w/ status ok, or anything that is NOT a

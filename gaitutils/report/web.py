@@ -360,9 +360,7 @@ def dash_report(
                 signals.progress.emit('Reading EMG data', 0)
                 try:
                     emgs = [tr.emg for tr in trials_dyn]
-                    emg_layout = layouts.rm_dead_channels_multitrial(
-                        emgs, cfg.layouts.std_emg
-                    )
+                    emg_layout = layouts.rm_dead_channels(emgs, cfg.layouts.std_emg)
                     if not emg_layout:
                         emg_layout = 'disabled'
                 except GaitDataError:

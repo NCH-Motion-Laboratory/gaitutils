@@ -298,7 +298,7 @@ class Trial(object):
         if not self.is_static:
             self.fp_events = self._get_fp_events()
         else:
-            self.fp_events = utils.empty_fp_events()
+            self.fp_events = utils._empty_fp_events()
         self._models_data = dict()
         self.stddev_data = None  # AvgTrial only
         # frames 0...length
@@ -533,7 +533,7 @@ class Trial(object):
             return utils.detect_forceplate_events(self.source, fp_info=fp_info)
         except GaitDataError:
             logger.warning('Could not detect forceplate events')
-            return utils.empty_fp_events()
+            return utils._empty_fp_events()
 
     def get_cycles(self, cyclespec, max_cycles_per_context=None):
         """Get specified gait cycles from the trial.

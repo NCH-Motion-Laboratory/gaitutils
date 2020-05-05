@@ -238,7 +238,7 @@ def _get_metadata(c3dfile):
                 ltoeoffs.append(i.GetFrame())
             else:
                 raise GaitDataError("Unknown context on foot strike event")
-    events = TrialEvents(rstrikes, lstrikes, rtoeoffs, ltoeoffs)
+    events = TrialEvents(rstrikes=rstrikes, lstrikes=lstrikes, rtoeoffs=rtoeoffs, ltoeoffs=ltoeoffs)
 
     # get subject info
     try:

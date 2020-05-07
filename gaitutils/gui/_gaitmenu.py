@@ -866,7 +866,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         def _run_postprocessing():
             """Helper function that will be run in a separate thread"""
-            nexus.close_trial()
+            nexus._close_trial()
             for k, tr in enumerate(trials, 1):
                 trbase = op.splitext(tr)[0]
                 vicon.OpenTrial(trbase, cfg.autoproc.nexus_timeout)

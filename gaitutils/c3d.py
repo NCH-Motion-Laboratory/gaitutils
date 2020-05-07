@@ -23,12 +23,10 @@ from . import GaitDataError
 
 logger = logging.getLogger(__name__)
 
-# try the import the bundled btk version first
-# (currently Python 2.7 64-bit only)
-# if that fails, also try pyBTK
+# try the import the bundled btk version first (currently Python 2.7 64-bit
+# only); if that fails, also try pyBTK
 try:
     from .thirdparty import btk
-
     BTK_IMPORTED = True
 except ImportError:
     try:
@@ -45,7 +43,7 @@ except ImportError:
 
 
 def _get_c3d_metadata_subfields(acq, field):
-    """ Return names of metadata subfields for a given field"""
+    """Return names of metadata subfields for a given field"""
     meta = acq.GetMetaData()
     meta_s = meta.GetChild(field)
     return [f.GetLabel() for f in btk.Iterate(meta_s)]
@@ -53,7 +51,9 @@ def _get_c3d_metadata_subfields(acq, field):
 
 def _get_c3d_metadata_field(acq, field, subfield):
     """Get c3d metadata FIELD:SUBFIELD as Python type.
-    Always returns a list - pick [0] if scalar """
+
+    Always returns a list.
+    """
     meta = acq.GetMetaData()
 
     def _get_child(field, child):
@@ -73,7 +73,10 @@ def _get_c3d_metadata_field(acq, field, subfield):
 
 @lru_cache_checkfile
 def _get_c3dacq(c3dfile):
-    """Cache c3dacq if filename and digest match"""
+    """Get a btk c3dacq object.
+    
+    Object is returned from cache if filename and digest match.
+    """
     reader = btk.btkAcquisitionFileReader()
     # Py2: btk interface cannot take unicode, so encode to latin-1 first
     if sys.version_info.major == 2:
@@ -84,8 +87,21 @@ def _get_c3dacq(c3dfile):
 
 
 def get_analysis(c3dfile, condition='unknown'):
-    """Get analysis values from c3d (e.g. gait parameters). Returns a dict
-    keyed by var and context. First key can optionally be a condition label."""
+    """Get analysis values from c3d (e.g. gait parameters).
+
+    Parameters
+    ----------
+    c3dfile : str
+        Name of the file.
+    condition : str, optional
+        The condition name, by default 'unknown'
+
+    Returns
+    -------
+    dict
+        A nested dict of the analysis values, keyed by variable name and
+        context. The first key is the condition name.
+    """    
     logger.debug('getting analysis values from %s' % c3dfile)
     acq = _get_c3dacq(c3dfile)
     try:
@@ -117,12 +133,12 @@ def get_analysis(c3dfile, condition='unknown'):
 
 
 def _get_emg_data(c3dfile):
-    """Read EMG data from a c3d file."""
+    """Read EMG data from a c3d file"""
     return _get_analog_data(c3dfile, 'EMG')
 
 
 def _get_accelerometer_data(c3dfile):
-    """Read accelerometer data from a c3d file."""
+    """Read accelerometer data from a c3d file"""
     data = _get_analog_data(c3dfile, 'Accelerometer')
     # Remove the 'Acceleration.' prefix if inserted by Nexus, so that channel
     # names match Nexus. This is a bit ugly (not done for EMG which uses fuzzy
@@ -135,8 +151,10 @@ def _get_accelerometer_data(c3dfile):
 
 
 def _get_analog_data(c3dfile, devname):
-    """ Read analog data from a c3d file. devname is matched against channel
-    names. """
+    """Read analog data from a c3d file.
+    
+    devname is matched against channel names.
+    """
     acq = _get_c3dacq(c3dfile)
     data = dict()
     chnames = []
@@ -155,7 +173,10 @@ def _get_analog_data(c3dfile, devname):
 
 
 def _get_marker_data(c3dfile, markers, ignore_edge_gaps=True, ignore_missing=False):
-    """Get position, velocity and acceleration for specified markers."""
+    """Get position, velocity and acceleration for specified markers.
+    
+    See read_data.get_marker_data for details.
+    """
     if not isinstance(markers, list):  # listify if not already a list
         markers = [markers]
     acq = _get_c3dacq(c3dfile)
@@ -273,6 +294,10 @@ def _get_metadata(c3dfile):
 
 
 def _get_model_data(c3dfile, model):
+    """Read model output variables (e.g. Plug-in Gait).
+    
+    See read_data.get_model_data for details.
+    """
     modeldata = dict()
     acq = _get_c3dacq(c3dfile)
     var_dims = (3, acq.GetPointFrameNumber())
@@ -291,7 +316,11 @@ def _get_model_data(c3dfile, model):
     return modeldata
 
 
-def get_forceplate_data(c3dfile):
+def _get_forceplate_data(c3dfile):
+    """Read data of all forceplates from c3d file.
+    
+    See read_data.get_forceplate_data() for details.
+    """
     logger.debug('reading forceplate data from %s' % c3dfile)
     read_chs = ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz']
     acq = _get_c3dacq(c3dfile)

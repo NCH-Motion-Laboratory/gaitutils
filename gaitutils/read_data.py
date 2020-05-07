@@ -103,7 +103,7 @@ def get_forceplate_data(source):
         analograte: sampling rate
         samplesperframe: samples per capture frame
     """
-    return _reader_module(source).get_forceplate_data(source)
+    return _reader_module(source)._get_forceplate_data(source)
 
 
 def get_marker_data(source, markers, ignore_edge_gaps=True, ignore_missing=False):

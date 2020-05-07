@@ -505,8 +505,11 @@ def _get_1_forceplate_data(vicon, devid):
     }
 
 
-def get_forceplate_data(vicon):
-    """Read data of all forceplates from Nexus"""
+def _get_forceplate_data(vicon):
+    """Read data of all forceplates from Nexus.
+    
+    See read_data.get_forceplate_data() for details.
+    """
     # get forceplate ids
     logger.debug('reading forceplate data from Vicon Nexus')
     devids = [

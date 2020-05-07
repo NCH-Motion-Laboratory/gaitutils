@@ -120,7 +120,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             'detected Nexus version: %d.%d' % (nexus_ver_major, nexus_ver_minor)
         )
     # close trial to prevent 'Save trial?' dialog on first open
-    nexus.close_trial()
+    nexus._close_trial()
 
     # init trials dict
     for enffile in enffiles:

@@ -752,9 +752,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
             cycles = None
         layout_desc = self.cbLayout.currentText()
         layout_name = self.layouts_map[layout_desc]
+        # FIXME: this is a bit kludgy
+        is_emg_layout = 'EMG' in layout_name.upper()
         if self.xbEMGRMS.checkState():
             emg_mode = 'rms'
-        elif have_avgtrials and 'EMG' in layout_name.upper():
+        elif have_avgtrials and is_emg_layout:
             qt_message_dialog('Averaged EMG can only be plotted in RMS mode')
             return
         else:
@@ -770,7 +772,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             cycles=cycles,
             emg_mode=emg_mode,
             legend_type='short_name_with_tag_and_cycle',
-            auto_adjust_emg_layout=False,
+            auto_adjust_emg_layout=True,
         )
 
     def _average_trials(self):

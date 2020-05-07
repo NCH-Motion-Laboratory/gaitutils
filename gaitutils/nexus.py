@@ -25,7 +25,10 @@ logger = logging.getLogger(__name__)
 
 
 def _find_nexus_path(vicon_path=None):
-    """Return path to most recent Nexus version"""
+    """Return path to most recent Nexus version.
+    
+    vicon_path is the Vicon root directory.
+    """
     if vicon_path is None:
         vicon_path = r'C:\Program Files (x86)\Vicon'  # educated guess
     if not op.isdir(vicon_path):
@@ -98,7 +101,7 @@ sys.stdout.flush()  # make sure import warnings get printed
 
 
 def _nexus_pid():
-    """Tries to return the PID of the currently running Nexus process."""
+    """Try to return the PID of the currently running Nexus process"""
     PROCNAME = "Nexus.exe"
     for proc in psutil.process_iter():
         try:
@@ -111,9 +114,9 @@ def _nexus_pid():
 
 
 def _nexus_version():
-    """Tries to return the actual version of the running Nexus process
-    (API does not do that). Hackish and probably unreliable. Returns dict
-    of major and minor version number if successful, otherwise (None, None)"""
+    """Try to return the actual version of the running Nexus process
+    (API does not do that). Hackish and probably unreliable. Returns dict of
+    major and minor version number if successful, otherwise (None, None)"""
     PROCNAME = "Nexus.exe"
     for proc in psutil.process_iter():
         try:
@@ -144,7 +147,7 @@ def _nexus_ver_greater(major, minor):
 
 
 def viconnexus():
-    """Return a ViconNexus SDK instance.
+    """Return a ViconNexus() (SDK control object) instance.
 
     Raises an exception if Nexus is not running.
 
@@ -157,7 +160,7 @@ def viconnexus():
     return ViconNexus.ViconNexus()
 
 
-def close_trial():
+def _close_trial():
     """Try to close currently opened Nexus trial"""
     vicon = viconnexus()
     # this op was not supported before Nexus 2.8
@@ -172,14 +175,26 @@ def _open_trial(trialpath, close_first=True):
     """Open trial in Nexus"""
     vicon = viconnexus()
     if close_first:
-        close_trial()
+        _close_trial()
     # Nexus wants the path without filename extension (e.g. .c3d)
     trialpath_ = op.splitext(trialpath)[0]
     vicon.OpenTrial(trialpath_, 60)
 
 
 def get_subjectnames(single_only=True):
-    """Get subject name(s) from Nexus."""
+    """Get current subject name(s) from Nexus.
+
+    Parameters
+    ----------
+    single_only : bool, optional
+        Accept and return a single subject only. If True, an exception will be
+        raised if Nexus has multiple subjects defined.
+
+    Returns
+    -------
+    str | list
+        The subject name, or a list of names.
+    """
     vicon = viconnexus()
     get_sessionpath()  # check whether we can get data
     names_ = vicon.GetSubjectNames()
@@ -227,7 +242,11 @@ def _run_pipeline(pipeline, foo, timeout):
 
 
 def _run_pipelines(pipelines):
-    """Run given Nexus pipeline(s)"""
+    """Run given Nexus pipeline(s).
+    
+    Note: this version will stall the calling Python interpreter until the
+    pipeline is finished.
+    """
     if type(pipelines) != list:
         pipelines = [pipelines]
     for pipeline in pipelines:
@@ -257,14 +276,14 @@ def _run_pipelines_multiprocessing(pipelines):
 
 
 def _get_trialname():
-    """Get current Nexus trialname (without the session path)."""
+    """Get current Nexus trialname without the session path"""
     vicon = viconnexus()
     trialname_ = vicon.GetTrialName()
     return trialname_[1]
 
 
 def _is_vicon_instance(obj):
-    """ Check if obj is an instance of ViconNexus """
+    """Check if obj is an instance of ViconNexus"""
     return obj.__class__.__name__ == 'ViconNexus'
 
 
@@ -279,7 +298,10 @@ def _get_nexus_subject_param(vicon, name, param):
 
 
 def _get_marker_names(vicon, trajs_only=True):
-    """Return marker names (only ones with trajectories, if trajs_only)"""
+    """Return marker names from Nexus.
+    
+    If trajs_only, only return markers with trajectories.
+    """
     subjname = get_subjectnames()
     markers = vicon.GetMarkerNames(subjname)
     # only get markers with trajectories - excludes calibration markers
@@ -484,7 +506,7 @@ def _get_1_forceplate_data(vicon, devid):
 
 
 def get_forceplate_data(vicon):
-    """Read all forceplates from Nexus."""
+    """Read data of all forceplates from Nexus"""
     # get forceplate ids
     logger.debug('reading forceplate data from Vicon Nexus')
     devids = [
@@ -500,7 +522,7 @@ def get_forceplate_data(vicon):
 
 
 def _swap_markers(vicon, marker1, marker2):
-    """Swap trajectories of given two markers in the current trial."""
+    """Swap trajectories of given two markers in the current trial"""
     subj = get_subjectnames()
     m1 = vicon.GetTrajectory(subj, marker1)
     m2 = vicon.GetTrajectory(subj, marker2)
@@ -509,7 +531,10 @@ def _swap_markers(vicon, marker1, marker2):
 
 
 def _get_marker_data(vicon, markers, ignore_edge_gaps=True, ignore_missing=False):
-    """Get position, velocity and acceleration for specified markers."""
+    """Get position, velocity and acceleration for specified markers.
+
+    See read_data.get_marker_data for details.    
+    """
     if not isinstance(markers, list):
         markers = [markers]
     subj = get_subjectnames()
@@ -542,7 +567,10 @@ def _get_marker_data(vicon, markers, ignore_edge_gaps=True, ignore_missing=False
 
 
 def _get_model_data(vicon, model):
-    """ Read model output variables (e.g. Plug-in Gait) """
+    """Read model output variables (e.g. Plug-in Gait).
+    
+    See read_data.get_model_data for details.
+    """
     modeldata = dict()
     var_dims = (3, vicon.GetFrameCount())
     subj = get_subjectnames()
@@ -559,7 +587,7 @@ def _get_model_data(vicon, model):
 
 
 def _create_events(vicon, context, strikes, toeoffs):
-    """Create foot strike and toeoff events in Nexus."""
+    """Create foot strike and toeoff events in Nexus"""
     logger.debug('marking events in Nexus')
     side_str = 'Right' if context == 'R' else 'Left'
     subjectname = get_subjectnames()

@@ -198,6 +198,7 @@ class EMG(object):
         emgvar = np.var(numutils._filtfilt(data, band, self.sfrate)) / broadband_bw
         intrel = 10 * np.log10(intvar / emgvar)
         return intrel < cfg.emg.max_interference
+        #return np.var(data) < 1e-8
 
 
 class AvgEMG(EMG):

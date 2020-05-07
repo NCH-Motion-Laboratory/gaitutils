@@ -10,6 +10,7 @@ import pytest
 import logging
 import tempfile
 import os.path as op
+import numpy as np
 
 from gaitutils import sessionutils, emg, GaitDataError
 from utils import _file_path
@@ -30,6 +31,7 @@ tmpdir = tempfile.gettempdir()
 def test_emg_detect_bads():
     """Test bad channel detection"""
     # this file is tricky; RVas is disconnected but shows some kind of artifact
+    # instead of 50 Hz
     fn = r'2018_12_17_preOp_RR21.c3d'
     fpath = op.join(sessiondir_abs, fn)
     e = emg.EMG(fpath)
@@ -53,8 +55,3 @@ def test_emg_detect_bads():
     }
     for chname, exp_ok in expected_ok.items():
         assert e.status_ok(chname) == exp_ok
-
-
-
-
-

@@ -119,8 +119,8 @@ def _multitrial_analysis(trials):
     res_avg_all = OrderedDict()  # preserve condition ordering
     res_std_all = OrderedDict()  # for plots etc.
     for cond_label, cond_files in trials.items():
+        ans = list()
         for c3dfile in cond_files:
-            ans = list()
             try:
                 an = analysis.get_analysis(c3dfile, condition=cond_label)
                 ans.append(an)

@@ -507,6 +507,7 @@ def plot_trials(
                                     title={
                                         'text': ylabel,
                                         'font': {'size': label_fontsize},
+                                        'standoff': 0,
                                     }
                                 )
                                 # less decimals on hover label
@@ -564,6 +565,7 @@ def plot_trials(
                                 title={
                                     'text': cfg.plot.emg_ylabel,
                                     'font': {'size': label_fontsize},
+                                    'standoff': 0,
                                 },
                                 range=_emg_yscale(emg_mode),
                             )

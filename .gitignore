@@ -9,3 +9,4 @@ tests/.pytest_cache/v/cache/lastfailed
 tests/.pytest_cache/v/cache/nodeids
 tests/.pytest_cache/v/cache/stepwise
 tests/.vscode/settings.json
+tests/gaitutils_testdata

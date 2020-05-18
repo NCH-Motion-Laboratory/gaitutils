@@ -203,7 +203,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         gaps_found = False
         if cfg.autoproc.fail_on_gaps:
             for marker in set(allmarkers) - set(cfg.autoproc.ignore_markers):
-                gaps = mkrdata[marker + '_gaps']
+                gaps = utils.marker_gaps(mkrdata[marker])
                 if gaps.size > 0:
                     gaps_found = True
                     break

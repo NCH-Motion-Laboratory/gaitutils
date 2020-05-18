@@ -533,8 +533,8 @@ def _swap_markers(vicon, marker1, marker2):
     vicon.SetTrajectory(subj, marker1, m2[0], m2[1], m2[2], m2[3])
 
 
-def _get_marker_data(vicon, markers, ignore_edge_gaps=True, ignore_missing=False):
-    """Get position, velocity and acceleration for specified markers.
+def _get_marker_data(vicon, markers, ignore_missing=False):
+    """Get position data for specified markers.
 
     See read_data.get_marker_data for details.    
     """
@@ -552,20 +552,7 @@ def _get_marker_data(vicon, markers, ignore_edge_gaps=True, ignore_missing=False
                 raise GaitDataError(
                     'Cannot read marker trajectory from Nexus: %s' % marker
                 )
-        mP = np.array([x, y, z]).transpose()
-        mkrdata[marker] = mP
-        mkrdata[marker + '_P'] = mP
-        mkrdata[marker + '_V'] = np.gradient(mP)[0]
-        mkrdata[marker + '_A'] = np.gradient(mkrdata[marker + '_V'])[0]
-        # find gaps
-        allzero = np.any(mP, axis=1).astype(int)
-        if ignore_edge_gaps:
-            nleading = allzero.argmax()
-            allzero_trim = np.trim_zeros(allzero)
-            gap_inds = np.where(allzero_trim == 0)[0] + nleading
-        else:
-            gap_inds = np.where(allzero == 0)[0]
-        mkrdata[marker + '_gaps'] = gap_inds
+        mkrdata[marker] = np.array([x, y, z]).transpose()
     return mkrdata
 
 

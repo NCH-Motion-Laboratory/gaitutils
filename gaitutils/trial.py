@@ -468,9 +468,6 @@ class Trial(object):
     def get_marker_data(self, marker, cycle=None):
         """Return position data for a given marker.
 
-        Note that the derivatives (speed, acceleration) can also be obtained by
-        adding a suffix '_V' or '_A' to the marker name.
-
         Parameters
         ----------
         marker : string

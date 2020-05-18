@@ -13,7 +13,7 @@ import logging
 
 from gaitutils import read_data, utils
 from gaitutils.trial import Trial
-from gaitutils.utils import detect_forceplate_events
+from gaitutils.utils import detect_forceplate_events, marker_gaps
 from utils import _trial_path, _c3d_path, _file_path, cfg
 
 
@@ -27,13 +27,14 @@ def test_c3d_marker_data():
     mkrset = list(utils._pig_markerset().keys())
     mkrdata = read_data.get_marker_data(c3dfile, mkrset)
     assert utils.is_plugingait_set(mkrdata)
-    assert len(mkrdata) == 5 * len(mkrset)  # vars = P*2, V, A & gaps
+    assert len(mkrdata) == len(mkrset)
     # check array dimensions for all markers (gap data has different dims)
     for mkr in mkrdata:
-        if '_gaps' not in mkr:
-            assert mkrdata[mkr].shape == (442, 3)
+        assert mkrdata[mkr].shape == (442, 3)
     # LHEE gaps from 360 to 388
-    assert_equal(mkrdata['LHEE_gaps'], np.arange(360, 389))
+    mdata = mkrdata['LHEE']
+    gaps = marker_gaps(mdata)
+    assert_equal(gaps, np.arange(360, 389))
     lhee_file = _file_path('lhee_data.npy')
     lhee_data = np.load(lhee_file)
     # allow some deviation from saved reference data (was read using btk)

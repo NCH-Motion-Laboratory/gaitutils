@@ -106,7 +106,7 @@ def get_forceplate_data(source):
     return _reader_module(source)._get_forceplate_data(source)
 
 
-def get_marker_data(source, markers, ignore_edge_gaps=True, ignore_missing=False):
+def get_marker_data(source, markers, ignore_missing=False):
     """Get position, velocity and acceleration for given markers.
 
     Parameters
@@ -115,26 +115,16 @@ def get_marker_data(source, markers, ignore_edge_gaps=True, ignore_missing=False
         The data source. Can be a c3d filename or a ViconNexus instance.
     markers : list | str
         Marker name, or list of marker names.
-    ignore_edge_gaps : bool, optional
-        Whether leading/trailing "gaps" in data should be ignored (default) or marked as
-        gaps. Nexus writes out gaps at the beginning and end of trial when
-        reconstructions are unavailable.
     ignore_missing : bool, optional
         If True, ignore missing markers on read. Otherwise raise an exception.
 
     Returns
     -------
     dict
-        Marker data dict. Keys are marker names followed by _P, _V or _A for
-        position, velocity and acceleration respectively. Values are Nx3 ndarrays.
-        Gaps are also returned and keyed as marker names followed by _gaps, e.g.
-        'RHEE_gaps'.
+        Marker data dict. Keys are marker names. Values are Nx3 ndarrays.
     """
     return _reader_module(source)._get_marker_data(
-        source,
-        markers,
-        ignore_edge_gaps=ignore_edge_gaps,
-        ignore_missing=ignore_missing,
+        source, markers, ignore_missing=ignore_missing,
     )
 
 

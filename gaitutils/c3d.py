@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 # only); if that fails, also try pyBTK
 try:
     from .thirdparty import btk
+
     BTK_IMPORTED = True
 except ImportError:
     try:
@@ -101,7 +102,7 @@ def get_analysis(c3dfile, condition='unknown'):
     dict
         A nested dict of the analysis values, keyed by variable name and
         context. The first key is the condition name.
-    """    
+    """
     logger.debug('getting analysis values from %s' % c3dfile)
     acq = _get_c3dacq(c3dfile)
     try:
@@ -172,8 +173,8 @@ def _get_analog_data(c3dfile, devname):
         raise GaitDataError('No matching analog channels found in data')
 
 
-def _get_marker_data(c3dfile, markers, ignore_edge_gaps=True, ignore_missing=False):
-    """Get position, velocity and acceleration for specified markers.
+def _get_marker_data(c3dfile, markers, ignore_missing=False):
+    """Get position data for specified markers.
     
     See read_data.get_marker_data for details.
     """
@@ -183,26 +184,13 @@ def _get_marker_data(c3dfile, markers, ignore_edge_gaps=True, ignore_missing=Fal
     mkrdata = dict()
     for marker in markers:
         try:
-            mP = np.squeeze(acq.GetPoint(marker).GetValues())
+            mkrdata[marker] = np.squeeze(acq.GetPoint(marker).GetValues())
         except RuntimeError:
             if ignore_missing:
                 logger.warning('Cannot read trajectory %s from c3d file' % marker)
                 continue
             else:
                 raise GaitDataError('Cannot read trajectory %s from c3d file' % marker)
-        mkrdata[marker] = mP
-        mkrdata[marker + '_P'] = mP
-        mkrdata[marker + '_V'] = np.gradient(mP)[0]
-        mkrdata[marker + '_A'] = np.gradient(mkrdata[marker + '_V'])[0]
-        # find gaps
-        allzero = np.any(mP, axis=1).astype(int)
-        if ignore_edge_gaps:
-            nleading = allzero.argmax()
-            allzero_trim = np.trim_zeros(allzero)
-            gap_inds = np.where(allzero_trim == 0)[0] + nleading
-        else:
-            gap_inds = np.where(allzero == 0)[0]
-        mkrdata[marker + '_gaps'] = gap_inds
     return mkrdata
 
 

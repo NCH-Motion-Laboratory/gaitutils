@@ -90,7 +90,32 @@ def _empty_fp_events():
     )
 
 
-def avg_markerdata(mkrdata, markers, var_type='_P', roi=None, fail_on_gaps=True):
+def marker_gaps(mdata, ignore_edge_gaps=True):
+    """Find gaps for a marker.
+
+    Parameters
+    ----------
+    mdata : ndarray
+        Marker position data. See read_data.get_marker_data()
+    ignore_edge_gaps : bool, optional
+        If True, leading and trailing gaps are ignored.
+
+    Returns
+    -------
+    ndarray
+        The indices of frames where gaps occur.
+    """
+    allzero = np.any(mdata, axis=1).astype(int)
+    if ignore_edge_gaps:
+        nleading = allzero.argmax()
+        allzero_trim = np.trim_zeros(allzero)
+        gap_inds = np.where(allzero_trim == 0)[0] + nleading
+    else:
+        gap_inds = np.where(allzero == 0)[0]
+    return gap_inds
+
+
+def avg_markerdata(mkrdata, markers, roi=None, fail_on_gaps=True, avg_velocity=False):
     """Average marker data.
    
     Parameters
@@ -99,28 +124,30 @@ def avg_markerdata(mkrdata, markers, var_type='_P', roi=None, fail_on_gaps=True)
         The markerdata dict.
     markers : list
         Markers to average.
-    var_type : str, optional
-        Type of data to average, by default '_P' (position). Other options are
-        '_V' and '_A'.
     roi : array-like
         If given, specified a ROI. Gaps outside the ROI will be ignored.
     fail_on_gaps : bool, optional
-        If True, fail the averaging on ANY gaps. Otherwise, markers with gaps
+        If True, raise an exception on ANY gaps. Otherwise, markers with gaps
         will not be included in the average.
+    avg_velocity : bool, optional
+        If True, return averaged marker velocity data instead of position.
     
     Returns
     -------
     ndarray
         The averaged data (Nx3).
     """
-    data_shape = mkrdata[markers[0] + var_type].shape
-    mP = np.zeros(data_shape)
+    data_shape = mkrdata[markers[0]].shape
+    mdata_avg = np.zeros(data_shape)
     if roi is None:
         roi = [0, data_shape[0]]
     roi_frames = np.arange(roi[0], roi[1])
     n_ok = 0
     for marker in markers:
-        gap_frames = mkrdata[marker + '_gaps']
+        mdata = mkrdata[marker]
+        if avg_velocity:
+            mdata = np.gradient(mdata)[0]
+        gap_frames = marker_gaps(mdata)
         if np.intersect1d(roi_frames, gap_frames).size > 0:
             if fail_on_gaps:
                 raise GaitDataError('Averaging data for %s has gaps' % marker)
@@ -130,12 +157,12 @@ def avg_markerdata(mkrdata, markers, var_type='_P', roi=None, fail_on_gaps=True)
                 )
                 continue
         else:
-            mP += mkrdata[marker + var_type]
+            mdata_avg += mdata
             n_ok += 1
     if n_ok == 0:
         raise GaitDataError('all markers have gaps, cannot average')
     else:
-        return mP / n_ok
+        return mdata_avg / n_ok
 
 
 # FIXME: marker sets could be moved into models.py?
@@ -216,10 +243,10 @@ def _check_markers_flipped(mkrdata):
             yield mkr_toe, mkr_hee
 
 
-def _principal_movement_direction(mP):
+def _principal_movement_direction(mdata):
     """Return principal movement direction (dimension of maximum variance)"""
-    inds_ok = np.where(np.any(mP, axis=1))  # make sure that gaps are ignored
-    return np.argmax(np.var(mP[inds_ok], axis=0))
+    inds_ok = np.where(np.any(mdata, axis=1))  # make sure that gaps are ignored
+    return np.argmax(np.var(mdata[inds_ok], axis=0))
 
 
 def _get_foot_contact_vel(mkrdata, fp_events, medians=True, roi=None):
@@ -233,7 +260,7 @@ def _get_foot_contact_vel(mkrdata, fp_events, medians=True, roi=None):
         # we can be less strict about gaps here, since missing a marker or two
         # probably won't really affect the velocity
         footctrv_ = avg_markerdata(
-            mkrdata, markers, var_type='_V', roi=roi, fail_on_gaps=False
+            mkrdata, markers, roi=roi, fail_on_gaps=False, avg_velocity=True,
         )
         footctrv = np.linalg.norm(footctrv_, axis=1)
         strikes = fp_events[context + '_strikes']
@@ -347,7 +374,7 @@ def _trial_median_velocity(source, return_curve=False):
     try:
         frate = read_data.get_metadata(source)['framerate']
         mkrdata = read_data.get_marker_data(source, cfg.autoproc.track_markers)
-        vel_3 = avg_markerdata(mkrdata, cfg.autoproc.track_markers, var_type='_V')
+        vel_3 = avg_markerdata(mkrdata, cfg.autoproc.track_markers, avg_velocity=True)
         vel_ = np.sqrt(np.sum(vel_3 ** 2, 1))  # scalar velocity
     except (GaitDataError, ValueError):
         if return_curve:
@@ -674,17 +701,17 @@ def automark_events(
     rfootctrv_ = avg_markerdata(
         mkrdata,
         cfg.autoproc.right_foot_markers,
-        var_type='_V',
         roi=roi,
         fail_on_gaps=False,
+        avg_velocity=True,
     )
     rfootctrv = np.linalg.norm(rfootctrv_, axis=1)
     lfootctrv_ = avg_markerdata(
         mkrdata,
         cfg.autoproc.left_foot_markers,
-        var_type='_V',
         roi=roi,
         fail_on_gaps=False,
+        avg_velocity=True,
     )
     lfootctrv = np.linalg.norm(lfootctrv_, axis=1)
 
@@ -793,8 +820,8 @@ def automark_events(
 
         # select events for which the foot is close enough to center frame
         if events_range:
-            mP = avg_markerdata(mkrdata, cfg.autoproc.track_markers, roi=roi)
-            fwd_dim = _principal_movement_direction(mP)
+            mdata = avg_markerdata(mkrdata, cfg.autoproc.track_markers, roi=roi)
+            fwd_dim = _principal_movement_direction(mdata)
             strike_pos = footctrP[strikes, fwd_dim]
             dist_ok = np.logical_and(
                 strike_pos > events_range[0], strike_pos < events_range[1]

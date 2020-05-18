@@ -107,18 +107,28 @@ def get_forceplate_data(source):
 
 
 def get_marker_data(source, markers, ignore_edge_gaps=True, ignore_missing=False):
-    """Get position, velocity and acceleration for a given marker(s)
-    (specified as str or list of str).
-    Returns dict mkrdata keyed with marker names followed by _P, _V or _A
-    (position, velocity, acceleration). Values are Nx3 matrices
-    data, e.g. mkrdata['RHEE_V'] is a Nx3 matrix with velocity x, y and z
-    components. Also computes gaps, with keys as e.g. 'RHEE_gaps'.
-    markers: list of marker names
-    ignore_edge_gaps: whether leading/trailing "gaps" should be ignored
-    or marked as gaps. Nexus writes out gaps also at beginning/end of trial
-    when reconstructions are unavailable.
-    ignore_missing: whether to ignore missing markers on read or raise an
-    exception.
+    """Get position, velocity and acceleration for given markers.
+
+    Parameters
+    ----------
+    source : ViconNexus | str
+        The data source. Can be a c3d filename or a ViconNexus instance.
+    markers : list | str
+        Marker name, or list of marker names.
+    ignore_edge_gaps : bool, optional
+        Whether leading/trailing "gaps" in data should be ignored (default) or marked as
+        gaps. Nexus writes out gaps at the beginning and end of trial when
+        reconstructions are unavailable.
+    ignore_missing : bool, optional
+        If True, ignore missing markers on read. Otherwise raise an exception.
+
+    Returns
+    -------
+    dict
+        Marker data dict. Keys are marker names followed by _P, _V or _A for
+        position, velocity and acceleration respectively. Values are Nx3 ndarrays.
+        Gaps are also returned and keyed as marker names followed by _gaps, e.g.
+        'RHEE_gaps'.
     """
     return _reader_module(source)._get_marker_data(
         source,
@@ -134,6 +144,7 @@ def get_emg_data(source):
 
 
 def get_analysis(source, condition='unknown'):
+    """Get analysis data"""
     if nexus._is_vicon_instance(source):
         raise Exception('Analysis var reads from Nexus not supported yet')
     return _reader_module(source).get_analysis(source, condition)

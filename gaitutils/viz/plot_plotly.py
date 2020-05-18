@@ -52,15 +52,11 @@ def time_dist_barchart(
     big_fonts=False,
     figtitle=None,
 ):
-    """ Multi-variable and multi-condition barchart plot.
+    """Multi-variable and multi-condition barchart plot.
     values dict is keyed as values[condition][var][context],
     given by e.g. get_c3d_analysis()
     stddev can be None or a dict keyed as stddev[condition][var][context].
     plotvars gives variables to plot (if not all) and their order.
-
-    TODO:
-    fix hover labels
-    increase text size for bar text
     """
     conds, vars, units = _pick_common_vars(values, plotvars)
     vars = vars[::-1]  # plotly yaxis starts from bottom

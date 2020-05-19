@@ -2,7 +2,7 @@
 """
 Created on Tue Mar 17 14:41:31 2015
 
-Computations on gait trials
+Analysis of time-distance variables
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -18,30 +18,48 @@ logger = logging.getLogger(__name__)
 
 
 def group_analysis(an_list, fun=np.mean):
-    """ Average (or stddev etc) analysis dicts by applying fun to
-    collected values. The condition label needs to be the same for all dicts.
-    Returns single dict with the same condition. """
+    """Apply function (e.g. mean or stddev) to analysis dicts.
+
+    Parameters
+    ----------
+    an_list : list
+        List of analysis dicts returned by read_data.get_analysis(). All dicts
+        must have the same condition label.
+    fun : function
+        The reducing function to apply, by default np.mean. This must accept a
+        1-D ndarray of values and return a single value. Examples of useful
+        functions would be np.mean, np.std and np.median.
+
+    Returns
+    -------
+    dict
+        The resulting analysis dict after the reducing function has been
+        applied. The condition label is identical with the input dicts.
+    """
 
     if not isinstance(an_list, list):
         raise TypeError('Need a list of analysis dicts')
-
     if not an_list:
         return None
 
+    # check conditions
     condsets = [set(an.keys()) for an in an_list]
     conds = condsets[0]
     if not all(cset == conds for cset in condsets):
         raise RuntimeError('Conditions need to match between analysis dicts')
 
+    # figure out variables that are in all of the analysis dicts
     for cond in conds:
         varsets = [set(an[cond].keys()) for an in an_list for cond in conds]
-
     vars_ = set.intersection(*varsets)
     not_in_all = set.union(*varsets) - vars_
     if not_in_all:
         logger.warning(
-            'Some files are missing the following variables: %s' % ' '.join(not_in_all)
+            'Some analysis dicts are missing the following variables: %s'
+            % ' '.join(not_in_all)
         )
+
+    # gather data and apply function
     res = defaultdict(lambda: defaultdict(dict))
     for cond in conds:
         for var in vars_:
@@ -63,7 +81,9 @@ def group_analysis(an_list, fun=np.mean):
 
 
 def _step_width(source):
-    """ Compute step width over trial cycles. See:
+    """Compute step width over trial cycles.
+    
+    For details of computation, see:
     https://www.vicon.com/faqs/software/how-does-nexus-plug-in-gait-and-polygon-calculate-gait-cycle-parameters-spatial-and-temporal
     Returns context keyed dict of lists.
     FIXME: marker name into params?
@@ -71,6 +91,7 @@ def _step_width(source):
     to avoid creating new Trials
     """
     from .trial import Trial
+
     tr = Trial(source)
     sw = dict()
     mkr = 'TOE'  # marker name without context

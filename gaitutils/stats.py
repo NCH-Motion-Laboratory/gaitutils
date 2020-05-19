@@ -258,8 +258,8 @@ def average_model_data(data, reject_zeros=None, reject_outliers=None, use_median
         rejected based on robust statistics (modified Z-score).
     use_medians: bool
         Use median and MAD (median absolute deviation) instead of mean and
-        stddev. The median is robust to outliers but not robust to small
-        sample size. Thus, use of medians may be a bad idea for small samples.
+        stddev. The median is robust to outliers but not robust to small sample
+        size. Thus, use of medians may be a bad idea for small samples.
 
     Returns
     -------
@@ -332,25 +332,26 @@ def collect_trial_data(
         filename, or list of filenames (c3d) to collect data from, or list
         of Trial instances
     collect_types : dict
-        Which kind of vars to collect. Currently supported keys: 'model', 'emg'. Default is to
-        collect all supported types.
+        Which kind of vars to collect. Currently supported keys: 'model', 'emg'.
+        Default is to collect all supported types.
     fp_cycles_only : bool
-        If True, only collect data from forceplate cycles. Kinetics model vars will always
-        be collected from forceplate cycles only.
+        If True, only collect data from forceplate cycles. Kinetics model vars
+        will always be collected from forceplate cycles only.
     analog_len : int
-        Analog data length varies by gait cycle, so it will be resampled into grid length
-        specified by analog_len (default 1000 samples)
+        Analog data length varies by gait cycle, so it will be resampled into
+        grid length specified by analog_len (default 1000 samples)
 
     Returns
     -------
     data_all : dict
-        dict keyed by variable type. Each value is a dict keyed by variable, whose values are numpy arrays of data.
+        Dict keyed by variable type. Each value is a dict keyed by variable,
+        whose values are ndarrays of data.
 
     ncycles : dict
-        Total number of collected cycles for 'R', 'L', 'R_fp', 'L_fp'
-        (last two are for forceplate cycles)
-        
+        Total number of collected cycles for 'R', 'L', 'R_fp', 'L_fp' (last two
+        are for forceplate cycles)
     """
+    
     data_all = dict()
     ncycles = defaultdict(lambda: 0)
 
@@ -423,14 +424,13 @@ def collect_trial_data(
                             if data_all['model'][var] is None
                             else np.concatenate([data_all['model'][var], data[None, :]])
                         )
-
             for ch in emg_chs_to_collect:
                 # check whether cycle matches channel context
                 if not trial.is_static and not trial.emg.context_ok(ch, cycle.context):
                     continue
                 # get data on analog sampling grid and compute rms
                 try:
-                    t, data = trial.get_emg_data(ch)
+                    _, data = trial.get_emg_data(ch)
                 except (KeyError, GaitDataError):
                     logger.warning('no channel %s for %s' % (ch, trial))
                     continue
@@ -442,8 +442,7 @@ def collect_trial_data(
                     data_all['emg'][ch] = np.concatenate(
                         [data_all['emg'][ch], data_cyc[None, :]]
                     )
-
-    logger.debug(
+    logger.info(
         'collected %d trials, %d/%d R/L cycles, %d/%d forceplate cycles'
         % (len(trials), ncycles['R'], ncycles['L'], ncycles['R_fp'], ncycles['L_fp'])
     )

@@ -253,6 +253,6 @@ def test_autoproc():
         # and static is older (unmodified by processing)
         mtime = datetime.fromtimestamp(op.getmtime(c3dpath))
         if c3dn == 4:
-            assert (datetime.now() - mtime).seconds > 3600
+            assert (datetime.now() - mtime).total_seconds() > 3600
         else:
-            assert (datetime.now() - mtime).seconds < 300
+            assert (datetime.now() - mtime).total_seconds() < 300

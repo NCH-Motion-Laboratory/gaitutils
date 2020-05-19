@@ -59,12 +59,14 @@ def test_c3d_analysis_data():
         'Stride Length',
         'Opposite Foot Contact',
         'Cadence',
+        'Step Width',
     ]
     assert all([var in an for var in an_vars])
     assert all(['Left' in an[var] for var in an_vars])
     assert all(['Right' in an[var] for var in an_vars])
     an_file = _file_path('analysis_testdata.p')
     an_g = pickle.load(open(an_file, 'rb'))
+    an_vars.remove('Step Width')  # unfortunately not in test data
     for var in an_vars:
         for context in ['Left', 'Right']:
             assert_allclose(an_g['unknown'][var][context], an[var][context])

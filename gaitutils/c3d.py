@@ -18,7 +18,7 @@ import sys
 from .numutils import center_of_pressure, _change_coords
 from .utils import TrialEvents
 from .envutils import lru_cache_checkfile
-from . import GaitDataError
+from . import analysis, GaitDataError
 
 
 logger = logging.getLogger(__name__)
@@ -129,6 +129,17 @@ def get_analysis(c3dfile, condition='unknown'):
                     '%s has missing value: %s / %s' % (c3dfile, var, context)
                 )
                 di_[var][context] = np.nan
+
+    # Nexus <2.8 did not output step width into c3d, so compute it here if
+    # needed
+    if 'Step Width' not in di_:
+        logger.warning('computing step widths (not found in %s)' % c3dfile)
+        sw = analysis._step_width(c3dfile)
+        di[condition]['Step Width'] = dict()
+        # XXX: currently uses average of all cycles from trial
+        di[condition]['Step Width']['Right'] = np.array(sw['R']).mean()
+        di[condition]['Step Width']['Left'] = np.array(sw['L']).mean()
+        di[condition]['Step Width']['unit'] = 'm'
 
     return di
 

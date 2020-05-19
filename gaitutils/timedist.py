@@ -11,7 +11,7 @@ import os.path as op
 import numpy as np
 from collections import OrderedDict
 
-from . import analysis, sessionutils, cfg, GaitDataError
+from . import analysis, sessionutils, cfg, GaitDataError, c3d
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +122,7 @@ def _multitrial_analysis(trials):
         ans = list()
         for c3dfile in cond_files:
             try:
-                an = analysis.get_analysis(c3dfile, condition=cond_label)
+                an = c3d.get_analysis(c3dfile, condition=cond_label)
                 ans.append(an)
             except GaitDataError:
                 logger.warning('no analysis values found in %s' % c3dfile)

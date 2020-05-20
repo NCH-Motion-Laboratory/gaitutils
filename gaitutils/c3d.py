@@ -272,7 +272,7 @@ def _get_metadata(c3dfile):
     try:
         par_names = _get_c3d_metadata_subfields(acq, 'PROCESSING')
     except RuntimeError:
-        raise GaitDataError('cannot read metadata from %s' % c3dfile)
+        raise GaitDataError('cannot read subject parameters from %s' % c3dfile)
     subj_params = defaultdict(lambda: None)
     subj_params.update({par: _get_c3d_subject_param(acq, par) for par in par_names})
 

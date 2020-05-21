@@ -24,23 +24,27 @@ from . import analysis, GaitDataError
 logger = logging.getLogger(__name__)
 
 # try the import the bundled btk version first (currently Python 2.7 64-bit
-# only); if that fails, also try pyBTK
+# only); if that fails, try other options
 try:
     from .thirdparty import btk
-
     BTK_IMPORTED = True
 except ImportError:
     try:
-        if sys.version_info.major == 3:
-            from pyBTK.btk3 import btk
-        elif sys.version_info.major == 2:
-            from pyBTK.btk2 import btk
-        else:
-            raise Exception('unexpected major Python version')
+        import btk
         BTK_IMPORTED = True
     except ImportError:
-        BTK_IMPORTED = False
-        logger.warning('cannot import btk module; unable to read .c3d files')
+        try:
+            # try pyBTK package
+            if sys.version_info.major == 3:
+                from pyBTK.btk3 import btk
+            elif sys.version_info.major == 2:
+                from pyBTK.btk2 import btk
+            else:
+                raise Exception('unexpected major Python version')
+            BTK_IMPORTED = True
+        except ImportError:
+            BTK_IMPORTED = False
+            logger.warning('cannot import btk module; unable to read .c3d files')
 
 
 def _get_c3d_metadata_subfields(acq, field):

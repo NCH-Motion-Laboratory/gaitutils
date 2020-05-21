@@ -16,9 +16,9 @@ import os
 import sys
 
 from .numutils import center_of_pressure, _change_coords
-from .utils import TrialEvents
+from .utils import TrialEvents, _step_width
 from .envutils import lru_cache_checkfile
-from . import analysis, GaitDataError
+from . import GaitDataError
 
 
 logger = logging.getLogger(__name__)
@@ -138,13 +138,12 @@ def get_analysis(c3dfile, condition='unknown'):
     # needed
     if 'Step Width' not in di_:
         logger.warning('computing step widths (not found in %s)' % c3dfile)
-        sw = analysis._step_width(c3dfile)
+        sw = _step_width(c3dfile)
         di[condition]['Step Width'] = dict()
         # XXX: currently uses average of all cycles from trial
         di[condition]['Step Width']['Right'] = np.array(sw['R']).mean()
         di[condition]['Step Width']['Left'] = np.array(sw['L']).mean()
         di[condition]['Step Width']['unit'] = 'm'
-
     return di
 
 

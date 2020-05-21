@@ -6,12 +6,13 @@ Time-distance computations
 @author: Jussi (jnu@iki.fi)
 """
 
+from __future__ import division
 import logging
 import os.path as op
 import numpy as np
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
-from . import analysis, sessionutils, cfg, GaitDataError, c3d
+from . import sessionutils, cfg, GaitDataError, c3d
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,70 @@ _timedist_vars = [
     'Step Width',
     'Step Length',
 ]
+
+
+def group_analysis(an_list, fun=np.mean):
+    """Apply function (e.g. mean or stddev) to analysis dicts.
+
+    Parameters
+    ----------
+    an_list : list
+        List of analysis dicts returned by read_data.get_analysis(). All dicts
+        must have the same condition label.
+    fun : function
+        The reducing function to apply, by default np.mean. This must accept a
+        1-D ndarray of values and return a single value. Examples of useful
+        functions would be np.mean, np.std and np.median.
+
+    Returns
+    -------
+    dict
+        The resulting analysis dict after the reducing function has been
+        applied. The condition label is identical with the input dicts.
+    """
+
+    if not isinstance(an_list, list):
+        raise TypeError('Need a list of analysis dicts')
+    if not an_list:
+        return None
+
+    # check conditions
+    condsets = [set(an.keys()) for an in an_list]
+    conds = condsets[0]
+    if not all(cset == conds for cset in condsets):
+        raise RuntimeError('Conditions need to match between analysis dicts')
+
+    # figure out variables that are in all of the analysis dicts
+    for cond in conds:
+        varsets = [set(an[cond].keys()) for an in an_list for cond in conds]
+    vars_ = set.intersection(*varsets)
+    not_in_all = set.union(*varsets) - vars_
+    if not_in_all:
+        logger.warning(
+            'Some analysis dicts are missing the following variables: %s'
+            % ' '.join(not_in_all)
+        )
+
+    # gather data and apply function
+    res = defaultdict(lambda: defaultdict(dict))
+    for cond in conds:
+        for var in vars_:
+            # this will fail if vars are not strictly matched between dicts
+            res[cond][var]['unit'] = an_list[0][cond][var]['unit']
+            for context in ['Right', 'Left']:
+                # gather valus from analysis dicts
+                allvals = np.array(
+                    [
+                        an[cond][var][context]
+                        for an in an_list
+                        if context in an[cond][var]
+                    ]
+                )
+                # filter out missing values (nans)
+                allvals = allvals[~np.isnan(allvals)]
+                res[cond][var][context] = fun(allvals) if allvals.size else np.nan
+    return res
+
 
 
 def _print_analysis_table(trials):
@@ -127,8 +192,8 @@ def _multitrial_analysis(trials):
             except GaitDataError:
                 logger.warning('no analysis values found in %s' % c3dfile)
         if ans:
-            res_avg = analysis.group_analysis(ans)
-            res_std = analysis.group_analysis(ans, fun=np.std)
+            res_avg = group_analysis(ans)
+            res_std = group_analysis(ans, fun=np.std)
             res_avg_all.update(res_avg)
             res_std_all.update(res_std)
     return res_avg_all, res_std_all

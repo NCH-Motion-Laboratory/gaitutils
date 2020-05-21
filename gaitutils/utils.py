@@ -20,6 +20,7 @@ import logging
 from . import GaitDataError, cfg
 from .numutils import rising_zerocross, digitize_array, falling_zerocross, _baseline
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -113,6 +114,52 @@ def marker_gaps(mdata, ignore_edge_gaps=True):
     else:
         gap_inds = np.where(allzero == 0)[0]
     return gap_inds
+
+
+def _step_width(source):
+    """Compute step width over trial cycles.
+    
+    For details of computation, see:
+    https://www.vicon.com/faqs/software/how-does-nexus-plug-in-gait-and-polygon-calculate-gait-cycle-parameters-spatial-and-temporal
+    Returns context keyed dict of lists.
+    FIXME: marker name into params?
+    FIXME: this (and similar) may also need to take Trial instance as argument
+    to avoid creating new Trials
+    """
+    from .trial import Trial
+    tr = Trial(source)
+    sw = dict()
+    mkr = 'TOE'  # marker name without context
+    mkrdata = tr._full_marker_data
+    # FIXME: why not use cycles here?
+    for context, strikes in zip(['L', 'R'], [tr.events.lstrikes, tr.events.rstrikes]):
+        sw[context] = list()
+        nstrikes = len(strikes)
+        if nstrikes < 2:
+            continue
+        # contralateral vars
+        context_co = 'L' if context == 'R' else 'R'
+        strikes_co = tr.events.lstrikes if context == 'R' else tr.events.rstrikes
+        mname = context + mkr
+        mname_co = context_co + mkr
+        for j, strike in enumerate(strikes):
+            if strike == strikes[-1]:  # last strike on this side
+                break
+            pos_this = mkrdata[mname][strike]
+            pos_next = mkrdata[mname][strikes[j + 1]]
+            strikes_next_co = [k for k in strikes_co if k > strike]
+            if len(strikes_next_co) == 0:  # no subsequent contralateral strike
+                break
+            pos_next_co = mkrdata[mname_co][strikes_next_co[0]]
+            # vector distance between 'step lines' (see url above)
+            V1 = pos_next - pos_this
+            V1 /= np.linalg.norm(V1)
+            VC = pos_next_co - pos_this
+            VCP = V1 * np.dot(VC, V1)  # proj to ipsilateral line
+            VSW = VCP - VC
+            # marker data is in mm, but return step width in m
+            sw[context].append(np.linalg.norm(VSW) / 1000.0)
+    return sw
 
 
 def avg_markerdata(mkrdata, markers, roi=None, fail_on_gaps=True, avg_velocity=False):

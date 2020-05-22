@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-
-Wrapper methods that read from either Vicon Nexus or c3d files.
-'source' argument can be either a ViconNexus.ViconNexus instance or
-a path to a c3d file.
-
+Wrapper methods that read from Vicon Nexus or c3d files.
+The 'source' argument can be either a ViconNexus.ViconNexus instance or a c3d
+filename. Returned values should be independent of source.
 
 @author: Jussi (jnu@iki.fi)
-
 """
+
 from past.builtins import basestring
 import os.path as op
 
@@ -95,13 +93,19 @@ def get_forceplate_data(source):
     Returns
     -------
     dict
-        The forceplate data dict with the following keys:
-        F: Nx3 array with force x,y,z components
-        M: Nx3 array with moment x,y,z components
-        Ftot: Nx1 array of total force
-        CoP:  Nx3 array, center of pressure
-        analograte: sampling rate
-        samplesperframe: samples per capture frame
+        The forceplate data dict with the following keys and values:
+        F : ndarray
+            Nx3 array with x,y,z components of the force.
+        M : ndarray
+            Nx3 array with x,y,z components of the moment.
+        Ftot : ndarray
+            Nx1 array of total force.
+        CoP : ndarray
+            Nx3 array of center of pressure data.
+        analograte : float
+            Sampling rate.
+        samplesperframe : int
+            Analog samples per capture frame.
     """
     return _reader_module(source)._get_forceplate_data(source)
 
@@ -121,7 +125,8 @@ def get_marker_data(source, markers, ignore_missing=False):
     Returns
     -------
     dict
-        Marker data dict. Keys are marker names. Values are Nx3 ndarrays.
+        Marker data dict. Keys are marker names and values are Nx3 ndarrays of
+        x,y,z data.
     """
     return _reader_module(source)._get_marker_data(
         source, markers, ignore_missing=ignore_missing,
@@ -129,24 +134,84 @@ def get_marker_data(source, markers, ignore_missing=False):
 
 
 def get_emg_data(source):
-    """ Get EMG data. Returns dict with keys """
+    """Read EMG data.
+
+    Parameters
+    ----------
+    source : ViconNexus | str
+        The data source. Can be a c3d filename or a ViconNexus instance.
+
+    Returns
+    -------
+    dict
+        Dict with following keys:
+        t : ndarray
+            Time axis in seconds.
+        data : dict
+            The data. Keys are channel names and values are ndarrays.
+    """    
     return _reader_module(source)._get_emg_data(source)
 
 
 def get_analysis(source, condition='unknown'):
-    """Get analysis data"""
+    """Read analysis data (e.g. time-distance vars).
+
+    Parameters
+    ----------
+    source : str
+        Name of a c3d file. Reads from Nexus are not supported yet.
+    condition : str, optional
+        The condition name for the analysis dict, by default 'unknown'.
+
+    Returns
+    -------
+    dict
+        A nested dict of the analysis values, keyed by variable name and
+        context. The first key is the condition name.
+    """
     if nexus._is_vicon_instance(source):
         raise Exception('Analysis var reads from Nexus not supported yet')
     return _reader_module(source).get_analysis(source, condition)
 
 
 def get_accelerometer_data(source):
-    """ Get accelerometer data. Returns dict with keys """
+    """Read accelerometer data.
+
+    Parameters
+    ----------
+    source : ViconNexus | str
+        The data source. Can be a c3d filename or a ViconNexus instance.
+
+    Returns
+    -------
+    dict
+        Dict with following keys:
+        t : ndarray
+            Time axis in seconds.
+        data : dict
+            The data. Keys are channel names and values are ndarrays.
+    """    
     return _reader_module(source)._get_accelerometer_data(source)
 
 
 def get_model_data(source, model):
-    """ Get other variables such as model outputs """
+    """Read model data (e.g. Plug-in Gait).
+
+    Parameters
+    ----------
+    source : ViconNexus | str
+        The data source. Can be a c3d filename or a ViconNexus instance.
+    model : GaitModel
+        The model to read. For available models, see models.py. For a known
+        variable name, the corresponding model can be obtained by calling
+        models.model_from_var(varname).
+
+    Returns
+    -------
+    dict
+        The model data. Keys are model variable names and values are ndarrays of
+        data.
+    """
     modeldata = _reader_module(source)._get_model_data(source, model)
     for var in model.read_vars:
         # convert Moment variables into SI units

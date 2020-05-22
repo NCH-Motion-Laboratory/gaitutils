@@ -99,7 +99,7 @@ def get_analysis(c3dfile, condition='unknown'):
     c3dfile : str
         Name of the file.
     condition : str, optional
-        The condition name, by default 'unknown'
+        The condition name, by default 'unknown'.
 
     Returns
     -------
@@ -148,7 +148,10 @@ def get_analysis(c3dfile, condition='unknown'):
 
 
 def _get_emg_data(c3dfile):
-    """Read EMG data from a c3d file"""
+    """Read EMG data from a c3d file.
+
+    See read_data.get_emg_data() for details.
+    """
     return _get_analog_data(c3dfile, 'EMG')
 
 
@@ -218,7 +221,10 @@ def _get_c3d_subject_param(acq, param):
 
 
 def _get_metadata(c3dfile):
-    """Read trial and subject metadata from c3d file."""
+    """Read trial and subject metadata from c3d file.
+    
+    See read_data.get_metadata() for details.
+    """
     trialname = os.path.basename(os.path.splitext(c3dfile)[0])
     sessionpath = os.path.dirname(c3dfile)
     acq = _get_c3dacq(c3dfile)

@@ -11,7 +11,7 @@ import os.path as op
 from collections import OrderedDict
 
 from .. import GaitDataError, sessionutils, cfg
-from ..timedist import _timedist_vars, _multitrial_analysis
+from ..timedist import _timedist_vars, _group_analysis_trials
 from .plot_misc import get_backend
 
 logger = logging.getLogger(__name__)
@@ -110,7 +110,7 @@ def plot_trials(c3dfiles, plotvars=None, title=None, big_fonts=False, backend=No
     """
     if plotvars is None:
         plotvars = _timedist_vars
-    res_avg_all, res_std_all = _multitrial_analysis(c3dfiles)
+    res_avg_all, res_std_all = _group_analysis_trials(c3dfiles)
     backend_lib = get_backend(backend)
     return backend_lib.time_dist_barchart(
         res_avg_all,

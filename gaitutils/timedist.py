@@ -99,7 +99,7 @@ def group_analysis(an_list, fun=np.mean):
 
 def _print_analysis_table(trials):
     """Print analysis vars as text table"""
-    res_avg_all, _ = _multitrial_analysis(trials)
+    res_avg_all, _ = _group_analysis_trials(trials)
     hdr = '%-25s%-9s%-9s\n' % ('Variable', 'Right', 'Left')
     yield hdr
     for _, cond_data in res_avg_all.items():
@@ -110,7 +110,7 @@ def _print_analysis_table(trials):
 
 def _print_analysis_text(trials, main_label=None):
     """Print analysis vars as text"""
-    res_avg_all, _ = _multitrial_analysis(trials)
+    res_avg_all, _ = _group_analysis_trials(trials)
     hdr = 'Time-distance variables (R/L)'
     hdr += ' for %s:\n' % main_label if main_label else ':\n'
     yield hdr
@@ -125,7 +125,7 @@ def _print_analysis_text_finnish(trials, vars_=None, main_label=None):
     """Print analysis vars_ as Finnish text"""
     if vars_ is None:
         vars_ = _timedist_vars
-    res_avg_all, res_std_all = _multitrial_analysis(trials)
+    res_avg_all, res_std_all = _group_analysis_trials(trials)
     hdr = 'Matka-aikamuuttujat (O/V)'
     hdr += ' (%s):\n' % main_label if main_label else ':\n'
     yield hdr
@@ -165,7 +165,7 @@ def _print_analysis_text_finnish(trials, vars_=None, main_label=None):
     yield ''
 
 
-def _session_analysis_text(sessionpath):
+def _session_analysis_text_finnish(sessionpath):
     """Return session time-distance vars as text"""
     sessiondir = op.split(sessionpath)[-1]
     tagged_trials = sessionutils.get_c3ds(
@@ -176,7 +176,7 @@ def _session_analysis_text(sessionpath):
     )
 
 
-def _multitrial_analysis(trials):
+def _group_analysis_trials(trials):
     """Multitrial analysis from given trials (.c3d files).
     trials: dict of lists keyed by condition name
     If there are multiple trials per condition, they will be averaged.
@@ -217,8 +217,8 @@ def _pick_common_vars(values, vars_wanted=None):
                 % (vars_wanted_set - vars_ok)
             )
         # preserve original var order
-        vars = [var for var in vars_wanted if var in vars_ok]
+        vars_ = [var for var in vars_wanted if var in vars_ok]
     else:
-        vars = vars_common
-    units = [vals_1[var]['unit'] for var in vars]
-    return conds, vars, units
+        vars_ = vars_common
+    units = [vals_1[var]['unit'] for var in vars_]
+    return conds, vars_, units

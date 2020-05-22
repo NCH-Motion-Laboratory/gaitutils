@@ -18,14 +18,13 @@ from utils import _file_path
 logger = logging.getLogger(__name__)
 
 
-# test session
+# test data
 sessiondir_ = 'test_subjects/D0063_RR/2018_12_17_preOp_RR'
 sessiondir_abs = _file_path(sessiondir_)
 sessiondir2_ = 'test_subjects/D0063_RR/2018_12_17_preOp_tuet_RR'
 sessiondir2_abs = _file_path(sessiondir2_)
-sessiondir__ = op.split(sessiondir_)[-1]
-sessions = [sessiondir_abs, sessiondir2_abs]
-tmpdir = tempfile.gettempdir()
+sessiondir3_ = 'test_subjects/girl6v/test_session'
+sessiondir3_abs = _file_path(sessiondir3_)
 
 
 def test_emg_detect_bads():
@@ -55,3 +54,9 @@ def test_emg_detect_bads():
     }
     for chname, exp_ok in expected_ok.items():
         assert e.status_ok(chname) == exp_ok
+    # all should be ok
+    fn = r'2015_10_22_girl6v_IN03.c3d'
+    fpath = op.join(sessiondir3_abs, fn)
+    e = emg.EMG(fpath)
+    for chname, exp_ok in expected_ok.items():
+        assert e.status_ok(chname) == True

@@ -34,7 +34,6 @@ class EMG(object):
         logger.debug('new EMG instance from %s' % source)
         self.source = source
         self.passband = cfg.emg.passband
-        self.linefreq = cfg.emg.linefreq
         self._data = None
         self.t = None
         self.sfrate = None
@@ -104,6 +103,9 @@ class EMG(object):
         if rms:
             data = numutils.rms(data, cfg.emg.rms_win)
         elif self.passband:  # no filtering for RMS data
+            # filtered data is currently not cached; _filtfilt() call typically
+            # takes less than 1 ms, so this should not be a problem, unless a
+            # huge number of calls are made
             data = numutils._filtfilt(data, self.passband, self.sfrate)
         data *= self.correction_factor
         return data
@@ -173,32 +175,8 @@ class EMG(object):
         return True
 
     def _is_valid_emg(self, data):
-        """Check whether channel contains a valid EMG signal.
-        
-        Usually, an invalid signal can be identified by the presence of large
-        powerline (harmonics) compared to broadband signal. Cause is typically
-        disconnected or badly connected electrodes.
-        TODO: should use multiple-zero IIR notch filter.
-        """
-        # bandwidth of broadband signal. should be less than dist between
-        # the powerline harmonics
-        broadband_bw = 30
-        power_bw = 4  # width of power line peak detector (bandpass)
-        nharm = 3  # number of harmonics to detect
-        # detect the 50 Hz harmonics
-        linefreqs = (np.arange(nharm + 1) + 1) * self.linefreq
-        intvar = 0
-        for f in linefreqs:
-            data_filt = numutils._filtfilt(
-                data, [f - power_bw / 2.0, f + power_bw / 2.0], self.sfrate
-            )
-            intvar += np.var(data_filt) / power_bw
-        # broadband signal
-        band = [self.linefreq + 10, self.linefreq + 10 + broadband_bw]
-        emgvar = np.var(numutils._filtfilt(data, band, self.sfrate)) / broadband_bw
-        intrel = 10 * np.log10(intvar / emgvar)
-        return intrel < cfg.emg.max_interference
-        #return np.var(data) < 1e-8
+        """Check whether channel contains a valid EMG signal."""
+        return cfg.emg.variance_ok[0] < np.var(data) < cfg.emg.variance_ok[1]
 
 
 class AvgEMG(EMG):

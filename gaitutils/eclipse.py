@@ -21,11 +21,14 @@ logger = logging.getLogger(__name__)
 
 
 class FileFilter(object):
-    """ File-like class that will replace strings according to the replace
+    """Filter class for configobj.
+
+    File-like class that will replace strings according to the replace
     dict below. This is needed for prefiltering before configobj parsing,
     since configobj will not tolerate lines with neither key nor value
     (which seem to occasionally appear in Eclipse files).
-    Also deduplicates successive identical lines for same reason """
+    Also deduplicates successive identical lines for same reason.
+    """
 
     replace = {'\n=\n': '\n'}
 
@@ -33,7 +36,10 @@ class FileFilter(object):
         self.fname = fname
 
     def read(self):
-        """ ConfigObj seems to use only this method """
+        """Read data.
+
+        ConfigObj seems to use only this method.
+        """
         # Eclipse switched from latin-1 to utf-8 at some point...
         try:
             self.fp = io.open(self.fname, encoding='utf8')
@@ -54,7 +60,7 @@ class FileFilter(object):
 
 
 def _enf_reader(fname_enf):
-    """ Return enf reader """
+    """Return enf reader (ConfigObj instance)."""
     fp = FileFilter(fname_enf)
     # do not listify comma-separated values
     # logger.debug('loading %s' % fname_enf)

@@ -332,11 +332,11 @@ def plot_trials(
                     tracegroup = _get_cycle_name(trial, cyc, name_type=legend_type)
                     cyclename_full = _get_cycle_name(trial, cyc, name_type='full')
 
-                    mod = models.model_from_var(var)
-                    if mod:
+                    themodel = models.model_from_var(var)
+                    if themodel:
                         do_plot = cyc in cyclebunch.model_cycles
 
-                        if var in mod.varnames_noside:
+                        if var in themodel.varnames_noside:
                             # var context was unspecified, so choose it
                             # according to cycle context
                             var = context + var
@@ -348,14 +348,14 @@ def plot_trials(
                         # forceplate data
                         if (
                             normalized
-                            and mod.is_kinetic_var(var)
+                            and themodel.is_kinetic_var(var)
                             and not cyc.on_forceplate
                         ):
                             do_plot = False
 
                         # plot normal data before first cycle
                         if model_normaldata is not None and first_cyc and normalized:
-                            nvar = var if var in mod.varlabels_noside else var[1:]
+                            nvar = var if var in themodel.varlabels_noside else var[1:]
                             key = nvar if nvar in model_normaldata else None
                             ndata = (
                                 model_normaldata[key]
@@ -377,7 +377,7 @@ def plot_trials(
                             do_plot = False
 
                         if do_plot:
-                            # decide style and color
+                            # get style and color
                             sty = _style_by_params(
                                 style_by['model'], trace_styles, trial, cyc, context
                             )
@@ -426,29 +426,14 @@ def plot_trials(
                                     leg_entries['Stddev for %s' % tracegroup] = stddev_
 
                             # add supplementary data
-                            # if cyc in supplementary_data:
-                            #     supdata = supplementary_data[cyc]
-                            #     if var in supdata:
-                            #         logger.debug('plotting supplementary data '
-                            #                      'for var %s' % var)
-                            #         t_sup = supdata[var]['t']
-                            #         data_sup = supdata[var]['data']
-                            #         label_sup = supdata[var]['label']
-                            #         strace = go.Scatter(x=t_sup, y=data_sup,
-                            #                             name=label_sup,
-                            #                             text=label_sup,
-                            #                             line=line,
-                            #                             legendgroup=tracegroup,
-                            #                             hoverinfo='x+y+text',
-                            #                             showlegend=False)
-                            #         fig.append_trace(strace, i+1, j+1)
+                            # XXX: not implemented for matplotlib
 
                             # axis adjustments for model variable
                             if not ax.get_ylabel():
-                                yunit = mod.units[var]
+                                yunit = themodel.units[var]
                                 if yunit == 'deg':
                                     yunit = u'\u00B0'  # degree sign
-                                ydesc = [s[:3] for s in mod.ydesc[var]]  # shorten
+                                ydesc = [s[:3] for s in themodel.ydesc[var]]  # shorten
                                 ylabel_ = '%s %s %s' % (ydesc[0], yunit, ydesc[1])
                                 ax.set(ylabel=ylabel_)
 
@@ -477,6 +462,68 @@ def plot_trials(
                                     subplot_title += (
                                         ' (avg of %d cycles)' % trial.n_ok[var]
                                     )
+
+                    # plot marker variable
+                    elif var in trial._full_marker_data:
+                        do_plot = cyc in cyclebunch.model_cycles
+
+                        t, mdata = trial.get_marker_data(var, cycle=cyc)
+                        if mdata is None:
+                            do_plot = False
+
+                        if do_plot:
+
+                            for datadim, data in zip('XYZ', mdata.T):
+                                sty = _style_by_params(
+                                    style_by['marker'], trace_styles, trial, cyc, context, datadim
+                                )
+                                col = _color_by_params(
+                                    color_by['marker'], trace_colors, trial, cyc, context, datadim
+                                )
+
+                                line_ = ax.plot(
+                                    t,
+                                    data,
+                                    color=col,
+                                    linestyle=sty,
+                                    linewidth=cfg.plot.model_linewidth,
+                                    alpha=cfg.plot.model_alpha,
+                                )[0]
+                                leg_entries[tracegroup] = line_
+
+                                # add toeoff marker
+                                if cyc.toeoffn is not None:
+                                    toeoff = int(cyc.toeoffn)
+                                    toeoff_marker = ax.plot(
+                                        t[toeoff : toeoff + 1],
+                                        data[toeoff : toeoff + 1],
+                                        col,
+                                        marker='^',
+                                    )
+
+                            # adjust subplot once
+                            if not ax.get_ylabel():  # this gets modified the first time around
+                                ylabel = 'mm'
+                                ax.set(ylabel=ylabel)
+
+                                ax.xaxis.label.set_fontsize(
+                                    cfg.plot_matplotlib.label_fontsize
+                                )
+                                ax.yaxis.label.set_fontsize(
+                                    cfg.plot_matplotlib.label_fontsize
+                                )
+                                title = _var_title(var)
+                                if title:
+                                    ax.set_title(title)
+                                    ax.title.set_fontsize(
+                                        cfg.plot_matplotlib.subtitle_fontsize
+                                    )
+                                ax.tick_params(
+                                    axis='both',
+                                    which='major',
+                                    labelsize=cfg.plot_matplotlib.ticks_fontsize,
+                                )
+                                ax.locator_params(axis='y', nbins=6)  # less tick marks
 
                     # plot EMG variable
                     elif (
@@ -561,9 +608,6 @@ def plot_trials(
                                         vmin=0,
                                         vmax=1,
                                     )
-
-                    elif var is None:
-                        continue
 
                     else:
                         raise GaitDataError('Unknown variable %s' % var)

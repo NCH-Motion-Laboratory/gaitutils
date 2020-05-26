@@ -482,21 +482,21 @@ class Gaitmenu(QtWidgets.QMainWindow):
         rb_backend_active = self.rb_map_backend[cfg.plot.backend]
         rb_backend_active.setChecked(True)
 
-        def _colorstylevar_changed(self):
-            logger.debug('callback')
-
         # set up color/style comboboxes
         self.cbColorStyleVar.currentIndexChanged.connect(self._colorstylevar_changed)
         # this callback only needs to fire when user activates the combobox
         self.cbColorStyleBy.activated.connect(self._colorstyleby_changed)
         # dynamically create combobox entries according to cfg
-        for vartype, col_choice in cfg.plot.color_by.items():
+        for vartype in cfg.plot.color_by:
+            # capitalize 'emg' choice
+            vartype_txt = 'EMG' if vartype == 'emg' else vartype
             self.cbColorStyleVar.addItem(
-                'Set %s trace color by:' % vartype, userData=('color', vartype)
+                'Set %s trace color by:' % vartype_txt, userData=('color', vartype)
             )
-        for vartype, sty_choice in cfg.plot.style_by.items():
+        for vartype in cfg.plot.style_by:
+            vartype_txt = 'EMG' if vartype == 'emg' else vartype
             self.cbColorStyleVar.addItem(
-                'Set %s trace style by:' % vartype, userData=('style', vartype)
+                'Set %s trace style by:' % vartype_txt, userData=('style', vartype)
             )
 
         # add plot layouts to layout combobox

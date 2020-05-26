@@ -279,6 +279,11 @@
         </item>
         <item>
          <property name="text">
+          <string>dimension</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
           <string>context</string>
          </property>
         </item>

@@ -343,7 +343,7 @@ def plot_trials(
         sorter = partial(_get_cycle_name, trial, name_type=legend_type)
         allcycles = sorted(cyclebunch.allcycles, key=sorter)
 
-        for cyc_ind, cyc in enumerate(allcycles):
+        for cyc in allcycles:
 
             context = cyc.context
 
@@ -354,17 +354,14 @@ def plot_trials(
                         continue
 
                     xaxis, yaxis = _get_plotly_axis_labels(i, j, ncols)
-                    tracename = _get_cycle_name(trial, cyc, name_type=legend_type)
+
+                    cyclename = _get_cycle_name(trial, cyc, name_type=legend_type)
                     cyclename_full = _get_cycle_name(trial, cyc, name_type='full')
+
                     # plotly cannot directly handle unicode objects
                     # needs to be handled in py2/3 compatible way
-                    if sys.version_info.major == 2 and isinstance(tracename, unicode):
-                        tracename = tracename.encode('utf-8')
-
-                    # tracename determines the legend group
-                    # only create a legend entry for the first trace in the
-                    # tracegroup, so we do not repeat legends
-                    show_legend = tracename not in legendgroups
+                    if sys.version_info.major == 2 and isinstance(cyclename, unicode):
+                        cyclename = cyclename.encode('utf-8')
 
                     themodel = models.model_from_var(var)
                     if themodel:  # it's a model variable
@@ -392,7 +389,6 @@ def plot_trials(
                             do_plot = False
 
                         if do_plot:
-                            # decide style and color
                             sty = _style_by_params(
                                 style_by['model'], trace_styles, trial, cyc, context
                             )
@@ -405,12 +401,17 @@ def plot_trials(
                                 width=cfg.plot.model_linewidth, dash=sty, color=col
                             )
 
+                            # for model variables, put traces into legend groups
+                            # according to trial/cycle info
+                            legendgroup = cyclename
+                            show_legend = cyclename not in legendgroups
+
                             trace = dict(
                                 x=t,
                                 y=y,
-                                name=tracename,
+                                name=cyclename,
                                 text=cyclename_full,
-                                legendgroup=tracename,
+                                legendgroup=legendgroup,
                                 showlegend=show_legend,
                                 hoverlabel=dict(namelength=-1),
                                 hoverinfo='x+y+text',
@@ -425,7 +426,7 @@ def plot_trials(
                                     x=t[toeoff : toeoff + 1],
                                     y=y[toeoff : toeoff + 1],
                                     showlegend=False,
-                                    legendgroup=tracename,
+                                    legendgroup=legendgroup,
                                     hoverinfo='skip',
                                     mode='markers',
                                     marker=marker,
@@ -434,7 +435,7 @@ def plot_trials(
 
                             # add trace to figure
                             fig.add_trace(trace, i + 1, j + 1)
-                            legendgroups.add(tracename)
+                            legendgroups.add(legendgroup)
 
                             # each cycle gets its own stddev plot
                             if isinstance(trial, AvgTrial):
@@ -455,8 +456,8 @@ def plot_trials(
                                         y - sdata,
                                         y + sdata,
                                         fillcolor=fillcolor,
-                                        name='Stddev, %s' % tracename,
-                                        legendgroup='Stddev, %s' % tracename,
+                                        name='Stddev, %s' % cyclename,
+                                        legendgroup='Stddev, %s' % cyclename,
                                         showlegend=show_legend,
                                         line=dict(width=0),
                                     )  # no border lines
@@ -480,12 +481,12 @@ def plot_trials(
                                         name=label_sup,
                                         text=label_sup,
                                         line=line,
-                                        legendgroup=tracename,
+                                        legendgroup=cyclename,
                                         hoverinfo='x+y+text',
                                         showlegend=False,
                                     )
                                     fig.add_trace(strace, i + 1, j + 1)
-                                    legendgroups.add(tracename)
+                                    legendgroups.add(cyclename)
 
                             # adjust subplot once
                             if not subplot_adjusted[(i, j)]:
@@ -510,6 +511,7 @@ def plot_trials(
                                 fig['layout'][yaxis].update(hoverformat='.2f')
                                 subplot_adjusted[(i, j)] = True
 
+                    # plot marker variable
                     elif var in trial._full_marker_data:
                         do_plot = cyc in cyclebunch.model_cycles
                         t, mdata = trial.get_marker_data(var, cycle=cyc)
@@ -519,7 +521,6 @@ def plot_trials(
                         if do_plot:
 
                             for datadim, data in zip('XYZ', mdata.T):
-                                # decide style and color
                                 sty = _style_by_params(
                                     style_by['marker'], trace_styles, trial, cyc, context, datadim
                                 )
@@ -530,19 +531,26 @@ def plot_trials(
                                 line = dict(
                                     width=cfg.plot.model_linewidth, dash=sty, color=col
                                 )
+                                # dim-specific tracename
+                                tracename_marker = 'mkr_%s:%s' % (datadim, cyclename)
+                                # marker data goes into its own dimension and
+                                # trial -based groups, so we can toggle x, y and
+                                # z traces for each trial separately
+                                legendgroup = 'mkr_%s:%s' % (datadim, trial.trialname)
+                                show_legend = tracename_marker not in legendgroups
                                 trace = dict(
                                     x=t,
                                     y=data,
-                                    name='mkr_%s:%s' % (datadim, tracename),
+                                    name=tracename_marker,
                                     text=cyclename_full,
-                                    legendgroup=tracename,
+                                    legendgroup=legendgroup,
                                     showlegend=show_legend,
                                     hoverlabel=dict(namelength=-1),
                                     hoverinfo='x+y+name',
                                     line=line,
                                 )
                                 fig.add_trace(trace, i + 1, j + 1)
-                                legendgroups.add(tracename)
+                                legendgroups.add(tracename_marker)
 
                                 # add toeoff marker
                                 if cyc.toeoffn is not None:
@@ -552,7 +560,7 @@ def plot_trials(
                                         x=t[toeoff : toeoff + 1],
                                         y=data[toeoff : toeoff + 1],
                                         showlegend=False,
-                                        legendgroup=tracename,
+                                        legendgroup=legendgroup,
                                         hoverinfo='skip',
                                         mode='markers',
                                         marker=marker,
@@ -589,7 +597,7 @@ def plot_trials(
                         # _no_ticks_or_labels(ax)
                         # _axis_annotate(ax, 'disconnected')
                         if do_plot:
-                            tracename_emg = 'EMG:' + tracename
+                            tracename_emg = 'EMG:' + cyclename
 
                             t_, y = trial.get_emg_data(var, rms=use_rms, cycle=cyc)
                             t = t_ if normalized else t_ / trial.samplesperframe
@@ -605,18 +613,19 @@ def plot_trials(
                             )
                             line = {'width': lw, 'color': col}
 
+                            # EMG traces get grouped according to cycle (same
+                            # legendgroup as model traces)
                             # the tracename_emg legend group does not actually exist
                             # in plotly, it's only used to keep track of whether the
-                            # EMG trace legend was already shown. In the legend,
-                            # EMG traces get grouped with model traces of the
-                            # same cycle.
+                            # EMG trace legend was already shown. 
                             show_legend = tracename_emg not in legendgroups
+                            legendgroup = cyclename
 
                             trace = dict(
                                 x=t,
                                 y=y * cfg.plot.emg_multiplier,
                                 name=tracename_emg,
-                                legendgroup=tracename,
+                                legendgroup=legendgroup,
                                 showlegend=show_legend,
                                 line=line,
                             )

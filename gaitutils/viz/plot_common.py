@@ -194,7 +194,7 @@ def _truncate_trialname(trialname):
         return trialname
 
 
-def _get_cycle_name(trial, cycle, name_type):
+def _get_cycle_name(trial, cyc, name_type):
     """Return descriptive name for a gait cycle"""
     if name_type == 'name_with_tag':
         cyclename = '%s / %s' % (trial.trialname, trial.eclipse_tag)
@@ -208,15 +208,15 @@ def _get_cycle_name(trial, cycle, name_type):
         if trial.eclipse_tag is not None:
             cyclename += ' (%s)' % trial.eclipse_tag
         cyclename += ' / '
-        cyclename += cycle.name
+        cyclename += cyc.name
     elif name_type == 'tag_only':
         cyclename = trial.eclipse_tag
     elif name_type == 'tag_with_cycle':
-        cyclename = '%s / %s' % (trial.eclipse_tag, cycle.name)
+        cyclename = '%s / %s' % (trial.eclipse_tag, cyc.name)
     elif name_type == 'full':
-        cyclename = '%s / %s' % (trial.name_with_description, cycle.name)
+        cyclename = '%s / %s' % (trial.name_with_description, cyc.name)
     elif name_type == 'short_name_with_cyclename':
-        cyclename = '%s / %s' % (_truncate_trialname(trial.trialname), cycle.name)
+        cyclename = '%s / %s' % (_truncate_trialname(trial.trialname), cyc.name)
     else:
         raise ValueError('Invalid name_type')
     return cyclename

@@ -29,18 +29,29 @@ def _get_trial_cycles(trial, cycles, max_cycles):
     model_cycles = trial.get_cycles(
         cycles['model'], max_cycles_per_context=max_cycles['model']
     )
+    marker_cycles = trial.get_cycles(
+        cycles['marker'], max_cycles_per_context=max_cycles['marker']
+    )
     emg_cycles = trial.get_cycles(
         cycles['emg'], max_cycles_per_context=max_cycles['emg']
     )
-    allcycles = list(set.union(set(model_cycles), set(emg_cycles)))
+    allcycles = list(set.union(set(model_cycles), set(marker_cycles), set(emg_cycles)))
     if not allcycles:
         logger.debug('trial %s has no cycles of specified type' % trial.trialname)
     logger.debug(
-        'got total of %d cycles for %s (%d model, %d EMG)'
-        % (len(allcycles), trial.trialname, len(model_cycles), len(emg_cycles))
+        'got total of %d cycles for %s (%d model, %d marker, %d EMG)'
+        % (
+            len(allcycles),
+            trial.trialname,
+            len(model_cycles),
+            len(marker_cycles),
+            len(emg_cycles),
+        )
     )
-    Cyclebunch = namedtuple('Cyclebunch', 'allcycles, model_cycles, emg_cycles')
-    return Cyclebunch(allcycles, model_cycles, emg_cycles)
+    Cyclebunch = namedtuple(
+        'Cyclebunch', 'allcycles, model_cycles, marker_cycles, emg_cycles'
+    )
+    return Cyclebunch(allcycles, model_cycles, marker_cycles, emg_cycles)
 
 
 def _emg_yscale(emg_mode):

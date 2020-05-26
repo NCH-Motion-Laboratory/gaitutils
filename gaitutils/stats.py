@@ -351,7 +351,7 @@ def collect_trial_data(
         Total number of collected cycles for 'R', 'L', 'R_fp', 'L_fp' (last two
         are for forceplate cycles)
     """
-    
+
     data_all = dict()
     ncycles = defaultdict(lambda: 0)
 

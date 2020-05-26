@@ -149,7 +149,7 @@ def get_emg_data(source):
             Time axis in seconds.
         data : dict
             The data. Keys are channel names and values are ndarrays.
-    """    
+    """
     return _reader_module(source)._get_emg_data(source)
 
 
@@ -190,7 +190,7 @@ def get_accelerometer_data(source):
             Time axis in seconds.
         data : dict
             The data. Keys are channel names and values are ndarrays.
-    """    
+    """
     return _reader_module(source)._get_accelerometer_data(source)
 
 

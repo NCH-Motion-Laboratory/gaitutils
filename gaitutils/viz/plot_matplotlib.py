@@ -475,10 +475,20 @@ def plot_trials(
 
                             for datadim, data in zip('XYZ', mdata.T):
                                 sty = _style_by_params(
-                                    style_by['marker'], trace_styles, trial, cyc, context, datadim
+                                    style_by['marker'],
+                                    trace_styles,
+                                    trial,
+                                    cyc,
+                                    context,
+                                    datadim,
                                 )
                                 col = _color_by_params(
-                                    color_by['marker'], trace_colors, trial, cyc, context, datadim
+                                    color_by['marker'],
+                                    trace_colors,
+                                    trial,
+                                    cyc,
+                                    context,
+                                    datadim,
                                 )
 
                                 line_ = ax.plot(
@@ -502,7 +512,9 @@ def plot_trials(
                                     )
 
                             # adjust subplot once
-                            if not ax.get_ylabel():  # this gets modified the first time around
+                            if (
+                                not ax.get_ylabel()
+                            ):  # this gets modified the first time around
                                 ylabel = 'mm'
                                 ax.set(ylabel=ylabel)
 

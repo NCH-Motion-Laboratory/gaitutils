@@ -96,7 +96,6 @@ def group_analysis(an_list, fun=np.mean):
     return res
 
 
-
 def _print_analysis_table(trials):
     """Print analysis vars as text table"""
     res_avg_all, _ = _group_analysis_trials(trials)

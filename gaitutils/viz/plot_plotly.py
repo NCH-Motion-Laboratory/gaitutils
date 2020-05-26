@@ -338,6 +338,8 @@ def plot_trials(
     for trial in trials:
         subplot_adjusted = defaultdict(lambda: False)
         cyclebunch = _get_trial_cycles(trial, cycles, max_cycles)
+        logger.debug(cyclebunch.marker_cycles)
+        logger.debug(cyclebunch.model_cycles)
         # the idea here is to sort the trial cycles by their legend key, so they
         # appear in the legend in correct order
         sorter = partial(_get_cycle_name, trial, name_type=legend_type)
@@ -513,7 +515,7 @@ def plot_trials(
 
                     # plot marker variable
                     elif var in trial._full_marker_data:
-                        do_plot = cyc in cyclebunch.model_cycles
+                        do_plot = cyc in cyclebunch.marker_cycles
                         t, mdata = trial.get_marker_data(var, cycle=cyc)
                         if mdata is None:
                             do_plot = False
@@ -522,11 +524,21 @@ def plot_trials(
 
                             for datadim, data in zip('XYZ', mdata.T):
                                 sty = _style_by_params(
-                                    style_by['marker'], trace_styles, trial, cyc, context, datadim
+                                    style_by['marker'],
+                                    trace_styles,
+                                    trial,
+                                    cyc,
+                                    context,
+                                    datadim,
                                 )
                                 sty = _style_mpl_to_plotly(sty)
                                 col = _color_by_params(
-                                    color_by['marker'], trace_colors, trial, cyc, context, datadim
+                                    color_by['marker'],
+                                    trace_colors,
+                                    trial,
+                                    cyc,
+                                    context,
+                                    datadim,
                                 )
                                 line = dict(
                                     width=cfg.plot.model_linewidth, dash=sty, color=col
@@ -536,7 +548,8 @@ def plot_trials(
                                 # marker data goes into its own dimension and
                                 # trial -based groups, so we can toggle x, y and
                                 # z traces for each trial separately
-                                legendgroup = 'mkr_%s:%s' % (datadim, trial.trialname)
+                                # legendgroup = 'mkr_%s:%s' % (datadim, trial.trialname)
+                                legendgroup = tracename_marker
                                 show_legend = tracename_marker not in legendgroups
                                 trace = dict(
                                     x=t,
@@ -555,7 +568,9 @@ def plot_trials(
                                 # add toeoff marker
                                 if cyc.toeoffn is not None:
                                     toeoff = int(cyc.toeoffn)
-                                    marker = dict(color=col, symbol='triangle-up', size=8)
+                                    marker = dict(
+                                        color=col, symbol='triangle-up', size=8
+                                    )
                                     toeoff_marker = dict(
                                         x=t[toeoff : toeoff + 1],
                                         y=data[toeoff : toeoff + 1],
@@ -617,7 +632,7 @@ def plot_trials(
                             # legendgroup as model traces)
                             # the tracename_emg legend group does not actually exist
                             # in plotly, it's only used to keep track of whether the
-                            # EMG trace legend was already shown. 
+                            # EMG trace legend was already shown.
                             show_legend = tracename_emg not in legendgroups
                             legendgroup = cyclename
 

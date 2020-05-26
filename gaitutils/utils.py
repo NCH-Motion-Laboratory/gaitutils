@@ -129,6 +129,7 @@ def _step_width(source):
     to avoid creating new Trials
     """
     from .trial import Trial
+
     tr = Trial(source)
     sw = dict()
     mkr = 'TOE'  # marker name without context

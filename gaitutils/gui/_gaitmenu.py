@@ -484,20 +484,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
         # set up color/style comboboxes
         self.cbColorStyleVar.currentIndexChanged.connect(self._colorstylevar_changed)
-        # this callback only needs to fire when user activates the combobox
+        self.cbColorOrStyle.currentIndexChanged.connect(self._colorstylevar_changed)
         self.cbColorStyleBy.activated.connect(self._colorstyleby_changed)
-        # dynamically create combobox entries according to cfg
+        # dynamically create entries for vartype according to cfg
         for vartype in cfg.plot.color_by:
-            # capitalize 'emg' choice
-            vartype_txt = 'EMG' if vartype == 'emg' else vartype
-            self.cbColorStyleVar.addItem(
-                'Set %s trace color by:' % vartype_txt, userData=('color', vartype)
-            )
-        for vartype in cfg.plot.style_by:
-            vartype_txt = 'EMG' if vartype == 'emg' else vartype
-            self.cbColorStyleVar.addItem(
-                'Set %s trace style by:' % vartype_txt, userData=('style', vartype)
-            )
+            vartype_txt = 'EMG' if vartype == 'emg' else vartype  # capitalize 'emg'
+            self.cbColorStyleVar.addItem(vartype_txt)
 
         # add plot layouts to layout combobox
         cb_items = sorted(
@@ -528,32 +520,43 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.prog = None
 
     def _colorstylevar_changed(self, _idx):
-        """Callback for color/style variable selection combobox"""
-        # get current style/color choice and show it in the other combobox
-        mode, vartype = self.cbColorStyleVar.currentData()
+        """Callback for color/style comboboxes.
+
+        Updates the 'color/style by' combobox according to the new choice.
+        """
+        vartype, mode = self._get_colorstyle_choices()
         cfg_item = {'color': cfg.plot.color_by, 'style': cfg.plot.style_by}[mode]
         choice = cfg_item[vartype]
         if choice is None:
-            choice = 'none'
+            choice = '(none)'
         idx = self.cbColorStyleBy.findText(choice)
         self.cbColorStyleBy.setCurrentIndex(idx)
-        # don't allow styling for EMG variables
+        # disable styling for EMG variables
         enabled = not (vartype == 'emg' and mode == 'style')
         self.cbColorStyleBy.setEnabled(enabled)
 
     def _colorstyleby_changed(self, _idx):
-        """Callback for color/style selection combobox"""
-        mode, vartype = self.cbColorStyleVar.currentData()
-        # set the appropriate cfg item according to choice
+        """Callback for color/style by xxx combobox.
+        
+        Changes the cfg item according to the current settings.
+        """
+        vartype, mode = self._get_colorstyle_choices()
         cfg_item = {'color': cfg.plot.color_by, 'style': cfg.plot.style_by}[mode]
         colorstyleby_choice = self.cbColorStyleBy.currentText()
         # Py2: convert unicode choices to str
         # (unicode prefix looks weird in Options interface)
         if sys.version_info.major == 2:
             colorstyleby_choice = str(colorstyleby_choice)
-        if colorstyleby_choice == 'none':
+        if colorstyleby_choice == '(none)':
             colorstyleby_choice = None
         cfg_item[vartype] = colorstyleby_choice
+
+    def _get_colorstyle_choices(self):
+        """Get color/style choices from UI"""
+        mode = self.cbColorOrStyle.currentText()
+        vartype = self.cbColorStyleVar.currentText()
+        vartype = 'emg' if vartype == 'EMG' else vartype  # undo capitalize 'emg'
+        return vartype, mode
 
     @property
     def _plotting_backend(self):

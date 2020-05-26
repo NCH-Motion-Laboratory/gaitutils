@@ -279,9 +279,9 @@ def plot_trials(
     if normalized:
         for i, row in enumerate(layout):
             for j, var in enumerate(row):
-                mod = models.model_from_var(var)
-                if mod and model_normaldata:
-                    nvar = var if var in mod.varlabels_noside else var[1:]
+                themodel = models.model_from_var(var)
+                if themodel and model_normaldata:
+                    nvar = var if var in themodel.varlabels_noside else var[1:]
                     key = nvar if nvar in model_normaldata else None
                     ndata = model_normaldata[key] if key in model_normaldata else None
                     if ndata is not None:
@@ -366,11 +366,11 @@ def plot_trials(
                     # tracegroup, so we do not repeat legends
                     show_legend = tracename not in legendgroups
 
-                    mod = models.model_from_var(var)
-                    if mod:
+                    themodel = models.model_from_var(var)
+                    if themodel:  # it's a model variable
                         do_plot = cyc in cyclebunch.model_cycles
 
-                        if var in mod.varnames_noside:
+                        if var in themodel.varnames_noside:
                             # var context was unspecified, so choose it
                             # according to cycle context
                             var = context + var
@@ -382,7 +382,7 @@ def plot_trials(
                         # forceplate data
                         if (
                             normalized
-                            and mod.is_kinetic_var(var)
+                            and themodel.is_kinetic_var(var)
                             and not cyc.on_forceplate
                         ):
                             do_plot = False
@@ -490,11 +490,79 @@ def plot_trials(
                             # adjust subplot once
                             if not subplot_adjusted[(i, j)]:
                                 # fig['layout'][xaxis].update(showticklabels=False)
-                                yunit = mod.units[var]
+                                yunit = themodel.units[var]
                                 if yunit == 'deg':
                                     yunit = u'\u00B0'  # Unicode degree sign
-                                ydesc = [s[:3] for s in mod.ydesc[var]]  # shorten
+                                ydesc = [s[:3] for s in themodel.ydesc[var]]  # shorten
                                 ylabel = u'%s %s %s' % (ydesc[0], yunit, ydesc[1])
+                                if sys.version_info.major == 2 and isinstance(
+                                    ylabel, unicode
+                                ):
+                                    ylabel = ylabel.encode('utf-8')
+                                fig['layout'][yaxis].update(
+                                    title={
+                                        'text': ylabel,
+                                        'font': {'size': label_fontsize},
+                                        'standoff': 0,
+                                    }
+                                )
+                                # less decimals on hover label
+                                fig['layout'][yaxis].update(hoverformat='.2f')
+                                subplot_adjusted[(i, j)] = True
+
+                    elif var in trial._full_marker_data:
+                        do_plot = cyc in cyclebunch.model_cycles
+                        t, mdata = trial.get_marker_data(var, cycle=cyc)
+                        if mdata is None:
+                            do_plot = False
+
+                        if do_plot:
+
+                            for datadim, data in zip('XYZ', mdata.T):
+                                # decide style and color
+                                sty = _style_by_params(
+                                    style_by['marker'], trace_styles, trial, cyc, context, datadim
+                                )
+                                sty = _style_mpl_to_plotly(sty)
+                                col = _color_by_params(
+                                    color_by['marker'], trace_colors, trial, cyc, context, datadim
+                                )
+                                line = dict(
+                                    width=cfg.plot.model_linewidth, dash=sty, color=col
+                                )
+                                trace = dict(
+                                    x=t,
+                                    y=data,
+                                    name='mkr_%s:%s' % (datadim, tracename),
+                                    text=cyclename_full,
+                                    legendgroup=tracename,
+                                    showlegend=show_legend,
+                                    hoverlabel=dict(namelength=-1),
+                                    hoverinfo='x+y+name',
+                                    line=line,
+                                )
+                                fig.add_trace(trace, i + 1, j + 1)
+                                legendgroups.add(tracename)
+
+                                # add toeoff marker
+                                if cyc.toeoffn is not None:
+                                    toeoff = int(cyc.toeoffn)
+                                    marker = dict(color=col, symbol='triangle-up', size=8)
+                                    toeoff_marker = dict(
+                                        x=t[toeoff : toeoff + 1],
+                                        y=data[toeoff : toeoff + 1],
+                                        showlegend=False,
+                                        legendgroup=tracename,
+                                        hoverinfo='skip',
+                                        mode='markers',
+                                        marker=marker,
+                                    )
+                                    fig.add_trace(toeoff_marker, i + 1, j + 1)
+
+                            # adjust subplot once
+                            if not subplot_adjusted[(i, j)]:
+                                # fig['layout'][xaxis].update(showticklabels=False)
+                                ylabel = 'mm'
                                 if sys.version_info.major == 2 and isinstance(
                                     ylabel, unicode
                                 ):
@@ -570,6 +638,9 @@ def plot_trials(
                                 fig['layout'][xaxis].update(range=[0, 100])
                             # rm x tick labels, plot too crowded
                             # fig['layout'][xaxis].update(showticklabels=False)
+                            # less decimals on hover label
+                            # XXX: this is not working?
+                            fig['layout'][yaxis].update(hoverformat='.2f')
                             subplot_adjusted[(i, j)] = True
 
                     else:

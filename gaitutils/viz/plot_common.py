@@ -55,8 +55,14 @@ def _emg_yscale(emg_mode):
     return emg_yrange
 
 
-def _color_by_params(spec, mapper, trial, cyc, context):
-    """Helper to return color from mapper, according to trial etc."""
+def _color_by_params(spec, mapper, trial, cyc, context, dim=None):
+    """Helper to return a color.
+    
+    spec is colorspec and mapper is a color mapper. Returns color according to
+    trial, context etc., depending on what spec says. Depending on spec, color
+    may come from the mapper or elsewhere (e.g. config). 'dim' refers to
+    variable dimension in case of multidimensional vars (e.g. markers).
+    """
     if spec == 'session':
         return mapper[trial.sessiondir]
     elif spec == 'trial':
@@ -65,14 +71,18 @@ def _color_by_params(spec, mapper, trial, cyc, context):
         return mapper[cyc]
     elif spec == 'context':
         return cfg.plot.context_colors[context]
+    elif spec == 'dim':
+        return mapper[dim]
     elif spec is None:
         return '#000000'
     else:
         raise RuntimeError('Unexpected colorspec: %s' % spec)
 
 
-def _style_by_params(spec, mapper, trial, cyc, context):
-    """Helper to return color from mapper, according to trial etc."""
+def _style_by_params(spec, mapper, trial, cyc, context, dim=None):
+    """Helper to return a style.
+    
+    See above for details."""
     if spec == 'session':
         return mapper[trial.sessiondir]
     elif spec == 'trial':
@@ -81,6 +91,8 @@ def _style_by_params(spec, mapper, trial, cyc, context):
         return mapper[cyc]
     elif spec == 'context':
         return cfg.plot.context_styles[context]
+    elif spec == 'dim':
+        return mapper[dim]
     elif spec is None:
         return '-'
     else:
@@ -123,7 +135,7 @@ def _handle_cyclespec(cycles):
 
 def _handle_style_and_color_args(style_by, color_by):
     """Handle style and color choice"""
-    vals_ok = set(('session', 'trial', 'context', None))
+    vals_ok = set(('session', 'trial', 'context', 'dim', None))
     style_by_defaults = cfg.plot.style_by
     if style_by is None:
         style_by = dict()

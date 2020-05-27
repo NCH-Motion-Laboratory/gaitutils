@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>657</width>
+    <width>679</width>
     <height>747</height>
    </rect>
   </property>
@@ -40,43 +40,24 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="2">
-       <widget class="QLabel" name="label_6">
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>Plot trials</string>
-        </property>
-       </widget>
-      </item>
-      <item row="9" column="5">
-       <widget class="QRadioButton" name="rbMatplotlib">
-        <property name="text">
-         <string>matplotlib</string>
-        </property>
-        <attribute name="buttonGroup">
-         <string notr="true">buttonGroup_2</string>
-        </attribute>
-       </widget>
-      </item>
-      <item row="5" column="4" colspan="6">
-       <widget class="QComboBox" name="cbLayout">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
-      </item>
       <item row="9" column="2">
        <widget class="QLabel" name="label">
         <property name="text">
          <string>Backend:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="16" column="3">
+       <widget class="QPushButton" name="btnAveragePlot">
+        <property name="text">
+         <string>Average selected</string>
+        </property>
+       </widget>
+      </item>
+      <item row="11" column="2">
+       <widget class="QPushButton" name="btnAddSession">
+        <property name="text">
+         <string>Add session...</string>
         </property>
        </widget>
       </item>
@@ -96,10 +77,30 @@
         </property>
        </spacer>
       </item>
+      <item row="5" column="4" colspan="6">
+       <widget class="QComboBox" name="cbLayout">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
       <item row="13" column="3">
        <widget class="QPushButton" name="btnClearSelected">
         <property name="text">
          <string>Remove selected</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="6" colspan="2">
+       <widget class="QCheckBox" name="xbEMGRMS">
+        <property name="text">
+         <string>Plot EMG as RMS</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
         </property>
        </widget>
       </item>
@@ -110,24 +111,20 @@
         </property>
        </widget>
       </item>
-      <item row="7" column="5">
-       <widget class="QCheckBox" name="xbEMGRMS">
-        <property name="text">
-         <string>Plot EMG as RMS</string>
+      <item row="3" column="2">
+       <widget class="QLabel" name="label_6">
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
         </property>
-        <property name="checked">
-         <bool>false</bool>
+        <property name="text">
+         <string>Plot trials</string>
         </property>
        </widget>
       </item>
-      <item row="16" column="3">
-       <widget class="QPushButton" name="btnAveragePlot">
-        <property name="text">
-         <string>Average selected</string>
-        </property>
-       </widget>
-      </item>
-      <item row="9" column="4">
+      <item row="9" column="4" colspan="2">
        <widget class="QRadioButton" name="rbPlotly">
         <property name="text">
          <string>plotly (web browser)</string>
@@ -137,14 +134,28 @@
         </attribute>
        </widget>
       </item>
-      <item row="11" column="2">
-       <widget class="QPushButton" name="btnAddSession">
-        <property name="text">
-         <string>Add session...</string>
+      <item row="15" column="2" colspan="9">
+       <widget class="Line" name="line">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
         </property>
        </widget>
       </item>
-      <item row="10" column="2" colspan="8">
+      <item row="5" column="2">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Plot layout:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="13" column="2">
+       <widget class="QPushButton" name="btnSelectAll">
+        <property name="text">
+         <string>Select all</string>
+        </property>
+       </widget>
+      </item>
+      <item row="10" column="2" colspan="9">
        <widget class="QTableWidget" name="tableTrials">
         <property name="styleSheet">
          <string notr="true"/>
@@ -192,21 +203,7 @@
         </column>
        </widget>
       </item>
-      <item row="18" column="9">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="15" column="2" colspan="8">
-       <widget class="Line" name="line">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="10">
+      <item row="5" column="11">
        <spacer name="horizontalSpacer_4">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -222,6 +219,20 @@
         </property>
        </spacer>
       </item>
+      <item row="12" column="2" colspan="9">
+       <widget class="Line" name="line_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="18" column="10">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
       <item row="7" column="2">
        <widget class="QLabel" name="label_5">
         <property name="text">
@@ -229,67 +240,40 @@
         </property>
        </widget>
       </item>
-      <item row="13" column="2">
-       <widget class="QPushButton" name="btnSelectAll">
-        <property name="text">
-         <string>Select all</string>
+      <item row="7" column="4" colspan="2">
+       <widget class="QCheckBox" name="xbPlotUnnorm">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
-       </widget>
-      </item>
-      <item row="5" column="2">
-       <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>Plot layout:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="11" column="4">
-       <widget class="QPushButton" name="btnAddNexusTrial">
-        <property name="text">
-         <string>Add current Nexus trial</string>
-        </property>
-       </widget>
-      </item>
-      <item row="12" column="2" colspan="8">
-       <widget class="Line" name="line_2">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+         <string>Plot unnormalized data</string>
         </property>
        </widget>
       </item>
       <item row="8" column="6">
        <widget class="QLabel" name="label_8">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="text">
          <string>trace</string>
         </property>
        </widget>
       </item>
-      <item row="8" column="5">
-       <widget class="QComboBox" name="cbColorStyleVar"/>
-      </item>
-      <item row="8" column="7">
-       <widget class="QComboBox" name="cbColorOrStyle">
-        <item>
-         <property name="text">
-          <string>color</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>style</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item row="8" column="8">
-       <widget class="QLabel" name="label_9">
-        <property name="text">
-         <string>by</string>
-        </property>
-       </widget>
-      </item>
       <item row="8" column="9">
        <widget class="QComboBox" name="cbColorStyleBy">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <item>
          <property name="text">
           <string>trial</string>
@@ -317,26 +301,83 @@
         </item>
        </widget>
       </item>
-      <item row="8" column="4">
-       <widget class="QLabel" name="label_7">
-        <property name="text">
-         <string>Set</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="4">
-       <widget class="QCheckBox" name="xbPlotUnnorm">
+      <item row="8" column="8">
+       <widget class="QLabel" name="label_9">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="text">
-         <string>Plot unnormalized data</string>
+         <string>by</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="7">
+       <widget class="QComboBox" name="cbColorOrStyle">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <item>
+         <property name="text">
+          <string>color</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>style</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="8" column="5">
+       <widget class="QComboBox" name="cbColorStyleVar">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="4">
+       <widget class="QLabel" name="label_7">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Set</string>
+        </property>
+       </widget>
+      </item>
+      <item row="11" column="4" colspan="2">
+       <widget class="QPushButton" name="btnAddNexusTrial">
+        <property name="text">
+         <string>Add current Nexus trial</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="6" colspan="2">
+       <widget class="QRadioButton" name="rbMatplotlib">
+        <property name="text">
+         <string>matplotlib</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup_2</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="8" column="2">
+       <widget class="QLabel" name="label_10">
+        <property name="text">
+         <string>Trace style/color:</string>
         </property>
        </widget>
       </item>
@@ -375,7 +416,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>657</width>
+     <width>679</width>
      <height>21</height>
     </rect>
    </property>

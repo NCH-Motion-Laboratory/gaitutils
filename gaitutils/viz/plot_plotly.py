@@ -338,8 +338,6 @@ def plot_trials(
     for trial in trials:
         subplot_adjusted = defaultdict(lambda: False)
         cyclebunch = _get_trial_cycles(trial, cycles, max_cycles)
-        logger.debug(cyclebunch.marker_cycles)
-        logger.debug(cyclebunch.model_cycles)
         # the idea here is to sort the trial cycles by their legend key, so they
         # appear in the legend in correct order
         sorter = partial(_get_cycle_name, trial, name_type=legend_type)
@@ -545,12 +543,11 @@ def plot_trials(
                                 )
                                 # dim-specific tracename
                                 tracename_marker = 'mkr_%s:%s' % (datadim, cyclename)
-                                # marker data goes into its own dimension and
-                                # trial -based groups, so we can toggle x, y and
-                                # z traces for each trial separately
+                                # dimension- and trial-based grouping
                                 # legendgroup = 'mkr_%s:%s' % (datadim, trial.trialname)
+                                # dimension- and cycle-based grouping
                                 legendgroup = tracename_marker
-                                show_legend = tracename_marker not in legendgroups
+                                show_legend = legendgroup not in legendgroups
                                 trace = dict(
                                     x=t,
                                     y=data,
@@ -563,7 +560,7 @@ def plot_trials(
                                     line=line,
                                 )
                                 fig.add_trace(trace, i + 1, j + 1)
-                                legendgroups.add(tracename_marker)
+                                legendgroups.add(legendgroup)
 
                                 # add toeoff marker
                                 if cyc.toeoffn is not None:

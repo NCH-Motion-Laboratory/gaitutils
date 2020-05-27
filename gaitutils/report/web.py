@@ -383,6 +383,7 @@ def dash_report(
                 ('Muscle length', cfg.layouts.musclelen),
                 ('Torso kinematics', cfg.layouts.torso),
                 ('Time-distance variables', 'time_dist'),
+                ('PiG lowerbody markers', cfg.layouts.pig_lowerbody_markers),
             ]
         )
         # pick desired single variables from model and append

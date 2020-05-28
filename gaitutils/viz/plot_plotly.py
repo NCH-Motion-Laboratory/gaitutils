@@ -367,7 +367,7 @@ def plot_trials(
 
                     if vartype == 'model':
                         do_plot = cyc in cyclebunch.model_cycles
-                        themodel = models.model_from_var(var)                        
+                        themodel = models.model_from_var(var)
                         if var in themodel.varnames_noside:
                             # var context was unspecified, so choose it
                             # according to cycle context
@@ -668,7 +668,9 @@ def plot_trials(
                         raise GaitDataError('cannot interpret variable %s' % var)
 
                     else:
-                        raise GaitDataError('plotting not implemented for variable %s' % var)
+                        raise GaitDataError(
+                            'plotting not implemented for variable %s' % var
+                        )
 
     # set subplot title font size
     for anno in fig['layout']['annotations']:

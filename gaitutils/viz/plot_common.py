@@ -260,8 +260,3 @@ def _triage_var(var, trial):
                 return k
         return 'unknown'
 
-
-FP1::Force
-
-
-

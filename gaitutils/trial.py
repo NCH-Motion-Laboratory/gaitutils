@@ -406,7 +406,7 @@ class Trial(object):
     @property
     def _full_marker_data(self):
         """Return the full marker data dict."""
-        if not self._marker_data:
+        if self._marker_data is None:
             self._marker_data = read_data.get_marker_data(self.source, self.markers)
         return self._marker_data
 

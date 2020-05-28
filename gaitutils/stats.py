@@ -119,6 +119,7 @@ class AvgTrial(Trial):
         )
         self.ncycles = 2
         self.eclipse_data = defaultdict(lambda: '', {})
+        self._marker_data = dict()
 
     def get_model_data(self, var, cycle=None):
         """Get averaged model variable.
@@ -149,6 +150,8 @@ class AvgTrial(Trial):
             raise ValueError('AvgTrial only supports EMG in RMS mode')
         return self.tn_analog, self.emg.get_channel_data(ch, rms=True)
 
+    def get_marker_data(self, marker, cycle=None):
+        raise GaitDataError('AvgTrial does not average marker data yet')
 
 def _robust_reject_rows(data, p_threshold):
     """Reject rows (observations) from data based on robust Z-score"""

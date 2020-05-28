@@ -624,7 +624,9 @@ def plot_trials(
                         raise GaitDataError('cannot interpret variable %s' % var)
 
                     else:
-                        raise GaitDataError('plotting not implemented for variable %s' % var)
+                        raise GaitDataError(
+                            'plotting not implemented for variable %s' % var
+                        )
 
                     # adjustments common to all plots
                     # set x labels on bottom row of plot

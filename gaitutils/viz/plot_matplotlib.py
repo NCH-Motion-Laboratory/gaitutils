@@ -332,7 +332,7 @@ def plot_trials(
                     # depending on name_type, one tracegroup may end up
                     # holding several cycles, which will be under the same
                     # legend entry.
-                    tracegroup = _get_cycle_name(trial, cyc, name_type=legend_type)
+                    cyclename = _get_cycle_name(trial, cyc, name_type=legend_type)
                     cyclename_full = _get_cycle_name(trial, cyc, name_type='full')
 
                     if vartype == 'model':
@@ -395,7 +395,7 @@ def plot_trials(
                                 linewidth=cfg.plot.model_linewidth,
                                 alpha=cfg.plot.model_alpha,
                             )[0]
-                            leg_entries[tracegroup] = line_
+                            leg_entries[cyclename] = line_
 
                             # add toeoff marker
                             if cyc.toeoffn is not None:
@@ -425,7 +425,7 @@ def plot_trials(
                                         color=col,
                                         alpha=cfg.plot.model_stddev_alpha,
                                     )
-                                    leg_entries['Stddev for %s' % tracegroup] = stddev_
+                                    leg_entries['Stddev for %s' % cyclename] = stddev_
 
                             # add supplementary data
                             # XXX: not implemented for matplotlib
@@ -501,7 +501,10 @@ def plot_trials(
                                     linewidth=cfg.plot.model_linewidth,
                                     alpha=cfg.plot.model_alpha,
                                 )[0]
-                                leg_entries[tracegroup] = line_
+                                
+                                # dim-specific tracename
+                                tracename_marker = 'mkr_%s:%s' % (datadim, cyclename)
+                                leg_entries[tracename_marker] = line_
 
                                 # add toeoff marker
                                 if cyc.toeoffn is not None:
@@ -566,7 +569,7 @@ def plot_trials(
                             line_ = ax.plot(
                                 t, y * cfg.plot.emg_multiplier, color=col, linewidth=lw
                             )[0]
-                            leg_entries['EMG: ' + tracegroup] = line_
+                            leg_entries['EMG: ' + cyclename] = line_
 
                         # do normal data & plot adjustments for last EMG cycle
                         # keeps track of whether any trials have valid EMG data for this

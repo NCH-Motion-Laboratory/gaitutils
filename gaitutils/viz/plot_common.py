@@ -176,7 +176,7 @@ def _handle_style_and_color_args(style_by, color_by):
 
 def _style_mpl_to_plotly(style):
     """Style mapper matplotlib -> plotly"""
-    return {'-': 'solid', '--': '5px', '-.': 'dashdot', '..': '2px'}[style]
+    return {'-': 'solid', '--': '5px', '-.': 'dashdot', ':': '2px'}[style]
 
 
 def _var_title(var):
@@ -250,9 +250,18 @@ def _triage_var(var, trial):
         categs['emg'] = True
     if list(categs.values()).count(True) > 1:
         categs_matching = [key for key, val in categs.items() if val]
-        raise GaitDataError('ambiguous variable name %s (matches categories %s)' % (var, categs_matching))
+        raise GaitDataError(
+            'ambiguous variable name %s (matches categories %s)'
+            % (var, categs_matching)
+        )
     else:
         for k, v in categs.items():
             if v:
                 return k
         return 'unknown'
+
+
+FP1::Force
+
+
+

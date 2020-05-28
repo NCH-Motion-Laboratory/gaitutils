@@ -35,6 +35,7 @@ from .plot_common import (
     _style_by_params,
     _emg_yscale,
     _get_trial_cycles,
+    _triage_var,
 )
 
 
@@ -350,7 +351,8 @@ def plot_trials(
             for i, row in enumerate(layout):
                 for j, var in enumerate(row):
 
-                    if var is None:
+                    vartype = _triage_var(var, trial)
+                    if vartype is None:
                         continue
 
                     xaxis, yaxis = _get_plotly_axis_labels(i, j, ncols)
@@ -363,10 +365,9 @@ def plot_trials(
                     if sys.version_info.major == 2 and isinstance(cyclename, unicode):
                         cyclename = cyclename.encode('utf-8')
 
-                    themodel = models.model_from_var(var)
-                    if themodel:  # it's a model variable
+                    if vartype == 'model':
                         do_plot = cyc in cyclebunch.model_cycles
-
+                        themodel = models.model_from_var(var)                        
                         if var in themodel.varnames_noside:
                             # var context was unspecified, so choose it
                             # according to cycle context
@@ -511,8 +512,7 @@ def plot_trials(
                                 fig['layout'][yaxis].update(hoverformat='.2f')
                                 subplot_adjusted[(i, j)] = True
 
-                    # plot marker variable
-                    elif var in trial._full_marker_data:
+                    elif vartype == 'marker':
                         do_plot = cyc in cyclebunch.marker_cycles
                         t, mdata = trial.get_marker_data(var, cycle=cyc)
                         if mdata is None:
@@ -599,7 +599,7 @@ def plot_trials(
                                 subplot_adjusted[(i, j)] = True
 
                     # plot EMG variable
-                    elif trial.emg.has_channel(var) or var in cfg.emg.channel_labels:
+                    elif vartype == 'emg':
                         do_plot = (
                             trial.emg.context_ok(var, cyc.context)
                             and trial.emg.status_ok(var)
@@ -664,8 +664,11 @@ def plot_trials(
                             fig['layout'][yaxis].update(hoverformat='.2f')
                             subplot_adjusted[(i, j)] = True
 
+                    elif vartype == 'unknown':
+                        raise GaitDataError('cannot interpret variable %s' % var)
+
                     else:
-                        raise GaitDataError('Unknown variable %s' % var)
+                        raise GaitDataError('plotting not implemented for variable %s' % var)
 
     # set subplot title font size
     for anno in fig['layout']['annotations']:

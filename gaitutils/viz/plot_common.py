@@ -18,7 +18,7 @@ import logging
 import copy
 import numpy as np
 
-from gaitutils import models, cfg
+from gaitutils import models, cfg, GaitDataError
 
 
 logger = logging.getLogger(__name__)
@@ -231,3 +231,28 @@ def _get_cycle_name(trial, cyc, name_type):
     else:
         raise ValueError('Invalid name_type')
     return cyclename
+
+
+def _triage_var(var, trial):
+    """Return category of variable (model, marker etc.).
+    
+    Returns 'model', 'marker' or 'emg' for known types,
+    'unknown' if type cannot be inferred, None for None
+    """
+    categs = {'model': False, 'marker': False, 'emg': False}
+    if var is None:
+        return None
+    if models.model_from_var(var):
+        categs['model'] = True
+    if var in trial._full_marker_data:
+        categs['marker'] = True
+    if var in cfg.emg.channel_labels:
+        categs['emg'] = True
+    if list(categs.values()).count(True) > 1:
+        categs_matching = [key for key, val in categs.items() if val]
+        raise GaitDataError('ambiguous variable name %s (matches categories %s)' % (var, categs_matching))
+    else:
+        for k, v in categs.items():
+            if v:
+                return k
+        return 'unknown'

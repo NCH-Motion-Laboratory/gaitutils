@@ -27,6 +27,7 @@ from .plot_common import (
     _style_by_params,
     _emg_yscale,
     _get_trial_cycles,
+    _triage_var,
 )
 from .. import models, normaldata, cfg, GaitDataError, numutils
 from ..stats import AvgTrial
@@ -303,6 +304,7 @@ def plot_trials(
         allcycles = sorted(cyclebunch.allcycles, key=sorter)
 
         for cyc_ind, cyc in enumerate(allcycles):
+
             first_cyc = trial_ind == 0 and cyc_ind == 0
             context = cyc.context
 
@@ -321,7 +323,8 @@ def plot_trials(
                     else:
                         ax = axes[i][j]
 
-                    if var is None:
+                    vartype = _triage_var(var, trial)
+                    if vartype is None:
                         ax.axis('off')
                         continue
 
@@ -332,10 +335,9 @@ def plot_trials(
                     tracegroup = _get_cycle_name(trial, cyc, name_type=legend_type)
                     cyclename_full = _get_cycle_name(trial, cyc, name_type='full')
 
-                    themodel = models.model_from_var(var)
-                    if themodel:
+                    if vartype == 'model':
                         do_plot = cyc in cyclebunch.model_cycles
-
+                        themodel = models.model_from_var(var)
                         if var in themodel.varnames_noside:
                             # var context was unspecified, so choose it
                             # according to cycle context
@@ -464,7 +466,7 @@ def plot_trials(
                                     )
 
                     # plot marker variable
-                    elif var in trial._full_marker_data:
+                    elif vartype == 'marker':
                         do_plot = cyc in cyclebunch.model_cycles
 
                         t, mdata = trial.get_marker_data(var, cycle=cyc)
@@ -538,13 +540,10 @@ def plot_trials(
                                 ax.locator_params(axis='y', nbins=6)  # less tick marks
 
                     # plot EMG variable
-                    elif (
-                        trial.emg is not None
-                        and trial.emg.has_channel(var)
-                        or var in cfg.emg.channel_labels
-                    ):
+                    elif vartype == 'emg':
                         do_plot = (
-                            trial.emg.context_ok(var, context)
+                            trial.emg is not None
+                            and trial.emg.context_ok(var, context)
                             and trial.emg.status_ok(var)
                             and cyc in cyclebunch.emg_cycles
                         )
@@ -621,8 +620,11 @@ def plot_trials(
                                         vmax=1,
                                     )
 
+                    elif vartype == 'unknown':
+                        raise GaitDataError('cannot interpret variable %s' % var)
+
                     else:
-                        raise GaitDataError('Unknown variable %s' % var)
+                        raise GaitDataError('plotting not implemented for variable %s' % var)
 
                     # adjustments common to all plots
                     # set x labels on bottom row of plot

@@ -85,7 +85,7 @@ def _color_by_params(spec, mapper, trial, cyc, context, dimension=None):
     elif spec == 'dimension':
         return mapper[dimension]
     elif spec is None:
-        return '#000000'
+        return mapper[None]
     else:
         raise RuntimeError('Unexpected colorspec: %s' % spec)
 
@@ -101,11 +101,11 @@ def _style_by_params(spec, mapper, trial, cyc, context, dimension=None):
     elif spec == 'cycle':
         return mapper[cyc]
     elif spec == 'context':
-        return cfg.plot.context_styles[context]
+        return mapper[context]
     elif spec == 'dimension':
         return mapper[dimension]
     elif spec is None:
-        return '-'
+        return mapper[None]
     else:
         raise RuntimeError('Unexpected colorspec: %s' % spec)
 

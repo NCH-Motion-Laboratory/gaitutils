@@ -74,9 +74,21 @@ def _enf_reader(fname_enf):
 
 
 def get_eclipse_keys(fname_enf, return_empty=False):
-    """ Read key/value pairs from ENF file into a dict. Only keys in the
-    TRIAL_INFO section will be read. Return keys without value if
-    return_empty.
+    """Read key/value pairs from enf file.
+
+    Currently, only keys in the TRIAL_INFO section will be read.
+
+    Parameters
+    ----------
+    fname_enf : str
+        The filename.
+    return_empty : bool, optional
+        If True, return also keys without value
+
+    Returns
+    -------
+    dict
+        Dict of the eclipse keys and values.
     """
     di = defaultdict(lambda: u'')
     cp = _enf_reader(fname_enf)
@@ -86,8 +98,8 @@ def get_eclipse_keys(fname_enf, return_empty=False):
     return di
 
 
-def eclipse_fp_keys(eclipse_keys):
-    """ Filter that returns Eclipse forceplate keys/values as a dict """
+def _eclipse_forceplate_keys(eclipse_keys):
+    """Filter that returns Eclipse forceplate keys/values as a dict."""
     return {
         key: val
         for key, val in eclipse_keys.items()
@@ -96,8 +108,18 @@ def eclipse_fp_keys(eclipse_keys):
 
 
 def set_eclipse_keys(fname_enf, eclipse_dict, update_existing=False):
-    """ Set key/value pairs in an ENF file. If update_existing is True,
-    overwrite existing keys. Keys will be written into the TRIAL_INFO section.
+    """Set key/value pairs in enf file.
+
+    Keys will be written into the TRIAL_INFO section.
+
+    Parameters
+    ----------
+    fname_enf : str
+        The filename.
+    eclipse_dict : dict
+        A dict containing the new key/value pairs.
+    update_existing : bool, optional
+        If True, overwrite existing keys.
     """
     cp = _enf_reader(fname_enf)
     did_set = False

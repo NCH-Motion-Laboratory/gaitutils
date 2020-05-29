@@ -13,14 +13,14 @@ import argparse
 
 from . import plots
 from .plot_misc import show_fig
-from ..envutils import register_gui_exception_handler
+from ..envutils import _register_gui_exception_handler
 from .. import nexus
 
 
 def _console_init():
     """Set up some things for console scripts"""
     logging.basicConfig(level=logging.DEBUG)
-    register_gui_exception_handler()
+    _register_gui_exception_handler()
 
 
 def plot_nexus_trial():

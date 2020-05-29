@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 def _handle_cfg_defaults(cfg):
-    """Handle deprecated and default values"""
+    """Handle deprecated and default config values"""
     if not isinstance(cfg.plot.emg_yscale, float):
         ysc = cfg.plot.emg_yscale[1]
         logger.warning('emg_yscale was changed to float, using %g' % ysc)
@@ -38,13 +38,12 @@ def _handle_cfg_defaults(cfg):
         cfg.autoproc.write_eclipse_fp_info = 'write'
 
 
-# default config
+# location of the default config file
 cfg_template_fn = resource_filename(__name__, 'data/default.cfg')
-# user specific config
-# On Windows, this typically puts the config at C:\Users\Username, since the
-# USERPROFILE environment variable points there. Putting the config in a
-# networked home dir requires some tinkering with environment variables
-# (e.g. setting HOME)
+# Location of the user specific config file. On Windows, this typically puts the
+# config at C:\Users\Username, since the USERPROFILE environment variable points
+# there. Putting the config in a networked home dir requires some tinkering with
+# environment variables (e.g. setting HOME)
 homedir = op.expanduser('~')
 cfg_user_fn = op.join(homedir, '.gaitutils.cfg')
 

@@ -1,28 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Autoprocess all trials in current Nexus session directory. See autoproc
-section in config for options.
-
-1st pass (all trials):
--preprocess
--get fp context + strike/toeoff velocities etc.
-
-2nd pass:
--automark (using velocity stats from previous step)
--run models + save
-
--write Eclipse info
-
-GAP HANDLING:
-    If cfg.autoproc.fail_on_gaps is set, the processing will fail on ANY gaps.
-    Otherwise, a ROI (region of interest) will be determined based on
-    cfg.autoproc.events_range. Gaps outside the ROI will not affect processing.
-    However the tracking markers (cfg.autoproc.track_markers) are used to
-    determine the ROI and they may not have any gaps anywhere.
+Functions for automated processing of data in Nexus.
 
 @author: Jussi (jnu@iki.fi)
 """
+
 from __future__ import division
 
 from builtins import zip
@@ -41,8 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
-    """Run autoprocessing for all enffiles (list of paths to .enf files).
-    """
+    """Run autoprocessing for given enf files."""
     if not cfg.autoproc.run_models_only:
         _delete_c3ds(enffiles)
 
@@ -247,7 +229,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
 
         # check forceplate data
         fp_info = (
-            eclipse.eclipse_fp_keys(edata) if cfg.autoproc.use_eclipse_fp_info else None
+            eclipse._eclipse_forceplate_keys(edata) if cfg.autoproc.use_eclipse_fp_info else None
         )
         try:
             fpev = utils.detect_forceplate_events(
@@ -433,9 +415,12 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
 
 
 def _delete_c3ds(enffiles):
-    """ c3d files need to be deleted before processing. Otherwise Nexus will
-    load analog data from existing c3d files which are affected by previous
-    crop operations, e.g. forceplate data might be clipped """
+    """Delete all c3d files corresponding to the given .enf files.
+
+    This is a good thing to do before autoprocessing, since otherwise Nexus will
+    load analog data from the existing c3d files which are affected by e.g.
+    previous crop operations.
+    """
     logger.debug('deleting previous c3d files')
     c3dfiles = sessionutils._filter_to_c3ds(enffiles)
     for enffile, c3dfile in zip(enffiles, c3dfiles):
@@ -464,6 +449,17 @@ def _delete_c3ds(enffiles):
 
 
 def autoproc_session(patterns=None, signals=None):
+    """Autoprocess the currently open Nexus session.
+
+    Parameters
+    ----------
+    patterns : list, optional
+        Limit the processing to trialnames that contain given strings. if None,
+        all trials will be processed (but see relevant config options).
+    signals : ProgressSignals | None
+        This is used to emit processing-related status signals. If None, a dummy
+        instance will be created.
+    """    
     sessionpath = nexus.get_sessionpath()
     enffiles = sessionutils.get_enfs(sessionpath)
     if not enffiles:
@@ -476,6 +472,14 @@ def autoproc_session(patterns=None, signals=None):
 
 
 def autoproc_trial(signals=None):
+    """Autoprocess the currently open Nexus trial.
+
+    Parameters
+    ----------
+    signals : ProgressSignals | None
+        This is used to emit processing-related status signals. If None, a dummy
+        instance will be created.
+    """    
     fn = nexus._get_trialname()
     if not fn:
         raise GaitDataError('No trial open in Nexus')
@@ -486,7 +490,13 @@ def autoproc_trial(signals=None):
 
 
 def automark_trial(plot=False):
+    """Automatically mark events for the currently loaded Nexus trial.
 
+    Parameters
+    ----------
+    plot : bool
+        Create a velocity/events plot. Mostly for debug purposes.
+    """
     vicon = nexus.viconnexus()
     roi = vicon.GetTrialRegionOfInterest()
     vicon.ClearAllEvents()
@@ -499,7 +509,7 @@ def automark_trial(plot=False):
     utils.automark_events(vicon, vel_thresholds=vel, fp_events=fpe, roi=roi, plot=plot)
 
 
-def copy_session_videos():
+def _copy_session_videos():
     """Copy Nexus session videos to desktop"""
     nexus._check_nexus()
 

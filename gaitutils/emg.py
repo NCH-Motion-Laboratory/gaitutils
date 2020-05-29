@@ -2,7 +2,7 @@
 """
 Created on Tue Mar 17 14:41:31 2015
 
-Class for reading EMG
+Class for handling EMG data.
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -180,11 +180,17 @@ class EMG(object):
 
 
 class AvgEMG(EMG):
-    """Class for storing averaged RMS EMG. This tries to match EMG class API but differs
-    in following ways:
+    """Class for storing averaged RMS EMG.
+    
+    This tries to match the API of the EMG class, but differs in following ways:
     -precomputed RMS data is stored in self._data
     -only the RMS data can be returned
     -no filtering is done
+
+    Parameters
+    ----------
+    data : dict
+        The averaged data, e.g. from stats.average_analog.data().
     """
 
     def __init__(self, data):

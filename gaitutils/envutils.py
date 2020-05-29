@@ -31,7 +31,9 @@ pkg_dir = resource_filename('gaitutils', '')  # package directory
 pkg_parent = op.abspath(op.join(pkg_dir, op.pardir))
 git_mode = op.isdir(op.join(pkg_parent, '.git'))
 
+
 class GaitDataError(Exception):
+    """Custom exception class to indicate gait data related errors"""
     pass
 
 
@@ -52,7 +54,7 @@ def _ipython_setup():
     # np.set_printoptions(precision=3)
 
 
-def make_gaitutils_shortcut():
+def _make_gaitutils_shortcut():
     """Makes a desktop shortcut to gaitmenu gui."""
     env.make_shortcut('gaitutils', 'gui/gaitmenu.py', 'gaitutils menu')
 
@@ -89,9 +91,8 @@ def _git_autoupdate():
         return False
 
 
-def register_gui_exception_handler(full_traceback=False):
-    """ Registers an exception handler that reports uncaught exceptions
-    via GUI"""
+def _register_gui_exception_handler(full_traceback=False):
+    """Registers an exception handler that reports exceptions via GUI"""
     from .config import cfg
 
     def _my_excepthook(type_, value, tback):
@@ -113,13 +114,23 @@ def register_gui_exception_handler(full_traceback=False):
 
 
 def lru_cache_checkfile(fun):
-    """Caches function results, unless the argument file has changed.
+    """Cache function results, unless the argument file has changed.
 
     A lru_cache type decorator for functions that take a file name argument.
     Makes sense for functions that read a file and take a long time to process
     the data (anything that takes significantly longer than the md5 digest).
     Works by computing the md5 digest for the input file and passing that on to
     lru_cache, so the cache is invalidated if file contents have changed.
+
+    Parameters
+    ----------
+    fun : function
+        The function to cache.
+
+    Returns
+    -------
+    function
+        The cached function.
     """
 
     @lru_cache()

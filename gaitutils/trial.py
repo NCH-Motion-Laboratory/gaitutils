@@ -522,7 +522,7 @@ class Trial(object):
         """Read the forceplate events."""
         try:
             fp_info = (
-                eclipse.eclipse_fp_keys(self.eclipse_data)
+                eclipse._eclipse_forceplate_keys(self.eclipse_data)
                 if cfg.trial.use_eclipse_fp_info and self.use_eclipse_fp_info
                 else None
             )

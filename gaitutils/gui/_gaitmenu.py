@@ -42,7 +42,7 @@ from ..autoprocess import (
     autoproc_session,
     autoproc_trial,
     automark_trial,
-    copy_session_videos,
+    _copy_session_videos,
 )
 from ..viz.plots import (
     plot_trials,
@@ -468,7 +468,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         )
         self.actionTime_distance_average.triggered.connect(self._plot_timedist_average)
         # XXX: these get run in the main thread
-        self.actionCopy_session_videos_to_desktop.triggered.connect(copy_session_videos)
+        self.actionCopy_session_videos_to_desktop.triggered.connect(_copy_session_videos)
         self.actionAutomark_events.triggered.connect(self._automark_trial)
         # trials table settings
         # force "item selected" style, otherwise it will depend on focus; set font size

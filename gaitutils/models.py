@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-Definitions for various models (PiG, muscle length, etc.)
+Definitions for various gait related models (Plug-in Gait etc.)
 
 To create a new model, create a GaitModel() instance, fill in the data and
 append to models_all.
@@ -13,13 +13,23 @@ from past.builtins import basestring
 from builtins import object
 from collections import defaultdict
 
-
+# list of all our models
 models_all = list()
 
 
 def model_from_var(var_):
-    """ Return model corresponding to specified variable.
-    Returns the GaitModel instance that has the specified variable. """
+    """Return model corresponding to a variable.
+
+    Parameters
+    ----------
+    var_ : str
+        The variable name.
+
+    Returns
+    -------
+    GaitModel | None
+        The model. None if no models contain the given variable.
+    """
     if var_ is None:
         return None
     elif not isinstance(var_, basestring):
@@ -29,16 +39,17 @@ def model_from_var(var_):
             return model
     return None
 
-
 # convenience methods for model creation
+
 def _list_with_side(vars_):
-    """ Prepend variables in vars with 'L' and 'R', creating a new list of
-    variables. Many model variables share the same name, except for leading
-    'L' or 'R' that indicates side. """
+    """Prepend variable names in vars_ with 'L' and 'R'."""
     return [side + var for var in vars_ for side in 'LR']
 
 
 def _dict_with_side_gen(di, append_side=False):
+    """Prepend all dict keys in di with 'R' and 'L' and return new dict.
+    If append_side, also append corresponding ' (R)' or ' (L)' to every dict
+    value."""
     for key, val in di.items():
         for ctxt in 'RL':
             if append_side:
@@ -48,18 +59,19 @@ def _dict_with_side_gen(di, append_side=False):
 
 
 def _dict_with_side(di, append_side=False):
-    """Helper: prepend all dict keys with 'R' and 'L' and return new dict.
+    """Prepend all dict keys in di with 'R' and 'L' and return new dict.
     If append_side, also append corresponding ' (R)' or ' (L)' to every dict
     value."""
     return dict(_dict_with_side_gen(di, append_side=append_side))
 
 
 class GaitModel(object):
-    """ A class (template) for storing information about a model, e.g.
-    Plug-in Gait. The data describes model-specific variable names etc.
-    and is intended (currently not forced) to be non-mutable.
-    The actual data is stored elsewhere. """
+    """A class for storing information about a gait model.
 
+    The data describes model-specific variable names etc. and is intended
+    (currently not forced) to be non-mutable. The actual data is stored
+    elsewhere.
+    """
     def __init__(self):
         self.read_vars = list()  # vars to be read from data
         # How to read multidimensional variables: 'split_xyz' splits each
@@ -83,7 +95,7 @@ class GaitModel(object):
         self.is_kinetic_var = lambda var: False
 
 
-""" Create models """
+"""Create the models"""
 
 #
 # Oxford foot model

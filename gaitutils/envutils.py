@@ -27,6 +27,10 @@ else:
 logger = logging.getLogger(__name__)
 
 
+pkg_dir = resource_filename('gaitutils', '')  # package directory
+pkg_parent = op.abspath(op.join(pkg_dir, op.pardir))
+git_mode = op.isdir(op.join(pkg_parent, '.git'))
+
 class GaitDataError(Exception):
     pass
 
@@ -67,11 +71,9 @@ def _git_autoupdate():
 
     Return True if update was ran, else False."""
 
-    pkg_dir = resource_filename('gaitutils', '')  # package directory
-    repo_dir = op.abspath(op.join(pkg_dir, op.pardir))
-    if op.isdir(op.join(repo_dir, '.git')):  # looks like it's actually a repo
+    if git_mode:
         logger.debug('running git autoupdate')
-        o = subprocess.check_output(['git', 'pull'], cwd=repo_dir)
+        o = subprocess.check_output(['git', 'pull'], cwd=pkg_parent)
         # check git output to see if update was done; this is fragile
         # better idea might be to use python-git
         updated = 'pdating' in o
@@ -82,7 +84,7 @@ def _git_autoupdate():
             logger.debug('package already up to date')
             return False
     else:  # not a git repo
-        logger.debug('%s is not a git repo, not running autoupdate' % repo_dir)
+        logger.debug('%s is not a git repo, not running autoupdate' % pkg_parent)
         return False
 
 

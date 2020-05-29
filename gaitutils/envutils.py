@@ -69,7 +69,8 @@ def _git_autoupdate():
 
     Since this update mechanism is a bit fragile, it is not used by default.
 
-    Return True if update was ran, else False."""
+    Return True if update was ran, else False.
+    """
 
     if git_mode:
         logger.debug('running git autoupdate')

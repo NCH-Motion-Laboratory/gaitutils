@@ -428,7 +428,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 qt_message_dialog(
                     'The package was automatically updated. Restarting...'
                 )
-                os.execv(sys.executable, ['python'] + sys.argv)
+                mod_dir = resource_filename('gaitutils', '')
+                menu_script = op.join(mod_dir, 'gui/gaitmenu.py')
+                os.execv(sys.executable, ['python'] + [menu_script])
 
         self._web_report_dialog = WebReportDialog(self)
 

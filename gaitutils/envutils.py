@@ -54,14 +54,27 @@ def make_gaitutils_shortcut():
 
 
 def _git_autoupdate():
-    """Hacky way to update repo to latest master, if running under git.
-    Return True if update was ran, else False"""
-    mod_dir = resource_filename('gaitutils', '')
-    repo_dir = op.abspath(op.join(mod_dir, op.pardir))
-    if op.isdir(op.join(repo_dir, '.git')):
+    """Update the package git repository.
+    
+    This works if the package was installed into user directory by cloning the
+    git repository and running 'python setup.py develop'. In this case, updating
+    the cloned repository will effectively update the package.
+
+    The normal way to install the package is via pip install. In this case, the
+    package must be updated manually by pip.
+
+    Since this update mechanism is a bit fragile, it is not used by default.
+
+    Return True if update was ran, else False."""
+
+    pkg_dir = resource_filename('gaitutils', '')  # package directory
+    repo_dir = op.abspath(op.join(pkg_dir, op.pardir))
+    if op.isdir(op.join(repo_dir, '.git')):  # looks like it's actually a repo
         logger.debug('running git autoupdate')
         o = subprocess.check_output(['git', 'pull'], cwd=repo_dir)
-        updated = 'pdating' in o  # XXX: fragile as hell
+        # check git output to see if update was done; this is fragile
+        # better idea might be to use python-git
+        updated = 'pdating' in o
         if updated:
             logger.debug('autoupdate status: %s' % o)
             return True
@@ -69,7 +82,7 @@ def _git_autoupdate():
             logger.debug('package already up to date')
             return False
     else:  # not a git repo
-        logger.debug('%s is a git repo, not running autoupdate' % repo_dir)
+        logger.debug('%s is not a git repo, not running autoupdate' % repo_dir)
         return False
 
 

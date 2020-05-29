@@ -1145,7 +1145,8 @@ def main():
     logger.debug('Python interpreter: %s' % sys.executable)
     logger.debug('Python version: %s' % sys.version)
     logger.debug('Package directory: %s' % envutils.pkg_dir)
-    logger.debug('Running from a git repository: %s' % envutils.git_mode)
+    if envutils.git_mode:
+        logger.debug('Running from a git repository')
     logger.debug('Nexus SDK path: %s' % nexus.nexus_path)
     if not c3d.BTK_IMPORTED:
         logger.warning('cannot find btk module; unable to read .c3d files')

@@ -428,8 +428,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 qt_message_dialog(
                     'The package was automatically updated. Restarting...'
                 )
-                mod_dir = resource_filename('gaitutils', '')
-                menu_script = op.join(mod_dir, 'gui/gaitmenu.py')
+                pkg_dir = resource_filename('gaitutils', '')
+                menu_script = op.join(pkg_dir, 'gui/gaitmenu.py')
                 os.execv(sys.executable, ['python'] + [menu_script])
 
         self._web_report_dialog = WebReportDialog(self)
@@ -1147,6 +1147,7 @@ def main():
     gaitmenu.show()
     logger.debug('Python interpreter: %s' % sys.executable)
     logger.debug('Python version: %s' % sys.version)
+    logger.debug('Package directory: %s' % resource_filename('gaitutils', ''))
     logger.debug('Nexus SDK path: %s' % nexus.nexus_path)
     if not c3d.BTK_IMPORTED:
         logger.warning('cannot find btk module; unable to read .c3d files')

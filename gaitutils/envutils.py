@@ -56,7 +56,7 @@ def make_gaitutils_shortcut():
 def _git_autoupdate():
     """Update the package git repository.
     
-    This works if the package was installed into user directory by cloning the
+    This works, if the package was installed into user directory by cloning the
     git repository and running 'python setup.py develop'. In this case, updating
     the cloned repository will effectively update the package.
 

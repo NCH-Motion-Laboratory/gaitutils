@@ -17,7 +17,7 @@ from .. import cfg, sessionutils, normaldata, GaitDataError, trial
 from ulstools.num import age_from_hetu
 from ..viz.timedist import plot_session_average, plot_comparison
 from ..timedist import _session_analysis_text_finnish
-from ..viz.plots import plot_sessions, plot_session_average, plot_trial_velocities
+from ..viz.plots import _plot_sessions, _plot_session_average, plot_trial_velocities
 
 
 logger = logging.getLogger(__name__)
@@ -138,7 +138,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     fig_timedist_avg = None
     if pages['TimeDistAverage']:
         logger.debug('creating time-distance plot')
-        fig_timedist_avg = plot_session_average(sessionpath, backend=pdf_backend)
+        fig_timedist_avg = _plot_session_average(sessionpath, backend=pdf_backend)
 
     # time-dist text
     _timedist_txt = _session_analysis_text_finnish(sessionpath)
@@ -148,7 +148,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     fig_kinematics_cons = None
     if pages['KinematicsCons']:
         logger.debug('creating kinematics consistency plot')
-        fig_kinematics_cons = plot_sessions(
+        fig_kinematics_cons = _plot_sessions(
             sessions=[sessionpath],
             layout_name='lb_kinematics',
             model_normaldata=model_normaldata,
@@ -164,7 +164,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     fig_kinetics_cons = None
     if pages['KineticsCons'] and has_kinetics:
         logger.debug('creating kinetics consistency plot')
-        fig_kinetics_cons = plot_sessions(
+        fig_kinetics_cons = _plot_sessions(
             sessions=[sessionpath],
             layout_name='lb_kinetics',
             model_normaldata=model_normaldata,
@@ -180,7 +180,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     fig_musclelen_cons = None
     if pages['MuscleLenCons']:
         logger.debug('creating muscle length consistency plot')
-        fig_musclelen_cons = plot_sessions(
+        fig_musclelen_cons = _plot_sessions(
             sessions=[sessionpath],
             layout_name='musclelen',
             color_by=color_by,
@@ -195,7 +195,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     fig_emg_cons = None
     if do_emg_consistency:
         logger.debug('creating EMG consistency plot')
-        fig_emg_cons = plot_sessions(
+        fig_emg_cons = _plot_sessions(
             sessions=[sessionpath],
             layout_name='std_emg',
             color_by=color_by,
@@ -208,7 +208,7 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
     # average plots, R/L
     fig_kin_avg = None
     if pages['KinAverage']:
-        fig_kin_avg = plot_session_average(
+        fig_kin_avg = _plot_session_average(
             sessionpath, model_normaldata=model_normaldata, backend=pdf_backend,
         )
 
@@ -289,7 +289,7 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
     )
 
     fig_kinematics = (
-        plot_sessions(
+        _plot_sessions(
             sessionpaths,
             tags=cfg.eclipse.repr_tags,
             layout_name='lb_kinematics',
@@ -305,7 +305,7 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
     )
 
     fig_kinetics = (
-        plot_sessions(
+        _plot_sessions(
             sessionpaths,
             tags=cfg.eclipse.repr_tags,
             layout_name='lb_kinetics',
@@ -321,7 +321,7 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
     )
 
     fig_musclelen = (
-        plot_sessions(
+        _plot_sessions(
             sessionpaths,
             tags=cfg.eclipse.repr_tags,
             layout_name='musclelen',
@@ -337,7 +337,7 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
     )
 
     fig_emg = (
-        plot_sessions(
+        _plot_sessions(
             sessionpaths,
             tags=cfg.eclipse.repr_tags,
             layout_name='std_emg',

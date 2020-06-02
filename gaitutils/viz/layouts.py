@@ -15,8 +15,19 @@ logger = logging.getLogger(__name__)
 
 
 def get_layout(layout_name):
-    """Get layout from config"""
-    # default layout is lower body kinematics
+    """Get a layout from config.
+
+    Parameters
+    ----------
+    layout_name : str
+        Name of layout.
+
+    Returns
+    -------
+    list
+        The layout.
+    """
+    # our default layout is PiG lower body kinematics
     if layout_name is None:
         layout_name = 'lb_kinematics'
     try:

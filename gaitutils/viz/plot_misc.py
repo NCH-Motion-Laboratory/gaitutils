@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def _show_plotly_fig(fig):
-    """Shows a Plotly fig in configured browser"""
+    """Show a Plotly fig in the configured browser"""
     tmp_html = op.join(tempfile.gettempdir(), 'gaitutils_temp.html')
     plotly.offline.plot(fig, filename=tmp_html, auto_open=False, validate=False)
     _browse_localhost(url='file:///%s' % tmp_html)
@@ -45,15 +45,39 @@ def _browse_localhost(url=None, port=None):
 
 
 def get_backend(backend_name):
-    """Returns plotting backend module according to name, default for None"""
+    """Return plotting backend module.
+
+    Parameters
+    ----------
+    backend_name : str | None
+        Name of the backend. Currently supported backends are 'plotly' and
+        'matplotlib'. If None, return configured default backend.
+
+    Returns
+    -------
+    backend : module
+        The module.
+    """    
     if backend_name is None:
         backend_name = cfg.plot.backend
     backends = {'plotly': plot_plotly, 'matplotlib': plot_matplotlib}
+    if backend_name not in backends:
+        raise ValueError('no such plotting backend %s' % backend_name)
     return backends[backend_name]
 
 
 def show_fig(fig):
-    """Show the created figures"""
+    """Show a figure created by the plotting functions.
+
+    What actually happens depends on the backend. Plotly figures are shown in a
+    browser window. For matplotlib plots, a new Qt window is created and the
+    plot is shown there.
+
+    Parameters
+    ----------
+    fig : Figure | dict
+        The figure to show.
+    """
     if not fig:
         raise ValueError('No figure to show')
     if isinstance(fig, Figure):  # matplotlib

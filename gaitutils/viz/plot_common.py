@@ -10,12 +10,10 @@ plotting functionality shared between backends
 from builtins import str
 from builtins import next
 from past.builtins import basestring
-from builtins import object
 from itertools import cycle
 from collections import defaultdict, namedtuple
 import datetime
 import logging
-import copy
 import numpy as np
 
 from gaitutils import models, cfg, GaitDataError
@@ -25,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 def _get_trial_cycles(trial, cycles, max_cycles):
-    """Gets the specified cycles from a trial."""
+    """Get the specified cycles from a trial"""
     model_cycles = trial.get_cycles(
         cycles['model'], max_cycles_per_context=max_cycles['model']
     )
@@ -127,7 +125,7 @@ def _cyclical_mapper(it):
 
 
 def _handle_cyclespec(cycles):
-    """Handle cyclespec argument to plotter functions. """
+    """Handle cyclespec argument to plotter functions"""
     default_cycles = cfg.plot.default_cycles
     if cycles == 'unnormalized':
         cycles = {vartype: 'unnormalized' for vartype in default_cycles}
@@ -175,12 +173,12 @@ def _handle_style_and_color_args(style_by, color_by):
 
 
 def _style_mpl_to_plotly(style):
-    """Style mapper matplotlib -> plotly"""
+    """Map style argument from matplotlib to plotly"""
     return {'-': 'solid', '--': '5px', '-.': 'dashdot', ':': '2px'}[style]
 
 
 def _var_title(var):
-    """Get proper title for variable"""
+    """Get proper title for a variable"""
     mod = models.model_from_var(var)
     if mod:
         if var in mod.varlabels_noside:
@@ -194,7 +192,7 @@ def _var_title(var):
 
 
 def _truncate_trialname(trialname):
-    """Shorten trial name."""
+    """Shorten trial name"""
     try:
         # try to truncate date string of the form yyyy_mm_dd
         tn_split = trialname.split('_')
@@ -259,4 +257,3 @@ def _triage_var(var, trial):
             if v:
                 return k
         return 'unknown'
-

@@ -86,11 +86,11 @@ def test_plot_trials():
 
 def test_plot_sessions():
     """Test individual trial plotter"""
-    fig = plots.plot_sessions(sessions, backend='matplotlib')
+    fig = plots._plot_sessions(sessions, backend='matplotlib')
 
 
 def test_plot_session_average():
-    fig = plots.plot_session_average(sessiondir_abs, backend='matplotlib')
+    fig = plots._plot_session_average(sessiondir_abs, backend='matplotlib')
 
 
 def test_plot_trial_velocities():

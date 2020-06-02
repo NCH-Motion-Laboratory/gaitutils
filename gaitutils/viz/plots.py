@@ -34,7 +34,7 @@ def plot_trials(
 ):
     """Plot gait trials.
 
-    Creates a plot of gait trials using the given layout. Output depends on the
+    Create a plot of gait trials using the given layout. Output depends on the
     backend.
 
     Parameters
@@ -98,7 +98,7 @@ def plot_trials(
     )
 
 
-def plot_sessions(
+def _plot_sessions(
     sessions,
     tagged_only=True,
     tags=None,
@@ -142,7 +142,7 @@ def plot_sessions(
     )
 
 
-def plot_session_average(
+def _plot_session_average(
     session,
     layout_name=None,
     tagged_only=True,
@@ -150,7 +150,7 @@ def plot_session_average(
     model_normaldata=None,
     backend=None,
 ):
-    """Average trials across sessions and plot."""
+    """Average trials from session and plot."""
 
     layout = layouts.get_layout(layout_name)
     backend_lib = get_backend(backend)
@@ -180,7 +180,21 @@ def plot_session_average(
 
 
 def plot_trial_velocities(session, backend=None):
-    """Plot median velocities for each dynamic trial in Nexus session."""
+    """Plot median velocities of dynamic trials.
+
+    Parameters
+    ----------
+    session : str
+        Path to session.
+    backend : str | None
+        Name of backend to use, currently 'plotly' or 'matplotlib'. If None,
+        taken from cfg.
+
+    Returns
+    -------
+    fig : Figure | dict
+        The figure object. Type depends on backend. Use show_fig() to show it.
+    """
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
     if not c3ds:
         raise GaitDataError('No dynamic trials found for %s' % session)
@@ -194,7 +208,22 @@ def plot_trial_velocities(session, backend=None):
 
 
 def plot_trial_timedep_velocities(session, backend=None):
-    """Plot time-dependent velocity for each dynamic trial in session."""
+    """Plot time-dependent velocity of dynamic trials in session.
+
+    Parameters
+    ----------
+    session : str
+        Path to session.
+    backend : str | None
+        Name of backend to use, currently 'plotly' or 'matplotlib'. If None,
+        taken from cfg.
+
+    Returns
+    -------
+    fig : Figure | dict
+        The figure object. Type depends on backend. Use show_fig() to show it.
+   
+    """
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
     if not c3ds:
         raise GaitDataError('No dynamic trials found for %s' % session)
@@ -203,7 +232,7 @@ def plot_trial_timedep_velocities(session, backend=None):
     # get velocity curves
     for c3d in c3ds:
         _, vel = utils._trial_median_velocity(c3d, return_curve=True)
-        # vel = signal.medfilt(vel, 3)  # if spikes
+        # vel = signal.medfilt(vel, 3)  # can be used to filter out spikes
         vels.append(vel)
     figtitle = 'Time-dependent trial velocities for %s' % op.split(session)[-1]
     return get_backend(backend)._plot_timedep_vels(vels, labels, title=figtitle)

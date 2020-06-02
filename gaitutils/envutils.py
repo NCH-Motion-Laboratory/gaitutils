@@ -76,7 +76,11 @@ def _git_autoupdate():
 
     if git_mode:
         logger.debug('running git autoupdate')
-        o = subprocess.check_output(['git', 'pull'], cwd=pkg_parent)
+        try:
+            o = subprocess.check_output(['git', 'pull'], cwd=pkg_parent)
+        except subprocess.CalledProcessError:
+            logger.warning('git pull returned exit status 1')
+            return False
         # check git output to see if update was done; this is fragile
         # better idea might be to use python-git
         updated = 'pdating' in o

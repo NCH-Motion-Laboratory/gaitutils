@@ -117,7 +117,7 @@ def plot_trials(c3dfiles, plotvars=None, title=None, big_fonts=False, backend=No
         stddev=res_std_all,
         stddev_bars=False,
         plotvars=plotvars,
-        title=title,
+        figtitle=title,
         big_fonts=big_fonts,
     )
 

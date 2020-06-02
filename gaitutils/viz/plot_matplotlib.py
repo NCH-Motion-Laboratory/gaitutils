@@ -86,15 +86,39 @@ def time_dist_barchart(
     color=None,
     stddev_bars=True,
     plotvars=None,
-    title=None,
+    figtitle=None,
     big_fonts=None,
 ):
-    """ Multi-variable and multi-condition barchart plot.
-    values dict is keyed as values[condition][var][context],
-    given by e.g. get_c3d_analysis()
-    stddev can be None or a dict keyed as stddev[condition][var][context].
-    plotvars gives variables to plot (if not all) and their order.
+    """Multi-variable and multi-condition barchart plot.
+
+    Used mostly for plotting time-distance variables.
+
+    Parameters
+    ----------
+    values : dict
+        Nested dict of values to plot. Keys are values[condition][var][context].
+        Matches the output of group_analysis_trials().
+    stddev : dict | None
+        Similar to values, but provides standard deviation for each variable.
+    thickness : float, optional
+        Y direction thickness of the bars, by default 0.5
+    color : list, optional
+        List of colors for the different conditions. If None, use default values.
+    stddev_bars : bool, optional
+        Whether to plot standard deviation also as bars.
+    plotvars : list, optional
+        The variables to plot and their order. If None, plot all variables.
+    figtitle : str, optional
+        Title of the plot.
+    big_fonts : bool, optional
+        If True, increase font sizes somewhat.
+
+    Returns
+    -------
+    Figure
+        The chart.
     """
+
     fig = Figure()
 
     def _plot_label(ax, rects, texts):
@@ -186,8 +210,8 @@ def time_dist_barchart(
             bbox_transform=fig.transFigure,
         )
 
-    if title is not None:
-        fig.suptitle(title)
+    if figtitle is not None:
+        fig.suptitle(figtitle)
     return fig
 
 

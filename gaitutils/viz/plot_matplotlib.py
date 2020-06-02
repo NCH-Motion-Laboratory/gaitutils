@@ -12,7 +12,6 @@ from builtins import range
 from functools import partial
 from collections import OrderedDict, defaultdict
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.gridspec as gridspec
 import numpy as np
 import logging
@@ -731,15 +730,3 @@ def plot_trials(
         for li in leg.get_lines():
             li.set_linewidth(2.0)
     return fig
-
-
-def save_pdf(filename, fig):
-    """ Save figure fig into pdf filename """
-    try:
-        logger.debug('writing %s' % filename)
-        with PdfPages(filename) as pdf:
-            pdf.savefig(fig)
-    except IOError:
-        raise IOError(
-            'Error writing %s, check that file is not already open.' % filename
-        )

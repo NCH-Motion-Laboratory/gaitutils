@@ -231,8 +231,44 @@ def plot_trials(
     legend=True,
     figtitle=None,
 ):
-    """plot trials and return Figure instance"""
+    """Plot gait trials using matplotlib.
 
+    Parameters
+    ----------
+    trials : list
+        List of Trial instances to plot.
+    layout : list
+        The plot layout to use.
+    model_normaldata : dict | None
+        Normaldata for model variables. If None, taken from cfg.
+    emg_normaldata : dict | None
+        Normal data for EMG variables. If None, taken from cfg.
+    cycles : dict | str | int | tuple | list
+        Cycles to plot. See Trial.get_cycles() for details.
+    max_cycles : dict | None
+        Maximum number of cycles to plot for each variable type. If None, taken
+        from cfg.
+    emg_mode : str | None
+        If 'rms', plot EMG in RMS mode.
+    legend_type : str | None
+        Legend type for gait cycles (see _get_cycle_name for options). If None,
+        taken from cfg.
+    style_by : dict | None
+        How to style each variable type. If None, taken from cfg.
+    color_by : dict | None
+        How to color each variable type. If None, taken from cfg.
+    supplementary_data : dict | None
+        Supplementary data to plot for each variable.
+    legend : bool
+        If True, plot the legend.
+    figtitle : str | None
+        Main title for the figure.
+
+    Returns
+    -------
+    Figure
+        The matplotlib figure object.
+    """
     if not trials:
         raise GaitDataError('No trials')
 
@@ -501,7 +537,7 @@ def plot_trials(
                                     linewidth=cfg.plot.model_linewidth,
                                     alpha=cfg.plot.model_alpha,
                                 )[0]
-                                
+
                                 # dim-specific tracename
                                 tracename_marker = 'mkr_%s:%s' % (datadim, cyclename)
                                 leg_entries[tracename_marker] = line_

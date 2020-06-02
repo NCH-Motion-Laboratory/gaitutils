@@ -21,6 +21,7 @@ def plot_trials(
     layout_name=None,
     backend=None,
     model_normaldata=None,
+    emg_normaldata=None,
     cycles=None,
     max_cycles=None,
     emg_mode=None,
@@ -47,7 +48,9 @@ def plot_trials(
         Name of backend to use, currently 'plotly' or 'matplotlib'. If None,
         taken from cfg.
     model_normaldata : dict | None
-        Normaldata for model variables. If None, taken from cfg.
+        Normal data for model variables. If None, taken from cfg.
+    emg_normaldata : dict | None
+        Normal data for EMG variables. If None, taken from cfg.
     cycles : dict | str | int | tuple | list
         Cycles to plot. See Trial.get_cycles() for details.
     max_cycles : dict | None
@@ -86,6 +89,7 @@ def plot_trials(
         trials,
         layout,
         model_normaldata=model_normaldata,
+        emg_normaldata=emg_normaldata,
         cycles=cycles,
         max_cycles=max_cycles,
         emg_mode=emg_mode,

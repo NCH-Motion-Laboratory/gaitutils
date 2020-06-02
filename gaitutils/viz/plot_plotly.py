@@ -246,7 +246,7 @@ def plot_trials(
 
     use_rms = emg_mode == 'rms'
 
-    nrows, ncols = layouts.check_layout(layout)
+    nrows, ncols = layouts._check_layout(layout)
 
     # these generate and keep track of key -> linestyle (or color) mappings
     trace_colors = _cyclical_mapper(cfg.plot.colors)

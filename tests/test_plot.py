@@ -31,15 +31,15 @@ tmpdir = tempfile.gettempdir()
 def test_check_layout():
     """Check layout checker"""
     with pytest.raises(TypeError):
-        layouts.check_layout('a')
+        layouts._check_layout('a')
     with pytest.raises(TypeError):
-        layouts.check_layout(['foo'])
+        layouts._check_layout(['foo'])
     with pytest.raises(TypeError):
-        layouts.check_layout([['foo'], []])
+        layouts._check_layout([['foo'], []])
     with pytest.raises(TypeError):
-        layouts.check_layout([['foo'], 'a'])
+        layouts._check_layout([['foo'], 'a'])
     lout = [['a', 'b'], ['c', 'd'], ['e', 'f']]  # being unimaginative here
-    assert layouts.check_layout(lout) == (3, 2)
+    assert layouts._check_layout(lout) == (3, 2)
 
 
 def test_rm_dead_channels():
@@ -67,8 +67,8 @@ def test_rm_dead_channels():
     ]
     # assert that Glut and Vas get removed for both single and multiple EMG
     # instances
-    assert layouts.rm_dead_channels(emg, lout) == lout_
-    assert layouts.rm_dead_channels(emgs, lout) == lout_
+    assert layouts._rm_dead_channels(emg, lout) == lout_
+    assert layouts._rm_dead_channels(emgs, lout) == lout_
 
 
 # XXX: currently we only test that the plotting funcs run without errors

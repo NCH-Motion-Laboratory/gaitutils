@@ -36,8 +36,12 @@ def get_layout(layout_name):
         raise GaitDataError('No such layout %s' % layout_name)
 
 
-def check_layout(layout):
-    """Check layout consistency. Return tuple (n_of_rows, n_of_cols)"""
+def _check_layout(layout):
+    """Check consistency of layout.
+    
+    Returns a tuple (n_of_rows, n_of_cols) if layout is ok.
+    Otherwise raises a TypeError.
+    """
     if not layout or not isinstance(layout, list):
         raise TypeError('Invalid layout')
     if not isinstance(layout[0], list):
@@ -52,9 +56,8 @@ def check_layout(layout):
     return nrows, ncols
 
 
-def rm_dead_channels(emgs, layout):
-    """From layout, drop rows that do not have good data in any of the
-    EMG() instances given """
+def _rm_dead_channels(emgs, layout):
+    """From EMG layout, remove rows that do not have any good data"""
     if not isinstance(emgs, list):
         emgs = [emgs]
     chs_ok = None

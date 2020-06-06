@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Report related functions
+Create web-based gait report using dash.
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -52,10 +52,12 @@ logger = logging.getLogger(__name__)
 
 
 def _make_dropdown_lists(options):
-    """This takes a list of label/value dicts (with arbitrary type values)
-    and returns list and dict. Needed since dcc.Dropdown can only take str
-    values. identity is fed to dcc.Dropdown() and mapper is used for getting
-    the actual values at the callback."""
+    """Helper for dcc.Dropdown.
+   
+    Take a list of label/value dicts (with arbitrary type values) and returns
+    (list, dict). Needed since dcc.Dropdown can only take str values. identity
+    is fed to dcc.Dropdown() and mapper is used for getting the actual values at
+    the callback."""
     identity = list()
     mapper = dict()
     for option in options:
@@ -67,8 +69,9 @@ def _make_dropdown_lists(options):
     return identity, mapper
 
 
-# helper to shutdown flask server, see http://flask.pocoo.org/snippets/67/
+
 def _shutdown_server():
+    """Shutdown flask server, see http://flask.pocoo.org/snippets/67/"""
     func = request.environ.get('werkzeug.server.shutdown')
     if func is None:
         raise RuntimeError('Not running with the Werkzeug Server')
@@ -88,30 +91,38 @@ def _report_name(sessions, long_name=True):
 
 
 def dash_report(
+    sessions,
     info=None,
-    sessions=None,
     tags=None,
     signals=None,
     recreate_plots=None,
     video_only=None,
 ):
-    """Create a web report dash app.
+    """Create a gait report dash app.
 
     Parameters
     ----------
-
-    info : dict
-        patient info
     sessions : list
-        list of session dirs
-    tags : list
-        tags for dynamic gait trials
-    signals : ProgressSignals
-        instance of ProgressSignals, used to send progress updates across threads
+        List of session directories. Up to three sessions can be compared in the
+        report.
+    info : dict | None
+        The patient info.
+    tags : list | None
+        Eclipse tags for finding dynamic gait trials. If None, will be taken from config.
+    signals : ProgressSignals | None
+        Instance of ProgressSignals, used to send progress updates across
+        threads and track cancel flag. If None, a dummy one will be created.
     recreate_plots : bool
-        force recreation of report
+        If True, force recreation of report figures. Otherwise, figures cached
+        to disk will be used, unless the report c3d files have changed (a
+        checksum mechanism is used to verify this).
     video_only : bool
-        Create a video-only report. C3D data will not be read.
+        If True, create a video-only report.
+
+    Returns
+    -------
+    dash.Dash | None
+        The dash (flask) app, or None if report creation failed.
     """
 
     if recreate_plots is None:

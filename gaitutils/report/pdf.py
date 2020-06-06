@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Create pdf gait report.
+Create gait reports in pdf format.
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -27,19 +27,22 @@ pdf_backend = 'matplotlib'
 
 
 def _add_footer(fig, txt):
-    """Add footer text to mpl Figure"""
+    """Add footer text to matplotlib Figure"""
     # XXX: currently puts text in right bottom corner
     fig.text(1, 0, txt, fontsize=8, color='black', ha='right', va='bottom')
 
 
 def _add_header(fig, txt):
-    """Add header text to mpl Figure"""
+    """Add header text to matplotlib Figure"""
     # XXX: currently puts text in left bottom corner
     fig.text(0, 0, txt, fontsize=8, color='black', ha='left', va='bottom')
 
 
 def _make_text_fig(txt, titlepage=True):
-    """Make a Figure from txt"""
+    """Make a Figure from given text.
+    
+    If titlepage is True, use larger font in bold.
+    """
     fig = Figure()
     ax = fig.add_subplot(111)
     ax.set_axis_off()
@@ -51,7 +54,10 @@ def _make_text_fig(txt, titlepage=True):
 
 
 def _savefig(pdf, fig, header=None, footer=None):
-    """Add header/footer into page and save as A4"""
+    """Save figure fig into the given pdf object.
+    
+    Adds header/footer into page and saves as A4.
+    """
     if fig is None:
         return
     elif not isinstance(fig, Figure):
@@ -64,9 +70,35 @@ def _savefig(pdf, fig, header=None, footer=None):
     pdf.savefig(fig)
 
 
-def create_report(sessionpath, info=None, pages=None, destdir=None):
-    """Create the pdf report and save in session directory"""
+def create_report(sessionpath, info=None, pages=None, destdir=None, write_timedist=False):
+    """Create a single-session pdf report.
 
+    Parameters
+    ----------
+    sessionpath : str
+        Path to session.
+    info : dict, optional
+        Patient info dict.
+    pages : dict, optional
+        Which pages to include to include in report. Set value to True for
+        desired pages. Currently supported keys:
+        'TrialVelocity'
+        'TimeDistAverage'
+        'KinematicsCons'
+        'KineticsCons'
+        'MuscleLenCons'
+        'KinAverage'
+    destdir : str, optional
+        Destination directory for the pdf report. If None, write into sessionpath.
+    write_timedist : bool
+        If True, also write a text report of time-distance parameters into the
+        same directory as the pdf.
+
+    Returns
+    -------
+    str
+        A status message.
+    """
     if info is None:
         info = defaultdict(lambda: '')
     fullname = info['fullname'] or ''
@@ -224,18 +256,43 @@ def create_report(sessionpath, info=None, pages=None, destdir=None):
         _savefig(pdf, fig_emg_cons, header)
         _savefig(pdf, fig_kin_avg, header)
 
-    # here we sneakily also export the time-distance data in text format
-    timedist_txt_file = sessiondir + '_time_distance.txt'
-    timedist_txt_path = op.join(destdir, timedist_txt_file)
-    with io.open(timedist_txt_path, 'w', encoding='utf8') as f:
-        logger.debug('writing timedist text data into %s' % timedist_txt_path)
-        f.write(_timedist_txt)
+    if write_timedist:
+        timedist_txt_file = sessiondir + '_time_distance.txt'
+        timedist_txt_path = op.join(destdir, timedist_txt_file)
+        with io.open(timedist_txt_path, 'w', encoding='utf8') as f:
+            logger.debug('writing timedist text data into %s' % timedist_txt_path)
+            f.write(_timedist_txt)
 
     return 'Created %s' % pdfpath
 
 
 def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
-    """Create pdf comparison report"""
+    """Create a comparison pdf report.
+
+    Parameters
+    ----------
+    sessionpath : str
+        Path to session.
+    info : dict, optional
+        Patient info dict.
+    pages : dict, optional
+        Which pages to include to include in report. Set value to True for
+        desired pages. Currently supported keys:
+        'TimeDist'
+        'Kinematics'
+        'Kinetics'
+        'MuscleLen'
+    destdir : str, optional
+        Destination directory for the pdf report. If None, write into first
+        session path.
+
+    Returns
+    -------
+    str
+        A status message.
+    """
+
+
     if info is None:
         info = defaultdict(lambda: '')
 

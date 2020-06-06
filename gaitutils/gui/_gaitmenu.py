@@ -1014,6 +1014,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         else:
             fun = pdf.create_report
             kwargs['sessionpath'] = sessions[0]
+            kwargs['write_timedist'] = True
         self._run_in_thread(fun, **kwargs)
 
     def _log_message(self, msg):

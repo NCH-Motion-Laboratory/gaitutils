@@ -1148,6 +1148,8 @@ def main():
     logger.debug('Package directory: %s' % envutils.pkg_dir)
     if envutils.git_mode:
         logger.debug('Running from a git repository')
+    if cfg.general.git_autoupdate:
+        logger.debug('git autoupdate enabled')
     logger.debug('Nexus SDK path: %s' % nexus.nexus_path)
     if not c3d.BTK_IMPORTED:
         logger.warning('cannot find btk module; unable to read .c3d files')

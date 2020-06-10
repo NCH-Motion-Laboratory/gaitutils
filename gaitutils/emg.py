@@ -65,7 +65,7 @@ class EMG(object):
         self._data = emgdi['data']
         self.t = emgdi['t']
 
-    def _edf_export(self):
+    def _edf_export(self, filename):
         """Export the EMG data to EDF format."""
         try:
             import pyedflib
@@ -73,11 +73,39 @@ class EMG(object):
             raise RuntimeError(
                 'You need to install the pyedflib package to use this function'
             )
-        raise RuntimeError('WIP')
-        #writer = pyedflib.EdfWriter('test.edf', 10)
-        #writer.setSamplefrequency(1000)
-        #writer.blockWriteDigitalSamples(data)
-        #writer.close()
+
+        f = pyedflib.EdfWriter(
+            filename, len(self.data), file_type=pyedflib.FILETYPE_EDFPLUS
+        )
+
+        channel_info = list()
+        data_list = list()
+        nbits = 16  # EDF only supports 16 bit data
+
+        for chname, chdata in self.data.items():
+            chdata_scaled = chdata * 1e3  # scale to mV
+            # strip Voltage. prefix that Nexus inserts
+            if chname.find('Voltage.') == 0:
+                chname = chname[8:]
+            # this tries to conform with EDF channel label standard
+            chname = 'EMG %s' % chname
+            ch_dict = {
+                'label': chname,
+                'dimension': 'mV',
+                'sample_rate': self.sfrate,
+                'physical_max': max(chdata_scaled),
+                'physical_min': min(chdata_scaled),
+                'digital_max': 2 ** (nbits - 1) - 1,
+                'digital_min': -(2 ** (nbits - 1)),
+                'transducer': 'EMG',
+                'prefilter': '',
+            }
+            channel_info.append(ch_dict)
+            data_list.append(chdata_scaled)
+
+        f.setSignalHeaders(channel_info)
+        f.writeSamples(data_list)
+        f.close()
 
     def _match_name(self, chname):
         """Fuzzily match channel name"""

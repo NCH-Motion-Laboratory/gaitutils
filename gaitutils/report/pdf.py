@@ -70,7 +70,9 @@ def _savefig(pdf, fig, header=None, footer=None):
     pdf.savefig(fig)
 
 
-def create_report(sessionpath, info=None, pages=None, destdir=None, write_timedist=False):
+def create_report(
+    sessionpath, info=None, pages=None, destdir=None, write_timedist=False
+):
     """Create a single-session pdf report.
 
     Parameters
@@ -291,7 +293,6 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
     str
         A status message.
     """
-
 
     if info is None:
         info = defaultdict(lambda: '')

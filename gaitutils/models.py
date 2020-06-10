@@ -39,7 +39,9 @@ def model_from_var(var_):
             return model
     return None
 
+
 # convenience methods for model creation
+
 
 def _list_with_side(vars_):
     """Prepend variable names in vars_ with 'L' and 'R'."""
@@ -72,6 +74,7 @@ class GaitModel(object):
     (currently not forced) to be non-mutable. The actual data is stored
     elsewhere.
     """
+
     def __init__(self):
         self.read_vars = list()  # vars to be read from data
         # How to read multidimensional variables: 'split_xyz' splits each

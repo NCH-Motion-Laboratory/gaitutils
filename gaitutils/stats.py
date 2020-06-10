@@ -153,6 +153,7 @@ class AvgTrial(Trial):
     def get_marker_data(self, marker, cycle=None):
         raise GaitDataError('AvgTrial does not average marker data yet')
 
+
 def _robust_reject_rows(data, p_threshold):
     """Reject rows (observations) from data based on robust Z-score"""
     # a Bonferroni type correction for the p-threshold

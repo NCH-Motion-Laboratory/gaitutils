@@ -57,7 +57,7 @@ def get_backend(backend_name):
     -------
     backend : module
         The module.
-    """    
+    """
     if backend_name is None:
         backend_name = cfg.plot.backend
     backends = {'plotly': plot_plotly, 'matplotlib': plot_matplotlib}

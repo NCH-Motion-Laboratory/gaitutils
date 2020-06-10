@@ -69,7 +69,7 @@ class EMG(object):
         """Export the EMG data to EDF format.
 
         Dumps raw (unfiltered) data from all physical channels to the given EDF
-        file. Format is currently set to EDF plus.
+        file. Format is currently set to EDF plus. Uses pyedflib as a soft dependency.
 
         Parameters
         ----------

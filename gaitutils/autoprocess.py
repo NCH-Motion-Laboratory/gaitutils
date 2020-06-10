@@ -229,7 +229,9 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
 
         # check forceplate data
         fp_info = (
-            eclipse._eclipse_forceplate_keys(edata) if cfg.autoproc.use_eclipse_fp_info else None
+            eclipse._eclipse_forceplate_keys(edata)
+            if cfg.autoproc.use_eclipse_fp_info
+            else None
         )
         try:
             fpev = utils.detect_forceplate_events(
@@ -459,7 +461,7 @@ def autoproc_session(patterns=None, signals=None):
     signals : ProgressSignals | None
         This is used to emit processing-related status signals. If None, a dummy
         instance will be created.
-    """    
+    """
     sessionpath = nexus.get_sessionpath()
     enffiles = sessionutils.get_enfs(sessionpath)
     if not enffiles:
@@ -479,7 +481,7 @@ def autoproc_trial(signals=None):
     signals : ProgressSignals | None
         This is used to emit processing-related status signals. If None, a dummy
         instance will be created.
-    """    
+    """
     fn = nexus._get_trialname()
     if not fn:
         raise GaitDataError('No trial open in Nexus')

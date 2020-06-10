@@ -69,7 +69,6 @@ def _make_dropdown_lists(options):
     return identity, mapper
 
 
-
 def _shutdown_server():
     """Shutdown flask server, see http://flask.pocoo.org/snippets/67/"""
     func = request.environ.get('werkzeug.server.shutdown')
@@ -91,12 +90,7 @@ def _report_name(sessions, long_name=True):
 
 
 def dash_report(
-    sessions,
-    info=None,
-    tags=None,
-    signals=None,
-    recreate_plots=None,
-    video_only=None,
+    sessions, info=None, tags=None, signals=None, recreate_plots=None, video_only=None,
 ):
     """Create a gait report dash app.
 

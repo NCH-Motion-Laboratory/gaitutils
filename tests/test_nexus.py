@@ -249,10 +249,10 @@ def test_autoproc():
         c3dname = '2018_12_17_preOp_RR0%d.c3d' % c3dn
         c3dpath = op.join(sessionpath, c3dname)
         assert op.isfile(c3dpath)
-        # check that dynamic files were modified in the last 5 minutes,
+        # check that dynamic files were modified in the last 10 minutes,
         # and static is older (unmodified by processing)
         mtime = datetime.fromtimestamp(op.getmtime(c3dpath))
         if c3dn == 4:
             assert (datetime.now() - mtime).total_seconds() > 3600
         else:
-            assert (datetime.now() - mtime).total_seconds() < 300
+            assert (datetime.now() - mtime).total_seconds() < 600

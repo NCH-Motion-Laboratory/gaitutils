@@ -66,7 +66,17 @@ class EMG(object):
         self.t = emgdi['t']
 
     def _edf_export(self, filename):
-        """Export the EMG data to EDF format."""
+        """Export the EMG data to EDF format.
+
+        Dumps raw (unfiltered) data from all physical channels to the given EDF
+        file. Format is currently set to EDF plus.
+
+        Parameters
+        ----------
+        filename : str
+            Name of EDF file to write.
+
+        """
         try:
             import pyedflib
         except ImportError:
@@ -77,18 +87,20 @@ class EMG(object):
         f = pyedflib.EdfWriter(
             filename, len(self.data), file_type=pyedflib.FILETYPE_EDFPLUS
         )
-
         channel_info = list()
         data_list = list()
-        nbits = 16  # EDF only supports 16 bit data
-
         for chname, chdata in self.data.items():
-            chdata_scaled = chdata * 1e3  # scale to mV
+            # scale signals to more typical EMG unit of mV
+            chdata_scaled = chdata * 1e3
             # strip Voltage. prefix that Nexus inserts
             if chname.find('Voltage.') == 0:
                 chname = chname[8:]
-            # this tries to conform with EDF channel label standard
+            # try to conform with the EDF channel label standard
             chname = 'EMG %s' % chname
+            # EDF stores data as 16 bit ints
+            # since ranges can be set per-channel, we map individual
+            # range of each signal into the 16-bit digital scale
+            nbits = 16
             ch_dict = {
                 'label': chname,
                 'dimension': 'mV',
@@ -102,7 +114,6 @@ class EMG(object):
             }
             channel_info.append(ch_dict)
             data_list.append(chdata_scaled)
-
         f.setSignalHeaders(channel_info)
         f.writeSamples(data_list)
         f.close()

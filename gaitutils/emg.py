@@ -150,6 +150,11 @@ class EMG(object):
             The EMG channel name. Name matching is used (see above).
         rms : bool
             Return moving-window RMS instead of raw data.
+        
+        Returns
+        -------
+        ndarray
+            The data, shape (N,).
         """
         ch = self._match_name(chname)
         data = self.data[ch]

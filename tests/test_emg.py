@@ -11,6 +11,7 @@ import logging
 import tempfile
 import os.path as op
 import numpy as np
+import tempfile
 
 from gaitutils import sessionutils, emg, GaitDataError
 from utils import _file_path
@@ -60,3 +61,44 @@ def test_emg_detect_bads():
     e = emg.EMG(fpath)
     for chname, exp_ok in expected_ok.items():
         assert e.status_ok(chname) == True
+
+
+def test_emg_write_edf():
+    """Test the edf writer"""
+    fn = r'2018_12_17_preOp_RR21.c3d'
+    fpath = op.join(sessiondir_abs, fn)
+    e = emg.EMG(fpath)
+    tmp_edf = op.join(tempfile.gettempdir(), 'edf_dump.edf')
+    e._edf_export(tmp_edf)
+    assert op.isfile(tmp_edf)
+    # FIXME: read edf file and check output
+
+
+def test_emg_get_data():
+    """Test the EMG data getter"""
+    fn = r'2018_12_17_preOp_RR04.c3d'
+    fpath = op.join(sessiondir_abs, fn)
+    e = emg.EMG(fpath)
+    chnames = [
+        'RGas',
+        'LHam',
+        'RSol',
+        'RGlut',
+        'LVas',
+        'LGas',
+        'LRec',
+        'RPer',
+        'RVas',
+        'LSol',
+        'RTibA',
+        'RHam',
+        'LTibA',
+        'RRec',
+        'LPer',
+        'LGlut',
+    ]
+    for chname in chnames:
+        chdata = e.get_channel_data(chname)
+        assert chdata.shape == (1000,)
+        chdata = e.get_channel_data(chname, rms=True)
+        assert chdata.shape == (1000,)

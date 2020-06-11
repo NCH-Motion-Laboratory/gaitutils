@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>679</width>
-    <height>747</height>
+    <width>1095</width>
+    <height>952</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -416,8 +416,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>679</width>
-     <height>21</height>
+     <width>1095</width>
+     <height>38</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -432,6 +432,7 @@
      <string>Tools</string>
     </property>
     <addaction name="actionTardieu_analysis"/>
+    <addaction name="actionExport_current_trial_to_EDF_format"/>
    </widget>
    <widget class="QMenu" name="menuProcessing">
     <property name="title">
@@ -601,6 +602,11 @@
   <action name="actionPDF_report_from_Nexus_session">
    <property name="text">
     <string>PDF report from Nexus session...</string>
+   </property>
+  </action>
+  <action name="actionExport_current_trial_to_EDF_format">
+   <property name="text">
+    <string>Export current trial to EDF format</string>
    </property>
   </action>
  </widget>

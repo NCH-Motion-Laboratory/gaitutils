@@ -446,6 +446,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionQuit.triggered.connect(self.close)
         self.actionOpts.triggered.connect(self._options_dialog)
         self.actionTardieu_analysis.triggered.connect(self._tardieu)
+        self.actionExport_current_trial_to_EDF_format.triggered.connect(self._export_current_trial_to_edf)
         self.actionAutoprocess_session.triggered.connect(self._autoproc_session)
         self.actionAutoprocess_single_trial.triggered.connect(self._autoproc_trial)
         self.actionPDF_report_from_Nexus_session.triggered.connect(
@@ -732,6 +733,19 @@ class Gaitmenu(QtWidgets.QMainWindow):
             # this relies on _selected_rows dynamically changing after removals
             row = self._selected_rows[0]
             self.tableTrials.removeRow(row)
+
+    def _export_current_trial_to_edf(self):
+        """Export EMG from current trial to an EDF file"""
+        if len(self._selected_rows) != 1:
+            qt_message_dialog('Select one trial first')
+            return
+        fout = QtWidgets.QFileDialog.getSaveFileName(
+            self, 'Save EDF file', op.expanduser('~'), 'EDF files (*.edf)'
+        )
+        fname = fout[0]
+        if fname:
+            tr = self._selected_trials[0]
+            tr.emg._edf_export(fname)
 
     def _plot_selected_trials(self):
         if not self._selected_rows:

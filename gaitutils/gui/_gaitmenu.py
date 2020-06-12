@@ -739,12 +739,14 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if len(self._selected_rows) != 1:
             qt_message_dialog('Select one trial first')
             return
+        tr = self._selected_trials[0]
+        default_edfname = op.join(tr.sessionpath, tr.trialname + '.edf')
         fout = QtWidgets.QFileDialog.getSaveFileName(
-            self, 'Save EDF file', op.expanduser('~'), 'EDF files (*.edf)'
+            self, 'Save EDF file', default_edfname, 'EDF files (*.edf)'
         )
         fname = fout[0]
         if fname:
-            tr = self._selected_trials[0]
+
             tr.emg._edf_export(fname)
 
     def _plot_selected_trials(self):

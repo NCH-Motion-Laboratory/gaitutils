@@ -83,9 +83,10 @@ class EMG(object):
             raise RuntimeError(
                 'You need to install the pyedflib package to use this function'
             )
-
+        # default to EDF+ for the time being
+        file_type=pyedflib.FILETYPE_EDFPLUS            
         f = pyedflib.EdfWriter(
-            filename, len(self.data), file_type=pyedflib.FILETYPE_EDFPLUS
+            filename, len(self.data), file_type=file_type,
         )
         channel_info = list()
         data_list = list()

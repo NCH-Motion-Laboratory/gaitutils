@@ -42,17 +42,19 @@ def _check_layout(layout):
     Returns a tuple (n_of_rows, n_of_cols) if layout is ok.
     Otherwise raises a TypeError.
     """
-    if not layout or not isinstance(layout, list):
-        raise TypeError('Invalid layout')
+    if not layout:
+        raise TypeError('Empty plotting layout: %s. If EMG layout, check that channels are ok.' % layout)
+    if not isinstance(layout, list):
+        raise TypeError('Invalid plotting layout')
     if not isinstance(layout[0], list):
-        raise TypeError('Invalid layout')
+        raise TypeError('Invalid plotting layout')
     nrows = len(layout)
     ncols = len(layout[0])
     if ncols < 1:
-        raise TypeError('Invalid layout: %s' % layout)
+        raise TypeError('Invalid plotting layout: %s' % layout)
     for col in layout:
         if not isinstance(col, list) or len(col) != ncols:
-            raise TypeError('Inconsistent layout: %s' % layout)
+            raise TypeError('Inconsistent plotting layout: %s' % layout)
     return nrows, ncols
 
 

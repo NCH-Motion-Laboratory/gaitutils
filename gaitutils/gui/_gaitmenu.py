@@ -89,7 +89,13 @@ def _exception_msg(e):
     # XXX: some exception classes (e.g. IOError) repr doesn't print all relevant information
     # (e.g. the file name), however it looks like the safest choice (str() has its own issues)
     # this can probably be improved for Py3
-    return e.message if isinstance(e, GaitDataError) else repr(e)
+    if isinstance(e, GaitDataError):
+        return e.message
+    # at least for certain classes, str(e) works fine        
+    elif isinstance(e, TypeError) or isinstance(e, ValueError):
+        return str(e)
+    else:
+        return repr(e)
 
 
 class PdfReportDialog(QtWidgets.QDialog):

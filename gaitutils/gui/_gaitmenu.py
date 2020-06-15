@@ -401,7 +401,9 @@ class AddSessionDialog(QtWidgets.QDialog):
             sessions = qt_dir_chooser()
             session = sessions[0] if sessions else None
         if session:
-            self.c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
+            self.c3ds = sessionutils.get_c3ds(
+                session, tags=tags, trial_type='dynamic', check_if_exists=False
+            )
             if self.c3ds:
                 self.done(QtWidgets.QDialog.Accepted)
             else:
@@ -680,6 +682,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
         c3dfiles = (op.normpath(fn) for fn in c3dfiles)
         self._disable_main_ui()  # in case it takes a while
         for c3dfile in c3dfiles:
+            if not op.isfile(c3dfile):
+                qt_message_dialog(
+                    'Could not find the C3D file (%s) for this trial. Please make sure the trial has been processed and saved.'
+                    % c3dfile
+                )
+                continue
             try:
                 tr = trial.Trial(c3dfile)
             except GaitDataError as e:
@@ -759,7 +767,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
             tr.emg._edf_export(default_edfname)
             n_out += 1
         if n_out:
-            qt_message_dialog('Exported %d edf file(s) into %s' % (n_out, tr.sessionpath))
+            qt_message_dialog(
+                'Exported %d edf file(s) into %s' % (n_out, tr.sessionpath)
+            )
 
     def _plot_selected_trials(self):
         if not self._selected_rows:

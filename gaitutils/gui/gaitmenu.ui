@@ -606,7 +606,7 @@
   </action>
   <action name="actionExport_current_trial_to_EDF_format">
    <property name="text">
-    <string>Export current trial to EDF format</string>
+    <string>Export selected trials to EDF</string>
    </property>
   </action>
  </widget>

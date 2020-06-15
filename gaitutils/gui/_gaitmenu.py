@@ -697,7 +697,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 self._add_trial_to_table(tr)
                 self.tableTrials.resizeColumnsToContents()
             finally:
-                self._enable_main_ui()
+                self._enable_main_ui()  # in case an unexpected exception is raised
+        self._enable_main_ui()  # in case we do not hit the try/finally block
+
 
     def _add_nexus_trial(self):
         """Add directly from Nexus"""

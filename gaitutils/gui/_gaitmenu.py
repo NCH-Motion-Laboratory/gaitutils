@@ -91,7 +91,7 @@ def _exception_msg(e):
     # this can probably be improved for Py3
     if isinstance(e, GaitDataError):
         return e.message
-    # at least for certain classes, str(e) works fine        
+    # at least for certain classes, str(e) works fine
     elif isinstance(e, TypeError) or isinstance(e, ValueError):
         return str(e)
     else:
@@ -452,7 +452,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.actionQuit.triggered.connect(self.close)
         self.actionOpts.triggered.connect(self._options_dialog)
         self.actionTardieu_analysis.triggered.connect(self._tardieu)
-        self.actionExport_current_trial_to_EDF_format.triggered.connect(self._export_current_trial_to_edf)
+        self.actionExport_current_trial_to_EDF_format.triggered.connect(
+            self._export_current_trial_to_edf
+        )
         self.actionAutoprocess_session.triggered.connect(self._autoproc_session)
         self.actionAutoprocess_single_trial.triggered.connect(self._autoproc_trial)
         self.actionPDF_report_from_Nexus_session.triggered.connect(
@@ -742,18 +744,22 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _export_current_trial_to_edf(self):
         """Export EMG from current trial to an EDF file"""
-        if len(self._selected_rows) != 1:
-            qt_message_dialog('Select one trial first')
+        if not self._selected_rows:
+            qt_message_dialog('Load and select one or more trials first')
             return
-        tr = self._selected_trials[0]
-        default_edfname = op.join(tr.sessionpath, tr.trialname + '.edf')
-        fout = QtWidgets.QFileDialog.getSaveFileName(
-            self, 'Save EDF file', default_edfname, 'EDF files (*.edf)'
-        )
-        fname = fout[0]
-        if fname:
-
-            tr.emg._edf_export(fname)
+        n_out = 0
+        for tr in self._selected_trials:
+            default_edfname = op.join(tr.sessionpath, tr.trialname + '.edf')
+            if op.isfile(default_edfname):
+                reply = qt_yesno_dialog(
+                    'File %s already exists. Overwrite?' % default_edfname
+                )
+                if reply == QtWidgets.QMessageBox.NoRole:
+                    continue
+            tr.emg._edf_export(default_edfname)
+            n_out += 1
+        if n_out:
+            qt_message_dialog('Exported %d edf file(s) into %s' % (n_out, tr.sessionpath))
 
     def _plot_selected_trials(self):
         if not self._selected_rows:

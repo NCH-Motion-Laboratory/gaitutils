@@ -15,7 +15,7 @@ from configobj import ConfigObj
 from collections import defaultdict, OrderedDict
 
 from .numutils import _isint
-from . import GaitDataError
+from .envutils import GaitDataError
 
 logger = logging.getLogger(__name__)
 

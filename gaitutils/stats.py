@@ -13,7 +13,9 @@ import os.path as op
 from collections import defaultdict
 
 from .trial import Trial, Gaitcycle
-from . import models, cfg, numutils, GaitDataError
+from . import models, numutils
+from .envutils import GaitDataError
+from .config import cfg
 from .emg import AvgEMG
 
 

@@ -17,7 +17,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import logging
 
-from . import GaitDataError, cfg
+from .envutils import GaitDataError
+from .config import cfg
 from .numutils import rising_zerocross, digitize_array, falling_zerocross, _baseline
 
 

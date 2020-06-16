@@ -1,7 +1,32 @@
-import sys
-import os
 import logging
+import os
+import sys
 
+from . import (
+    c3d,
+    config,
+    eclipse,
+    emg,
+    envutils,
+    gui,
+    models,
+    nexus,
+    normaldata,
+    numutils,
+    read_data,
+    report,
+    sessionutils,
+    stats,
+    timedist,
+    trial,
+    utils,
+    videos,
+    viz,
+)
+
+# in case we want to print stuff from config.py, it's better to delay
+# the import until this point (after the stdout fix above)
+from .config import cfg
 from .envutils import GaitDataError
 
 # the main purpose of adding the null handler is to disable the
@@ -27,8 +52,3 @@ if (
 ):
     blackhole = open(os.devnull, 'w')
     sys.stdout = sys.stderr = blackhole
-
-
-# in case we want to print stuff from config.py, it's better to delay
-# the import until this point (after the stdout fix above)
-from .config import cfg

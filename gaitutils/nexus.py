@@ -18,7 +18,8 @@ import multiprocessing
 
 from .numutils import _change_coords
 from .utils import TrialEvents
-from . import GaitDataError, cfg
+from .envutils import GaitDataError
+from .config import cfg
 
 
 logger = logging.getLogger(__name__)

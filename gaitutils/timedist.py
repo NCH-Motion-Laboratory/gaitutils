@@ -12,7 +12,9 @@ import os.path as op
 import numpy as np
 from collections import OrderedDict, defaultdict
 
-from . import sessionutils, cfg, GaitDataError, c3d
+from .envutils import GaitDataError
+from . import sessionutils, c3d
+from .config import cfg
 
 logger = logging.getLogger(__name__)
 

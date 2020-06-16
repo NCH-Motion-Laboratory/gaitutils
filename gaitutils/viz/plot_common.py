@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-plotting functionality shared between backends
+Plotting functionality shared between backends.
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -16,7 +16,9 @@ import datetime
 import logging
 import numpy as np
 
-from gaitutils import models, cfg, GaitDataError
+from .. import models
+from ..config import cfg
+from ..envutils import GaitDataError
 
 
 logger = logging.getLogger(__name__)

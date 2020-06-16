@@ -17,7 +17,9 @@ import logging
 import itertools
 import shutil
 
-from . import nexus, eclipse, utils, GaitDataError, sessionutils, read_data, videos, cfg
+from . import nexus, eclipse, utils, sessionutils, read_data, videos
+from .envutils import GaitDataError
+from .config import cfg
 from .gui.qt_widgets import ProgressSignals
 
 logger = logging.getLogger(__name__)

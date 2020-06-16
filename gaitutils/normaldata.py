@@ -15,7 +15,9 @@ import json
 import io
 import logging
 
-from . import cfg, sessionutils, GaitDataError, numutils
+from .config import cfg
+from .envutils import GaitDataError
+from . import sessionutils, numutils
 from .numutils import _isfloat
 from ulstools.num import age_from_hetu
 from .models import models_all

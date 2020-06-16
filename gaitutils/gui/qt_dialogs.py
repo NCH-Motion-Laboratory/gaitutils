@@ -16,9 +16,10 @@ import io
 from collections import defaultdict
 import logging
 
-from .. import nexus, GaitDataError, cfg
+from .. import nexus
+from ..envutils import GaitDataError
 from ulstools import configdot
-from ..config import _handle_cfg_defaults, cfg_user_fn
+from ..config import _handle_cfg_defaults, cfg_user_fn, cfg
 
 logger = logging.getLogger(__name__)
 

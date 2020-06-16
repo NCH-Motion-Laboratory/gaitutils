@@ -14,7 +14,8 @@ from builtins import object
 import numpy as np
 import logging
 
-from . import read_data, cfg, numutils
+from . import read_data, numutils
+from .config import cfg
 
 logger = logging.getLogger(__name__)
 

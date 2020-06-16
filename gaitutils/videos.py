@@ -14,7 +14,8 @@ import itertools
 import ctypes
 import subprocess
 
-from . import cfg, sessionutils, numutils
+from .config import cfg
+from . import sessionutils, numutils
 
 logger = logging.getLogger(__name__)
 

@@ -9,7 +9,9 @@ import numpy as np
 import os.path as op
 import logging
 
-from .. import cfg, trial, GaitDataError, sessionutils, stats, utils
+from ..config import cfg
+from ..envutils import GaitDataError
+from .. import trial, sessionutils, stats, utils
 from . import layouts
 from .plot_misc import get_backend
 

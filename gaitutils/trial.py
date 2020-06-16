@@ -18,9 +18,9 @@ import os.path as op
 import logging
 
 from .emg import EMG
+from .config import cfg
+from .envutils import GaitDataError
 from . import (
-    cfg,
-    GaitDataError,
     read_data,
     nexus,
     utils,

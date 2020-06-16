@@ -16,7 +16,8 @@ import re
 import logging
 
 from .eclipse import get_eclipse_keys
-from . import cfg, GaitDataError
+from .config import cfg
+from .envutils import GaitDataError
 
 
 logger = logging.getLogger(__name__)

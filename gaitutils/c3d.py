@@ -17,8 +17,7 @@ import sys
 
 from .numutils import center_of_pressure, _change_coords
 from .utils import TrialEvents, _step_width
-from .envutils import lru_cache_checkfile
-from . import GaitDataError
+from .envutils import lru_cache_checkfile, GaitDataError
 
 
 logger = logging.getLogger(__name__)

@@ -28,7 +28,9 @@ from .plot_common import (
     _get_trial_cycles,
     _triage_var,
 )
-from .. import models, normaldata, cfg, GaitDataError, numutils
+from .. import models, normaldata, numutils
+from ..config import cfg
+from ..envutils import GaitDataError
 from ..stats import AvgTrial
 from ..timedist import _pick_common_vars
 from . import layouts

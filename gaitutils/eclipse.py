@@ -13,6 +13,7 @@ import io
 import configobj
 from configobj import ConfigObj
 from collections import defaultdict, OrderedDict
+import sys
 
 from .numutils import _isint
 from .envutils import GaitDataError
@@ -129,9 +130,10 @@ def set_eclipse_keys(fname_enf, eclipse_dict, update_existing=False):
             did_set = True
     if did_set:
         logger.debug('writing %s' % fname_enf)
-        out = cp.write()  # output the config lines
-        # result is utf8, but needs to be converted to unicode type for write
-        outu = [str(line + '\n', encoding='utf8') for line in out]
+        # output the config lines; this writes utf8-encoded bytes
+        out = cp.write()
+        # they must be converted to str for writing
+        outu = [str(line, encoding='utf8') + '\n' for line in out]
         with io.open(fname_enf, 'w', encoding='utf8') as fp:
             fp.writelines(outu)
     else:

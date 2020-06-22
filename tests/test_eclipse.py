@@ -11,6 +11,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 from shutil import copyfile
 import logging
+import sys
 
 from gaitutils import eclipse
 from utils import _file_path, cfg
@@ -31,7 +32,10 @@ def test_enf_reader():
     edi_full = eclipse.get_eclipse_keys(trial_enf, return_empty=True)
     assert len(edi_full) == 16
     assert 'STAGES' in edi_full  # empty but should be read now
-    uni_ok = all([type(val) == unicode for val in edi_full.values()])
+    if sys.version_info.major == 2:
+        uni_ok = all([type(val) == unicode for val in edi_full.values()])
+    else:
+        uni_ok = all([type(val) == str for val in edi_full.values()])
     assert uni_ok
     with pytest.raises(IOError):
         eclipse.get_eclipse_keys('no.enf')

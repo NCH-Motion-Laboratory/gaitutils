@@ -89,10 +89,8 @@ def _exception_msg(e):
     # XXX: some exception classes (e.g. IOError) repr doesn't print all relevant information
     # (e.g. the file name), however it looks like the safest choice (str() has its own issues)
     # this can probably be improved for Py3
-    if isinstance(e, GaitDataError):
-        return e.message
-    # at least for certain classes, str(e) works fine
-    elif isinstance(e, TypeError) or isinstance(e, ValueError):
+    # for certain classes, str(e) works fine
+    if isinstance(e, TypeError) or isinstance(e, ValueError) or isinstance(e, GaitDataError):
         return str(e)
     else:
         return repr(e)

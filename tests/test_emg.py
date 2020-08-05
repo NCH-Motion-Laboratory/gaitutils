@@ -65,6 +65,11 @@ def test_emg_detect_bads():
 
 def test_emg_write_edf():
     """Test the edf writer"""
+    # only run the test if pyedflib is installed
+    try:
+        import pyedflib
+    except ImportError:
+        return
     fn = r'2018_12_17_preOp_RR21.c3d'
     fpath = op.join(sessiondir_abs, fn)
     e = emg.EMG(fpath)

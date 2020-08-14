@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
     """Run autoprocessing for given enf files."""
-    if not cfg.autoproc.run_models_only:
+    if not cfg.autoproc.run_models_only and cfg.autoproc.delete_c3ds:
         _delete_c3ds(enffiles)
 
     # signals is used to track progress across threads; if not given, just

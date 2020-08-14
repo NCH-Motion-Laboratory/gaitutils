@@ -1188,6 +1188,8 @@ def main():
     logger.debug('Package directory: %s' % envutils.pkg_dir)
     if envutils.git_mode:
         logger.debug('Running from a git repository')
+    else:
+        logger.debug('Running from a pip install')
     if cfg.general.git_autoupdate:
         logger.debug('git autoupdate enabled')
     logger.debug('Nexus SDK path: %s' % nexus.nexus_path)

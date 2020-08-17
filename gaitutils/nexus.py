@@ -523,7 +523,7 @@ def _get_forceplate_data(vicon):
         return None
     logger.debug('detected %d forceplate(s)' % len(devids))
     # filter by device name
-    if cfg.autoproc.nexus_forceplate_devnames is not None:
+    if cfg.autoproc.nexus_forceplate_devnames:
         devids = [id for id in devids if vicon.GetDeviceDetails(id)[0] in cfg.autoproc.nexus_forceplate_devnames]
     return [_get_1_forceplate_data(vicon, devid) for devid in devids]
 

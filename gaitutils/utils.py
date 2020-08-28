@@ -488,15 +488,42 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
         else:
             return 0
 
+    def _check_eclipse_fp_info(fp_info_this):
+        """Helper to check Eclipse forceplate info.
+        Returns tuple of (valid, detect_foot)
+        valid: detected foot according to Eclipse; 'L', 'R' or None
+        detect_foot: whether autodetection of foot contact is desired,
+        or we should just trust Eclipse
+        """
+        # XXX: are we sure that the plate indices always match Eclipse?
+        detect_foot = False
+        logger.debug('using Eclipse forceplate info: %s' % fp_info_this)
+        if fp_info_this == 'Right':
+            # force right foot - do not detect context
+            valid = 'R'
+        elif fp_info_this == 'Left':
+            # force left foot - do not detect context
+            valid = 'L'
+        elif fp_info_this == 'Invalid':
+            # force invalid contact - do not detect context
+            valid = None
+        elif fp_info_this == 'Auto':
+            # autodetect context
+            detect_foot = True  
+            valid = None
+        else:
+            raise GaitDataError('unexpected Eclipse forceplate field')
+        return valid, detect_foot
+
     # get subject info
     from . import read_data
 
-    logger.debug('detect forceplate events from %s' % source)
+    logger.debug('detecting forceplate events from %s' % source)
+    logger.debug('reading subject data')
     info = read_data.get_metadata(source)
     fpdata = read_data.get_forceplate_data(source)
     results = _empty_fp_events()
-
-    # get marker data and find "forward" direction (by max variance)
+    # read marker data if it was not supplied
     if mkrdata is None:
         mkrs = (
             cfg.autoproc.right_foot_markers
@@ -504,7 +531,6 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             + cfg.autoproc.track_markers
         )
         mkrdata = read_data.get_marker_data(source, mkrs)
-
     footlen = info['subj_params']['FootLen']
     rfootlen = info['subj_params']['RFootLen']
     lfootlen = info['subj_params']['LFootLen']
@@ -518,36 +544,23 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
     else:
         logger.debug('foot length parameter not set')
     bodymass = info['subj_params']['Bodymass']
-
-    logger.debug('acquiring gait events')
     events_0 = automark_events(source, mkrdata=mkrdata, mark=False, roi=roi)
 
     # loop over plates; our internal forceplate index is 0-based
     for plate_ind, fp in enumerate(fpdata):
         logger.debug('analyzing plate %d' % plate_ind)
-        # XXX: are we sure that the plate indices always match Eclipse?
-        plate = 'FP' + str(plate_ind + 1)  # Eclipse starts from FP1
+
+        plate = 'FP' + str(plate_ind + 1)  # Eclipse plate naming starts from FP1
         if fp_info is not None and plate in fp_info:
-            ecl_valid = fp_info[plate]
-            detect_foot = False
-            logger.debug('using Eclipse forceplate info: %s' % ecl_valid)
-            if ecl_valid == 'Right':
-                valid = 'R'
-            elif ecl_valid == 'Left':
-                valid = 'L'
-            elif ecl_valid == 'Invalid':
-                valid = None
-            elif ecl_valid == 'Auto':
-                detect_foot = True
-            else:
-                raise GaitDataError('unexpected Eclipse forceplate field')
+            fp_info_this = fp_info[plate]
+            valid, detect_foot = _check_eclipse_fp_info(fp_info_this)
         else:
             logger.debug('not using Eclipse forceplate info')
+            # autodetect context
             valid = None
             detect_foot = True
 
-        # identify candidate frames for foot strike
-
+        # analyze force        
         # median filter to remove spikes
         # XXX: kernel size should maybe depend on sampling freq?
         forcetot = signal.medfilt(fp['Ftot'], kernel_size=3)

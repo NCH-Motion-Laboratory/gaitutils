@@ -449,20 +449,103 @@ def _trial_median_velocity(source, return_curve=False):
 
 
 def _point_in_poly(poly, pt):
-    """Point-in-polygon. poly is ordered nx3 array of vertices and P is mx3
-    array of points. Returns mx3 array of booleans. 3rd dim is currently
-    ignored"""
+    """Point-in-polygon test. poly is an ordered Nx3 array of polygon vertices
+    and P is Mx3 array of points. Returns Mx3 array of booleans, one value for
+    each points. The 3rd dim is currently ignored (2D projection mode)."""
     p = path.Path(poly[:, :2])
     return p.contains_point(pt)
+
+
+def _check_foot_on_plate(fpdata, mkrdata, fr0, context, footlen):
+    """Helper for foot-plate check. Returns 0, 1, 2 for:
+    completely outside plate, partially outside plate, inside plate"""
+    allpts = _get_foot_points(mkrdata, context, footlen)
+    poly = fpdata['cor_full']
+    pts_ok = list()
+    for label, pts in allpts.items():
+        pt = pts[fr0, :]
+        pt_ok = _point_in_poly(poly, pt)
+        logger.debug('%s point %son plate' % (label, '' if pt_ok else 'not '))
+        pts_ok.append(pt_ok)
+    if all(pts_ok):
+        return 2
+    elif any(pts_ok):
+        return 1
+    else:
+        return 0
+
+
+def _check_eclipse_fp_info(fp_info_this):
+    """Helper to check Eclipse forceplate info.
+    Returns tuple of (valid, detect_foot)
+    valid: detected foot according to Eclipse; 'L', 'R' or None
+    (None signifies both 'do not know' and 'invalid')
+    detect_foot: whether autodetection of context is desired
+    or we should just use Eclipse info
+    """
+    # XXX: are we sure that the plate indices always match Eclipse?
+    detect_foot = False
+    logger.debug('using Eclipse forceplate info: %s' % fp_info_this)
+    if fp_info_this == 'Right':
+        # force right foot - do not detect context
+        valid = 'R'
+    elif fp_info_this == 'Left':
+        # force left foot - do not detect context
+        valid = 'L'
+    elif fp_info_this == 'Invalid':
+        # force invalid contact - do not detect context
+        valid = None
+    elif fp_info_this == 'Auto':
+        # autodetect context
+        detect_foot = True
+        valid = None
+    else:
+        raise GaitDataError('unexpected Eclipse forceplate field')
+    return valid, detect_foot
+
+
+def _check_plate_force(fp, bodymass, samplesperframe):
+    """From forceplate signal, find candidate frames for foot strike / toeoff
+    events (=frames where the force crosses a threshold).
+    """
+    # apply median filter to remove spikes
+    # XXX: kernel size should maybe depend on sampling freq?
+    forcetot = signal.medfilt(fp['Ftot'], kernel_size=3)
+    forcetot = _baseline(forcetot)
+    fmaxind = np.argmax(forcetot)
+    fmax = forcetot[fmaxind]
+    logger.debug('peak force: %.2f N at sample %d' % (fmax, fmaxind))
+
+    # determine force threshold based on body mass or maximum force
+    if bodymass is None:
+        f_threshold = cfg.autoproc.forceplate_contact_threshold * fmax
+        logger.warning(
+            'body mass unknown, thresholding force at %.2f N', f_threshold
+        )
+    else:
+        logger.debug('body mass %.2f kg' % bodymass)
+        f_threshold = cfg.autoproc.forceplate_contact_threshold * bodymass * 9.81
+        if fmax < cfg.autoproc.forceplate_min_weight * bodymass * 9.81:
+            logger.debug('insufficient max. force on plate')
+            return list(), list()
+
+    # find indices where rising/falling force crosses threshold and
+    # convert to 0-based frame indices (=1 less than Nexus frame index)
+    f_rising_inds = rising_zerocross(forcetot - f_threshold)
+    f_rising_inds = f_rising_inds[np.where(f_rising_inds < fmaxind)]
+    f_rising_frames = list(np.round(f_rising_inds / samplesperframe).astype(int))
+    f_falling_inds = falling_zerocross(forcetot - f_threshold)
+    f_falling_inds = f_falling_inds[np.where(f_falling_inds > fmaxind)]
+    f_falling_frames = list(np.round(f_rising_inds / samplesperframe).astype(int))
+    return f_rising_frames, f_falling_frames
 
 
 def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
     """Detect frames where valid forceplate strikes and toeoffs occur.
 
-    Uses forceplate data and foot shape estimated from markers
-
-    If supplied, mkrdata must include foot and pelvis markers. Otherwise
-    it will be read from source.
+    Uses forceplate data and foot shape estimated from markers. If supplied,
+    mkrdata must include foot and pelvis markers. Otherwise it will be read from
+    source.
 
     If fp_info dict is supplied, no marker-based checks will be done;
     instead the Eclipse forceplate info will be used to determine the context.
@@ -471,97 +554,13 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
     Even if Eclipse info is used to determine context, the foot strike and
     toeoff frames must be determined from forceplate data.
 
-    If roi is given e.g. [100, 300], all marker data checks will be restricted
-    to roi.
+    If roi is given (in frames, e.g. [100, 300]), all marker data checks will be
+    restricted to given roi.
     """
-
-    def _check_foot_on_plate(fpdata, mkrdata, fr0, context, footlen):
-        """Helper for foot-plate check. Returns 0, 1, 2 for:
-        completely outside plate, partially outside plate, inside plate"""
-        allpts = _get_foot_points(mkrdata, context, footlen)
-        poly = fpdata['cor_full']
-        pts_ok = list()
-        for label, pts in allpts.items():
-            pt = pts[fr0, :]
-            pt_ok = _point_in_poly(poly, pt)
-            logger.debug('%s point %son plate' % (label, '' if pt_ok else 'not '))
-            pts_ok.append(pt_ok)
-        if all(pts_ok):
-            return 2
-        elif any(pts_ok):
-            return 1
-        else:
-            return 0
-
-    def _check_eclipse_fp_info(fp_info_this):
-        """Helper to check Eclipse forceplate info.
-        Returns tuple of (valid, detect_foot)
-        valid: detected foot according to Eclipse; 'L', 'R' or None
-        (None signifies both 'do not know' and 'invalid')
-        detect_foot: whether autodetection of context is desired
-        or we should just use Eclipse info
-        """
-        # XXX: are we sure that the plate indices always match Eclipse?
-        detect_foot = False
-        logger.debug('using Eclipse forceplate info: %s' % fp_info_this)
-        if fp_info_this == 'Right':
-            # force right foot - do not detect context
-            valid = 'R'
-        elif fp_info_this == 'Left':
-            # force left foot - do not detect context
-            valid = 'L'
-        elif fp_info_this == 'Invalid':
-            # force invalid contact - do not detect context
-            valid = None
-        elif fp_info_this == 'Auto':
-            # autodetect context
-            detect_foot = True
-            valid = None
-        else:
-            raise GaitDataError('unexpected Eclipse forceplate field')
-        return valid, detect_foot
-
-    def _check_plate_force(fp):
-        """Analyze forceplate signal.
-
-        Finds candidate frames for foot strike / toeoff events. This is done by finding frames where
-        the force rapidly increases or settles down.
-        """
-        # apply median filter to remove spikes
-        # XXX: kernel size should maybe depend on sampling freq?
-        forcetot = signal.medfilt(fp['Ftot'], kernel_size=3)
-        forcetot = _baseline(forcetot)
-        fmaxind = np.argmax(forcetot)
-        fmax = forcetot[fmaxind]
-        logger.debug('peak force: %.2f N at sample %d' % (fmax, fmaxind))
-
-        # determine force threshold based on body mass or maximum force
-        if bodymass is None:
-            f_threshold = cfg.autoproc.forceplate_contact_threshold * fmax
-            logger.warning(
-                'body mass unknown, thresholding force at %.2f N', f_threshold
-            )
-        else:
-            logger.debug('body mass %.2f kg' % bodymass)
-            f_threshold = cfg.autoproc.forceplate_contact_threshold * bodymass * 9.81
-            if fmax < cfg.autoproc.forceplate_min_weight * bodymass * 9.81:
-                logger.debug('insufficient max. force on plate')
-                return list(), list()
-
-        # find indices where rising/falling force crosses threshold
-        # convert to 0-based frame indices (=1 less than Nexus frame index)
-        f_rising_inds = rising_zerocross(forcetot - f_threshold)
-        f_rising_inds = f_rising_inds[np.where(f_rising_inds < fmaxind)]
-        f_rising_frames = list(np.round(f_rising_inds / info['samplesperframe']).astype(int))
-        f_falling_inds = falling_zerocross(forcetot - f_threshold)
-        f_falling_inds = f_falling_inds[np.where(f_falling_inds > fmaxind)] / info['samplesperframe']
-        f_falling_frames = list(np.round(f_rising_inds / info['samplesperframe']).astype(int))
-        return f_rising_frames, f_falling_frames
-
-    # get subject info
     from . import read_data
 
     logger.debug('detecting forceplate events from %s' % source)
+    # get subject info
     logger.debug('reading subject data')
     info = read_data.get_metadata(source)
     fpdata = read_data.get_forceplate_data(source)
@@ -574,6 +573,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             + cfg.autoproc.track_markers
         )
         mkrdata = read_data.get_marker_data(source, mkrs)
+    # this is our own foot length parameter
     footlen = info['subj_params']['FootLen']
     rfootlen = info['subj_params']['RFootLen']
     lfootlen = info['subj_params']['LFootLen']
@@ -605,7 +605,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             detect_foot = True
 
         # check the force signal
-        strike_frames, toeoff_frames = _check_plate_force(fp)
+        strike_frames, toeoff_frames = _check_plate_force(fp, bodymass, info['samplesperframe'])
         if strike_frames and toeoff_frames:
             force_ok = True
             strike_fr = strike_frames[-1]

@@ -121,7 +121,7 @@ def marker_gaps(mdata, ignore_edge_gaps=True):
 
 def _step_width(source):
     """Compute step width over trial cycles.
-    
+
     For details of computation, see:
     https://www.vicon.com/faqs/software/how-does-nexus-plug-in-gait-and-polygon-calculate-gait-cycle-parameters-spatial-and-temporal
     Returns context keyed dict of lists.
@@ -168,7 +168,7 @@ def _step_width(source):
 
 def avg_markerdata(mkrdata, markers, roi=None, fail_on_gaps=True, avg_velocity=False):
     """Average marker data.
-   
+
     Parameters
     ----------
     mkrdata : dict
@@ -182,7 +182,7 @@ def avg_markerdata(mkrdata, markers, roi=None, fail_on_gaps=True, avg_velocity=F
         will not be included in the average.
     avg_velocity : bool, optional
         If True, return averaged marker velocity data instead of position.
-    
+
     Returns
     -------
     ndarray
@@ -311,7 +311,11 @@ def _get_foot_contact_vel(mkrdata, fp_events, medians=True, roi=None):
         # we can be less strict about gaps here, since missing a marker or two
         # probably won't really affect the velocity
         footctrv_ = avg_markerdata(
-            mkrdata, markers, roi=roi, fail_on_gaps=False, avg_velocity=True,
+            mkrdata,
+            markers,
+            roi=roi,
+            fail_on_gaps=False,
+            avg_velocity=True,
         )
         footctrv = np.linalg.norm(footctrv_, axis=1)
         strikes = fp_events[context + '_strikes']
@@ -351,7 +355,7 @@ def _normalize(V):
 
 def _get_foot_points(mkrdata, context, footlen=None):
     """Estimate points in the xy plane enclosing the foot.
-    
+
     Foot is modeled as a triangle with three points: heel, lateral leading edge
     (small toe) and medial leading edge (hallux)"""
     # marker data as N x 3 matrices
@@ -473,7 +477,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
 
     def _check_foot_on_plate(fpdata, mkrdata, fr0, side, footlen):
         """Helper for foot-plate check. Returns 0, 1, 2 for:
-            completely outside plate, partially outside plate, inside plate"""
+        completely outside plate, partially outside plate, inside plate"""
         allpts = _get_foot_points(mkrdata, side, footlen)
         poly = fpdata['cor_full']
         pts_ok = list()
@@ -511,14 +515,18 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             valid = None
         elif fp_info_this == 'Auto':
             # autodetect context
-            detect_foot = True  
+            detect_foot = True
             valid = None
         else:
             raise GaitDataError('unexpected Eclipse forceplate field')
         return valid, detect_foot
 
     def _check_plate_force(fp):
-        """Analyze forceplate signal"""
+        """Analyze forceplate signal.
+
+        Finds candidate frames for foot strike / toeoff events. This is done by finding frames where
+        the force rapidly increases or settles down.
+        """
         # apply median filter to remove spikes
         # XXX: kernel size should maybe depend on sampling freq?
         forcetot = signal.medfilt(fp['Ftot'], kernel_size=3)
@@ -527,7 +535,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
         fmax = forcetot[fmaxind]
         logger.debug('peak force: %.2f N at sample %d' % (fmax, fmaxind))
 
-        # find force threshold
+        # determine force threshold based on body mass or maximum force
         if bodymass is None:
             f_threshold = cfg.autoproc.forceplate_contact_threshold * fmax
             logger.warning(
@@ -538,28 +546,17 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             f_threshold = cfg.autoproc.forceplate_contact_threshold * bodymass * 9.81
             if fmax < cfg.autoproc.forceplate_min_weight * bodymass * 9.81:
                 logger.debug('insufficient max. force on plate')
-                force_checks_ok = False
+                return list(), list()
 
-        # find indices around peak where force crosses threshold
+        # find indices where rising/falling force crosses threshold
+        # convert to 0-based frame indices (=1 less than Nexus frame index)
         f_rising_inds = rising_zerocross(forcetot - f_threshold)
+        f_rising_inds = f_rising_inds[np.where(f_rising_inds < fmaxind)]
+        f_rising_frames = list(np.round(f_rising_inds / info['samplesperframe']).astype(int))
         f_falling_inds = falling_zerocross(forcetot - f_threshold)
-        try:
-            f_rising_ind = f_rising_inds[np.where(f_rising_inds < fmaxind)][-1]
-            f_falling_ind = f_falling_inds[np.where(f_falling_inds > fmaxind)][0]
-            logger.debug('force rise: %d fall: %d' % (f_rising_ind, f_falling_ind))
-            # these are 0-based frame indices (=1 less than Nexus frame index)
-            strike_fr = int(np.round(f_rising_ind / info['samplesperframe']))
-            toeoff_fr = int(np.round(f_falling_ind / info['samplesperframe']))
-            logger.debug(
-                'foot strike at frame %d, toeoff at %d' % (strike_fr, toeoff_fr)
-            )
-            force_checks_ok = True
-        except IndexError:
-            logger.debug('cannot detect force rise/fall')
-            force_checks_ok = False
-            strike_fr = None
-            toeoff_fr = None
-        return force_checks_ok, strike_fr, toeoff_fr
+        f_falling_inds = f_falling_inds[np.where(f_falling_inds > fmaxind)] / info['samplesperframe']
+        f_falling_frames = list(np.round(f_rising_inds / info['samplesperframe']).astype(int))
+        return f_rising_frames, f_falling_frames
 
     # get subject info
     from . import read_data
@@ -606,14 +603,18 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             # autodetect context
             valid = None
             detect_foot = True
-        
+
         # check the force signal
-        force_checks_ok, strike_fr, toeoff_fr = _check_plate_force(fp)
-        if not force_checks_ok:
-            valid = None
+        strike_frames, toeoff_frames = _check_plate_force(fp)
+        if strike_frames and toeoff_frames:
+            force_ok = True
+            strike_fr = strike_frames[-1]
+            toeoff_fr = toeoff_frames[0]
+        else:
+            force_ok = False
 
         # autodetect context and whether contact is valid (all markers on plate)
-        if force_checks_ok and detect_foot:
+        if force_ok and detect_foot:
             logger.debug('using autodetection of foot contact')
             # allows foot to settle for 50 ms after strike
             settle_time = int(50 / 1000 * info['framerate'])
@@ -640,7 +641,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
                         'foot (at frame %d)' % fr0
                     )
                     contra_next_ok = (
-                        _check_foot_on_plate(fp, mkrdata, fr0, contra_side, footlen) == 0
+                        _check_foot_on_plate(fp, mkrdata, fr0, contra_side, footlen)
+                        == 0
                     )
                     ok &= contra_next_ok
                 contra_strikes_prev = contra_strikes[
@@ -655,7 +657,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
                         'foot (at frame %d)' % fr0
                     )
                     contra_prev_ok = (
-                        _check_foot_on_plate(fp, mkrdata, fr0, contra_side, footlen) == 0
+                        _check_foot_on_plate(fp, mkrdata, fr0, contra_side, footlen)
+                        == 0
                     )
                     ok &= contra_prev_ok
             valid = side if ok else None

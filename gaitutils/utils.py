@@ -453,24 +453,25 @@ def _point_in_poly(poly, pt):
 
 
 def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
-    """ Detect frames where valid forceplate strikes and toeoffs occur.
-    Uses forceplate data and estimated foot shape.
+    """Detect frames where valid forceplate strikes and toeoffs occur.
+
+    Uses forceplate data and foot shape estimated from markers
 
     If supplied, mkrdata must include foot and pelvis markers. Otherwise
-    it will be read.
+    it will be read from source.
 
     If fp_info dict is supplied, no marker-based checks will be done;
-    instead the Eclipse forceplate info will be used to determine the foot.
-    Eclipse info is written e.g. as {FP1: 'Left'} where plate indices start
-    from 1 and the value can be 'Auto', 'Left', 'Right' or 'Invalid'.
-    Even if Eclipse info is used, foot strike and toeoff frames must be
-    determined from forceplate data.
+    instead the Eclipse forceplate info will be used to determine the context.
+    Eclipse info is written e.g. as {FP1: 'Left'} where plate indices are 1-based
+    and the value can be 'Auto', 'Left', 'Right' or 'Invalid'.
+    Even if Eclipse info is used to determine context, the foot strike and
+    toeoff frames must be determined from forceplate data.
 
     If roi is given e.g. [100, 300], all marker data checks will be restricted
     to roi.
     """
 
-    def _foot_plate_check(fpdata, mkrdata, fr0, side, footlen):
+    def _check_foot_on_plate(fpdata, mkrdata, fr0, side, footlen):
         """Helper for foot-plate check. Returns 0, 1, 2 for:
             completely outside plate, partially outside plate, inside plate"""
         allpts = _get_foot_points(mkrdata, side, footlen)
@@ -492,8 +493,9 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
         """Helper to check Eclipse forceplate info.
         Returns tuple of (valid, detect_foot)
         valid: detected foot according to Eclipse; 'L', 'R' or None
-        detect_foot: whether autodetection of foot contact is desired,
-        or we should just trust Eclipse
+        (None signifies both 'do not know' and 'invalid')
+        detect_foot: whether autodetection of context is desired
+        or we should just use Eclipse info
         """
         # XXX: are we sure that the plate indices always match Eclipse?
         detect_foot = False
@@ -515,53 +517,9 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             raise GaitDataError('unexpected Eclipse forceplate field')
         return valid, detect_foot
 
-    # get subject info
-    from . import read_data
-
-    logger.debug('detecting forceplate events from %s' % source)
-    logger.debug('reading subject data')
-    info = read_data.get_metadata(source)
-    fpdata = read_data.get_forceplate_data(source)
-    results = _empty_fp_events()
-    # read marker data if it was not supplied
-    if mkrdata is None:
-        mkrs = (
-            cfg.autoproc.right_foot_markers
-            + cfg.autoproc.left_foot_markers
-            + cfg.autoproc.track_markers
-        )
-        mkrdata = read_data.get_marker_data(source, mkrs)
-    footlen = info['subj_params']['FootLen']
-    rfootlen = info['subj_params']['RFootLen']
-    lfootlen = info['subj_params']['LFootLen']
-    if footlen is not None:
-        logger.debug('(obsolete) single foot length parameter set to %.2f' % footlen)
-        rfootlen = lfootlen = footlen
-    elif rfootlen is not None and lfootlen is not None:
-        logger.debug(
-            'foot length parameters set to r=%.2f, l=%.2f' % (rfootlen, lfootlen)
-        )
-    else:
-        logger.debug('foot length parameter not set')
-    bodymass = info['subj_params']['Bodymass']
-    events_0 = automark_events(source, mkrdata=mkrdata, mark=False, roi=roi)
-
-    # loop over plates; our internal forceplate index is 0-based
-    for plate_ind, fp in enumerate(fpdata):
-        logger.debug('analyzing plate %d' % plate_ind)
-
-        plate = 'FP' + str(plate_ind + 1)  # Eclipse plate naming starts from FP1
-        if fp_info is not None and plate in fp_info:
-            fp_info_this = fp_info[plate]
-            valid, detect_foot = _check_eclipse_fp_info(fp_info_this)
-        else:
-            logger.debug('not using Eclipse forceplate info')
-            # autodetect context
-            valid = None
-            detect_foot = True
-
-        # analyze force        
-        # median filter to remove spikes
+    def _check_plate_force(fp):
+        """Analyze forceplate signal"""
+        # apply median filter to remove spikes
         # XXX: kernel size should maybe depend on sampling freq?
         forcetot = signal.medfilt(fp['Ftot'], kernel_size=3)
         forcetot = _baseline(forcetot)
@@ -599,22 +557,74 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
         except IndexError:
             logger.debug('cannot detect force rise/fall')
             force_checks_ok = False
+            strike_fr = None
+            toeoff_fr = None
+        return force_checks_ok, strike_fr, toeoff_fr
+
+    # get subject info
+    from . import read_data
+
+    logger.debug('detecting forceplate events from %s' % source)
+    logger.debug('reading subject data')
+    info = read_data.get_metadata(source)
+    fpdata = read_data.get_forceplate_data(source)
+    results = _empty_fp_events()
+    # read marker data if it was not supplied
+    if mkrdata is None:
+        mkrs = (
+            cfg.autoproc.right_foot_markers
+            + cfg.autoproc.left_foot_markers
+            + cfg.autoproc.track_markers
+        )
+        mkrdata = read_data.get_marker_data(source, mkrs)
+    footlen = info['subj_params']['FootLen']
+    rfootlen = info['subj_params']['RFootLen']
+    lfootlen = info['subj_params']['LFootLen']
+    if footlen is not None:
+        logger.debug('(obsolete) single foot length parameter set to %.2f' % footlen)
+        rfootlen = lfootlen = footlen
+    elif rfootlen is not None and lfootlen is not None:
+        logger.debug(
+            'foot length parameters set to r=%.2f, l=%.2f' % (rfootlen, lfootlen)
+        )
+    else:
+        logger.debug('foot length parameter not set')
+    bodymass = info['subj_params']['Bodymass']
+    events_0 = automark_events(source, mkrdata=mkrdata, mark=False, roi=roi)
+
+    # loop over plates; our internal forceplate index is 0-based
+    for plate_ind, fp in enumerate(fpdata):
+        logger.debug('analyzing plate %d' % plate_ind)
+
+        # check Eclipse info for this plate
+        plate = 'FP' + str(plate_ind + 1)  # Eclipse plate naming starts from FP1
+        if fp_info is not None and plate in fp_info:
+            fp_info_this = fp_info[plate]
+            valid, detect_foot = _check_eclipse_fp_info(fp_info_this)
+        else:
+            logger.debug('not using Eclipse forceplate info')
+            # autodetect context
+            valid = None
+            detect_foot = True
+        
+        # check the force signal
+        force_checks_ok, strike_fr, toeoff_fr = _check_plate_force(fp)
         if not force_checks_ok:
             valid = None
 
-        # foot marker (or point) checks
+        # autodetect context and whether contact is valid (all markers on plate)
         if force_checks_ok and detect_foot:
             logger.debug('using autodetection of foot contact')
             # allows foot to settle for 50 ms after strike
-            settle_fr = int(50 / 1000 * info['framerate'])
-            fr0 = strike_fr + settle_fr
+            settle_time = int(50 / 1000 * info['framerate'])
+            fr0 = strike_fr + settle_time
             side = _leading_foot(mkrdata, roi=roi)[fr0]
             if side is None:
                 raise GaitDataError('cannot determine leading foot from marker data')
             footlen = rfootlen if side == 'R' else lfootlen
             logger.debug('checking contact for leading foot: %s' % side)
-            ok = _foot_plate_check(fp, mkrdata, fr0, side, footlen) == 2
-            # check that contralateral foot is not on plate (needs events)
+            ok = _check_foot_on_plate(fp, mkrdata, fr0, side, footlen) == 2
+            # check that the contralateral foot clears the plate on subsequent and previous strike
             if ok and events_0 is not None:
                 contra_side = 'R' if side == 'L' else 'L'
                 contra_strikes = events_0[contra_side + '_strikes']
@@ -622,15 +632,15 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
                     np.where(contra_strikes > strike_fr)
                 ]
                 if contra_strikes_next.size == 0:
-                    logger.debug('no following contralateral strike')
+                    logger.debug('no subsequent contralateral strike')
                 else:
-                    fr0 = contra_strikes_next[0] + settle_fr
+                    fr0 = contra_strikes_next[0] + settle_time
                     logger.debug(
                         'checking next contact for contralateral '
                         'foot (at frame %d)' % fr0
                     )
                     contra_next_ok = (
-                        _foot_plate_check(fp, mkrdata, fr0, contra_side, footlen) == 0
+                        _check_foot_on_plate(fp, mkrdata, fr0, contra_side, footlen) == 0
                     )
                     ok &= contra_next_ok
                 contra_strikes_prev = contra_strikes[
@@ -639,13 +649,13 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
                 if contra_strikes_prev.size == 0:
                     logger.debug('no previous contralateral strike')
                 else:
-                    fr0 = contra_strikes_prev[-1] + settle_fr
+                    fr0 = contra_strikes_prev[-1] + settle_time
                     logger.debug(
                         'checking previous contact for contralateral '
                         'foot (at frame %d)' % fr0
                     )
                     contra_prev_ok = (
-                        _foot_plate_check(fp, mkrdata, fr0, contra_side, footlen) == 0
+                        _check_foot_on_plate(fp, mkrdata, fr0, contra_side, footlen) == 0
                     )
                     ok &= contra_prev_ok
             valid = side if ok else None

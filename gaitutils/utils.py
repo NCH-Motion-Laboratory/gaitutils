@@ -475,10 +475,10 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
     to roi.
     """
 
-    def _check_foot_on_plate(fpdata, mkrdata, fr0, side, footlen):
+    def _check_foot_on_plate(fpdata, mkrdata, fr0, context, footlen):
         """Helper for foot-plate check. Returns 0, 1, 2 for:
         completely outside plate, partially outside plate, inside plate"""
-        allpts = _get_foot_points(mkrdata, side, footlen)
+        allpts = _get_foot_points(mkrdata, context, footlen)
         poly = fpdata['cor_full']
         pts_ok = list()
         for label, pts in allpts.items():
@@ -619,15 +619,16 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             # allows foot to settle for 50 ms after strike
             settle_time = int(50 / 1000 * info['framerate'])
             fr0 = strike_fr + settle_time
-            side = _leading_foot(mkrdata, roi=roi)[fr0]
-            if side is None:
+            context = _leading_foot(mkrdata, roi=roi)[fr0]
+            if context is None:
                 raise GaitDataError('cannot determine leading foot from marker data')
-            footlen = rfootlen if side == 'R' else lfootlen
-            logger.debug('checking contact for leading foot: %s' % side)
-            ok = _check_foot_on_plate(fp, mkrdata, fr0, side, footlen) == 2
+            footlen = rfootlen if context == 'R' else lfootlen
+            logger.debug('checking contact for leading foot: %s' % context)
+            checks_ok = _check_foot_on_plate(fp, mkrdata, fr0, context, footlen) == 2
             # check that the contralateral foot clears the plate on subsequent and previous strike
-            if ok and events_0 is not None:
-                contra_side = 'R' if side == 'L' else 'L'
+            # (no double contact)
+            if checks_ok and events_0 is not None:
+                contra_side = 'R' if context == 'L' else 'L'
                 contra_strikes = events_0[contra_side + '_strikes']
                 contra_strikes_next = contra_strikes[
                     np.where(contra_strikes > strike_fr)
@@ -644,7 +645,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
                         _check_foot_on_plate(fp, mkrdata, fr0, contra_side, footlen)
                         == 0
                     )
-                    ok &= contra_next_ok
+                    checks_ok &= contra_next_ok
                 contra_strikes_prev = contra_strikes[
                     np.where(contra_strikes < strike_fr)
                 ]
@@ -660,8 +661,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
                         _check_foot_on_plate(fp, mkrdata, fr0, contra_side, footlen)
                         == 0
                     )
-                    ok &= contra_prev_ok
-            valid = side if ok else None
+                    checks_ok &= contra_prev_ok
+            valid = context if checks_ok else None
 
         if valid:
             logger.debug(
@@ -697,9 +698,10 @@ def automark_events(
     """Automatically mark foot strike and toeoff events.
 
     Events are marked based on velocity thresholding. Absolute thresholds can be
-    specified as arguments. Otherwise, relative thresholds will be calculated
-    based on the data. Optimal results will be obtained when thresholds are
-    predetermined based on forceplate data, but it is not necessary.
+    given as argument. Otherwise, relative thresholds (heuristics) will be
+    calculated based on the data. Optimal results will be obtained when
+    thresholds are predetermined based on forceplate data, but it is not
+    necessary.
 
     Before running automark, run reconstruct, label, gap fill and filter
     pipelines. Filtering is important to get reasonably smooth derivatives.

@@ -722,13 +722,13 @@ def automark_events(
     plot=False,
     mark=True,
 ):
-    """Automatically mark foot strike and toeoff events.
+    """Detect foot strike and toeoff events based on marker data.
 
-    Events are marked based on velocity thresholding. Absolute thresholds can be
-    given as argument. Otherwise, relative thresholds (heuristics) will be
-    calculated based on the data. Optimal results will be obtained when
-    thresholds are predetermined based on forceplate data, but it is not
-    necessary.
+    Detection is based on marker velocity, and events are marked based on
+    velocity thresholding. Absolute thresholds can be given as argument.
+    Otherwise, relative thresholds (heuristics) will be calculated based on the
+    data. Optimal results will be obtained when thresholds are predetermined
+    based on forceplate data, but it is not necessary.
 
     Before running automark, run reconstruct, label, gap fill and filter
     pipelines. Filtering is important to get reasonably smooth derivatives.

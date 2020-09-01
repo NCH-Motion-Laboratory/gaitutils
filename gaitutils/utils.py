@@ -519,9 +519,7 @@ def _check_plate_force(fp, bodymass, samplesperframe):
     # determine force threshold based on body mass or maximum force
     if bodymass is None:
         f_threshold = cfg.autoproc.forceplate_contact_threshold * fmax
-        logger.warning(
-            'body mass unknown, thresholding force at %.2f N', f_threshold
-        )
+        logger.warning('body mass unknown, thresholding force at %.2f N', f_threshold)
     else:
         logger.debug('body mass %.2f kg' % bodymass)
         f_threshold = cfg.autoproc.forceplate_contact_threshold * bodymass * 9.81
@@ -541,21 +539,34 @@ def _check_plate_force(fp, bodymass, samplesperframe):
 
 
 def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
-    """Detect frames where valid forceplate strikes and toeoffs occur.
+    """Detects forceplate events based on force and marker data.
 
-    Uses forceplate data and foot shape estimated from markers. If supplied,
-    mkrdata must include foot and pelvis markers. Otherwise it will be read from
-    source.
+    Identifies frames where valid forceplate strikes and toeoffs occur, as well
+    as the event context (L/R). Returns maximum of one contact per forceplate
+    (not designed for treadmill plates).
 
-    If fp_info dict is supplied, no marker-based checks will be done;
-    instead the Eclipse forceplate info will be used to determine the context.
-    Eclipse info is written e.g. as {FP1: 'Left'} where plate indices are 1-based
-    and the value can be 'Auto', 'Left', 'Right' or 'Invalid'.
-    Even if Eclipse info is used to determine context, the foot strike and
-    toeoff frames must be determined from forceplate data.
+    Parameters
+    ----------
+    source : ViconNexus | str
+        The data source. Can be a c3d filename or a ViconNexus instance.
+    mkrdata : dict, optional
+        The marker data dict. If given, must include foot and pelvis markers. If
+        None, it will be read from source.
+    fp_info : dict, optional
+        Eclipse forceplate info. If given, no marker-based context checks will
+        be done; instead the Eclipse forceplate info will be used to determine
+        the context. The Eclipse info is given as e.g. {FP1: 'Left'}, where
+        plate indices are 1-based and the value can be 'Auto', 'Left', 'Right'
+        or 'Invalid'. Even if Eclipse info is used to determine context, the
+        foot strike and toeoff frames must be determined from forceplate data.
+    roi : list, optional
+        Region of interest in frames, e.g. [100, 300]. If given, all marker data
+        checks will be restricted to given roi.
 
-    If roi is given (in frames, e.g. [100, 300]), all marker data checks will be
-    restricted to given roi.
+    Returns
+    -------
+    dict
+        Event results.
     """
     from . import read_data
 
@@ -605,18 +616,27 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             detect_foot = True
 
         # check the force signal
-        strike_frames, toeoff_frames = _check_plate_force(fp, bodymass, info['samplesperframe'])
-        # for data with multiple foot strikes / toeoffs (threshold crossings), we choose the
-        # last ones; this is kind of arbitrary, but fake foot strikes tend to happen before the
-        # actual one (due to e.g. walker being pushed in front of the subject)
+        strike_frames, toeoff_frames = _check_plate_force(
+            fp, bodymass, info['samplesperframe']
+        )
+        # for data with multiple candidate foot strikes / toeoffs (threshold
+        # crossings), we choose the last ones; this is kind of arbitrary, but
+        # fake foot strikes tend to happen before the actual one (due to e.g.
+        # a walker device being pushed in front of the subject)
         if strike_frames and toeoff_frames:
             if len(strike_frames) > 1:
-                logger.info('%d strike events detected on plate %d, using last one')
+                logger.info(
+                    '%d strike events detected on plate %d, using last one'
+                    % (len(strike_frames), plate_ind)
+                )
             if len(toeoff_frames) > 1:
-                logger.info('%d toeoff events detected on plate %d, using last one')
-            force_ok = True
+                logger.info(
+                    '%d toeoff events detected on plate %d, using last one'
+                    % (len(toeoff_frames), plate_ind)
+                )
             strike_fr = strike_frames[-1]
             toeoff_fr = toeoff_frames[-1]
+            force_ok = True
         else:
             force_ok = False
 

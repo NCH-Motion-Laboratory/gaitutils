@@ -606,10 +606,17 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
 
         # check the force signal
         strike_frames, toeoff_frames = _check_plate_force(fp, bodymass, info['samplesperframe'])
+        # for data with multiple foot strikes / toeoffs (threshold crossings), we choose the
+        # last ones; this is kind of arbitrary, but fake foot strikes tend to happen before the
+        # actual one (due to e.g. walker being pushed in front of the subject)
         if strike_frames and toeoff_frames:
+            if len(strike_frames) > 1:
+                logger.info('%d strike events detected on plate %d, using last one')
+            if len(toeoff_frames) > 1:
+                logger.info('%d toeoff events detected on plate %d, using last one')
             force_ok = True
             strike_fr = strike_frames[-1]
-            toeoff_fr = toeoff_frames[0]
+            toeoff_fr = toeoff_frames[-1]
         else:
             force_ok = False
 

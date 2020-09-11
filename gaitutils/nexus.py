@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 def _find_nexus_path(vicon_path=None):
     """Return path to most recent Nexus version.
-    
+
     vicon_path is the Vicon root directory.
     """
     if vicon_path is None:
@@ -218,7 +218,7 @@ def _check_nexus():
 
 def get_sessionpath():
     """Get path to current Nexus session.
-    
+
     Returns
     -------
     str
@@ -244,7 +244,7 @@ def _run_pipeline(pipeline, foo, timeout):
 
 def _run_pipelines(pipelines):
     """Run given Nexus pipeline(s).
-    
+
     Note: this version will stall the calling Python interpreter until the
     pipeline is finished.
     """
@@ -259,7 +259,7 @@ def _run_pipelines(pipelines):
 
 def _run_pipelines_multiprocessing(pipelines):
     """Run given Nexus pipeline(s) via the multiprocessing module.
-    
+
     The idea is to work around the Python global interpreter lock, since the
     Nexus SDK does not release it. By starting a new interpreter process for the
     pipeline, this version causes the invoking thread to sleep and release the
@@ -300,7 +300,7 @@ def _get_nexus_subject_param(vicon, name, param):
 
 def _get_marker_names(vicon, trajs_only=True):
     """Return marker names from Nexus.
-    
+
     If trajs_only, only return markers with trajectories.
     """
     subjname = get_subjectnames()
@@ -313,7 +313,7 @@ def _get_marker_names(vicon, trajs_only=True):
 
 def _get_metadata(vicon):
     """Read trial and subject metadata from Nexus.
-    
+
     See read.data.get_metadata for details."""
     _check_nexus()
     logger.debug('reading metadata from Vicon Nexus')
@@ -393,14 +393,14 @@ def _get_accelerometer_data(vicon):
 
 def _get_analog_data(vicon, devname):
     """Read analog data from Vicon Nexus.
-    
+
     Parameters
     ----------
     vicon : ViconNexus
         The SDK object.
     devname : str
         The analog device name, set in Nexus configuration. E.g. 'Myon EMG'.
-    
+
     Returns
     -------
     dict
@@ -419,16 +419,33 @@ def _get_analog_data(vicon, devname):
         raise GaitDataError('No matching analog devices for %s' % devname)
     dev_id = ids[0]
     dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(dev_id)
-    if len(outputids) != 1:  # not handling multiple output ids yet
-        raise GaitDataError('Expected single output for device %s' % devname)
-    outputid = outputids[0]
-    # get list of channel names and IDs
-    _, _, _, _, chnames, chids = vicon.GetDeviceOutputDetails(dev_id, outputid)
+    # gather device outputs; there does not seem to be any reliable way to
+    # identify output IDs that have actual EMG signal, so we use the heuristic
+    # of units being volts. this may lead to inclusion of some channels (e.g.
+    # Foot Switch on Noraxon) that are not actually EMG
+    emg_outputids = [
+        outputid
+        for outputid in outputids
+        if vicon.GetDeviceOutputDetails(dev_id, outputid)[2] == 'volt'
+    ]
+
     data = dict()
-    for chid in chids:
-        chdata, _, chrate = vicon.GetDeviceChannel(dev_id, outputid, chid)
-        chname = chnames[chid - 1]  # chids start from 1
-        data[chname] = np.array(chdata)
+    for outputid in emg_outputids:
+        # get list of channel names and IDs
+        outputname, _, _, _, chnames, chids = vicon.GetDeviceOutputDetails(dev_id, outputid)
+        for chid in chids:
+            chdata, _, chrate = vicon.GetDeviceChannel(dev_id, outputid, chid)
+            chname = chnames[chid - 1]  # chids start from 1
+            # in case of multiple output ids (e.g. Noraxon), the channel
+            # names may not be unique, so try to generate unique names by
+            # merging output name and channel name
+            if len(emg_outputids) > 1:
+                logger.warning('merging output %s and channel name %s for a unique name' % (outputname, chname))
+                chname = '%s_%s' % (outputname, chname)
+            if chname in data:
+                raise RuntimeError('duplicate EMG channel; check Nexus device settings')
+            data[chname] = np.array(chdata)
+    # WIP: sanity checks for data (channel lengths equal, etc.)    
     t = np.arange(len(chdata)) / drate  # time axis
     return {'t': t, 'data': data}
 
@@ -508,7 +525,7 @@ def _get_1_forceplate_data(vicon, devid):
 
 def _get_forceplate_data(vicon):
     """Read data of all forceplates from Nexus.
-    
+
     See read_data.get_forceplate_data() for details.
     """
     # get forceplate ids
@@ -524,7 +541,11 @@ def _get_forceplate_data(vicon):
     logger.debug('detected %d forceplate(s)' % len(devids))
     # filter by device name
     if cfg.autoproc.nexus_forceplate_devnames:
-        devids = [id for id in devids if vicon.GetDeviceDetails(id)[0] in cfg.autoproc.nexus_forceplate_devnames]
+        devids = [
+            id
+            for id in devids
+            if vicon.GetDeviceDetails(id)[0] in cfg.autoproc.nexus_forceplate_devnames
+        ]
     return [_get_1_forceplate_data(vicon, devid) for devid in devids]
 
 
@@ -540,7 +561,7 @@ def _swap_markers(vicon, marker1, marker2):
 def _get_marker_data(vicon, markers, ignore_missing=False):
     """Get position data for specified markers.
 
-    See read_data.get_marker_data for details.    
+    See read_data.get_marker_data for details.
     """
     if not isinstance(markers, list):
         markers = [markers]
@@ -562,7 +583,7 @@ def _get_marker_data(vicon, markers, ignore_missing=False):
 
 def _get_model_data(vicon, model):
     """Read model output variables (e.g. Plug-in Gait).
-    
+
     See read_data.get_model_data for details.
     """
     modeldata = dict()

@@ -22,6 +22,7 @@ dependencies:
   - xlsxwriter
   - xlutils
   - pip:
+    - brotli==1.0.7
     - dash
     - dash-daq
     - flake8

@@ -138,14 +138,11 @@ def dash_report(
     info = info or sessionutils.default_info()
 
     # tags for dynamic trials
-    # if doing a comparison with gait curves, pick representative trials only
-    # this is to reduce number of trials, so we don't get too many curves
-    if tags is not None:
-        dyn_tags = tags
-    elif is_comparison and not video_only:
-        dyn_tags = cfg.eclipse.repr_tags
-    else:
+    if tags is None:
         dyn_tags = cfg.eclipse.tags
+    else:
+        dyn_tags = tags
+
     # this tag will be shown in the menu for static trials
     static_tag = 'Static'
 

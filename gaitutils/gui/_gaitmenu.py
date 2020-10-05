@@ -263,8 +263,12 @@ class WebReportDialog(QtWidgets.QDialog):
         signals.progress.connect(lambda text, p: self.parent.prog.update(text, p))
         self.parent.prog._canceled.connect(signals.cancel)
 
-        # for comparison between sessions, get representative trials only
-        tags = cfg.eclipse.repr_tags if len(sessions) > 1 else cfg.eclipse.tags
+        # for comparison reports, get representative trials only, unless doing
+        # video only; this is to reduce the number of gait curves
+        if len(sessions) > 1 and not video_only:
+            tags = cfg.eclipse.repr_tags
+        else:
+            tags = cfg.eclipse.tags
 
         # collect all video files for conversion
         # includes tagged dynamic, video-only tagged, and static trials
@@ -284,7 +288,6 @@ class WebReportDialog(QtWidgets.QDialog):
             result_func=self._web_report_ready,
             sessions=sessions,
             info=info,
-            tags=tags,
             signals=signals,
             recreate_plots=recreate_plots,
             video_only=video_only,

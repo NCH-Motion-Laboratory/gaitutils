@@ -30,9 +30,11 @@ def convert_videos(vidfiles, check_only=False):
 
     Parameters
     ----------
-    vidfiles : list | str list of video filenames, or a single filename
-        check_only : bool, optional Instead of converting, return True if all
-        files are already converted (target exists).
+    vidfiles : list | str
+        List of video filenames, or a single filename
+    check_only : bool, optional
+        Instead of converting, return True if all files are already converted
+        (target exists).
     """
     CONV_EXT = '.ogv'  # extension for converted files
     if not isinstance(vidfiles, list):

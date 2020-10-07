@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-Misc unit tests.
+Unit tests for utils.py misc functions.
 
 @author: jussi (jnu@iki.fi)
 """
@@ -9,13 +9,14 @@ Misc unit tests.
 import numpy as np
 import logging
 import pytest
+from numpy.testing import assert_allclose
 
 from gaitutils.utils import (
     TrialEvents,
     is_plugingait_set,
     _point_in_poly,
     _pig_markerset,
-    _check_markers_flipped,
+    _check_markers_flipped, marker_gaps,
 )
 from utils import _file_path
 
@@ -42,6 +43,20 @@ def test_trialevents():
         te.foo = None  # invalid attribute name
     with pytest.raises(AttributeError):
         te.rstrikes = 10  # invalid type
+
+
+def test_marker_gaps():
+    """Test marker_gaps"""
+    mdata = np.random.randn(1000, 3)
+    assert not marker_gaps(mdata)
+    mdata[100:200, :] = 0
+    gaps = marker_gaps(mdata)
+    assert_allclose(gaps, np.arange(100, 200))
+    mdata[0, :] = 0
+    gaps = marker_gaps(mdata)
+    assert 0 not in gaps
+    gaps = marker_gaps(mdata, ignore_edge_gaps=False)
+    assert 0 in gaps
 
 
 def test_is_plugingait_set():

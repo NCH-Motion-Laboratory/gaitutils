@@ -16,7 +16,7 @@ import logging
 import time
 import multiprocessing
 
-from .numutils import _change_coords
+from .numutils import _change_coords, _isfloat
 from .utils import TrialEvents
 from .envutils import GaitDataError
 from .config import cfg
@@ -353,8 +353,11 @@ def _get_metadata(vicon):
     if not devids:
         raise GaitDataError('Cannot determine analog rate')
     else:
-        devid = devids[0]
-        _, _, analograte, _, _, _ = vicon.GetDeviceDetails(devid)
+        # rates may be 0 for some devices, we just pick the maximum as "the rate"
+        analogrates = [vicon.GetDeviceDetails(id)[2] for id in devids]
+        analograte = max(rate for rate in analogrates if _isfloat(rate))
+    if analograte == 0.0:
+        raise GaitDataError('Cannot determine analog rate')
     samplesperframe = analograte / framerate
     logger.debug(
         'offset @ %d, %d frames, framerate %d Hz, %d samples per '

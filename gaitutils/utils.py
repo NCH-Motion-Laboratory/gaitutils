@@ -121,7 +121,7 @@ def marker_gaps(mdata, ignore_edge_gaps=True):
 
 def _step_width(source):
     """Compute step width over trial cycles.
-    
+
     For details of computation, see:
     https://www.vicon.com/faqs/software/how-does-nexus-plug-in-gait-and-polygon-calculate-gait-cycle-parameters-spatial-and-temporal
     Returns context keyed dict of lists.
@@ -168,7 +168,7 @@ def _step_width(source):
 
 def avg_markerdata(mkrdata, markers, roi=None, fail_on_gaps=True, avg_velocity=False):
     """Average marker data.
-   
+
     Parameters
     ----------
     mkrdata : dict
@@ -182,7 +182,7 @@ def avg_markerdata(mkrdata, markers, roi=None, fail_on_gaps=True, avg_velocity=F
         will not be included in the average.
     avg_velocity : bool, optional
         If True, return averaged marker velocity data instead of position.
-    
+
     Returns
     -------
     ndarray
@@ -311,7 +311,11 @@ def _get_foot_contact_vel(mkrdata, fp_events, medians=True, roi=None):
         # we can be less strict about gaps here, since missing a marker or two
         # probably won't really affect the velocity
         footctrv_ = avg_markerdata(
-            mkrdata, markers, roi=roi, fail_on_gaps=False, avg_velocity=True,
+            mkrdata,
+            markers,
+            roi=roi,
+            fail_on_gaps=False,
+            avg_velocity=True,
         )
         footctrv = np.linalg.norm(footctrv_, axis=1)
         strikes = fp_events[context + '_strikes']
@@ -351,7 +355,7 @@ def _normalize(V):
 
 def _get_foot_points(mkrdata, context, footlen=None):
     """Estimate points in the xy plane enclosing the foot.
-    
+
     Foot is modeled as a triangle with three points: heel, lateral leading edge
     (small toe) and medial leading edge (hallux)"""
     # marker data as N x 3 matrices
@@ -453,7 +457,7 @@ def _point_in_poly(poly, pt):
 
 
 def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
-    """ Detect frames where valid forceplate strikes and toeoffs occur.
+    """Detect frames where valid forceplate strikes and toeoffs occur.
     Uses forceplate data and estimated foot shape.
 
     If supplied, mkrdata must include foot and pelvis markers. Otherwise
@@ -472,7 +476,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
 
     def _foot_plate_check(fpdata, mkrdata, fr0, side, footlen):
         """Helper for foot-plate check. Returns 0, 1, 2 for:
-            completely outside plate, partially outside plate, inside plate"""
+        completely outside plate, partially outside plate, inside plate"""
         allpts = _get_foot_points(mkrdata, side, footlen)
         poly = fpdata['cor_full']
         pts_ok = list()
@@ -488,67 +492,9 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
         else:
             return 0
 
-    # get subject info
-    from . import read_data
-
-    logger.debug('detect forceplate events from %s' % source)
-    info = read_data.get_metadata(source)
-    fpdata = read_data.get_forceplate_data(source)
-    results = _empty_fp_events()
-
-    # get marker data and find "forward" direction (by max variance)
-    if mkrdata is None:
-        mkrs = (
-            cfg.autoproc.right_foot_markers
-            + cfg.autoproc.left_foot_markers
-            + cfg.autoproc.track_markers
-        )
-        mkrdata = read_data.get_marker_data(source, mkrs)
-
-    footlen = info['subj_params']['FootLen']
-    rfootlen = info['subj_params']['RFootLen']
-    lfootlen = info['subj_params']['LFootLen']
-    if footlen is not None:
-        logger.debug('(obsolete) single foot length parameter set to %.2f' % footlen)
-        rfootlen = lfootlen = footlen
-    elif rfootlen is not None and lfootlen is not None:
-        logger.debug(
-            'foot length parameters set to r=%.2f, l=%.2f' % (rfootlen, lfootlen)
-        )
-    else:
-        logger.debug('foot length parameter not set')
-    bodymass = info['subj_params']['Bodymass']
-
-    logger.debug('acquiring gait events')
-    events_0 = automark_events(source, mkrdata=mkrdata, mark=False, roi=roi)
-
-    # loop over plates; our internal forceplate index is 0-based
-    for plate_ind, fp in enumerate(fpdata):
-        logger.debug('analyzing plate %d' % plate_ind)
-        # XXX: are we sure that the plate indices always match Eclipse?
-        plate = 'FP' + str(plate_ind + 1)  # Eclipse starts from FP1
-        if fp_info is not None and plate in fp_info:
-            ecl_valid = fp_info[plate]
-            detect_foot = False
-            logger.debug('using Eclipse forceplate info: %s' % ecl_valid)
-            if ecl_valid == 'Right':
-                valid = 'R'
-            elif ecl_valid == 'Left':
-                valid = 'L'
-            elif ecl_valid == 'Invalid':
-                valid = None
-            elif ecl_valid == 'Auto':
-                detect_foot = True
-            else:
-                raise GaitDataError('unexpected Eclipse forceplate field')
-        else:
-            logger.debug('not using Eclipse forceplate info')
-            valid = None
-            detect_foot = True
-
-        # identify candidate frames for foot strike
-
-        # median filter to remove spikes
+    def _threshold_forceplate(fp, bodymass=None):
+        """Get candidate foot strike and toeoff frames by considering force only"""
+        # apply median filter to remove spikes
         # XXX: kernel size should maybe depend on sampling freq?
         forcetot = signal.medfilt(fp['Ftot'], kernel_size=3)
         forcetot = _baseline(forcetot)
@@ -569,7 +515,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
                 logger.debug('insufficient max. force on plate')
                 force_checks_ok = False
 
-        # find indices around peak where force crosses threshold
+        # find the indices around peak where force crosses threshold
         f_rising_inds = rising_zerocross(forcetot - f_threshold)
         f_falling_inds = falling_zerocross(forcetot - f_threshold)
         try:
@@ -586,12 +532,84 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
         except IndexError:
             logger.debug('cannot detect force rise/fall')
             force_checks_ok = False
-        if not force_checks_ok:
-            valid = None
+            strike_fr, toeoff_fr = None, None
+        return strike_fr, toeoff_fr, force_checks_ok
 
-        # foot marker (or point) checks
-        if force_checks_ok and detect_foot:
-            logger.debug('using autodetection of foot contact')
+
+    def _context_from_eclipse(fp_info, plate):
+        """Interpret context from Eclipse data.
+        Returns tuple of (context, detect_context), where context is 'R', 'L'
+        (or None for invalid/unknown) and detect_context indicates whether we
+        should do our own autodetection.
+        """
+        context = None
+        if fp_info is not None and plate in fp_info:
+            eclipse_context = fp_info[plate]
+            logger.debug('using Eclipse forceplate info: %s' % eclipse_context)
+            if eclipse_context == 'Right':
+                detect_context = False
+                context = 'R'
+            elif eclipse_context == 'Left':
+                detect_context = False
+                context = 'L'
+            elif eclipse_context == 'Invalid':
+                detect_context = False
+            elif eclipse_context == 'Auto':
+                detect_context = True
+            else:
+                raise GaitDataError('unexpected Eclipse forceplate field')
+        else:
+            logger.debug('not using Eclipse forceplate info')
+            detect_context = True
+        return context, detect_context
+
+
+    from . import read_data
+
+    logger.debug('detecting forceplate events from %s' % source)
+    results = _empty_fp_events()
+
+    # get subject info
+    info = read_data.get_metadata(source)
+    fpdata = read_data.get_forceplate_data(source)
+    footlen = info['subj_params']['FootLen']
+    rfootlen = info['subj_params']['RFootLen']
+    lfootlen = info['subj_params']['LFootLen']
+    if footlen is not None:
+        logger.debug('(obsolete) single foot length parameter set to %.2f' % footlen)
+        rfootlen = lfootlen = footlen
+    elif rfootlen is not None and lfootlen is not None:
+        logger.debug(
+            'foot length parameters set to r=%.2f, l=%.2f' % (rfootlen, lfootlen)
+        )
+    else:
+        logger.debug('foot length parameter not set')
+    bodymass = info['subj_params']['Bodymass']
+    if mkrdata is None:  # not supplied as parameter
+        mkrs = (
+            cfg.autoproc.right_foot_markers
+            + cfg.autoproc.left_foot_markers
+            + cfg.autoproc.track_markers
+        )
+        mkrdata = read_data.get_marker_data(source, mkrs)
+
+    logger.debug('acquiring gait events')
+    events_0 = automark_events(source, mkrdata=mkrdata, mark=False, roi=roi)
+
+    # loop over the plates; our internal forceplate index is 0-based
+    for plate_ind, fp in enumerate(fpdata):
+        logger.debug('analyzing plate %d' % plate_ind)
+        # XXX: are we sure that the plate indices always match Eclipse?
+        plate = 'FP' + str(plate_ind + 1)  # Eclipse numbering starts from FP1
+        context, detect_context = _context_from_eclipse(fp_info, plate)
+
+        strike_fr, toeoff_fr, force_checks_ok = _threshold_forceplate(fp, bodymass)
+        if not force_checks_ok:
+            context = None
+
+        # check foot markers (or points) to determine context / validity
+        if force_checks_ok and detect_context:
+            logger.debug('autodetecting context')
             # allows foot to settle for 50 ms after strike
             settle_fr = int(50 / 1000 * info['framerate'])
             fr0 = strike_fr + settle_fr
@@ -601,7 +619,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             footlen = rfootlen if side == 'R' else lfootlen
             logger.debug('checking contact for leading foot: %s' % side)
             ok = _foot_plate_check(fp, mkrdata, fr0, side, footlen) == 2
-            # check that contralateral foot is not on plate (needs events)
+            # check that contralateral foot is not on plate (needs marker-based events)
             if ok and events_0 is not None:
                 contra_side = 'R' if side == 'L' else 'L'
                 contra_strikes = events_0[contra_side + '_strikes']
@@ -635,19 +653,19 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
                         _foot_plate_check(fp, mkrdata, fr0, contra_side, footlen) == 0
                     )
                     ok &= contra_prev_ok
-            valid = side if ok else None
+            context = side if ok else None
 
-        if valid:
+        if context:
             logger.debug(
                 'plate %d: valid foot strike on %s at frame %d'
-                % (plate_ind, valid, strike_fr)
+                % (plate_ind, context, strike_fr)
             )
-            results['valid'].add(valid)
-            results[valid + '_strikes'].append(strike_fr)
-            results[valid + '_toeoffs'].append(toeoff_fr)
-            results[valid + '_strikes_plate'].append(plate_ind)
-            results['our_fp_info'][plate] = 'Right' if valid == 'R' else 'Left'
-            results['coded'] += valid
+            results['valid'].add(context)
+            results[context + '_strikes'].append(strike_fr)
+            results[context + '_toeoffs'].append(toeoff_fr)
+            results[context + '_strikes_plate'].append(plate_ind)
+            results['our_fp_info'][plate] = 'Right' if context == 'R' else 'Left'
+            results['coded'] += context
         else:
             logger.debug('plate %d: no valid foot strike' % plate_ind)
             results['our_fp_info'][plate] = 'Invalid'

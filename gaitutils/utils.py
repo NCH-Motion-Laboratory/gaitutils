@@ -535,7 +535,6 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             strike_fr, toeoff_fr = None, None
         return strike_fr, toeoff_fr, force_checks_ok
 
-
     def _context_from_eclipse(fp_info, plate):
         """Interpret context from Eclipse data.
         Returns tuple of (context, detect_context), where context is 'R', 'L'
@@ -562,7 +561,6 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             logger.debug('not using Eclipse forceplate info')
             detect_context = True
         return context, detect_context
-
 
     from . import read_data
 
@@ -607,21 +605,25 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
         if not force_checks_ok:
             context = None
 
-        # check foot markers (or points) to determine context / validity
+        # check foot markers (or points) to determine context and validity
         if force_checks_ok and detect_context:
             logger.debug('autodetecting context')
             # allows foot to settle for 50 ms after strike
             settle_fr = int(50 / 1000 * info['framerate'])
             fr0 = strike_fr + settle_fr
-            side = _leading_foot(mkrdata, roi=roi)[fr0]
-            if side is None:
+            # context is determined by leading foot at strike time
+            this_context = _leading_foot(mkrdata, roi=roi)[fr0]
+            if this_context is None:
                 raise GaitDataError('cannot determine leading foot from marker data')
-            footlen = rfootlen if side == 'R' else lfootlen
-            logger.debug('checking contact for leading foot: %s' % side)
-            ok = _foot_plate_check(fp, mkrdata, fr0, side, footlen) == 2
-            # check that contralateral foot is not on plate (needs marker-based events)
-            if ok and events_0 is not None:
-                contra_side = 'R' if side == 'L' else 'L'
+            footlen = rfootlen if this_context == 'R' else lfootlen
+            logger.debug('checking contact for leading foot: %s' % this_context)
+            foot_contacts_ok = (
+                _foot_plate_check(fp, mkrdata, fr0, this_context, footlen) == 2
+            )
+            # to eliminate double contacts, check that contralateral foot is not on plate
+            # this needs marker-based events
+            if foot_contacts_ok and events_0 is not None:
+                contra_side = 'R' if this_context == 'L' else 'L'
                 contra_strikes = events_0[contra_side + '_strikes']
                 contra_strikes_next = contra_strikes[
                     np.where(contra_strikes > strike_fr)
@@ -631,13 +633,13 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
                 else:
                     fr0 = contra_strikes_next[0] + settle_fr
                     logger.debug(
-                        'checking next contact for contralateral '
-                        'foot (at frame %d)' % fr0
+                        'checking the following contralateral strike '
+                        '(at frame %d)' % fr0
                     )
                     contra_next_ok = (
                         _foot_plate_check(fp, mkrdata, fr0, contra_side, footlen) == 0
                     )
-                    ok &= contra_next_ok
+                    foot_contacts_ok &= contra_next_ok
                 contra_strikes_prev = contra_strikes[
                     np.where(contra_strikes < strike_fr)
                 ]
@@ -652,8 +654,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
                     contra_prev_ok = (
                         _foot_plate_check(fp, mkrdata, fr0, contra_side, footlen) == 0
                     )
-                    ok &= contra_prev_ok
-            context = side if ok else None
+                    foot_contacts_ok &= contra_prev_ok
+            context = this_context if foot_contacts_ok else None
 
         if context:
             logger.debug(

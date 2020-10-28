@@ -22,47 +22,47 @@ logger = logging.getLogger(__name__)
 
 
 
-def kabsch_rotation(P, Q):
-    """Calculate a rotation matrix from P->Q using the Kabsch algorithm."""
-    H = P.T @ Q
-    U, S, V = np.linalg.svd(H)
-    E = np.eye(3)
-    E[2, 2] = np.sign(np.linalg.det(V.T @ U.T))
-    return V.T @ E @ U.T
+# def kabsch_rotation(P, Q):
+#     """Calculate a rotation matrix from P->Q using the Kabsch algorithm."""
+#     H = P.T @ Q
+#     U, S, V = np.linalg.svd(H)
+#     E = np.eye(3)
+#     E[2, 2] = np.sign(np.linalg.det(V.T @ U.T))
+#     return V.T @ E @ U.T
 
 
-def _rotation_matrix(yaw, pitch, roll):
-    """Rotation matrix from yaw, pitch, roll in degrees"""
-    yaw, pitch, roll = np.array([yaw, pitch, roll]) / 180 * np.pi
-    cos, sin = np.cos, np.sin
-    r1 = [cos(yaw)*cos(pitch),
-          cos(yaw)*sin(pitch)*sin(roll)-sin(yaw)*cos(roll),
-          cos(yaw)*sin(pitch)*cos(roll)+sin(yaw)*sin(roll)]
-    r2 = [sin(yaw)*cos(pitch),
-          sin(yaw)*sin(pitch)*sin(roll)+cos(yaw)*cos(roll),
-          sin(yaw)*sin(pitch)*cos(roll)-cos(yaw)*sin(roll)]
-    r3 = [-sin(pitch), cos(pitch)*sin(roll), cos(pitch)*cos(roll)]
-    return np.array([r1, r2, r3])
+# def _rotation_matrix(yaw, pitch, roll):
+#     """Rotation matrix from yaw, pitch, roll in degrees"""
+#     yaw, pitch, roll = np.array([yaw, pitch, roll]) / 180 * np.pi
+#     cos, sin = np.cos, np.sin
+#     r1 = [cos(yaw)*cos(pitch),
+#           cos(yaw)*sin(pitch)*sin(roll)-sin(yaw)*cos(roll),
+#           cos(yaw)*sin(pitch)*cos(roll)+sin(yaw)*sin(roll)]
+#     r2 = [sin(yaw)*cos(pitch),
+#           sin(yaw)*sin(pitch)*sin(roll)+cos(yaw)*cos(roll),
+#           sin(yaw)*sin(pitch)*cos(roll)-cos(yaw)*sin(roll)]
+#     r3 = [-sin(pitch), cos(pitch)*sin(roll), cos(pitch)*cos(roll)]
+#     return np.array([r1, r2, r3])
 
 
-def extrapolate_rigid_set(P0, Pr):
-    """Extrapolate marker in a rigid set.
-    P0 (N x 3), where N>=4, the marker positions in the static frame.
-    The target marker is the last row.
-    Pr (N-1 x 3) gives the reference marker positions to extrapolate from.
+# def extrapolate_rigid_set(P0, Pr):
+#     """Extrapolate marker in a rigid set.
+#     P0 (N x 3), where N>=4, the marker positions in the static frame.
+#     The target marker is the last row.
+#     Pr (N-1 x 3) gives the reference marker positions to extrapolate from.
     
-    Algorithm:
-    -find R and t that go from Pr0 -> Pr by Kabsch algorithm
-    -apply R and t to p to get the extrapolated position
-    """
-    Pr0 = P0[:-1, :]  # reference cluster
-    trans0 = Pr0.mean(axis=0)
-    Pr0_ = Pr0 - trans0
-    P0_ = P0 - trans0
-    trans1 = Pr.mean(axis=0)
-    Pr_ = Pr - trans1
-    R = kabsch_rotation(Pr0_, Pr_)
-    return (R@P0_.T).T + trans1 
+#     Algorithm:
+#     -find R and t that go from Pr0 -> Pr by Kabsch algorithm
+#     -apply R and t to p to get the extrapolated position
+#     """
+#     Pr0 = P0[:-1, :]  # reference cluster
+#     trans0 = Pr0.mean(axis=0)
+#     Pr0_ = Pr0 - trans0
+#     P0_ = P0 - trans0
+#     trans1 = Pr.mean(axis=0)
+#     Pr_ = Pr - trans1
+#     R = kabsch_rotation(Pr0_, Pr_)
+#     return (R@P0_.T).T + trans1 
 
 
 def mad(data, axis=None, scale=1.4826, keepdims=False):

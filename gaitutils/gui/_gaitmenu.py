@@ -288,6 +288,7 @@ class WebReportDialog(QtWidgets.QDialog):
             result_func=self._web_report_ready,
             sessions=sessions,
             info=info,
+            tags=tags,
             signals=signals,
             recreate_plots=recreate_plots,
             video_only=video_only,

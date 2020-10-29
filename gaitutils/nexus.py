@@ -16,7 +16,7 @@ import logging
 import time
 import multiprocessing
 
-from .numutils import _change_coords, _isfloat
+from .numutils import _change_coords, _isfloat, _rigid_body_extrapolate
 from .utils import TrialEvents
 from .envutils import GaitDataError
 from .config import cfg
@@ -435,7 +435,9 @@ def _get_analog_data(vicon, devname):
     data = dict()
     for outputid in emg_outputids:
         # get list of channel names and IDs
-        outputname, _, _, _, chnames, chids = vicon.GetDeviceOutputDetails(dev_id, outputid)
+        outputname, _, _, _, chnames, chids = vicon.GetDeviceOutputDetails(
+            dev_id, outputid
+        )
         for chid in chids:
             chdata, _, chrate = vicon.GetDeviceChannel(dev_id, outputid, chid)
             chname = chnames[chid - 1]  # chids start from 1
@@ -443,12 +445,15 @@ def _get_analog_data(vicon, devname):
             # names may not be unique, so try to generate unique names by
             # merging output name and channel name
             if len(emg_outputids) > 1:
-                logger.warning('merging output %s and channel name %s for a unique name' % (outputname, chname))
+                logger.warning(
+                    'merging output %s and channel name %s for a unique name'
+                    % (outputname, chname)
+                )
                 chname = '%s_%s' % (outputname, chname)
             if chname in data:
                 raise RuntimeError('duplicate EMG channel; check Nexus device settings')
             data[chname] = np.array(chdata)
-    # WIP: sanity checks for data (channel lengths equal, etc.)    
+    # WIP: sanity checks for data (channel lengths equal, etc.)
     t = np.arange(len(chdata)) / drate  # time axis
     return {'t': t, 'data': data}
 
@@ -613,3 +618,72 @@ def _create_events(vicon, context, strikes, toeoffs):
         vicon.CreateAnEvent(subjectname, side_str, 'Foot Strike', int(fr + 1), 0)
     for fr in toeoffs:
         vicon.CreateAnEvent(subjectname, side_str, 'Foot Off', int(fr + 1), 0)
+
+
+def extrapolate_rigid(
+    vicon, ref_trial, extrap_trials, ref_markers, extrap_markers, ref_frame=None
+):
+    """Extrapolate missing marker positions from one trial to others.
+
+    Rigid body extrapolation: all markers are assumed to be part of a rigid
+    cluster. The reference markers (ref_markers) must be present in all trials.
+    The markers to be extrapolated (extrap_markers) must be present in the
+    reference trial. The relative position of the reference marker cluster is
+    computed in the extrapolation trials, and the positions of the missing
+    markers are extrapolated based on that.
+
+    The extrapolated marker positions are written back into Nexus.
+
+    Parameters
+    ----------
+    vicon : ViconNexus
+        A ViconNexus SDK object.
+    ref_trial : str
+        Filename of the reference trial. Give the filename without the
+        'Trial.enf' extension, e.g. 'my_session\my_trial01'. It must contain all
+        markers.
+    extrap_trials : list
+        The trials where the extrapolation should be done.
+    ref_markers : list
+        The reference markers to extrapolate from.
+    extrap_markers : list
+        The markers to extrapolate.
+    ref_frame : int or None
+        The reference frame to use from the reference trial. If not given, defaults to 0.
+    """
+    if ref_frame is None:
+        ref_frame = 0
+    if not isinstance(extrap_trials, list):
+        extrap_trials = [extrap_trials]
+    # read data from reference trial
+    _open_trial(ref_trial)
+    allmarkers = ref_markers + extrap_markers
+    mdata_ref = _get_marker_data(vicon, allmarkers)
+    mdata_ref_ = np.row_stack(
+        [mdata_ref[marker][ref_frame, :] for marker in allmarkers]
+    )
+    # read reference marker data from extrapolation trials
+    for extrap_trial in extrap_trials:
+        extrap_coords = defaultdict(list)
+        _open_trial(extrap_trial)
+        mdata_ref = _get_marker_data(vicon, ref_markers)
+        for frame in range(vicon.GetFrameCount()):
+            mdata_thisframe = np.row_stack(
+                [mdata_ref[marker][frame, :] for marker in ref_markers]
+            )
+            mdata_extrap = _rigid_body_extrapolate(mdata_ref_, mdata_thisframe)
+            for marker, pos in zip(extrap_markers, mdata_extrap):
+                extrap_coords[marker].append(pos)
+        # write extrapolated data
+        for marker, vals in extrap_coords.items():
+            vals_array = np.array(vals)
+            subjname = get_subjectnames()
+            vicon.SetTrajectory(
+                subjname,
+                marker,
+                vals_array[:, 0],
+                vals_array[:, 1],
+                vals_array[:, 2],
+                [True] * vicon.GetFrameCount(),
+            )
+        vicon.SaveTrial(cfg.autoproc.nexus_timeout)

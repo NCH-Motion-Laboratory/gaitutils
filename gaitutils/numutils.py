@@ -20,54 +20,63 @@ from numpy.lib.stride_tricks import as_strided
 logger = logging.getLogger(__name__)
 
 
+def kabsch_rotation(P, Q):
+    """Calculate a rotation matrix P->Q using the Kabsch algorithm."""
+    H = np.dot(P.T, Q)
+    U, S, V = np.linalg.svd(H)
+    E = np.eye(3)
+    E[2, 2] = np.sign(np.linalg.det(np.dot(V.T, U.T)))
+    return np.dot(np.dot(V.T, E), U.T)
 
 
-# def kabsch_rotation(P, Q):
-#     """Calculate a rotation matrix from P->Q using the Kabsch algorithm."""
-#     H = P.T @ Q
-#     U, S, V = np.linalg.svd(H)
-#     E = np.eye(3)
-#     E[2, 2] = np.sign(np.linalg.det(V.T @ U.T))
-#     return V.T @ E @ U.T
+def _rotation_matrix(yaw, pitch, roll):
+    """Rotation matrix from yaw, pitch, roll in degrees"""
+    yaw, pitch, roll = np.array([yaw, pitch, roll]) / 180 * np.pi
+    cos, sin = np.cos, np.sin
+    r1 = [
+        cos(yaw) * cos(pitch),
+        cos(yaw) * sin(pitch) * sin(roll) - sin(yaw) * cos(roll),
+        cos(yaw) * sin(pitch) * cos(roll) + sin(yaw) * sin(roll),
+    ]
+    r2 = [
+        sin(yaw) * cos(pitch),
+        sin(yaw) * sin(pitch) * sin(roll) + cos(yaw) * cos(roll),
+        sin(yaw) * sin(pitch) * cos(roll) - cos(yaw) * sin(roll),
+    ]
+    r3 = [-sin(pitch), cos(pitch) * sin(roll), cos(pitch) * cos(roll)]
+    return np.array([r1, r2, r3])
 
 
-# def _rotation_matrix(yaw, pitch, roll):
-#     """Rotation matrix from yaw, pitch, roll in degrees"""
-#     yaw, pitch, roll = np.array([yaw, pitch, roll]) / 180 * np.pi
-#     cos, sin = np.cos, np.sin
-#     r1 = [cos(yaw)*cos(pitch),
-#           cos(yaw)*sin(pitch)*sin(roll)-sin(yaw)*cos(roll),
-#           cos(yaw)*sin(pitch)*cos(roll)+sin(yaw)*sin(roll)]
-#     r2 = [sin(yaw)*cos(pitch),
-#           sin(yaw)*sin(pitch)*sin(roll)+cos(yaw)*cos(roll),
-#           sin(yaw)*sin(pitch)*cos(roll)-cos(yaw)*sin(roll)]
-#     r3 = [-sin(pitch), cos(pitch)*sin(roll), cos(pitch)*cos(roll)]
-#     return np.array([r1, r2, r3])
+def _rigid_body_extrapolate(P0, Pr):
+    """Extrapolate some markers in a rigid set.
+    P0 (N x 3), the marker positions in the static frame.
+    Pr (M x 3), the marker positions in where extrapolation is needed.
+    N-M markers will be extrapolated.
 
-
-# def extrapolate_rigid_set(P0, Pr):
-#     """Extrapolate marker in a rigid set.
-#     P0 (N x 3), where N>=4, the marker positions in the static frame.
-#     The target marker is the last row.
-#     Pr (N-1 x 3) gives the reference marker positions to extrapolate from.
-    
-#     Algorithm:
-#     -find R and t that go from Pr0 -> Pr by Kabsch algorithm
-#     -apply R and t to p to get the extrapolated position
-#     """
-#     Pr0 = P0[:-1, :]  # reference cluster
-#     trans0 = Pr0.mean(axis=0)
-#     Pr0_ = Pr0 - trans0
-#     P0_ = P0 - trans0
-#     trans1 = Pr.mean(axis=0)
-#     Pr_ = Pr - trans1
-#     R = kabsch_rotation(Pr0_, Pr_)
-#     return (R@P0_.T).T + trans1 
+    Algorithm:
+    -find R and t that take us from Pr0 to Pr, by Kabsch algorithm (Pr0 is the
+    reference markers in P0)
+    -apply R and t to P0 to get the extrapolated positions
+    """
+    nref = Pr.shape[0]
+    if P0.shape <= nref:
+        raise ValueError('1st dim of P0 needs to be larger than 1st dim of Pr')
+    Pr0 = P0[:nref, :]  # reference markers
+    # find rotation and translation that take the static reference position to the
+    # position where extrapolation is needed
+    trans0 = Pr0.mean(axis=0)
+    Pr0_ = Pr0 - trans0
+    P0_ = P0 - trans0
+    trans1 = Pr.mean(axis=0)
+    Pr_ = Pr - trans1
+    R = kabsch_rotation(Pr0_, Pr_)
+    # apply the transformation to the markers to be extrapolated
+    return np.dot(R, P0_[nref:, :].T).T + trans1
 
 
 def mad(data, axis=None, scale=1.4826, keepdims=False):
     """Median absolute deviation (MAD).
-    
+
     Defined as the median absolute deviation from the median of the data. A
     robust alternative to stddev. Results should be identical to
     scipy.stats.median_absolute_deviation(), which does not take a keepdims
@@ -127,7 +136,7 @@ def modified_zscore(data, axis=None, single_mad=None):
 
 def outliers(x, axis=0, single_mad=None, p_threshold=1e-3):
     """Robustly detect outliers assuming a normal distribution.
-    
+
     A modified Z-score is first computed based on the data. Then a threshold
     value Zlim is computed from p_threshold, and values that exceed Zlim are
     rejected. p_threshold is the probability of rejection assuming strictly
@@ -175,14 +184,14 @@ def _file_digest(fn):
 
 def rising_zerocross(x):
     """Find indices of rising zero crossings in array.
-    
+
     The indices are defined as n for which x[n] >= 0 and x[n-1] < 0.
-    
+
     Parameters
     ----------
     x : array_like
         The data.
-    
+
     Returns
     -------
     tuple
@@ -194,14 +203,14 @@ def rising_zerocross(x):
 
 def falling_zerocross(x):
     """Find indices of falling zero crossings in array.
-    
+
     The indices are defined as n for which x[n] <= 0 and x[n-1] > 0.
-    
+
     Parameters
     ----------
     x : array_like
         The data.
-    
+
     Returns
     -------
     tuple
@@ -212,7 +221,7 @@ def falling_zerocross(x):
 
 def digitize_array(v, b):
     """Replace all elements of v with their closest matches in b.
-    
+
     Uses abs(x-y) as the distance metric. This function is similar to
     np.digitize(), but simpler in usage and implementation.
 
@@ -222,7 +231,7 @@ def digitize_array(v, b):
         Array to make replacements in.
     b : array_like
         Array to pick replacements from.
-    
+
     Returns
     -------
     ndarray
@@ -271,7 +280,7 @@ def _baseline(v):
 
 def center_of_pressure(F, M, dz):
     """Compute center of pressure from forceplate data.
-    
+
     Computes CoP according to AMTI formula. The results differ slightly
     (typically few mm) from those given by Nexus, for unknown reasons (different
     filter?) See http://health.uottawa.ca/biomech/courses/apa6903/amticalc.pdf
@@ -284,7 +293,7 @@ def center_of_pressure(F, M, dz):
         The moment vector (Nx3)
     dz : float
         The thickness of the plate, or the distance from moment origin to physical origin.
-    
+
     Returns
     -------
     ndarray
@@ -335,10 +344,10 @@ def _segment_angles(P):
 
 def _running_sum(M, win, axis=None):
     """Calculate running sum for given window length.
-    
+
     M is the data (ndarray) and sum will be along given axis. win is the window
     length. Uses cumulative sum, inspired by:
-    http://arogozhnikov.github.io/2015/09/30/NumpyTipsAndTricks2.html """
+    http://arogozhnikov.github.io/2015/09/30/NumpyTipsAndTricks2.html"""
     if axis is None:
         M = M.flatten()
     s = np.cumsum(M, axis=axis)
@@ -351,7 +360,7 @@ def _running_sum(M, win, axis=None):
 
 def rms(data, win, axis=None, pad_mode=None):
     """Calculate rolling window RMS.
-    
+
     Parameters
     ----------
     data : ndarray
@@ -362,7 +371,7 @@ def rms(data, win, axis=None, pad_mode=None):
         Axis along which to compute rms.
     pad_mode : str or function, optional
         Padding mode. See np.pad for details.
-    
+
     Returns
     -------
     ndarray

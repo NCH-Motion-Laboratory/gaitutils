@@ -16,7 +16,7 @@ import logging
 import time
 import multiprocessing
 
-from .numutils import _change_coords, _isfloat, _rigid_body_extrapolate
+from .numutils import _change_coords, _isfloat, _rigid_body_extrapolate_markers
 from .utils import TrialEvents
 from .envutils import GaitDataError
 from .config import cfg
@@ -620,8 +620,14 @@ def _create_events(vicon, context, strikes, toeoffs):
         vicon.CreateAnEvent(subjectname, side_str, 'Foot Off', int(fr + 1), 0)
 
 
-def extrapolate_rigid(
-    vicon, ref_trial, extrap_trials, ref_markers, extrap_markers, ref_frame=None
+def rigid_body_extrapolate(
+    vicon,
+    ref_trial,
+    extrap_trials,
+    ref_markers,
+    extrap_markers,
+    ref_frame=None,
+    save_trials=True,
 ):
     """Extrapolate missing marker positions from one trial to others.
 
@@ -632,7 +638,12 @@ def extrapolate_rigid(
     computed in the extrapolation trials, and the positions of the missing
     markers are extrapolated based on that.
 
-    The extrapolated marker positions are written back into Nexus.
+    Note that the reference trial and extrapolation trial can be the same. In
+    that case, set ref_frame to a frame where all the markers are present. The
+    other frames will then be extrapolated.
+
+    The extrapolated marker positions are written back into Nexus and
+    vicon.SaveTrial() is called to save each trial.
 
     Parameters
     ----------
@@ -640,16 +651,19 @@ def extrapolate_rigid(
         A ViconNexus SDK object.
     ref_trial : str
         Filename of the reference trial. Give the filename without the
-        'Trial.enf' extension, e.g. 'my_session\my_trial01'. It must contain all
-        markers.
+        'Trial.enf' extension, e.g. 'my_session\my_trial01'. All markers must be
+        present in the reference trial, at least at the frame given by
+        ref_frame.
     extrap_trials : list
-        The trials where the extrapolation should be done.
+        The trials on which the extrapolation should be performed.
     ref_markers : list
         The reference markers to extrapolate from.
     extrap_markers : list
         The markers to extrapolate.
     ref_frame : int or None
         The reference frame to use from the reference trial. If not given, defaults to 0.
+    save_trials : bool
+        Whether to save the extrapolated trials.
     """
     if ref_frame is None:
         ref_frame = 0
@@ -658,7 +672,10 @@ def extrapolate_rigid(
     # read data from reference trial
     _open_trial(ref_trial)
     allmarkers = ref_markers + extrap_markers
-    mdata_ref = _get_marker_data(vicon, allmarkers)
+    try:
+        mdata_ref = _get_marker_data(vicon, allmarkers)
+    except GaitDataError:
+        raise GaitDataError('cannot read markers from reference trial %s' % ref_trial)
     mdata_ref_ = np.row_stack(
         [mdata_ref[marker][ref_frame, :] for marker in allmarkers]
     )
@@ -666,24 +683,31 @@ def extrapolate_rigid(
     for extrap_trial in extrap_trials:
         extrap_coords = defaultdict(list)
         _open_trial(extrap_trial)
-        mdata_ref = _get_marker_data(vicon, ref_markers)
+        subjname = get_subjectnames()
+        try:
+            mdata_ref = _get_marker_data(vicon, ref_markers)
+        except GaitDataError:
+            raise GaitDataError(
+                'cannot read markers from extrapolation trial %s' % extrap_trial
+            )
         for frame in range(vicon.GetFrameCount()):
             mdata_thisframe = np.row_stack(
                 [mdata_ref[marker][frame, :] for marker in ref_markers]
             )
-            mdata_extrap = _rigid_body_extrapolate(mdata_ref_, mdata_thisframe)
+            mdata_extrap = _rigid_body_extrapolate_markers(mdata_ref_, mdata_thisframe)
             for marker, pos in zip(extrap_markers, mdata_extrap):
                 extrap_coords[marker].append(pos)
         # write extrapolated data
         for marker, vals in extrap_coords.items():
-            vals_array = np.array(vals)
-            subjname = get_subjectnames()
+            vals_x, vals_y, vals_z = np.array(vals).T
+            data_exists = [True] * vicon.GetFrameCount()
             vicon.SetTrajectory(
                 subjname,
                 marker,
-                vals_array[:, 0],
-                vals_array[:, 1],
-                vals_array[:, 2],
-                [True] * vicon.GetFrameCount(),
+                vals_x,
+                vals_y,
+                vals_z,
+                data_exists,
             )
-        vicon.SaveTrial(cfg.autoproc.nexus_timeout)
+        if save_trials:
+            vicon.SaveTrial(cfg.autoproc.nexus_timeout)

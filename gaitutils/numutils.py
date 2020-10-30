@@ -47,7 +47,7 @@ def _rotation_matrix(yaw, pitch, roll):
     return np.array([r1, r2, r3])
 
 
-def _rigid_body_extrapolate(P0, Pr):
+def _rigid_body_extrapolate_markers(P0, Pr):
     """Extrapolate some markers in a rigid set.
     P0 (N x 3), the marker positions in the static frame.
     Pr (M x 3), the marker positions in where extrapolation is needed.

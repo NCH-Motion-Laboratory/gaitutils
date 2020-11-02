@@ -659,7 +659,7 @@ class Trial(object):
                     )
                 else:
                     toeoff = toeoff[0]
-                fp_str = ' (fp)' if on_forceplate else ''
+                fp_str = ' (f)' if on_forceplate else ''
                 name = '%s%d%s' % (sidestrs[context], (k + 1), fp_str)
                 yield Gaitcycle(
                     start,

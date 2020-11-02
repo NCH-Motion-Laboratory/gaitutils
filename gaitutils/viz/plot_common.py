@@ -195,20 +195,33 @@ def _var_title(var):
 
 def _truncate_trialname(trialname):
     """Shorten trial name"""
-    try:
-        # try to truncate date string of the form yyyy_mm_dd
-        tn_split = trialname.split('_')
-        datetxt = '-'.join(tn_split[:3])
+    tname_split = trialname.split('_')
+    try:  # see if trial begins with valid date
+        datetxt = '-'.join(tname_split[:3])
         d = datetime.datetime.strptime(datetxt, '%Y-%m-%d')
-        return '%d..%s' % (d.year, '_'.join(tn_split[3:]))
-    except ValueError:  # trial was not named as expected
+    except ValueError:
+        # if trial was not named as expected, do nothing
+        return trialname
+    if len(tname_split) >= 5:
+        # trialname is probably of the standard form:
+        # yyyy_mm_dd_measinfo_sessioninfo_trialn
+        measinfo = tname_split[3]
+        if len(tname_split) > 5:
+            sessioninfo = tname_split[4]
+        else:
+            sessioninfo = ''
+        s = '%d/%d %s' % (d.month, d.year, measinfo)
+        if sessioninfo:
+            s += '/%s' % sessioninfo
+        return s
+    else:
         return trialname
 
 
 def _get_cycle_name(trial, cyc, name_type):
     """Return descriptive name for a gait cycle"""
     if name_type == 'name_with_tag':
-        cyclename = '%s / %s' % (trial.trialname, trial.eclipse_tag)
+        cyclename = '%s/%s' % (trial.trialname, trial.eclipse_tag)
     elif name_type == 'short_name_with_tag':
         cyclename = '%s / %s' % (
             _truncate_trialname(trial.trialname),
@@ -217,17 +230,15 @@ def _get_cycle_name(trial, cyc, name_type):
     elif name_type == 'short_name_with_tag_and_cycle':
         cyclename = _truncate_trialname(trial.trialname)
         if trial.eclipse_tag is not None:
-            cyclename += ' (%s)' % trial.eclipse_tag
-        cyclename += ' / '
-        cyclename += cyc.name
+            cyclename += ' %s/%s' % (trial.eclipse_tag, cyc.name)
     elif name_type == 'tag_only':
         cyclename = trial.eclipse_tag
     elif name_type == 'tag_with_cycle':
-        cyclename = '%s / %s' % (trial.eclipse_tag, cyc.name)
+        cyclename = '%s/%s' % (trial.eclipse_tag, cyc.name)
     elif name_type == 'full':
-        cyclename = '%s / %s' % (trial.name_with_description, cyc.name)
+        cyclename = '%s/%s' % (trial.name_with_description, cyc.name)
     elif name_type == 'short_name_with_cyclename':
-        cyclename = '%s / %s' % (_truncate_trialname(trial.trialname), cyc.name)
+        cyclename = '%s/%s' % (_truncate_trialname(trial.trialname), cyc.name)
     else:
         raise ValueError('Invalid name_type')
     return cyclename

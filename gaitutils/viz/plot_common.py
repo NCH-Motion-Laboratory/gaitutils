@@ -204,10 +204,11 @@ def _truncate_trialname(trialname):
         return trialname
     if len(tname_split) >= 5:
         # trialname is probably of the standard form:
-        # yyyy_mm_dd_measinfo_sessioninfo_trialn
+        # yyyy_mm_dd_measinfo_sessioninfo1_sessioninfo2_trialn
         measinfo = tname_split[3]
         if len(tname_split) > 5:
-            sessioninfo = tname_split[4]
+            # pick all sessioninfo strings
+            sessioninfo = '/'.join(tname_split[4:-1])
         else:
             sessioninfo = ''
         s = '%d/%d %s' % (d.month, d.year, measinfo)

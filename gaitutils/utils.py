@@ -475,8 +475,11 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
     """
 
     def _foot_plate_check(fpdata, mkrdata, fr0, side, footlen):
-        """Helper for foot-plate check. Returns 0, 1, 2 for:
-        completely outside plate, partially outside plate, inside plate"""
+        """Helper for foot-plate check.
+        
+        Returns 0, 1, 2 for: completely outside plate, partially outside plate,
+        inside plate, respectively.
+        """
         allpts = _get_foot_points(mkrdata, side, footlen)
         poly = fpdata['cor_full']
         pts_ok = list()
@@ -570,6 +573,11 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
     # get subject info
     info = read_data.get_metadata(source)
     fpdata = read_data.get_forceplate_data(source)
+    if cfg.autoproc.nexus_forceplate_devnames:
+        logger.info('using configured plates: %s' % cfg.autoproc.nexus_forceplate_devnames)
+    if not fpdata:
+        logger.warning('no forceplates')
+        return results
     footlen = info['subj_params']['FootLen']
     rfootlen = info['subj_params']['RFootLen']
     lfootlen = info['subj_params']['LFootLen']

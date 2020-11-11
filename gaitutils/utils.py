@@ -617,7 +617,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
         if force_checks_ok and detect_context:
             logger.debug('autodetecting context')
             # allows foot to settle for 50 ms after strike
-            settle_fr = int(50 / 1000 * info['framerate'])
+            settle_fr = int(.05 * info['framerate'])
             fr0 = strike_fr + settle_fr
             # context is determined by leading foot at strike time
             this_context = _leading_foot(mkrdata, roi=roi)[fr0]

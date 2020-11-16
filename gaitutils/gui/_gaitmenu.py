@@ -1050,7 +1050,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             'info': info,
             'pages': dlg_info.pages,
             'finished_func': self._enable_main_ui,
-            'result_func': qt_message_dialog,  # show a message on success
+            #'result_func': qt_message_dialog,  # show a message on success
         }
         if comparison:
             fun = pdf.create_comparison_report

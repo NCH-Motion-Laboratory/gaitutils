@@ -105,7 +105,6 @@ class GaitModel(object):
 #
 ofm = GaitModel()
 ofm.desc = 'Oxford foot model kinematics'
-ofm.type = 'OFM'
 ofm.read_strategy = 'split_xyz'
 
 ofm.read_vars = _list_with_side(['FFHFA', 'FFTBA', 'HFTBA', 'HFTFL', 'HXFFA', 'TIBA'])
@@ -168,7 +167,6 @@ models_all.append(ofm)
 #
 pig_upperbody = GaitModel()
 pig_upperbody.desc = 'Plug-in Gait upper body kinematics'
-pig_upperbody.type = 'PiG'
 pig_upperbody.read_strategy = 'split_xyz'
 
 pig_upperbody.read_vars = _list_with_side(
@@ -231,7 +229,6 @@ models_all.append(pig_upperbody)
 #
 pig_lowerbody = GaitModel()
 pig_lowerbody.desc = 'Plug-in Gait lower body kinematics'
-pig_lowerbody.type = 'PiG'
 pig_lowerbody.read_strategy = 'split_xyz'
 pig_lowerbody.read_vars = _list_with_side(
     [
@@ -315,7 +312,6 @@ models_all.append(pig_lowerbody)
 #
 pig_lowerbody_kinetics = GaitModel()
 pig_lowerbody_kinetics.desc = 'Plug-in Gait lower body kinetics'
-pig_lowerbody_kinetics.type = 'PiG'
 pig_lowerbody_kinetics.read_strategy = 'split_xyz'
 pig_lowerbody_kinetics.read_vars = _list_with_side(
     [
@@ -419,7 +415,6 @@ models_all.append(pig_lowerbody_kinetics)
 
 musclelen = GaitModel()
 musclelen.desc = 'Muscle length (MuscleLength.mod)'
-musclelen.type = 'musclelen'
 musclelen.read_strategy = 'last'
 
 musclelen.varlabels_noside = {

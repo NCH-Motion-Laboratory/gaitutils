@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Vicon Nexus utils & data readers
+Vicon Nexus utils & data readers.
+
+NB: do not use the data readers from this file directly. They are intended to be
+called via the read_data module.
 
 @author: Jussi (jnu@iki.fi)
 """

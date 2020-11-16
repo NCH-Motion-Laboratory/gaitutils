@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
+C3D reader functions.
 
-c3d reader functions
-
+NB: do not use the data readers from this file directly. They are intended to be
+called via the read_data module.
 
 @author: Jussi (jnu@iki.fi)
 """
@@ -13,6 +14,7 @@ from collections import defaultdict
 import logging
 import numpy as np
 import os
+import os.path as op
 import sys
 
 from .numutils import center_of_pressure, _change_coords
@@ -48,6 +50,14 @@ except ImportError:
             logger.warning('cannot import btk module; unable to read .c3d files')
 
 
+def _is_c3d_file(source):
+    """Check if source is a valid c3d file.
+
+    XXX: Currently we just check existence.
+    """
+    return isinstance(source, basestring) and op.isfile(source)
+
+
 def _get_c3d_metadata_subfields(acq, field):
     """Return names of metadata subfields for a given field"""
     meta = acq.GetMetaData()
@@ -80,7 +90,7 @@ def _get_c3d_metadata_field(acq, field, subfield):
 @lru_cache_checkfile
 def _get_c3dacq(c3dfile):
     """Get a btk c3dacq object.
-    
+
     Object is returned from cache if filename and digest match.
     """
     reader = btk.btkAcquisitionFileReader()
@@ -171,7 +181,7 @@ def _get_accelerometer_data(c3dfile):
 
 def _get_analog_data(c3dfile, devname):
     """Read analog data from a c3d file.
-    
+
     devname is matched against channel names.
     """
     acq = _get_c3dacq(c3dfile)
@@ -193,7 +203,7 @@ def _get_analog_data(c3dfile, devname):
 
 def _get_marker_data(c3dfile, markers, ignore_missing=False):
     """Get position data for specified markers.
-    
+
     See read_data.get_marker_data for details.
     """
     if not isinstance(markers, list):  # listify if not already a list
@@ -223,7 +233,7 @@ def _get_c3d_subject_param(acq, param):
 
 def _get_metadata(c3dfile):
     """Read trial and subject metadata from c3d file.
-    
+
     See read_data.get_metadata() for details.
     """
     trialname = os.path.basename(os.path.splitext(c3dfile)[0])
@@ -304,7 +314,7 @@ def _get_metadata(c3dfile):
 
 def _get_model_data(c3dfile, model):
     """Read model output variables (e.g. Plug-in Gait).
-    
+
     See read_data.get_model_data for details.
     """
     modeldata = dict()
@@ -327,7 +337,7 @@ def _get_model_data(c3dfile, model):
 
 def _get_forceplate_data(c3dfile):
     """Read data of all forceplates from c3d file.
-    
+
     See read_data.get_forceplate_data() for details.
     """
     logger.debug('reading forceplate data from %s' % c3dfile)

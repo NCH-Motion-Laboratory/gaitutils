@@ -6,36 +6,38 @@ filename. Returned values should be independent of source.
 
 @author: Jussi (jnu@iki.fi)
 """
+from __future__ import division
 
 from past.builtins import basestring
 import os.path as op
+import numpy as np
+import logging
 
 from . import nexus, c3d
+from .config import cfg
+
+
+logger = logging.getLogger(__name__)
 
 
 def _reader_module(source):
     """Determine the appropriate data reader module to use"""
     if nexus._is_vicon_instance(source):
         return nexus
-    elif isinstance(source, basestring):
-        # currently we just check c3d existence, without checking
-        # headers etc.
-        if op.isfile(source):
-            return c3d
-        else:
-            raise RuntimeError('File %s does not exist' % source)
+    elif c3d._is_c3d_file(source):
+        return c3d
     else:
         raise RuntimeError('Unknown type for data source %s' % source)
 
 
 def get_metadata(source):
     """Get trial metadata from a source.
-    
+
     Parameters
     ----------
     source : ViconNexus | str
         The data source. Can be a c3d filename or a ViconNexus instance.
-    
+
     Returns
     -------
     dict
@@ -129,7 +131,9 @@ def get_marker_data(source, markers, ignore_missing=False):
         x,y,z data.
     """
     return _reader_module(source)._get_marker_data(
-        source, markers, ignore_missing=ignore_missing,
+        source,
+        markers,
+        ignore_missing=ignore_missing,
     )
 
 
@@ -217,7 +221,7 @@ def get_model_data(source, model):
         # convert Moment variables into SI units
         if var.find('Moment') > 0:
             modeldata[var] /= 1.0e3  # Nmm -> Nm
-        # split 3-d arrays into x,y,z variables
+        # split 3D arrays into x,y,z variables
         if model.read_strategy == 'split_xyz':
             if modeldata[var].shape[0] == 3:
                 modeldata[var + 'X'] = modeldata[var][0, :]
@@ -225,4 +229,24 @@ def get_model_data(source, model):
                 modeldata[var + 'Z'] = modeldata[var][2, :]
             else:
                 raise RuntimeError('Expected a 3D array')
+    # For basic Plug-in Gait, add tibial torsion to knee rotation. This is to
+    # compensate for a weird PiG feature that offsets knee rotation by the
+    # tibial torsion, so that it always rotates around zero. With this fix, we
+    # get the actual (anatomical) knee rotation.
+    if (
+        model.desc == 'Plug-in Gait lower body kinematics'
+        and cfg.models.add_tibial_torsion
+    ):
+        params = get_metadata(source)['subj_params']
+        for ctxt in 'RL':
+            var_knee = ctxt + 'KneeAnglesZ'
+            var_torsion = ctxt + 'TibialTorsion'
+            if var_torsion in params and var_knee in modeldata:
+                tibt = params[var_torsion]
+                if c3d._is_c3d_file(source):
+                    tibt /= (np.pi / 180)
+                if np.abs(tibt) > 1e-2:  # do not add insignificant values
+                    # for c3d data, need to convert radians -> degrees
+                    logger.info('adding %s tibial torsion: %g deg' % (ctxt, tibt))
+                    modeldata[var_knee] += tibt
     return modeldata

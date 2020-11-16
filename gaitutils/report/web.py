@@ -295,7 +295,6 @@ def dash_report(
                 trials_static.append(tri)
 
         emg_layout = None
-        tibial_torsion = dict()
 
         # stuff that's needed to (re)create the figures
         if not saved_report_data:
@@ -328,51 +327,16 @@ def dash_report(
                 AvgTrial.from_trials(_trials_avg[session], sessionpath=session)
                 for session in sessions
             ]
-            # read some extra data from trials and create supplementary data
-            for tr in trials_dyn:
-                # read tibial torsion for each trial and make supplementary traces
-                # these will only be shown for KneeAnglesZ (knee rotation) variable
-                tors = dict()
-                tors['R'], tors['L'] = (
-                    tr.subj_params['RTibialTorsion'],
-                    tr.subj_params['LTibialTorsion'],
-                )
-                if tors['R'] is None or tors['L'] is None:
-                    logger.warning(
-                        'could not read tibial torsion values from %s' % tr.trialname
-                    )
-                    continue
-                # include torsion info for all cycles; this is useful when plotting
-                # isolated cycles
-                max_cycles = cfg.plot.max_cycles['model']
-                cycs = tr.get_cycles(cfg.plot.default_cycles['model'])[:max_cycles]
 
-                for cyc in cycs:
-                    tibial_torsion[cyc] = dict()
-                    for ctxt in tors:
-                        var_ = ctxt + 'KneeAnglesZ'
-                        tibial_torsion[cyc][var_] = dict()
-                        # x = % of gait cycle
-                        tibial_torsion[cyc][var_]['t'] = np.arange(101)
-                        # static tibial torsion value as function of x
-                        # convert radians -> degrees
-                        tibial_torsion[cyc][var_]['data'] = (
-                            np.ones(101) * tors[ctxt] / np.pi * 180
-                        )
-                        tibial_torsion[cyc][var_]['label'] = 'Tib. tors. (%s) % s' % (
-                            ctxt,
-                            tr.trialname,
-                        )
-
-                # in EMG layout, keep chs that are active in any of the trials
-                signals.progress.emit('Reading EMG data', 0)
-                try:
-                    emgs = [tr.emg for tr in trials_dyn]
-                    emg_layout = layouts._rm_dead_channels(emgs, cfg.layouts.std_emg)
-                    if not emg_layout:
-                        emg_layout = 'disabled'
-                except GaitDataError:
+            # in EMG layout, keep chs that are active in any of the trials
+            signals.progress.emit('Reading EMG data', 0)
+            try:
+                emgs = [tr.emg for tr in trials_dyn]
+                emg_layout = layouts._rm_dead_channels(emgs, cfg.layouts.std_emg)
+                if not emg_layout:
                     emg_layout = 'disabled'
+            except GaitDataError:
+                emg_layout = 'disabled'
 
         # define layouts
         # FIXME: should be definable in config
@@ -406,7 +370,6 @@ def dash_report(
 
         # add supplementary data for normal layouts
         supplementary_default = dict()
-        supplementary_default.update(tibial_torsion)
 
         dd_opts_multi_upper = list()
         dd_opts_multi_lower = list()

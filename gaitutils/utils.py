@@ -80,17 +80,17 @@ class TrialEvents(object):
 
 
 def _empty_fp_events():
-    """Container for forceplate events"""
+    """Container for forceplate events."""
     return dict(
-        R_strikes=[],
-        R_toeoffs=[],
+        R_strikes=[],  # frames where valid fp foot strikes occur
+        R_toeoffs=[],  # frames where valid fp toeoffs occur
         L_strikes=[],
         L_toeoffs=[],
-        valid=set(),
-        R_strikes_plate=[],
+        valid=set(),  # contexts with valid foot strike; any of 'L', 'R'
+        R_strikes_plate=[],  # corresponding (zero-based) plate index for each strike
         L_strikes_plate=[],
-        our_fp_info={},
-        coded='',
+        our_fp_info={},  # Eclipse-like dict, e.g 'FP1': 'Invalid', 'FP2': 'Right'
+        coded='',  # status for each forceplate in coded form, e.g. 'RX' for 1=right, 2=invalid
     )
 
 

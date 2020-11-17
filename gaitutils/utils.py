@@ -102,7 +102,7 @@ def marker_gaps(mdata, ignore_edge_gaps=True):
     mdata : ndarray
         Marker position data. See read_data.get_marker_data()
     ignore_edge_gaps : bool, optional
-        If True, leading and trailing gaps are ignored.
+        If True, leading and trailing "gaps" are ignored.
 
     Returns
     -------
@@ -176,7 +176,8 @@ def avg_markerdata(mkrdata, markers, roi=None, fail_on_gaps=True, avg_velocity=F
     markers : list
         Markers to average.
     roi : array-like
-        If given, specified a ROI. Gaps outside the ROI will be ignored.
+        If given, specifies a region of interest (ROI) in frames. Gaps outside
+        the ROI will be ignored.
     fail_on_gaps : bool, optional
         If True, raise an exception on ANY gaps. Otherwise, markers with gaps
         will not be included in the average.
@@ -196,9 +197,17 @@ def avg_markerdata(mkrdata, markers, roi=None, fail_on_gaps=True, avg_velocity=F
     n_ok = 0
     for marker in markers:
         mdata = mkrdata[marker]
-        if avg_velocity:
-            mdata = np.gradient(mdata)[0]
         gap_frames = marker_gaps(mdata)
+        if avg_velocity:
+            # since the data often begins and ends with zeros (areas where
+            # marker reconstruction does not exist), big transients will appear
+            # there causing spikes in the gradients; to avoid this, we reset the
+            # gradient to zero at the transition points
+            mdata_valid_inds = np.where(np.any(mdata, axis=1).astype(int) == 1)[0]
+            data_start, data_end = mdata_valid_inds.min(), mdata_valid_inds.max()
+            mdata = np.gradient(mdata, axis=0)
+            mdata[data_start-1:data_start+1, :] = 0
+            mdata[data_end:data_end+2, :] = 0
         if np.intersect1d(roi_frames, gap_frames).size > 0:
             if fail_on_gaps:
                 raise GaitDataError('Averaging data for %s has gaps' % marker)

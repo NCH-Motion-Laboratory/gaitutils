@@ -461,6 +461,48 @@ def _get_analog_data(vicon, devname):
     return {'t': t, 'data': data}
 
 
+def _get_forceplate_ids(vicon):
+    """Return Nexus forceplate device IDs"""
+    return [
+        id_
+        for id_ in vicon.GetDeviceIDs()
+        if vicon.GetDeviceDetails(id_)[1].lower() == 'forceplate'
+    ]
+
+
+def set_forceplate_data(vicon, fp_index, data, kind='Force'):
+    """Set forceplate data in Nexus.
+
+    Parameters
+    ----------
+    vicon : ViconNexus
+        The SDK object.
+    fp_index : int
+        The index of the forceplate (0...N). Note that this is not the same as
+        Nexus device ID.
+    data : ndarray
+        Tx3 array of data, where T is number of analog frames in current data. T
+        needs to equal the number of analog samples in the current Nexus trial
+        (not the ROI, but whole trial).
+    kind : str, optional
+        Kind of data to write. Can be 'Force', 'Moment' or 'CoP', by default
+        'Force'.
+    """
+    kinds = ['Force', 'Moment', 'CoP']
+    if kind not in kinds:
+        raise ValueError('kind argument needs to be one of %s' % ', '.join(kinds))
+    fpids = _get_forceplate_ids(vicon)
+    if not fpids:
+        raise RuntimeError('no forceplates detected')
+    else:
+        fpid = fpids[fp_index]
+    outputid = vicon.GetDeviceOutputIDFromName(fpid, kind)
+    for dim, data_dim in zip('xyz', data.T):
+        chname = kind[0] + dim  # e.g. 'Fx'
+        chid = vicon.GetDeviceChannelIDFromName(fpid, outputid, chname)
+        vicon.SetDeviceChannel(fpid, outputid, chid, data_dim)
+
+
 def _get_1_forceplate_data(vicon, devid):
     """Read data of single forceplate from Nexus.
     Data is returned in global (laboratory) coordinate frame."""
@@ -541,12 +583,8 @@ def _get_forceplate_data(vicon):
     """
     # get forceplate ids
     logger.debug('reading forceplate data from Vicon Nexus')
-    devids = [
-        id_
-        for id_ in vicon.GetDeviceIDs()
-        if vicon.GetDeviceDetails(id_)[1].lower() == 'forceplate'
-    ]
-    if len(devids) == 0:
+    devids = _get_forceplate_ids(vicon)
+    if not devids:
         logger.debug('no forceplates detected')
         return None
     logger.debug('detected %d forceplate(s)' % len(devids))

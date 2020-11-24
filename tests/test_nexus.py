@@ -6,6 +6,7 @@ Unit tests on a running instance of Vicon Nexus.
 @author: jussi (jnu@iki.fi)
 """
 
+from numpy.testing._private.utils import assert_allclose, assert_almost_equal
 import pytest
 import numpy as np
 import os.path as op
@@ -128,6 +129,21 @@ def test_nexus_get_forceplate_data():
     trialpath = _trial_path(subj, trialname, session=session)
     nexus._open_trial(trialpath)
     meta = nexus._get_metadata(vicon)
+    # plate is rotated 270 degrees in the global system, hence
+    # the min and max relationships below
+    fpdata_global = nexus._get_1_forceplate_data(vicon, 1, coords='global')
+    assert_almost_equal(fpdata_global['F'][:, 0].max(), 46.7622)
+    assert_almost_equal(fpdata_global['F'][:, 0].min(), -25.0151)
+    assert_almost_equal(fpdata_global['F'][:, 1].max(), 40.8465)
+    assert_almost_equal(fpdata_global['F'][:, 1].min(), -133.93)    
+    assert_almost_equal(fpdata_global['F'][:, 2].min(), -597.624)
+    fpdata_local = nexus._get_1_forceplate_data(vicon, 1, coords='local')
+    assert_almost_equal(fpdata_local['F'][:, 0].max(), 133.93)
+    assert_almost_equal(fpdata_local['F'][:, 1].max(), 46.7622)
+    assert_almost_equal(fpdata_local['F'][:, 2].min(), -597.624)
+    # check the local-> global rotation matrix
+    assert_array_almost_equal(fpdata_local['wR'], np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]]))
+    assert_array_almost_equal(fpdata_global['wR'], np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]]))
 
 
 @pytest.mark.nexus

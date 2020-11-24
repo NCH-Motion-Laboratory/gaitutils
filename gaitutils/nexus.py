@@ -473,6 +473,9 @@ def _get_forceplate_ids(vicon):
 def set_forceplate_data(vicon, fp_index, data, kind='Force'):
     """Set forceplate data in Nexus.
 
+    This sets the data in the device local frame. Note that the readers return
+    data in the global (laboratory) coordinates instead.
+
     Parameters
     ----------
     vicon : ViconNexus
@@ -495,7 +498,10 @@ def set_forceplate_data(vicon, fp_index, data, kind='Force'):
     if not fpids:
         raise RuntimeError('no forceplates detected')
     else:
-        fpid = fpids[fp_index]
+        try:
+            fpid = fpids[fp_index]
+        except IndexError:
+            raise RuntimeError('Invalid plate index %d (detected %d forceplates)' % (fp_index, len(fpids)))
     outputid = vicon.GetDeviceOutputIDFromName(fpid, kind)
     for dim, data_dim in zip('xyz', data.T):
         chname = kind[0] + dim  # e.g. 'Fx'
@@ -503,10 +509,8 @@ def set_forceplate_data(vicon, fp_index, data, kind='Force'):
         vicon.SetDeviceChannel(fpid, outputid, chid, data_dim)
 
 
-def _get_1_forceplate_data(vicon, devid):
-    """Read data of single forceplate from Nexus.
-    Data is returned in global (laboratory) coordinate frame."""
-    # get available forceplate ids
+def _get_1_forceplate_data(vicon, devid, coords='global'):
+    """Read data of single forceplate from Nexus."""
     logger.debug('reading forceplate data from devid %d' % devid)
     dname, dtype, drate, outputids, nfp, _ = vicon.GetDeviceDetails(devid)
     # outputs should be force, moment, cop. read them one by one
@@ -537,7 +541,7 @@ def _get_1_forceplate_data(vicon, devid):
     F = np.array([fx, fy, fz]).transpose()
     M = np.array([mx, my, mz]).transpose()
     Ftot = np.linalg.norm(F, axis=1)
-    # translation and rotation matrices -> world coords
+    # translation and rotation matrices, local -> global coordinates
     # suspect that Nexus wR is wrong (does not match displayed plate axes)?
     wR = np.array(nfp.WorldR).reshape(3, 3)
     wT = np.array(nfp.WorldT)
@@ -552,7 +556,6 @@ def _get_1_forceplate_data(vicon, devid):
             [cor_w[1, 0], cor_w[0, 1], cor_w[0, 2]],
         ]
     )
-
     lb = np.min(cor_w, axis=0)
     ub = np.max(cor_w, axis=0)
     # check that CoP stays inside plate boundaries

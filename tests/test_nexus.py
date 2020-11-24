@@ -102,6 +102,37 @@ def test_nexus_plot():
 
 
 @pytest.mark.nexus
+def test_nexus_set_forceplate_data():
+    """Test forceplate data setter"""
+    global vicon
+    if vicon is None:
+        vicon = start_nexus()
+    subj = 'D0063_RR'
+    trialname = '2018_12_17_preOp_RR06.c3d'
+    session = 'autoproc_session'
+    trialpath = _trial_path(subj, trialname, session=session)
+    nexus._open_trial(trialpath)
+    meta = nexus._get_metadata(vicon)
+    data_len = int(meta['length'] * meta['samplesperframe'])
+    # set data to ones
+    data = np.ones((data_len, 3))
+    # invalid plate index
+    with pytest.raises(RuntimeError):
+        nexus.set_forceplate_data(vicon, 4, data)
+    # invalid arg
+    with pytest.raises(ValueError):
+        nexus.set_forceplate_data(vicon, 0, data, kind='foo')
+    # the setter writes data in device local coords
+    nexus.set_forceplate_data(vicon, 0, data)
+    # try reading the data back
+    # get device id corresponding to plate index
+    devid = nexus._get_forceplate_ids(vicon)[0]
+    fpdata = nexus._get_1_forceplate_data(vicon, devid)
+    F_read = fpdata['F']
+    data_global = np.dot(fpdata['wR'], data.T).T
+
+
+@pytest.mark.nexus
 def test_compare_to_c3d():
     """Compare data reads from Nexus and corresponding Nexus written .c3d"""
     global vicon

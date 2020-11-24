@@ -383,7 +383,7 @@ def _get_forceplate_data(c3dfile):
         pz = np.array([0, 0, -1])
         P = np.stack([px, py, pz], axis=1)
         wR = P / np.linalg.norm(P, axis=0)  # rotation matrix, plate -> world
-        # check whether cop stays inside forceplate area and clip if necessary
+        # check whether CoP stays inside forceplate area and clip if necessary
         cop_w = _change_coords(cop, wR, wT)
         cop_wx = np.clip(cop_w[:, 0], lb[0], ub[0])
         cop_wy = np.clip(cop_w[:, 1], lb[1], ub[1])
@@ -398,10 +398,8 @@ def _get_forceplate_data(c3dfile):
         data['Ftot'] = Ftot
         data['M'] = _change_coords(-M, wR, 0)  # not sure why sign flip needed
         data['CoP'] = cop_w
-        data['upperbounds'] = ub
-        data['lowerbounds'] = lb
         data['wR'] = wR
         data['wT'] = wT
-        data['cor_full'] = cor.T
+        data['plate_corners'] = cor.T
         fpdata.append(data)
     return fpdata

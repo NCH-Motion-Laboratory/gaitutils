@@ -481,7 +481,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
         inside plate, respectively.
         """
         allpts = _get_foot_points(mkrdata, side, footlen)
-        poly = fpdata['cor_full']
+        poly = fpdata['plate_corners']
         pts_ok = list()
         for label, pts in allpts.items():
             pt = pts[fr0, :]

@@ -102,6 +102,35 @@ def test_nexus_plot():
 
 
 @pytest.mark.nexus
+def test_nexus_get_forceplate_ids():
+    """Test forceplate id getter"""
+    global vicon
+    if vicon is None:
+        vicon = start_nexus()
+    subj = 'D0063_RR'
+    trialname = '2018_12_17_preOp_RR06.c3d'
+    session = 'autoproc_session'
+    trialpath = _trial_path(subj, trialname, session=session)
+    nexus._open_trial(trialpath)
+    fpids = nexus._get_forceplate_ids(vicon)
+    assert fpids == [1, 2, 3, 5]
+
+
+@pytest.mark.nexus
+def test_nexus_get_forceplate_data():
+    """Test forceplate data getter"""
+    global vicon
+    if vicon is None:
+        vicon = start_nexus()
+    subj = 'D0063_RR'
+    trialname = '2018_12_17_preOp_RR06.c3d'
+    session = 'autoproc_session'
+    trialpath = _trial_path(subj, trialname, session=session)
+    nexus._open_trial(trialpath)
+    meta = nexus._get_metadata(vicon)
+
+
+@pytest.mark.nexus
 def test_nexus_set_forceplate_data():
     """Test forceplate data setter"""
     global vicon

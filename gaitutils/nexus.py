@@ -473,6 +473,10 @@ def _get_forceplate_ids(vicon):
 def set_forceplate_data(vicon, fp_index, data, kind='Force'):
     """Set forceplate data in Nexus.
 
+    This always sets the data in the device local frame. To set data in the
+    global frame, you need to get the local->global transformation from Nexus,
+    invert it, and apply the resulting global->local transformation to inputs.
+
     Parameters
     ----------
     vicon : ViconNexus
@@ -495,7 +499,13 @@ def set_forceplate_data(vicon, fp_index, data, kind='Force'):
     if not fpids:
         raise RuntimeError('no forceplates detected')
     else:
-        fpid = fpids[fp_index]
+        try:
+            fpid = fpids[fp_index]
+        except IndexError:
+            raise RuntimeError(
+                'Invalid plate index %d (detected %d forceplates)'
+                % (fp_index, len(fpids))
+            )
     outputid = vicon.GetDeviceOutputIDFromName(fpid, kind)
     for dim, data_dim in zip('xyz', data.T):
         chname = kind[0] + dim  # e.g. 'Fx'
@@ -503,76 +513,94 @@ def set_forceplate_data(vicon, fp_index, data, kind='Force'):
         vicon.SetDeviceChannel(fpid, outputid, chid, data_dim)
 
 
-def _get_1_forceplate_data(vicon, devid):
-    """Read data of single forceplate from Nexus.
-    Data is returned in global (laboratory) coordinate frame."""
-    # get available forceplate ids
+def _get_1_forceplate_data(vicon, devid, coords='global'):
+    """Read data of a single forceplate from Nexus.
+
+    Parameters
+    ----------
+    vicon : ViconNexus
+        The SDK object.
+    devid : int
+        The device id.
+    coords : str, optional
+        Whether to return data in 'global' or 'local' coordinate system.
+
+    Returns
+    -------
+    dict
+        Force dict with the following keys and values:
+
+        F : ndarray
+            Nx3 matrix of force.
+        Ftot : ndarray
+            Nx1 matrix of force magnitude.
+        M : ndarray
+            Nx3 matrix of moment.
+        CoP : ndarray
+            Nx3 matrix of center of pressure.
+        wR : ndarray
+            3x3 rotation matrix for local -> global frame.
+        wT : ndarray
+            1x3 transformation vector for local -> global frame.
+        plate_corners : ndarray
+            4x3 matrix of the four plate corners.
+    
+    All data is returned in the coordinate frame specified by the coords
+    parameter. wR and wT are always returned as local -> world transformation.
+    """
+    if coords == 'global':
+        getter_fun = vicon.GetDeviceChannelGlobal
+    elif coords == 'local':
+        getter_fun = vicon.GetDeviceChannel
+    else:
+        raise ValueError('Invalid coords argument, must be "global" or "local"')
     logger.debug('reading forceplate data from devid %d' % devid)
     dname, dtype, drate, outputids, nfp, _ = vicon.GetDeviceDetails(devid)
-    # outputs should be force, moment, cop. read them one by one
-    outputid = outputids[0]
-    chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Fx')
-    fx, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
-    chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Fy')
-    fy, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
-    chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Fz')
-    fz, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
-    # moments
-    outputid = outputids[1]
-    chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Mx')
-    mx, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
-    chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'My')
-    my, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
-    chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Mz')
-    mz, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
-    # center of pressure
-    outputid = outputids[2]
-    chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Cx')
-    copx, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
-    chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Cy')
-    copy, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
-    chid = vicon.GetDeviceChannelIDFromName(devid, outputid, 'Cz')
-    copz, chready, chrate = vicon.GetDeviceChannelGlobal(devid, outputid, chid)
-    cop_w = np.array([copx, copy, copz]).transpose()
-    F = np.array([fx, fy, fz]).transpose()
-    M = np.array([mx, my, mz]).transpose()
-    Ftot = np.linalg.norm(F, axis=1)
-    # translation and rotation matrices -> world coords
-    # suspect that Nexus wR is wrong (does not match displayed plate axes)?
+    kinds = ['Force', 'Moment', 'CoP']
+    alldata = dict()
+    for kind in kinds:
+        outputid = vicon.GetDeviceOutputIDFromName(devid, kind)
+        datalist = list()
+        for dim in 'xyz':
+            chname = kind[0] + dim  # e.g. 'Fx'
+            chid = vicon.GetDeviceChannelIDFromName(devid, outputid, chname)
+            data, chready, chrate = getter_fun(devid, outputid, chid)
+            datalist.append(data)
+        alldata[kind] = np.array(datalist).T
+    Ftot = np.linalg.norm(alldata['Force'], axis=1)
+    cop = alldata['CoP']
+    # translation and rotation matrices from local to global coordinates
     wR = np.array(nfp.WorldR).reshape(3, 3)
     wT = np.array(nfp.WorldT)
-    # plate corners -> world coords
+    # get plate coords, convert to global frame if needed
     cor = np.stack([nfp.LowerBounds, nfp.UpperBounds])
-    cor_w = _change_coords(cor, wR, wT)
-    cor_full = np.array(
+    if coords == 'global':
+        cor = _change_coords(cor, wR, wT)
+    plate_corners = np.array(
         [
-            cor_w[0, :],
-            [cor_w[0, 0], cor_w[1, 1], cor_w[0, 2]],
-            cor_w[1, :],
-            [cor_w[1, 0], cor_w[0, 1], cor_w[0, 2]],
+            cor[0, :],
+            [cor[0, 0], cor[1, 1], cor[0, 2]],
+            cor[1, :],
+            [cor[1, 0], cor[0, 1], cor[0, 2]],
         ]
     )
-
-    lb = np.min(cor_w, axis=0)
-    ub = np.max(cor_w, axis=0)
+    lb = np.min(cor, axis=0)
+    ub = np.max(cor, axis=0)
     # check that CoP stays inside plate boundaries
-    cop_ok = np.logical_and(cop_w[:, 0] >= lb[0], cop_w[:, 0] <= ub[0]).all()
-    cop_ok &= np.logical_and(cop_w[:, 1] >= lb[1], cop_w[:, 1] <= ub[1]).all()
+    cop_ok = np.logical_and(cop[:, 0] >= lb[0], cop[:, 0] <= ub[0]).all()
+    cop_ok &= np.logical_and(cop[:, 1] >= lb[1], cop[:, 1] <= ub[1]).all()
     if not cop_ok:
         logger.warning('center of pressure outside plate boundaries, clipping to plate')
-        cop_w[:, 0] = np.clip(cop_w[:, 0], lb[0], ub[0])
-        cop_w[:, 1] = np.clip(cop_w[:, 1], lb[1], ub[1])
+        cop[:, 0] = np.clip(cop[:, 0], lb[0], ub[0])
+        cop[:, 1] = np.clip(cop[:, 1], lb[1], ub[1])
     return {
-        'F': F,
-        'M': M,
+        'F': alldata['Force'],
+        'M': alldata['Moment'],
         'Ftot': Ftot,
-        'CoP': cop_w,
+        'CoP': cop,
         'wR': wR,
         'wT': wT,
-        'lowerbounds': lb,
-        'upperbounds': ub,
-        'cor_w': cor_w,
-        'cor_full': cor_full,
+        'plate_corners': plate_corners,
     }
 
 
@@ -588,7 +616,7 @@ def _get_forceplate_data(vicon):
         logger.debug('no forceplates detected')
         return None
     logger.debug('detected %d forceplate(s)' % len(devids))
-    # filter by device name
+    # filter by device names, if they are configured
     if cfg.autoproc.nexus_forceplate_devnames:
         devids = [
             id

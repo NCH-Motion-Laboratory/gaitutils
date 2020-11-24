@@ -6,6 +6,7 @@ Unit tests on a running instance of Vicon Nexus.
 @author: jussi (jnu@iki.fi)
 """
 
+from numpy.testing import assert_allclose, assert_almost_equal
 import pytest
 import numpy as np
 import os.path as op
@@ -99,6 +100,109 @@ def test_nexus_plot():
     tr = Trial(vicon)
     pl = plots.plot_trials([tr], backend='matplotlib')
     assert isinstance(pl, Figure)
+
+
+@pytest.mark.nexus
+def test_nexus_get_forceplate_ids():
+    """Test forceplate id getter"""
+    global vicon
+    if vicon is None:
+        vicon = start_nexus()
+    subj = 'D0063_RR'
+    trialname = '2018_12_17_preOp_RR06.c3d'
+    session = 'autoproc_session'
+    trialpath = _trial_path(subj, trialname, session=session)
+    nexus._open_trial(trialpath)
+    fpids = nexus._get_forceplate_ids(vicon)
+    assert fpids == [1, 2, 3, 5]
+
+
+@pytest.mark.nexus
+def test_nexus_get_forceplate_data():
+    """Test forceplate data getter"""
+    global vicon
+    if vicon is None:
+        vicon = start_nexus()
+    subj = 'D0063_RR'
+    trialname = '2018_12_17_preOp_RR06.c3d'
+    session = 'autoproc_session'
+    trialpath = _trial_path(subj, trialname, session=session)
+    nexus._open_trial(trialpath)
+    meta = nexus._get_metadata(vicon)
+    # make a slice of relevant analog frames
+    analog_roi = slice(
+        *(int(x * meta['samplesperframe']) for x in vicon.GetTrialRegionOfInterest())
+    )
+    fpdata_local = nexus._get_1_forceplate_data(vicon, 1, coords='local')
+    fpdata_global = nexus._get_1_forceplate_data(vicon, 1, coords='global')
+    # rotation and translation local -> global
+    R = fpdata_global['wR']
+    trans = fpdata_global['wT']
+    # check rotation matrix
+    assert_array_almost_equal(
+        fpdata_local['wR'], np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
+    )
+    assert_array_almost_equal(
+        fpdata_global['wR'], np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
+    )
+    # check global data against rotated local data
+    assert_allclose(
+        fpdata_global['F'], np.dot(R, fpdata_local['F'].T).T, atol=0, rtol=1e-5
+    )
+    assert_allclose(
+        fpdata_global['M'], np.dot(R, fpdata_local['M'].T).T, atol=0, rtol=1e-5
+    )
+    # CoP is more finicky than F and M
+    assert_allclose(
+        fpdata_global['CoP'][analog_roi, :],
+        np.dot(R, fpdata_local['CoP'][analog_roi, :].T).T + trans,
+        rtol=1e-5,
+        atol=0.001,
+    )
+    # check some values
+    assert_almost_equal(fpdata_local['F'][:, 0].max(), 133.93)
+    assert_almost_equal(fpdata_local['F'][:, 1].max(), 46.7622)
+    assert_almost_equal(fpdata_local['F'][:, 2].min(), -597.624)
+    corners = np.array(
+        [
+            [-232.0, -254.0, 0.0],
+            [-232.0, 254.0, 0.0],
+            [232.0, 254.0, 0.0],
+            [232.0, -254.0, 0.0],
+        ]
+    )
+    assert_almost_equal(fpdata_local['plate_corners'], corners)
+
+
+@pytest.mark.nexus
+def test_nexus_set_forceplate_data():
+    """Test forceplate data setter"""
+    global vicon
+    if vicon is None:
+        vicon = start_nexus()
+    subj = 'D0063_RR'
+    trialname = '2018_12_17_preOp_RR06.c3d'
+    session = 'autoproc_session'
+    trialpath = _trial_path(subj, trialname, session=session)
+    nexus._open_trial(trialpath)
+    meta = nexus._get_metadata(vicon)
+    data_len = int(meta['length'] * meta['samplesperframe'])
+    # set data to ones
+    data = np.ones((data_len, 3))
+    # invalid plate index
+    with pytest.raises(RuntimeError):
+        nexus.set_forceplate_data(vicon, 4, data)
+    # invalid arg
+    with pytest.raises(ValueError):
+        nexus.set_forceplate_data(vicon, 0, data, kind='foo')
+    # the setter writes data in device local coords
+    nexus.set_forceplate_data(vicon, 0, data)
+    # try reading the data back
+    # get device id corresponding to plate index
+    devid = nexus._get_forceplate_ids(vicon)[0]
+    fpdata = nexus._get_1_forceplate_data(vicon, devid)
+    F_read = fpdata['F']
+    data_global = np.dot(fpdata['wR'], data.T).T
 
 
 @pytest.mark.nexus
@@ -225,7 +329,7 @@ def test_event_marking():
 @pytest.mark.slow
 def test_autoproc():
     """Test autoprocessing.
-   
+
     This requires preprocessing and model pipelines to be set up correctly in
     Nexus.
     """

@@ -254,6 +254,11 @@ def _isfloat(x):
         return False
 
 
+def _is_ascii(s):
+    """Check for ASCII string"""
+    return all(ord(c) < 128 for c in s)
+    
+
 def _isint(x):
     """Test for int-conversible value"""
     try:

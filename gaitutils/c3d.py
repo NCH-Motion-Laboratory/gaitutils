@@ -17,10 +17,12 @@ import numpy as np
 import os
 import os.path as op
 import sys
+import tempfile
+import shutil
 
-from .numutils import center_of_pressure, _change_coords
+from .numutils import center_of_pressure, _change_coords, _is_ascii
 from .utils import TrialEvents, _step_width
-from .envutils import lru_cache_checkfile, GaitDataError
+from .envutils import lru_cache_checkfile, _named_tempfile, GaitDataError
 
 
 logger = logging.getLogger(__name__)
@@ -87,7 +89,6 @@ def _get_c3d_metadata_field(acq, field, subfield):
     else:
         raise RuntimeError('Unhandled btk meta info type')
 
-
 @lru_cache_checkfile
 def _get_c3dacq(c3dfile):
     """Get a btk c3dacq object.
@@ -99,7 +100,27 @@ def _get_c3dacq(c3dfile):
     if sys.version_info.major == 2:
         c3dfile = c3dfile.encode('latin-1')
     reader.SetFilename(c3dfile)
-    reader.Update()
+    try:
+        reader.Update()
+    except RuntimeError as e:
+        # this is a workaround for an unresolved BTK Python 3 bug, where
+        # filenames containing extended characters cannot be read
+        if not _is_ascii(c3dfile) and sys.version_info.major == 3:
+            logger.warning('trying to work around possible btk extended chars bug')
+            # just copy the file into another directory
+            temp_path = _named_tempfile(suffix='.c3d')
+            shutil.copy2(c3dfile, temp_path)
+            logger.warning('using %s' % temp_path)
+            # we need to create a new reader here
+            # (the previous update call screws it up somehow)
+            reader = btk.btkAcquisitionFileReader()
+            reader.SetFilename(temp_path)
+            reader.Update()
+            # we should be able to remove the temp file now
+            os.remove(temp_path)
+        else:
+            # something else went wrong during read
+            raise e
     return reader.GetOutput()
 
 

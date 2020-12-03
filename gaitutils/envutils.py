@@ -15,6 +15,8 @@ from ulstools import env
 from pkg_resources import resource_filename
 import logging
 import hashlib
+import os
+import tempfile
 
 from .gui._windows import error_exit
 
@@ -62,7 +64,7 @@ def _make_gaitutils_shortcut():
 
 def _git_autoupdate():
     """Update the package git repository.
-    
+
     This works, if the package was installed into user directory by cloning the
     git repository and running 'python setup.py develop'. In this case, updating
     the cloned repository will effectively update the package.
@@ -101,8 +103,8 @@ def _register_gui_exception_handler(full_traceback=False):
     from .config import cfg
 
     def _my_excepthook(type_, value, tback):
-        """ Custom exception handler for fatal (unhandled) exceptions:
-        report to user via GUI and terminate. """
+        """Custom exception handler for fatal (unhandled) exceptions:
+        report to user via GUI and terminate."""
         # exception and message, but no traceback
         tbackstr = tback if full_traceback else ''
         msg = ''.join(traceback.format_exception(type_, value, tbackstr))
@@ -149,3 +151,15 @@ def lru_cache_checkfile(fun):
         return cached_fun(filename, md5sum)
 
     return wrapper
+
+
+def _named_tempfile(suffix=None):
+    """Return a name for a temporary file.
+    Does not open the file. Cross-platform. Replaces tempfile.NamedTemporaryFile
+    which behaves strangely on Windows.
+    """
+    if suffix is None:
+        suffix = ''
+    elif suffix[0] != '.':
+        raise ValueError('Invalid suffix, must start with dot')
+    return os.path.join(tempfile.gettempdir(), os.urandom(24).hex() + suffix)

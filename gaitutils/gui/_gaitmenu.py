@@ -23,7 +23,7 @@ import logging
 import traceback
 import socket
 import ulstools
-from ulstools import configdot
+import configdot
 
 from .qt_dialogs import (
     OptionsDialog,

@@ -10,6 +10,7 @@ called via the read_data module.
 
 from __future__ import print_function, division
 from builtins import zip
+from past.builtins import basestring
 from collections import defaultdict
 import logging
 import numpy as np

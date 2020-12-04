@@ -41,7 +41,7 @@ class AvgTrial(Trial):
     ):
         """Build AvgTrial from a list of trials"""
         nfiles = len(trials)
-        data_all, ncycles = collect_trial_data(trials)
+        data_all, ncycles, _ = collect_trial_data(trials)
 
         avgdata_model, stddata_model, ncycles_ok_analog = average_model_data(
             data_all['model'],
@@ -349,16 +349,20 @@ def collect_trial_data(
 
     Returns
     -------
-    data_all : dict
-        Dict keyed by variable type. Each value is a dict keyed by variable,
-        whose values are ndarrays of data.
+    tuple
+        Tuple of (data_all, ncycles), where:
 
-    ncycles : dict
-        Total number of collected cycles for 'R', 'L', 'R_fp', 'L_fp' (last two
-        are for forceplate cycles)
+            data_all : dict
+                Dict keyed by variable type. Each value is a dict keyed by variable,
+                whose values are ndarrays of data.
+            ncycles : dict
+                Total number of collected cycles for 'R', 'L', 'R_fp', 'L_fp' (last two
+                are for forceplate cycles)
+
     """
 
     data_all = dict()
+    toeoff_frames = defaultdict(list)
     ncycles = defaultdict(lambda: 0)
 
     if fp_cycles_only is None:
@@ -368,11 +372,11 @@ def collect_trial_data(
         collect_types = defaultdict(lambda: True)
 
     if analog_len is None:
-        analog_len = 1000
+        analog_len = 1000  # reasonable default for analog data (?)
 
     if not trials:
-        logger.warning('no trials')
         return None, None
+
     if not isinstance(trials, list):
         trials = [trials]
 
@@ -384,12 +388,14 @@ def collect_trial_data(
 
     if collect_types['model']:
         data_all['model'] = defaultdict(lambda: None)
+
         models_to_collect = models.models_all
     else:
         models_to_collect = list()
 
     trial_types = list()
     for trial_ in trials:
+        # create Trial instance in case we got filenames as args
         trial = trial_ if isinstance(trial_, Trial) else Trial(trial_)
         logger.info('collecting data for %s' % trial.trialname)
         trial_types.append(trial.is_static)
@@ -430,6 +436,7 @@ def collect_trial_data(
                             if data_all['model'][var] is None
                             else np.concatenate([data_all['model'][var], data[None, :]])
                         )
+                        toeoff_frames[var].append(cycle.toeoffn)
             for ch in emg_chs_to_collect:
                 # check whether cycle matches channel context
                 if not trial.is_static and not trial.emg.context_ok(ch, cycle.context):
@@ -452,4 +459,4 @@ def collect_trial_data(
         'collected %d trials, %d/%d R/L cycles, %d/%d forceplate cycles'
         % (len(trials), ncycles['R'], ncycles['L'], ncycles['R_fp'], ncycles['L_fp'])
     )
-    return data_all, ncycles
+    return data_all, ncycles, toeoff_frames

@@ -25,7 +25,7 @@ sessiondir_abs = _file_path(sessiondir_)
 def test_collect_trial_data():
     """Test collection of trial data"""
     c3ds = sessionutils.get_c3ds(sessiondir_abs, trial_type='dynamic')
-    data_all, nc = stats.collect_trial_data(c3ds)
+    data_all, nc, toeoff_frames = stats.collect_trial_data(c3ds)
     data_model = data_all['model']
     collected_vars = set(data_model.keys())
     # test whether data was collected for all vars
@@ -43,14 +43,14 @@ def test_collect_trial_data():
     assert data_model['RKneeAnglesX'].shape[1] == 101
     assert data_model['fubar'] is None
     # forceplate cycles only
-    data_all, nc = stats.collect_trial_data(c3ds, fp_cycles_only=True)
+    data_all, nc, toeoff_frames = stats.collect_trial_data(c3ds, fp_cycles_only=True)
     data_model = data_all['model']
     assert nc == {'R_fp': 19, 'R': 19, 'L': 17, 'L_fp': 17}
     assert data_model['RKneeAnglesX'].shape[0] == nc['R']
     assert data_model['RAnkleMomentX'].shape[0] == nc['R_fp']
     assert data_model['RKneeAnglesX'].shape[1] == 101
     # EMG data collection
-    data_all, nc = stats.collect_trial_data(
+    data_all, nc, toeoff_frames = stats.collect_trial_data(
         c3ds, collect_types={'model': False, 'emg': True}, analog_len=501
     )
     assert 'model' not in data_all
@@ -68,7 +68,7 @@ def test_collect_trial_data():
 def test_average_model_data():
     """Test averaging of model data"""
     c3ds = sessionutils.get_c3ds(sessiondir_abs, trial_type='dynamic')
-    data_all, nc = stats.collect_trial_data(
+    data_all, nc, toeoff_frames = stats.collect_trial_data(
         c3ds, collect_types={'model': True, 'emg': False}
     )
     data_model = data_all['model']
@@ -121,7 +121,7 @@ def test_avgtrial():
     cycs = atrial.get_cycles('forceplate')
     assert len(cycs) == 2
     # create from already averaged data
-    data_all, nc = stats.collect_trial_data(
+    data_all, nc, toeoff_frames = stats.collect_trial_data(
         c3ds, collect_types={'model': True, 'emg': True}
     )
     data_model = data_all['model']

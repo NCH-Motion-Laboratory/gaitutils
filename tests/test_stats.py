@@ -41,6 +41,8 @@ def test_collect_trial_data():
     assert data_model['RKneeAnglesX'].shape[0] == nc['R']
     assert data_model['RAnkleMomentX'].shape[0] == nc['R_fp']
     assert data_model['RKneeAnglesX'].shape[1] == 101
+    assert len(toeoff_frames['RKneeAnglesX']) == nc['R']
+    assert len(toeoff_frames['RAnkleMomentX']) == nc['R_fp']
     assert data_model['fubar'] is None
     # forceplate cycles only
     data_all, nc, toeoff_frames = stats.collect_trial_data(c3ds, fp_cycles_only=True)

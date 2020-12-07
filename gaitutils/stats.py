@@ -6,6 +6,8 @@ Compute statistics across/within trials
 @author: Jussi (jnu@iki.fi)
 """
 
+from __future__ import division
+
 import logging
 import numpy as np
 import scipy
@@ -350,7 +352,7 @@ def collect_trial_data(
     Returns
     -------
     tuple
-        Tuple of (data_all, ncycles), where:
+        Tuple of (data_all, ncycles, toeoff_frames), where:
 
             data_all : dict
                 Dict keyed by variable type. Each value is a dict keyed by variable,
@@ -358,11 +360,13 @@ def collect_trial_data(
             ncycles : dict
                 Total number of collected cycles for 'R', 'L', 'R_fp', 'L_fp' (last two
                 are for forceplate cycles)
-
+            toeoff_frames : dict
+                Dict keyed by variable type. The toeoff frames for each collected curve.
+                For analog data, the values are indices to the analog samples.
     """
 
     data_all = dict()
-    toeoff_frames = defaultdict(list)
+    toeoff_frames = dict()
     ncycles = defaultdict(lambda: 0)
 
     if fp_cycles_only is None:
@@ -382,12 +386,14 @@ def collect_trial_data(
 
     if collect_types['emg']:
         data_all['emg'] = defaultdict(lambda: None)
+        toeoff_frames['emg'] = defaultdict(list)
         emg_chs_to_collect = cfg.emg.channel_labels.keys()
     else:
         emg_chs_to_collect = list()
 
     if collect_types['model']:
         data_all['model'] = defaultdict(lambda: None)
+        toeoff_frames['model'] = defaultdict(list)
 
         models_to_collect = models.models_all
     else:
@@ -436,7 +442,8 @@ def collect_trial_data(
                             if data_all['model'][var] is None
                             else np.concatenate([data_all['model'][var], data[None, :]])
                         )
-                        toeoff_frames[var].append(cycle.toeoffn)
+                        toeoff_frames['model'][var].append(cycle.toeoffn)
+
             for ch in emg_chs_to_collect:
                 # check whether cycle matches channel context
                 if not trial.is_static and not trial.emg.context_ok(ch, cycle.context):
@@ -455,6 +462,8 @@ def collect_trial_data(
                     data_all['emg'][ch] = np.concatenate(
                         [data_all['emg'][ch], data_cyc[None, :]]
                     )
+                toeoff_frames['emg'][ch].append(cycle.toeoffn / 101 * analog_len)
+
     logger.info(
         'collected %d trials, %d/%d R/L cycles, %d/%d forceplate cycles'
         % (len(trials), ncycles['R'], ncycles['L'], ncycles['R_fp'], ncycles['L_fp'])

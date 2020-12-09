@@ -501,7 +501,10 @@ def curve_extract_values(curves, toeoffs):
     Thus, to get maximum peak values at swing phase, use
     results['peaks']['swing']['max'].
     """
-
+    if isinstance(curves, list):
+        curves = np.array(curves)
+    if isinstance(toeoffs, list):
+        toeoffs = np.array(toeoffs)
     if curves.shape[0] != toeoffs.shape[0]:
         raise ValueError('invalid shape of arguments')
     # use defaultdict to reduct dict initialization boilerplate

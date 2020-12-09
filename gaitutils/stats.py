@@ -17,6 +17,7 @@ from collections import defaultdict
 from .trial import Trial, Gaitcycle
 from . import models, numutils
 from .envutils import GaitDataError
+from .numutils import _get_local_max, _get_local_min
 from .config import cfg
 from .emg import AvgEMG
 
@@ -469,3 +470,98 @@ def collect_trial_data(
         % (len(trials), ncycles['R'], ncycles['L'], ncycles['R_fp'], ncycles['L_fp'])
     )
     return data_all, ncycles, toeoff_frames
+
+
+def curve_extract_values(curves, toeoffs):
+    """Extract values from gait curves.
+
+    This extracts values such as swing phase maximum from a set of gait curves.
+    The curves are input as ndarrays, returned by e.g. collect_trial_data().
+
+    Parameters
+    ----------
+    curves : ndarray
+        NxT array of gait curves. Typically T==101 for normalized data.
+    toeoffs : ndarray
+        Nx1 array of toeoff frame indices, one for each curve. This frame
+        separates the contact phase from the swing phase.
+
+    Returns
+    -------
+    dict
+        Dictionary of results, with following keys:
+            'contact' : list of curve values at initial foot contact (frame 0)
+            'toeoff' : list of curve values at toeoff
+            'extrema' : nested dict of simple extrema
+            'peaks' : nested dict of peaks (local extrema)
+        The nested dicts have keys:
+            1: 'overall', 'swing', or 'stance' : the phase of the gait curve   
+            2: 'min', 'argmin', 'max', or 'argmax' : the values and indices
+
+    Thus, to get maximum peak values at swing phase, use
+    results['peaks']['swing']['max'].
+    """
+
+    if curves.shape[0] != toeoffs.shape[0]:
+        raise ValueError('invalid shape of arguments')
+    # use defaultdict to reduct dict initialization boilerplate
+    results = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    results['contact'] = list()
+    results['toeoff'] = list()
+
+    for curve, toeoff in zip(curves, toeoffs):
+
+        # extract stance and swing phases; swing phase begins at the toeoff frame
+        curve_stance, curve_swing = np.split(curve, [toeoff])
+
+        # get the simple extrema
+        results['extrema']['overall']['min'].append(curve.min())
+        results['extrema']['overall']['argmin'].append(curve.argmin())
+        results['extrema']['overall']['max'].append(curve.max())
+        results['extrema']['overall']['argmax'].append(curve.argmax())
+
+        results['extrema']['stance']['min'].append(curve_stance.min())
+        results['extrema']['stance']['argmin'].append(curve_stance.argmin())
+        results['extrema']['stance']['max'].append(curve_stance.max())
+        results['extrema']['stance']['argmax'].append(curve_stance.argmax())
+
+        # swing phase indices need to be offset by the toeff frame
+        results['extrema']['swing']['min'].append(curve_swing.min())
+        results['extrema']['swing']['argmin'].append(curve_swing.argmin() + toeoff)
+        results['extrema']['swing']['max'].append(curve_swing.max())
+        results['extrema']['swing']['argmax'].append(curve_swing.argmax() + toeoff)
+
+        # get the peaks (local extrema)
+        ind, val = _get_local_min(curve)
+        results['peaks']['overall']['argmin'].append(ind)
+        results['peaks']['overall']['min'].append(val)
+        ind, val = _get_local_max(curve)
+        results['peaks']['overall']['argmax'].append(ind)
+        results['peaks']['overall']['max'].append(val)
+
+        ind, val = _get_local_min(curve_stance)
+        results['peaks']['stance']['argmin'].append(ind)
+        results['peaks']['stance']['min'].append(val)
+        ind, val = _get_local_max(curve_stance)
+        results['peaks']['stance']['argmax'].append(ind)
+        results['peaks']['stance']['max'].append(val)
+
+        ind, val = _get_local_min(curve_swing)
+        results['peaks']['swing']['argmin'].append(ind + toeoff)
+        results['peaks']['swing']['min'].append(val)
+        ind, val = _get_local_max(curve_swing)
+        results['peaks']['swing']['argmax'].append(ind + toeoff)
+        results['peaks']['swing']['max'].append(val)
+
+        # get some single values
+        results['contact'].append(curve[0])
+        results['toeoff'].append(curve[toeoff])
+
+        # if needed, we can return a regular dict
+        # results = dict(results)
+        # for k in 'extrema', 'peaks':
+        #     results[k] = dict(results[k])
+        #     for x, v in results[k].items():
+        #         results[k][x] = dict(v)
+
+    return results

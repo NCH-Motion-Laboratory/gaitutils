@@ -257,7 +257,7 @@ def _isfloat(x):
 def _is_ascii(s):
     """Check for ASCII string"""
     return all(ord(c) < 128 for c in s)
-    
+
 
 def _isint(x):
     """Test for int-conversible value"""
@@ -417,3 +417,24 @@ def _filtfilt(data, passband, sfrate, buttord=5):
     else:  # lowpass
         b, a = signal.butter(buttord, passbandn[1])
     return signal.filtfilt(b, a, data)
+
+
+def _get_local_max(data):
+    """Get local maximum (peak) of 1-D data"""
+    # the simpler argrelextrema() would not return flat peaks, which might occur
+    # at least in theory
+    peak_inds = signal.find_peaks(data)[0]
+    if not any(peak_inds):
+         return (np.nan, np.nan)
+    peak_ind = peak_inds[data[peak_inds].argmax()]
+    peak_val = data[peak_ind]
+    return peak_ind, peak_val
+
+
+def _get_local_min(data):
+    """Get local minimum  (peak) of 1-D data"""
+    ind, val = _get_local_max(-data)
+    if ind is np.nan:
+        return np.nan, np.nan
+    else:
+        return ind, -val

@@ -5,6 +5,7 @@ Tests for trial stats
 
 @author: jussi (jnu@iki.fi)
 """
+from __future__ import division
 
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
@@ -30,11 +31,14 @@ def test_collect_trial_data():
     collected_vars = set(data_model.keys())
     # test whether data was collected for all vars
     # except CGM2 forefoot (which are not in the c3d data)
-    desired_vars = set.union(
-        set(models.pig_lowerbody.varnames),
-        set(models.pig_lowerbody_kinetics.varnames),
-        set(models.musclelen.varnames),
-    ) - set([var for var in models.pig_lowerbody.varnames if 'ForeFoot' in var])
+    desired_vars = (
+        set.union(
+            set(models.pig_lowerbody.varnames),
+            set(models.pig_lowerbody_kinetics.varnames),
+            set(models.musclelen.varnames),
+        )
+        - set([var for var in models.pig_lowerbody.varnames if 'ForeFoot' in var])
+    )
     assert collected_vars == desired_vars
     # check that correct number of cycles was collected
     assert nc == {'R_fp': 19, 'R': 54, 'L': 53, 'L_fp': 17}
@@ -79,11 +83,14 @@ def test_average_model_data():
     )
     # test whether data was averaged for all vars
     # except CGM2 forefoot (which are not in the c3d data)
-    desired_vars = set.union(
-        set(models.pig_lowerbody.varnames),
-        set(models.pig_lowerbody_kinetics.varnames),
-        set(models.musclelen.varnames),
-    ) - set([var for var in models.pig_lowerbody.varnames if 'ForeFoot' in var])
+    desired_vars = (
+        set.union(
+            set(models.pig_lowerbody.varnames),
+            set(models.pig_lowerbody_kinetics.varnames),
+            set(models.musclelen.varnames),
+        )
+        - set([var for var in models.pig_lowerbody.varnames if 'ForeFoot' in var])
+    )
     for var in desired_vars:
         assert avgdata[var] is not None and avgdata[var].shape == (101,)
         assert stddata[var] is not None and stddata[var].shape == (101,)
@@ -109,7 +116,9 @@ def test_avgtrial():
     # create from trials
     c3ds = sessionutils.get_c3ds(sessiondir_abs, trial_type='dynamic')
     atrial = stats.AvgTrial.from_trials(
-        c3ds, sessionpath=sessiondir_abs, reject_outliers=1e-3,
+        c3ds,
+        sessionpath=sessiondir_abs,
+        reject_outliers=1e-3,
     )
     assert atrial.sessionpath == sessiondir_abs
     assert atrial.trialname
@@ -153,3 +162,34 @@ def test_avgtrial():
     assert len(cycs) == 2
     cycs = atrial.get_cycles('forceplate')
     assert len(cycs) == 2
+
+
+def test_curve_extract_values():
+    """Test extraction of curve values"""
+    # make a fake gait curve
+    npts = 100  # usually 101, but this will give us nice round values to test
+    t = np.arange(npts)
+    curve = np.sin(2 * np.pi * 5 * t / npts - np.pi / 2) + t / npts
+    toeoff = 60
+    res = stats.curve_extract_values(np.array([curve]), np.array([toeoff]))
+    # this comparison may be fragile due to floating point inaccuracy
+    # it would be wiser to dive into the dicts and use assert_allclose
+    assert res == {
+        'contact': [-1.0],
+        'toeoff': [-0.4],
+        'extrema': {
+            'overall': {'min': [-1.0], 'argmin': [0], 'max': [1.9], 'argmax': [90]},
+            'stance': {'min': [-1.0], 'argmin': [0], 'max': [1.5], 'argmax': [50]},
+            'swing': {'min': [-0.4], 'argmin': [60], 'max': [1.9], 'argmax': [90]},
+        },
+        'peaks': {
+            'overall': {'argmin': [20], 'min': [-0.8], 'argmax': [90], 'max': [1.9]},
+            'stance': {'argmin': [20], 'min': [-0.8], 'argmax': [50], 'max': [1.5]},
+            'swing': {
+                'argmin': [80],
+                'min': [-0.19999999999999996],
+                'argmax': [90],
+                'max': [1.9],
+            },
+        },
+    }

@@ -460,10 +460,9 @@ def plot_trials(
 
                             # add toeoff marker
                             if cyc.toeoffn is not None:
-                                toeoff = int(cyc.toeoffn)
                                 toeoff_marker = ax.plot(
-                                    t[toeoff : toeoff + 1],
-                                    y[toeoff : toeoff + 1],
+                                    t[cyc.toeoffn : cyc.toeoffn + 1],
+                                    y[cyc.toeoffn : cyc.toeoffn + 1],
                                     col,
                                     marker='^',
                                 )
@@ -569,10 +568,9 @@ def plot_trials(
 
                                 # add toeoff marker
                                 if cyc.toeoffn is not None:
-                                    toeoff = int(cyc.toeoffn)
                                     toeoff_marker = ax.plot(
-                                        t[toeoff : toeoff + 1],
-                                        data[toeoff : toeoff + 1],
+                                        t[cyc.toeoffn : cyc.toeoffn + 1],
+                                        data[cyc.toeoffn : cyc.toeoffn + 1],
                                         col,
                                         marker='^',
                                     )

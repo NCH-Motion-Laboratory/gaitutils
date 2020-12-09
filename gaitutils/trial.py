@@ -9,6 +9,7 @@ Read gait trials.
 
 
 from __future__ import division
+
 from builtins import range
 from builtins import object
 from collections import defaultdict
@@ -149,7 +150,7 @@ class Gaitcycle(object):
         # normalized x-axis of 0,1,2..100%
         self.tn = np.linspace(0, 100, 101)
         # normalize toe-off event to the cycle
-        self.toeoffn = round(100 * ((self.toeoff - self.start) / self.len))
+        self.toeoffn = int(round(100 * ((self.toeoff - self.start) / self.len)))
         self.trial = trial
         self.plate_idx = plate_idx
         self.index = index

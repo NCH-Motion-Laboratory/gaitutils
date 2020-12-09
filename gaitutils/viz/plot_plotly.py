@@ -486,11 +486,10 @@ def plot_trials(
 
                             # add toeoff marker
                             if cyc.toeoffn is not None:
-                                toeoff = int(cyc.toeoffn)
                                 marker = dict(color=col, symbol='triangle-up', size=8)
                                 toeoff_marker = dict(
-                                    x=t[toeoff : toeoff + 1],
-                                    y=y[toeoff : toeoff + 1],
+                                    x=t[cyc.toeoffn : cyc.toeoffn + 1],
+                                    y=y[cyc.toeoffn : cyc.toeoffn + 1],
                                     showlegend=False,
                                     legendgroup=legendgroup,
                                     hoverinfo='skip',
@@ -629,13 +628,13 @@ def plot_trials(
 
                                 # add toeoff marker
                                 if cyc.toeoffn is not None:
-                                    toeoff = int(cyc.toeoffn)
+                                    cyc.toeoffn = int(cyc.toeoffn)
                                     marker = dict(
                                         color=col, symbol='triangle-up', size=8
                                     )
                                     toeoff_marker = dict(
-                                        x=t[toeoff : toeoff + 1],
-                                        y=data[toeoff : toeoff + 1],
+                                        x=t[cyc.toeoffn : cyc.toeoffn + 1],
+                                        y=data[cyc.toeoffn : cyc.toeoffn + 1],
                                         showlegend=False,
                                         legendgroup=legendgroup,
                                         hoverinfo='skip',

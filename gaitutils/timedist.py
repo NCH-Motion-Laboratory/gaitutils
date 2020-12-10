@@ -220,6 +220,6 @@ def _pick_common_vars(values, vars_wanted=None):
         # preserve original var order
         vars_ = [var for var in vars_wanted if var in vars_ok]
     else:
-        vars_ = vars_common
+        vars_ = list(vars_common)
     units = [vals_1[var]['unit'] for var in vars_]
     return conds, vars_, units

@@ -463,7 +463,7 @@ def collect_trial_data(
                     data_all['emg'][ch] = np.concatenate(
                         [data_all['emg'][ch], data_cyc[None, :]]
                     )
-                toeoff_frames['emg'][ch].append(cycle.toeoffn / 101 * analog_len)
+                toeoff_frames['emg'][ch].append(int(cycle.toeoffn / 101 * analog_len))
 
     logger.info(
         'collected %d trials, %d/%d R/L cycles, %d/%d forceplate cycles'

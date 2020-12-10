@@ -62,10 +62,13 @@ def time_dist_barchart(
     Parameters
     ----------
     values : dict
-        Nested dict of values to plot. Keys are values[condition][var][context].
-        Matches the output of group_analysis_trials().
+        Nested dict of values to plot. The data values are given in
+        values[condition][var][context] where context is 'Left' or 'Right' and
+        their units in values[condition][var]['unit']. Usually it is the output
+        of timedist._group_analysis_trials().
     stddev : dict | None
-        Similar to values, but provides standard deviation for each variable.
+        Dict with structure similar to values, but provides standard deviation
+        for each variable.
     thickness : float, optional
         Y direction thickness of the bars, by default 0.5
     color : list, optional
@@ -108,7 +111,7 @@ def time_dist_barchart(
             data[cond][ctxt] = np.array([values[cond][var][ctxt] for var in vars])
             if stddev:
                 stddevs = np.array([stddev[cond][var][ctxt] for var in vars])
-            if stddevs.max() > 0:
+            if stddev and stddevs.max() > 0:
                 texts[cond][ctxt] = [
                     u'%.2f ± %.2f %s' % (val, std, unit)
                     for val, std, unit in zip(data[cond][ctxt], stddevs, units)

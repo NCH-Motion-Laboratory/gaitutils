@@ -10,7 +10,9 @@ import logging
 import os.path as op
 from collections import OrderedDict
 
-from .. import GaitDataError, sessionutils, cfg
+from ..envutils import GaitDataError
+from ..config import cfg
+from .. import sessionutils
 from ..timedist import _timedist_vars, _group_analysis_trials
 from .plot_misc import get_backend
 

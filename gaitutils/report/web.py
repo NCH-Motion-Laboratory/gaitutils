@@ -10,7 +10,6 @@ from __future__ import division
 
 from builtins import str
 from past.builtins import basestring
-import numpy as np
 import plotly.graph_objs as go
 import dash
 import dash_core_components as dcc
@@ -22,7 +21,6 @@ from collections import OrderedDict
 import logging
 import os.path as op
 import base64
-import copy
 
 from ulstools.num import age_from_hetu
 
@@ -39,9 +37,9 @@ from ..sessionutils import enf_to_trialfile
 from ..trial import Trial
 from ..viz.plot_plotly import plot_trials
 from ..viz import timedist, layouts
-from ..stats import AvgTrial
+from ..stats import AvgTrial, collect_trial_data, curve_extract_values
 
-# for Python 3 compatibility
+# Py2: for Python 3 compatibility
 try:
     import cPickle as pickle
 except ImportError:
@@ -404,7 +402,8 @@ def dash_report(
                         figdata = saved_report_data[label]
                 else:
                     logger.debug('creating figure data for %s' % label)
-                    if isinstance(layout, basestring):  # handle special layout codes
+                    # handle the 'special' layouts
+                    if isinstance(layout, basestring):
                         if layout == 'time_dist':
                             figdata = timedist.plot_comparison(
                                 sessions, big_fonts=False, backend='plotly'

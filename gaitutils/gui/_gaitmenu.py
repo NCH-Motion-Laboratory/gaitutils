@@ -237,6 +237,12 @@ class WebReportDialog(QtWidgets.QDialog):
             )
             info = sessionutils.default_info()
 
+        # if we could not load info, remember the previous values
+        if info['fullname'] is None:
+            info['fullname'] = self.parent._prev_info['fullname']
+        if info['hetu'] is None:
+            info['hetu'] = self.parent._prev_info['hetu']
+
         # ask user for info updates
         # dialog will be prepopulated with the values gathered above
         dlg_info = WebReportInfoDialog(info, check_info=False)
@@ -253,6 +259,7 @@ class WebReportDialog(QtWidgets.QDialog):
                 update_dict = dict(fullname=dlg_info.fullname, hetu=dlg_info.hetu,)
                 session_infos[session].update(update_dict)
                 sessionutils.save_info(session, session_infos[session])
+            self.parent._prev_info.update(update_dict)
         else:
             return
 
@@ -532,6 +539,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self._mpl_windows = list()
         # progress bar
         self.prog = None
+        # used to save previous info dialog values
+        self._prev_info = {'fullname': None, 'hetu': None}
+
 
     def _colorstylevar_changed(self, _idx):
         """Callback for color/style comboboxes.
@@ -1013,6 +1023,12 @@ class Gaitmenu(QtWidgets.QMainWindow):
             )
             info = sessionutils.default_info()
 
+        # if we could not load info, remember the previous values
+        if info['fullname'] is None:
+            info['fullname'] = self._prev_info['fullname']
+        if info['hetu'] is None:
+            info['hetu'] = self._prev_info['hetu']
+
         if comparison:
             # compose a default description for comparison reports
             # we use the session_description field to pass this on to dialog and
@@ -1036,12 +1052,14 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
             # update info files in session dirs (except session specific keys)
             for session in sessions:
-                update_dict = dict(fullname=dlg_info.fullname, hetu=dlg_info.hetu,)
+                update_dict = dict(fullname=dlg_info.fullname, hetu=dlg_info.hetu)
                 # for single session reports, update also the session description
                 if not comparison:
                     update_dict['session_description'] = info['session_description']
                 session_infos[session].update(update_dict)
                 sessionutils.save_info(session, session_infos[session])
+                # update the remembered previous values
+                self._prev_info.update(update_dict)
         else:
             return
 

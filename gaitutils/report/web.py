@@ -326,14 +326,6 @@ def dash_report(
                 for session in sessions
             ]
 
-            # WIP: extract data from curves for a plot
-            _data, ncycles, _toeoffs = collect_trial_data(trials_dyn, collect_types=['model'])
-            data = _data['model']
-            toeoffs = _toeoffs['model']
-            vars = ['LKneeAnglesX']
-            for var in vars:
-                logger.debug(curve_extract_values(data[var], toeoffs[var]))
-
             # in EMG layout, keep chs that are active in any of the trials
             signals.progress.emit('Reading EMG data', 0)
             try:

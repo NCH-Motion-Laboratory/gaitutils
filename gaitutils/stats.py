@@ -256,7 +256,7 @@ def average_model_data(data, reject_zeros=None, reject_outliers=None, use_median
     Parameters
     ----------
     data : dict
-        Data to average (from collect_trial_data)
+        Data to average (from collect_trial_data).
     reject_zeros : bool
         Reject any curves which contain zero values. Exact zero values are
         commonly used to mark gaps. No zero rejection is done for kinetic vars,
@@ -485,6 +485,7 @@ def curve_extract_values(curves, toeoffs):
     Thus, to get maximum peak values at swing phase, use
     results['peaks']['swing']['max'].
     """
+    
     if isinstance(curves, list):
         curves = np.array(curves)
     if isinstance(toeoffs, list):

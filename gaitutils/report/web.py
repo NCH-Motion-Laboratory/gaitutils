@@ -327,7 +327,7 @@ def dash_report(
             ]
 
             # WIP: extract data from curves for a plot
-            _data, ncycles, _toeoffs = collect_trial_data(trials_dyn, collect_types={'model': True, 'emg': False})
+            _data, ncycles, _toeoffs = collect_trial_data(trials_dyn, collect_types=['model'])
             data = _data['model']
             toeoffs = _toeoffs['model']
             vars = ['LKneeAnglesX']

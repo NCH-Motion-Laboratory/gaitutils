@@ -26,7 +26,7 @@ sessiondir_abs = _file_path(sessiondir_)
 def test_collect_trial_data():
     """Test collection of trial data"""
     c3ds = sessionutils.get_c3ds(sessiondir_abs, trial_type='dynamic')
-    data_all, nc, toeoff_frames = stats.collect_trial_data(c3ds)
+    data_all, cycles_all = stats.collect_trial_data(c3ds)
     data_model = data_all['model']
     collected_vars = set(data_model.keys())
     # test whether data was collected for all vars
@@ -40,33 +40,32 @@ def test_collect_trial_data():
         - set([var for var in models.pig_lowerbody.varnames if 'ForeFoot' in var])
     )
     assert collected_vars == desired_vars
-    # check that correct number of cycles was collected
-    assert nc == {'R_fp': 19, 'R': 54, 'L': 53, 'L_fp': 17}
-    assert data_model['RKneeAnglesX'].shape[0] == nc['R']
-    assert data_model['RAnkleMomentX'].shape[0] == nc['R_fp']
-    assert data_model['RKneeAnglesX'].shape[1] == 101
-    assert len(toeoff_frames['model']['RKneeAnglesX']) == nc['R']
-    assert len(toeoff_frames['model']['RAnkleMomentX']) == nc['R_fp']
+    # check that the correct number of cycles was collected
+    assert len(cycles_all['model']['LHipMomentX']) == 17
+    assert data_model['LHipMomentX'].shape[0] == 17
+    assert data_model['RAnkleMomentX'].shape[0] == 19
+    assert len(cycles_all['model']['RKneeAnglesX']) == 54
+    assert data_model['RKneeAnglesX'].shape[0] == 54
     assert data_model['fubar'] is None
     # forceplate cycles only
-    data_all, nc, toeoff_frames = stats.collect_trial_data(c3ds, fp_cycles_only=True)
+    data_all, cycles_all = stats.collect_trial_data(c3ds, fp_cycles_only=True)
     data_model = data_all['model']
-    assert nc == {'R_fp': 19, 'R': 19, 'L': 17, 'L_fp': 17}
-    assert data_model['RKneeAnglesX'].shape[0] == nc['R']
-    assert data_model['RAnkleMomentX'].shape[0] == nc['R_fp']
+    assert data_model['RKneeAnglesX'].shape[0] == 19
+    assert data_model['RAnkleMomentX'].shape[0] == 19
     assert data_model['RKneeAnglesX'].shape[1] == 101
+    assert len(cycles_all['model']['RKneeAnglesX']) == 19
     # EMG data collection
-    data_all, nc, toeoff_frames = stats.collect_trial_data(
-        c3ds, collect_types={'model': False, 'emg': True}, analog_len=501
+    data_all, cycles_all = stats.collect_trial_data(
+        c3ds, collect_types=['emg'], analog_len=501
     )
     assert 'model' not in data_all
     data_emg = data_all['emg']
     assert set(data_emg.keys()) == set(cfg.emg.channel_labels.keys())
     assert all(
-        data.shape[0] == nc['L'] for ch, data in data_emg.items() if ch[0] == 'L'
+        data.shape[0] == 53 for ch, data in data_emg.items() if ch[0] == 'L'
     )
     assert all(
-        data.shape[0] == nc['R'] for ch, data in data_emg.items() if ch[0] == 'R'
+        data.shape[0] == 54 for ch, data in data_emg.items() if ch[0] == 'R'
     )
     assert all(data.shape[1] == 501 for data in data_emg.values())
 
@@ -74,9 +73,7 @@ def test_collect_trial_data():
 def test_average_model_data():
     """Test averaging of model data"""
     c3ds = sessionutils.get_c3ds(sessiondir_abs, trial_type='dynamic')
-    data_all, nc, toeoff_frames = stats.collect_trial_data(
-        c3ds, collect_types={'model': True, 'emg': False}
-    )
+    data_all, cycles_all = stats.collect_trial_data(c3ds, collect_types=['model'])
     data_model = data_all['model']
     avgdata, stddata, ncycles_ok = stats.average_model_data(
         data_model, reject_outliers=None
@@ -132,9 +129,7 @@ def test_avgtrial():
     cycs = atrial.get_cycles('forceplate')
     assert len(cycs) == 2
     # create from already averaged data
-    data_all, nc, toeoff_frames = stats.collect_trial_data(
-        c3ds, collect_types={'model': True, 'emg': True}
-    )
+    data_all, cycles_all = stats.collect_trial_data(c3ds)
     data_model = data_all['model']
     avgdata_model, stddata_model, ncycles_ok = stats.average_model_data(
         data_model, reject_outliers=None

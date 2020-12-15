@@ -44,7 +44,7 @@ class AvgTrial(Trial):
     ):
         """Build AvgTrial from a list of trials"""
         nfiles = len(trials)
-        data_all, ncycles, _ = collect_trial_data(trials)
+        data_all, cycles = collect_trial_data(trials)
 
         avgdata_model, stddata_model, ncycles_ok_analog = average_model_data(
             data_all['model'],
@@ -340,9 +340,9 @@ def collect_trial_data(
     trials : list | str
         filename, or list of filenames (c3d) to collect data from, or list
         of Trial instances
-    collect_types : dict
-        Which kind of vars to collect. Currently supported keys: 'model', 'emg'.
-        Default is to collect all supported types.
+    collect_types : list | None
+        The types of data to collect. Currently supported types: 'model', 'emg'.
+        If None, collect all supported types.
     fp_cycles_only : bool
         If True, only collect data from forceplate cycles. Kinetics model vars
         will always be collected from forceplate cycles only.
@@ -353,28 +353,24 @@ def collect_trial_data(
     Returns
     -------
     tuple
-        Tuple of (data_all, ncycles, toeoff_frames), where:
+        Tuple of (data_all, cycles_all):
 
             data_all : dict
-                Dict keyed by variable type. Each value is a dict keyed by variable,
-                whose values are ndarrays of data.
-            ncycles : dict
-                Total number of collected cycles for 'R', 'L', 'R_fp', 'L_fp' (last two
-                are for forceplate cycles)
-            toeoff_frames : dict
-                Dict keyed by variable type. The toeoff frames for each collected curve.
-                For analog data, the values are indices to the analog samples.
+                Nested dict of the collected data. First key is the variable type,
+                second key is the variable name. The values are ndarrays of the data.
+            cycles_all : dict
+                Nested dict of the collected cycle. First key is the variable type,
+                second key is the variable name. The values are Gaitcycle instances.
     """
 
     data_all = dict()
-    toeoff_frames = dict()
-    ncycles = defaultdict(lambda: 0)
+    cycles_all = dict()
 
     if fp_cycles_only is None:
         fp_cycles_only = False
 
     if collect_types is None:
-        collect_types = defaultdict(lambda: True)
+        collect_types = ['model', 'emg']
 
     if analog_len is None:
         analog_len = 1000  # reasonable default for analog data (?)
@@ -385,20 +381,19 @@ def collect_trial_data(
     if not isinstance(trials, list):
         trials = [trials]
 
-    if collect_types['emg']:
-        data_all['emg'] = defaultdict(lambda: None)
-        toeoff_frames['emg'] = defaultdict(list)
-        emg_chs_to_collect = cfg.emg.channel_labels.keys()
-    else:
-        emg_chs_to_collect = list()
-
-    if collect_types['model']:
+    if 'model' in collect_types:
         data_all['model'] = defaultdict(lambda: None)
-        toeoff_frames['model'] = defaultdict(list)
-
+        cycles_all['model'] = defaultdict(list)
         models_to_collect = models.models_all
     else:
         models_to_collect = list()
+
+    if 'emg' in collect_types:
+        data_all['emg'] = defaultdict(lambda: None)
+        cycles_all['emg'] = defaultdict(list)
+        emg_chs_to_collect = cfg.emg.channel_labels.keys()
+    else:
+        emg_chs_to_collect = list()
 
     trial_types = list()
     for trial_ in trials:
@@ -410,15 +405,8 @@ def collect_trial_data(
             raise GaitDataError('Cannot mix dynamic and static trials')
 
         cycles = [None] if trial.is_static else trial.cycles
-        for cycle in cycles:
-            if not trial.is_static:
-                context = cycle.context
-                if cycle.on_forceplate:
-                    ncycles[context + '_fp'] += 1
-                    ncycles[context] += 1
-                elif not fp_cycles_only:
-                    ncycles[context] += 1
 
+        for cycle in cycles:
             # collect model data
             for model in models_to_collect:
                 for var in model.varnames:
@@ -426,7 +414,7 @@ def collect_trial_data(
                         # pick data only if var context matches cycle context
                         # FIXME: should implement context() for models
                         # (and a filter for context?)
-                        if var[0] != context:
+                        if var[0] != cycle.context:
                             continue
                         # don't collect kinetics if cycle is not on forceplate
                         if (
@@ -437,13 +425,13 @@ def collect_trial_data(
                     if np.all(np.isnan(data)):
                         logger.debug('no data for %s/%s' % (trial.trialname, var))
                     else:
-                        # add as first row or concatenate to existing data
-                        data_all['model'][var] = (
-                            data[None, :]
-                            if data_all['model'][var] is None
-                            else np.concatenate([data_all['model'][var], data[None, :]])
-                        )
-                        toeoff_frames['model'][var].append(cycle.toeoffn)
+                        cycles_all['model'][var].append(cycle)
+                        if var not in data_all['model']:
+                            data_all['model'][var] = data[None, :]
+                        else:
+                            data_all['model'][var] = np.concatenate(
+                                [data_all['model'][var], data[None, :]]
+                            )
 
             for ch in emg_chs_to_collect:
                 # check whether cycle matches channel context
@@ -457,19 +445,15 @@ def collect_trial_data(
                     continue
                 # resample to requested grid
                 data_cyc = scipy.signal.resample(data, analog_len)
+                cycles_all['emg'][ch].append(cycle)
                 if ch not in data_all['emg']:
                     data_all['emg'][ch] = data_cyc[None, :]
                 else:
                     data_all['emg'][ch] = np.concatenate(
                         [data_all['emg'][ch], data_cyc[None, :]]
                     )
-                toeoff_frames['emg'][ch].append(int(cycle.toeoffn / 101 * analog_len))
-
-    logger.info(
-        'collected %d trials, %d/%d R/L cycles, %d/%d forceplate cycles'
-        % (len(trials), ncycles['R'], ncycles['L'], ncycles['R_fp'], ncycles['L_fp'])
-    )
-    return data_all, ncycles, toeoff_frames
+    logger.info('collected %d trials' % len(trials))
+    return data_all, cycles_all
 
 
 def curve_extract_values(curves, toeoffs):
@@ -495,7 +479,7 @@ def curve_extract_values(curves, toeoffs):
             'extrema' : nested dict of simple extrema
             'peaks' : nested dict of peaks (local extrema)
         The nested dicts have keys:
-            1: 'overall', 'swing', or 'stance' : the phase of the gait curve   
+            1: 'overall', 'swing', or 'stance' : the phase of the gait curve
             2: 'min', 'argmin', 'max', or 'argmax' : the values and indices
 
     Thus, to get maximum peak values at swing phase, use

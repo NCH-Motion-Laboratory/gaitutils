@@ -224,14 +224,14 @@ def _plotly_fill_between(x, ylow, yhigh, **kwargs):
 
 
 def plot_trials_browser(trials, layout, **kwargs):
-    """ Convenience plotter, uses plotly.offline to plot directly to browser"""
+    """Convenience plotter, uses plotly.offline to plot directly to browser"""
     fig = plot_trials(trials, layout, **kwargs)
     plotly.offline.plot(fig)
 
 
-def _get_plotly_axis_labels(i, j, ncols):
-    """Gets plotly axis labels from subplot indices i, j"""
-    plot_ind = i * ncols + j + 1  # plotly subplot index
+def _get_plotly_axis_labels(row, col, ncols):
+    """Gets plotly axis labels from zero-based row and col indices"""
+    plot_ind = row * ncols + col + 1  # plotly subplot index
     return 'xaxis%d' % plot_ind, 'yaxis%d' % plot_ind
 
 

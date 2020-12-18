@@ -12,10 +12,12 @@ import logging
 import numpy as np
 import scipy
 import os.path as op
+import itertools
 from collections import defaultdict
 
+
 from .trial import Trial, Gaitcycle
-from . import models, numutils
+from . import models, numutils, sessionutils
 from .envutils import GaitDataError
 from .numutils import _get_local_max, _get_local_min
 from .config import cfg
@@ -485,7 +487,7 @@ def curve_extract_values(curves, toeoffs):
     Thus, to get maximum peak values at swing phase, use
     results['peaks']['swing']['max'].
     """
-    
+
     if isinstance(curves, list):
         curves = np.array(curves)
     if isinstance(toeoffs, list):
@@ -553,3 +555,26 @@ def curve_extract_values(curves, toeoffs):
         #         results[k][x] = dict(v)
 
     return results
+
+
+def _extract_values(session, models=None):
+    """Extract curve values from session"""
+    if models is None:
+        models = [
+            models.pig_lowerbody,
+            models.pig_lowerbody_kinetics,
+        ]
+    thevars = itertools.chain.from_iterable(model.varnames for model in models)
+    c3ds = sessionutils.get_c3ds(session, tags=cfg.eclipse.tags, trial_type='dynamic')
+    if not c3ds:
+        raise RuntimeError('No tagged trials found in session %s' % session)
+    data, cycles = collect_trial_data(c3ds)
+    vals = dict()
+    for var in thevars:
+        data_var = data['model'][var]
+        toeoffs_var = [cyc.toeoffn for cyc in cycles['model'][var]]
+        if data_var is not None and toeoffs_var is not None:
+            vals[var] = curve_extract_values(data_var, toeoffs_var)
+        else:
+            logger.info('no data for %s' % var)
+    return vals

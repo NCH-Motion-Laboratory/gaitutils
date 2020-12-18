@@ -17,13 +17,14 @@ import logging
 from . import plot_matplotlib, plot_plotly
 from ..config import cfg
 from ..gui import qt_dialogs
+from ..envutils import _named_tempfile
 
 logger = logging.getLogger(__name__)
 
 
 def _show_plotly_fig(fig):
     """Show a Plotly fig in the configured browser"""
-    tmp_html = op.join(tempfile.gettempdir(), 'gaitutils_temp.html')
+    tmp_html = _named_tempfile('.html')
     plotly.offline.plot(fig, filename=tmp_html, auto_open=False, validate=False)
     _browse_localhost(url='file:///%s' % tmp_html)
 

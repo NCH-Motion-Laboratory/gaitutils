@@ -276,7 +276,7 @@ def dash_report(
             logger.debug('no saved data found or recreate forced')
 
         # make Trial instances for all dynamic and static trials
-        # this is currently needed even if saved report is used
+        # this is currently needed even if saved figures are used
         trials_dyn = list()
         trials_static = list()
         _trials_avg = dict()

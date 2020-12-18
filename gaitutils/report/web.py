@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 def _make_dropdown_lists(options):
     """Helper for dcc.Dropdown.
-   
+
     Take a list of label/value dicts (with arbitrary type values) and returns
     (list, dict). Needed since dcc.Dropdown can only take str values. identity
     is fed to dcc.Dropdown() and mapper is used for getting the actual values at
@@ -88,7 +88,12 @@ def _report_name(sessions, long_name=True):
 
 
 def dash_report(
-    sessions, info=None, tags=None, signals=None, recreate_plots=None, video_only=None,
+    sessions,
+    info=None,
+    tags=None,
+    signals=None,
+    recreate_plots=None,
+    video_only=None,
 ):
     """Create a gait report dash app.
 
@@ -248,15 +253,13 @@ def dash_report(
     if not opts_tags:
         opts_tags.append({'label': 'No videos', 'value': 'no videos', 'disabled': True})
 
-    # this whole section is only needed if we have c3d data
+    # create (or load) the figures
+    # this section is only run if we have c3d data
     if not video_only:
         data_c3ds = [enf_to_trialfile(enffile, 'c3d') for enffile in data_enfs]
         # at this point, all the c3ds need to exist
-        for fn in data_c3ds:
-            if not op.isfile(fn):
-                raise GaitDataError(
-                    'Missing C3D file for trial %s' % op.splitext(fn)[0]
-                )
+        if not all(op.isfile(fn) for fn in data_c3ds):
+            raise GaitDataError('Missing C3D file for trial %s' % op.splitext(fn)[0])
         # see whether we can load report figures from disk
         digest = numutils._files_digest(data_c3ds)
         logger.debug('report data digest: %s' % digest)

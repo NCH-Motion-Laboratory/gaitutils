@@ -557,15 +557,15 @@ def curve_extract_values(curves, toeoffs):
     return results
 
 
-def _extract_values(session, models=None):
+def _extract_values(session, tags=None, from_models=None):
     """Extract curve values from session"""
-    if models is None:
-        models = [
+    if from_models is None:
+        from_models = [
             models.pig_lowerbody,
             models.pig_lowerbody_kinetics,
         ]
-    thevars = itertools.chain.from_iterable(model.varnames for model in models)
-    c3ds = sessionutils.get_c3ds(session, tags=cfg.eclipse.tags, trial_type='dynamic')
+    thevars = itertools.chain.from_iterable(mod.varnames for mod in from_models)
+    c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
     if not c3ds:
         raise RuntimeError('No tagged trials found in session %s' % session)
     data, cycles = collect_trial_data(c3ds)

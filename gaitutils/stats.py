@@ -28,6 +28,12 @@ logger = logging.getLogger(__name__)
 
 
 class AvgTrial(Trial):
+    """Gait trial -style class that holds averaged data. The API is designed to mimic trial.Trial.
+
+    An AvgTrial instance can be created from averaged data using __init__()
+    or from a list of trials using from_trials().
+    """
+
     def __repr__(self):
         s = '<AvgTrial |'
         s += ' trial name: %s' % self.trialname
@@ -359,10 +365,18 @@ def collect_trial_data(
 
             data_all : dict
                 Nested dict of the collected data. First key is the variable type,
-                second key is the variable name. The values are ndarrays of the data.
+                second key is the variable name. The values are NxT ndarrays of the data,
+                where N is the number of collected curves and T is the dimensionality.
             cycles_all : dict
-                Nested dict of the collected cycle. First key is the variable type,
+                Nested dict of the collected cycles. First key is the variable type,
                 second key is the variable name. The values are Gaitcycle instances.
+
+        Example: you can obtain all collected curves for LKneeAnglesX as
+        data_all['model']['LKneeAnglesX']. This will be a Nx101 ndarray. You can obtain
+        the corresponding gait cycles as cycles_all['model']['LKneeAnglesX']. This will
+        be a length N list of Gaitcycles. You can use it to obtain various metadata, e.g.
+        create a list of toeoff frames for each curve:
+        [cyc.toeoffn for cyc in cycles_all['model']['LKneeAnglesX']]
     """
 
     data_all = dict()

@@ -276,12 +276,12 @@ def dash_report(
             logger.debug('no saved data found or recreate forced')
 
         # make Trial instances for all dynamic and static trials
-        # this is currently needed even if saved figures are used
+        # this is currently necessary even if saved figures are used
         trials_dyn = list()
+        trials_dyn_dict = dict()  # also organize dynamic trials by session
         trials_static = list()
-        _trials_avg = dict()
         for session in sessions:
-            _trials_avg[session] = list()
+            trials_dyn_dict[session] = list()
             for tag in dyn_tags:
                 if enfs[session]['dynamic'][tag]:
                     if signals.canceled:
@@ -289,7 +289,7 @@ def dash_report(
                     c3dfile = enf_to_trialfile(enfs[session]['dynamic'][tag][0], 'c3d')
                     tri = Trial(c3dfile)
                     trials_dyn.append(tri)
-                    _trials_avg[session].append(tri)
+                    trials_dyn_dict[session].append(tri)
             if enfs[session]['static'][static_tag]:
                 c3dfile = enf_to_trialfile(enfs[session]['static']['Static'][0], 'c3d')
                 tri = Trial(c3dfile)
@@ -325,7 +325,7 @@ def dash_report(
 
             # make average trials for each session
             avg_trials = [
-                AvgTrial.from_trials(_trials_avg[session], sessionpath=session)
+                AvgTrial.from_trials(trials_dyn_dict[session], sessionpath=session)
                 for session in sessions
             ]
 

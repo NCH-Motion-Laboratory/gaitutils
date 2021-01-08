@@ -17,7 +17,7 @@ from collections import defaultdict
 
 
 from .trial import Trial, Gaitcycle
-from . import models, numutils, sessionutils
+from . import models, numutils
 from .envutils import GaitDataError
 from .numutils import _get_local_max, _get_local_min
 from .config import cfg
@@ -345,9 +345,9 @@ def collect_trial_data(
 
     Parameters
     ----------
-    trials : list | str
-        filename, or list of filenames (c3d) to collect data from, or list
-        of Trial instances
+    trials : list | str | Trial
+        List of c3d filenames or Trial instances to collect data from.
+        Alternatively, a single filename or Trial instance.
     collect_types : list | None
         The types of data to collect. Currently supported types: 'model', 'emg'.
         If None, collect all supported types.
@@ -561,7 +561,7 @@ def curve_extract_values(curves, toeoffs):
         results['contact'].append(curve[0])
         results['toeoff'].append(curve[toeoff])
 
-        # if needed, we can return a regular dict
+        # if needed, we can finally return a regular dict
         # results = dict(results)
         # for k in 'extrema', 'peaks':
         #     results[k] = dict(results[k])
@@ -571,15 +571,13 @@ def curve_extract_values(curves, toeoffs):
     return results
 
 
-def _extract_values(session, tags=None, from_models=None):
-    """Extract curve values from a gait session.
+def _extract_values_trials(trials, from_models=None):
+    """Extract curve values from given trials.
 
     Parameters
     ----------
-    session : str
-        The session path.
-    tags : list
-        Tags for the trials.
+    trials: list
+        List of c3d files or Trial instances to extract data from.
     from_models : list
         List of GaitModel instances. These determine the variables to collect
         data for.
@@ -590,17 +588,15 @@ def _extract_values(session, tags=None, from_models=None):
         Dict keyed by variable. The values are dicts as returned by
         curve_extract_values().
     """
-
     if from_models is None:
         from_models = [
             models.pig_lowerbody,
         ]
     thevars = itertools.chain.from_iterable(mod.varnames for mod in from_models)
-    c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
-    if not c3ds:
-        raise RuntimeError('No tagged trials found in session %s' % session)
-    data, cycles = collect_trial_data(c3ds, collect_types=['model'])
+    # collect all curves
+    data, cycles = collect_trial_data(trials, collect_types=['model'])
     vals = dict()
+    # extract values for each variable
     for var in thevars:
         data_var = data['model'][var]
         toeoffs_var = [cyc.toeoffn for cyc in cycles['model'][var]]

@@ -352,7 +352,7 @@ def collect_trial_data(
         The types of data to collect. Currently supported types: 'model', 'emg'.
         If None, collect all supported types.
     fp_cycles_only : bool
-        If True, only collect data from forceplate cycles. Kinetics model vars
+        If True, collect data from forceplate cycles only. Kinetics model vars
         will always be collected from forceplate cycles only.
     analog_len : int
         Analog data length varies by gait cycle, so it will be resampled into
@@ -374,7 +374,7 @@ def collect_trial_data(
         Example: you can obtain all collected curves for LKneeAnglesX as
         data_all['model']['LKneeAnglesX']. This will be a Nx101 ndarray. You can obtain
         the corresponding gait cycles as cycles_all['model']['LKneeAnglesX']. This will
-        be a length N list of Gaitcycles. You can use it to obtain various metadata, e.g.
+        be a length N list of Gaitcycles. You can use that to obtain various metadata, e.g.
         create a list of toeoff frames for each curve:
         [cyc.toeoffn for cyc in cycles_all['model']['LKneeAnglesX']]
     """
@@ -572,17 +572,34 @@ def curve_extract_values(curves, toeoffs):
 
 
 def _extract_values(session, tags=None, from_models=None):
-    """Extract curve values from session"""
+    """Extract curve values from a gait session.
+
+    Parameters
+    ----------
+    session : str
+        The session path.
+    tags : list
+        Tags for the trials.
+    from_models : list
+        List of GaitModel instances. These determine the variables to collect
+        data for.
+
+    Returns
+    -------
+    dict
+        Dict keyed by variable. The values are dicts as returned by
+        curve_extract_values().
+    """
+
     if from_models is None:
         from_models = [
             models.pig_lowerbody,
-            models.pig_lowerbody_kinetics,
         ]
     thevars = itertools.chain.from_iterable(mod.varnames for mod in from_models)
     c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
     if not c3ds:
         raise RuntimeError('No tagged trials found in session %s' % session)
-    data, cycles = collect_trial_data(c3ds)
+    data, cycles = collect_trial_data(c3ds, collect_types=['model'])
     vals = dict()
     for var in thevars:
         data_var = data['model'][var]

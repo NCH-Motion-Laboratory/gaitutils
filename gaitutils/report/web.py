@@ -410,9 +410,6 @@ def dash_report(
                             figdata = timedist.plot_comparison(
                                 sessions, big_fonts=False, backend='plotly'
                             )
-                        elif layout_spec == 'extracted':
-                            for title, vardefs in cfg.web_report.vardefs.items():
-                                figdata = plot_extracted_box(curve_vals, vardefs)
                         elif layout_spec == 'patient_info':
                             figdata = patient_info_text
                         elif layout_spec == 'static_kinematics':
@@ -464,29 +461,34 @@ def dash_report(
                             # will be caught, resulting in empty menu item
                             raise RuntimeError
                         else:  # unrecognized layout; this is not caught by us
-                            raise Exception('Unrecognized layout: %s' % layout_spec)
+                            raise Exception('Invalid page layout: %s' % str(layout_spec))
 
                     elif isinstance(layout_spec, tuple):
                         # regular gaitutils layout
-                        if layout_spec[0] == 'layout_name': 
-                            # get a configured layout by name
-                            layout = layouts.get_layout(layout_spec[1])
-                        elif layout_spec[0] != 'layout':
-                            # else it should be a valid layout
-                            raise Exception('Unrecognized layout: %s' % layout_spec)
-                        figdata = plot_trials(
-                            trials_dyn,
-                            layout,
-                            model_normaldata=model_normaldata,
-                            emg_mode=emg_mode,
-                            legend_type=legend_type,
-                            style_by=style_by,
-                            color_by=color_by,
-                            supplementary_data=supplementary_default,
-                            big_fonts=True,
-                        )
+                        if layout_spec[0] in ['layout_name', 'layout']:
+                            if layout_spec[0] == 'layout_name': 
+                                # get a configured layout by name
+                                layout = layouts.get_layout(layout_spec[1])
+                            elif layout_spec[0] == 'layout':
+                                layout = layout_spec[1]
+                            figdata = plot_trials(
+                                trials_dyn,
+                                layout,
+                                model_normaldata=model_normaldata,
+                                emg_mode=emg_mode,
+                                legend_type=legend_type,
+                                style_by=style_by,
+                                color_by=color_by,
+                                supplementary_data=supplementary_default,
+                                big_fonts=True,
+                            )
+                        elif layout_spec[0] == 'curve_extracted':
+                            the_vardefs = cfg.web_report.vardefs[layout_spec[1]]
+                            figdata = plot_extracted_box(curve_vals, the_vardefs)
+                        else:
+                            raise Exception('Invalid page layout: %s' % str(layout_spec))
                     else:
-                        raise Exception('Invalid layout: %s' % layout_spec)
+                        raise Exception('Invalid page layout: %s' % str(layout_spec))
 
                 # save the newly created data
                 if not saved_report_data:

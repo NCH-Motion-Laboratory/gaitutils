@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 def _read_configured_model_normaldata(age=None):
     """Read all model normal data defined in config.
-    
+
     If age is specified, include also age specific normal data, which will take
     preference over other data.
     """
@@ -57,7 +57,7 @@ def _read_configured_emg_normaldata():
 
 def _read_session_normaldata(session):
     """Read model normal data according to patient in given session.
-    
+
     This is a convenience that figures out the age of the patient
     and calls _read_default_normaldata"""
     info = sessionutils.load_info(session)
@@ -94,7 +94,7 @@ def _read_emg_normaldata_file(filename):
 @lru_cache_checkfile
 def _read_model_normaldata_file(filename):
     """Read model normaldata from a file.
-    
+
     Returns a dict, where keys are variables and values are ndarrays of shape
     (n,2). n is either 1 (for scalar variables) or 51 (data on 0..100% gait
     cycle, defined every 2% of cycle). The first and second columns are min and

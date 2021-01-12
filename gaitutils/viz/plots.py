@@ -228,7 +228,7 @@ def plot_trial_timedep_velocities(session, backend=None):
     -------
     fig : Figure | dict
         The figure object. Type depends on backend. Use show_fig() to show it.
-   
+
     """
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
     if not c3ds:
@@ -242,5 +242,3 @@ def plot_trial_timedep_velocities(session, backend=None):
         vels.append(vel)
     figtitle = 'Time-dependent trial velocities for %s' % op.split(session)[-1]
     return get_backend(backend)._plot_timedep_vels(vels, labels, title=figtitle)
-
-

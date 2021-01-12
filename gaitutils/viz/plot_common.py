@@ -68,7 +68,7 @@ def _emg_yscale(emg_mode):
 
 def _color_by_params(spec, mapper, trial, cyc, context, dimension=None):
     """Helper to return a color.
-    
+
     spec is colorspec and mapper is a color mapper. Returns color according to
     trial, context etc., depending on what spec says. Depending on spec, color
     may come from the mapper or elsewhere (e.g. config). 'dimension' refers to
@@ -92,7 +92,7 @@ def _color_by_params(spec, mapper, trial, cyc, context, dimension=None):
 
 def _style_by_params(spec, mapper, trial, cyc, context, dimension=None):
     """Helper to return a style.
-    
+
     See above for details."""
     if spec == 'session':
         return mapper[trial.sessiondir]
@@ -247,7 +247,7 @@ def _get_cycle_name(trial, cyc, name_type):
 
 def _triage_var(var, trial):
     """Return category of variable (model, marker etc.).
-    
+
     Returns 'model', 'marker' or 'emg' for known types,
     'unknown' if type cannot be inferred, None for None
     """

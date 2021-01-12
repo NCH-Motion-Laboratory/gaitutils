@@ -16,7 +16,8 @@ from gaitutils.utils import (
     is_plugingait_set,
     _point_in_poly,
     _pig_markerset,
-    _check_markers_flipped, marker_gaps,
+    _check_markers_flipped,
+    marker_gaps,
 )
 from utils import _file_path
 

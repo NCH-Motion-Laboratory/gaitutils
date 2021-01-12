@@ -40,7 +40,7 @@ def _add_header(fig, txt):
 
 def _make_text_fig(txt, titlepage=True):
     """Make a Figure from given text.
-    
+
     If titlepage is True, use larger font in bold.
     """
     fig = Figure()
@@ -55,7 +55,7 @@ def _make_text_fig(txt, titlepage=True):
 
 def _savefig(pdf, fig, header=None, footer=None):
     """Save figure fig into the given pdf object.
-    
+
     Adds header/footer into page and saves as A4.
     """
     if fig is None:
@@ -243,7 +243,9 @@ def create_report(
     fig_kin_avg = None
     if pages['KinAverage']:
         fig_kin_avg = _plot_session_average(
-            sessionpath, model_normaldata=model_normaldata, backend=pdf_backend,
+            sessionpath,
+            model_normaldata=model_normaldata,
+            backend=pdf_backend,
         )
 
     # save the pdf file

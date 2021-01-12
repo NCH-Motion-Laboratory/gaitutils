@@ -544,7 +544,7 @@ def _get_1_forceplate_data(vicon, devid, coords='global'):
             1x3 transformation vector for local -> global frame.
         plate_corners : ndarray
             4x3 matrix of the four plate corners.
-    
+
     All data is returned in the coordinate frame specified by the coords
     parameter. wR and wT are always returned as local -> world transformation.
     """

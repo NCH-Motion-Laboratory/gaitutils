@@ -62,7 +62,6 @@ def plot_extracted_box(curve_vals, vardefs):
             di = di[key]  # iterate until we exhaust the nested keys
         return di
 
-
     def _compose_varname(vardef):
         """Compose a variable name for extracted variable.
 

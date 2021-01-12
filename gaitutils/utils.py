@@ -476,7 +476,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
 
     def _foot_plate_check(fpdata, mkrdata, fr0, side, footlen):
         """Helper for foot-plate check.
-        
+
         Returns 0, 1, 2 for: completely outside plate, partially outside plate,
         inside plate, respectively.
         """
@@ -574,7 +574,9 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
     info = read_data.get_metadata(source)
     fpdata = read_data.get_forceplate_data(source)
     if cfg.autoproc.nexus_forceplate_devnames:
-        logger.info('using configured plates: %s' % cfg.autoproc.nexus_forceplate_devnames)
+        logger.info(
+            'using configured plates: %s' % cfg.autoproc.nexus_forceplate_devnames
+        )
     if not fpdata:
         logger.warning('no forceplates')
         return results

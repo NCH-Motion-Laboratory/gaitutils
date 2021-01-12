@@ -61,12 +61,8 @@ def test_collect_trial_data():
     assert 'model' not in data_all
     data_emg = data_all['emg']
     assert set(data_emg.keys()) == set(cfg.emg.channel_labels.keys())
-    assert all(
-        data.shape[0] == 53 for ch, data in data_emg.items() if ch[0] == 'L'
-    )
-    assert all(
-        data.shape[0] == 54 for ch, data in data_emg.items() if ch[0] == 'R'
-    )
+    assert all(data.shape[0] == 53 for ch, data in data_emg.items() if ch[0] == 'L')
+    assert all(data.shape[0] == 54 for ch, data in data_emg.items() if ch[0] == 'R')
     assert all(data.shape[1] == 501 for data in data_emg.values())
 
 

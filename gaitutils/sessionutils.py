@@ -41,12 +41,12 @@ def load_quirks(session):
     ignore_eclipse_fp_info : bool
         If True, Eclipse forceplate fields will be ignored when loading trials from
         the session.
-    
+
     Parameters
     ----------
     session : str
         The session path.
-    
+
     Returns
     -------
     dict
@@ -66,7 +66,7 @@ def load_quirks(session):
 
 def default_info():
     """Return a default patient info dict.
-    
+
     Returns
     -------
     dict
@@ -77,12 +77,12 @@ def default_info():
 
 def load_info(session):
     """Load the patient info dict from a given session
-    
+
     Parameters
     ----------
     session : str
         The session path.
-    
+
     Returns
     -------
     dict
@@ -119,7 +119,7 @@ def load_info(session):
 
 def save_info(session, patient_info):
     """Save an info dict into a session.
-    
+
     Parameters
     ----------
     session : str
@@ -160,14 +160,14 @@ def _merge_session_info(sessions):
 
 def enf_to_trialfile(fname, ext):
     """Convert the name of a trial .enf file to another type of trial file.
-    
+
     Parameters
     ----------
     fname : str
         The .enf file name.
     ext : str
         File extension, e.g. 'c3d'. Can be supplied with a leading dot.
-    
+
     Returns
     -------
     str
@@ -189,7 +189,7 @@ def get_session_date(sessionpath):
     ----------
     sessionpath : str
         The session path.
-    
+
     Returns
     -------
     datetime.datetime
@@ -251,7 +251,7 @@ def _filter_exists(files):
 
 def get_enfs(sessionpath, tags=None, trial_type=None, check_if_exists=True):
     """Get specified enf files for a session.
-    
+
     Parameters
     ----------
     sessionpath : str
@@ -264,7 +264,7 @@ def get_enfs(sessionpath, tags=None, trial_type=None, check_if_exists=True):
         Trial type (Eclipse TYPE field), e.g. 'static' or 'dynamic'.
     check_if_exists : bool, optional
         If True, return only enf files that actually exist.
-    
+
     Returns
     -------
     list
@@ -293,10 +293,10 @@ def get_c3ds(sessionpath, tags=None, trial_type=None, check_if_exists=True):
         files that are tagged with 'T1' in Eclipse. An empty list or None
         disables filtering by tags.
     trial_type : str, optional
-        Trial type (Eclipse TYPE field), e.g. 'static' or 'dynamic'.    
+        Trial type (Eclipse TYPE field), e.g. 'static' or 'dynamic'.
     check_if_exists : bool, optional
         If True, return only c3d files that actually exist.
-    
+
     Returns
     -------
     list

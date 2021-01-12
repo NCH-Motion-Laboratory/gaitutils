@@ -39,12 +39,15 @@ def get_layout(layout_name):
 
 def _check_layout(layout):
     """Check consistency of layout.
-    
+
     Returns a tuple (n_of_rows, n_of_cols) if layout is ok.
     Otherwise raises a TypeError.
     """
     if not layout:
-        raise TypeError('Empty plotting layout: %s. If EMG layout, check that channels are ok.' % layout)
+        raise TypeError(
+            'Empty plotting layout: %s. If EMG layout, check that channels are ok.'
+            % layout
+        )
     if not isinstance(layout, list):
         raise TypeError('Invalid plotting layout')
     if not isinstance(layout[0], list):

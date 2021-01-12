@@ -89,6 +89,7 @@ def _get_c3d_metadata_field(acq, field, subfield):
     else:
         raise RuntimeError('Unhandled btk meta info type')
 
+
 @lru_cache_checkfile
 def _get_c3dacq(c3dfile):
     """Get a btk c3dacq object.

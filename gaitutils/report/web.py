@@ -37,7 +37,12 @@ from ..sessionutils import enf_to_trialfile
 from ..trial import Trial
 from ..viz.plot_plotly import plot_trials, plot_extracted_box
 from ..viz import timedist, layouts
-from ..stats import AvgTrial, collect_trial_data, curve_extract_values, _extract_values_trials
+from ..stats import (
+    AvgTrial,
+    collect_trial_data,
+    curve_extract_values,
+    _extract_values_trials,
+)
 
 # Py2: for Python 3 compatibility
 try:
@@ -332,7 +337,9 @@ def dash_report(
             # prepare for the curve-extracted value plots
             logger.debug('extracting values for curve-extracted plots...')
             allvars = [
-                vardef[0] for vardefs in cfg.web_report.vardefs.values() for vardef in vardefs
+                vardef[0]
+                for vardefs in cfg.web_report.vardefs.values()
+                for vardef in vardefs
             ]
             from_models = set(models.model_from_var(var) for var in allvars)
             curve_vals = {
@@ -378,7 +385,9 @@ def dash_report(
         # loop through the layouts, create or load figures
         report_data_new = dict()
         for k, (page_label, layout_spec) in enumerate(page_layouts.items()):
-            signals.progress.emit('Creating plot: %s' % page_label, 100 * k / len(page_layouts))
+            signals.progress.emit(
+                'Creating plot: %s' % page_label, 100 * k / len(page_layouts)
+            )
             if signals.canceled:
                 return None
             # for comparison report, include session info in plot legends and
@@ -462,12 +471,14 @@ def dash_report(
                             # will be caught, resulting in empty menu item
                             raise RuntimeError
                         else:  # unrecognized layout; this is not caught by us
-                            raise Exception('Invalid page layout: %s' % str(layout_spec))
+                            raise Exception(
+                                'Invalid page layout: %s' % str(layout_spec)
+                            )
 
                     # regular layouts and curve-extracted layouts are indicated by tuple
                     elif isinstance(layout_spec, tuple):
                         if layout_spec[0] in ['layout_name', 'layout']:
-                            if layout_spec[0] == 'layout_name': 
+                            if layout_spec[0] == 'layout_name':
                                 # get a configured layout by name
                                 layout = layouts.get_layout(layout_spec[1])
                             else:
@@ -489,7 +500,9 @@ def dash_report(
                             the_vardefs = cfg.web_report.vardefs[layout_spec[1]]
                             figdata = plot_extracted_box(curve_vals, the_vardefs)
                         else:
-                            raise Exception('Invalid page layout: %s' % str(layout_spec))
+                            raise Exception(
+                                'Invalid page layout: %s' % str(layout_spec)
+                            )
                     else:
                         raise Exception('Invalid page layout: %s' % str(layout_spec))
 

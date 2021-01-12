@@ -295,7 +295,7 @@ def dash_report(
                 tri = Trial(c3dfile)
                 trials_static.append(tri)
 
-        emg_layout = None
+        emg_auto_layout = None
 
         # stuff that's needed to (re)create the figures
         if not saved_report_data:
@@ -343,38 +343,20 @@ def dash_report(
             signals.progress.emit('Reading EMG data', 0)
             try:
                 emgs = [tr.emg for tr in trials_dyn]
-                emg_layout = layouts._rm_dead_channels(emgs, cfg.layouts.std_emg)
-                if not emg_layout:
-                    emg_layout = 'disabled'
+                emg_auto_layout = layouts._rm_dead_channels(emgs, cfg.layouts.std_emg)
+                if not emg_auto_layout:
+                    emg_auto_layout = None
             except GaitDataError:
-                emg_layout = 'disabled'
+                emg_auto_layout = None
 
-
-        class SpecialItem(str):
-            pass
-
-        # define layouts
-        # WIP: 'special' layouts can be defined as SpecialItem instance?
-        # 
-        _layouts = OrderedDict(
-            [
-                ('Patient info', 'patient_info'),
-                ('Kinematics', cfg.layouts.lb_kinematics),
-                ('Kinematics average', 'kinematics_average'),
-                ('Static kinematics', 'static_kinematics'),
-                ('Static EMG', 'static_emg'),
-                ('Kinematics + kinetics', cfg.layouts.lb_kin_web),
-                ('Kinetics', cfg.layouts.lb_kinetics_web),
-                ('EMG', emg_layout),
-                ('Kinetics-EMG left', cfg.layouts.lb_kinetics_emg_l),
-                ('Kinetics-EMG right', cfg.layouts.lb_kinetics_emg_r),
-                ('Muscle length', cfg.layouts.musclelen),
-                ('Torso kinematics', cfg.layouts.torso),
-                ('Time-distance variables', 'time_dist'),
-                ('PiG lowerbody markers', cfg.layouts.pig_lowerbody_markers),
-                ('Extracted kinematics', 'extracted'),
-            ]
-        )
+        # the layouts are specified as lists of tuples: (title, layout_spec)
+        # where title is the page title, and layout_spec is either string or tuple.
+        # if string, it denotes a special layout (e.g. 'patient_info')
+        # if tuple, the first element should be the string 'layout_name' and the second
+        # a gaitutils configured layout name;
+        # alternatively the first element can be 'layout' and the second element a
+        # valid gaitutils layout
+        page_layouts = OrderedDict(cfg.web_report.page_layouts)
 
         # pick desired single variables from model and append
         # Py2: dict merge below can be done more elegantly once Py2 is dropped
@@ -382,9 +364,9 @@ def dash_report(
         pig_singlevars_.update(models.pig_lowerbody_kinetics.varlabels_noside)
         pig_singlevars = sorted(pig_singlevars_.items(), key=lambda item: item[1])
         singlevars = OrderedDict(
-            [(varlabel, [[var]]) for var, varlabel in pig_singlevars]
+            [(varlabel, ('layout', [[var]])) for var, varlabel in pig_singlevars]
         )
-        _layouts.update(singlevars)
+        page_layouts.update(singlevars)
 
         # add supplementary data for normal layouts
         supplementary_default = dict()
@@ -394,8 +376,8 @@ def dash_report(
 
         # loop through the layouts, create or load figures
         report_data_new = dict()
-        for k, (label, layout) in enumerate(_layouts.items()):
-            signals.progress.emit('Creating plot: %s' % label, 100 * k / len(_layouts))
+        for k, (page_label, layout_spec) in enumerate(page_layouts.items()):
+            signals.progress.emit('Creating plot: %s' % page_label, 100 * k / len(page_layouts))
             if signals.canceled:
                 return None
             # for comparison report, include session info in plot legends and
@@ -414,26 +396,26 @@ def dash_report(
 
             try:
                 if saved_report_data:
-                    logger.debug('loading %s from saved report data' % label)
-                    if label not in saved_report_data:
+                    logger.debug('loading %s from saved report data' % page_label)
+                    if page_label not in saved_report_data:
                         # will be caught, resulting in empty menu item
                         raise RuntimeError
                     else:
-                        figdata = saved_report_data[label]
+                        figdata = saved_report_data[page_label]
                 else:
-                    logger.debug('creating figure data for %s' % label)
+                    logger.debug('creating figure data for %s' % page_label)
                     # handle the 'special' layouts
-                    if isinstance(layout, basestring):
-                        if layout == 'time_dist':
+                    if isinstance(layout_spec, basestring):
+                        if layout_spec == 'time_dist':
                             figdata = timedist.plot_comparison(
                                 sessions, big_fonts=False, backend='plotly'
                             )
-                        elif layout == 'extracted':
+                        elif layout_spec == 'extracted':
                             for title, vardefs in cfg.web_report.vardefs.items():
                                 figdata = plot_extracted_box(curve_vals, vardefs)
-                        elif layout == 'patient_info':
+                        elif layout_spec == 'patient_info':
                             figdata = patient_info_text
-                        elif layout == 'static_kinematics':
+                        elif layout_spec == 'static_kinematics':
                             layout_ = cfg.layouts.lb_kinematics
                             figdata = plot_trials(
                                 trials_static,
@@ -445,7 +427,7 @@ def dash_report(
                                 color_by=color_by,
                                 big_fonts=True,
                             )
-                        elif layout == 'static_emg':
+                        elif layout_spec == 'static_emg':
                             layout_ = cfg.layouts.std_emg
                             figdata = plot_trials(
                                 trials_static,
@@ -457,7 +439,18 @@ def dash_report(
                                 color_by=color_by,
                                 big_fonts=True,
                             )
-                        elif layout == 'kinematics_average':
+                        elif layout_spec == 'emg_auto' and emg_auto_layout is not None:
+                            figdata = plot_trials(
+                                trials_dyn,
+                                emg_auto_layout,
+                                emg_mode=emg_mode,
+                                legend_type=legend_type,
+                                style_by=style_by,
+                                color_by=color_by,
+                                supplementary_data=supplementary_default,
+                                big_fonts=True,
+                            )
+                        elif layout_spec == 'kinematics_average':
                             layout_ = cfg.layouts.lb_kinematics
                             figdata = plot_trials(
                                 avg_trials,
@@ -467,13 +460,20 @@ def dash_report(
                                 model_normaldata=model_normaldata,
                                 big_fonts=True,
                             )
-                        elif layout == 'disabled':
+                        elif layout_spec == 'disabled':
                             # will be caught, resulting in empty menu item
                             raise RuntimeError
                         else:  # unrecognized layout; this is not caught by us
-                            raise Exception('Unrecognized layout: %s' % layout)
+                            raise Exception('Unrecognized layout: %s' % layout_spec)
 
-                    else:  # regular gaitutils layout
+                    elif isinstance(layout_spec, tuple):
+                        # regular gaitutils layout
+                        if layout_spec[0] == 'layout_name': 
+                            # get a configured layout by name
+                            layout = layouts.get_layout(layout_spec[1])
+                        elif layout_spec[0] != 'layout':
+                            # else it should be a valid layout
+                            raise Exception('Unrecognized layout: %s' % layout_spec)
                         figdata = plot_trials(
                             trials_dyn,
                             layout,
@@ -485,7 +485,10 @@ def dash_report(
                             supplementary_data=supplementary_default,
                             big_fonts=True,
                         )
-                # save newly created data
+                    else:
+                        raise Exception('Invalid layout: %s' % layout_spec)
+
+                # save the newly created data
                 if not saved_report_data:
                     if isinstance(figdata, go.Figure):
                         # serialize go.Figures before saving
@@ -495,7 +498,7 @@ def dash_report(
                         figdata_ = figdata.to_plotly_json()
                     else:
                         figdata_ = figdata
-                    report_data_new[label] = figdata_
+                    report_data_new[page_label] = figdata_
 
                 # make the upper and lower panel graphs from figdata, depending
                 # on data type
@@ -507,7 +510,7 @@ def dash_report(
 
                 # this is for old style timedist figures that were in base64
                 # encoded svg
-                if layout == 'time_dist' and _is_base64(figdata):
+                if layout_spec == 'time_dist' and _is_base64(figdata):
                     graph_upper = html.Img(
                         src='data:image/svg+xml;base64,{}'.format(figdata),
                         id='gaitgraph%d' % k,
@@ -515,10 +518,10 @@ def dash_report(
                     )
                     graph_lower = html.Img(
                         src='data:image/svg+xml;base64,{}'.format(figdata),
-                        id='gaitgraph%d' % (len(_layouts) + k),
+                        id='gaitgraph%d' % (len(page_layouts) + k),
                         style={'height': '100%'},
                     )
-                elif layout == 'patient_info':
+                elif layout_spec == 'patient_info':
                     graph_upper = dcc.Markdown(figdata)
                     graph_lower = graph_upper
                 else:
@@ -528,20 +531,20 @@ def dash_report(
                     )
                     graph_lower = dcc.Graph(
                         figure=figdata,
-                        id='gaitgraph%d' % (len(_layouts) + k),
+                        id='gaitgraph%d' % (len(page_layouts) + k),
                         style={'height': '100%'},
                     )
-                dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
-                dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
+                dd_opts_multi_upper.append({'label': page_label, 'value': graph_upper})
+                dd_opts_multi_lower.append({'label': page_label, 'value': graph_lower})
 
             except (RuntimeError, GaitDataError) as e:  # could not create a figure
-                logger.warning(u'failed to create figure for %s: %s' % (label, e))
+                logger.warning(u'failed to create figure for %s: %s' % (page_label, e))
                 # insert the menu options but make them disabled
                 dd_opts_multi_upper.append(
-                    {'label': label, 'value': label, 'disabled': True}
+                    {'label': page_label, 'value': page_label, 'disabled': True}
                 )
                 dd_opts_multi_lower.append(
-                    {'label': label, 'value': label, 'disabled': True}
+                    {'label': page_label, 'value': page_label, 'disabled': True}
                 )
                 continue
 

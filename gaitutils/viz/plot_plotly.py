@@ -14,6 +14,7 @@ from functools import partial
 import sys
 
 import numpy as np
+import os.path as op
 import plotly
 import plotly.graph_objs as go
 from plotly.matplotlylib.mpltools import merge_color_and_opacity
@@ -42,6 +43,104 @@ from .plot_common import (
 
 
 logger = logging.getLogger(__name__)
+
+
+def plot_extracted_box(curve_vals, vardefs):
+    """Plot comparison of extracted gait curve values as box plot.
+
+    Parameters
+    ----------
+    vardefs : list
+        Nested list of variable definitions.
+    curve_vals : dict
+        The curve extracted data, keyed by session.
+    """
+
+    def _nested_get(di, keys):
+        """Get a value from a nested dict, using a list of keys"""
+        for key in keys:
+            di = di[key]  # iterate until we exhaust the nested keys
+        return di
+
+
+    def _compose_varname(vardef):
+        """Compose a variable name for extracted variable.
+
+        E.g. ['HipAnglesX', 'peaks', 'swing', 'max']
+        -> 'Hip flexion maximum during swing phase'
+        """
+        varname = vardef[0]
+        # get variable description from gaitutils.models
+        themodel = models.model_from_var(varname)
+        name = themodel.varlabels_noside[varname]
+        if vardef[1] == 'contact':
+            name += ' at initial contact'
+        elif vardef[1] in ['peaks', 'extrema']:
+            phase = vardef[2]  # swing, stance etc.
+            valtype = vardef[3]  # min, max etc.
+            val_trans = {'max': 'maximum', 'min': 'minimum'}
+            if phase == 'overall':
+                name += ', %s %s' % (phase, val_trans[valtype])
+            else:
+                name += ', %s phase %s' % (phase, val_trans[valtype])
+            if vardef[1] == 'peaks':
+                name += ' peak'
+        return name
+
+    def _var_unit(vardef):
+        """Return unit for a vardef"""
+        varname = vardef[0]
+        themodel = models.model_from_var(varname)
+        return themodel.units[varname]
+
+    nvars = len(vardefs)
+    subtitles = [_compose_varname(nested_keys) for nested_keys in vardefs]
+    fig = plotly.subplots.make_subplots(rows=nvars, cols=1, subplot_titles=subtitles)
+    legendgroups = set()
+
+    # the plotting logic is a bit weird due to the way go.Box() works:
+    # -we first consolidate one variable's data from all sessions into a 1-d array
+    # -this is done separately for L/R context
+    # -the consolidated data is then plotted along with the session identifier
+    for row, vardef in enumerate(vardefs):
+        for ctxt in 'LR':
+            vals = list()
+            sessionnames = list()
+            vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
+            for session, session_vals in curve_vals.items():
+                this_vals = _nested_get(session_vals, vardef_ctxt)
+                vals.extend(this_vals)
+                sessiondir = op.split(session)[-1]
+                sessionnames.extend([sessiondir] * len(this_vals))
+            # show entry in legend only if it was not already shown
+            show_legend = ctxt not in legendgroups
+            legendgroups.add(ctxt)
+
+            box = go.Box(
+                x=sessionnames,
+                y=vals,
+                # boxpoints='all',
+                name=ctxt,
+                offsetgroup=ctxt,
+                legendgroup=ctxt,
+                showlegend=show_legend,
+                opacity=0.5,
+                # mode='lines+markers',
+                marker_color=cfg.plot.context_colors[ctxt],
+            )
+            fig.append_trace(box, row=row + 1, col=1)
+            xlabel = _var_unit(vardef_ctxt)
+            xaxis, yaxis = _get_plotly_axis_labels(row, 0, ncols=1)
+            fig['layout'][yaxis].update(
+                title={
+                    'text': xlabel,
+                    'standoff': 0,
+                }
+            )
+    fig.update_layout(
+        boxmode='group'  # group together boxes of the different traces for each value of x
+    )
+    return fig
 
 
 def time_dist_barchart(
@@ -517,7 +616,8 @@ def plot_trials(
                                     sdata = model_stddev[var]
                                     stdx = np.linspace(0, 100, sdata.shape[0])
                                     fillcolor = merge_color_and_opacity(
-                                        col, cfg.plot.model_stddev_alpha,
+                                        col,
+                                        cfg.plot.model_stddev_alpha,
                                     )
                                     ntrace = _plotly_fill_between(
                                         stdx,

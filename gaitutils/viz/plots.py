@@ -242,3 +242,95 @@ def plot_trial_timedep_velocities(session, backend=None):
         vels.append(vel)
     figtitle = 'Time-dependent trial velocities for %s' % op.split(session)[-1]
     return get_backend(backend)._plot_timedep_vels(vels, labels, title=figtitle)
+
+
+def _compose_varname(vardef):
+    """Compose a variable name for extracted variable.
+
+    E.g. ['HipAnglesX', 'peaks', 'swing', 'max']
+    -> 'Hip flexion maximum during swing phase'
+    """
+    varname = vardef[0]
+    # get variable description from gaitutils.models
+    themodel = gaitutils.models.model_from_var(varname)
+    name = themodel.varlabels_noside[varname]
+    if vardef[1] == 'contact':
+        name += ' at initial contact'
+    elif vardef[1] in ['peaks', 'extrema']:
+        phase = vardef[2]  # swing, stance etc.
+        valtype = vardef[3]  # min, max etc.
+        val_trans = {'max': 'maximum', 'min': 'minimum'}
+        if phase == 'overall':
+            name += ', %s %s' % (phase, val_trans[valtype])
+        else:
+            name += ', %s phase %s' % (phase, val_trans[valtype])
+        if vardef[1] == 'peaks':
+            name += ' peak'
+    return name
+
+
+def _var_unit(vardef):
+    """Return unit for a vardef"""
+    varname = vardef[0]
+    themodel = gaitutils.models.model_from_var(varname)
+    return themodel.units[varname]
+
+
+def plot_extracted_box(curve_vals, vardefs):
+    """Plot comparison of extracted gait curve values as box plot.
+
+    Parameters
+    ----------
+    vardefs : list
+        Nested list of variable definitions.
+    curve_vals : dict
+        The curve extracted data, keyed by session.
+    """
+    nvars = len(vardefs)
+    subtitles = [_compose_varname(nested_keys) for nested_keys in vardefs]
+    fig = make_subplots(rows=nvars, cols=1, subplot_titles=subtitles)
+    legendgroups = set()
+
+    # the plotting logic is a bit weird due to the way go.Box() works:
+    # -we first consolidate one variable's data from all sessions into a 1-d array
+    # -this is done separately for L/R context
+    # -the consolidated data is then plotted along with the session identifier
+    for row, vardef in enumerate(vardefs):
+        for ctxt in 'LR':
+            vals = list()
+            sessionnames = list()
+            vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
+            for session, session_vals in curve_vals.items():
+                this_vals = _nested_get(session_vals, vardef_ctxt)
+                vals.extend(this_vals)
+                sessiondir = op.split(session)[-1]
+                sessionnames.extend([sessiondir] * len(this_vals))
+            # show entry in legend only if it was not already shown
+            show_legend = ctxt not in legendgroups
+            legendgroups.add(ctxt)
+
+            box = go.Box(
+                x=sessionnames,
+                y=vals,
+                # boxpoints='all',
+                name=ctxt,
+                offsetgroup=ctxt,
+                legendgroup=ctxt,
+                showlegend=show_legend,
+                opacity=0.5,
+                # mode='lines+markers',
+                marker_color=cfg.plot.context_colors[ctxt],
+            )
+            fig.append_trace(box, row=row + 1, col=1)
+            xlabel = _var_unit(vardef_ctxt)
+            xaxis, yaxis = _get_plotly_axis_labels(row, 0, ncols=1)
+            fig['layout'][yaxis].update(
+                title={
+                    'text': xlabel,
+                    'standoff': 0,
+                }
+            )
+    fig.update_layout(
+        boxmode='group'  # group together boxes of the different traces for each value of x
+    )
+    return fig

@@ -35,9 +35,9 @@ from .. import (
 )
 from ..sessionutils import enf_to_trialfile
 from ..trial import Trial
-from ..viz.plot_plotly import plot_trials
+from ..viz.plot_plotly import plot_trials, plot_extracted_box
 from ..viz import timedist, layouts
-from ..stats import AvgTrial, collect_trial_data, curve_extract_values
+from ..stats import AvgTrial, collect_trial_data, curve_extract_values, _extract_values_trials
 
 # Py2: for Python 3 compatibility
 try:
@@ -329,6 +329,16 @@ def dash_report(
                 for session in sessions
             ]
 
+            # prepare for the curve-extracted value plots
+            allvars = [
+                vardef[0] for vardefs in cfg.web_report.vardefs.values() for vardef in vardefs
+            ]
+            from_models = set(models.model_from_var(var) for var in allvars)
+            curve_vals = {
+                session: _extract_values_trials(trials, from_models=from_models)
+                for session, trials in trials_dyn_dict.items()
+            }
+
             # in EMG layout, keep chs that are active in any of the trials
             signals.progress.emit('Reading EMG data', 0)
             try:
@@ -339,8 +349,13 @@ def dash_report(
             except GaitDataError:
                 emg_layout = 'disabled'
 
+
+        class SpecialItem(str):
+            pass
+
         # define layouts
-        # FIXME: should be definable in config
+        # WIP: 'special' layouts can be defined as SpecialItem instance?
+        # 
         _layouts = OrderedDict(
             [
                 ('Patient info', 'patient_info'),
@@ -357,8 +372,10 @@ def dash_report(
                 ('Torso kinematics', cfg.layouts.torso),
                 ('Time-distance variables', 'time_dist'),
                 ('PiG lowerbody markers', cfg.layouts.pig_lowerbody_markers),
+                ('Extracted kinematics', 'extracted'),
             ]
         )
+
         # pick desired single variables from model and append
         # Py2: dict merge below can be done more elegantly once Py2 is dropped
         pig_singlevars_ = models.pig_lowerbody.varlabels_noside.copy()
@@ -411,6 +428,9 @@ def dash_report(
                             figdata = timedist.plot_comparison(
                                 sessions, big_fonts=False, backend='plotly'
                             )
+                        elif layout == 'extracted':
+                            for title, vardefs in cfg.web_report.vardefs.items():
+                                figdata = plot_extracted_box(curve_vals, vardefs)
                         elif layout == 'patient_info':
                             figdata = patient_info_text
                         elif layout == 'static_kinematics':

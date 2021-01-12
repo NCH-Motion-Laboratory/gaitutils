@@ -118,7 +118,7 @@ def plot_extracted_box(curve_vals, vardefs):
             box = go.Box(
                 x=sessionnames,
                 y=vals,
-                # boxpoints='all',
+                boxpoints=False,
                 name=ctxt,
                 offsetgroup=ctxt,
                 legendgroup=ctxt,

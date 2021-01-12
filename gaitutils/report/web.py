@@ -330,6 +330,7 @@ def dash_report(
             ]
 
             # prepare for the curve-extracted value plots
+            logger.debug('extracting values for curve-extracted plots...')
             allvars = [
                 vardef[0] for vardefs in cfg.web_report.vardefs.values() for vardef in vardefs
             ]
@@ -404,7 +405,7 @@ def dash_report(
                         figdata = saved_report_data[page_label]
                 else:
                     logger.debug('creating figure data for %s' % page_label)
-                    # handle the 'special' layouts
+                    # the 'special' layouts are indicated by a string
                     if isinstance(layout_spec, basestring):
                         if layout_spec == 'time_dist':
                             figdata = timedist.plot_comparison(
@@ -463,14 +464,16 @@ def dash_report(
                         else:  # unrecognized layout; this is not caught by us
                             raise Exception('Invalid page layout: %s' % str(layout_spec))
 
+                    # regular layouts and curve-extracted layouts are indicated by tuple
                     elif isinstance(layout_spec, tuple):
-                        # regular gaitutils layout
                         if layout_spec[0] in ['layout_name', 'layout']:
                             if layout_spec[0] == 'layout_name': 
                                 # get a configured layout by name
                                 layout = layouts.get_layout(layout_spec[1])
-                            elif layout_spec[0] == 'layout':
+                            else:
+                                # it's already a valid layout
                                 layout = layout_spec[1]
+                            # plot according to layout
                             figdata = plot_trials(
                                 trials_dyn,
                                 layout,

@@ -21,7 +21,7 @@ import binascii
 
 from .gui._windows import error_exit
 
-# import backported lru_cache for 2.7
+# Py2: import backported lru_cache
 if sys.version_info.major == 2:
     from functools32 import lru_cache
 else:

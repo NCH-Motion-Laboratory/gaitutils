@@ -51,7 +51,7 @@ def plot_extracted_box(curve_vals, vardefs):
     Parameters
     ----------
     vardefs : list
-        Nested list of variable definitions.
+        Nested list of variable definitions. The definitions are 
     curve_vals : dict
         The curve extracted data, keyed by session.
     """
@@ -526,8 +526,7 @@ def plot_trials(
                     cyclename = _get_cycle_name(trial, cyc, name_type=legend_type)
                     cyclename_full = _get_cycle_name(trial, cyc, name_type='full')
 
-                    # plotly cannot directly handle unicode objects
-                    # needs to be handled in py2/3 compatible way
+                    # Py2: plotly cannot handle unicode objects
                     if sys.version_info.major == 2 and isinstance(cyclename, unicode):
                         cyclename = cyclename.encode('utf-8')
 
@@ -663,6 +662,7 @@ def plot_trials(
                                     yunit = u'\u00B0'  # Unicode degree sign
                                 ydesc = [s[:3] for s in themodel.ydesc[var]]  # shorten
                                 ylabel = u'%s %s %s' % (ydesc[0], yunit, ydesc[1])
+                                # Py2: plotly cannot handle unicode objects
                                 if sys.version_info.major == 2 and isinstance(
                                     ylabel, unicode
                                 ):
@@ -749,6 +749,7 @@ def plot_trials(
                             if not subplot_adjusted[(i, j)]:
                                 # fig['layout'][xaxis].update(showticklabels=False)
                                 ylabel = 'mm'
+                                # Py2: plotly cannot handle unicode objects
                                 if sys.version_info.major == 2 and isinstance(
                                     ylabel, unicode
                                 ):

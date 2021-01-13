@@ -17,6 +17,7 @@ import logging
 import hashlib
 import os
 import tempfile
+import binascii
 
 from .gui._windows import error_exit
 
@@ -158,8 +159,16 @@ def _named_tempfile(suffix=None):
     Does not open the file. Cross-platform. Replaces tempfile.NamedTemporaryFile
     which behaves strangely on Windows.
     """
+    LEN = 12  # length of basename
     if suffix is None:
         suffix = ''
     elif suffix[0] != '.':
         raise ValueError('Invalid suffix, must start with dot')
-    return os.path.join(tempfile.gettempdir(), os.urandom(24).hex() + suffix)
+    basename = os.urandom(LEN)  # get random bytes
+    # convert to hex string
+    # Py2
+    if sys.version_info.major == 2:
+        basename = binascii.b2a_hex(basename)
+    else:
+        basename = basename.hex()
+    return os.path.join(tempfile.gettempdir(), basename + suffix)

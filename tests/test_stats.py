@@ -184,3 +184,14 @@ def test_curve_extract_values():
             },
         },
     }
+
+
+def test_trials_extract_values():
+    """Test curve value extraction from trials"""
+    c3ds = sessionutils.get_c3ds(sessiondir_abs, trial_type='dynamic')
+    extr_vals = stats._trials_extract_values(c3ds, from_models=[models.pig_lowerbody])
+    # forefoot vars are not present in our test data
+    forefoot = models._list_with_side(
+        ['ForeFootAnglesX', 'ForeFootAnglesY', 'ForeFootAnglesZ']
+    )
+    assert set(extr_vals.keys()) == (set(models.pig_lowerbody.varnames) - set(forefoot))

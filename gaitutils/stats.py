@@ -477,6 +477,7 @@ def curve_extract_values(curves, toeoffs):
 
     This extracts values such as swing phase maximum from a set of gait curves.
     The curves are input as ndarrays, returned by e.g. collect_trial_data().
+    Data with any nans will result in (at least partially) nan output values.
 
     Parameters
     ----------
@@ -571,7 +572,7 @@ def curve_extract_values(curves, toeoffs):
     return results
 
 
-def _extract_values_trials(trials, from_models=None):
+def _trials_extract_values(trials, from_models=None):
     """Extract curve values from given trials.
 
     Parameters

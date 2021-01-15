@@ -41,7 +41,7 @@ from ..stats import (
     AvgTrial,
     collect_trial_data,
     curve_extract_values,
-    _extract_values_trials,
+    _trials_extract_values,
 )
 
 # Py2: for Python 3 compatibility
@@ -343,7 +343,7 @@ def dash_report(
             ]
             from_models = set(models.model_from_var(var) for var in allvars)
             curve_vals = {
-                session: _extract_values_trials(trials, from_models=from_models)
+                session: _trials_extract_values(trials, from_models=from_models)
                 for session, trials in trials_dyn_dict.items()
             }
 

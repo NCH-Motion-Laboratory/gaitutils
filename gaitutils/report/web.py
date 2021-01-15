@@ -342,6 +342,8 @@ def dash_report(
                 for vardef in vardefs
             ]
             from_models = set(models.model_from_var(var) for var in allvars)
+            if None in from_models:
+                raise GaitDataError('unknown variables in extract list: %s' % allvars)
             curve_vals = {
                 session: _trials_extract_values(trials, from_models=from_models)
                 for session, trials in trials_dyn_dict.items()

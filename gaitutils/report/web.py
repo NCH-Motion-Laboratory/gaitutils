@@ -338,7 +338,7 @@ def dash_report(
             logger.debug('extracting values for curve-extracted plots...')
             allvars = [
                 vardef[0]
-                for vardefs in cfg.web_report.vardefs.values()
+                for vardefs in cfg.report.vardefs.values()
                 for vardef in vardefs
             ]
             from_models = set(models.model_from_var(var) for var in allvars)
@@ -501,7 +501,7 @@ def dash_report(
                                 big_fonts=True,
                             )
                         elif layout_spec[0] == 'curve_extracted':
-                            the_vardefs = cfg.web_report.vardefs[layout_spec[1]]
+                            the_vardefs = cfg.report.vardefs[layout_spec[1]]
                             figdata = plot_extracted_box(curve_vals, the_vardefs)
                         else:
                             raise Exception(

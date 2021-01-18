@@ -51,7 +51,7 @@ def plot_extracted_box(curve_vals, vardefs):
     Parameters
     ----------
     vardefs : list
-        Nested list of variable definitions. The definitions are 
+        Nested list of variable definitions. The definitions are
     curve_vals : dict
         The curve extracted data, keyed by session.
     """
@@ -128,7 +128,7 @@ def plot_extracted_box(curve_vals, vardefs):
                 marker_color=cfg.plot.context_colors[ctxt],
             )
             fig.append_trace(box, row=row + 1, col=1)
-            xlabel = _var_unit(vardef_ctxt)
+            xlabel = _plotly_var_ylabel(vardef_ctxt[0])
             xaxis, yaxis = _get_plotly_axis_labels(row, 0, ncols=1)
             fig['layout'][yaxis].update(
                 title={
@@ -331,6 +331,21 @@ def _get_plotly_axis_labels(row, col, ncols):
     """Gets plotly axis labels from zero-based row and col indices"""
     plot_ind = row * ncols + col + 1  # plotly subplot index
     return 'xaxis%d' % plot_ind, 'yaxis%d' % plot_ind
+
+
+def _plotly_var_ylabel(var, themodel=None):
+    """Make ylabel for model variable var"""
+    if themodel is None:
+        themodel = models.model_from_var(var)
+    yunit = themodel.units[var]
+    if yunit == 'deg':
+        yunit = u'\u00B0'  # Unicode degree sign
+    ydesc = [s[:3] for s in themodel.ydesc[var]]  # shorten
+    ylabel = u'%s %s %s' % (ydesc[0], yunit, ydesc[1])
+    # Py2: plotly cannot handle unicode objects
+    if sys.version_info.major == 2 and isinstance(ylabel, unicode):
+        ylabel = ylabel.encode('utf-8')
+    return ylabel
 
 
 def plot_trials(
@@ -656,17 +671,7 @@ def plot_trials(
 
                             # adjust subplot once
                             if not subplot_adjusted[(i, j)]:
-                                # fig['layout'][xaxis].update(showticklabels=False)
-                                yunit = themodel.units[var]
-                                if yunit == 'deg':
-                                    yunit = u'\u00B0'  # Unicode degree sign
-                                ydesc = [s[:3] for s in themodel.ydesc[var]]  # shorten
-                                ylabel = u'%s %s %s' % (ydesc[0], yunit, ydesc[1])
-                                # Py2: plotly cannot handle unicode objects
-                                if sys.version_info.major == 2 and isinstance(
-                                    ylabel, unicode
-                                ):
-                                    ylabel = ylabel.encode('utf-8')
+                                ylabel = _plotly_var_ylabel(var, themodel)
                                 fig['layout'][yaxis].update(
                                     title={
                                         'text': ylabel,

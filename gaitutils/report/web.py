@@ -283,7 +283,7 @@ def dash_report(
         # make Trial instances for all dynamic and static trials
         # this is currently necessary even if saved figures are used
         trials_dyn = list()
-        trials_dyn_dict = dict()  # also organize dynamic trials by session
+        trials_dyn_dict = OrderedDict()  # also organize dynamic trials by session
         trials_static = list()
         for session in sessions:
             trials_dyn_dict[session] = list()
@@ -344,10 +344,12 @@ def dash_report(
             from_models = set(models.model_from_var(var) for var in allvars)
             if None in from_models:
                 raise GaitDataError('unknown variables in extract list: %s' % allvars)
-            curve_vals = {
-                session: _trials_extract_values(trials, from_models=from_models)
-                for session, trials in trials_dyn_dict.items()
-            }
+            curve_vals = OrderedDict(
+                [
+                    (session, _trials_extract_values(trials, from_models=from_models))
+                    for session, trials in trials_dyn_dict.items()
+                ]
+            )
 
             # in EMG layout, keep chs that are active in any of the trials
             signals.progress.emit('Reading EMG data', 0)

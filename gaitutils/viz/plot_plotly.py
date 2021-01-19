@@ -39,6 +39,8 @@ from .plot_common import (
     _emg_yscale,
     _get_trial_cycles,
     _triage_var,
+    _compose_varname,
+    _nested_get,
 )
 
 
@@ -55,42 +57,6 @@ def plot_extracted_box(curve_vals, vardefs):
     curve_vals : dict
         The curve extracted data, keyed by session.
     """
-
-    def _nested_get(di, keys):
-        """Get a value from a nested dict, using a list of keys"""
-        for key in keys:
-            di = di[key]  # iterate until we exhaust the nested keys
-        return di
-
-    def _compose_varname(vardef):
-        """Compose a variable name for extracted variable.
-
-        E.g. ['HipAnglesX', 'peaks', 'swing', 'max']
-        -> 'Hip flexion maximum during swing phase'
-        """
-        varname = vardef[0]
-        # get variable description from gaitutils.models
-        themodel = models.model_from_var(varname)
-        name = themodel.varlabels_noside[varname]
-        if vardef[1] == 'contact':
-            name += ' at initial contact'
-        elif vardef[1] in ['peaks', 'extrema']:
-            phase = vardef[2]  # swing, stance etc.
-            valtype = vardef[3]  # min, max etc.
-            val_trans = {'max': 'maximum', 'min': 'minimum'}
-            if phase == 'overall':
-                name += ', %s %s' % (phase, val_trans[valtype])
-            else:
-                name += ', %s phase %s' % (phase, val_trans[valtype])
-            if vardef[1] == 'peaks':
-                name += ' peak'
-        return name
-
-    def _var_unit(vardef):
-        """Return unit for a vardef"""
-        varname = vardef[0]
-        themodel = models.model_from_var(varname)
-        return themodel.units[varname]
 
     nvars = len(vardefs)
     subtitles = [_compose_varname(nested_keys) for nested_keys in vardefs]

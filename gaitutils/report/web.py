@@ -263,8 +263,12 @@ def dash_report(
     if not video_only:
         data_c3ds = [enf_to_trialfile(enffile, 'c3d') for enffile in data_enfs]
         # at this point, all the c3ds need to exist
-        if not all(op.isfile(fn) for fn in data_c3ds):
-            raise GaitDataError('Missing C3D file for trial %s' % op.splitext(fn)[0])
+        missing = [fn for fn in data_c3ds if not op.isfile(fn)]
+        if missing:
+            missing_trials = ', '.join([op.splitext(op.split(fn)[-1])[0] for fn in missing])
+            raise GaitDataError(
+                'C3D files are missing for following trials: %s' % missing_trials
+            )
         # see whether we can load report figures from disk
         digest = numutils._files_digest(data_c3ds)
         logger.debug('report data digest: %s' % digest)

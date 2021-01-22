@@ -593,7 +593,10 @@ def _trials_extract_values(trials, from_models=None):
         from_models = [
             models.pig_lowerbody,
         ]
-    thevars = itertools.chain.from_iterable(mod.varnames for mod in from_models)
+    try:
+        thevars = itertools.chain.from_iterable(mod.varnames for mod in from_models)
+    except AttributeError:
+        raise RuntimeError('')
     # collect all curves
     data, cycles = collect_trial_data(trials, collect_types=['model'])
     vals = dict()

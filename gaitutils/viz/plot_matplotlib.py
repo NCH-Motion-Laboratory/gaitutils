@@ -11,11 +11,14 @@ from builtins import zip
 from builtins import range
 from functools import partial
 from collections import OrderedDict, defaultdict
+import matplotlib
 from matplotlib.figure import Figure
 import matplotlib.gridspec as gridspec
+import plotly.graph_objs as go
 import numpy as np
 import logging
 import os.path as op
+import io
 
 from .plot_common import (
     _get_cycle_name,
@@ -93,11 +96,11 @@ def _plot_extracted_table2(curve_vals, vardefs):
                     unit = ' ' + unit
                 row.append('%.2f±%.2f%s' % (mean, std, unit))
         table.append(row)
-    return _plot_tabular_data(table, row_labels, col_labels)
+    return _plot_tabular_data_via_plotly(table, row_labels, col_labels)
 
 
 def _plot_tabular_data(data, row_labels=None, col_labels=None):
-    """Plot tabular data via matplotlib."""
+    """Plot tabular data via matplotlib table()"""
     fig = Figure()
     ax = fig.add_subplot(111)
     the_table = ax.table(
@@ -108,9 +111,33 @@ def _plot_tabular_data(data, row_labels=None, col_labels=None):
         loc='center',
         bbox=[0.2, 0.0, 0.9, 0.8],
     )
+    # the_table.auto_set_font_size(False)
+    # the_table.set_fontsize(7)
+    # the_table.scale(1, 1.5)
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    ax.set_frame_on(False)
     the_table.auto_set_font_size(False)
-    the_table.set_fontsize(8)
-    the_table.scale(1, 1.5)
+    the_table.set_fontsize(6)
+    return fig
+
+
+def _plot_tabular_data_via_plotly(data, row_labels=None, col_labels=None):
+    """Plot tabular data via plotly, convert to matplotlib"""
+    # 1: make figure
+    # transpose into list of columns, since that's what go.Table wants
+    data = list(zip(*data))
+    data = [row_labels] + data
+    col_labels = ['Variable'] + col_labels
+    thetable = go.Table(cells={'values': data}, header={'values': col_labels})
+    pfig = go.Figure(data=[thetable])
+    bytes = pfig.to_image(format='png', engine='kaleido', width=1600, height=1200)
+    bio = io.BytesIO(bytes)
+    # 2: read into matplotlib
+    im = matplotlib.image.imread(bio, format='png')
+    fig = Figure()
+    ax = fig.add_subplot(111)
+    ax.imshow(im)
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
     ax.set_frame_on(False)

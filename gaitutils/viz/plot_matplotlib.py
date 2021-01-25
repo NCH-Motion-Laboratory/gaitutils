@@ -124,11 +124,10 @@ def _plot_tabular_data(data, row_labels=None, col_labels=None):
 
 def _plot_tabular_data_via_plotly(data, row_labels=None, col_labels=None):
     """Plot tabular data via plotly, convert to matplotlib"""
-    # 1: make figure
-    # transpose into list of columns, since that's what go.Table wants
+    # transpose into list of columns for go.Table
     data = list(zip(*data))
     data = [row_labels] + data
-    col_labels = ['Variable'] + col_labels
+    col_labels = [''] + col_labels
     thetable = go.Table(cells={'values': data}, header={'values': col_labels})
     pfig = go.Figure(data=[thetable])
     bytes = pfig.to_image(format='png', engine='kaleido', width=1600, height=1200)

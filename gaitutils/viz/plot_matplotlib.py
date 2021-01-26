@@ -66,7 +66,7 @@ def _plot_extracted_table(curve_vals, vardefs):
                     unit = u'\u00B0'  # Unicode degree sign
                 else:
                     unit = ' ' + unit
-                element += '%s: %.2f±%.2f%s' % (ctxt, mean, std, unit)
+                element += u'%s: %.2f±%.2f%s' % (ctxt, mean, std, unit)
             row.append(element)
         table.append(row)
     return _plot_tabular_data(table, row_labels, col_labels)
@@ -100,7 +100,7 @@ def _plot_extracted_table_plotly(curve_vals, vardefs):
                     unit = u'\u00B0'  # Unicode degree sign
                 else:
                     unit = ' ' + unit
-                row.append('%.2f±%.2f%s' % (mean, std, unit))
+                row.append(u'%.2f±%.2f%s' % (mean, std, unit))
         table.append(row)
     return _plot_tabular_data_via_plotly(table, row_labels, col_labels)
 

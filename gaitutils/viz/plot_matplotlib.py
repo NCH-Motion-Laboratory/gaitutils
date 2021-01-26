@@ -11,6 +11,7 @@ from builtins import zip
 from builtins import range
 from functools import partial
 from collections import OrderedDict, defaultdict
+import itertools
 import matplotlib
 from matplotlib.figure import Figure
 import matplotlib.gridspec as gridspec
@@ -71,19 +72,24 @@ def _plot_extracted_table(curve_vals, vardefs):
     return _plot_tabular_data(table, row_labels, col_labels)
 
 
-def _plot_extracted_table2(curve_vals, vardefs):
+def _plot_extracted_table_plotly(curve_vals, vardefs, filename, title=None):
     """Plot comparison of extracted gait curve values as a table."""
-    col_labels = [
-        op.split(session)[-1] + ' / %s' % ctxt
-        for session in curve_vals.keys()
-        for ctxt in 'LR'
-    ]
+    ctxts = 'LR'
+    # make a nested list of column headers; first row is session, second row is context
+    session_labels = [op.split(session)[-1] for session in curve_vals.keys()]
+    col_labels_1 = list(
+        itertools.chain.from_iterable(zip(session_labels, itertools.repeat('')))
+    )
+    context_cycle = itertools.cycle(ctxts)
+    col_labels_2 = [next(context_cycle) for k in col_labels_1]
+    # transpose
+    col_labels = list(zip(col_labels_1, col_labels_2))
     row_labels = [_compose_varname(vardef) for vardef in vardefs]
     table = list()
     for vardef in vardefs:
         row = list()
         for session, session_vals in curve_vals.items():
-            for ctxt in 'LR':
+            for ctxt in ctxts:
                 vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
                 this_vals = _nested_get(
                     session_vals, vardef_ctxt

@@ -23,6 +23,7 @@ dependencies:
   - xlutils
   - pip:
     - brotli==1.0.7
+    - kaleido
     - dash
     - dash-daq
     - flake8

@@ -53,7 +53,7 @@ def _plot_extracted_table(curve_vals, vardefs):
     table = list()
     for vardef in vardefs:
         row = list()
-        for session, session_vals in curve_vals.items():
+        for session_vals in curve_vals.values():
             element = ''
             for ctxt in 'LR':
                 vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
@@ -88,7 +88,7 @@ def _plot_extracted_table_plotly(curve_vals, vardefs):
     table = list()
     for vardef in vardefs:
         row = list()
-        for session, session_vals in curve_vals.items():
+        for session_vals in curve_vals.values():
             for ctxt in ctxts:
                 vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
                 this_vals = _nested_get(

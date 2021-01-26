@@ -11,10 +11,15 @@ from builtins import zip
 from builtins import range
 from functools import partial
 from collections import OrderedDict, defaultdict
+import itertools
+import matplotlib
 from matplotlib.figure import Figure
 import matplotlib.gridspec as gridspec
+import plotly.graph_objs as go
 import numpy as np
 import logging
+import os.path as op
+import io
 
 from .plot_common import (
     _get_cycle_name,
@@ -27,8 +32,11 @@ from .plot_common import (
     _emg_yscale,
     _get_trial_cycles,
     _triage_var,
+    _compose_varname,
+    _nested_get,
+    _var_unit,
 )
-from .. import models, normaldata, numutils
+from .. import models, normaldata
 from ..config import cfg
 from ..envutils import GaitDataError
 from ..stats import AvgTrial
@@ -36,6 +44,109 @@ from ..timedist import _pick_common_vars
 from . import layouts
 
 logger = logging.getLogger(__name__)
+
+
+def _plot_extracted_table(curve_vals, vardefs):
+    """Plot comparison of extracted gait curve values as a table."""
+    col_labels = [op.split(session)[-1] for session in curve_vals.keys()]
+    row_labels = [_compose_varname(vardef) for vardef in vardefs]
+    table = list()
+    for vardef in vardefs:
+        row = list()
+        for session_vals in curve_vals.values():
+            element = ''
+            for ctxt in 'LR':
+                vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
+                this_vals = _nested_get(
+                    session_vals, vardef_ctxt
+                )  # returns list of values for given session and context = column
+                mean, std = np.mean(this_vals), np.std(this_vals)
+                unit = _var_unit(vardef_ctxt)
+                if unit == 'deg':
+                    unit = u'\u00B0'  # Unicode degree sign
+                else:
+                    unit = ' ' + unit
+                element += u'%s: %.2f±%.2f%s' % (ctxt, mean, std, unit)
+            row.append(element)
+        table.append(row)
+    return _plot_tabular_data(table, row_labels, col_labels)
+
+
+def _plot_extracted_table_plotly(curve_vals, vardefs):
+    """Plot comparison of extracted gait curve values as a table."""
+    ctxts = 'LR'
+    # make a nested list of column headers; first row is session, second row is context
+    session_labels = [op.split(session)[-1] for session in curve_vals.keys()]
+    col_labels_1 = list(
+        itertools.chain.from_iterable(zip(session_labels, itertools.repeat('')))
+    )
+    context_cycle = itertools.cycle(ctxts)
+    col_labels_2 = [next(context_cycle) for k in col_labels_1]
+    # transpose
+    col_labels = list(zip(col_labels_1, col_labels_2))
+    row_labels = [_compose_varname(vardef) for vardef in vardefs]
+    table = list()
+    for vardef in vardefs:
+        row = list()
+        for session_vals in curve_vals.values():
+            for ctxt in ctxts:
+                vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
+                this_vals = _nested_get(
+                    session_vals, vardef_ctxt
+                )  # returns list of values for given session and context = column
+                mean, std = np.mean(this_vals), np.std(this_vals)
+                unit = _var_unit(vardef_ctxt)
+                if unit == 'deg':
+                    unit = u'\u00B0'  # Unicode degree sign
+                else:
+                    unit = ' ' + unit
+                row.append(u'%.2f±%.2f%s' % (mean, std, unit))
+        table.append(row)
+    return _plot_tabular_data_via_plotly(table, row_labels, col_labels)
+
+
+def _plot_tabular_data(data, row_labels=None, col_labels=None):
+    """Plot tabular data via matplotlib table()"""
+    fig = Figure()
+    ax = fig.add_subplot(111)
+    the_table = ax.table(
+        cellText=data,
+        rowLabels=row_labels,
+        rowLoc='left',
+        colLabels=col_labels,
+        loc='center',
+        bbox=[0.2, 0.0, 0.9, 0.8],
+    )
+    # the_table.auto_set_font_size(False)
+    # the_table.set_fontsize(7)
+    # the_table.scale(1, 1.5)
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    ax.set_frame_on(False)
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(6)
+    return fig
+
+
+def _plot_tabular_data_via_plotly(data, row_labels=None, col_labels=None):
+    """Plot tabular data via plotly and convert to matplotlib"""
+    # transpose into list of columns for go.Table
+    data = list(zip(*data))
+    data = [row_labels] + data
+    col_labels = [''] + col_labels
+    thetable = go.Table(cells={'values': data}, header={'values': col_labels})
+    pfig = go.Figure(data=[thetable])
+    bytes = pfig.to_image(format='png', engine='kaleido', width=1600, height=1200)
+    bio = io.BytesIO(bytes)
+    # 2: read into matplotlib
+    im = matplotlib.image.imread(bio, format='png')
+    fig = Figure()
+    ax = fig.add_subplot(111)
+    ax.imshow(im)
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    ax.set_frame_on(False)
+    return fig
 
 
 def _plot_vels(vels, labels, title=None):
@@ -701,7 +812,7 @@ def plot_trials(
         # constrained_layout does not work well with suptitle
         # (https://github.com/matplotlib/matplotlib/issues/13672)
         # hack: add extra \n to create whitespace
-        # XXX Py3: this hack is no longer necessary in matplotlib 3.x or newer
+        # Py2: this hack is no longer necessary in matplotlib 3.x or newer
         if figtitle and figtitle[-1] != '\n':
             figtitle = figtitle + '\n'
         fig.suptitle(figtitle, fontsize=10)

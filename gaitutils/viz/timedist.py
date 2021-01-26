@@ -89,7 +89,7 @@ def plot_comparison(sessions, tags=None, big_fonts=False, backend=None):
 
 def plot_trials(c3dfiles, plotvars=None, title=None, big_fonts=False, backend=None):
     """Plot a time-distance barchart from given c3d files.
-    
+
     Parameters
     ----------
     c3dfiles : dict

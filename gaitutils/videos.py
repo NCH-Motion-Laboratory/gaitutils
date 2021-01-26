@@ -102,7 +102,7 @@ def get_trial_videos(
 
     Trial file must be e.g. c3d, x1d or x2d (enf files won't work, since they
     are named according to different logic).
-    
+
     Parameters
     ----------
     trialfile : str
@@ -116,7 +116,7 @@ def get_trial_videos(
         respectively
     single_file : bool
         If True, return only one file.
-    
+
     Returns
     -------
     list

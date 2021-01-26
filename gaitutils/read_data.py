@@ -244,7 +244,7 @@ def get_model_data(source, model):
             if var_torsion in params and var_knee in modeldata:
                 tibt = params[var_torsion]
                 if c3d._is_c3d_file(source):
-                    tibt /= (np.pi / 180)
+                    tibt /= np.pi / 180
                 if np.abs(tibt) > 1e-2:  # do not add insignificant values
                     # for c3d data, need to convert radians -> degrees
                     logger.info('adding %s tibial torsion: %g deg' % (ctxt, tibt))

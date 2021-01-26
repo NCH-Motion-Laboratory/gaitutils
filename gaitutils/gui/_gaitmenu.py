@@ -90,7 +90,11 @@ def _exception_msg(e):
     # (e.g. the file name), however it looks like the safest choice (str() has its own issues)
     # this can probably be improved for Py3
     # for certain classes, str(e) works fine
-    if isinstance(e, TypeError) or isinstance(e, ValueError) or isinstance(e, GaitDataError):
+    if (
+        isinstance(e, TypeError)
+        or isinstance(e, ValueError)
+        or isinstance(e, GaitDataError)
+    ):
         return str(e)
     else:
         return repr(e)
@@ -117,8 +121,8 @@ class PdfReportDialog(QtWidgets.QDialog):
                 self.lnDescription.setText(info['session_description'])
 
     def accept(self):
-        """ Update config and close dialog, if widget inputs are ok. Otherwise
-        show an error dialog """
+        """Update config and close dialog, if widget inputs are ok. Otherwise
+        show an error dialog"""
         self.hetu = self.lnHetu.text()
         self.fullname = self.lnFullName.text()
         self.session_description = self.lnDescription.text()
@@ -157,8 +161,8 @@ class WebReportInfoDialog(QtWidgets.QDialog):
                 self.lnHetu.setText(info['hetu'])
 
     def accept(self):
-        """ Update config and close dialog, if widget inputs are ok. Otherwise
-        show an error dialog """
+        """Update config and close dialog, if widget inputs are ok. Otherwise
+        show an error dialog"""
         self.recreate_plots = self.xbRecreatePlots.checkState()
         self.force_convert_videos = self.xbForceConvertVideos.checkState()
         self.video_only = self.xbVideoOnly.checkState()
@@ -247,7 +251,10 @@ class WebReportDialog(QtWidgets.QDialog):
         # dialog will be prepopulated with the values gathered above
         dlg_info = WebReportInfoDialog(info, check_info=False)
         if dlg_info.exec_():
-            new_info = dict(hetu=dlg_info.hetu, fullname=dlg_info.fullname,)
+            new_info = dict(
+                hetu=dlg_info.hetu,
+                fullname=dlg_info.fullname,
+            )
             recreate_plots = dlg_info.recreate_plots
             force_convert_videos = dlg_info.force_convert_videos
             video_only = dlg_info.video_only
@@ -256,7 +263,10 @@ class WebReportDialog(QtWidgets.QDialog):
             # update info files in all sessions according to the user input
             # exclude the session specific keys
             for session in sessions:
-                update_dict = dict(fullname=dlg_info.fullname, hetu=dlg_info.hetu,)
+                update_dict = dict(
+                    fullname=dlg_info.fullname,
+                    hetu=dlg_info.hetu,
+                )
                 session_infos[session].update(update_dict)
                 sessionutils.save_info(session, session_infos[session])
             self.parent._prev_info.update(update_dict)
@@ -542,7 +552,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         # used to save previous info dialog values
         self._prev_info = {'fullname': None, 'hetu': None}
 
-
     def _colorstylevar_changed(self, _idx):
         """Callback for color/style comboboxes.
 
@@ -561,7 +570,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _colorstyleby_changed(self, _idx):
         """Callback for color/style by xxx combobox.
-        
+
         Changes the cfg item according to the current settings.
         """
         vartype, mode = self._get_colorstyle_choices()
@@ -711,7 +720,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
             finally:
                 self._enable_main_ui()  # in case an unexpected exception is raised
         self._enable_main_ui()  # in case we do not hit the try/finally block
-
 
     def _add_nexus_trial(self):
         """Add directly from Nexus"""
@@ -1111,7 +1119,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self, fun, block_ui=True, finished_func=None, result_func=None, **kwargs
     ):
         """Run function fun with args kwargs in a worker thread.
-        
+
         If block_ui==True, disable main ui until worker thread is finished.
         finished_func will be called when thread is finished. result_func
         will be called with the function return value as its single argument,
@@ -1168,8 +1176,8 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
 
     def my_excepthook(type_, value, tback):
-        """ Custom handler for unhandled exceptions:
-        report to user via GUI and terminate. """
+        """Custom handler for unhandled exceptions:
+        report to user via GUI and terminate."""
         tb_full = u''.join(traceback.format_exception(type_, value, tback))
         qt_message_dialog(
             'Oops! An unhandled exception was generated. '

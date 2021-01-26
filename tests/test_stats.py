@@ -61,12 +61,8 @@ def test_collect_trial_data():
     assert 'model' not in data_all
     data_emg = data_all['emg']
     assert set(data_emg.keys()) == set(cfg.emg.channel_labels.keys())
-    assert all(
-        data.shape[0] == 53 for ch, data in data_emg.items() if ch[0] == 'L'
-    )
-    assert all(
-        data.shape[0] == 54 for ch, data in data_emg.items() if ch[0] == 'R'
-    )
+    assert all(data.shape[0] == 53 for ch, data in data_emg.items() if ch[0] == 'L')
+    assert all(data.shape[0] == 54 for ch, data in data_emg.items() if ch[0] == 'R')
     assert all(data.shape[1] == 501 for data in data_emg.values())
 
 
@@ -188,3 +184,14 @@ def test_curve_extract_values():
             },
         },
     }
+
+
+def test_trials_extract_values():
+    """Test curve value extraction from trials"""
+    c3ds = sessionutils.get_c3ds(sessiondir_abs, trial_type='dynamic')
+    extr_vals = stats._trials_extract_values(c3ds, from_models=[models.pig_lowerbody])
+    # forefoot vars are not present in our test data
+    forefoot = models._list_with_side(
+        ['ForeFootAnglesX', 'ForeFootAnglesY', 'ForeFootAnglesZ']
+    )
+    assert set(extr_vals.keys()) == (set(models.pig_lowerbody.varnames) - set(forefoot))

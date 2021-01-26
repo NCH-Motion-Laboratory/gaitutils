@@ -53,7 +53,7 @@ class NiceListWidget(QtWidgets.QListWidget):
     @property
     def items(self):
         """Yield all list items.
-        
+
         NB: be careful when modifying list items in a loop with the generator -
         count() is evaluated only once, so the generator may return items that
         have already been deleted"""

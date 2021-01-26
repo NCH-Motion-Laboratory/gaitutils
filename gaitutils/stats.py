@@ -12,7 +12,9 @@ import logging
 import numpy as np
 import scipy
 import os.path as op
+import itertools
 from collections import defaultdict
+
 
 from .trial import Trial, Gaitcycle
 from . import models, numutils
@@ -343,14 +345,14 @@ def collect_trial_data(
 
     Parameters
     ----------
-    trials : list | str
-        filename, or list of filenames (c3d) to collect data from, or list
-        of Trial instances
+    trials : list | str | Trial
+        List of c3d filenames or Trial instances to collect data from.
+        Alternatively, a single filename or Trial instance.
     collect_types : list | None
         The types of data to collect. Currently supported types: 'model', 'emg'.
         If None, collect all supported types.
     fp_cycles_only : bool
-        If True, only collect data from forceplate cycles. Kinetics model vars
+        If True, collect data from forceplate cycles only. Kinetics model vars
         will always be collected from forceplate cycles only.
     analog_len : int
         Analog data length varies by gait cycle, so it will be resampled into
@@ -359,7 +361,6 @@ def collect_trial_data(
     Returns
     -------
     tuple
-
         Tuple of (data_all, cycles_all):
 
             data_all : dict
@@ -373,7 +374,7 @@ def collect_trial_data(
         Example: you can obtain all collected curves for LKneeAnglesX as
         data_all['model']['LKneeAnglesX']. This will be a Nx101 ndarray. You can obtain
         the corresponding gait cycles as cycles_all['model']['LKneeAnglesX']. This will
-        be a length N list of Gaitcycles. You can use it to obtain various metadata, e.g.
+        be a length N list of Gaitcycles. You can use that to obtain various metadata, e.g.
         create a list of toeoff frames for each curve:
         [cyc.toeoffn for cyc in cycles_all['model']['LKneeAnglesX']]
     """
@@ -476,6 +477,7 @@ def curve_extract_values(curves, toeoffs):
 
     This extracts values such as swing phase maximum from a set of gait curves.
     The curves are input as ndarrays, returned by e.g. collect_trial_data().
+    Data with any nans will result in (at least partially) nan output values.
 
     Parameters
     ----------
@@ -560,7 +562,7 @@ def curve_extract_values(curves, toeoffs):
         results['contact'].append(curve[0])
         results['toeoff'].append(curve[toeoff])
 
-        # if needed, we can return a regular dict
+        # if needed, we can finally return a regular dict
         # results = dict(results)
         # for k in 'extrema', 'peaks':
         #     results[k] = dict(results[k])
@@ -568,3 +570,42 @@ def curve_extract_values(curves, toeoffs):
         #         results[k][x] = dict(v)
 
     return results
+
+
+def _trials_extract_values(trials, from_models=None):
+    """Extract curve values from given trials.
+
+    Parameters
+    ----------
+    trials: list
+        List of c3d files or Trial instances to extract data from.
+    from_models : list
+        List of GaitModel instances. These determine the variables to collect
+        data for.
+
+    Returns
+    -------
+    dict
+        Dict keyed by variable. The values are dicts as returned by
+        curve_extract_values().
+    """
+    if from_models is None:
+        from_models = [
+            models.pig_lowerbody,
+        ]
+    try:
+        thevars = itertools.chain.from_iterable(mod.varnames for mod in from_models)
+    except AttributeError:
+        raise RuntimeError('')
+    # collect all curves
+    data, cycles = collect_trial_data(trials, collect_types=['model'])
+    vals = dict()
+    # extract values for each variable
+    for var in thevars:
+        data_var = data['model'][var]
+        toeoffs_var = [cyc.toeoffn for cyc in cycles['model'][var]]
+        if data_var is not None and toeoffs_var is not None:
+            vals[var] = curve_extract_values(data_var, toeoffs_var)
+        else:
+            logger.info('no data for %s' % var)
+    return vals

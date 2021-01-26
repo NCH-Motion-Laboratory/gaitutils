@@ -5,6 +5,7 @@ Create gait reports in pdf format.
 @author: Jussi (jnu@iki.fi)
 """
 from __future__ import absolute_import
+import itertools
 
 import logging
 import io
@@ -13,12 +14,12 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from collections import defaultdict
 
-from .. import cfg, sessionutils, normaldata, GaitDataError, trial
+from .. import cfg, sessionutils, normaldata, GaitDataError, trial, models, stats
 from ulstools.num import age_from_hetu
 from ..viz.timedist import plot_session_average, plot_comparison
 from ..timedist import _session_analysis_text_finnish
 from ..viz.plots import _plot_sessions, _plot_session_average, plot_trial_velocities
-
+from ..viz.plot_matplotlib import _plot_extracted_table_plotly
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ def _add_header(fig, txt):
 
 def _make_text_fig(txt, titlepage=True):
     """Make a Figure from given text.
-    
+
     If titlepage is True, use larger font in bold.
     """
     fig = Figure()
@@ -55,7 +56,7 @@ def _make_text_fig(txt, titlepage=True):
 
 def _savefig(pdf, fig, header=None, footer=None):
     """Save figure fig into the given pdf object.
-    
+
     Adds header/footer into page and saves as A4.
     """
     if fig is None:
@@ -243,8 +244,29 @@ def create_report(
     fig_kin_avg = None
     if pages['KinAverage']:
         fig_kin_avg = _plot_session_average(
-            sessionpath, model_normaldata=model_normaldata, backend=pdf_backend,
+            sessionpath,
+            model_normaldata=model_normaldata,
+            backend=pdf_backend,
         )
+
+    # tables of curve extracted values
+    figs_extracted = list()
+    if pages['Extracted']:
+        allvars = [
+            vardef[0] for vardefs in cfg.report.vardefs.values() for vardef in vardefs
+        ]
+        from_models = set(models.model_from_var(var) for var in allvars)
+        curve_vals = {
+            sessionpath: stats._trials_extract_values(
+                tagged_trials, from_models=from_models
+            )
+        }
+        for title, vardefs in cfg.report.vardefs.items():
+            fig = _plot_extracted_table_plotly(curve_vals, vardefs)
+            fig.tight_layout()
+            fig.set_dpi(300)
+            fig.suptitle('Curve extracted values: %s' % title)
+            figs_extracted.append(fig)
 
     # save the pdf file
     logger.debug('creating multipage pdf %s' % pdfpath)
@@ -257,7 +279,10 @@ def create_report(
         _savefig(pdf, fig_musclelen_cons, header, footer_musclelen)
         _savefig(pdf, fig_emg_cons, header)
         _savefig(pdf, fig_kin_avg, header)
+        for fig in figs_extracted:
+            _savefig(pdf, fig, header)
 
+    # save the time-distance parameters into a text file
     if write_timedist:
         timedist_txt_file = sessiondir + '_time_distance.txt'
         timedist_txt_path = op.join(destdir, timedist_txt_file)
@@ -273,8 +298,8 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
 
     Parameters
     ----------
-    sessionpath : str
-        Path to session.
+    sessionpaths : list
+        List of paths to sessions.
     info : dict, optional
         Patient info dict.
     pages : dict, optional
@@ -284,6 +309,7 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
         'Kinematics'
         'Kinetics'
         'MuscleLen'
+        'Extracted'
     destdir : str, optional
         Destination directory for the pdf report. If None, write into first
         session path.
@@ -304,11 +330,13 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
         raise GaitDataError('No pages to print')
 
     # check for kinetics
-    tagged_trials = sessionutils._get_tagged_dynamic_c3ds_from_sessions(
-        sessionpaths, tags=cfg.eclipse.tags
-    )
-    trials = (trial.Trial(t) for t in tagged_trials)
-    any_kinetics = any(c.on_forceplate for t in trials for c in t.cycles)
+    trials_dict = {
+        session: sessionutils._get_tagged_dynamic_c3ds_from_sessions(
+            session, tags=cfg.eclipse.tags
+        ) for session in sessionpaths
+    }
+    alltrials = (trial.Trial(t) for t in itertools.chain.from_iterable(trials_dict.values()))
+    any_kinetics = any(c.on_forceplate for t in alltrials for c in t.cycles)
 
     # compose a name for the resulting pdf; it will be saved in the first session dir
     sessionpath = sessionpaths[0]
@@ -410,6 +438,25 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
         else None
     )
 
+    # tables of curve extracted values
+    figs_extracted = list()
+    if pages['Extracted']:
+        allvars = [
+            vardef[0] for vardefs in cfg.report.vardefs.values() for vardef in vardefs
+        ]
+        from_models = set(models.model_from_var(var) for var in allvars)
+        curve_vals = {
+            session: stats._trials_extract_values(
+                trials, from_models=from_models
+            ) for session, trials in trials_dict.items()
+        }
+        for title, vardefs in cfg.report.vardefs.items():
+            fig = _plot_extracted_table_plotly(curve_vals, vardefs)
+            fig.tight_layout()
+            fig.set_dpi(300)
+            fig.suptitle('Curve extracted values: %s' % title)
+            figs_extracted.append(fig)
+
     header = u'Nimi: %s Henkilötunnus: %s' % (fullname, hetu)
     logger.debug('creating multipage comparison pdf %s' % pdfpath)
     with PdfPages(pdfpath) as pdf:
@@ -419,5 +466,7 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
         _savefig(pdf, fig_kinetics, header)
         _savefig(pdf, fig_musclelen, header)
         _savefig(pdf, fig_emg, header)
+        for fig in figs_extracted:
+            _savefig(pdf, fig, header)
 
     return 'Created %s\nin %s' % (pdfname, sessionpath)

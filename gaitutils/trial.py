@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 def nexus_trial(from_c3d=False):
     """Return Trial instance created from the currently open Nexus trial.
-   
+
     Parameters
     ----------
     from_c3d : bool
@@ -93,28 +93,28 @@ class Noncycle(object):
 class Gaitcycle(object):
     """Gait cycle class.
 
-        Parameters
-        ----------
-        start : int
-            Starting frame for the cycle.
-        start : int
-            Ending frame for the cycle.
-        toeoff : int
-            Frame where toeoff occurs.
-        context : str
-            Cycle context: R or L for right and left, respectively.
-        on_forceplate : bool
-            Whether cycle starts on forceplate contact.
-        plate_idx : int
-            Index of forceplate.
-        smp_per_frame : float
-            Analog samples per frame.
-        trial : instance of Trial
-            The trial instance owning this cycle. Does not need to be set.
-        name : str
-            Name for the cycle. Can be set freely.
-        index : int
-            Cycle index.
+    Parameters
+    ----------
+    start : int
+        Starting frame for the cycle.
+    start : int
+        Ending frame for the cycle.
+    toeoff : int
+        Frame where toeoff occurs.
+    context : str
+        Cycle context: R or L for right and left, respectively.
+    on_forceplate : bool
+        Whether cycle starts on forceplate contact.
+    plate_idx : int
+        Index of forceplate.
+    smp_per_frame : float
+        Analog samples per frame.
+    trial : instance of Trial
+        The trial instance owning this cycle. Does not need to be set.
+    name : str
+        Name for the cycle. Can be set freely.
+    index : int
+        Cycle index.
     """
 
     def __init__(
@@ -315,7 +315,7 @@ class Trial(object):
     @property
     def videos(self):
         """Returns names of trial video files.
-        
+
         Returns
         -------
         vidfiles : list
@@ -330,7 +330,7 @@ class Trial(object):
 
         The configured Eclipse fields (e.g. DESCRIPTION) are searched for the configured
         tags. If a configured tag is found, the it will be returned.
-        
+
         Returns
         -------
         tag : str
@@ -344,7 +344,7 @@ class Trial(object):
     @property
     def name_with_description(self):
         """Return the trial name with Eclipse DESCRIPTION and NOTES keys.
-        
+
         Returns
         -------
         desc : str

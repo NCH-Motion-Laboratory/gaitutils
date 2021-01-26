@@ -103,8 +103,8 @@ class SimpleToolbar(NavigationToolbar2QT):
 
 
 class TardieuWindow(QtWidgets.QMainWindow):
-    """ Main Qt window with controls. The mpl figure containing the actual data
-    is created by a separate class and embedded into this window. """
+    """Main Qt window with controls. The mpl figure containing the actual data
+    is created by a separate class and embedded into this window."""
 
     # FIXME: all str casts are probably unnecessary
 
@@ -360,14 +360,14 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
 
 class Markers(object):
-    """ Manage vertical marker lines at multiple axes.
-    The markers are created as matplotlib axvline()s. """
+    """Manage vertical marker lines at multiple axes.
+    The markers are created as matplotlib axvline()s."""
 
     def __init__(self, marker_colors, marker_width, axes):
-        """ Initialize.
+        """Initialize.
         marker_colors: the colors (and max. number) of markers
         marker_width: the line width for the markers
-        axes: all axes to put the markers in """
+        axes: all axes to put the markers in"""
         self._markers = OrderedDict()  # markers are keyed by x coordinate
         self._axes = axes
         self.marker_colors = marker_colors
@@ -543,7 +543,7 @@ class TardieuPlot(object):
         return True
 
     def plot_data(self, interactive=True, emg_yscale=None):
-        """ Plot the data. Can plot either on the main (interactive) display
+        """Plot the data. Can plot either on the main (interactive) display
         or a new mpl Figure() (which will be returned)"""
 
         fig = self.fig if interactive else Figure()

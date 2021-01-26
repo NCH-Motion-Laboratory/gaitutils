@@ -24,6 +24,45 @@ from ..envutils import GaitDataError
 logger = logging.getLogger(__name__)
 
 
+def _var_unit(vardef):
+    """Return unit for a vardef"""
+    varname = vardef[0]
+    themodel = models.model_from_var(varname)
+    return themodel.units[varname]
+
+
+def _nested_get(di, keys):
+    """Get a value from a nested dict, using a list of keys"""
+    for key in keys:
+        di = di[key]  # iterate until we exhaust the nested keys
+    return di
+
+
+def _compose_varname(vardef):
+    """Compose a variable name for extracted variable.
+
+    E.g. ['HipAnglesX', 'peaks', 'swing', 'max']
+    -> 'Hip flexion maximum during swing phase'
+    """
+    varname = vardef[0]
+    # get variable description from gaitutils.models
+    themodel = models.model_from_var(varname)
+    name = themodel.varlabels_noside[varname]
+    if vardef[1] == 'contact':
+        name += ' at IC'
+    elif vardef[1] in ['peaks', 'extrema']:
+        phase = vardef[2]  # swing, stance etc.
+        valtype = vardef[3]  # min, max etc.
+        val_trans = {'max': 'max.', 'min': 'min.'}
+        if phase == 'overall':
+            name += ', %s %s' % (phase, val_trans[valtype])
+        else:
+            name += ', %s phase %s' % (phase, val_trans[valtype])
+        if vardef[1] == 'peaks':
+            name += ' peak'
+    return name
+
+
 def _get_trial_cycles(trial, cycles, max_cycles):
     """Get the specified cycles from a trial"""
     model_cycles = trial.get_cycles(
@@ -68,7 +107,7 @@ def _emg_yscale(emg_mode):
 
 def _color_by_params(spec, mapper, trial, cyc, context, dimension=None):
     """Helper to return a color.
-    
+
     spec is colorspec and mapper is a color mapper. Returns color according to
     trial, context etc., depending on what spec says. Depending on spec, color
     may come from the mapper or elsewhere (e.g. config). 'dimension' refers to
@@ -92,7 +131,7 @@ def _color_by_params(spec, mapper, trial, cyc, context, dimension=None):
 
 def _style_by_params(spec, mapper, trial, cyc, context, dimension=None):
     """Helper to return a style.
-    
+
     See above for details."""
     if spec == 'session':
         return mapper[trial.sessiondir]
@@ -247,7 +286,7 @@ def _get_cycle_name(trial, cyc, name_type):
 
 def _triage_var(var, trial):
     """Return category of variable (model, marker etc.).
-    
+
     Returns 'model', 'marker' or 'emg' for known types,
     'unknown' if type cannot be inferred, None for None
     """

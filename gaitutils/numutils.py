@@ -425,7 +425,7 @@ def _get_local_max(data):
     # at least in theory
     peak_inds = signal.find_peaks(data)[0]
     if not any(peak_inds):
-         return (np.nan, np.nan)
+        return (np.nan, np.nan)
     peak_ind = peak_inds[data[peak_inds].argmax()]
     peak_val = data[peak_ind]
     return peak_ind, peak_val

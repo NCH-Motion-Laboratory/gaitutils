@@ -28,8 +28,6 @@ sessiondir__ = op.split(sessiondir_)[-1]  # dirname
 tmpdir = tempfile.gettempdir()
 
 
-
-
 def test_convert_videos():
     c3d_file = sessionutils.get_c3ds(
         sessiondir_abs, tags=None, trial_type='dynamic', check_if_exists=False

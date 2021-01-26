@@ -29,7 +29,7 @@ class EMG(object):
         The data source. Can be a c3d filename or a ViconNexus instance.
     correction_factor : int, optional
         After read, the EMG data is multiplied by this factor.
-     """
+    """
 
     def __init__(self, source, correction_factor=1):
         logger.debug('new EMG instance from %s' % source)
@@ -85,9 +85,11 @@ class EMG(object):
                 'You need to install the pyedflib package to use this function'
             )
         # default to EDF+ for the time being
-        file_type=pyedflib.FILETYPE_EDFPLUS            
+        file_type = pyedflib.FILETYPE_EDFPLUS
         f = pyedflib.EdfWriter(
-            filename, len(self.data), file_type=file_type,
+            filename,
+            len(self.data),
+            file_type=file_type,
         )
         channel_info = list()
         data_list = list()
@@ -152,7 +154,7 @@ class EMG(object):
             The EMG channel name. Name matching is used (see above).
         rms : bool
             Return moving-window RMS instead of raw data.
-        
+
         Returns
         -------
         ndarray
@@ -241,7 +243,7 @@ class EMG(object):
 
 class AvgEMG(EMG):
     """Class for storing averaged RMS EMG.
-    
+
     This tries to match the API of the EMG class, but differs in following ways:
     -precomputed RMS data is stored in self._data
     -only the RMS data can be returned

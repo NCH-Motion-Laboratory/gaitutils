@@ -14,6 +14,7 @@ from functools import partial
 import sys
 
 import numpy as np
+import os.path as op
 import plotly
 import plotly.graph_objs as go
 from plotly.matplotlylib.mpltools import merge_color_and_opacity
@@ -38,10 +39,73 @@ from .plot_common import (
     _emg_yscale,
     _get_trial_cycles,
     _triage_var,
+    _compose_varname,
+    _nested_get,
 )
 
 
 logger = logging.getLogger(__name__)
+
+
+def plot_extracted_box(curve_vals, vardefs):
+    """Plot comparison of extracted gait curve values as box plot.
+
+    Parameters
+    ----------
+    vardefs : list
+        Nested list of variable definitions. The definitions are
+    curve_vals : dict
+        The curve extracted data, keyed by session.
+    """
+
+    nvars = len(vardefs)
+    subtitles = [_compose_varname(nested_keys) for nested_keys in vardefs]
+    fig = plotly.subplots.make_subplots(rows=nvars, cols=1, subplot_titles=subtitles)
+    legendgroups = set()
+
+    # the plotting logic is a bit weird due to the way go.Box() works:
+    # -we first consolidate one variable's data from all sessions into a 1-d array
+    # -this is done separately for L/R context
+    # -the consolidated data is then plotted along with the session identifier
+    for row, vardef in enumerate(vardefs):
+        for ctxt in 'LR':
+            vals = list()
+            sessionnames = list()
+            vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
+            for session, session_vals in curve_vals.items():
+                this_vals = _nested_get(session_vals, vardef_ctxt)
+                vals.extend(this_vals)
+                sessiondir = op.split(session)[-1]
+                sessionnames.extend([sessiondir] * len(this_vals))
+            # show entry in legend only if it was not already shown
+            show_legend = ctxt not in legendgroups
+            legendgroups.add(ctxt)
+
+            box = go.Box(
+                x=sessionnames,
+                y=vals,
+                boxpoints=False,
+                name=ctxt,
+                offsetgroup=ctxt,
+                legendgroup=ctxt,
+                showlegend=show_legend,
+                opacity=0.5,
+                # mode='lines+markers',
+                marker_color=cfg.plot.context_colors[ctxt],
+            )
+            fig.append_trace(box, row=row + 1, col=1)
+            xlabel = _plotly_var_ylabel(vardef_ctxt[0])
+            xaxis, yaxis = _get_plotly_axis_labels(row, 0, ncols=1)
+            fig['layout'][yaxis].update(
+                title={
+                    'text': xlabel,
+                    'standoff': 0,
+                }
+            )
+    fig.update_layout(
+        boxmode='group'  # group together boxes of the different traces for each value of x
+    )
+    return fig
 
 
 def time_dist_barchart(
@@ -224,15 +288,30 @@ def _plotly_fill_between(x, ylow, yhigh, **kwargs):
 
 
 def plot_trials_browser(trials, layout, **kwargs):
-    """ Convenience plotter, uses plotly.offline to plot directly to browser"""
+    """Convenience plotter, uses plotly.offline to plot directly to browser"""
     fig = plot_trials(trials, layout, **kwargs)
     plotly.offline.plot(fig)
 
 
-def _get_plotly_axis_labels(i, j, ncols):
-    """Gets plotly axis labels from subplot indices i, j"""
-    plot_ind = i * ncols + j + 1  # plotly subplot index
+def _get_plotly_axis_labels(row, col, ncols):
+    """Gets plotly axis labels from zero-based row and col indices"""
+    plot_ind = row * ncols + col + 1  # plotly subplot index
     return 'xaxis%d' % plot_ind, 'yaxis%d' % plot_ind
+
+
+def _plotly_var_ylabel(var, themodel=None):
+    """Make ylabel for model variable var"""
+    if themodel is None:
+        themodel = models.model_from_var(var)
+    yunit = themodel.units[var]
+    if yunit == 'deg':
+        yunit = u'\u00B0'  # Unicode degree sign
+    ydesc = [s[:3] for s in themodel.ydesc[var]]  # shorten
+    ylabel = u'%s %s %s' % (ydesc[0], yunit, ydesc[1])
+    # Py2: plotly cannot handle unicode objects
+    if sys.version_info.major == 2 and isinstance(ylabel, unicode):
+        ylabel = ylabel.encode('utf-8')
+    return ylabel
 
 
 def plot_trials(
@@ -428,8 +507,7 @@ def plot_trials(
                     cyclename = _get_cycle_name(trial, cyc, name_type=legend_type)
                     cyclename_full = _get_cycle_name(trial, cyc, name_type='full')
 
-                    # plotly cannot directly handle unicode objects
-                    # needs to be handled in py2/3 compatible way
+                    # Py2: plotly cannot handle unicode objects
                     if sys.version_info.major == 2 and isinstance(cyclename, unicode):
                         cyclename = cyclename.encode('utf-8')
 
@@ -517,7 +595,8 @@ def plot_trials(
                                     sdata = model_stddev[var]
                                     stdx = np.linspace(0, 100, sdata.shape[0])
                                     fillcolor = merge_color_and_opacity(
-                                        col, cfg.plot.model_stddev_alpha,
+                                        col,
+                                        cfg.plot.model_stddev_alpha,
                                     )
                                     ntrace = _plotly_fill_between(
                                         stdx,
@@ -558,16 +637,7 @@ def plot_trials(
 
                             # adjust subplot once
                             if not subplot_adjusted[(i, j)]:
-                                # fig['layout'][xaxis].update(showticklabels=False)
-                                yunit = themodel.units[var]
-                                if yunit == 'deg':
-                                    yunit = u'\u00B0'  # Unicode degree sign
-                                ydesc = [s[:3] for s in themodel.ydesc[var]]  # shorten
-                                ylabel = u'%s %s %s' % (ydesc[0], yunit, ydesc[1])
-                                if sys.version_info.major == 2 and isinstance(
-                                    ylabel, unicode
-                                ):
-                                    ylabel = ylabel.encode('utf-8')
+                                ylabel = _plotly_var_ylabel(var, themodel)
                                 fig['layout'][yaxis].update(
                                     title={
                                         'text': ylabel,
@@ -650,6 +720,7 @@ def plot_trials(
                             if not subplot_adjusted[(i, j)]:
                                 # fig['layout'][xaxis].update(showticklabels=False)
                                 ylabel = 'mm'
+                                # Py2: plotly cannot handle unicode objects
                                 if sys.version_info.major == 2 and isinstance(
                                     ylabel, unicode
                                 ):

@@ -35,9 +35,14 @@ from .. import (
 )
 from ..sessionutils import enf_to_trialfile
 from ..trial import Trial
-from ..viz.plot_plotly import plot_trials
+from ..viz.plot_plotly import plot_trials, plot_extracted_box
 from ..viz import timedist, layouts
-from ..stats import AvgTrial, collect_trial_data, curve_extract_values
+from ..stats import (
+    AvgTrial,
+    collect_trial_data,
+    curve_extract_values,
+    _trials_extract_values,
+)
 
 # Py2: for Python 3 compatibility
 try:
@@ -51,7 +56,7 @@ logger = logging.getLogger(__name__)
 
 def _make_dropdown_lists(options):
     """Helper for dcc.Dropdown.
-   
+
     Take a list of label/value dicts (with arbitrary type values) and returns
     (list, dict). Needed since dcc.Dropdown can only take str values. identity
     is fed to dcc.Dropdown() and mapper is used for getting the actual values at
@@ -88,7 +93,12 @@ def _report_name(sessions, long_name=True):
 
 
 def dash_report(
-    sessions, info=None, tags=None, signals=None, recreate_plots=None, video_only=None,
+    sessions,
+    info=None,
+    tags=None,
+    signals=None,
+    recreate_plots=None,
+    video_only=None,
 ):
     """Create a gait report dash app.
 
@@ -248,15 +258,17 @@ def dash_report(
     if not opts_tags:
         opts_tags.append({'label': 'No videos', 'value': 'no videos', 'disabled': True})
 
-    # this whole section is only needed if we have c3d data
+    # create (or load) the figures
+    # this section is only run if we have c3d data
     if not video_only:
         data_c3ds = [enf_to_trialfile(enffile, 'c3d') for enffile in data_enfs]
         # at this point, all the c3ds need to exist
-        for fn in data_c3ds:
-            if not op.isfile(fn):
-                raise GaitDataError(
-                    'Missing C3D file for trial %s' % op.splitext(fn)[0]
-                )
+        missing = [fn for fn in data_c3ds if not op.isfile(fn)]
+        if missing:
+            missing_trials = ', '.join([op.splitext(op.split(fn)[-1])[0] for fn in missing])
+            raise GaitDataError(
+                'C3D files are missing for following trials: %s' % missing_trials
+            )
         # see whether we can load report figures from disk
         digest = numutils._files_digest(data_c3ds)
         logger.debug('report data digest: %s' % digest)
@@ -273,12 +285,12 @@ def dash_report(
             logger.debug('no saved data found or recreate forced')
 
         # make Trial instances for all dynamic and static trials
-        # this is currently needed even if saved report is used
+        # this is currently necessary even if saved figures are used
         trials_dyn = list()
+        trials_dyn_dict = OrderedDict()  # also organize dynamic trials by session
         trials_static = list()
-        _trials_avg = dict()
         for session in sessions:
-            _trials_avg[session] = list()
+            trials_dyn_dict[session] = list()
             for tag in dyn_tags:
                 if enfs[session]['dynamic'][tag]:
                     if signals.canceled:
@@ -286,13 +298,13 @@ def dash_report(
                     c3dfile = enf_to_trialfile(enfs[session]['dynamic'][tag][0], 'c3d')
                     tri = Trial(c3dfile)
                     trials_dyn.append(tri)
-                    _trials_avg[session].append(tri)
+                    trials_dyn_dict[session].append(tri)
             if enfs[session]['static'][static_tag]:
                 c3dfile = enf_to_trialfile(enfs[session]['static']['Static'][0], 'c3d')
                 tri = Trial(c3dfile)
                 trials_static.append(tri)
 
-        emg_layout = None
+        emg_auto_layout = None
 
         # stuff that's needed to (re)create the figures
         if not saved_report_data:
@@ -322,49 +334,55 @@ def dash_report(
 
             # make average trials for each session
             avg_trials = [
-                AvgTrial.from_trials(_trials_avg[session], sessionpath=session)
+                AvgTrial.from_trials(trials_dyn_dict[session], sessionpath=session)
                 for session in sessions
             ]
+
+            # prepare for the curve-extracted value plots
+            logger.debug('extracting values for curve-extracted plots...')
+            allvars = [
+                vardef[0]
+                for vardefs in cfg.report.vardefs.values()
+                for vardef in vardefs
+            ]
+            from_models = set(models.model_from_var(var) for var in allvars)
+            if None in from_models:
+                raise GaitDataError('unknown variables in extract list: %s' % allvars)
+            curve_vals = OrderedDict(
+                [
+                    (session, _trials_extract_values(trials, from_models=from_models))
+                    for session, trials in trials_dyn_dict.items()
+                ]
+            )
 
             # in EMG layout, keep chs that are active in any of the trials
             signals.progress.emit('Reading EMG data', 0)
             try:
                 emgs = [tr.emg for tr in trials_dyn]
-                emg_layout = layouts._rm_dead_channels(emgs, cfg.layouts.std_emg)
-                if not emg_layout:
-                    emg_layout = 'disabled'
+                emg_auto_layout = layouts._rm_dead_channels(emgs, cfg.layouts.std_emg)
+                if not emg_auto_layout:
+                    emg_auto_layout = None
             except GaitDataError:
-                emg_layout = 'disabled'
+                emg_auto_layout = None
 
-        # define layouts
-        # FIXME: should be definable in config
-        _layouts = OrderedDict(
-            [
-                ('Patient info', 'patient_info'),
-                ('Kinematics', cfg.layouts.lb_kinematics),
-                ('Kinematics average', 'kinematics_average'),
-                ('Static kinematics', 'static_kinematics'),
-                ('Static EMG', 'static_emg'),
-                ('Kinematics + kinetics', cfg.layouts.lb_kin_web),
-                ('Kinetics', cfg.layouts.lb_kinetics_web),
-                ('EMG', emg_layout),
-                ('Kinetics-EMG left', cfg.layouts.lb_kinetics_emg_l),
-                ('Kinetics-EMG right', cfg.layouts.lb_kinetics_emg_r),
-                ('Muscle length', cfg.layouts.musclelen),
-                ('Torso kinematics', cfg.layouts.torso),
-                ('Time-distance variables', 'time_dist'),
-                ('PiG lowerbody markers', cfg.layouts.pig_lowerbody_markers),
-            ]
-        )
+        # the layouts are specified as lists of tuples: (title, layout_spec)
+        # where title is the page title, and layout_spec is either string or tuple.
+        # if string, it denotes a special layout (e.g. 'patient_info')
+        # if tuple, the first element should be the string 'layout_name' and the second
+        # a gaitutils configured layout name;
+        # alternatively the first element can be 'layout' and the second element a
+        # valid gaitutils layout
+        page_layouts = OrderedDict(cfg.web_report.page_layouts)
+
         # pick desired single variables from model and append
         # Py2: dict merge below can be done more elegantly once Py2 is dropped
         pig_singlevars_ = models.pig_lowerbody.varlabels_noside.copy()
         pig_singlevars_.update(models.pig_lowerbody_kinetics.varlabels_noside)
         pig_singlevars = sorted(pig_singlevars_.items(), key=lambda item: item[1])
         singlevars = OrderedDict(
-            [(varlabel, [[var]]) for var, varlabel in pig_singlevars]
+            [(varlabel, ('layout', [[var]])) for var, varlabel in pig_singlevars]
         )
-        _layouts.update(singlevars)
+        page_layouts.update(singlevars)
 
         # add supplementary data for normal layouts
         supplementary_default = dict()
@@ -374,8 +392,10 @@ def dash_report(
 
         # loop through the layouts, create or load figures
         report_data_new = dict()
-        for k, (label, layout) in enumerate(_layouts.items()):
-            signals.progress.emit('Creating plot: %s' % label, 100 * k / len(_layouts))
+        for k, (page_label, layout_spec) in enumerate(page_layouts.items()):
+            signals.progress.emit(
+                'Creating plot: %s' % page_label, 100 * k / len(page_layouts)
+            )
             if signals.canceled:
                 return None
             # for comparison report, include session info in plot legends and
@@ -394,23 +414,23 @@ def dash_report(
 
             try:
                 if saved_report_data:
-                    logger.debug('loading %s from saved report data' % label)
-                    if label not in saved_report_data:
+                    logger.debug('loading %s from saved report data' % page_label)
+                    if page_label not in saved_report_data:
                         # will be caught, resulting in empty menu item
                         raise RuntimeError
                     else:
-                        figdata = saved_report_data[label]
+                        figdata = saved_report_data[page_label]
                 else:
-                    logger.debug('creating figure data for %s' % label)
-                    # handle the 'special' layouts
-                    if isinstance(layout, basestring):
-                        if layout == 'time_dist':
+                    logger.debug('creating figure data for %s' % page_label)
+                    # the 'special' layouts are indicated by a string
+                    if isinstance(layout_spec, basestring):
+                        if layout_spec == 'time_dist':
                             figdata = timedist.plot_comparison(
                                 sessions, big_fonts=False, backend='plotly'
                             )
-                        elif layout == 'patient_info':
+                        elif layout_spec == 'patient_info':
                             figdata = patient_info_text
-                        elif layout == 'static_kinematics':
+                        elif layout_spec == 'static_kinematics':
                             layout_ = cfg.layouts.lb_kinematics
                             figdata = plot_trials(
                                 trials_static,
@@ -422,7 +442,7 @@ def dash_report(
                                 color_by=color_by,
                                 big_fonts=True,
                             )
-                        elif layout == 'static_emg':
+                        elif layout_spec == 'static_emg':
                             layout_ = cfg.layouts.std_emg
                             figdata = plot_trials(
                                 trials_static,
@@ -434,7 +454,18 @@ def dash_report(
                                 color_by=color_by,
                                 big_fonts=True,
                             )
-                        elif layout == 'kinematics_average':
+                        elif layout_spec == 'emg_auto' and emg_auto_layout is not None:
+                            figdata = plot_trials(
+                                trials_dyn,
+                                emg_auto_layout,
+                                emg_mode=emg_mode,
+                                legend_type=legend_type,
+                                style_by=style_by,
+                                color_by=color_by,
+                                supplementary_data=supplementary_default,
+                                big_fonts=True,
+                            )
+                        elif layout_spec == 'kinematics_average':
                             layout_ = cfg.layouts.lb_kinematics
                             figdata = plot_trials(
                                 avg_trials,
@@ -444,25 +475,46 @@ def dash_report(
                                 model_normaldata=model_normaldata,
                                 big_fonts=True,
                             )
-                        elif layout == 'disabled':
+                        elif layout_spec == 'disabled':
                             # will be caught, resulting in empty menu item
                             raise RuntimeError
                         else:  # unrecognized layout; this is not caught by us
-                            raise Exception('Unrecognized layout: %s' % layout)
+                            raise Exception(
+                                'Invalid page layout: %s' % str(layout_spec)
+                            )
 
-                    else:  # regular gaitutils layout
-                        figdata = plot_trials(
-                            trials_dyn,
-                            layout,
-                            model_normaldata=model_normaldata,
-                            emg_mode=emg_mode,
-                            legend_type=legend_type,
-                            style_by=style_by,
-                            color_by=color_by,
-                            supplementary_data=supplementary_default,
-                            big_fonts=True,
-                        )
-                # save newly created data
+                    # regular layouts and curve-extracted layouts are indicated by tuple
+                    elif isinstance(layout_spec, tuple):
+                        if layout_spec[0] in ['layout_name', 'layout']:
+                            if layout_spec[0] == 'layout_name':
+                                # get a configured layout by name
+                                layout = layouts.get_layout(layout_spec[1])
+                            else:
+                                # it's already a valid layout
+                                layout = layout_spec[1]
+                            # plot according to layout
+                            figdata = plot_trials(
+                                trials_dyn,
+                                layout,
+                                model_normaldata=model_normaldata,
+                                emg_mode=emg_mode,
+                                legend_type=legend_type,
+                                style_by=style_by,
+                                color_by=color_by,
+                                supplementary_data=supplementary_default,
+                                big_fonts=True,
+                            )
+                        elif layout_spec[0] == 'curve_extracted':
+                            the_vardefs = cfg.report.vardefs[layout_spec[1]]
+                            figdata = plot_extracted_box(curve_vals, the_vardefs)
+                        else:
+                            raise Exception(
+                                'Invalid page layout: %s' % str(layout_spec)
+                            )
+                    else:
+                        raise Exception('Invalid page layout: %s' % str(layout_spec))
+
+                # save the newly created data
                 if not saved_report_data:
                     if isinstance(figdata, go.Figure):
                         # serialize go.Figures before saving
@@ -472,7 +524,7 @@ def dash_report(
                         figdata_ = figdata.to_plotly_json()
                     else:
                         figdata_ = figdata
-                    report_data_new[label] = figdata_
+                    report_data_new[page_label] = figdata_
 
                 # make the upper and lower panel graphs from figdata, depending
                 # on data type
@@ -484,7 +536,7 @@ def dash_report(
 
                 # this is for old style timedist figures that were in base64
                 # encoded svg
-                if layout == 'time_dist' and _is_base64(figdata):
+                if layout_spec == 'time_dist' and _is_base64(figdata):
                     graph_upper = html.Img(
                         src='data:image/svg+xml;base64,{}'.format(figdata),
                         id='gaitgraph%d' % k,
@@ -492,10 +544,10 @@ def dash_report(
                     )
                     graph_lower = html.Img(
                         src='data:image/svg+xml;base64,{}'.format(figdata),
-                        id='gaitgraph%d' % (len(_layouts) + k),
+                        id='gaitgraph%d' % (len(page_layouts) + k),
                         style={'height': '100%'},
                     )
-                elif layout == 'patient_info':
+                elif layout_spec == 'patient_info':
                     graph_upper = dcc.Markdown(figdata)
                     graph_lower = graph_upper
                 else:
@@ -505,20 +557,20 @@ def dash_report(
                     )
                     graph_lower = dcc.Graph(
                         figure=figdata,
-                        id='gaitgraph%d' % (len(_layouts) + k),
+                        id='gaitgraph%d' % (len(page_layouts) + k),
                         style={'height': '100%'},
                     )
-                dd_opts_multi_upper.append({'label': label, 'value': graph_upper})
-                dd_opts_multi_lower.append({'label': label, 'value': graph_lower})
+                dd_opts_multi_upper.append({'label': page_label, 'value': graph_upper})
+                dd_opts_multi_lower.append({'label': page_label, 'value': graph_lower})
 
             except (RuntimeError, GaitDataError) as e:  # could not create a figure
-                logger.warning(u'failed to create figure for %s: %s' % (label, e))
+                logger.warning(u'failed to create figure for %s: %s' % (page_label, e))
                 # insert the menu options but make them disabled
                 dd_opts_multi_upper.append(
-                    {'label': label, 'value': label, 'disabled': True}
+                    {'label': page_label, 'value': page_label, 'disabled': True}
                 )
                 dd_opts_multi_lower.append(
-                    {'label': label, 'value': label, 'disabled': True}
+                    {'label': page_label, 'value': page_label, 'disabled': True}
                 )
                 continue
 

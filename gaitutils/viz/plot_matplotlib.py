@@ -72,7 +72,7 @@ def _plot_extracted_table(curve_vals, vardefs):
     return _plot_tabular_data(table, row_labels, col_labels)
 
 
-def _plot_extracted_table_plotly(curve_vals, vardefs, filename, title=None):
+def _plot_extracted_table_plotly(curve_vals, vardefs):
     """Plot comparison of extracted gait curve values as a table."""
     ctxts = 'LR'
     # make a nested list of column headers; first row is session, second row is context
@@ -129,7 +129,7 @@ def _plot_tabular_data(data, row_labels=None, col_labels=None):
 
 
 def _plot_tabular_data_via_plotly(data, row_labels=None, col_labels=None):
-    """Plot tabular data via plotly, convert to matplotlib"""
+    """Plot tabular data via plotly and convert to matplotlib"""
     # transpose into list of columns for go.Table
     data = list(zip(*data))
     data = [row_labels] + data

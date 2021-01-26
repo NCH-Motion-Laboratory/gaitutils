@@ -13,12 +13,12 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from collections import defaultdict
 
-from .. import cfg, sessionutils, normaldata, GaitDataError, trial
+from .. import cfg, sessionutils, normaldata, GaitDataError, trial, models, stats
 from ulstools.num import age_from_hetu
 from ..viz.timedist import plot_session_average, plot_comparison
 from ..timedist import _session_analysis_text_finnish
 from ..viz.plots import _plot_sessions, _plot_session_average, plot_trial_velocities
-
+from ..viz.plot_matplotlib import _plot_extracted_table_plotly
 
 logger = logging.getLogger(__name__)
 
@@ -248,6 +248,23 @@ def create_report(
             backend=pdf_backend,
         )
 
+    # tables of curve extracted values
+    figs_extracted = list()
+    if pages['Extracted']:
+        allvars = [
+            vardef[0] for vardefs in cfg.report.vardefs.values() for vardef in vardefs
+        ]
+        from_models = set(models.model_from_var(var) for var in allvars)
+        curve_vals = {
+            sessionpath: stats._trials_extract_values(tagged_trials, from_models=from_models)
+        }
+        for title, vardefs in cfg.report.vardefs.items():
+            fig = _plot_extracted_table_plotly(curve_vals, vardefs)
+            fig.tight_layout()
+            fig.set_dpi(300)
+            fig.suptitle('Curve extracted values: %s' % title)
+            figs_extracted.append(fig)
+
     # save the pdf file
     logger.debug('creating multipage pdf %s' % pdfpath)
     with PdfPages(pdfpath) as pdf:
@@ -259,7 +276,10 @@ def create_report(
         _savefig(pdf, fig_musclelen_cons, header, footer_musclelen)
         _savefig(pdf, fig_emg_cons, header)
         _savefig(pdf, fig_kin_avg, header)
+        for fig in figs_extracted:
+            _savefig(pdf, fig, header)
 
+    # save the time-distance parameters into a text file
     if write_timedist:
         timedist_txt_file = sessiondir + '_time_distance.txt'
         timedist_txt_path = op.join(destdir, timedist_txt_file)

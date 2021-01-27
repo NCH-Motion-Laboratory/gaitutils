@@ -16,6 +16,7 @@ import matplotlib
 from matplotlib.figure import Figure
 import matplotlib.gridspec as gridspec
 import plotly.graph_objs as go
+import plotly.io as pio
 import numpy as np
 import logging
 import os.path as op
@@ -130,6 +131,9 @@ def _plot_tabular_data(data, row_labels=None, col_labels=None):
 
 def _plot_tabular_data_via_plotly(data, row_labels=None, col_labels=None):
     """Plot tabular data via plotly and convert to matplotlib"""
+    # disable MathJax since it causes slowdowns
+    # see https://github.com/plotly/Kaleido/issues/36
+    pio.kaleido.scope.mathjax = None
     # transpose into list of columns for go.Table
     data = list(zip(*data))
     data = [row_labels] + data

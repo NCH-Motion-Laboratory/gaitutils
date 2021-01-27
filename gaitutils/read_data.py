@@ -229,10 +229,10 @@ def get_model_data(source, model):
                 modeldata[var + 'Z'] = modeldata[var][2, :]
             else:
                 raise RuntimeError('Expected a 3D array')
-    # For basic Plug-in Gait, add tibial torsion to knee rotation. This is to
-    # compensate for a weird PiG feature that offsets knee rotation by the
-    # tibial torsion, so that it always rotates around zero. With this fix, we
-    # get the actual (anatomical) knee rotation.
+    # For basic Plug-in Gait, add the tibial torsion value to knee rotation.
+    # This is to compensate for a weird PiG feature that offsets knee rotation
+    # by tibial torsion, so that it always rotates around zero. With this fix,
+    # we get the actual (anatomical) knee rotation.
     if (
         model.desc == 'Plug-in Gait lower body kinematics'
         and cfg.models.add_tibial_torsion
@@ -243,10 +243,10 @@ def get_model_data(source, model):
             var_torsion = ctxt + 'TibialTorsion'
             if var_torsion in params and var_knee in modeldata:
                 tibt = params[var_torsion]
+                # for c3d data, need to convert radians -> degrees
                 if c3d._is_c3d_file(source):
                     tibt /= np.pi / 180
                 if np.abs(tibt) > 1e-2:  # do not add insignificant values
-                    # for c3d data, need to convert radians -> degrees
                     logger.info('adding %s tibial torsion: %g deg' % (ctxt, tibt))
                     modeldata[var_knee] += tibt
     return modeldata

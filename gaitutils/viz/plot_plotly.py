@@ -66,23 +66,23 @@ def plot_extracted_box(curve_vals, vardefs):
     # the plotting logic is a bit weird due to the way go.Box() works:
     # -we first consolidate one variable's data from all sessions into a 1-d array
     # -this is done separately for L/R context
-    # -the consolidated data is then plotted along with the session identifier
+    # -the consolidated data is then plotted along with the session identifiers
     for row, vardef in enumerate(vardefs):
         for ctxt in 'LR':
             vals = list()
-            sessionnames = list()
+            groupnames = list()
             vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
             for session, session_vals in curve_vals.items():
                 this_vals = _nested_get(session_vals, vardef_ctxt)
                 vals.extend(this_vals)
-                sessiondir = op.split(session)[-1]
-                sessionnames.extend([sessiondir] * len(this_vals))
+                # do not add session label on x axis if we only have a single session
+                label = op.split(session)[-1] if len(curve_vals) > 1 else ''
+                groupnames.extend([label] * len(this_vals))
             # show entry in legend only if it was not already shown
             show_legend = ctxt not in legendgroups
             legendgroups.add(ctxt)
-
             box = go.Box(
-                x=sessionnames,
+                x=groupnames,
                 y=vals,
                 boxpoints=False,
                 name=ctxt,
@@ -94,17 +94,22 @@ def plot_extracted_box(curve_vals, vardefs):
                 marker_color=cfg.plot.context_colors[ctxt],
             )
             fig.append_trace(box, row=row + 1, col=1)
-            xlabel = _plotly_var_ylabel(vardef_ctxt[0])
+            ylabel = _plotly_var_ylabel(vardef_ctxt[0])
             xaxis, yaxis = _get_plotly_axis_labels(row, 0, ncols=1)
             fig['layout'][yaxis].update(
                 title={
-                    'text': xlabel,
+                    'font': {'size': cfg.plot_plotly.label_fontsize},                    
+                    'text': ylabel,
                     'standoff': 0,
                 }
             )
+    # group together boxes of the different traces for each value of x            
     fig.update_layout(
-        boxmode='group'  # group together boxes of the different traces for each value of x
+        boxmode='group'
     )
+    # set subplot title font size
+    for anno in fig['layout']['annotations']:
+        anno['font']['size'] = cfg.plot_plotly.subtitle_fontsize
     return fig
 
 

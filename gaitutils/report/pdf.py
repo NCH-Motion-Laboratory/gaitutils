@@ -12,7 +12,7 @@ import io
 import os.path as op
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 from .. import cfg, sessionutils, normaldata, GaitDataError, trial, models, stats
 from ulstools.num import age_from_hetu
@@ -84,7 +84,7 @@ def create_report(
         Patient info dict.
     pages : dict, optional
         Which pages to include to include in report. Set value to True for
-        desired pages. Currently supported keys:
+        desired pages. If None, do all pages. Currently supported keys:
         'TrialVelocity'
         'TimeDistAverage'
         'KinematicsCons'
@@ -252,6 +252,7 @@ def create_report(
     # tables of curve extracted values
     figs_extracted = list()
     if pages['Extracted']:
+        logger.debug('plotting curve extracted values')
         allvars = [
             vardef[0] for vardefs in cfg.report.vardefs.values() for vardef in vardefs
         ]
@@ -329,13 +330,15 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
     elif not any(pages.values()):
         raise GaitDataError('No pages to print')
 
-    # check for kinetics
-    trials_dict = {
-        session: sessionutils._get_tagged_dynamic_c3ds_from_sessions(
+    # gather trials and check for kinetics
+    trials_dict = OrderedDict()  # Py2: preserve session ordering
+    for session in sessionpaths:
+        trials_dict[session] = sessionutils._get_tagged_dynamic_c3ds_from_sessions(
             session, tags=cfg.eclipse.tags
-        ) for session in sessionpaths
-    }
-    alltrials = (trial.Trial(t) for t in itertools.chain.from_iterable(trials_dict.values()))
+        )
+    alltrials = (
+        trial.Trial(t) for t in itertools.chain.from_iterable(trials_dict.values())
+    )
     any_kinetics = any(c.on_forceplate for t in alltrials for c in t.cycles)
 
     # compose a name for the resulting pdf; it will be saved in the first session dir
@@ -441,15 +444,17 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
     # tables of curve extracted values
     figs_extracted = list()
     if pages['Extracted']:
+        logger.debug('plotting curve extracted values')
         allvars = [
             vardef[0] for vardefs in cfg.report.vardefs.values() for vardef in vardefs
         ]
         from_models = set(models.model_from_var(var) for var in allvars)
-        curve_vals = {
-            session: stats._trials_extract_values(
-                trials, from_models=from_models
-            ) for session, trials in trials_dict.items()
-        }
+        curve_vals = OrderedDict(
+            [
+                (session, stats._trials_extract_values(trials, from_models=from_models))
+                for session, trials in trials_dict.items()
+            ]
+        )
         for title, vardefs in cfg.report.vardefs.items():
             fig = _plot_extracted_table_plotly(curve_vals, vardefs)
             fig.tight_layout()

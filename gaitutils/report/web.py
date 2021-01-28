@@ -340,9 +340,13 @@ def dash_report(
 
             # prepare for the curve-extracted value plots
             logger.debug('extracting values for curve-extracted plots...')
+            # Py2: the tuple->OrderedDict trick is used in pdf.py to preserve the
+            # ordering of plots under Py2; it isn't really be necessary here
+            # since page_layouts defines the order
+            vardefs_dict = OrderedDict(cfg.report.vardefs)
             allvars = [
                 vardef[0]
-                for vardefs in cfg.report.vardefs.values()
+                for vardefs in vardefs_dict.values()
                 for vardef in vardefs
             ]
             from_models = set(models.model_from_var(var) for var in allvars)
@@ -372,6 +376,7 @@ def dash_report(
         # a gaitutils configured layout name;
         # alternatively the first element can be 'layout' and the second element a
         # valid gaitutils layout
+        # Py2: we need to use tuple->OrderedDict to preserve the ordering
         page_layouts = OrderedDict(cfg.web_report.page_layouts)
 
         # pick desired single variables from model and append
@@ -505,7 +510,7 @@ def dash_report(
                                 big_fonts=True,
                             )
                         elif layout_spec[0] == 'curve_extracted':
-                            the_vardefs = cfg.report.vardefs[layout_spec[1]]
+                            the_vardefs = vardefs_dict[layout_spec[1]]
                             figdata = plot_extracted_box(curve_vals, the_vardefs)
                         else:
                             raise Exception(

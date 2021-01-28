@@ -252,9 +252,10 @@ def create_report(
     # tables of curve extracted values
     figs_extracted = list()
     if pages['Extracted']:
+        vardefs_dict = OrderedDict(cfg.report.vardefs)        
         logger.debug('plotting curve extracted values')
         allvars = [
-            vardef[0] for vardefs in cfg.report.vardefs.values() for vardef in vardefs
+            vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs
         ]
         from_models = set(models.model_from_var(var) for var in allvars)
         curve_vals = {
@@ -262,7 +263,7 @@ def create_report(
                 tagged_trials, from_models=from_models
             )
         }
-        for title, vardefs in cfg.report.vardefs.items():
+        for title, vardefs in vardefs_dict.items():
             fig = _plot_extracted_table_plotly(curve_vals, vardefs)
             fig.tight_layout()
             fig.set_dpi(300)
@@ -444,9 +445,10 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
     # tables of curve extracted values
     figs_extracted = list()
     if pages['Extracted']:
+        vardefs_dict = OrderedDict(cfg.report.vardefs)
         logger.debug('plotting curve extracted values')
         allvars = [
-            vardef[0] for vardefs in cfg.report.vardefs.values() for vardef in vardefs
+            vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs
         ]
         from_models = set(models.model_from_var(var) for var in allvars)
         curve_vals = OrderedDict(
@@ -455,7 +457,7 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
                 for session, trials in trials_dict.items()
             ]
         )
-        for title, vardefs in cfg.report.vardefs.items():
+        for title, vardefs in vardefs_dict.items():
             fig = _plot_extracted_table_plotly(curve_vals, vardefs)
             fig.tight_layout()
             fig.set_dpi(300)

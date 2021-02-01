@@ -74,7 +74,7 @@ def plot_extracted_box(curve_vals, vardefs):
             vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
             for session, session_vals in curve_vals.items():
                 if vardef_ctxt[0] not in session_vals:
-                    logger.debug('%s was not collected for this session')
+                    logger.debug('%s was not collected for this session' % vardef_ctxt[0])
                     continue
                 this_vals = _nested_get(session_vals, vardef_ctxt)
                 vals.extend(this_vals)

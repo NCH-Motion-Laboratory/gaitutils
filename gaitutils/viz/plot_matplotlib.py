@@ -92,6 +92,9 @@ def _plot_extracted_table_plotly(curve_vals, vardefs):
         for session_vals in curve_vals.values():
             for ctxt in ctxts:
                 vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
+                if vardef_ctxt[0] not in session_vals:
+                    logger.debug('%s was not collected for this session' % vardef_ctxt[0])
+                    continue
                 this_vals = _nested_get(
                     session_vals, vardef_ctxt
                 )  # returns list of values for given session and context = column

@@ -15,8 +15,8 @@ from matplotlib.figure import Figure
 from collections import defaultdict, OrderedDict
 
 from .. import cfg, sessionutils, normaldata, GaitDataError, trial, models, stats
+from ..viz import timedist
 from ulstools.num import age_from_hetu
-from ..viz.timedist import plot_session_average, plot_comparison
 from ..timedist import _session_analysis_text_finnish
 from ..viz.plots import _plot_sessions, _plot_session_average, plot_trial_velocities
 from ..viz.plot_matplotlib import _plot_extracted_table_plotly
@@ -173,7 +173,7 @@ def create_report(
     fig_timedist_avg = None
     if pages['TimeDistAverage']:
         logger.debug('creating time-distance plot')
-        fig_timedist_avg = _plot_session_average(sessionpath, backend=pdf_backend)
+        fig_timedist_avg = timedist.plot_session_average(sessionpath, backend=pdf_backend)
 
     # time-dist text
     _timedist_txt = _session_analysis_text_finnish(sessionpath)
@@ -376,7 +376,7 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
     emg_mode = 'rms' if cfg.report.comparison_emg_rms else None
 
     fig_timedist = (
-        plot_comparison(sessionpaths, backend=pdf_backend)
+        timedist.plot_comparison(sessionpaths, backend=pdf_backend)
         if pages['TimeDist']
         else None
     )

@@ -322,6 +322,9 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
         A status message.
     """
 
+    if len(sessionpaths) <= 1:
+        raise GaitDataError('need at least two sessions')
+
     if info is None:
         info = defaultdict(lambda: '')
 

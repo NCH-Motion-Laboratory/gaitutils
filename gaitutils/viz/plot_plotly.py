@@ -73,6 +73,9 @@ def plot_extracted_box(curve_vals, vardefs):
             groupnames = list()
             vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
             for session, session_vals in curve_vals.items():
+                if vardef_ctxt[0] not in session_vals:
+                    logger.debug('%s was not collected for this session')
+                    continue
                 this_vals = _nested_get(session_vals, vardef_ctxt)
                 vals.extend(this_vals)
                 # do not add session label on x axis if we only have a single session

@@ -9,10 +9,12 @@ import itertools
 
 import logging
 import io
+import numpy as np
 import os.path as op
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from collections import defaultdict, OrderedDict
+
 
 from .. import cfg, sessionutils, normaldata, GaitDataError, trial, models, stats
 from ..viz import timedist
@@ -20,6 +22,12 @@ from ulstools.num import age_from_hetu
 from ..timedist import _session_analysis_text_finnish
 from ..viz.plots import _plot_sessions, _plot_session_average, plot_trial_velocities
 from ..viz.plot_matplotlib import _plot_extracted_table_plotly
+from ..viz.plot_common import (
+    _compose_varname,
+    _nested_get,
+    _var_unit,
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +79,39 @@ def _savefig(pdf, fig, header=None, footer=None):
     pdf.savefig(fig)
 
 
+def _curve_extracted_text(curve_vals, vardefs, title):
+    """Write out curve extracted values as textual tables. Yields rows of text."""
+    yield '\n%s\n' % title
+    rowtitle_maxlen = max(len(_compose_varname(vardef)) for vardef in vardefs)
+    for vardef in vardefs:
+        row = _compose_varname(vardef).ljust(rowtitle_maxlen + 5)
+        for session_vals in curve_vals.values():
+            for ctxt in 'LR':
+                vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
+                if vardef_ctxt[0] not in session_vals:
+                    logger.debug(
+                        '%s was not collected for this session' % vardef_ctxt[0]
+                    )
+                    continue
+                this_vals = _nested_get(session_vals, vardef_ctxt)
+                mean, std = np.mean(this_vals), np.std(this_vals)
+                unit = _var_unit(vardef_ctxt)
+                if unit == 'deg':
+                    unit = u'\u00B0'  # Unicode degree sign
+                else:
+                    unit = ' ' + unit
+                element = u'%s: %.2f±%.2f%s' % (ctxt, mean, std, unit)
+                row += element.ljust(25)
+        yield row
+
+
 def create_report(
-    sessionpath, info=None, pages=None, destdir=None, write_timedist=False
+    sessionpath,
+    info=None,
+    pages=None,
+    destdir=None,
+    write_timedist=False,
+    write_extracted=False,
 ):
     """Create a single-session pdf report.
 
@@ -96,6 +135,9 @@ def create_report(
     write_timedist : bool
         If True, also write a text report of time-distance parameters into the
         same directory as the pdf.
+    write_extracted : bool
+        If True, also write a text report of curve extracted values into the
+        same directory as the pdf.
 
     Returns
     -------
@@ -110,7 +152,7 @@ def create_report(
     if pages is None:
         pages = defaultdict(lambda: True)  # default: do all plots
     elif not any(pages.values()):
-        raise ValueError('No pages to print')
+        pages = defaultdict(lambda: False)
 
     do_emg_consistency = True
 
@@ -173,10 +215,9 @@ def create_report(
     fig_timedist_avg = None
     if pages['TimeDistAverage']:
         logger.debug('creating time-distance plot')
-        fig_timedist_avg = timedist.plot_session_average(sessionpath, backend=pdf_backend)
-
-    # time-dist text
-    _timedist_txt = _session_analysis_text_finnish(sessionpath)
+        fig_timedist_avg = timedist.plot_session_average(
+            sessionpath, backend=pdf_backend
+        )
 
     # for next 2 plots, disable the legends (there are typically too many cycles)
     # kin consistency
@@ -249,20 +290,21 @@ def create_report(
             backend=pdf_backend,
         )
 
-    # tables of curve extracted values
-    figs_extracted = list()
-    if pages['Extracted']:
-        vardefs_dict = OrderedDict(cfg.report.vardefs)        
-        logger.debug('plotting curve extracted values')
-        allvars = [
-            vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs
-        ]
+    # prep for extracted values if needed
+    if pages['Extracted'] or write_extracted:
+        vardefs_dict = OrderedDict(cfg.report.vardefs)
+        allvars = [vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs]
         from_models = set(models.model_from_var(var) for var in allvars)
         curve_vals = {
             sessionpath: stats._trials_extract_values(
                 tagged_trials, from_models=from_models
             )
         }
+
+    # tables of curve extracted values
+    figs_extracted = list()
+    if pages['Extracted']:
+        logger.debug('plotting curve extracted values')
         for title, vardefs in vardefs_dict.items():
             fig = _plot_extracted_table_plotly(curve_vals, vardefs)
             fig.tight_layout()
@@ -286,11 +328,26 @@ def create_report(
 
     # save the time-distance parameters into a text file
     if write_timedist:
+        _timedist_txt = _session_analysis_text_finnish(sessionpath)
         timedist_txt_file = sessiondir + '_time_distance.txt'
         timedist_txt_path = op.join(destdir, timedist_txt_file)
         with io.open(timedist_txt_path, 'w', encoding='utf8') as f:
             logger.debug('writing timedist text data into %s' % timedist_txt_path)
             f.write(_timedist_txt)
+
+    # save the curve extraced values into a text file
+    if write_extracted:
+        alltext = ''
+        for title, vardefs in vardefs_dict.items():
+            _extracted_txt = '\n'.join(
+                _curve_extracted_text(curve_vals, vardefs, title)
+            )
+            alltext += _extracted_txt + '\n\n'
+        extracted_txt_file = sessiondir + '_curve_values.txt'
+        extracted_txt_path = op.join(destdir, extracted_txt_file)
+        with io.open(extracted_txt_path, 'w', encoding='utf8') as f:
+            logger.debug('writing extracted text data into %s' % extracted_txt_path)
+            f.write(alltext)
 
     return 'Created %s' % pdfpath
 
@@ -450,9 +507,7 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
     if pages['Extracted']:
         vardefs_dict = OrderedDict(cfg.report.vardefs)
         logger.debug('plotting curve extracted values')
-        allvars = [
-            vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs
-        ]
+        allvars = [vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs]
         from_models = set(models.model_from_var(var) for var in allvars)
         curve_vals = OrderedDict(
             [

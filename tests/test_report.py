@@ -37,7 +37,7 @@ def test_pdf_report():
         os.remove(pdfpath)
     if op.isfile(timedist_path):
         os.remove(timedist_path)
-    pdf.create_report(sessiondir_abs, destdir=tmpdir, write_timedist=True)
+    pdf.create_report(sessiondir_abs, destdir=tmpdir, write_timedist=True, write_extracted=True)
     assert op.isfile(pdfpath)
     assert op.isfile(timedist_path)
 

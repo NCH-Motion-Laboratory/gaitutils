@@ -81,11 +81,13 @@ def _savefig(pdf, fig, header=None, footer=None):
 
 def _curve_extracted_text(curve_vals, vardefs, title):
     """Write out curve extracted values as textual tables. Yields rows of text."""
+    COL_WIDTH = 25  # chars
     yield '\n%s\n' % title
     rowtitle_maxlen = max(len(_compose_varname(vardef)) for vardef in vardefs)
+    yield 'L'.rjust(rowtitle_maxlen + COL_WIDTH/2) + 'R'.rjust(COL_WIDTH)
     for vardef in vardefs:
         row = _compose_varname(vardef).ljust(rowtitle_maxlen + 5)
-        for session_vals in curve_vals.values():
+        for session, session_vals in curve_vals.values():
             for ctxt in 'LR':
                 vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
                 if vardef_ctxt[0] not in session_vals:
@@ -100,8 +102,8 @@ def _curve_extracted_text(curve_vals, vardefs, title):
                     unit = u'\u00B0'  # Unicode degree sign
                 else:
                     unit = ' ' + unit
-                element = u'%s: %.2f±%.2f%s' % (ctxt, mean, std, unit)
-                row += element.ljust(25)
+                element = u'%.2f±%.2f%s' % (mean, std, unit)
+                row += element.ljust(COL_WIDTH)
         yield row
 
 

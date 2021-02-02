@@ -9,17 +9,19 @@ import itertools
 
 import logging
 import io
+import numpy as np
 import os.path as op
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from collections import defaultdict, OrderedDict
 
-from .. import cfg, sessionutils, normaldata, GaitDataError, trial, models, stats
+from .. import cfg, sessionutils, normaldata, GaitDataError, trial, models, stats, utils
 from ..viz import timedist
 from ulstools.num import age_from_hetu
-from ..timedist import _session_analysis_text_finnish
 from ..viz.plots import _plot_sessions, _plot_session_average, plot_trial_velocities
 from ..viz.plot_matplotlib import _plot_extracted_table_plotly
+from .text import _curve_extracted_text, _session_analysis_text_finnish
+
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +74,12 @@ def _savefig(pdf, fig, header=None, footer=None):
 
 
 def create_report(
-    sessionpath, info=None, pages=None, destdir=None, write_timedist=False
+    sessionpath,
+    info=None,
+    pages=None,
+    destdir=None,
+    write_timedist=False,
+    write_extracted=False,
 ):
     """Create a single-session pdf report.
 
@@ -96,6 +103,9 @@ def create_report(
     write_timedist : bool
         If True, also write a text report of time-distance parameters into the
         same directory as the pdf.
+    write_extracted : bool
+        If True, also write a text report of curve extracted values into the
+        same directory as the pdf.
 
     Returns
     -------
@@ -110,7 +120,7 @@ def create_report(
     if pages is None:
         pages = defaultdict(lambda: True)  # default: do all plots
     elif not any(pages.values()):
-        raise ValueError('No pages to print')
+        pages = defaultdict(lambda: False)
 
     do_emg_consistency = True
 
@@ -173,10 +183,9 @@ def create_report(
     fig_timedist_avg = None
     if pages['TimeDistAverage']:
         logger.debug('creating time-distance plot')
-        fig_timedist_avg = timedist.plot_session_average(sessionpath, backend=pdf_backend)
-
-    # time-dist text
-    _timedist_txt = _session_analysis_text_finnish(sessionpath)
+        fig_timedist_avg = timedist.plot_session_average(
+            sessionpath, backend=pdf_backend
+        )
 
     # for next 2 plots, disable the legends (there are typically too many cycles)
     # kin consistency
@@ -249,20 +258,21 @@ def create_report(
             backend=pdf_backend,
         )
 
-    # tables of curve extracted values
-    figs_extracted = list()
-    if pages['Extracted']:
-        vardefs_dict = OrderedDict(cfg.report.vardefs)        
-        logger.debug('plotting curve extracted values')
-        allvars = [
-            vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs
-        ]
+    # prep for extracted values if needed
+    if pages['Extracted'] or write_extracted:
+        vardefs_dict = OrderedDict(cfg.report.vardefs)
+        allvars = [vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs]
         from_models = set(models.model_from_var(var) for var in allvars)
         curve_vals = {
-            sessionpath: stats._trials_extract_values(
+            op.split(sessionpath)[-1]: stats._trials_extract_values(
                 tagged_trials, from_models=from_models
             )
         }
+
+    # tables of curve extracted values
+    figs_extracted = list()
+    if pages['Extracted']:
+        logger.debug('plotting curve extracted values')
         for title, vardefs in vardefs_dict.items():
             fig = _plot_extracted_table_plotly(curve_vals, vardefs)
             fig.tight_layout()
@@ -286,16 +296,28 @@ def create_report(
 
     # save the time-distance parameters into a text file
     if write_timedist:
+        _timedist_txt = _session_analysis_text_finnish(sessionpath)
         timedist_txt_file = sessiondir + '_time_distance.txt'
         timedist_txt_path = op.join(destdir, timedist_txt_file)
         with io.open(timedist_txt_path, 'w', encoding='utf8') as f:
             logger.debug('writing timedist text data into %s' % timedist_txt_path)
             f.write(_timedist_txt)
 
+    # save the curve extraced values into a text file
+    if write_extracted:
+        extracted_txt = '\n'.join(_curve_extracted_text(curve_vals, vardefs_dict))
+        extracted_txt_file = sessiondir + '_curve_values.txt'
+        extracted_txt_path = op.join(destdir, extracted_txt_file)
+        with io.open(extracted_txt_path, 'w', encoding='utf8') as f:
+            logger.debug('writing extracted text data into %s' % extracted_txt_path)
+            f.write(extracted_txt)
+
     return 'Created %s' % pdfpath
 
 
-def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
+def create_comparison_report(
+    sessionpaths, info=None, pages=None, destdir=None, write_extracted=False
+):
     """Create a comparison pdf report.
 
     Parameters
@@ -332,7 +354,7 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
         # if no pages specified, do them all
         pages = defaultdict(lambda: True)
     elif not any(pages.values()):
-        raise GaitDataError('No pages to print')
+        pages = defaultdict(lambda: False)
 
     # gather trials and check for kinetics
     trials_dict = OrderedDict()  # Py2: preserve session ordering
@@ -445,21 +467,25 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
         else None
     )
 
-    # tables of curve extracted values
-    figs_extracted = list()
-    if pages['Extracted']:
+    # prep for extracted values if needed
+    if pages['Extracted'] or write_extracted:
         vardefs_dict = OrderedDict(cfg.report.vardefs)
-        logger.debug('plotting curve extracted values')
-        allvars = [
-            vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs
-        ]
+        allvars = [vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs]
         from_models = set(models.model_from_var(var) for var in allvars)
         curve_vals = OrderedDict(
             [
-                (session, stats._trials_extract_values(trials, from_models=from_models))
+                (
+                    op.split(session)[-1],
+                    stats._trials_extract_values(trials, from_models=from_models),
+                )
                 for session, trials in trials_dict.items()
             ]
         )
+
+    # tables of curve extracted values
+    figs_extracted = list()
+    if pages['Extracted']:
+        logger.debug('plotting curve extracted values')
         for title, vardefs in vardefs_dict.items():
             fig = _plot_extracted_table_plotly(curve_vals, vardefs)
             fig.tight_layout()
@@ -478,5 +504,15 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
         _savefig(pdf, fig_emg, header)
         for fig in figs_extracted:
             _savefig(pdf, fig, header)
+
+    # save the curve extraced values into a text file
+    if write_extracted:
+        extracted_txt = '\n'.join(_curve_extracted_text(curve_vals, vardefs_dict))
+        extracted_txt_file = ' VS '.join(op.split(sp)[1] for sp in sessionpaths)
+        extracted_txt_file += '_curve_values.txt'
+        extracted_txt_path = op.join(destdir, extracted_txt_file)
+        with io.open(extracted_txt_path, 'w', encoding='utf8') as f:
+            logger.debug('writing extracted text data into %s' % extracted_txt_path)
+            f.write(extracted_txt)
 
     return 'Created %s\nin %s' % (pdfname, sessionpath)

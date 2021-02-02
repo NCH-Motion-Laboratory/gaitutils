@@ -19,7 +19,6 @@ import plotly.graph_objs as go
 import plotly.io as pio
 import numpy as np
 import logging
-import os.path as op
 import io
 
 from .plot_common import (
@@ -37,7 +36,7 @@ from .plot_common import (
     _nested_get,
     _var_unit,
 )
-from .. import models, normaldata
+from .. import models, normaldata, utils
 from ..config import cfg
 from ..envutils import GaitDataError
 from ..stats import AvgTrial
@@ -49,15 +48,19 @@ logger = logging.getLogger(__name__)
 
 def _plot_extracted_table(curve_vals, vardefs):
     """Plot comparison of extracted gait curve values as a table."""
-    col_labels = [op.split(session)[-1] for session in curve_vals.keys()]
+    contexts = utils.get_contexts()
+    col_labels = list(curve_vals.keys())
     row_labels = [_compose_varname(vardef) for vardef in vardefs]
     table = list()
     for vardef in vardefs:
         row = list()
         for session_vals in curve_vals.values():
             element = ''
-            for ctxt in 'LR':
+            for ctxt, _ in contexts:
                 vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
+                if vardef_ctxt[0] not in session_vals:
+                    logger.debug('%s was not collected for this session' % vardef_ctxt[0])
+                    continue
                 this_vals = _nested_get(
                     session_vals, vardef_ctxt
                 )  # returns list of values for given session and context = column
@@ -74,14 +77,14 @@ def _plot_extracted_table(curve_vals, vardefs):
 
 
 def _plot_extracted_table_plotly(curve_vals, vardefs):
-    """Plot comparison of extracted gait curve values as a table."""
-    ctxts = 'LR'
+    """Plot comparison of extracted gait curve values as a table, using Plotly as backend."""
+    contexts = utils.get_contexts()
     # make a nested list of column headers; first row is session, second row is context
-    session_labels = [op.split(session)[-1] for session in curve_vals.keys()]
+    session_labels = list(curve_vals.keys())
     col_labels_1 = list(
         itertools.chain.from_iterable(zip(session_labels, itertools.repeat('')))
     )
-    context_cycle = itertools.cycle(ctxts)
+    context_cycle = itertools.cycle(c[0] for c in contexts)
     col_labels_2 = [next(context_cycle) for k in col_labels_1]
     # transpose
     col_labels = list(zip(col_labels_1, col_labels_2))
@@ -90,7 +93,7 @@ def _plot_extracted_table_plotly(curve_vals, vardefs):
     for vardef in vardefs:
         row = list()
         for session_vals in curve_vals.values():
-            for ctxt in ctxts:
+            for ctxt, _ in contexts:
                 vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
                 if vardef_ctxt[0] not in session_vals:
                     logger.debug('%s was not collected for this session' % vardef_ctxt[0])

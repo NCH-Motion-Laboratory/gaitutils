@@ -14,7 +14,6 @@ from functools import partial
 import sys
 
 import numpy as np
-import os.path as op
 import plotly
 import plotly.graph_objs as go
 from plotly.matplotlylib.mpltools import merge_color_and_opacity
@@ -25,7 +24,7 @@ from ..envutils import GaitDataError
 from ..config import cfg
 from ..stats import AvgTrial
 from ..timedist import _pick_common_vars
-from .. import models, normaldata
+from .. import models, normaldata, utils
 from . import layouts
 from .plot_common import (
     _get_cycle_name,
@@ -58,6 +57,7 @@ def plot_extracted_box(curve_vals, vardefs):
         The curve extracted data, keyed by session.
     """
 
+    contexts = utils.get_contexts()
     nvars = len(vardefs)
     subtitles = [_compose_varname(nested_keys) for nested_keys in vardefs]
     fig = plotly.subplots.make_subplots(rows=nvars, cols=1, subplot_titles=subtitles)
@@ -68,7 +68,7 @@ def plot_extracted_box(curve_vals, vardefs):
     # -this is done separately for L/R context
     # -the consolidated data is then plotted along with the session identifiers
     for row, vardef in enumerate(vardefs):
-        for ctxt in 'LR':
+        for ctxt, _ in contexts:
             vals = list()
             groupnames = list()
             vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
@@ -79,7 +79,7 @@ def plot_extracted_box(curve_vals, vardefs):
                 this_vals = _nested_get(session_vals, vardef_ctxt)
                 vals.extend(this_vals)
                 # do not add session label on x axis if we only have a single session
-                label = op.split(session)[-1] if len(curve_vals) > 1 else ''
+                label = session if len(curve_vals) > 1 else ''
                 groupnames.extend([label] * len(this_vals))
             # show entry in legend only if it was not already shown
             show_legend = ctxt not in legendgroups

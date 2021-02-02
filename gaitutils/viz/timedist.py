@@ -13,7 +13,8 @@ from collections import OrderedDict
 from ..envutils import GaitDataError
 from ..config import cfg
 from .. import sessionutils
-from ..timedist import _timedist_vars, _group_analysis_trials
+from ..timedist import _group_analysis_trials
+from ..report.text import _timedist_vars
 from .plot_misc import get_backend
 
 logger = logging.getLogger(__name__)

@@ -15,6 +15,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from collections import defaultdict, OrderedDict
 
+from numpy.core.fromnumeric import var
+
 
 from .. import cfg, sessionutils, normaldata, GaitDataError, trial, models, stats
 from ..viz import timedist
@@ -79,32 +81,51 @@ def _savefig(pdf, fig, header=None, footer=None):
     pdf.savefig(fig)
 
 
-def _curve_extracted_text(curve_vals, vardefs, title):
-    """Write out curve extracted values as textual tables. Yields rows of text."""
-    COL_WIDTH = 20  # chars
-    yield '\n%s\n' % title
-    rowtitle_len = max(len(_compose_varname(vardef)) for vardef in vardefs) + 5
-    yield ' ' * rowtitle_len + 'Left'.ljust(COL_WIDTH) + 'Right'.ljust(COL_WIDTH)
-    for vardef in vardefs:
-        row = _compose_varname(vardef).ljust(rowtitle_len)
+def _curve_extracted_text(curve_vals, vardefs_dict):
+    """Write out curve extracted values as textual tables.
+
+    Works for single and multiple sessions.
+    Yields table rows. Use '\n'.join(output_generator) to create the table.
+    """
+    # write out main title
+    is_comparison = len(curve_vals) > 1
+    sessions_str = ' vs. '.join(op.split(sp)[-1] for sp in curve_vals.keys())
+    yield '\nCurve extracted values for %s' % sessions_str
+    # write the pages
+    for title, vardefs in vardefs_dict.items():
+        COL_WIDTH = 20  # chars
+        # the page title
+        yield '\n%s' % title
+        yield '-' * len(title)
+        rowtitle_len = max(len(_compose_varname(vardef)) for vardef in vardefs) + 5
         for session, session_vals in curve_vals.items():
-            for ctxt in 'LR':
-                vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
-                if vardef_ctxt[0] not in session_vals:
-                    logger.debug(
-                        '%s was not collected for this session' % vardef_ctxt[0]
-                    )
-                    continue
-                this_vals = _nested_get(session_vals, vardef_ctxt)
-                mean, std = np.mean(this_vals), np.std(this_vals)
-                unit = _var_unit(vardef_ctxt)
-                if unit == 'deg':
-                    unit = u'\u00B0'  # Unicode degree sign
-                else:
-                    unit = ' ' + unit
-                element = u'%.2f±%.2f%s' % (mean, std, unit)
-                row += element.ljust(COL_WIDTH)
-        yield row
+            # session header (only for multiple sessions)
+            if is_comparison:
+                yield '\n%s:\n' % session
+            # context header
+            yield ' ' * rowtitle_len + 'Left'.ljust(COL_WIDTH) + 'Right'.ljust(
+                COL_WIDTH
+            )
+            for vardef in vardefs:
+                # output rows consisting of variable desc followed by L/R values
+                row = _compose_varname(vardef).ljust(rowtitle_len)
+                for ctxt in 'LR':
+                    vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
+                    if vardef_ctxt[0] not in session_vals:
+                        logger.debug(
+                            '%s was not collected for this session' % vardef_ctxt[0]
+                        )
+                        continue
+                    this_vals = _nested_get(session_vals, vardef_ctxt)
+                    mean, std = np.mean(this_vals), np.std(this_vals)
+                    unit = _var_unit(vardef_ctxt)
+                    if unit == 'deg':
+                        unit = u'\u00B0'  # Unicode degree sign
+                    else:
+                        unit = ' ' + unit
+                    element = u'%.2f±%.2f%s' % (mean, std, unit)
+                    row += element.ljust(COL_WIDTH)
+                yield row
 
 
 def create_report(
@@ -339,22 +360,19 @@ def create_report(
 
     # save the curve extraced values into a text file
     if write_extracted:
-        alltext = ''
-        for title, vardefs in vardefs_dict.items():
-            _extracted_txt = '\n'.join(
-                _curve_extracted_text(curve_vals, vardefs, title)
-            )
-            alltext += _extracted_txt + '\n\n'
+        extracted_txt = '\n'.join(_curve_extracted_text(curve_vals, vardefs_dict))
         extracted_txt_file = sessiondir + '_curve_values.txt'
         extracted_txt_path = op.join(destdir, extracted_txt_file)
         with io.open(extracted_txt_path, 'w', encoding='utf8') as f:
             logger.debug('writing extracted text data into %s' % extracted_txt_path)
-            f.write(alltext)
+            f.write(extracted_txt)
 
     return 'Created %s' % pdfpath
 
 
-def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
+def create_comparison_report(
+    sessionpaths, info=None, pages=None, destdir=None, write_extracted=False
+):
     """Create a comparison pdf report.
 
     Parameters
@@ -391,7 +409,7 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
         # if no pages specified, do them all
         pages = defaultdict(lambda: True)
     elif not any(pages.values()):
-        raise GaitDataError('No pages to print')
+        pages = defaultdict(lambda: False)
 
     # gather trials and check for kinetics
     trials_dict = OrderedDict()  # Py2: preserve session ordering
@@ -504,11 +522,9 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
         else None
     )
 
-    # tables of curve extracted values
-    figs_extracted = list()
-    if pages['Extracted']:
+    # prep for extracted values if needed
+    if pages['Extracted'] or write_extracted:
         vardefs_dict = OrderedDict(cfg.report.vardefs)
-        logger.debug('plotting curve extracted values')
         allvars = [vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs]
         from_models = set(models.model_from_var(var) for var in allvars)
         curve_vals = OrderedDict(
@@ -517,6 +533,11 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
                 for session, trials in trials_dict.items()
             ]
         )
+
+    # tables of curve extracted values
+    figs_extracted = list()
+    if pages['Extracted']:
+        logger.debug('plotting curve extracted values')
         for title, vardefs in vardefs_dict.items():
             fig = _plot_extracted_table_plotly(curve_vals, vardefs)
             fig.tight_layout()
@@ -535,5 +556,15 @@ def create_comparison_report(sessionpaths, info=None, pages=None, destdir=None):
         _savefig(pdf, fig_emg, header)
         for fig in figs_extracted:
             _savefig(pdf, fig, header)
+
+    # save the curve extraced values into a text file
+    if write_extracted:
+        extracted_txt = '\n'.join(_curve_extracted_text(curve_vals, vardefs_dict))
+        extracted_txt_file = ' VS '.join(op.split(sp)[1] for sp in sessionpaths)        
+        extracted_txt_file += '_curve_values.txt'
+        extracted_txt_path = op.join(destdir, extracted_txt_file)
+        with io.open(extracted_txt_path, 'w', encoding='utf8') as f:
+            logger.debug('writing extracted text data into %s' % extracted_txt_path)
+            f.write(extracted_txt)
 
     return 'Created %s\nin %s' % (pdfname, sessionpath)

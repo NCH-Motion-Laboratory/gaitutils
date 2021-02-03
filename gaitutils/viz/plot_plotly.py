@@ -14,7 +14,6 @@ from functools import partial
 import sys
 
 import numpy as np
-import os.path as op
 import plotly
 import plotly.graph_objs as go
 from plotly.matplotlylib.mpltools import merge_color_and_opacity
@@ -79,7 +78,7 @@ def plot_extracted_box(curve_vals, vardefs):
                 this_vals = _nested_get(session_vals, vardef_ctxt)
                 vals.extend(this_vals)
                 # do not add session label on x axis if we only have a single session
-                label = op.split(session)[-1] if len(curve_vals) > 1 else ''
+                label = session if len(curve_vals) > 1 else ''
                 groupnames.extend([label] * len(this_vals))
             # show entry in legend only if it was not already shown
             show_legend = ctxt not in legendgroups

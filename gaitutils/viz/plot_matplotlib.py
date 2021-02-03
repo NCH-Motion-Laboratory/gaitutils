@@ -19,7 +19,6 @@ import plotly.graph_objs as go
 import plotly.io as pio
 import numpy as np
 import logging
-import os.path as op
 import io
 
 from .plot_common import (
@@ -49,7 +48,7 @@ logger = logging.getLogger(__name__)
 
 def _plot_extracted_table(curve_vals, vardefs):
     """Plot comparison of extracted gait curve values as a table."""
-    col_labels = [op.split(session)[-1] for session in curve_vals.keys()]
+    col_labels = list(curve_vals.keys())
     row_labels = [_compose_varname(vardef) for vardef in vardefs]
     table = list()
     for vardef in vardefs:
@@ -80,7 +79,7 @@ def _plot_extracted_table_plotly(curve_vals, vardefs):
     """Plot comparison of extracted gait curve values as a table."""
     ctxts = 'LR'
     # make a nested list of column headers; first row is session, second row is context
-    session_labels = [op.split(session)[-1] for session in curve_vals.keys()]
+    session_labels = list(curve_vals.keys())
     col_labels_1 = list(
         itertools.chain.from_iterable(zip(session_labels, itertools.repeat('')))
     )

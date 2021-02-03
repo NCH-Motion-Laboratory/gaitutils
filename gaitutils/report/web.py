@@ -354,7 +354,7 @@ def dash_report(
                 raise GaitDataError('unknown variables in extract list: %s' % allvars)
             curve_vals = OrderedDict(
                 [
-                    (session, _trials_extract_values(trials, from_models=from_models))
+                    (op.split(session)[-1], _trials_extract_values(trials, from_models=from_models))
                     for session, trials in trials_dyn_dict.items()
                 ]
             )

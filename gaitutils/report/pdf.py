@@ -15,9 +15,6 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from collections import defaultdict, OrderedDict
 
-from numpy.core.fromnumeric import var
-
-
 from .. import cfg, sessionutils, normaldata, GaitDataError, trial, models, stats
 from ..viz import timedist
 from ulstools.num import age_from_hetu
@@ -89,7 +86,7 @@ def _curve_extracted_text(curve_vals, vardefs_dict):
     """
     # write out main title
     is_comparison = len(curve_vals) > 1
-    sessions_str = ' vs. '.join(op.split(sp)[-1] for sp in curve_vals.keys())
+    sessions_str = ' vs. '.join(curve_vals.keys())
     yield '\nCurve extracted values for %s' % sessions_str
     # write the pages
     for title, vardefs in vardefs_dict.items():
@@ -319,7 +316,7 @@ def create_report(
         allvars = [vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs]
         from_models = set(models.model_from_var(var) for var in allvars)
         curve_vals = {
-            sessionpath: stats._trials_extract_values(
+            op.split(sessionpath)[-1]: stats._trials_extract_values(
                 tagged_trials, from_models=from_models
             )
         }
@@ -529,7 +526,10 @@ def create_comparison_report(
         from_models = set(models.model_from_var(var) for var in allvars)
         curve_vals = OrderedDict(
             [
-                (session, stats._trials_extract_values(trials, from_models=from_models))
+                (
+                    op.split(session)[-1],
+                    stats._trials_extract_values(trials, from_models=from_models),
+                )
                 for session, trials in trials_dict.items()
             ]
         )
@@ -560,7 +560,7 @@ def create_comparison_report(
     # save the curve extraced values into a text file
     if write_extracted:
         extracted_txt = '\n'.join(_curve_extracted_text(curve_vals, vardefs_dict))
-        extracted_txt_file = ' VS '.join(op.split(sp)[1] for sp in sessionpaths)        
+        extracted_txt_file = ' VS '.join(op.split(sp)[1] for sp in sessionpaths)
         extracted_txt_file += '_curve_values.txt'
         extracted_txt_path = op.join(destdir, extracted_txt_file)
         with io.open(extracted_txt_path, 'w', encoding='utf8') as f:

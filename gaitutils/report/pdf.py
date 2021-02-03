@@ -81,13 +81,13 @@ def _savefig(pdf, fig, header=None, footer=None):
 
 def _curve_extracted_text(curve_vals, vardefs, title):
     """Write out curve extracted values as textual tables. Yields rows of text."""
-    COL_WIDTH = 25  # chars
+    COL_WIDTH = 20  # chars
     yield '\n%s\n' % title
-    rowtitle_maxlen = max(len(_compose_varname(vardef)) for vardef in vardefs)
-    yield 'L'.rjust(rowtitle_maxlen + COL_WIDTH/2) + 'R'.rjust(COL_WIDTH)
+    rowtitle_len = max(len(_compose_varname(vardef)) for vardef in vardefs) + 5
+    yield ' ' * rowtitle_len + 'Left'.ljust(COL_WIDTH) + 'Right'.ljust(COL_WIDTH)
     for vardef in vardefs:
-        row = _compose_varname(vardef).ljust(rowtitle_maxlen + 5)
-        for session, session_vals in curve_vals.values():
+        row = _compose_varname(vardef).ljust(rowtitle_len)
+        for session, session_vals in curve_vals.items():
             for ctxt in 'LR':
                 vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
                 if vardef_ctxt[0] not in session_vals:

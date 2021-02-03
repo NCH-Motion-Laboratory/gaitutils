@@ -15,7 +15,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from collections import defaultdict, OrderedDict
 
-from .. import cfg, sessionutils, normaldata, GaitDataError, trial, models, stats
+from .. import cfg, sessionutils, normaldata, GaitDataError, trial, models, stats, utils
 from ..viz import timedist
 from ulstools.num import age_from_hetu
 from ..timedist import _session_analysis_text_finnish
@@ -85,6 +85,8 @@ def _curve_extracted_text(curve_vals, vardefs_dict):
     Yields table rows. Use '\n'.join(_curve_extracted_text(curve_vals, vardefs_dict))
     to create the table.
     """
+    # we use right/left for textual data (consistency with patient system)
+    contexts = utils.get_contexts(right_first=True)
     # write out main title
     is_comparison = len(curve_vals) > 1
     sessions_str = ' vs. '.join(curve_vals.keys())
@@ -101,13 +103,13 @@ def _curve_extracted_text(curve_vals, vardefs_dict):
             if is_comparison:
                 yield '\n%s:' % session
             # context header
-            yield ' ' * rowtitle_len + 'Right'.ljust(COL_WIDTH) + 'Left'.ljust(
-                COL_WIDTH
-            )
+            hdr = ' ' * rowtitle_len
+            hdr += ''.join(ctxt_name.ljust(COL_WIDTH) for _, ctxt_name in contexts)
+            yield hdr
             for vardef in vardefs:
                 # output rows consisting of variable desc followed by R/L values
                 row = _compose_varname(vardef).ljust(rowtitle_len)
-                for ctxt in 'RL':
+                for ctxt, _ in contexts:
                     vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
                     if vardef_ctxt[0] not in session_vals:
                         logger.debug(

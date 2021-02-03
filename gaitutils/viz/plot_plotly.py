@@ -57,6 +57,7 @@ def plot_extracted_box(curve_vals, vardefs):
         The curve extracted data, keyed by session.
     """
 
+    contexts = utils.get_contexts()
     nvars = len(vardefs)
     subtitles = [_compose_varname(nested_keys) for nested_keys in vardefs]
     fig = plotly.subplots.make_subplots(rows=nvars, cols=1, subplot_titles=subtitles)
@@ -67,7 +68,7 @@ def plot_extracted_box(curve_vals, vardefs):
     # -this is done separately for L/R context
     # -the consolidated data is then plotted along with the session identifiers
     for row, vardef in enumerate(vardefs):
-        for ctxt in 'LR':
+        for ctxt, _ in contexts:
             vals = list()
             groupnames = list()
             vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]

@@ -79,6 +79,19 @@ class TrialEvents(object):
         self._offset = offset
 
 
+def get_contexts(right_first=False):
+    """Return the usual contexts and their names as pairs.
+    
+    Our default is to return left size first.
+    """
+    _contexts = 'LR'
+    _desc =  ['Left', 'Right']
+    zipped = list(zip(_contexts, _desc))
+    if right_first:
+        zipped.reverse()
+    return zipped
+
+
 def _empty_fp_events():
     """Container for forceplate events"""
     return dict(

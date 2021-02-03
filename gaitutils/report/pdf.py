@@ -82,7 +82,8 @@ def _curve_extracted_text(curve_vals, vardefs_dict):
     """Write out curve extracted values as textual tables.
 
     Works for single and multiple sessions.
-    Yields table rows. Use '\n'.join(output_generator) to create the table.
+    Yields table rows. Use '\n'.join(_curve_extracted_text(curve_vals, vardefs_dict))
+    to create the table.
     """
     # write out main title
     is_comparison = len(curve_vals) > 1
@@ -90,23 +91,23 @@ def _curve_extracted_text(curve_vals, vardefs_dict):
     yield '\nCurve extracted values for %s' % sessions_str
     # write the pages
     for title, vardefs in vardefs_dict.items():
-        COL_WIDTH = 20  # chars
+        COL_WIDTH = 20  # width of the columns containing the data
         # the page title
-        yield '\n%s' % title
+        yield '\n\n%s' % title
         yield '-' * len(title)
         rowtitle_len = max(len(_compose_varname(vardef)) for vardef in vardefs) + 5
         for session, session_vals in curve_vals.items():
             # session header (only for multiple sessions)
             if is_comparison:
-                yield '\n%s:\n' % session
+                yield '\n%s:' % session
             # context header
-            yield ' ' * rowtitle_len + 'Left'.ljust(COL_WIDTH) + 'Right'.ljust(
+            yield ' ' * rowtitle_len + 'Right'.ljust(COL_WIDTH) + 'Left'.ljust(
                 COL_WIDTH
             )
             for vardef in vardefs:
-                # output rows consisting of variable desc followed by L/R values
+                # output rows consisting of variable desc followed by R/L values
                 row = _compose_varname(vardef).ljust(rowtitle_len)
-                for ctxt in 'LR':
+                for ctxt in 'RL':
                     vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
                     if vardef_ctxt[0] not in session_vals:
                         logger.debug(

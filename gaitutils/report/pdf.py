@@ -4,18 +4,18 @@ Create gait reports in pdf format.
 
 @author: Jussi (jnu@iki.fi)
 """
+
 from __future__ import absolute_import
 import itertools
 
 import logging
 import io
-import numpy as np
 import os.path as op
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from collections import defaultdict, OrderedDict
 
-from .. import cfg, sessionutils, normaldata, GaitDataError, trial, models, stats, utils
+from .. import cfg, sessionutils, normaldata, GaitDataError, trial, models, stats
 from ..viz import timedist
 from ulstools.num import age_from_hetu
 from ..viz.plots import _plot_sessions, _plot_session_average, plot_trial_velocities

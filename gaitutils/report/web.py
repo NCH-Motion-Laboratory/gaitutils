@@ -32,18 +32,13 @@ from .. import (
     sessionutils,
     numutils,
     videos,
-    utils,
 )
 from ..sessionutils import enf_to_trialfile
 from ..trial import Trial
 from ..viz.plot_plotly import plot_trials, plot_extracted_box
 from ..viz import timedist, layouts
-from ..stats import (
-    AvgTrial,
-    collect_trial_data,
-    curve_extract_values,
-    _trials_extract_values,
-)
+from ..stats import AvgTrial, _trials_extract_values
+
 
 # Py2: for Python 3 compatibility
 try:
@@ -266,7 +261,9 @@ def dash_report(
         # at this point, all the c3ds need to exist
         missing = [fn for fn in data_c3ds if not op.isfile(fn)]
         if missing:
-            missing_trials = ', '.join([op.splitext(op.split(fn)[-1])[0] for fn in missing])
+            missing_trials = ', '.join(
+                [op.splitext(op.split(fn)[-1])[0] for fn in missing]
+            )
             raise GaitDataError(
                 'C3D files are missing for following trials: %s' % missing_trials
             )
@@ -346,16 +343,17 @@ def dash_report(
             # since page_layouts defines the order
             vardefs_dict = OrderedDict(cfg.report.vardefs)
             allvars = [
-                vardef[0]
-                for vardefs in vardefs_dict.values()
-                for vardef in vardefs
+                vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs
             ]
             from_models = set(models.model_from_var(var) for var in allvars)
             if None in from_models:
                 raise GaitDataError('unknown variables in extract list: %s' % allvars)
             curve_vals = OrderedDict(
                 [
-                    (op.split(session)[-1], _trials_extract_values(trials, from_models=from_models))
+                    (
+                        op.split(session)[-1],
+                        _trials_extract_values(trials, from_models=from_models),
+                    )
                     for session, trials in trials_dyn_dict.items()
                 ]
             )

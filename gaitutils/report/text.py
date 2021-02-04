@@ -109,12 +109,16 @@ def _print_analysis_text(trials, main_label=None):
 
 
 def _print_analysis_text_finnish(trials, vars_=None, main_label=None):
-    """Print analysis vars_ as Finnish text"""
+    """Print time-distance variables as Finnish text"""
+    COL_WIDTH = 25  # width of the columns containing the data
+    contexts = utils.get_contexts(right_first=True)
+    contexts_fin = utils.get_contexts(right_first=True, in_finnish=True)
     if vars_ is None:
         vars_ = _timedist_vars
     res_avg_all, res_std_all = _group_analysis_trials(trials)
-    hdr = 'Matka-aikamuuttujat (O/V)'
-    hdr += ' (%s):\n' % main_label if main_label else ':\n'
+    hdr = '\nMatka-aikamuuttujat\n'
+    hdr += '-' * len(hdr)
+    hdr += '\n\n%s:' % main_label if main_label else '\n\n'
     yield hdr
     translations = {
         'Single Support': u'Yksöistukivaihe',
@@ -131,23 +135,23 @@ def _print_analysis_text_finnish(trials, vars_=None, main_label=None):
         'Cadence': u'Kadenssi',
         'Stride Time': u'Askelsyklin kesto',
     }
-    unit_translations = {'steps/min': u'askelta/min'}
-
+    unit_translations = {'steps/min': u'1/min'}
     for cond, cond_data in res_avg_all.items():
+        rowtitle_len = max(len(translations[var] if var in translations else var) for var in vars_) + 5
+        hdr = ' ' * rowtitle_len
+        hdr += ''.join(ctxt_name.ljust(COL_WIDTH) for _, ctxt_name in contexts_fin)
+        yield hdr
         for var in vars_:
             val = cond_data[var]
             val_std = res_std_all[cond][var]
             var_ = translations[var] if var in translations else var
             unit = val['unit']
             unit_ = unit_translations[unit] if unit in unit_translations else unit
-            li = u'%s: %.2f ±%.2f / %.2f ±%.2f %s' % (
-                var_,
-                val['Right'],
-                val_std['Right'],
-                val['Left'],
-                val_std['Left'],
-                unit_,
-            )
+            li = u''
+            li += var_.ljust(rowtitle_len)
+            for _, ctxt_name in contexts:
+                element = u'%.2f±%.2f %s' % (val[ctxt_name], val_std[ctxt_name], unit_)
+                li += element.ljust(COL_WIDTH)
             yield li
     yield ''
 

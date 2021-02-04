@@ -79,12 +79,15 @@ class TrialEvents(object):
         self._offset = offset
 
 
-def get_contexts(right_first=False):
+def get_contexts(right_first=False, in_finnish=False):
     """Return the usual contexts and their names as pairs.
     
     Our default is to return left size first.
     """
-    _contexts = [('L', 'Left'), ('R', 'Right')]
+    if in_finnish:
+        _contexts = [('V', 'Vasen'), ('O', 'Oikea')]
+    else:
+        _contexts = [('L', 'Left'), ('R', 'Right')]
     if right_first:
         _contexts.reverse()
     return _contexts

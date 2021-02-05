@@ -14,6 +14,17 @@ logger = logging.getLogger(__name__)
 
 translations = dict()
 translations['finnish'] = {
+    'Patient code': u'Potilaskoodi',
+    'Session date': u'Mittauksen päivämäärä',
+    'Normal data': u'Normaalidata',
+    'Session': u'Mittaus',
+    'Description': u'Kuvaus',
+    'vuotta': u'years',
+    'Age at time of measurement': u'Ikä mittaushetkellä',
+    'unknown': u'ei tiedossa',
+    'Social security number': u'Henkilötunnus',
+    'Name': u'Nimi',
+    'Results of gait analysis': u'Kävelyanalyysin tulokset',
     'Right': u'Oikea',
     'Left': u'Vasen',
     'R': u'O',
@@ -35,16 +46,25 @@ translations['finnish'] = {
     'steps/min': u'1/min',
 }
 
+# make case insensitive
+for lang, trans in translations.items():
+    translations.pop(lang)
+    translations[lang.lower()] = trans
+    for key, val in trans.items():
+        trans.pop(key)
+        trans[key.lower()] = val
+    
 
 def translate(text):
-    """Simple mechanism for translating text.
+    """Simple mechanism for translating words and expressions.
+
+    The translation language is taken from the config. Currently supported
+    values: 'finnish'. If None, do not translate.
 
     Parameters
     ----------
     text : str
-        Text to translate. Currently requires exact case match.
-    language : str
-        Translation language. Currently supported: 'finnish'
+        Word or expression to translate.
 
     Returns
     -------
@@ -57,8 +77,8 @@ def translate(text):
         return text
     elif language not in translations:
         raise ValueError('Unknown translation language')
-    elif text not in translations[language]:
+    elif text.lower() not in translations[language]:
         logger.info('no translation for %s' % text)
         return text
     else:
-        return translations[language][text]
+        return translations[language][text.lower()]

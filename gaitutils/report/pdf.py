@@ -150,25 +150,27 @@ def create_report(
 
     # make header page
     # timestr = time.strftime('%d.%m.%Y')  # current time, not currently used
-    title_txt = 'HUS Liikelaboratorio\n'
-    title_txt += u'Kävelyanalyysin tulokset\n'
+    title_txt = '%s\n' % cfg.report.laboratory_name
+    title_txt += '%s\n' % translate('Results of gait analysis')
     title_txt += '\n'
-    title_txt += u'Nimi: %s\n' % fullname
-    title_txt += u'Henkilötunnus: %s\n' % (hetu if hetu else 'ei tiedossa')
-    title_txt += u'Ikä mittaushetkellä: %s\n' % (
-        '%d vuotta' % age if age else 'ei tiedossa'
+    title_txt += u'%s: %s\n' % (translate('Name'), fullname)
+    title_txt += u'%s: %s\n' % (
+        translate('Social security number'),
+        hetu if hetu else translate('unknown'),
     )
-    title_txt += u'Mittaus: %s\n' % sessiondir
+    age_str = '%d %s' % (age, translate('years')) if age else translate('unknown')
+    title_txt += u'%s: %s\n' % (translate('Age at time of measurement'), age_str)
+    title_txt += u'%s: %s\n' % (translate('Session'), sessiondir)
     if session_description:
-        title_txt += u'Kuvaus: %s\n' % session_description
-    title_txt += u'Mittauksen pvm: %s\n' % session_t.strftime('%d.%m.%Y')
-    title_txt += u'Liikelaboratorion potilaskoodi: %s\n' % patient_code
+        title_txt += u'%s: %s\n' % (translate('Description'), session_description)
+    title_txt += u'%s: %s\n' % (translate('Session date'), session_t.strftime('%d.%m.%Y'))
+    title_txt += u'%s: %s\n' % (translate('Patient code'), patient_code)
     fig_title = _make_text_fig(title_txt)
 
-    header = u'Nimi: %s Henkilötunnus: %s' % (fullname, hetu)
+    header = u'%s: %s %s: %s' % (translate('Name'), fullname, translate('Social security number'), hetu)
     musclelen_ndata = normaldata._find_normaldata_for_age(age)
     footer_musclelen = (
-        u' Normaalidata: %s' % musclelen_ndata if musclelen_ndata else u''
+        u' %s: %s' % (translate('Normal data'), musclelen_ndata) if musclelen_ndata else u''
     )
 
     # make the figures

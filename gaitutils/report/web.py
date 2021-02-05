@@ -25,14 +25,14 @@ import base64
 from ulstools.num import age_from_hetu
 
 from .. import (
-    cfg,
     normaldata,
     models,
-    GaitDataError,
     sessionutils,
     numutils,
     videos,
 )
+from ..config import cfg
+from ..envutils import GaitDataError
 from ..sessionutils import enf_to_trialfile
 from ..trial import Trial
 from ..viz.plot_plotly import plot_trials, plot_extracted_box

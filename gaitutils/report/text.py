@@ -12,6 +12,7 @@ import numpy as np
 import os.path as op
 
 from .. import utils, sessionutils
+from ..config import cfg
 from ..viz.plot_common import _compose_varname, _nested_get, _var_unit
 from ..timedist import _group_analysis_trials
 
@@ -158,7 +159,7 @@ def _print_analysis_text_finnish(trials, vars_=None, main_label=None):
 
 def _session_analysis_text_finnish(sessionpath):
     """Return session time-distance vars as text"""
-    from .. import cfg
+
     sessiondir = op.split(sessionpath)[-1]
     tagged_trials = sessionutils.get_c3ds(
         sessionpath, tags=cfg.eclipse.tags, trial_type='dynamic'

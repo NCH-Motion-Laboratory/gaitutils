@@ -17,7 +17,6 @@ import numpy as np
 import os
 import os.path as op
 import sys
-import tempfile
 import shutil
 
 from .numutils import center_of_pressure, _change_coords, _is_ascii

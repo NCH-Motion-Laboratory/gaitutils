@@ -9,8 +9,6 @@ misc plotting related stuff
 import plotly
 from matplotlib.figure import Figure
 from PyQt5 import QtWidgets
-import tempfile
-import os.path as op
 import subprocess
 import logging
 

@@ -8,13 +8,11 @@ Time-distance computations
 
 from __future__ import division
 import logging
-import os.path as op
 import numpy as np
 from collections import OrderedDict, defaultdict
 
 from .envutils import GaitDataError
-from . import sessionutils, c3d
-from .config import cfg
+from . import c3d
 
 logger = logging.getLogger(__name__)
 

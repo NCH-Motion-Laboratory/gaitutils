@@ -15,7 +15,6 @@ import os.path as op
 import itertools
 from collections import defaultdict
 
-
 from .trial import Trial, Gaitcycle
 from . import models, numutils
 from .envutils import GaitDataError

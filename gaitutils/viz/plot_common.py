@@ -7,7 +7,6 @@ Plotting functionality shared between backends.
 """
 
 
-from builtins import str
 from builtins import next
 from past.builtins import basestring
 from itertools import cycle

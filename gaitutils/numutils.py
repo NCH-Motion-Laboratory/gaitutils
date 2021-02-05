@@ -15,7 +15,6 @@ import hashlib
 from scipy import signal
 from scipy.signal import medfilt
 from scipy.special import erfcinv
-from numpy.lib.stride_tricks import as_strided
 
 logger = logging.getLogger(__name__)
 

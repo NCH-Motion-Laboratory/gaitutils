@@ -13,7 +13,6 @@ import io
 import configobj
 from configobj import ConfigObj
 from collections import defaultdict, OrderedDict
-import sys
 
 from .numutils import _isint
 from .envutils import GaitDataError

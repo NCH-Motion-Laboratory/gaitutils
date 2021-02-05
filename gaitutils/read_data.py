@@ -8,8 +8,6 @@ filename. Returned values should be independent of source.
 """
 from __future__ import division
 
-from past.builtins import basestring
-import os.path as op
 import numpy as np
 import logging
 

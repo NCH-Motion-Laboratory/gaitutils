@@ -5,7 +5,6 @@ layout handling
 @author: Jussi (jnu@iki.fi)
 """
 
-from builtins import str
 from builtins import zip
 import logging
 

@@ -8,7 +8,6 @@ gaitutils custom Qt widgets
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import QObject, pyqtSignal
 import logging
-import sys
 
 
 class NiceListWidgetItem(QtWidgets.QListWidgetItem):

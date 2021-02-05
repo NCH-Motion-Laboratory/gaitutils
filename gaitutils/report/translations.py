@@ -7,6 +7,8 @@ Translate text.
 
 import logging
 
+from ..config import cfg
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,7 +36,7 @@ translations['finnish'] = {
 }
 
 
-def translate(text, language=None):
+def translate(text):
     """Simple mechanism for translating text.
 
     Parameters
@@ -50,6 +52,7 @@ def translate(text, language=None):
         The translated text.
     """
     global translations
+    language = cfg.report.language
     if language is None:
         return text
     elif language not in translations:

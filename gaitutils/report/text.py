@@ -97,27 +97,27 @@ def _print_analysis_table(trials):
             yield li
 
 
-def _print_analysis_text(trials, vars_=None, main_label=None, language=None):
+def _print_analysis_text(trials, vars_=None, main_label=None):
     """Print time-distance variables as text"""
     COL_WIDTH = 25  # width of the columns containing the data
     contexts = utils.get_contexts(right_first=True)
     if vars_ is None:
         vars_ = _timedist_vars
     res_avg_all, res_std_all = _group_analysis_trials(trials)
-    hdr = '\n%s\n' % translate('Time-distance variables', language)
+    hdr = '\n%s\n' % translate('Time-distance variables')
     hdr += '-' * len(hdr)
     hdr += '\n\n%s:' % main_label if main_label else '\n\n'
     yield hdr
     for cond, cond_data in res_avg_all.items():
-        varnames_trans = [translate(varname, language) for varname in vars_]
+        varnames_trans = [translate(varname) for varname in vars_]
         rowtitle_len = max(len(varname) for varname in varnames_trans) + 5
         hdr = ' ' * rowtitle_len
-        hdr += ''.join(translate(ctxt_name, language).ljust(COL_WIDTH) for _, ctxt_name in contexts)
+        hdr += ''.join(translate(ctxt_name).ljust(COL_WIDTH) for _, ctxt_name in contexts)
         yield hdr
         for varname, varname_trans in zip(vars_, varnames_trans):
             val = cond_data[varname]
             val_std = res_std_all[cond][varname]
-            unit = translate(val['unit'], language)
+            unit = translate(val['unit'])
             li = u''
             li += varname_trans.ljust(rowtitle_len)
             for _, ctxt_name in contexts:
@@ -127,7 +127,7 @@ def _print_analysis_text(trials, vars_=None, main_label=None, language=None):
     yield ''
 
 
-def _session_analysis_text(sessionpath, language=None):
+def _session_analysis_text(sessionpath):
     """Return session time-distance vars as text"""
 
     sessiondir = op.split(sessionpath)[-1]
@@ -135,5 +135,5 @@ def _session_analysis_text(sessionpath, language=None):
         sessionpath, tags=cfg.eclipse.tags, trial_type='dynamic'
     )
     return '\n'.join(
-        _print_analysis_text({sessiondir: tagged_trials}, main_label=sessiondir, language=language)
+        _print_analysis_text({sessiondir: tagged_trials}, main_label=sessiondir)
     )

@@ -387,13 +387,13 @@ def create_comparison_report(
     # make header page
     fullname = info['fullname'] or ''
     hetu = info['hetu'] or ''
-    title_txt = 'HUS Liikelaboratorio\n'
-    title_txt += u'Kävelyanalyysin vertailuraportti\n'
+    title_txt = '%s\n' % cfg.report.laboratory_name
+    title_txt += u'%s\n' % translate('Comparison report')
     title_txt += '\n'
     title_txt += info['session_description']
     title_txt += '\n'
-    title_txt += u'Nimi: %s\n' % fullname
-    title_txt += u'Henkilötunnus: %s\n' % hetu
+    title_txt += u'%s: %s\n' % (translate('Name'), fullname)
+    title_txt += u'%s: %s\n' % (translate('Social security number'), hetu)
     fig_title = _make_text_fig(title_txt)
 
     # make the figures
@@ -498,7 +498,7 @@ def create_comparison_report(
             fig.suptitle('Curve extracted values: %s' % title)
             figs_extracted.append(fig)
 
-    header = u'Nimi: %s Henkilötunnus: %s' % (fullname, hetu)
+    header = u'%s: %s %s: %s' % (translate('Name'), fullname, translate('Social security number'), hetu)
     logger.debug('creating multipage comparison pdf %s' % pdfpath)
     with PdfPages(pdfpath) as pdf:
         _savefig(pdf, fig_title)

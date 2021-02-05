@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 translations = dict()
 translations['finnish'] = {
+    'Comparison report': u'Vertailuraportti',
     'Patient code': u'Potilaskoodi',
     'Session date': u'Mittauksen päivämäärä',
     'Normal data': u'Normaalidata',

@@ -24,6 +24,7 @@ dependencies:
   - xlutils
   - pip:
     - dash
+    - kaleido
     - dash-daq
     - flake8
     - pytest

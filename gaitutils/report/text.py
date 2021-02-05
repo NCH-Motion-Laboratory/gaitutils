@@ -11,6 +11,7 @@ import logging
 import numpy as np
 import os.path as op
 
+from .translations import translate
 from .. import utils, sessionutils
 from ..config import cfg
 from ..viz.plot_common import _compose_varname, _nested_get, _var_unit
@@ -96,68 +97,37 @@ def _print_analysis_table(trials):
             yield li
 
 
-def _print_analysis_text(trials, main_label=None):
-    """Print analysis vars as text"""
-    res_avg_all, _ = _group_analysis_trials(trials)
-    hdr = 'Time-distance variables (R/L)'
-    hdr += ' for %s:\n' % main_label if main_label else ':\n'
-    yield hdr
-    for _, cond_data in res_avg_all.items():
-        for var, val in cond_data.items():
-            li = u'%s: %.2f/%.2f %s' % (var, val['Right'], val['Left'], val['unit'])
-            yield li
-    yield ''
-
-
-def _print_analysis_text_finnish(trials, vars_=None, main_label=None):
-    """Print time-distance variables as Finnish text"""
+def _print_analysis_text(trials, vars_=None, main_label=None, language=None):
+    """Print time-distance variables as text"""
     COL_WIDTH = 25  # width of the columns containing the data
     contexts = utils.get_contexts(right_first=True)
-    contexts_fin = utils.get_contexts(right_first=True, in_finnish=True)
     if vars_ is None:
         vars_ = _timedist_vars
     res_avg_all, res_std_all = _group_analysis_trials(trials)
-    hdr = '\nMatka-aikamuuttujat\n'
+    hdr = '\n%s\n' % translate('Time-distance variables', language)
     hdr += '-' * len(hdr)
     hdr += '\n\n%s:' % main_label if main_label else '\n\n'
     yield hdr
-    translations = {
-        'Single Support': u'Yksöistukivaihe',
-        'Double Support': u'Kaksoistukivaihe',
-        'Opposite Foot Contact': u'Vastakkaisen jalan kontakti',
-        'Opposite Foot Off': u'Vastakkainen jalka irti',
-        'Limp Index': u'Limp-indeksi',
-        'Step Length': u'Askelpituus',
-        'Foot Off': u'Tukivaiheen kesto',
-        'Walking Speed': u'Kävelynopeus',
-        'Stride Length': u'Askelsyklin pituus',
-        'Step Width': u'Askelleveys',
-        'Step Time': u'Askeleen kesto',
-        'Cadence': u'Kadenssi',
-        'Stride Time': u'Askelsyklin kesto',
-    }
-    unit_translations = {'steps/min': u'1/min'}
     for cond, cond_data in res_avg_all.items():
-        rowtitle_len = max(len(translations[var] if var in translations else var) for var in vars_) + 5
+        varnames_trans = [translate(varname, language) for varname in vars_]
+        rowtitle_len = max(len(varname) for varname in varnames_trans) + 5
         hdr = ' ' * rowtitle_len
-        hdr += ''.join(ctxt_name.ljust(COL_WIDTH) for _, ctxt_name in contexts_fin)
+        hdr += ''.join(translate(ctxt_name, language).ljust(COL_WIDTH) for _, ctxt_name in contexts)
         yield hdr
-        for var in vars_:
-            val = cond_data[var]
-            val_std = res_std_all[cond][var]
-            var_ = translations[var] if var in translations else var
-            unit = val['unit']
-            unit_ = unit_translations[unit] if unit in unit_translations else unit
+        for varname, varname_trans in zip(vars_, varnames_trans):
+            val = cond_data[varname]
+            val_std = res_std_all[cond][varname]
+            unit = translate(val['unit'], language)
             li = u''
-            li += var_.ljust(rowtitle_len)
+            li += varname_trans.ljust(rowtitle_len)
             for _, ctxt_name in contexts:
-                element = u'%.2f±%.2f %s' % (val[ctxt_name], val_std[ctxt_name], unit_)
+                element = u'%.2f±%.2f %s' % (val[ctxt_name], val_std[ctxt_name], unit)
                 li += element.ljust(COL_WIDTH)
             yield li
     yield ''
 
 
-def _session_analysis_text_finnish(sessionpath):
+def _session_analysis_text(sessionpath, language=None):
     """Return session time-distance vars as text"""
 
     sessiondir = op.split(sessionpath)[-1]
@@ -165,5 +135,5 @@ def _session_analysis_text_finnish(sessionpath):
         sessionpath, tags=cfg.eclipse.tags, trial_type='dynamic'
     )
     return '\n'.join(
-        _print_analysis_text_finnish({sessiondir: tagged_trials}, main_label=sessiondir)
+        _print_analysis_text({sessiondir: tagged_trials}, main_label=sessiondir, language=language)
     )

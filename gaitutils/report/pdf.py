@@ -22,7 +22,7 @@ from ..viz import timedist
 from ulstools.num import age_from_hetu
 from ..viz.plots import _plot_sessions, _plot_session_average, plot_trial_velocities
 from ..viz.plot_matplotlib import _plot_extracted_table_plotly
-from .text import _curve_extracted_text, _session_analysis_text_finnish
+from .text import _curve_extracted_text, _session_analysis_text
 
 
 logger = logging.getLogger(__name__)
@@ -298,7 +298,7 @@ def create_report(
 
     # save the time-distance parameters into a text file
     if write_timedist:
-        _timedist_txt = _session_analysis_text_finnish(sessionpath)
+        _timedist_txt = _session_analysis_text(sessionpath, language=cfg.report.language)
         timedist_txt_file = sessiondir + '_time_distance.txt'
         timedist_txt_path = op.join(destdir, timedist_txt_file)
         with io.open(timedist_txt_path, 'w', encoding='utf8') as f:

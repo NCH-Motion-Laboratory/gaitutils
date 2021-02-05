@@ -47,13 +47,10 @@ translations['finnish'] = {
     'steps/min': u'1/min',
 }
 
-# make case insensitive
-for lang, trans in translations.items():
-    translations.pop(lang)
-    translations[lang.lower()] = trans
-    for key, val in trans.items():
-        trans.pop(key)
-        trans[key.lower()] = val
+# rewrite keys in lower case
+translations = {key.lower(): val for key, val in translations.items()}
+for key, val in translations.items():
+    translations[key] = {lang.lower(): trans_di for lang, trans_di in val.items()}
 
 
 def translate(text):

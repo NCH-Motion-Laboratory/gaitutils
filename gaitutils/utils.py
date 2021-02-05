@@ -81,7 +81,7 @@ class TrialEvents(object):
 
 def get_contexts(right_first=False):
     """Return the usual contexts and their names as pairs.
-    
+
     Our default is to return left size first.
     """
     _contexts = [('L', 'Left'), ('R', 'Right')]

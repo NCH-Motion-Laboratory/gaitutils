@@ -228,10 +228,16 @@ class WebReportDialog(QtWidgets.QDialog):
         report_name = web._report_name(sessions)
         existing_names = [item.text for item in self.listActiveReports.items]
         if report_name in existing_names:
-            reply = qt_yesno_dialog('There is already a report for %s. Recreate?' % report_name)
+            reply = qt_yesno_dialog(
+                'There is already a report for %s. Recreate?' % report_name
+            )
             if reply == QtWidgets.QMessageBox.YesRole:
                 # delete the existing one
-                theitem = [item for item in self.listActiveReports.items if item.text == report_name][0]
+                theitem = [
+                    item
+                    for item in self.listActiveReports.items
+                    if item.text == report_name
+                ][0]
                 self._delete_report(theitem)
             else:
                 return

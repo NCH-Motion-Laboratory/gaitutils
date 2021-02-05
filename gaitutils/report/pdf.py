@@ -163,14 +163,24 @@ def create_report(
     title_txt += u'%s: %s\n' % (translate('Session'), sessiondir)
     if session_description:
         title_txt += u'%s: %s\n' % (translate('Description'), session_description)
-    title_txt += u'%s: %s\n' % (translate('Session date'), session_t.strftime('%d.%m.%Y'))
+    title_txt += u'%s: %s\n' % (
+        translate('Session date'),
+        session_t.strftime('%d.%m.%Y'),
+    )
     title_txt += u'%s: %s\n' % (translate('Patient code'), patient_code)
     fig_title = _make_text_fig(title_txt)
 
-    header = u'%s: %s %s: %s' % (translate('Name'), fullname, translate('Social security number'), hetu)
+    header = u'%s: %s %s: %s' % (
+        translate('Name'),
+        fullname,
+        translate('Social security number'),
+        hetu,
+    )
     musclelen_ndata = normaldata._find_normaldata_for_age(age)
     footer_musclelen = (
-        u' %s: %s' % (translate('Normal data'), musclelen_ndata) if musclelen_ndata else u''
+        u' %s: %s' % (translate('Normal data'), musclelen_ndata)
+        if musclelen_ndata
+        else u''
     )
 
     # make the figures
@@ -498,7 +508,12 @@ def create_comparison_report(
             fig.suptitle('Curve extracted values: %s' % title)
             figs_extracted.append(fig)
 
-    header = u'%s: %s %s: %s' % (translate('Name'), fullname, translate('Social security number'), hetu)
+    header = u'%s: %s %s: %s' % (
+        translate('Name'),
+        fullname,
+        translate('Social security number'),
+        hetu,
+    )
     logger.debug('creating multipage comparison pdf %s' % pdfpath)
     with PdfPages(pdfpath) as pdf:
         _savefig(pdf, fig_title)

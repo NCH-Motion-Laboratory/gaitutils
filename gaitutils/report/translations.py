@@ -54,7 +54,7 @@ for lang, trans in translations.items():
     for key, val in trans.items():
         trans.pop(key)
         trans[key.lower()] = val
-    
+
 
 def translate(text):
     """Simple mechanism for translating words and expressions.

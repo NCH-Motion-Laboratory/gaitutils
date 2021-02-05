@@ -74,7 +74,9 @@ def plot_extracted_box(curve_vals, vardefs):
             vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
             for session, session_vals in curve_vals.items():
                 if vardef_ctxt[0] not in session_vals:
-                    logger.debug('%s was not collected for this session' % vardef_ctxt[0])
+                    logger.debug(
+                        '%s was not collected for this session' % vardef_ctxt[0]
+                    )
                     continue
                 this_vals = _nested_get(session_vals, vardef_ctxt)
                 vals.extend(this_vals)
@@ -101,15 +103,13 @@ def plot_extracted_box(curve_vals, vardefs):
             xaxis, yaxis = _get_plotly_axis_labels(row, 0, ncols=1)
             fig['layout'][yaxis].update(
                 title={
-                    'font': {'size': cfg.plot_plotly.label_fontsize},                    
+                    'font': {'size': cfg.plot_plotly.label_fontsize},
                     'text': ylabel,
                     'standoff': 0,
                 }
             )
-    # group together boxes of the different traces for each value of x            
-    fig.update_layout(
-        boxmode='group'
-    )
+    # group together boxes of the different traces for each value of x
+    fig.update_layout(boxmode='group')
     # set subplot title font size
     for anno in fig['layout']['annotations']:
         anno['font']['size'] = cfg.plot_plotly.subtitle_fontsize

@@ -112,7 +112,9 @@ def _print_analysis_text(trials, vars_=None, main_label=None):
         varnames_trans = [translate(varname) for varname in vars_]
         rowtitle_len = max(len(varname) for varname in varnames_trans) + 5
         hdr = ' ' * rowtitle_len
-        hdr += ''.join(translate(ctxt_name).ljust(COL_WIDTH) for _, ctxt_name in contexts)
+        hdr += ''.join(
+            translate(ctxt_name).ljust(COL_WIDTH) for _, ctxt_name in contexts
+        )
         yield hdr
         for varname, varname_trans in zip(vars_, varnames_trans):
             val = cond_data[varname]

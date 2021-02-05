@@ -37,6 +37,7 @@ git_mode = op.isdir(op.join(pkg_parent, '.git'))
 
 class GaitDataError(Exception):
     """Custom exception class to indicate gait data related errors"""
+
     pass
 
 

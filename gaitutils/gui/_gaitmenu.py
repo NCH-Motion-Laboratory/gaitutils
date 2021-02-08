@@ -1092,6 +1092,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         if comparison:
             fun = pdf.create_comparison_report
             kwargs['sessionpaths'] = sessions
+            kwargs['write_extracted'] = True
         else:
             fun = pdf.create_report
             kwargs['sessionpath'] = sessions[0]

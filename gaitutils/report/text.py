@@ -43,6 +43,8 @@ def _curve_extracted_text(curve_vals, vardefs_dict):
     Yields table rows. Use '\n'.join(_curve_extracted_text(curve_vals, vardefs_dict))
     to create the table.
     """
+    # width of the data columns containing the data
+    COL_WIDTH = 20
     # we use right/left for textual data (consistency with patient system)
     contexts = utils.get_contexts(right_first=True)
     # write out main title
@@ -51,10 +53,9 @@ def _curve_extracted_text(curve_vals, vardefs_dict):
     yield '\nCurve extracted values for %s' % sessions_str
     # write the pages
     for title, vardefs in vardefs_dict.items():
-        COL_WIDTH = 20  # width of the columns containing the data
         # the page title
         yield '\n\n%s' % title
-        yield '-' * len(title)
+        yield '-' * len(title)  # underline
         rowtitle_len = max(len(_compose_varname(vardef)) for vardef in vardefs) + 5
         for session, session_vals in curve_vals.items():
             # session header (only for multiple sessions)
@@ -65,7 +66,7 @@ def _curve_extracted_text(curve_vals, vardefs_dict):
             hdr += ''.join(ctxt_name.ljust(COL_WIDTH) for _, ctxt_name in contexts)
             yield hdr
             for vardef in vardefs:
-                # output rows consisting of variable desc followed by R/L values
+                # output rows consisting of variable description followed by the R/L values
                 row = _compose_varname(vardef).ljust(rowtitle_len)
                 for ctxt, _ in contexts:
                     vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
@@ -84,17 +85,6 @@ def _curve_extracted_text(curve_vals, vardefs_dict):
                     element = u'%.2f±%.2f%s' % (mean, std, unit)
                     row += element.ljust(COL_WIDTH)
                 yield row
-
-
-def _print_analysis_table(trials):
-    """Print analysis vars as text table"""
-    res_avg_all, _ = _group_analysis_trials(trials)
-    hdr = '%-25s%-9s%-9s\n' % ('Variable', 'Right', 'Left')
-    yield hdr
-    for _, cond_data in res_avg_all.items():
-        for var, val in cond_data.items():
-            li = '%-25s%-9.2f%-9.2f%s' % (var, val['Right'], val['Left'], val['unit'])
-            yield li
 
 
 def _print_analysis_text(trials, vars_=None, main_label=None):

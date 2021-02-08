@@ -25,7 +25,7 @@ from .gui.qt_widgets import ProgressSignals
 logger = logging.getLogger(__name__)
 
 
-def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
+def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=False):
     """Run autoprocessing for given enf files."""
     if not cfg.autoproc.run_models_only and cfg.autoproc.delete_c3ds:
         _delete_c3ds(enffiles)
@@ -104,11 +104,9 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             'detected Nexus version: %d.%d' % (nexus_ver_major, nexus_ver_minor)
         )
     # close trial to prevent 'Save trial?' dialog on first open
-    nexus._close_trial()
-    # try to workaround a mysterious bug that manifests as a freeze when
-    # autoprocessing single trials
-    time.sleep(0.1)  
-
+    if not do_current:
+        nexus._close_trial()
+    
     # init trials dict
     for enffile in enffiles:
         filepath = enffile[: enffile.find('.Trial')]  # rm .TrialXXX and .enf
@@ -131,8 +129,9 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         if signals.canceled:
             return None
 
-        logger.debug('loading in Nexus: %s' % filename)
-        vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
+        if not do_current:
+            logger.debug('loading in Nexus: %s' % filename)
+            vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
         try:
             nexus._get_metadata(vicon)
         except GaitDataError:
@@ -494,7 +493,7 @@ def autoproc_trial(signals=None):
     fn += '.Trial.enf'
     enffiles = [op.join(nexus.get_sessionpath(), fn)]  # listify single enf
     if enffiles:
-        _do_autoproc(enffiles, signals=signals)
+        _do_autoproc(enffiles, signals=signals, do_current=True)
 
 
 def automark_trial(plot=False):

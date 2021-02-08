@@ -105,6 +105,9 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         )
     # close trial to prevent 'Save trial?' dialog on first open
     nexus._close_trial()
+    # try to workaround a mysterious bug that manifests as a freeze when
+    # autoprocessing single trials
+    time.sleep(0.1)  
 
     # init trials dict
     for enffile in enffiles:

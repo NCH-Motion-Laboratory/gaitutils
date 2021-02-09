@@ -405,18 +405,33 @@ def rms(data, win, axis=None, pad_mode=None):
     return np.pad(rms_, padarg, mode=pad_mode)
 
 
-def _linear_envelope(data, sfrate):
-    """Calculate a linear envelope."""
+def envelope(data, sfrate=None, axis=None):
+    """Calculate an envelope for data using the configured method"""
+    if cfg.emg.envelope_method == 'linear_envelope':
+        if sfrate is None:
+            raise RuntimeError('Linear envelope requires the sampling rate')
+        data = _linear_envelope(data, sfrate, axis=axis)
+    elif cfg.emg.envelope_method == 'rms':
+        data = rms(data, cfg.emg.rms_win, axis=axis)
+    else:
+        raise RuntimeError('Invalid envelope method: %s' % cfg.emg.envelope_method)
+    return data
+
+
+def _linear_envelope(data, sfrate, axis=None):
+    """Calculate a linear envelope"""
     data_rect = np.abs(data)
-    return _filtfilt(data_rect, [0, cfg.emg.linear_envelope_lowpass], sfrate)
+    return _filtfilt(data_rect, [0, cfg.emg.linear_envelope_lowpass], sfrate, axis=axis)
 
 
-def _filtfilt(data, passband, sfrate, buttord=5):
+def _filtfilt(data, passband, sfrate, buttord=5, axis=None):
     """Forward-backward filter.
     Filter data into given passband, e.g. [1, 40].
     Frequencies are given in Hz along with sfrate (sampling rate).
     Implemented as pure lowpass, if highpass freq = 0.
     """
+    if axis is None:
+        axis = -1  # filtfilt() default
     if passband is None:
         return data
     passbandn = 2 * np.array(passband) / sfrate
@@ -424,7 +439,7 @@ def _filtfilt(data, passband, sfrate, buttord=5):
         b, a = signal.butter(buttord, passbandn, 'bandpass')
     else:  # lowpass
         b, a = signal.butter(buttord, passbandn[1])
-    return signal.filtfilt(b, a, data)
+    return signal.filtfilt(b, a, data, axis=axis)
 
 
 def _get_local_max(data):

@@ -166,12 +166,7 @@ class EMG(object):
         ch = self._match_name(chname)
         data = self.data[ch]
         if envelope:
-            if cfg.emg.envelope_method == 'linear_envelope':
-                data = numutils._linear_envelope(data, self.sfrate)
-            elif cfg.emg.envelope_method == 'rms':
-                data = numutils.rms(data, cfg.emg.rms_win)
-            else:
-                raise RuntimeError('Invalid envelope method: %s' % cfg.emg.envelope_method)
+            data = numutils.envelope(data, self.sfrate)
         elif self.passband:  # no filtering for RMS data
             # filtered data is currently not cached; _filtfilt() call typically
             # takes less than 1 ms, so this should not be a problem, unless a

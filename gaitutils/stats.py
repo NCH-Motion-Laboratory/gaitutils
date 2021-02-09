@@ -51,7 +51,8 @@ class AvgTrial(Trial):
     ):
         """Build AvgTrial from a list of trials"""
         nfiles = len(trials)
-        data_all, cycles = collect_trial_data(trials)
+        data_all, cycles, meta = collect_trial_data(trials, return_metadata=True)
+        sfrate = meta['analograte']
 
         avgdata_model, stddata_model, ncycles_ok_analog = average_model_data(
             data_all['model'],
@@ -61,9 +62,10 @@ class AvgTrial(Trial):
         )
         avgdata_emg, stddata_emg, ncycles_ok_emg = average_analog_data(
             data_all['emg'],
-            rms=True,
+            envelope=True,
             reject_outliers=reject_outliers,
             use_medians=use_medians,
+            sfrate=sfrate,
         )
 
         return cls(
@@ -188,15 +190,17 @@ def _robust_reject_rows(data, p_threshold):
     return data
 
 
-def average_analog_data(data, rms=None, reject_outliers=None, use_medians=None):
+def average_analog_data(
+    data, envelope=None, reject_outliers=None, use_medians=None, sfrate=None
+):
     """Average collected analog data.
 
     Parameters
     ----------
     data : dict
         Data to average (from collect_trial_data)
-    rms : bool
-        Compute RMS before averaging.
+    envelope : bool
+        Compute envelope of signal before averaging. See numutils.envelope().
     reject_outliers : float or None
         None for no automatic outlier rejection. Otherwise, a P value for false
         rejection (assuming strictly normally distributed data). Outliers are
@@ -219,8 +223,8 @@ def average_analog_data(data, rms=None, reject_outliers=None, use_medians=None):
     avgdata = dict()
     ncycles_ok = dict()
 
-    if rms is None:
-        rms = False
+    if envelope is None:
+        envelope = False
 
     if use_medians is None:
         use_medians = False
@@ -232,12 +236,14 @@ def average_analog_data(data, rms=None, reject_outliers=None, use_medians=None):
             ncycles_ok[var] = 0
             continue
         else:
-            if rms:
-                vardata = numutils.rms(vardata, cfg.emg.rms_win, axis=1)
+            if envelope:
+                if sfrate is None:
+                    raise RuntimeError('Linear envelope requires the sampling rate')
+                vardata = numutils.envelope(vardata, sfrate, axis=1)
             n_ok = vardata.shape[0]
             # do the outlier rejection
             if n_ok > 0 and reject_outliers is not None and not use_medians:
-                rms_status = 'RMS for ' if rms else ''
+                rms_status = 'RMS for ' if envelope else ''
                 logger.info('averaging %s%s (N=%d)' % (rms_status, var, n_ok))
                 vardata = _robust_reject_rows(vardata, reject_outliers)
             n_ok = vardata.shape[0]
@@ -338,9 +344,13 @@ def average_model_data(data, reject_zeros=None, reject_outliers=None, use_median
 
 
 def collect_trial_data(
-    trials, collect_types=None, fp_cycles_only=None, analog_len=None
+    trials,
+    collect_types=None,
+    fp_cycles_only=None,
+    analog_len=None,
+    return_metadata=False,
 ):
-    """Read model and analog data across trials into numpy arrays.
+    """Read model and analog cycle-normalized data from trials into numpy arrays.
 
     Parameters
     ----------
@@ -356,6 +366,8 @@ def collect_trial_data(
     analog_len : int
         Analog data length varies by gait cycle, so it will be resampled into
         grid length specified by analog_len (default 1000 samples)
+    return_metadata : bool
+        If True, returns some metadata such as the common sampling frequency.
 
     Returns
     -------
@@ -410,10 +422,14 @@ def collect_trial_data(
     else:
         emg_chs_to_collect = list()
 
+    meta = dict()
+    analogrates = set()
+
     trial_types = list()
     for trial_ in trials:
         # create Trial instance in case we got filenames as args
         trial = trial_ if isinstance(trial_, Trial) else Trial(trial_)
+        analogrates.add(trial.analograte)
         logger.info('collecting data for %s' % trial.trialname)
         trial_types.append(trial.is_static)
         if any(trial_types) and not all(trial_types):
@@ -468,7 +484,14 @@ def collect_trial_data(
                         [data_all['emg'][ch], data_cyc[None, :]]
                     )
     logger.info('collected %d trials' % len(trials))
-    return data_all, cycles_all
+    if return_metadata:
+        if len(analogrates) > 1:
+            raise RuntimeError('Inconsistent data across trials - analog rate changes')
+        else:
+            ret = (data_all, cycles_all, {'analograte': min(analogrates)})
+    else:
+        ret = (data_all, cycles_all)
+    return ret
 
 
 def curve_extract_values(curves, toeoffs):

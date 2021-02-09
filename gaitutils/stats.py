@@ -51,8 +51,13 @@ class AvgTrial(Trial):
     ):
         """Build AvgTrial from a list of trials"""
         nfiles = len(trials)
-        data_all, cycles, meta = collect_trial_data(trials, return_metadata=True)
-        sfrate = meta['analograte']
+        data_all, cycles = collect_trial_data(trials)
+
+        # some consistency checks
+        analogrates = set(c.trial.analograte for varx in cycles['emg'] for c in cycles['emg'][varx])
+        if len(analogrates) > 1:
+            raise RuntimeError('The averager requires trials to have identical analog sampling rates')
+        sfrate = analogrates.pop()
 
         avgdata_model, stddata_model, ncycles_ok_analog = average_model_data(
             data_all['model'],
@@ -198,7 +203,8 @@ def average_analog_data(
     Parameters
     ----------
     data : dict
-        Data to average (from collect_trial_data)
+        Data to average (from collect_trial_data). Keys should be names of
+        analog variables and values should be corresponding 1-D data.
     envelope : bool
         Compute envelope of signal before averaging. See numutils.envelope().
     reject_outliers : float or None
@@ -207,8 +213,10 @@ def average_analog_data(
         rejected based on robust statistics (modified Z-score).
     use_medians: bool
         Use median and MAD (median absolute deviation) instead of mean and
-        stddev. The median is robust to outliers but not robust to small
+        stddev. The median is robust to outliers, but not robust to small
         sample size. Thus, use of medians may be a bad idea for small samples.
+    sfrate : float
+        Analog sampling rate. Required for linear envelope.
 
     Returns
     -------
@@ -348,7 +356,6 @@ def collect_trial_data(
     collect_types=None,
     fp_cycles_only=None,
     analog_len=None,
-    return_metadata=False,
 ):
     """Read model and analog cycle-normalized data from trials into numpy arrays.
 
@@ -366,8 +373,6 @@ def collect_trial_data(
     analog_len : int
         Analog data length varies by gait cycle, so it will be resampled into
         grid length specified by analog_len (default 1000 samples)
-    return_metadata : bool
-        If True, returns some metadata such as the common sampling frequency.
 
     Returns
     -------
@@ -422,14 +427,10 @@ def collect_trial_data(
     else:
         emg_chs_to_collect = list()
 
-    meta = dict()
-    analogrates = set()
-
     trial_types = list()
     for trial_ in trials:
         # create Trial instance in case we got filenames as args
         trial = trial_ if isinstance(trial_, Trial) else Trial(trial_)
-        analogrates.add(trial.analograte)
         logger.info('collecting data for %s' % trial.trialname)
         trial_types.append(trial.is_static)
         if any(trial_types) and not all(trial_types):
@@ -484,14 +485,7 @@ def collect_trial_data(
                         [data_all['emg'][ch], data_cyc[None, :]]
                     )
     logger.info('collected %d trials' % len(trials))
-    if return_metadata:
-        if len(analogrates) > 1:
-            raise RuntimeError('Inconsistent data across trials - analog rate changes')
-        else:
-            ret = (data_all, cycles_all, {'analograte': min(analogrates)})
-    else:
-        ret = (data_all, cycles_all)
-    return ret
+    return data_all, cycles_all
 
 
 def curve_extract_values(curves, toeoffs):

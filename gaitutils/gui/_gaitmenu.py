@@ -852,8 +852,8 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _average_trials(self):
         """Average trials from list, add resulting averaged trial to list"""
-        if len(self._selected_rows) < 2:
-            qt_message_dialog('Need at least 2 trials for averaging')
+        if len(self._selected_rows) < 1:
+            qt_message_dialog('Select at least 1 trial for averaging')
             return
         if any(isinstance(tr, stats.AvgTrial) for tr in self._selected_trials):
             qt_message_dialog('Cannot include averaged trials in average')

@@ -262,12 +262,15 @@ class AvgEMG(EMG):
 
     def get_channel_data(self, chname, envelope=None):
         if not envelope:
-            raise RuntimeError('AvgEMG can only return averaged RMS data')
+            raise RuntimeError('AvgEMG can only return enveloped and averaged data')
         chname = self._match_name(chname)
         return self._data[chname]
 
     def status_ok(self, chname):
-        return self.has_channel(chname)
+        if cfg.emg.chs_disabled and chname in cfg.emg.chs_disabled:
+            return False
+        else:
+            return self.has_channel(chname)
 
     def _is_valid_emg(self, data):
         raise RuntimeError('signal check not implemented for averaged EMG')

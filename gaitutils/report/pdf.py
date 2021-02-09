@@ -410,7 +410,7 @@ def create_comparison_report(
     legend_type = cfg.report.comparison_legend_type
     style_by = cfg.report.comparison_style_by
     color_by = cfg.report.comparison_color_by
-    emg_mode = 'rms' if cfg.report.comparison_emg_rms else None
+    emg_mode = 'envelope' if cfg.report.comparison_emg_as_envelope else None
 
     fig_timedist = (
         timedist.plot_comparison(sessionpaths, backend=pdf_backend)

@@ -137,7 +137,9 @@ class EMG(object):
             )
         return ch
 
-    def get_channel_data(self, chname, rms=False):
+    
+
+    def get_channel_data(self, chname, envelope=False):
         """Return EMG data for a given channel.
 
         Uses name matching. The given chname is matched (case sensitive) against
@@ -152,8 +154,9 @@ class EMG(object):
         ----------
         ch : string
             The EMG channel name. Name matching is used (see above).
-        rms : bool
-            Return moving-window RMS instead of raw data.
+        envelope : bool
+            Return envelope of data. The envelope is computed as either RMS or
+            linear envelope, according to settings in the config.
 
         Returns
         -------
@@ -162,15 +165,19 @@ class EMG(object):
         """
         ch = self._match_name(chname)
         data = self.data[ch]
-        if rms:
-            data = numutils.rms(data, cfg.emg.rms_win)
+        if envelope:
+            if cfg.emg.envelope_method == 'linear_envelope':
+                data = numutils._linear_envelope(data, self.sfrate)
+            elif cfg.emg.envelope_method == 'rms':
+                data = numutils.rms(data, cfg.emg.rms_win)
+            else:
+                raise RuntimeError('Invalid envelope method: %s' % cfg.emg.envelope_method)
         elif self.passband:  # no filtering for RMS data
             # filtered data is currently not cached; _filtfilt() call typically
             # takes less than 1 ms, so this should not be a problem, unless a
             # huge number of calls are made
             data = numutils._filtfilt(data, self.passband, self.sfrate)
-        data *= self.correction_factor
-        return data
+        return data * self.correction_factor
 
     def has_channel(self, chname):
         """Check whether a channel exists in the data.
@@ -258,8 +265,8 @@ class AvgEMG(EMG):
     def __init__(self, data):
         self._data = data
 
-    def get_channel_data(self, chname, rms=None):
-        if not rms:
+    def get_channel_data(self, chname, envelope=None):
+        if not envelope:
             raise RuntimeError('AvgEMG can only return averaged RMS data')
         chname = self._match_name(chname)
         return self._data[chname]

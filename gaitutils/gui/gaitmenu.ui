@@ -95,9 +95,9 @@
        </widget>
       </item>
       <item row="7" column="6" colspan="2">
-       <widget class="QCheckBox" name="xbEMGRMS">
+       <widget class="QCheckBox" name="xbEMGEnvelope">
         <property name="text">
-         <string>Plot EMG as RMS</string>
+         <string>Plot EMG as envelope</string>
         </property>
         <property name="checked">
          <bool>false</bool>

@@ -59,7 +59,7 @@ def plot_trials(
         Maximum number of cycles to plot for each variable type. If None, taken
         from cfg.
     emg_mode : str | None
-        If 'rms', plot EMG in RMS mode.
+        If 'envelope', plot EMG in envelope mode.
     legend_type : str | None
         Legend type for gait cycles (see _get_cycle_name for options). If None,
         taken from cfg.

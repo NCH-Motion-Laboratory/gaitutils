@@ -829,10 +829,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
         layout_name = self.layouts_map[layout_desc]
         # FIXME: this is a bit kludgy
         is_emg_layout = 'EMG' in layout_name.upper()
-        if self.xbEMGRMS.checkState():
-            emg_mode = 'rms'
+        if self.xbEMGEnvelope.checkState():
+            emg_mode = 'envelope'
         elif have_avgtrials and is_emg_layout:
-            qt_message_dialog('Averaged EMG can only be plotted in RMS mode')
+            qt_message_dialog('Averaged EMG can only be plotted in envelope mode')
             return
         else:
             emg_mode = None

@@ -105,5 +105,5 @@ def test_emg_get_data():
     for chname in chnames:
         chdata = e.get_channel_data(chname)
         assert chdata.shape == (1000,)
-        chdata = e.get_channel_data(chname, rms=True)
+        chdata = e.get_channel_data(chname, envelope=True)
         assert chdata.shape == (1000,)

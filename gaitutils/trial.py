@@ -441,7 +441,7 @@ class Trial(object):
         data = self._get_modelvar(var)
         return self.normalize_to_cycle(data, cycle)
 
-    def get_emg_data(self, ch, rms=False, cycle=None):
+    def get_emg_data(self, ch, envelope=False, cycle=None):
         """Return trial data for an EMG channel.
 
         Uses 'fuzzy' name matching: if the specified channel is not found in the
@@ -454,8 +454,9 @@ class Trial(object):
         ----------
         ch : string
             The EMG channel name. Fuzzy name matching is used.
-        rms : bool
-            Return moving-window RMS instead of raw data.
+        envelope : bool
+            Return envelope of data. The envelope is computed as either RMS or
+            linear envelope, according to settings in the config.
 
         Returns
         -------
@@ -463,7 +464,7 @@ class Trial(object):
             Tuple of (t, data) where t is the time axis as 1-dim ndarray, and
             data is the EMG data as 1-dim ndarray.
         """
-        data = self.emg.get_channel_data(ch, rms=rms)
+        data = self.emg.get_channel_data(ch, envelope=envelope)
         return self.normalize_analog_to_cycle(data, cycle)
 
     def get_marker_data(self, marker, cycle=None):

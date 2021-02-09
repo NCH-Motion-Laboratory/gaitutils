@@ -409,8 +409,8 @@ def dash_report(
                 legend_type = cfg.report.comparison_legend_type
                 style_by = cfg.report.comparison_style_by
                 color_by = cfg.report.comparison_color_by
-                if cfg.report.comparison_emg_rms:
-                    emg_mode = 'rms'
+                if cfg.report.comparison_emg_as_envelope:
+                    emg_mode = 'envelope'
             else:
                 legend_type = cfg.report.legend_type
                 style_by = cfg.report.style_by

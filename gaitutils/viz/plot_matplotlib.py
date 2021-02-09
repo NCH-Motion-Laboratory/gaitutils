@@ -399,7 +399,7 @@ def plot_trials(
         Maximum number of cycles to plot for each variable type. If None, taken
         from cfg.
     emg_mode : str | None
-        If 'rms', plot EMG in RMS mode.
+        If 'envelope', plot EMG in envelope mode.
     legend_type : str | None
         Legend type for gait cycles (see _get_cycle_name for options). If None,
         taken from cfg.
@@ -439,7 +439,9 @@ def plot_trials(
     if emg_normaldata is None:
         emg_normaldata = normaldata._read_configured_emg_normaldata()
 
-    use_rms = emg_mode == 'rms'
+    if emg_mode not in (None, 'envelope'):
+        raise ValueError('invalid EMG mode parameter')
+    use_envelope = emg_mode == 'envelope'
 
     nrows, ncols = layouts._check_layout(layout)
 
@@ -739,15 +741,15 @@ def plot_trials(
                         # _axis_annotate(ax, 'disconnected')
                         if do_plot:
 
-                            t_, y = trial.get_emg_data(var, rms=use_rms, cycle=cyc)
+                            t_, y = trial.get_emg_data(var, envelope=use_envelope, cycle=cyc)
                             t = t_ if normalized else t_ / trial.samplesperframe
 
                             col = _color_by_params(
                                 color_by['emg'], emg_trace_colors, trial, cyc, context
                             )
                             lw = (
-                                cfg.plot.emg_rms_linewidth
-                                if use_rms
+                                cfg.plot.emg_envelope_linewidth
+                                if use_envelope
                                 else cfg.plot.emg_linewidth
                             )
                             line_ = ax.plot(

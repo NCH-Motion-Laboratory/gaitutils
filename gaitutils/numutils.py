@@ -16,6 +16,9 @@ from scipy import signal
 from scipy.signal import medfilt
 from scipy.special import erfcinv
 
+from .config import cfg
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -400,6 +403,12 @@ def rms(data, win, axis=None, pad_mode=None):
     padarg = eff_dim * [(0, 0)]
     padarg[axis] = padarg_axis
     return np.pad(rms_, padarg, mode=pad_mode)
+
+
+def _linear_envelope(data, sfrate):
+    """Calculate a linear envelope."""
+    data_rect = np.abs(data)
+    return _filtfilt(data_rect, [0, cfg.emg.linear_envelope_lowpass], sfrate)
 
 
 def _filtfilt(data, passband, sfrate, buttord=5):

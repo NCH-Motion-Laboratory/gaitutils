@@ -94,7 +94,7 @@ def _get_trial_cycles(trial, cycles, max_cycles):
 
 def _emg_yscale(emg_mode):
     """Compute EMG y range for plotting"""
-    if emg_mode == 'rms':
+    if emg_mode == 'envelope':
         emg_yrange = np.array([0, cfg.plot.emg_yscale]) * cfg.plot.emg_multiplier
     else:
         emg_yrange = (

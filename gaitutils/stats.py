@@ -150,7 +150,7 @@ class AvgTrial(Trial):
             data[:] = np.nan
         return self.t, data
 
-    def get_emg_data(self, ch, rms=None, cycle=None):
+    def get_emg_data(self, ch, envelope=None, cycle=None):
         """Get averaged EMG RMS data.
 
         Parameters
@@ -158,9 +158,9 @@ class AvgTrial(Trial):
         ch : str
             The channel name.
         """
-        if not rms:
+        if not envelope:
             raise ValueError('AvgTrial only supports EMG in RMS mode')
-        return self.tn_analog, self.emg.get_channel_data(ch, rms=True)
+        return self.tn_analog, self.emg.get_channel_data(ch, envelope=True)
 
     def get_marker_data(self, marker, cycle=None):
         raise GaitDataError('AvgTrial does not average marker data yet')

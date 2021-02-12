@@ -53,12 +53,6 @@ class AvgTrial(Trial):
         nfiles = len(trials)
         data_all, cycles = collect_trial_data(trials)
 
-        # some consistency checks
-        analogrates = set(c.trial.analograte for varx in cycles['emg'] for c in cycles['emg'][varx])
-        if len(analogrates) > 1:
-            raise RuntimeError('The averager requires trials to have identical analog sampling rates')
-        sfrate = analogrates.pop()
-
         avgdata_model, stddata_model, ncycles_ok_analog = average_model_data(
             data_all['model'],
             reject_zeros=reject_zeros,
@@ -67,10 +61,8 @@ class AvgTrial(Trial):
         )
         avgdata_emg, stddata_emg, ncycles_ok_emg = average_analog_data(
             data_all['emg'],
-            envelope=True,
             reject_outliers=reject_outliers,
             use_medians=use_medians,
-            sfrate=sfrate,
         )
 
         return cls(
@@ -196,7 +188,7 @@ def _robust_reject_rows(data, p_threshold):
 
 
 def average_analog_data(
-    data, envelope=None, reject_outliers=None, use_medians=None, sfrate=None
+    data, reject_outliers=None, use_medians=None
 ):
     """Average collected analog data.
 
@@ -205,8 +197,6 @@ def average_analog_data(
     data : dict
         Data to average (from collect_trial_data). Keys should be names of
         analog variables and values should be corresponding 1-D data.
-    envelope : bool
-        Compute envelope of signal before averaging. See numutils.envelope().
     reject_outliers : float or None
         None for no automatic outlier rejection. Otherwise, a P value for false
         rejection (assuming strictly normally distributed data). Outliers are
@@ -215,8 +205,6 @@ def average_analog_data(
         Use median and MAD (median absolute deviation) instead of mean and
         stddev. The median is robust to outliers, but not robust to small
         sample size. Thus, use of medians may be a bad idea for small samples.
-    sfrate : float
-        Analog sampling rate. Required for linear envelope.
 
     Returns
     -------
@@ -231,9 +219,6 @@ def average_analog_data(
     avgdata = dict()
     ncycles_ok = dict()
 
-    if envelope is None:
-        envelope = False
-
     if use_medians is None:
         use_medians = False
 
@@ -244,10 +229,6 @@ def average_analog_data(
             ncycles_ok[var] = 0
             continue
         else:
-            if envelope:
-                if sfrate is None:
-                    raise RuntimeError('Linear envelope requires the sampling rate')
-                vardata = numutils.envelope(vardata, sfrate, axis=1)
             n_ok = vardata.shape[0]
             # do the outlier rejection
             if n_ok > 0 and reject_outliers is not None and not use_medians:
@@ -356,6 +337,7 @@ def collect_trial_data(
     collect_types=None,
     fp_cycles_only=None,
     analog_len=None,
+    analog_envelope=None,
 ):
     """Read model and analog cycle-normalized data from trials into numpy arrays.
 
@@ -373,6 +355,9 @@ def collect_trial_data(
     analog_len : int
         Analog data length varies by gait cycle, so it will be resampled into
         grid length specified by analog_len (default 1000 samples)
+    analog_envelope : bool
+        Whether to compute envelope of analog data or return raw data. By
+        default the data will be enveloped.
 
     Returns
     -------
@@ -406,6 +391,9 @@ def collect_trial_data(
 
     if analog_len is None:
         analog_len = 1000  # reasonable default for analog data (?)
+    
+    if analog_envelope is None:
+        analog_envelope = True
 
     if not trials:
         return None, None
@@ -478,6 +466,9 @@ def collect_trial_data(
                 except (KeyError, GaitDataError):
                     logger.warning('no channel %s for %s' % (ch, trial))
                     continue
+                # compute the envelope
+                if analog_envelope:
+                    data = numutils.envelope(data, trial.analograte)
                 # resample to requested grid
                 data_cyc = scipy.signal.resample(data, analog_len)
                 cycles_all['emg'][ch].append(cycle)

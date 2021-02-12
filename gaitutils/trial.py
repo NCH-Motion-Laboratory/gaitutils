@@ -441,7 +441,7 @@ class Trial(object):
         data = self._get_modelvar(var)
         return self.normalize_to_cycle(data, cycle)
 
-    def get_emg_data(self, ch, envelope=False, cycle=None):
+    def get_emg_data(self, ch, cycle=None, envelope=False):
         """Return trial data for an EMG channel.
 
         Uses 'fuzzy' name matching: if the specified channel is not found in the

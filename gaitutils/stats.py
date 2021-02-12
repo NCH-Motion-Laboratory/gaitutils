@@ -439,6 +439,7 @@ def collect_trial_data(
         cycles = [None] if trial.is_static else trial.cycles
 
         for cycle in cycles:
+
             # collect model data
             for model in models_to_collect:
                 for var in model.varnames:
@@ -453,7 +454,7 @@ def collect_trial_data(
                             model.is_kinetic_var(var) or fp_cycles_only
                         ) and not cycle.on_forceplate:
                             continue
-                    _, data = trial.get_model_data(var, cycle)
+                    _, data = trial.get_model_data(var, cycle=cycle)
                     if np.all(np.isnan(data)):
                         logger.debug('no data for %s/%s' % (trial.trialname, var))
                     else:
@@ -465,13 +466,15 @@ def collect_trial_data(
                                 [data_all['model'][var], data[None, :]]
                             )
 
+            # collect EMG data
             for ch in emg_chs_to_collect:
                 # check whether cycle matches channel context
                 if not trial.is_static and not trial.emg.context_ok(ch, cycle.context):
                     continue
-                # get data on analog sampling grid and compute rms
+                # get data on analog sampling grid
                 try:
-                    _, data = trial.get_emg_data(ch)
+                    logger.debug('collecting EMG channel %s from %s' % (ch, cycle))
+                    _, data = trial.get_emg_data(ch, cycle=cycle)
                 except (KeyError, GaitDataError):
                     logger.warning('no channel %s for %s' % (ch, trial))
                     continue

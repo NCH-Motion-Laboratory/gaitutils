@@ -462,13 +462,10 @@ def collect_trial_data(
                 # get data on analog sampling grid
                 try:
                     logger.debug('collecting EMG channel %s from %s' % (ch, cycle))
-                    _, data = trial.get_emg_data(ch, cycle=cycle)
+                    _, data = trial.get_emg_data(ch, cycle=cycle, envelope=analog_envelope)
                 except (KeyError, GaitDataError):
                     logger.warning('no channel %s for %s' % (ch, trial))
                     continue
-                # compute the envelope
-                if analog_envelope:
-                    data = numutils.envelope(data, trial.analograte)
                 # resample to requested grid
                 data_cyc = scipy.signal.resample(data, analog_len)
                 cycles_all['emg'][ch].append(cycle)

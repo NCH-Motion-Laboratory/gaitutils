@@ -232,8 +232,7 @@ def average_analog_data(
             n_ok = vardata.shape[0]
             # do the outlier rejection
             if n_ok > 0 and reject_outliers is not None and not use_medians:
-                rms_status = 'RMS for ' if envelope else ''
-                logger.info('averaging %s%s (N=%d)' % (rms_status, var, n_ok))
+                logger.info('averaging %s (N=%d)' % (var, n_ok))
                 vardata = _robust_reject_rows(vardata, reject_outliers)
             n_ok = vardata.shape[0]
             if n_ok == 0:

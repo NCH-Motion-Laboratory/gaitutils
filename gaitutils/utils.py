@@ -612,6 +612,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
         )
         mkrdata = read_data.get_marker_data(source, mkrs)
 
+    datalen = mkrdata[cfg.autoproc.track_markers[0]].shape[0]
+
     logger.debug('acquiring gait events')
     events_0 = automark_events(source, mkrdata=mkrdata, mark=False, roi=roi)
 
@@ -653,14 +655,17 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
                     logger.debug('no following contralateral strike')
                 else:
                     fr0 = contra_strikes_next[0] + settle_fr
-                    logger.debug(
-                        'checking the following contralateral strike '
-                        '(at frame %d)' % fr0
-                    )
-                    contra_next_ok = (
-                        _foot_plate_check(fp, mkrdata, fr0, contra_side, footlen) == 0
-                    )
-                    foot_contacts_ok &= contra_next_ok
+                    if fr0 > datalen:  # data overrun
+                        logger.debug('no following contralateral strike (overrun)')
+                    else:
+                        logger.debug(
+                            'checking the following contralateral strike '
+                            '(at frame %d)' % fr0
+                        )
+                        contra_next_ok = (
+                            _foot_plate_check(fp, mkrdata, fr0, contra_side, footlen) == 0
+                        )
+                        foot_contacts_ok &= contra_next_ok
                 contra_strikes_prev = contra_strikes[
                     np.where(contra_strikes < strike_fr)
                 ]

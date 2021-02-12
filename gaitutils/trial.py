@@ -662,10 +662,24 @@ class Trial(object):
                     else:
                         raise RuntimeError('invalid no_toeoff parameter in config')
                 elif len(toeoff) > 1:
-                    raise GaitDataError(
-                        '%s: multiple toeoffs for cycle '
-                        'starting at %d' % (self.trialname, start)
-                    )
+                    if cfg.trial.multiple_toeoffs == 'error':
+                        raise GaitDataError(
+                            'multiple toeoffs for cycle starting at %d' % start
+                        )
+                    elif cfg.trial.multiple_toeoffs == 'accept_first':
+                        logger.warning(
+                            'multiple toeoffs for cycle starting at %d, picking the first one'
+                            % start
+                        )
+                        toeoff = toeoff[0]
+                    elif cfg.trial.multiple_toeoffs == 'reject':
+                        logger.warning(
+                            'multiple toeoffs for cycle starting at %d, skipping cycle'
+                            % start
+                        )
+                        continue
+                    else:
+                        raise RuntimeError('invalid multiple_toeoffs parameter in config')
                 else:
                     toeoff = toeoff[0]
                 fp_str = ' (f)' if on_forceplate else ''

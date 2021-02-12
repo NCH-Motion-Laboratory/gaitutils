@@ -650,10 +650,17 @@ class Trial(object):
                 end = strikes[k + 1]
                 toeoff = [x for x in toeoffs if x > start and x < end]
                 if len(toeoff) == 0:
-                    raise GaitDataError(
-                        '%s: no toeoff for cycle starting at '
-                        '%d' % (self.trialname, start)
-                    )
+                    if cfg.trial.no_toeoff == 'error':
+                        raise GaitDataError(
+                            'no toeoff for cycle starting at %d' % start
+                        )
+                    elif cfg.trial.no_toeoff == 'reject':
+                        logger.warning(
+                            'no toeoff for cycle starting at %d, skipping cycle' % start
+                        )
+                        continue
+                    else:
+                        raise RuntimeError('invalid no_toeoff parameter in config')
                 elif len(toeoff) > 1:
                     raise GaitDataError(
                         '%s: multiple toeoffs for cycle '

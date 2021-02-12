@@ -220,7 +220,9 @@ def _get_analog_data(c3dfile, devname):
             'data': data,
         }
     else:
-        raise GaitDataError('No matching analog channels found in data')
+        raise GaitDataError(
+            'No analog channels matching device %s found in data' % devname
+        )
 
 
 def _get_marker_data(c3dfile, markers, ignore_missing=False):

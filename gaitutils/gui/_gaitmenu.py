@@ -827,7 +827,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         else:
             emg_mode = None
-        # FIXME: hardcoded legend type
         self._run_in_thread(
             plot_trials,
             finished_func=self._enable_main_ui,
@@ -837,7 +836,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             backend=self._plotting_backend,
             cycles=cycles,
             emg_mode=emg_mode,
-            legend_type='short_name_with_tag_and_cycle',
+            legend_type=cfg.plot.gui_plotter_legend_type,
             auto_adjust_emg_layout=True,
         )
 

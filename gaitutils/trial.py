@@ -350,11 +350,17 @@ class Trial(object):
         desc : str
             The trial name and description.
         """
-        return '%s (%s, %s)' % (
-            self.trialname,
-            self.eclipse_data['DESCRIPTION'],
-            self.eclipse_data['NOTES'],
-        )
+        s = self.trialname
+        if self.eclipse_data['DESCRIPTION'] or self.eclipse_data['NOTES']:
+            s += ' ('
+            if self.eclipse_data['DESCRIPTION']:
+                s += self.eclipse_data['DESCRIPTION']
+            if self.eclipse_data['DESCRIPTION'] and self.eclipse_data['NOTES']:
+                s += ','
+            if self.eclipse_data['NOTES']:
+                s += self.eclipse_data['NOTES']
+            s += ')'
+        return s
 
     def normalize_to_cycle(self, data, cycle):
         """Normalize frame-based data to a gait cycle.

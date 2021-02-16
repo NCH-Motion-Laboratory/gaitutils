@@ -180,5 +180,5 @@ def _camera_id(fname):
     fn_split = op.split(fname)[-1].split('.')
     id_ = fn_split[1]
     if not numutils._isint(id_):
-        raise RuntimeError('Cannot parse video id from filename %s' % fname)
+        return None
     return id_

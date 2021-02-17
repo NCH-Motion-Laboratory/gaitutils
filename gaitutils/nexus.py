@@ -19,7 +19,7 @@ import logging
 import time
 import multiprocessing
 
-from .numutils import _change_coords, _isfloat, _rigid_body_extrapolate_markers
+from .numutils import _change_coords, _isfloat, _isint, _rigid_body_extrapolate_markers
 from .utils import TrialEvents
 from .envutils import GaitDataError
 from .config import cfg
@@ -118,27 +118,10 @@ def _nexus_pid():
 
 
 def _nexus_version():
-    """Try to return the actual version of the running Nexus process
-    (API does not do that). Hackish and probably unreliable. Returns dict of
-    major and minor version number if successful, otherwise (None, None)"""
-    PROCNAME = "Nexus.exe"
-    for proc in psutil.process_iter():
-        try:
-            if proc.name() == PROCNAME:
-                exname = proc.exe()
-                vstart = exname.find('2.')  # assumes ver >2.
-                vend = exname.find('\\Nexus.exe')
-                if vstart == -1 or vend == -1:
-                    return None, None
-                try:
-                    ver_str = exname[vstart:vend]
-                    vmaj, vmin = ver_str.split('.')
-                    return int(vmaj), int(vmin)
-                except ValueError:  # cannot interpret version string
-                    return None, None
-        except psutil.AccessDenied:
-            pass
-    return None, None
+    """Get Nexus version via API"""
+    vicon = viconnexus()
+    info = vicon.GetServerInfo()
+    return info[1], info[2]
 
 
 def _nexus_ver_greater(major, minor):

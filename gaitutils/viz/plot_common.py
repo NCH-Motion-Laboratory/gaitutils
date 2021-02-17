@@ -11,11 +11,10 @@ from builtins import next
 from past.builtins import basestring
 from itertools import cycle
 from collections import defaultdict, namedtuple
-import datetime
 import logging
 import numpy as np
 
-from .. import models
+from .. import models, sessionutils
 from ..config import cfg
 from ..envutils import GaitDataError
 

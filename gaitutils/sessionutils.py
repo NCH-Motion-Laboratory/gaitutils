@@ -324,3 +324,24 @@ def _get_tagged_dynamic_c3ds_from_sessions(sessions, tags=None):
             raise GaitDataError('No tagged trials found for session %s' % session)
         c3ds_all.extend(c3ds)
     return c3ds_all
+
+
+def _parse_name(name):
+    """Parse trial or session name.
+
+    Name is assumed to be the form:
+    YYYY_MM_DD_desc1_desc2_..._descN_patientcode
+
+    Returns tuple of: (datetime, patientcode, session_description)
+    """
+    name_split = name.split('_')
+    if len(name_split) < 3:
+        raise ValueError('Could not parse name')
+    try:  # see if trial begins with valid date
+        datetxt = '-'.join(name_split[:3])
+        d = datetime.datetime.strptime(datetxt, '%Y-%m-%d')
+    except ValueError:
+        raise ValueError('Could not parse name')
+    code = name_split[-1] if len(name_split) > 3 else None
+    desc = ', '.join(name_split[3:-1]) if len(name_split) > 3 else None
+    return d, code, desc

@@ -237,28 +237,11 @@ def _var_title(var):
 
 def _truncate_trialname(trialname):
     """Shorten trial name"""
-    tname_split = trialname.split('_')
-    try:  # see if trial begins with valid date
-        datetxt = '-'.join(tname_split[:3])
-        d = datetime.datetime.strptime(datetxt, '%Y-%m-%d')
+    try:
+        d, code, desc = sessionutils._parse_name(trialname)
     except ValueError:
-        # if trial was not named as expected, do nothing
         return trialname
-    if len(tname_split) >= 5:
-        # trialname is probably of the standard form:
-        # yyyy_mm_dd_measinfo_sessioninfo1_sessioninfo2_trialn
-        measinfo = tname_split[3]
-        if len(tname_split) > 5:
-            # pick all sessioninfo strings
-            sessioninfo = '/'.join(tname_split[4:-1])
-        else:
-            sessioninfo = ''
-        s = '%d/%d %s' % (d.month, d.year, measinfo)
-        if sessioninfo:
-            s += '/%s' % sessioninfo
-        return s
-    else:
-        return trialname
+    return '%d/%d %s %s' % (d.year, d.month, desc, code)
 
 
 def _get_cycle_name(trial, cyc, name_type):

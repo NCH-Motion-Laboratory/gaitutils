@@ -38,6 +38,7 @@ from ..trial import Trial
 from ..viz.plot_plotly import plot_trials, plot_extracted_box
 from ..viz import timedist, layouts
 from ..stats import AvgTrial, _trials_extract_values
+from ..gui.qt_widgets import ProgressSignals
 
 
 # Py2: for Python 3 compatibility
@@ -146,6 +147,10 @@ def dash_report(
         dyn_tags = cfg.eclipse.tags
     else:
         dyn_tags = tags
+
+    # signals is used to track progress across threads; if not given, create a dummy one
+    if signals is None:
+        signals = ProgressSignals()
 
     # this tag will be shown in the menu for static trials
     static_tag = 'Static'

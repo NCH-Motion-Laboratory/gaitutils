@@ -19,7 +19,7 @@ import logging
 from .. import nexus
 from ..envutils import GaitDataError
 import configdot
-from ..config import _handle_cfg_defaults, cfg_user_fn, cfg
+from ..config import _handle_cfg_defaults, cfg_user_fn, cfg, cfg_types
 
 logger = logging.getLogger(__name__)
 
@@ -216,6 +216,8 @@ class OptionsDialog(QtWidgets.QDialog):
             desc = configdot.get_description(item)
             if not desc:
                 raise RuntimeError('Config item %s missing a description' % item)
+            vartype = cfg_types[secname][item.name].value
+            raise ValueError(vartype['type'])
             if isinstance(item.value, bool):  # use simple checkbox for boolean items
                 input_widget = QtWidgets.QCheckBox()
                 input_widget.setChecked(item.value)

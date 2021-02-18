@@ -46,6 +46,8 @@ cfg_template_fn = resource_filename(__name__, 'data/default.cfg')
 # environment variables (e.g. setting HOME)
 homedir = op.expanduser('~')
 cfg_user_fn = op.join(homedir, '.gaitutils.cfg')
+# location of config type definitions
+cfg_types_fn = resource_filename(__name__, 'data/config_types.cfg')
 
 # provide the global cfg instance
 # read template config
@@ -69,6 +71,9 @@ else:
         f.writelines(cfg_txt)
 
 _handle_cfg_defaults(cfg)
+
+# read config types
+cfg_types = parse_config(cfg_types_fn)
 
 # if using print for config messages:
 # sys.stdout.flush()  # make sure that warnings are printed out

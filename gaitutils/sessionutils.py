@@ -41,6 +41,8 @@ def load_quirks(session):
     ignore_eclipse_fp_info : bool
         If True, Eclipse forceplate fields will be ignored when loading trials from
         the session.
+    emg_chs_disabled : list
+        List of EMG channels to disable.
 
     Parameters
     ----------

@@ -279,21 +279,9 @@ class Trial(object):
             self.eclipse_data = defaultdict(lambda: '', {})
         self.is_static = self.eclipse_data['TYPE'].upper() == 'STATIC'
         # handle session quirks
-        quirks = sessionutils.load_quirks(self.sessionpath)
-        if 'emg_correction_factor' in quirks:
-            emg_correction_factor = quirks['emg_correction_factor']
-            logger.warning(
-                'using quirk: EMG correction factor = %g' % emg_correction_factor
-            )
-        else:
-            emg_correction_factor = 1
-        if 'ignore_eclipse_fp_info' in quirks:
-            logger.warning('using quirk: ignore Eclipse forceplate fields')
-            self.use_eclipse_fp_info = False
-        else:
-            self.use_eclipse_fp_info = True
+        self._handle_quirks()
         # data are lazily read
-        self.emg = EMG(self.source, correction_factor=emg_correction_factor)
+        self.emg = EMG(self.source, correction_factor=self.emg_correction_factor)
         self._forceplate_data = None
         self._marker_data = None
         if not self.is_static:
@@ -311,6 +299,25 @@ class Trial(object):
         self.samplesperframe = self.analograte / self.framerate
         self.cycles = list() if self.is_static else list(self._scan_cycles())
         self.ncycles = len(self.cycles)
+
+    def _handle_quirks(self):
+        """Handle session quirks"""
+        quirks = sessionutils.load_quirks(self.sessionpath)
+        if 'emg_chs_disabled' in quirks:
+            logger.warning('using quirk: disable EMG channels %s' % quirks['emg_chs_disabled'])
+            cfg.emg.chs_disabled = quirks['emg_chs_disabled']
+        if 'emg_correction_factor' in quirks:
+            logger.warning(
+                'using quirk: EMG correction factor = %g' % self.emg_correction_factor
+            )
+            self.emg_correction_factor = quirks['emg_correction_factor']
+        else:
+            self.emg_correction_factor = 1
+        if 'ignore_eclipse_fp_info' in quirks:
+            logger.warning('using quirk: ignore Eclipse forceplate fields')
+            self.use_eclipse_fp_info = False
+        else:
+            self.use_eclipse_fp_info = True
 
     @property
     def videos(self):

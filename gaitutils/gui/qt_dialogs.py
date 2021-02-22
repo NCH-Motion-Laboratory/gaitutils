@@ -216,13 +216,18 @@ class OptionsDialog(QtWidgets.QDialog):
             desc = configdot.get_description(item)
             if not desc:
                 raise RuntimeError('Config item %s missing a description' % item)
-            vartype = cfg_types[secname][item.name].value
-            raise ValueError(vartype['type'])
-            if isinstance(item.value, bool):  # use simple checkbox for boolean items
+            varinfo = cfg_types[secname][item.name].value
+            vartype = varinfo['type']
+            if vartype == 'bool':
                 input_widget = QtWidgets.QCheckBox()
                 input_widget.setChecked(item.value)
-            elif isinstance(item.value, list) or isinstance(item.value, dict):
-                # launch the compound editor for complex types (list and dict)
+            elif vartype == 'str' or vartype == 'tuple':
+                #  use a line edit with the literal value
+                input_widget = QtWidgets.QLineEdit()
+                input_widget.setText(item.literal_value)
+                input_widget.setCursorPosition(0)  # show beginning of line
+            elif vartype in ['list', 'dict']:
+                # launch the compound editor
                 input_widget = QtWidgets.QPushButton()
                 input_widget.setText('Edit...')
                 # lambda needs to consume the extra value from connect(), hence x
@@ -232,11 +237,29 @@ class OptionsDialog(QtWidgets.QDialog):
                 # do not register compound editor buttons as cfg widgets, since the compound editor
                 # callback updates cfg by itsel
                 _save_widget = False
-            else:
-                # for any other types, use a line edit with the literal value
+            elif vartype == 'int':
+                input_widget = QtWidgets.QSpinBox()
+                input_widget.setMinimum(varinfo['min'])
+                input_widget.setMaximum(varinfo['max'])
+                input_widget.setSingleStep(varinfo['step'])
+                input_widget.setValue(int(item.literal_value))
+            elif vartype == 'float':
+                input_widget = QtWidgets.QDoubleSpinBox()
+                input_widget.setMinimum(varinfo['min'])
+                input_widget.setMaximum(varinfo['max'])
+                input_widget.setSingleStep(varinfo['step'])
+                input_widget.setValue(float(item.literal_value))                
+            elif vartype == 'choice':
+                input_widget = QtWidgets.QComboBox()
+                input_widget.addItems(varinfo['choices'])
+                input_widget.setCurrentIndex(input_widget.findText(item.value))
+            elif vartype == 'path':
+                #raise NotImplementedError
                 input_widget = QtWidgets.QLineEdit()
                 input_widget.setText(item.literal_value)
                 input_widget.setCursorPosition(0)  # show beginning of line
+            else:
+                raise RuntimeError('Unknown config variable type: %s' % vartype)
             lout.addRow(desc, input_widget)
             if _save_widget:
                 self._input_widgets[secname][item.name] = input_widget
@@ -280,10 +303,11 @@ class OptionsDialog(QtWidgets.QDialog):
         self.setWindowTitle('Edit configuration')
 
     def _edit_with_compound_editor(self, item):
-        """Opens a compound editor for selected config item"""
+        """Edits the selected config item in the compound editor"""
         val = item.value
         editor = QCompoundEditorDict if isinstance(val, dict) else QCompoundEditorList
         dlg = editor(val)
+        # update the value of the config item if the dialog was accepted
         if dlg.exec_():
             item.value = dlg.data
 
@@ -327,7 +351,7 @@ class OptionsDialog(QtWidgets.QDialog):
                     f.writelines(txt)
 
     def _update_inputs(self):
-        """Update value-visible input widgets according to current cfg"""
+        """Update value-visible input widgets (other than compound) according to current cfg"""
         for secname, sec in cfg:
             for itemname, item in sec:
                 if itemname not in self._input_widgets[secname]:

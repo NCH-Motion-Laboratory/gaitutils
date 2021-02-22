@@ -492,8 +492,10 @@ def autoproc_trial(signals=None):
     # XXX: this may fail with old-style enf naming (2015 and pre)
     fn += '.Trial.enf'
     enffiles = [op.join(nexus.get_sessionpath(), fn)]  # listify single enf
+    # for single trial autoprocess, running pipelines in separate processes is
+    # not really necessary and seems to cause slowdowns
     if enffiles:
-        _do_autoproc(enffiles, signals=signals, do_current=True)
+        _do_autoproc(enffiles, pipelines_in_proc=False, signals=signals, do_current=True)
 
 
 def automark_trial(plot=False):

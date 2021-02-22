@@ -86,19 +86,20 @@ def qt_dir_chooser():
 class QCompoundEditorDict(QtWidgets.QDialog):
     """Compound editor for dicts"""
 
-    def __init__(self, data, parent=None):
+    def __init__(self, data, fixed_keys=None, parent=None):
         super(QCompoundEditorDict, self).__init__(parent=parent)
         root_layout = QtWidgets.QVBoxLayout()
         self.datable = QtWidgets.QTableWidget()
         self.data = data
         # create the button box
         self.buttonbox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        insertbutton = QtWidgets.QPushButton('Insert')
-        deletebutton = QtWidgets.QPushButton('Delete')
-        self.buttonbox.addButton(insertbutton, QDialogButtonBox.ActionRole)
-        self.buttonbox.addButton(deletebutton, QDialogButtonBox.ActionRole)
-        insertbutton.clicked.connect(self._insert_item)
-        deletebutton.clicked.connect(self._delete_item)
+        if not fixed_keys:
+            insertbutton = QtWidgets.QPushButton('Insert')
+            deletebutton = QtWidgets.QPushButton('Delete')
+            self.buttonbox.addButton(insertbutton, QDialogButtonBox.ActionRole)
+            self.buttonbox.addButton(deletebutton, QDialogButtonBox.ActionRole)
+            insertbutton.clicked.connect(self._insert_item)
+            deletebutton.clicked.connect(self._delete_item)
         self.buttonbox.accepted.connect(self.accept)
         self.buttonbox.rejected.connect(self.reject)
         self.datable = QtWidgets.QTableWidget()
@@ -237,6 +238,17 @@ class OptionsDialog(QtWidgets.QDialog):
                 # do not register compound editor buttons as cfg widgets, since the compound editor
                 # callback updates cfg by itsel
                 _save_widget = False
+            elif vartype == 'fixed_dict':
+                # launch the compound editor
+                input_widget = QtWidgets.QPushButton()
+                input_widget.setText('Edit...')
+                # lambda needs to consume the extra value from connect(), hence x
+                input_widget.clicked.connect(
+                    lambda x, it=item: self._edit_with_compound_editor(it, fixed_keys=True)
+                )
+                # do not register compound editor buttons as cfg widgets, since the compound editor
+                # callback updates cfg by itsel
+                _save_widget = False
             elif vartype == 'int':
                 input_widget = QtWidgets.QSpinBox()
                 input_widget.setMinimum(varinfo['min'])
@@ -302,11 +314,15 @@ class OptionsDialog(QtWidgets.QDialog):
         self.setLayout(_main_layout)
         self.setWindowTitle('Edit configuration')
 
-    def _edit_with_compound_editor(self, item):
+    def _edit_with_compound_editor(self, item, fixed_keys=None):
         """Edits the selected config item in the compound editor"""
+        if fixed_keys is None:
+            fixed_keys = False
         val = item.value
-        editor = QCompoundEditorDict if isinstance(val, dict) else QCompoundEditorList
-        dlg = editor(val)
+        if isinstance(val, dict):
+            dlg = QCompoundEditorDict(val, fixed_keys=fixed_keys)
+        else:
+            dlg = QCompoundEditorList(val)
         # update the value of the config item if the dialog was accepted
         if dlg.exec_():
             item.value = dlg.data

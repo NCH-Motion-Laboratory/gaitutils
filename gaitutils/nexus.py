@@ -18,6 +18,7 @@ import glob
 import logging
 import time
 import multiprocessing
+import subprocess
 
 from .numutils import _change_coords, _isfloat, _isint, _rigid_body_extrapolate_markers
 from .utils import TrialEvents
@@ -131,6 +132,25 @@ def _nexus_ver_greater(major, minor):
         return False
     else:
         return vmaj >= major and vmin >= minor
+
+
+def _start_nexus():
+    """Start Vicon Nexus"""
+    exe = op.join(_find_nexus_path(), 'Nexus.exe')
+    p = subprocess.Popen([exe])
+    time.sleep(12)
+    return p
+
+
+def _kill_nexus(p=None, restart=False):
+    """Kill Vicon Nexus process p"""
+    if p is None:
+        pid = _nexus_pid()
+        p = psutil.Process(pid)
+    p.terminate()
+    if restart:
+        time.sleep(5)
+        _start_nexus()
 
 
 def viconnexus():

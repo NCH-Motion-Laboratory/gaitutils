@@ -20,7 +20,7 @@ translations['finnish'] = {
     'Normal data': u'Normaalidata',
     'Session': u'Mittaus',
     'Description': u'Kuvaus',
-    'vuotta': u'years',
+    'Years': u'vuotta',
     'Age at time of measurement': u'Ikä mittaushetkellä',
     'unknown': u'ei tiedossa',
     'Social security number': u'Henkilötunnus',

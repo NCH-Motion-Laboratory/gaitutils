@@ -138,7 +138,6 @@ def _start_nexus():
     """Start Vicon Nexus"""
     exe = op.join(_find_nexus_path(), 'Nexus.exe')
     p = subprocess.Popen([exe])
-    time.sleep(12)
     return p
 
 

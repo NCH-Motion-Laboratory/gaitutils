@@ -304,13 +304,13 @@ class Trial(object):
         """Handle session quirks"""
         quirks = sessionutils.load_quirks(self.sessionpath)
         if 'emg_chs_disabled' in quirks:
-            logger.warning('using quirk: disable EMG channels %s' % quirks['emg_chs_disabled'])
             cfg.emg.chs_disabled = quirks['emg_chs_disabled']
+            logger.warning('using quirk: disable EMG channels %s' % quirks['emg_chs_disabled'])
         if 'emg_correction_factor' in quirks:
+            self.emg_correction_factor = quirks['emg_correction_factor']
             logger.warning(
                 'using quirk: EMG correction factor = %g' % self.emg_correction_factor
             )
-            self.emg_correction_factor = quirks['emg_correction_factor']
         else:
             self.emg_correction_factor = 1
         if 'ignore_eclipse_fp_info' in quirks:
@@ -665,7 +665,7 @@ class Trial(object):
                 if len(toeoff) == 0:
                     if cfg.trial.no_toeoff == 'error':
                         raise GaitDataError(
-                            'no toeoff for cycle starting at %d' % start
+                            '%s: no toeoff for cycle starting at %d' % (self.trialname, start)
                         )
                     elif cfg.trial.no_toeoff == 'reject':
                         logger.warning(
@@ -677,7 +677,7 @@ class Trial(object):
                 elif len(toeoff) > 1:
                     if cfg.trial.multiple_toeoffs == 'error':
                         raise GaitDataError(
-                            'multiple toeoffs for cycle starting at %d' % start
+                            '%s: multiple toeoffs for cycle starting at %d' % (self.trialname, start)
                         )
                     elif cfg.trial.multiple_toeoffs == 'accept_first':
                         logger.warning(

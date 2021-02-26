@@ -289,10 +289,10 @@ class OptionsDialog(QtWidgets.QDialog):
             )  # add widget description and widget as a layout row
             if _register_widget:
                 self._input_widgets[secname][item.name] = input_widget
-                #try:
-                input_widget._setter(item.value)
-                #except TypeError:
-                #    raise TypeError('%s %s' % (item, item.value))
+                try:
+                    input_widget._setter(item.value)
+                except TypeError:
+                    raise TypeError('%s %s' % (item, item.value))
         return tab
 
     def __init__(self, parent, default_tab=0):

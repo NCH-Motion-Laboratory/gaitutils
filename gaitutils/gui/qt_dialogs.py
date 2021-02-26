@@ -222,18 +222,19 @@ class OptionsDialog(QtWidgets.QDialog):
             vartype = varinfo['type']
             if vartype == 'bool':
                 input_widget = QtWidgets.QCheckBox()
-                input_widget.setChecked(item.value)
                 # we assign a _getter so that we can get value from any widget type with the same function call
                 input_widget._getter = input_widget.isChecked
+                input_widget._setter = input_widget.setChecked
             elif vartype == 'str':
-                #  use a line edit with the literal value
+                # use a line edit with the literal value
                 input_widget = QtWidgets.QLineEdit()
-                input_widget.setText(item.literal_value)
                 input_widget.setCursorPosition(0)  # show beginning of line
                 input_widget._getter = input_widget.text
+                input_widget._setter = lambda value: input_widget.setText(value)
             elif vartype == 'float_range':
-                input_widget = RangeWidget(*item.value, int_input=False)
+                input_widget = RangeWidget(*item.value)
                 input_widget._getter = input_widget.range
+                input_widget._setter = lambda val: input_widget.setRange(*val)
             elif vartype in ['list', 'dict']:
                 # launch the compound editor
                 input_widget = QtWidgets.QPushButton()
@@ -263,23 +264,24 @@ class OptionsDialog(QtWidgets.QDialog):
                 input_widget.setMinimum(varinfo['min'])
                 input_widget.setMaximum(varinfo['max'])
                 input_widget.setSingleStep(varinfo['step'])
-                input_widget.setValue(int(item.literal_value))
                 input_widget._getter = input_widget.value
+                input_widget._setter = input_widget.setValue
             elif vartype == 'float':
                 input_widget = QtWidgets.QDoubleSpinBox()
                 input_widget.setMinimum(varinfo['min'])
                 input_widget.setMaximum(varinfo['max'])
                 input_widget.setSingleStep(varinfo['step'])
-                input_widget.setValue(float(item.literal_value))
                 input_widget._getter = input_widget.value
+                input_widget._setter = input_widget.setValue                
             elif vartype == 'choice':
                 input_widget = QtWidgets.QComboBox()
                 input_widget.addItems(varinfo['choices'])
-                input_widget.setCurrentIndex(input_widget.findText(item.value))
                 input_widget._getter = input_widget.currentText
+                input_widget._setter = input_widget.setCurrentText
             elif vartype == 'path':
                 input_widget = PathWidget(item.value)
                 input_widget._getter = input_widget.text
+                input_widget._setter = input_widget.setText
             else:
                 raise RuntimeError('Unknown config variable type: %s' % vartype)
             lout.addRow(
@@ -287,6 +289,10 @@ class OptionsDialog(QtWidgets.QDialog):
             )  # add widget description and widget as a layout row
             if _register_widget:
                 self._input_widgets[secname][item.name] = input_widget
+                #try:
+                input_widget._setter(item.value)
+                #except TypeError:
+                #    raise TypeError('%s %s' % (item, item.value))
         return tab
 
     def __init__(self, parent, default_tab=0):
@@ -393,7 +399,7 @@ class OptionsDialog(QtWidgets.QDialog):
                     _widget.setChecked(item.value)
 
     def _update_cfg(self):
-        """Update cfg according to input widgets"""
+        """Update config according to input widgets"""
         for secname, sec in cfg:
             for itemname, item in sec:
                 if itemname not in self._input_widgets[secname]:

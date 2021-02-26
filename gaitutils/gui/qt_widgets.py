@@ -33,6 +33,10 @@ class RangeWidget(QtWidgets.QWidget):
         """Return the range"""
         return float(self.val0_widget.text()), float(self.val1_widget.text())
 
+    def setRange(self, val0, val1):
+        self.val0_widget.setText(str(val0))
+        self.val1_widget.setText(str(val1))
+
 
 class PathWidget(QtWidgets.QWidget):
     """Path widget that can be directly edited or browsed via file dialog"""

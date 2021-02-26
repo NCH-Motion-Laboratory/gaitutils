@@ -20,6 +20,7 @@ from .. import nexus
 from ..envutils import GaitDataError
 import configdot
 from ..config import _handle_cfg_defaults, cfg_user_fn, cfg, cfg_types
+from .qt_widgets import PathWidget, RangeWidget
 
 logger = logging.getLogger(__name__)
 
@@ -213,7 +214,7 @@ class OptionsDialog(QtWidgets.QDialog):
         )
         # loop through config items and insert appropriate input widget for each
         for item in items:
-            _save_widget = True
+            _register_widget = True
             desc = configdot.get_description(item)
             if not desc:
                 raise RuntimeError('Config item %s missing a description' % item)
@@ -222,11 +223,17 @@ class OptionsDialog(QtWidgets.QDialog):
             if vartype == 'bool':
                 input_widget = QtWidgets.QCheckBox()
                 input_widget.setChecked(item.value)
-            elif vartype == 'str' or vartype == 'tuple':
+                # we assign a _getter so that we can get value from any widget type with the same function call
+                input_widget._getter = input_widget.isChecked
+            elif vartype == 'str':
                 #  use a line edit with the literal value
                 input_widget = QtWidgets.QLineEdit()
                 input_widget.setText(item.literal_value)
                 input_widget.setCursorPosition(0)  # show beginning of line
+                input_widget._getter = input_widget.text
+            elif vartype == 'float_range':
+                input_widget = RangeWidget(*item.value, int_input=False)
+                input_widget._getter = input_widget.range
             elif vartype in ['list', 'dict']:
                 # launch the compound editor
                 input_widget = QtWidgets.QPushButton()
@@ -237,43 +244,48 @@ class OptionsDialog(QtWidgets.QDialog):
                 )
                 # do not register compound editor buttons as cfg widgets, since the compound editor
                 # callback updates cfg by itsel
-                _save_widget = False
+                _register_widget = False
             elif vartype == 'fixed_dict':
                 # launch the compound editor
                 input_widget = QtWidgets.QPushButton()
                 input_widget.setText('Edit...')
                 # lambda needs to consume the extra value from connect(), hence x
                 input_widget.clicked.connect(
-                    lambda x, it=item: self._edit_with_compound_editor(it, fixed_keys=True)
+                    lambda x, it=item: self._edit_with_compound_editor(
+                        it, fixed_keys=True
+                    )
                 )
                 # do not register compound editor buttons as cfg widgets, since the compound editor
                 # callback updates cfg by itsel
-                _save_widget = False
+                _register_widget = False
             elif vartype == 'int':
                 input_widget = QtWidgets.QSpinBox()
                 input_widget.setMinimum(varinfo['min'])
                 input_widget.setMaximum(varinfo['max'])
                 input_widget.setSingleStep(varinfo['step'])
                 input_widget.setValue(int(item.literal_value))
+                input_widget._getter = input_widget.value
             elif vartype == 'float':
                 input_widget = QtWidgets.QDoubleSpinBox()
                 input_widget.setMinimum(varinfo['min'])
                 input_widget.setMaximum(varinfo['max'])
                 input_widget.setSingleStep(varinfo['step'])
-                input_widget.setValue(float(item.literal_value))                
+                input_widget.setValue(float(item.literal_value))
+                input_widget._getter = input_widget.value
             elif vartype == 'choice':
                 input_widget = QtWidgets.QComboBox()
                 input_widget.addItems(varinfo['choices'])
                 input_widget.setCurrentIndex(input_widget.findText(item.value))
+                input_widget._getter = input_widget.currentText
             elif vartype == 'path':
-                #raise NotImplementedError
-                input_widget = QtWidgets.QLineEdit()
-                input_widget.setText(item.literal_value)
-                input_widget.setCursorPosition(0)  # show beginning of line
+                input_widget = PathWidget(item.value)
+                input_widget._getter = input_widget.text
             else:
                 raise RuntimeError('Unknown config variable type: %s' % vartype)
-            lout.addRow(desc, input_widget)
-            if _save_widget:
+            lout.addRow(
+                desc, input_widget
+            )  # add widget description and widget as a layout row
+            if _register_widget:
                 self._input_widgets[secname][item.name] = input_widget
         return tab
 
@@ -387,15 +399,7 @@ class OptionsDialog(QtWidgets.QDialog):
                 if itemname not in self._input_widgets[secname]:
                     continue
                 _widget = self._input_widgets[secname][itemname]
-                if isinstance(_widget, QtWidgets.QLineEdit):
-                    try:
-                        item.value = ast.literal_eval(_widget.text())
-                    except (SyntaxError, ValueError):
-                        return itemname, _widget.text()
-                elif isinstance(_widget, QtWidgets.QCheckBox):
-                    item.value = _widget.isChecked()
-                else:
-                    raise RuntimeError('Invalid input widget class, how come?')
+                item.value = _widget._getter()
         _handle_cfg_defaults(cfg)
         return None, None
 

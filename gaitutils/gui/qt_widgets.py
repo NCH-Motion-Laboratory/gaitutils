@@ -5,9 +5,76 @@ gaitutils custom Qt widgets
 @author: Jussi (jnu@iki.fi)
 """
 
+import os.path as op
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import QObject, pyqtSignal
 import logging
+
+
+class RangeWidget(QtWidgets.QWidget):
+    """Range defined by two numbers"""
+
+    def __init__(self, val0=None, val1=None, int_input=True, parent=None):
+        super(RangeWidget, self).__init__(parent)
+        widget_type = QtWidgets.QLineEdit
+        self.val0_widget, self.val1_widget = widget_type(), widget_type()
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(QtWidgets.QLabel('From:'))
+        layout.addWidget(self.val0_widget)
+        if val0 is not None:
+            self.val0_widget.setText(str(val0))
+        if val1 is not None:
+            self.val1_widget.setText(str(val1))
+        layout.addWidget(QtWidgets.QLabel('To:'))
+        layout.addWidget(self.val1_widget)
+
+    def range(self):
+        """Return the range"""
+        return float(self.val0_widget.text()), float(self.val1_widget.text())
+
+
+class PathWidget(QtWidgets.QWidget):
+    """Path widget that can be directly edited or browsed via file dialog"""
+
+    def __init__(self, path=None, parent=None):
+        super(PathWidget, self).__init__(parent)
+        self.browser_window_title = 'Select a file...'
+        self.browser_window_filter = ''  # e.g. '*.txt'
+        self.browser_window_path = ''  # default path for browser window
+        self.lineEdit = QtWidgets.QLineEdit()
+        self.button = QtWidgets.QPushButton()
+        self.button.setText('Browse...')
+        self.button.clicked.connect(self._browse)
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.lineEdit)
+        layout.addWidget(self.button)
+        if path is not None:
+            self.setText(self._normalize_path(path))
+
+    def text(self):
+        """Get line edit text"""
+        return self.lineEdit.text()
+
+    def setText(self, text):
+        """Set line edit text"""
+        self.lineEdit.setText(text)
+
+    def _browse(self):
+        """Browse for a file"""
+        fout = QtWidgets.QFileDialog.getOpenFileName(
+            self,
+            self.browser_window_title,
+            self.browser_window_path,
+            self.browser_window_filter,
+        )
+        if op.isfile(fout[0]):
+            self.setText(self._normalize_path(fout[0]))
+
+    def _normalize_path(self, path):
+        path = op.abspath(path)
+        return path[0].upper() + path[1:]  # upcase drive letter
 
 
 class NiceListWidgetItem(QtWidgets.QListWidgetItem):

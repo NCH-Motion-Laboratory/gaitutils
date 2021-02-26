@@ -12,9 +12,9 @@ import logging
 
 
 class RangeWidget(QtWidgets.QWidget):
-    """Range defined by two numbers"""
+    """Widget for a range defined by two numbers"""
 
-    def __init__(self, val0=None, val1=None, int_input=True, parent=None):
+    def __init__(self, val0=None, val1=None, parent=None):
         super(RangeWidget, self).__init__(parent)
         widget_type = QtWidgets.QLineEdit
         self.val0_widget, self.val1_widget = widget_type(), widget_type()

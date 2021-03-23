@@ -25,7 +25,7 @@ translations['finnish'] = {
     'unknown': u'ei tiedossa',
     'Social security number': u'Henkilötunnus',
     'Name': u'Nimi',
-    'Results of gait analysis': u'Kävelyanalyysin tulokset',
+    'Results of gait analysis': u'3D-kävelyanalyysin tulokset',
     'Right': u'Oikea',
     'Left': u'Vasen',
     'R': u'O',

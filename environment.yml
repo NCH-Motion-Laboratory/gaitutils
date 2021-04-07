@@ -6,7 +6,6 @@ dependencies:
   - configobj
   - flask
   - freetype
-  - future
   - matplotlib
   - numpy
   - scipy

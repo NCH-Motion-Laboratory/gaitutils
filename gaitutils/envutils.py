@@ -18,14 +18,10 @@ import hashlib
 import os
 import tempfile
 import binascii
+from functools import lru_cache
 
 from .gui._windows import error_exit
 
-# Py2: import backported lru_cache
-if sys.version_info.major == 2:
-    from functools32 import lru_cache
-else:
-    from functools import lru_cache
 
 logger = logging.getLogger(__name__)
 
@@ -166,9 +162,5 @@ def _named_tempfile(suffix=None):
         raise ValueError('Invalid suffix, must start with dot')
     basename = os.urandom(LEN)  # get random bytes
     # convert to hex string
-    # Py2
-    if sys.version_info.major == 2:
-        basename = binascii.b2a_hex(basename)
-    else:
-        basename = basename.hex()
+    basename = basename.hex()
     return os.path.join(tempfile.gettempdir(), basename + suffix)

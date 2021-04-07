@@ -393,7 +393,6 @@ class WebReportDialog(QtWidgets.QDialog):
         # running server then occupies a thread, this means that we need to
         # increase the threadpool max threads limit; otherwise new servers will
         # get queued by the threadpool and will not run.
-        # Serving is a bit flaky in py2 (multiple requests cause exceptions)
         self.parent._run_in_thread(
             app.server.run, block_ui=False, debug=False, port=port, threaded=True
         )
@@ -576,10 +575,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         vartype, mode = self._get_colorstyle_choices()
         cfg_item = {'color': cfg.plot.color_by, 'style': cfg.plot.style_by}[mode]
         colorstyleby_choice = self.cbColorStyleBy.currentText()
-        # Py2: convert unicode choices to str
-        # (unicode prefix looks weird in Options interface)
-        if sys.version_info.major == 2:
-            colorstyleby_choice = str(colorstyleby_choice)
         if colorstyleby_choice == '(none)':
             colorstyleby_choice = None
         cfg_item[vartype] = colorstyleby_choice

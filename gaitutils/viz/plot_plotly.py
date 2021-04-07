@@ -315,9 +315,6 @@ def _plotly_var_ylabel(var, themodel=None):
         yunit = u'\u00B0'  # Unicode degree sign
     ydesc = [s[:3] for s in themodel.ydesc[var]]  # shorten
     ylabel = u'%s %s %s' % (ydesc[0], yunit, ydesc[1])
-    # Py2: plotly cannot handle unicode objects
-    if sys.version_info.major == 2 and isinstance(ylabel, unicode):
-        ylabel = ylabel.encode('utf-8')
     return ylabel
 
 
@@ -515,10 +512,6 @@ def plot_trials(
 
                     cyclename = _get_cycle_name(trial, cyc, name_type=legend_type)
                     cyclename_full = _get_cycle_name(trial, cyc, name_type='full')
-
-                    # Py2: plotly cannot handle unicode objects
-                    if sys.version_info.major == 2 and isinstance(cyclename, unicode):
-                        cyclename = cyclename.encode('utf-8')
 
                     if vartype == 'model':
                         do_plot = cyc in cyclebunch.model_cycles
@@ -729,11 +722,6 @@ def plot_trials(
                             if not subplot_adjusted[(i, j)]:
                                 # fig['layout'][xaxis].update(showticklabels=False)
                                 ylabel = 'mm'
-                                # Py2: plotly cannot handle unicode objects
-                                if sys.version_info.major == 2 and isinstance(
-                                    ylabel, unicode
-                                ):
-                                    ylabel = ylabel.encode('utf-8')
                                 fig['layout'][yaxis].update(
                                     title={
                                         'text': ylabel,

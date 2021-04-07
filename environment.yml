@@ -1,7 +1,8 @@
 name: gaitutils
 channels:
-  - defaults
+  - conda-forge
 dependencies:
+  - btk
   - configobj
   - flask
   - freetype
@@ -9,7 +10,7 @@ dependencies:
   - matplotlib
   - numpy
   - scipy
-  - python=2.7
+  - python
   - openpyxl
   - pip
   - plotly
@@ -22,9 +23,8 @@ dependencies:
   - xlsxwriter
   - xlutils
   - pip:
-    - brotli==1.0.7
-    - kaleido
     - dash
+    - kaleido
     - dash-daq
     - flake8
     - pytest

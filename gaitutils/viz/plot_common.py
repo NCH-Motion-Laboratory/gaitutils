@@ -190,7 +190,7 @@ def _handle_style_and_color_args(style_by, color_by):
     style_by_defaults = cfg.plot.style_by
     if style_by is None:
         style_by = dict()
-    elif isinstance(style_by, basestring):
+    elif isinstance(style_by, str):
         style_by = {'model': style_by}
     elif not isinstance(style_by, dict):
         raise TypeError('style_by must be str or dict')
@@ -202,7 +202,7 @@ def _handle_style_and_color_args(style_by, color_by):
     color_by_defaults = cfg.plot.color_by
     if color_by is None:
         color_by = dict()
-    elif isinstance(color_by, basestring):
+    elif isinstance(color_by, str):
         color_by = {'model': color_by, 'emg': color_by}
     elif not isinstance(color_by, dict):
         raise TypeError('color_by must be str or dict')

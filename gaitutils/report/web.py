@@ -430,7 +430,7 @@ def dash_report(
                 else:
                     logger.debug('creating figure data for %s' % page_label)
                     # the 'special' layouts are indicated by a string
-                    if isinstance(layout_spec, basestring):
+                    if isinstance(layout_spec, str):
                         if layout_spec == 'time_dist':
                             figdata = timedist.plot_comparison(
                                 sessions, big_fonts=False, backend='plotly'

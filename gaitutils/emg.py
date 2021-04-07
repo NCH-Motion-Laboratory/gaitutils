@@ -122,7 +122,7 @@ class EMG(object):
 
     def _match_name(self, chname):
         """Fuzzily match channel name"""
-        if not (isinstance(chname, basestring) and len(chname)) >= 2:
+        if not (isinstance(chname, str) and len(chname)) >= 2:
             raise ValueError('invalid channel name: %s' % chname)
         matches = [x for x in self.data if x.find(chname) >= 0]
         if len(matches) == 0:

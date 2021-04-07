@@ -55,7 +55,7 @@ def _is_c3d_file(source):
 
     XXX: Currently we just check existence.
     """
-    return isinstance(source, basestring) and op.isfile(source)
+    return isinstance(source, str) and op.isfile(source)
 
 
 def _get_c3d_metadata_subfields(acq, field):

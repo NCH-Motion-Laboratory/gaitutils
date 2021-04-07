@@ -48,6 +48,8 @@ def _find_nexus_path(vicon_path=None):
         nexus_vers = [[int(s) for s in v.split('.')] for v in nexus_vers]
     except ValueError:
         return None
+    # remove unsupported versions (2.12 and onwards, which use a different import mechanism)
+    nexus_vers = [v for v in nexus_vers if v[0] > 2 or v[1] < 12]
     # 2-key sort using first major and then minor version number
     idx = nexus_vers.index(max(nexus_vers, key=lambda l: (l[0], l[1])))
     return nexus_dirs[idx]

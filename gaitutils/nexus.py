@@ -24,8 +24,18 @@ from .utils import TrialEvents
 from .envutils import GaitDataError
 from .config import cfg
 
-
 logger = logging.getLogger(__name__)
+
+
+try:
+    from viconnexusapi import ViconNexus
+
+    NEXUS_IMPORTED = True
+except ImportError:
+    logger.debug('cannot import Vicon Nexus SDK')
+    NEXUS_IMPORTED = False
+
+sys.stdout.flush()  # make sure import warnings get printed
 
 
 def _find_nexus_path(vicon_path=None):
@@ -50,58 +60,6 @@ def _find_nexus_path(vicon_path=None):
     # 2-key sort using first major and then minor version number
     idx = nexus_vers.index(max(nexus_vers, key=lambda l: (l[0], l[1])))
     return nexus_dirs[idx]
-
-
-def _add_nexus_path(vicon_path):
-    """Add Nexus SDK dir to sys.path"""
-
-    nexus_path = _find_nexus_path(vicon_path)
-    if nexus_path is None:
-        logger.warning(
-            'cannot locate Nexus installation directory under %s' % vicon_path
-        )
-        return
-
-    sdk_path = op.join(nexus_path, 'SDK', 'Python')
-    if sdk_path not in sys.path:
-        sys.path.append(sdk_path)
-    else:
-        logger.debug('%s already in sys.path' % sdk_path)
-
-    # import from Win32 or Win64 according to bitness of Python interpreter
-    bitness = '64' if sys.maxsize > 2 ** 32 else '32'
-    win = 'Win' + bitness
-    _win_sdk_path = op.join(nexus_path, 'SDK', win)
-
-    # check that the path for the wrong architecture has not already been
-    # added to path (this may happen when running inside Nexus)
-    win_other = 'Win32' if win == 'Win64' else 'Win64'
-    _win_sdk_other = op.join(nexus_path, 'SDK', win_other)
-    if _win_sdk_other in sys.path:
-        logger.debug('%s already in sys.path, removing' % _win_sdk_other)
-        sys.path.remove(_win_sdk_other)
-
-    if _win_sdk_path not in sys.path:
-        logger.debug('using Nexus SDK from %s' % _win_sdk_path)
-        sys.path.append(_win_sdk_path)
-    else:
-        logger.debug('%s already in sys.path' % _win_sdk_path)
-    return _win_sdk_path
-
-
-# try to add Nexus SDK to sys.path and import ViconNexus
-if sys.version_info.major >= 3:
-    logger.debug('running on Python 3 or newer, cannot import Nexus API (yet)')
-    nexus_path = ''
-else:
-    vicon_path = op.normpath(cfg.general.vicon_path)
-    nexus_path = _add_nexus_path(vicon_path)
-    try:
-        import ViconNexus
-    except ImportError:
-        logger.debug('cannot import Vicon Nexus SDK')
-        nexus_path = ''
-sys.stdout.flush()  # make sure import warnings get printed
 
 
 def _nexus_pid():

@@ -1215,9 +1215,12 @@ def main():
         logger.debug('Running from a pip install')
     if cfg.general.git_autoupdate:
         logger.debug('git autoupdate enabled')
-    logger.debug('Nexus SDK path: %s' % nexus.nexus_path)
     if not c3d.BTK_IMPORTED:
         logger.warning('cannot find btk module; unable to read .c3d files')
+    if not nexus.NEXUS_IMPORTED:
+        logger.warning(
+            'could not import Vicon Nexus SDK; make sure the viconnexusapi package is installed'
+        )
     nexus_status = 'Vicon Nexus is %srunning' % ('' if nexus._nexus_pid() else 'not ')
     logger.debug(nexus_status)
     app.exec_()

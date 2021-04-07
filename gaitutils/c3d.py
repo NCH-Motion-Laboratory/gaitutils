@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 # only); if that fails, try other options
 try:
     from .thirdparty import btk
-
+    
     BTK_IMPORTED = True
 except ImportError:
     try:

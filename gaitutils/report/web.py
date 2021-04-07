@@ -6,10 +6,8 @@ Create web-based gait report using dash.
 """
 
 
-from __future__ import division
 
 from builtins import str
-from past.builtins import basestring
 import plotly.graph_objs as go
 import dash
 import dash_core_components as dcc

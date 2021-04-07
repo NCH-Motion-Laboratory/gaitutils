@@ -4,7 +4,6 @@ Widget plugin for Qt Designer
 
 @author: Jussi (jnu@iki.fi)
 """
-from __future__ import absolute_import
 
 from qt_widgets import NiceListWidget
 from PyQt5 import QtDesigner

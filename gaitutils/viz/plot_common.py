@@ -8,7 +8,6 @@ Plotting functionality shared between backends.
 
 
 from builtins import next
-from past.builtins import basestring
 from itertools import cycle
 from collections import defaultdict, namedtuple
 import logging

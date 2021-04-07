@@ -4,7 +4,6 @@ Handles gaitutils config files.
 
 @author: Jussi (jnu@iki.fi)
 """
-from __future__ import print_function
 
 from builtins import str
 import os.path as op

@@ -8,8 +8,6 @@ Class for handling EMG data.
 """
 
 
-from __future__ import division
-from past.builtins import basestring
 from builtins import object
 import numpy as np
 import logging

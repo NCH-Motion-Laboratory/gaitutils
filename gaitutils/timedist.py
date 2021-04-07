@@ -6,7 +6,6 @@ Time-distance computations
 @author: Jussi (jnu@iki.fi)
 """
 
-from __future__ import division
 import logging
 import numpy as np
 from collections import OrderedDict, defaultdict

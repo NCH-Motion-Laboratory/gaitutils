@@ -6,7 +6,6 @@ Utility functions for processing gait data.
 @author: Jussi (jnu@iki.fi)
 """
 
-from __future__ import division
 
 from builtins import range
 from builtins import str

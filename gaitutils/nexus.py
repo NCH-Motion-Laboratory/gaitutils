@@ -8,7 +8,6 @@ called via the read_data module.
 @author: Jussi (jnu@iki.fi)
 """
 
-from __future__ import print_function, division
 from collections import defaultdict
 import sys
 import numpy as np

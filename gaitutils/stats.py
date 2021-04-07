@@ -6,7 +6,6 @@ Compute statistics across/within trials
 @author: Jussi (jnu@iki.fi)
 """
 
-from __future__ import division
 
 import logging
 import numpy as np

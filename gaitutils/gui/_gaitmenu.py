@@ -6,8 +6,6 @@ PyQt graphical interface to gaitutils
 @author: Jussi (jnu@iki.fi)
 """
 
-from __future__ import print_function
-from __future__ import division
 
 from builtins import str
 from PyQt5 import QtGui, QtCore, uic, QtWidgets

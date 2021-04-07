@@ -5,7 +5,6 @@ Tests for trial stats
 
 @author: jussi (jnu@iki.fi)
 """
-from __future__ import division
 
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal

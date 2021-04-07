@@ -7,7 +7,6 @@ Misc numerical utils
 @author: Jussi (jnu@iki.fi)
 """
 
-from __future__ import division
 
 import logging
 import numpy as np

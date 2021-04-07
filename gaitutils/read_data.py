@@ -6,7 +6,6 @@ filename. Returned values should be independent of source.
 
 @author: Jussi (jnu@iki.fi)
 """
-from __future__ import division
 
 import numpy as np
 import logging

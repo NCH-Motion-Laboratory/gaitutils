@@ -4,7 +4,6 @@ plotly based plotting functions
 
 @author: Jussi (jnu@iki.fi)
 """
-from __future__ import division
 
 from builtins import zip
 import logging

@@ -6,7 +6,6 @@ Functions for automated processing of data in Nexus.
 @author: Jussi (jnu@iki.fi)
 """
 
-from __future__ import division
 
 from builtins import zip
 import os

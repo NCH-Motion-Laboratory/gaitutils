@@ -8,7 +8,6 @@ Read gait trials.
 """
 
 
-from __future__ import division
 
 from builtins import range
 from builtins import object

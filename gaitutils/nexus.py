@@ -201,7 +201,7 @@ def get_sessionpath():
 def _run_pipeline(pipeline, foo, timeout):
     """Wrapper needed for multiprocessing module due to pickle limitations"""
     vicon = viconnexus()
-    return vicon.Client.RunPipeline(pipeline, foo, timeout)
+    return vicon.RunPipeline(pipeline, foo, timeout)
 
 
 def _run_pipelines(pipelines):
@@ -214,7 +214,7 @@ def _run_pipelines(pipelines):
         pipelines = [pipelines]
     for pipeline in pipelines:
         logger.debug('running pipeline: %s' % pipeline)
-        result = _run_pipeline(pipeline.encode('utf-8'), '', cfg.autoproc.nexus_timeout)
+        result = _run_pipeline(pipeline, '', cfg.autoproc.nexus_timeout)
         if result.Error():
             logger.warning('error while trying to run Nexus pipeline: %s' % pipeline)
 
@@ -231,7 +231,7 @@ def _run_pipelines_multiprocessing(pipelines):
         pipelines = [pipelines]
     for pipeline in pipelines:
         logger.debug('running pipeline via multiprocessing module: %s' % pipeline)
-        args = (pipeline.encode('utf-8'), '', cfg.autoproc.nexus_timeout)
+        args = (pipeline, '', cfg.autoproc.nexus_timeout)
         p = multiprocessing.Process(target=_run_pipeline, args=args)
         p.start()
         while p.exitcode is None:

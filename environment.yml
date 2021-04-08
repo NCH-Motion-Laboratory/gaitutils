@@ -4,6 +4,7 @@ channels:
 dependencies:
   - btk
   - configobj
+  - flake8
   - flask
   - freetype
   - matplotlib

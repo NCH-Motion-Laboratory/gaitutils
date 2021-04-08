@@ -25,7 +25,6 @@ dependencies:
     - dash
     - kaleido
     - dash-daq
-    - flake8
     - pytest
     - pathlib
     - https://github.com/jjnurminen/gaitutils/archive/master.zip

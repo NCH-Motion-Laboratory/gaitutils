@@ -24,30 +24,14 @@ from .envutils import lru_cache_checkfile, _named_tempfile, GaitDataError
 
 logger = logging.getLogger(__name__)
 
-# try the import the bundled btk version first (currently Python 2.7 64-bit
-# only); if that fails, try other options
+
 try:
-    from .thirdparty import btk
-    
+    import btk
+
     BTK_IMPORTED = True
 except ImportError:
-    try:
-        import btk
-
-        BTK_IMPORTED = True
-    except ImportError:
-        try:
-            # try pyBTK package
-            if sys.version_info.major == 3:
-                from pyBTK.btk3 import btk
-            elif sys.version_info.major == 2:
-                from pyBTK.btk2 import btk
-            else:
-                raise Exception('unexpected major Python version')
-            BTK_IMPORTED = True
-        except ImportError:
-            BTK_IMPORTED = False
-            logger.warning('cannot import btk module; unable to read .c3d files')
+    BTK_IMPORTED = False
+    logger.warning('cannot import btk module; unable to read .c3d files')
 
 
 def _is_c3d_file(source):
@@ -94,9 +78,6 @@ def _get_c3dacq(c3dfile):
     Object is returned from cache if filename and digest match.
     """
     reader = btk.btkAcquisitionFileReader()
-    # Py2: btk interface cannot take unicode, so encode to latin-1 first
-    if sys.version_info.major == 2:
-        c3dfile = c3dfile.encode('latin-1')
     reader.SetFilename(c3dfile)
     try:
         reader.Update()

@@ -10,3 +10,4 @@ from gaitutils.gui import _gaitmenu
 
 if __name__ == '__main__':
     _gaitmenu.main()
+

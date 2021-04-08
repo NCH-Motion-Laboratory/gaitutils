@@ -214,9 +214,7 @@ def _run_pipelines(pipelines):
         pipelines = [pipelines]
     for pipeline in pipelines:
         logger.debug('running pipeline: %s' % pipeline)
-        result = _run_pipeline(pipeline, '', cfg.autoproc.nexus_timeout)
-        if result.Error():
-            logger.warning('error while trying to run Nexus pipeline: %s' % pipeline)
+        _run_pipeline(pipeline, '', cfg.autoproc.nexus_timeout)
 
 
 def _run_pipelines_multiprocessing(pipelines):

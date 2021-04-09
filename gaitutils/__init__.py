@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 
+
 from . import (
     c3d,
     config,
@@ -24,15 +25,23 @@ from . import (
     viz,
 )
 
+
 # in case we want to print stuff from config.py, it's better to delay
 # the import until this point (after the stdout fix above)
 from .config import cfg
 from .envutils import GaitDataError
 
+
 # the main purpose of adding the null handler is to disable the
 # default stderr logging for levels >= warning, which may be
 # annoying in some cases
-logging.getLogger('gaitutils').addHandler(logging.NullHandler())
+root_logger = logging.getLogger('gaitutils')
+root_logger.addHandler(logging.NullHandler())
+# add a file handler for debugging startup problems
+# filehandler = logging.FileHandler(r'C:\Temp\gaitutils.log')
+# root_logger.addHandler(filehandler)
+# root_logger.setLevel(logging.DEBUG)
+# root_logger.debug('package init')
 
 
 def run_from_ipython():

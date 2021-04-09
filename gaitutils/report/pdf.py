@@ -152,24 +152,24 @@ def create_report(
     title_txt = '%s\n' % cfg.report.laboratory_name
     title_txt += '%s\n' % translate('Results of gait analysis')
     title_txt += '\n'
-    title_txt += u'%s: %s\n' % (translate('Name'), fullname)
-    title_txt += u'%s: %s\n' % (
+    title_txt += '%s: %s\n' % (translate('Name'), fullname)
+    title_txt += '%s: %s\n' % (
         translate('Social security number'),
         hetu if hetu else translate('unknown'),
     )
     age_str = '%d %s' % (age, translate('years')) if age else translate('unknown')
-    title_txt += u'%s: %s\n' % (translate('Age at time of measurement'), age_str)
-    title_txt += u'%s: %s\n' % (translate('Session'), sessiondir)
+    title_txt += '%s: %s\n' % (translate('Age at time of measurement'), age_str)
+    title_txt += '%s: %s\n' % (translate('Session'), sessiondir)
     if session_description:
-        title_txt += u'%s: %s\n' % (translate('Description'), session_description)
-    title_txt += u'%s: %s\n' % (
+        title_txt += '%s: %s\n' % (translate('Description'), session_description)
+    title_txt += '%s: %s\n' % (
         translate('Session date'),
         session_t.strftime('%d.%m.%Y'),
     )
-    title_txt += u'%s: %s\n' % (translate('Patient code'), patient_code)
+    title_txt += '%s: %s\n' % (translate('Patient code'), patient_code)
     fig_title = _make_text_fig(title_txt)
 
-    header = u'%s: %s %s: %s' % (
+    header = '%s: %s %s: %s' % (
         translate('Name'),
         fullname,
         translate('Social security number'),
@@ -177,9 +177,9 @@ def create_report(
     )
     musclelen_ndata = normaldata._find_normaldata_for_age(age)
     footer_musclelen = (
-        u' %s: %s' % (translate('Normal data'), musclelen_ndata)
+        ' %s: %s' % (translate('Normal data'), musclelen_ndata)
         if musclelen_ndata
-        else u''
+        else ''
     )
 
     # make the figures
@@ -397,12 +397,12 @@ def create_comparison_report(
     fullname = info['fullname'] or ''
     hetu = info['hetu'] or ''
     title_txt = '%s\n' % cfg.report.laboratory_name
-    title_txt += u'%s\n' % translate('Comparison report')
+    title_txt += '%s\n' % translate('Comparison report')
     title_txt += '\n'
     title_txt += info['session_description']
     title_txt += '\n'
-    title_txt += u'%s: %s\n' % (translate('Name'), fullname)
-    title_txt += u'%s: %s\n' % (translate('Social security number'), hetu)
+    title_txt += '%s: %s\n' % (translate('Name'), fullname)
+    title_txt += '%s: %s\n' % (translate('Social security number'), hetu)
     fig_title = _make_text_fig(title_txt)
 
     # make the figures
@@ -507,7 +507,7 @@ def create_comparison_report(
             fig.suptitle('Curve extracted values: %s' % title)
             figs_extracted.append(fig)
 
-    header = u'%s: %s %s: %s' % (
+    header = '%s: %s %s: %s' % (
         translate('Name'),
         fullname,
         translate('Social security number'),

@@ -90,7 +90,7 @@ def get_eclipse_keys(fname_enf, return_empty=False):
     dict
         Dict of the eclipse keys and values.
     """
-    di = defaultdict(lambda: u'')
+    di = defaultdict(lambda: '')
     cp = _enf_reader(fname_enf)
     di.update(
         {key: val for key, val in cp['TRIAL_INFO'].items() if val != '' or return_empty}

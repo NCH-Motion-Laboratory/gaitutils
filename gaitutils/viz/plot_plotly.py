@@ -184,12 +184,12 @@ def time_dist_barchart(
                 stddevs = np.array([stddev[cond][var][ctxt] for var in vars])
             if stddev and stddevs.max() > 0:
                 texts[cond][ctxt] = [
-                    u'%.2f ± %.2f %s' % (val, std, unit)
+                    '%.2f ± %.2f %s' % (val, std, unit)
                     for val, std, unit in zip(data[cond][ctxt], stddevs, units)
                 ]
             else:
                 texts[cond][ctxt] = [
-                    u'%.2f %s' % (val, unit)
+                    '%.2f %s' % (val, unit)
                     for val, unit in zip(data[cond][ctxt], units)
                 ]
 
@@ -312,9 +312,9 @@ def _plotly_var_ylabel(var, themodel=None):
         themodel = models.model_from_var(var)
     yunit = themodel.units[var]
     if yunit == 'deg':
-        yunit = u'\u00B0'  # Unicode degree sign
+        yunit = '\u00B0'  # Unicode degree sign
     ydesc = [s[:3] for s in themodel.ydesc[var]]  # shorten
-    ylabel = u'%s %s %s' % (ydesc[0], yunit, ydesc[1])
+    ylabel = '%s %s %s' % (ydesc[0], yunit, ydesc[1])
     return ylabel
 
 

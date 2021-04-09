@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 def test_c3d_extended_chars():
     """See if we can read filenames with extended chars"""
-    c3dfile = _c3d_path(u'2020_11_10_postOp5v_säärituet_SSD06.c3d')
+    c3dfile = _c3d_path('2020_11_10_postOp5v_säärituet_SSD06.c3d')
     an_ = read_data.get_analysis(c3dfile, 'c3dtest')
     mkrset = ['RASI', 'LASI']
     mkrdata = read_data.get_marker_data(c3dfile, mkrset)

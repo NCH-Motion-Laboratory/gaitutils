@@ -247,7 +247,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
     def _load_dialog_c3d(self):
         """Dialog for loading from c3d"""
         fout = QtWidgets.QFileDialog.getOpenFileName(
-            self, 'Open C3D file', '', u'C3D files (*.c3d)'
+            self, 'Open C3D file', '', 'C3D files (*.c3d)'
         )[0]
         if fout:
             self._load_dialog(fout)
@@ -292,7 +292,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
         """Save a pdf report"""
         fn_pdf = self._tardieu_plot.trial.trialname + '.pdf'
         fname = QtWidgets.QFileDialog.getSaveFileName(
-            self, 'Save plot', fn_pdf, u'PDF files (*pdf)'
+            self, 'Save plot', fn_pdf, 'PDF files (*pdf)'
         )[0]
         if not fname:
             return
@@ -435,7 +435,7 @@ class Markers(object):
                     (0, 1), (0, 0), linewidth=self.marker_width, color=col
                 )
             )
-            legtxts.append(u'%.3f s: %s' % (mkr, anno))
+            legtxts.append('%.3f s: %s' % (mkr, anno))
         ax.legend(
             artists,
             legtxts,
@@ -599,8 +599,8 @@ class TardieuPlot(object):
             ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
             ax.plot(self.time_analog, self.acctot, linewidth=cfg.plot.emg_linewidth)
             # FIXME: no calibration yet so data is assumed to be in mV
-            # ax.set(ylabel=u'm/s²')
-            ax.set(ylabel=u'mV')
+            # ax.set(ylabel='m/s²')
+            ax.set(ylabel='mV')
             ax.set_title('Accelerometer vector sum')
             data_axes.append(ax)
             ind += 1
@@ -629,7 +629,7 @@ class TardieuPlot(object):
         ax = fig.add_subplot(gs[ind, 0], sharex=sharex)
         self.angaccd = np.diff(self.angveld, axis=0)
         ax.plot(self.time[:-2], self.angaccd, linewidth=cfg.plot.model_linewidth)
-        ax.set(xlabel='Time (s)', ylabel=u'deg/s²')
+        ax.set(xlabel='Time (s)', ylabel='deg/s²')
         ax.set_title('Angular acceleration')
         data_axes.append(ax)
 
@@ -795,23 +795,23 @@ class TardieuPlot(object):
     @property
     def marker_status_text(self):
         """Return marker status text in HTML"""
-        s = u''
+        s = ''
         # each marker gets text of its own color
         for marker, anno, col in self.markers.marker_info:
             frame = self._time_to_frame(marker, self.trial.framerate)
             s += u"<font color='%s'>" % col
             # len of acc signal is nframes - 2
             if frame < 0 or frame >= self.nframes - 2:
-                s += u'Marker outside data range'
+                s += 'Marker outside data range'
             else:
-                s += u'Marker @%.3f s' % marker
+                s += 'Marker @%.3f s' % marker
                 s += (' (%s):<br>') % anno if anno else ':<br>'
-                s += u'dflex: %.2f° vel: %.2f°/s' % (
+                s += 'dflex: %.2f° vel: %.2f°/s' % (
                     self.angd[frame],
                     self.angveld[frame],
                 )
-                s += u' acc: %.2f°/s²<br><br>' % self.angaccd[frame]
-            s += u'</font>'
+                s += ' acc: %.2f°/s²<br><br>' % self.angaccd[frame]
+            s += '</font>'
         return s
 
     @property
@@ -821,12 +821,12 @@ class TardieuPlot(object):
         # find the limits of the data that is shown
         tmin_ = max(self.time[0], self.tmin)
         tmax_ = min(self.time[-1], self.tmax)
-        s = u'Trial name: %s\n' % self.trial.trialname
-        s += u'Description: %s\n' % (self.trial.eclipse_data['DESCRIPTION'])
-        s += u'Notes: %s\n' % (self.trial.eclipse_data['NOTES'])
-        s += u'Angle offset: '
-        s += (u' %.1f°\n' % self.ang0_nexus) if self.ang0_nexus else u'none\n'
-        s += u'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)
+        s = 'Trial name: %s\n' % self.trial.trialname
+        s += 'Description: %s\n' % (self.trial.eclipse_data['DESCRIPTION'])
+        s += 'Notes: %s\n' % (self.trial.eclipse_data['NOTES'])
+        s += 'Angle offset: '
+        s += (' %.1f°\n' % self.ang0_nexus) if self.ang0_nexus else 'none\n'
+        s += 'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)
         # frame indices corresponding to time limits
         fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
         if fmin == fmax:
@@ -834,7 +834,7 @@ class TardieuPlot(object):
             return s
         else:
             smin, smax = self._time_to_frame([tmin_, tmax_], self.trial.analograte)
-            s += u'In frames: %d - %d\n\n' % (fmin, fmax)
+            s += 'In frames: %d - %d\n\n' % (fmin, fmax)
             # foot angle in chosen range and the maximum
             angr = self.angd[fmin:fmax]
             # check if we zoomed to all-nan region of angle data
@@ -849,15 +849,15 @@ class TardieuPlot(object):
             velr = self.angveld[fmin:fmax]
             velmax = np.nanmax(velr)
             velmaxind = np.nanargmax(velr) / self.trial.framerate + tmin_
-            s += u'Values for range shown:\n'
-            s += u'Max. dorsiflexion: %.2f° @ %.2f s\n' % (angmax, angmaxind)
-            s += u'Max. plantarflexion: %.2f° @ %.2f s\n' % (angmin, angminind)
-            s += u'Max velocity: %.2f°/s @ %.2f s\n' % (velmax, velmaxind)
+            s += 'Values for range shown:\n'
+            s += 'Max. dorsiflexion: %.2f° @ %.2f s\n' % (angmax, angmaxind)
+            s += 'Max. plantarflexion: %.2f° @ %.2f s\n' % (angmin, angminind)
+            s += 'Max velocity: %.2f°/s @ %.2f s\n' % (velmax, velmaxind)
             for ch in self.emg_chs:
                 rmsdata = self.emg_rms[ch][smin:smax]
                 rmsmax = rmsdata.max()
                 rmsmaxind = np.argmax(rmsdata) / self.trial.analograte + tmin_
-                s += u'%s max RMS: %.2f mV @ %.2f s\n' % (ch, rmsmax * 1e3, rmsmaxind)
+                s += '%s max RMS: %.2f mV @ %.2f s\n' % (ch, rmsmax * 1e3, rmsmaxind)
             return s
 
 

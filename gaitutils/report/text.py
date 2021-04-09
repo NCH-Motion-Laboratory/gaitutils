@@ -78,10 +78,10 @@ def _curve_extracted_text(curve_vals, vardefs_dict):
                     mean, std = np.mean(this_vals), np.std(this_vals)
                     unit = _var_unit(vardef_ctxt)
                     if unit == 'deg':
-                        unit = u'\u00B0'  # Unicode degree sign
+                        unit = '\u00B0'  # Unicode degree sign
                     else:
                         unit = ' ' + unit
-                    element = u'%.2f±%.2f%s' % (mean, std, unit)
+                    element = '%.2f±%.2f%s' % (mean, std, unit)
                     row += element.ljust(COL_WIDTH)
                 yield row
 
@@ -109,10 +109,10 @@ def _print_analysis_text(trials, vars_=None, main_label=None):
             val = cond_data[varname]
             val_std = res_std_all[cond][varname]
             unit = translate(val['unit'])
-            li = u''
+            li = ''
             li += varname_trans.ljust(rowtitle_len)
             for _, ctxt_name in contexts:
-                element = u'%.2f±%.2f %s' % (val[ctxt_name], val_std[ctxt_name], unit)
+                element = '%.2f±%.2f %s' % (val[ctxt_name], val_std[ctxt_name], unit)
                 li += element.ljust(COL_WIDTH)
             yield li
     yield ''

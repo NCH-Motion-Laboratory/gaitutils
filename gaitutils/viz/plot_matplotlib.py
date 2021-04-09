@@ -68,10 +68,10 @@ def _plot_extracted_table(curve_vals, vardefs):
                 mean, std = np.mean(this_vals), np.std(this_vals)
                 unit = _var_unit(vardef_ctxt)
                 if unit == 'deg':
-                    unit = u'\u00B0'  # Unicode degree sign
+                    unit = '\u00B0'  # Unicode degree sign
                 else:
                     unit = ' ' + unit
-                element += u'%s: %.2f±%.2f%s' % (ctxt, mean, std, unit)
+                element += '%s: %.2f±%.2f%s' % (ctxt, mean, std, unit)
             row.append(element)
         table.append(row)
     return _plot_tabular_data(table, row_labels, col_labels)
@@ -107,10 +107,10 @@ def _plot_extracted_table_plotly(curve_vals, vardefs):
                 mean, std = np.mean(this_vals), np.std(this_vals)
                 unit = _var_unit(vardef_ctxt)
                 if unit == 'deg':
-                    unit = u'\u00B0'  # Unicode degree sign
+                    unit = '\u00B0'  # Unicode degree sign
                 else:
                     unit = ' ' + unit
-                row.append(u'%.2f±%.2f%s' % (mean, std, unit))
+                row.append('%.2f±%.2f%s' % (mean, std, unit))
         table.append(row)
     return _plot_tabular_data_via_plotly(table, row_labels, col_labels)
 
@@ -292,9 +292,9 @@ def time_dist_barchart(
                 if val == 0:
                     texts += ['']
                 elif std:
-                    texts += [u'%.2f ± %.2f %s' % (val, std, unit)]
+                    texts += ['%.2f ± %.2f %s' % (val, std, unit)]
                 else:
-                    texts += [u'%.2f %s' % (val, unit)]
+                    texts += ['%.2f %s' % (val, unit)]
             _plot_label(ax, rects, texts)
         # return the last set of rects for legend
         return rects
@@ -620,7 +620,7 @@ def plot_trials(
                             if not ax.get_ylabel():
                                 yunit = themodel.units[var]
                                 if yunit == 'deg':
-                                    yunit = u'\u00B0'  # degree sign
+                                    yunit = '\u00B0'  # degree sign
                                 ydesc = [s[:3] for s in themodel.ydesc[var]]  # shorten
                                 ylabel_ = '%s %s %s' % (ydesc[0], yunit, ydesc[1])
                                 ax.set(ylabel=ylabel_)

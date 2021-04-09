@@ -290,7 +290,7 @@ def _get_metadata(c3dfile):
         name = _get_c3d_metadata_field(acq, 'SUBJECTS', 'NAMES')[0]
     except RuntimeError:
         logger.warning('Cannot get subject name')
-        name = u'Unknown'
+        name = 'Unknown'
 
     try:
         par_names = _get_c3d_metadata_subfields(acq, 'PROCESSING')

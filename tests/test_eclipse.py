@@ -28,7 +28,7 @@ def test_enf_reader():
     assert 'STAGES' not in edi  # empty
     assert len(edi) == 7
     desc = edi['DESCRIPTION']
-    assert desc == u'ok, no contact, forward'
+    assert desc == 'ok, no contact, forward'
     edi_full = eclipse.get_eclipse_keys(trial_enf, return_empty=True)
     assert len(edi_full) == 16
     assert 'STAGES' in edi_full  # empty but should be read now

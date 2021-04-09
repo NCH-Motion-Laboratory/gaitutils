@@ -166,7 +166,7 @@ def get_subjectnames(single_only=True):
             raise GaitDataError('Nexus returns multiple subjects')
     # workaround a Nexus 2.6 bug (?) that creates extra names with weird unicode
     # strings
-    names_ = [name for name in names_ if u'\ufffd1' not in name]
+    names_ = [name for name in names_ if '\ufffd1' not in name]
     return names_[0] if single_only else names_
 
 

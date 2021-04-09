@@ -1166,7 +1166,7 @@ def main():
     def my_excepthook(type_, value, tback):
         """Custom handler for unhandled exceptions:
         report to user via GUI and terminate."""
-        tb_full = u''.join(traceback.format_exception(type_, value, tback))
+        tb_full = ''.join(traceback.format_exception(type_, value, tback))
         qt_message_dialog(
             'Oops! An unhandled exception was generated. '
             'The application will be closed.\n\n %s' % tb_full

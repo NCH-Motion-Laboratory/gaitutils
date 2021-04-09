@@ -172,7 +172,7 @@ def _files_digest(files):
     hashes = sorted(_file_digest(fn) for fn in files)
     # concat as unicode and encode to get a well defined byte representation in
     # both py2 and py3
-    hash_str = u''.join(hashes).encode('utf-8')
+    hash_str = ''.join(hashes).encode('utf-8')
     return hashlib.md5(hash_str).hexdigest()
 
 

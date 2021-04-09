@@ -35,8 +35,6 @@ except ImportError:
     logger.debug('cannot import Vicon Nexus SDK')
     NEXUS_IMPORTED = False
 
-sys.stdout.flush()  # make sure import warnings get printed
-
 
 def _find_nexus_path(vicon_path=None):
     """Return path to most recent Nexus version.

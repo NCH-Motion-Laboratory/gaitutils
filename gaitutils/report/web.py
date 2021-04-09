@@ -8,6 +8,7 @@ Create web-based gait report using dash.
 
 
 from builtins import str
+from numpy import save
 import plotly.graph_objs as go
 import dash
 import dash_core_components as dcc
@@ -279,8 +280,13 @@ def dash_report(
         if op.isfile(data_fn) and not recreate_plots:
             logger.debug('loading saved report data from %s' % data_fn)
             signals.progress.emit('Loading saved report...', 0)
-            with open(data_fn, 'rb') as f:
-                saved_report_data = pickle.load(f)
+            try:
+                with open(data_fn, 'rb') as f:
+                    saved_report_data = pickle.load(f)
+            except UnicodeDecodeError:
+                logger.warning('cannot open report (probably made with legacy version)')
+                logger.warning('recreating...')
+                saved_report_data = dict()
         else:
             saved_report_data = dict()
             logger.debug('no saved data found or recreate forced')

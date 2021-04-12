@@ -211,8 +211,7 @@ def get_session_date(sessionpath):
 def _get_session_enfs(sessionpath):
     """Return list of .enf files for the session """
     enfglob = op.join(sessionpath, '*Trial*.enf')
-    for enf in glob.iglob(enfglob):
-        yield enf
+    yield from glob.iglob(enfglob)
 
 
 def _filter_by_eclipse_keys(enfs, patterns, eclipse_keys):

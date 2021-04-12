@@ -81,7 +81,8 @@ def _get_c3dacq(c3dfile):
     Object is returned from cache if filename and digest match.
     """
     reader = btk.btkAcquisitionFileReader()
-    reader.SetFilename(str(c3dfile))  # str conversion to accept Path objects too
+    c3dfile = str(c3dfile)  # str conversion to accept Path objects too
+    reader.SetFilename(c3dfile)
     try:
         reader.Update()
     except RuntimeError as e:

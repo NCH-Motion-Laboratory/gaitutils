@@ -82,20 +82,10 @@ def _report_exception(e, title=None):
 
 def _exception_msg(e):
     """Return text representation of exception e"""
-    # for our own error class, we know that a neat message is there
-    # otherwise, we have no idea, so use generic repr()
-    # XXX: some exception classes (e.g. IOError) repr doesn't print all relevant information
-    # (e.g. the file name), however it looks like the safest choice (str() has its own issues)
-    # this can probably be improved for Py3
-    # for certain classes, str(e) works fine
-    if (
-        isinstance(e, TypeError)
-        or isinstance(e, ValueError)
-        or isinstance(e, GaitDataError)
-    ):
-        return str(e)
+    if isinstance(e, GaitDataError):
+        return(str(e))  # don't print the exception class for GaitDataError
     else:
-        return repr(e)
+        return repr(e)  # seems to work fine in Py3, regardless of exception type
 
 
 class PdfReportDialog(QtWidgets.QDialog):

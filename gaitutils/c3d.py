@@ -13,7 +13,7 @@ from collections import defaultdict
 import logging
 import numpy as np
 import os
-import os.path as op
+from pathlib import Path
 import sys
 import shutil
 
@@ -39,8 +39,10 @@ def _is_c3d_file(source):
 
     XXX: Currently we just check existence.
     """
-    return isinstance(source, str) and op.isfile(source)
-
+    try:
+        return Path(source).exists()
+    except TypeError:
+        return False
 
 def _get_c3d_metadata_subfields(acq, field):
     """Return names of metadata subfields for a given field"""
@@ -78,7 +80,7 @@ def _get_c3dacq(c3dfile):
     Object is returned from cache if filename and digest match.
     """
     reader = btk.btkAcquisitionFileReader()
-    reader.SetFilename(c3dfile)
+    reader.SetFilename(str(c3dfile))  # str conversion to accept Path objects too
     try:
         reader.Update()
     except RuntimeError as e:
@@ -239,8 +241,9 @@ def _get_metadata(c3dfile):
 
     See read_data.get_metadata() for details.
     """
-    trialname = os.path.basename(os.path.splitext(c3dfile)[0])
-    sessionpath = os.path.dirname(c3dfile)
+    c3dfile = Path(c3dfile)
+    trialname = c3dfile.stem
+    sessionpath = c3dfile.parent
     acq = _get_c3dacq(c3dfile)
     # frame offset (start of trial data in frames)
     offset = acq.GetFirstFrame()

@@ -6,7 +6,7 @@ Handles gaitutils config files.
 """
 
 from builtins import str
-import os.path as op
+from pathlib import Path
 import io
 import logging
 from pkg_resources import resource_filename
@@ -43,13 +43,12 @@ cfg_template_fn = resource_filename(__name__, 'data/default.cfg')
 # config at C:\Users\Username, since the USERPROFILE environment variable points
 # there. Putting the config in a networked home dir requires some tinkering with
 # environment variables (e.g. setting HOME)
-homedir = op.expanduser('~')
-cfg_user_fn = op.join(homedir, '.gaitutils.cfg')
+cfg_user_fn = Path.home() / '.gaitutils.cfg'
 
 # provide the global cfg instance
 # read template config
 cfg = parse_config(cfg_template_fn)
-if op.isfile(cfg_user_fn):
+if cfg_user_fn.exists():
     logger.debug('reading user config from %s' % cfg_user_fn)
     cfg_user = parse_config(cfg_user_fn)
     # update config from user file, but do not overwrite comments

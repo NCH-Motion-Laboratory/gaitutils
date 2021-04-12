@@ -61,7 +61,7 @@ class LoadDialog(QtWidgets.QDialog):
 
     def __init__(self):
 
-        super(self.__class__, self).__init__()
+        super().__init__()
         uifile = resource_filename('gaitutils', 'gui/tardieu_load_dialog.ui')
         uic.loadUi(uifile, self)
         try:
@@ -76,7 +76,7 @@ class EMGFilterDialog(QtWidgets.QDialog):
 
     def __init__(self, emg_passband):
 
-        super(self.__class__, self).__init__()
+        super().__init__()
         uifile = resource_filename('gaitutils', 'gui/tardieu_filter_dialog.ui')
         uic.loadUi(uifile, self)
         self.spEMGLow.setValue(emg_passband[0])
@@ -88,7 +88,7 @@ class HelpDialog(QtWidgets.QDialog):
 
     def __init__(self):
 
-        super(self.__class__, self).__init__()
+        super().__init__()
         uifile = resource_filename('gaitutils', 'gui/tardieu_help_dialog.ui')
         uic.loadUi(uifile, self)
 

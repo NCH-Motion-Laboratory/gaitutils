@@ -138,7 +138,7 @@ class ProgressBar(QtWidgets.QProgressDialog):
     _canceled = pyqtSignal()
 
     def __init__(self, title):
-        super(self.__class__, self).__init__()
+        super().__init__()
         self.setWindowTitle(title)
         self.cancelbutton = QtWidgets.QPushButton('Cancel')
         self.setCancelButton(self.cancelbutton)

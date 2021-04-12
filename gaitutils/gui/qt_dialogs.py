@@ -241,7 +241,7 @@ class OptionsDialog(QtWidgets.QDialog):
         return tab
 
     def __init__(self, parent, default_tab=0):
-        super(self.__class__, self).__init__(parent)
+        super().__init__(parent)
         _main_layout = QtWidgets.QVBoxLayout(self)
         self._input_widgets = defaultdict(lambda: dict())
 

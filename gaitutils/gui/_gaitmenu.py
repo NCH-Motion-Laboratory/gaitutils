@@ -92,7 +92,7 @@ class PdfReportDialog(QtWidgets.QDialog):
     """Ask for patient/session info and report options"""
 
     def __init__(self, info, comparison=False, parent=None):
-        super(self.__class__, self).__init__()
+        super().__init__()
         self.comparison = comparison
         ui_filename = (
             'pdf_report_dialog_comparison.ui' if comparison else 'pdf_report_dialog.ui'
@@ -137,7 +137,7 @@ class WebReportInfoDialog(QtWidgets.QDialog):
     """Ask for patient info"""
 
     def __init__(self, info, parent=None, check_info=True):
-        super(self.__class__, self).__init__()
+        super().__init__()
         uifile = resource_filename('gaitutils', 'gui/web_report_info.ui')
         uic.loadUi(uifile, self)
         # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
@@ -174,7 +174,7 @@ class WebReportDialog(QtWidgets.QDialog):
     GaitMenu instance as a parent (uses _run_in_thread() and other parent methods)"""
 
     def __init__(self, parent):
-        super(self.__class__, self).__init__(parent)
+        super().__init__(parent)
         self.parent = parent
         # load user interface made with designer
         uifile = resource_filename('gaitutils', 'gui/web_report_dialog.ui')
@@ -422,7 +422,7 @@ class AddSessionDialog(QtWidgets.QDialog):
 
 class Gaitmenu(QtWidgets.QMainWindow):
     def __init__(self):
-        super(self.__class__, self).__init__()
+        super().__init__()
         # load user interface made with designer
         uifile = resource_filename('gaitutils', 'gui/gaitmenu.ui')
         uic.loadUi(uifile, self)

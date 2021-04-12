@@ -66,7 +66,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
             if reason in cfg.autoproc.enf_descriptions
             else reason
         )
-        logger.debug('preprocessing failed: %s' % fail_desc)
+        logger.info(f'preprocessing failed: {fail_desc}')
         trial['recon_ok'] = False
         trial['description'] = fail_desc
         _save_trial()
@@ -93,14 +93,14 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
         'R_toeoff': np.array([]),
     }
     # 1st pass
-    logger.debug('\n1st pass - processing %d trial(s)\n' % len(enffiles))
+    logger.debug(f'\n1st pass - processing {len(enffiles)} trial(s)\n')
     trials = dict()
 
     vicon = nexus.viconnexus()
     nexus_ver_major, nexus_ver_minor = nexus._nexus_version()
     if nexus_ver_major is not None:
-        logger.info(
-            'detected Nexus version: %d.%d' % (nexus_ver_major, nexus_ver_minor)
+        logger.debug(
+            f'running Nexus version: {nexus_ver_major}.{nexus_ver_minor}'
         )
     # close trial to prevent 'Save trial?' dialog on first open
     if not do_current:
@@ -129,7 +129,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
             return None
 
         if not do_current:
-            logger.debug('loading in Nexus: %s' % filename)
+            logger.debug(f'loading in Nexus: {filename}')
             vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
         try:
             nexus._get_metadata(vicon)
@@ -141,14 +141,14 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
             continue
 
         edata = eclipse.get_eclipse_keys(enffile, return_empty=True)
-        logger.debug('type: %s' % edata['TYPE'])
-        logger.debug('current description: %s' % edata['DESCRIPTION'])
-        logger.debug('current notes: %s' % edata['NOTES'])
+        logger.debug(f'type: {edata["TYPE"]}')
+        logger.debug(f'current description: {edata["DESCRIPTION"]}')
+        logger.debug(f'current notes: {edata["NOTES"]}')
         eclipse_str = ''
 
         # check whether to skip trial
         if edata['TYPE'] in cfg.autoproc.type_skip:
-            logger.debug('skipping based on type: %s' % edata['TYPE'])
+            logger.debug(f'skipping based on type: {edata["TYPE"]}')
             trial['recon_ok'] = False
             trial['description'] = 'skipped'
             continue
@@ -180,7 +180,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
         try:
             mkrdata = read_data.get_marker_data(vicon, allmarkers, ignore_missing=True)
         except GaitDataError:
-            logger.debug('get_marker_data failed')
+            logger.info('get_marker_data failed')
             _fail(trial, 'label_failure')
             continue
 
@@ -199,21 +199,21 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
         # check for valid Plug-in Gait set
         if cfg.autoproc.check_marker_set:
             if not utils.is_plugingait_set(mkrdata):
-                logger.warning('marker set does not correspond to Plug-in Gait')
+                logger.info('marker set does not correspond to Plug-in Gait')
                 _fail(trial, 'label_failure')
                 continue
         # check for flipped markers
         flipped = list(utils._check_markers_flipped(mkrdata))
         if flipped:
             for m1, m2 in flipped:
-                logger.warning('trying to swap trajectories for %s and %s' % (m1, m2))
+                logger.info(f'trying to swap trajectories for {m1} and {m2}')
                 nexus._swap_markers(vicon, m1, m2)
 
         # get subject position by tracking markers
         try:
             subj_pos = utils.avg_markerdata(mkrdata, cfg.autoproc.track_markers)
         except GaitDataError:
-            logger.debug('gaps in tracking markers')
+            logger.info('gaps in tracking markers')
             _fail(trial, 'label_failure')
             continue
         gait_dim = utils._principal_movement_direction(subj_pos)
@@ -221,7 +221,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
         # this is not the same as Nexus ROI, which is unset at this point
         try:
             roi = _range_to_roi(subj_pos, gait_dim, cfg.autoproc.events_range)
-            logger.debug('events range corresponds to frames %d-%d' % roi)
+            logger.debug(f'events range corresponds to frames {roi[0]}-{roi[1]}')
             trial['roi'] = roi
         except GaitDataError:
             _fail(trial, 'no_frames_in_range')
@@ -242,7 +242,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
             )
         except GaitDataError:
             logger.warning(
-                'cannot determine forceplate events, possibly due ' 'to gaps'
+                'cannot determine forceplate events, possibly due to gaps'
             )
             _fail(trial, 'gaps')
             continue
@@ -250,7 +250,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
         try:
             vel = utils._get_foot_contact_vel(mkrdata, fpev, medians=False, roi=roi)
         except GaitDataError:
-            logger.warning('cannot determine foot velocity, possibly due to ' 'gaps')
+            logger.warning('cannot determine foot velocity, possibly due to gaps')
             _fail(trial, 'gaps')
             continue
 

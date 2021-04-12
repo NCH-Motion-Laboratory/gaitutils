@@ -1180,7 +1180,7 @@ def main():
     # it shows log messages in our QTextEdit widget
     root_logger = logging.getLogger()
     handler = QtHandler()
-    handler.setFormatter(logging.Formatter("%(name)s: %(message)s"))
+    handler.setFormatter(logging.Formatter("%(levelname)s: %(name)s: %(message)s"))
     root_logger.addHandler(handler)
     root_logger.setLevel(logging.DEBUG)
 

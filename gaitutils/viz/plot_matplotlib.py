@@ -740,7 +740,9 @@ def plot_trials(
                         # _axis_annotate(ax, 'disconnected')
                         if do_plot:
 
-                            t_, y = trial.get_emg_data(var, envelope=use_envelope, cycle=cyc)
+                            t_, y = trial.get_emg_data(
+                                var, envelope=use_envelope, cycle=cyc
+                            )
                             t = t_ if normalized else t_ / trial.samplesperframe
 
                             col = _color_by_params(

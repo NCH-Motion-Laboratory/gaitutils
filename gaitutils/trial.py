@@ -8,7 +8,6 @@ Read gait trials.
 """
 
 
-
 from builtins import range
 from builtins import object
 from collections import defaultdict
@@ -304,7 +303,9 @@ class Trial(object):
         quirks = sessionutils.load_quirks(self.sessionpath)
         if 'emg_chs_disabled' in quirks:
             cfg.emg.chs_disabled = quirks['emg_chs_disabled']
-            logger.warning('using quirk: disable EMG channels %s' % quirks['emg_chs_disabled'])
+            logger.warning(
+                'using quirk: disable EMG channels %s' % quirks['emg_chs_disabled']
+            )
         if 'emg_correction_factor' in quirks:
             self.emg_correction_factor = quirks['emg_correction_factor']
             logger.warning(
@@ -664,7 +665,8 @@ class Trial(object):
                 if len(toeoff) == 0:
                     if cfg.trial.no_toeoff == 'error':
                         raise GaitDataError(
-                            '%s: no toeoff for cycle starting at %d' % (self.trialname, start)
+                            '%s: no toeoff for cycle starting at %d'
+                            % (self.trialname, start)
                         )
                     elif cfg.trial.no_toeoff == 'reject':
                         logger.warning(
@@ -676,7 +678,8 @@ class Trial(object):
                 elif len(toeoff) > 1:
                     if cfg.trial.multiple_toeoffs == 'error':
                         raise GaitDataError(
-                            '%s: multiple toeoffs for cycle starting at %d' % (self.trialname, start)
+                            '%s: multiple toeoffs for cycle starting at %d'
+                            % (self.trialname, start)
                         )
                     elif cfg.trial.multiple_toeoffs == 'accept_first':
                         logger.warning(
@@ -691,7 +694,9 @@ class Trial(object):
                         )
                         continue
                     else:
-                        raise RuntimeError('invalid multiple_toeoffs parameter in config')
+                        raise RuntimeError(
+                            'invalid multiple_toeoffs parameter in config'
+                        )
                 else:
                     toeoff = toeoff[0]
                 fp_str = ' (f)' if on_forceplate else ''

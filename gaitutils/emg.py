@@ -135,8 +135,6 @@ class EMG(object):
             )
         return ch
 
-    
-
     def get_channel_data(self, chname, envelope=False):
         """Return EMG data for a given channel.
 

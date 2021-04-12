@@ -398,7 +398,7 @@ def plot_trials(
     if emg_mode not in (None, 'envelope'):
         raise ValueError('invalid EMG mode parameter')
     use_envelope = emg_mode == 'envelope'
-    
+
     nrows, ncols = layouts._check_layout(layout)
 
     # these generate and keep track of key -> linestyle (or color) mappings
@@ -746,7 +746,9 @@ def plot_trials(
                         if do_plot:
                             tracename_emg = 'EMG:' + cyclename
 
-                            t_, y = trial.get_emg_data(var, envelope=use_envelope, cycle=cyc)
+                            t_, y = trial.get_emg_data(
+                                var, envelope=use_envelope, cycle=cyc
+                            )
                             t = t_ if normalized else t_ / trial.samplesperframe
 
                             col = _color_by_params(

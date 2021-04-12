@@ -44,6 +44,7 @@ def _is_c3d_file(source):
     except TypeError:
         return False
 
+
 def _get_c3d_metadata_subfields(acq, field):
     """Return names of metadata subfields for a given field"""
     meta = acq.GetMetaData()

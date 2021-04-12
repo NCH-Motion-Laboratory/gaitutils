@@ -662,7 +662,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
                             '(at frame %d)' % fr0
                         )
                         contra_next_ok = (
-                            _foot_plate_check(fp, mkrdata, fr0, contra_side, footlen) == 0
+                            _foot_plate_check(fp, mkrdata, fr0, contra_side, footlen)
+                            == 0
                         )
                         foot_contacts_ok &= contra_next_ok
                 contra_strikes_prev = contra_strikes[

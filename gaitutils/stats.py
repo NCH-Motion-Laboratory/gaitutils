@@ -186,9 +186,7 @@ def _robust_reject_rows(data, p_threshold):
     return data
 
 
-def average_analog_data(
-    data, reject_outliers=None, use_medians=None
-):
+def average_analog_data(data, reject_outliers=None, use_medians=None):
     """Average collected analog data.
 
     Parameters
@@ -389,7 +387,7 @@ def collect_trial_data(
 
     if analog_len is None:
         analog_len = 1000  # reasonable default for analog data (?)
-    
+
     if analog_envelope is None:
         analog_envelope = True
 
@@ -460,7 +458,9 @@ def collect_trial_data(
                 # get data on analog sampling grid
                 try:
                     logger.debug('collecting EMG channel %s from %s' % (ch, cycle))
-                    _, data = trial.get_emg_data(ch, cycle=cycle, envelope=analog_envelope)
+                    _, data = trial.get_emg_data(
+                        ch, cycle=cycle, envelope=analog_envelope
+                    )
                 except (KeyError, GaitDataError):
                     logger.warning('no channel %s for %s' % (ch, trial))
                     continue

@@ -105,7 +105,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
     # close trial to prevent 'Save trial?' dialog on first open
     if not do_current:
         nexus._close_trial()
-    
+
     # init trials dict
     for enffile in enffiles:
         filepath = enffile[: enffile.find('.Trial')]  # rm .TrialXXX and .enf
@@ -494,7 +494,9 @@ def autoproc_trial(signals=None):
     # for single trial autoprocess, running pipelines in separate processes is
     # not really necessary and seems to cause slowdowns
     if enffiles:
-        _do_autoproc(enffiles, pipelines_in_proc=False, signals=signals, do_current=True)
+        _do_autoproc(
+            enffiles, pipelines_in_proc=False, signals=signals, do_current=True
+        )
 
 
 def automark_trial(plot=False):

@@ -83,7 +83,7 @@ def _report_exception(e, title=None):
 def _exception_msg(e):
     """Return text representation of exception e"""
     if isinstance(e, GaitDataError):
-        return(str(e))  # don't print the exception class for GaitDataError
+        return str(e)  # don't print the exception class for GaitDataError
     else:
         return repr(e)  # seems to work fine in Py3, regardless of exception type
 

@@ -71,12 +71,14 @@ def get_metadata(source):
     # XXX: c3d angle params are apparently in radians while Nexus uses degrees
     # - NOT translated here!
     if nexus._is_vicon_instance(source):
+
         def _rewrite_ctxt(s):
             if 'Right' in s:
                 s = s.replace('Right', 'R')
             if 'Left' in s:
                 s = s.replace('Left', 'L')
             return s
+
         pars = meta['subj_params'].copy()
         meta['subj_params'] = defaultdict(lambda: None)
         meta['subj_params'].update({_rewrite_ctxt(k): v for k, v in pars.items()})

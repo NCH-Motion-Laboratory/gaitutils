@@ -304,7 +304,7 @@ def _get_metadata(c3dfile):
 
     return {
         'trialname': trialname,
-        'sessionpath': sessionpath,
+        'sessionpath': str(sessionpath),  # XXX: we can eventually return Paths here
         'offset': offset,
         'framerate': framerate,
         'analograte': analograte,

@@ -8,7 +8,7 @@ Time-distance computations
 
 import logging
 import numpy as np
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 
 from .envutils import GaitDataError
 from . import c3d
@@ -84,8 +84,8 @@ def _group_analysis_trials(trials):
     trials: dict of lists keyed by condition name
     If there are multiple trials per condition, they will be averaged.
     """
-    res_avg_all = OrderedDict()  # preserve condition ordering
-    res_std_all = OrderedDict()  # for plots etc.
+    res_avg_all = dict()  # preserve condition ordering
+    res_std_all = dict()  # for plots etc.
     for cond_label, cond_files in trials.items():
         ans = list()
         for c3dfile in cond_files:

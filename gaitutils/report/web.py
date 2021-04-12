@@ -15,7 +15,6 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import flask
 from flask import request
-from collections import OrderedDict
 import logging
 import os.path as op
 import base64
@@ -287,7 +286,7 @@ def dash_report(
         # make Trial instances for all dynamic and static trials
         # this is currently necessary even if saved figures are used
         trials_dyn = list()
-        trials_dyn_dict = OrderedDict()  # also organize dynamic trials by session
+        trials_dyn_dict = dict()  # also organize dynamic trials by session
         trials_static = list()
         for session in sessions:
             trials_dyn_dict[session] = list()
@@ -378,9 +377,7 @@ def dash_report(
         pig_singlevars_ = models.pig_lowerbody.varlabels_noside.copy()
         pig_singlevars_.update(models.pig_lowerbody_kinetics.varlabels_noside)
         pig_singlevars = sorted(pig_singlevars_.items(), key=lambda item: item[1])
-        singlevars = OrderedDict(
-            [(varlabel, ('layout', [[var]])) for var, varlabel in pig_singlevars]
-        )
+        singlevars = {varlabel: ('layout', [[var]]) for var, varlabel in pig_singlevars}
         page_layouts.update(singlevars)
 
         # add supplementary data for normal layouts

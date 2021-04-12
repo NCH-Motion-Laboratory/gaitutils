@@ -9,7 +9,7 @@ matplotlib based plotting functions
 from builtins import zip
 from builtins import range
 from functools import partial
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 import itertools
 import matplotlib
 from matplotlib.figure import Figure
@@ -476,7 +476,7 @@ def plot_trials(
         max_cycles = cfg.plot.max_cycles
 
     axes = dict()
-    leg_entries = OrderedDict()
+    leg_entries = dict()
     mod_normal_lines_ = None
     emg_normal_lines_ = None
     emg_any_ok = defaultdict(lambda: False)
@@ -837,7 +837,7 @@ def plot_trials(
         # see https://github.com/matplotlib/matplotlib/issues/13023
         axleg = fig.add_subplot(gridspec_[i + 1, :])
         axleg.axis('off')
-        leg_entries_ = OrderedDict()
+        leg_entries_ = dict()
         if mod_normal_lines_:
             leg_entries_['Norm.'] = mod_normal_lines_
         if emg_normal_lines_:

@@ -12,7 +12,7 @@ import logging
 import io
 import configobj
 from configobj import ConfigObj
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 
 from .numutils import _isint
 from .envutils import GaitDataError
@@ -52,7 +52,7 @@ class FileFilter(object):
         for val, newval in FileFilter.replace.items():
             data = data.replace(val, newval)
         # rm subsequent duplicate lines - a bit cryptic
-        data = '\n'.join(list(OrderedDict.fromkeys(data.split('\n'))))
+        data = '\n'.join(list(dict.fromkeys(data.split('\n'))))
         return data
 
     def close(self):

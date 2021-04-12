@@ -24,7 +24,6 @@ TODO:
 from builtins import zip
 from builtins import str
 from builtins import object
-from collections import OrderedDict
 import matplotlib
 from matplotlib.figure import Figure
 import matplotlib.gridspec as gridspec
@@ -366,7 +365,7 @@ class Markers(object):
         marker_colors: the colors (and max. number) of markers
         marker_width: the line width for the markers
         axes: all axes to put the markers in"""
-        self._markers = OrderedDict()  # markers are keyed by x coordinate
+        self._markers = dict()  # markers are keyed by x coordinate
         self._axes = axes
         self.marker_colors = marker_colors
         self.marker_width = marker_width

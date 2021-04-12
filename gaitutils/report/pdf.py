@@ -12,7 +12,7 @@ import io
 import os.path as op
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 
 from .. import sessionutils, normaldata, trial, models, stats
 from ..envutils import GaitDataError
@@ -274,7 +274,7 @@ def create_report(
 
     # prep for extracted values if needed
     if pages['Extracted'] or write_extracted:
-        vardefs_dict = OrderedDict(cfg.report.vardefs)
+        vardefs_dict = dict(cfg.report.vardefs)
         allvars = [vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs]
         from_models = set(models.model_from_var(var) for var in allvars)
         curve_vals = {
@@ -483,18 +483,15 @@ def create_comparison_report(
 
     # prep for extracted values if needed
     if pages['Extracted'] or write_extracted:
-        vardefs_dict = OrderedDict(cfg.report.vardefs)
+        vardefs_dict = dict(cfg.report.vardefs)
         allvars = [vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs]
         from_models = set(models.model_from_var(var) for var in allvars)
-        curve_vals = OrderedDict(
-            [
-                (
-                    op.split(session)[-1],
-                    stats._trials_extract_values(trials, from_models=from_models),
-                )
-                for session, trials in trials_dict.items()
-            ]
-        )
+        curve_vals = {
+            op.split(session)[-1]: stats._trials_extract_values(
+                trials, from_models=from_models
+            )
+            for session, trials in trials_dict.items()
+        }
 
     # tables of curve extracted values
     figs_extracted = list()

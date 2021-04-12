@@ -8,7 +8,6 @@ Time-distance plots.
 
 import logging
 import os.path as op
-from collections import OrderedDict
 
 from ..envutils import GaitDataError
 from ..config import cfg
@@ -76,7 +75,7 @@ def plot_comparison(sessions, tags=None, big_fonts=False, backend=None):
     """
     if tags is None:
         tags = cfg.eclipse.tags
-    trials = OrderedDict()
+    trials = dict()
 
     for session in sessions:
         c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')

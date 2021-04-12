@@ -6,7 +6,6 @@ Create web-based gait report using dash.
 """
 
 
-
 from builtins import str
 from numpy import save
 import plotly.graph_objs as go
@@ -20,6 +19,7 @@ from collections import OrderedDict
 import logging
 import os.path as op
 import base64
+import pickle
 
 from ulstools.num import age_from_hetu
 
@@ -38,13 +38,6 @@ from ..viz.plot_plotly import plot_trials, plot_extracted_box
 from ..viz import timedist, layouts
 from ..stats import AvgTrial, _trials_extract_values
 from ..gui.qt_widgets import ProgressSignals
-
-
-# Py2: for Python 3 compatibility
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
 
 
 logger = logging.getLogger(__name__)
@@ -347,25 +340,19 @@ def dash_report(
 
             # prepare for the curve-extracted value plots
             logger.debug('extracting values for curve-extracted plots...')
-            # Py2: the tuple->OrderedDict trick is used in pdf.py to preserve the
-            # ordering of plots under Py2; it isn't really be necessary here
-            # since page_layouts defines the order
-            vardefs_dict = OrderedDict(cfg.report.vardefs)
+            vardefs_dict = dict(cfg.report.vardefs)
             allvars = [
                 vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs
             ]
             from_models = set(models.model_from_var(var) for var in allvars)
             if None in from_models:
                 raise GaitDataError('unknown variables in extract list: %s' % allvars)
-            curve_vals = OrderedDict(
-                [
-                    (
-                        op.split(session)[-1],
-                        _trials_extract_values(trials, from_models=from_models),
-                    )
-                    for session, trials in trials_dyn_dict.items()
-                ]
-            )
+            curve_vals = {
+                op.split(session)[-1]: _trials_extract_values(
+                    trials, from_models=from_models
+                )
+                for session, trials in trials_dyn_dict.items()
+            }
 
             # in EMG layout, keep chs that are active in any of the trials
             signals.progress.emit('Reading EMG data', 0)
@@ -384,8 +371,7 @@ def dash_report(
         # a gaitutils configured layout name;
         # alternatively the first element can be 'layout' and the second element a
         # valid gaitutils layout
-        # Py2: we need to use tuple->OrderedDict to preserve the ordering
-        page_layouts = OrderedDict(cfg.web_report.page_layouts)
+        page_layouts = dict(cfg.web_report.page_layouts)
 
         # pick desired single variables from model and append
         # Py2: dict merge below can be done more elegantly once Py2 is dropped

@@ -371,7 +371,7 @@ def create_comparison_report(
         pages = defaultdict(lambda: False)
 
     # gather trials and check for kinetics
-    trials_dict = OrderedDict()  # Py2: preserve session ordering
+    trials_dict = dict()
     for session in sessionpaths:
         trials_dict[session] = sessionutils._get_tagged_dynamic_c3ds_from_sessions(
             session, tags=cfg.eclipse.tags

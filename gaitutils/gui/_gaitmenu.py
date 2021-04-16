@@ -986,7 +986,10 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def _options_dialog(self):
         """Show the options dialog"""
         dlg = OptionsDialog(self)
-        dlg.exec_()
+        if dlg.exec_():
+            # reset level in case it was changed
+            root_logger = logging.getLogger()
+            root_logger.setLevel(logging.__dict__[cfg.general.logging_level])
 
     def _create_pdf_report_nexus(self):
         """Create PDF report from Nexus session"""
@@ -1182,7 +1185,8 @@ def main():
     handler = QtHandler()
     handler.setFormatter(logging.Formatter("%(levelname)s: %(name)s: %(message)s"))
     root_logger.addHandler(handler)
-    root_logger.setLevel(logging.DEBUG)
+    root_logger.setLevel(logging.__dict__[cfg.general.logging_level])
+
 
     # quiet down some noisy loggers
     logging.getLogger('matplotlib').setLevel(logging.WARNING)

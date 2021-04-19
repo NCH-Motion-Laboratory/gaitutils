@@ -62,7 +62,7 @@ def nexus_trial(from_c3d=False):
         return Trial(nexus.viconnexus())
 
 
-class Noncycle():
+class Noncycle:
     """Used in place of Gaitcycle when requesting unnormalized data.
 
     Has a context parameter, to facilitate plotting unnormalized data for left
@@ -86,7 +86,7 @@ class Noncycle():
         self.end = None
 
 
-class Gaitcycle():
+class Gaitcycle:
     """Gait cycle class.
 
     Parameters
@@ -199,7 +199,7 @@ class Gaitcycle():
         return self.tn_analog, var[self.start_smp : self.end_smp]
 
 
-class Trial():
+class Trial:
     """Gait trial class.
 
     Parameters

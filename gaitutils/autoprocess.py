@@ -98,9 +98,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
     vicon = nexus.viconnexus()
     nexus_ver_major, nexus_ver_minor = nexus._nexus_version()
     if nexus_ver_major is not None:
-        logger.debug(
-            f'running Nexus version: {nexus_ver_major}.{nexus_ver_minor}'
-        )
+        logger.debug(f'running Nexus version: {nexus_ver_major}.{nexus_ver_minor}')
     # close trial to prevent 'Save trial?' dialog on first open
     if not do_current:
         nexus._close_trial()
@@ -240,9 +238,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
                 vicon, mkrdata, fp_info=fp_info, roi=roi
             )
         except GaitDataError:
-            logger.warning(
-                'cannot determine forceplate events, possibly due to gaps'
-            )
+            logger.warning('cannot determine forceplate events, possibly due to gaps')
             _fail(trial, 'gaps')
             continue
         # get foot velocity info for all events (do not reduce to median)

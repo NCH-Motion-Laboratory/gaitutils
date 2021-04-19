@@ -1185,7 +1185,6 @@ def main():
     root_logger.addHandler(handler)
     root_logger.setLevel(logging.__dict__[cfg.general.logging_level])
 
-
     # quiet down some noisy loggers
     logging.getLogger('matplotlib').setLevel(logging.WARNING)
     logging.getLogger('PyQt5.uic').setLevel(logging.WARNING)

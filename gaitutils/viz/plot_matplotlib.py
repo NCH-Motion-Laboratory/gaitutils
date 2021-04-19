@@ -6,8 +6,6 @@ matplotlib based plotting functions
 """
 
 
-from builtins import zip
-from builtins import range
 from functools import partial
 from collections import defaultdict
 import itertools

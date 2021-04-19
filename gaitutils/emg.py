@@ -7,8 +7,6 @@ Class for handling EMG data.
 @author: Jussi (jnu@iki.fi)
 """
 
-
-from builtins import object
 import numpy as np
 import logging
 

@@ -9,7 +9,6 @@ append to models_all.
 @author: Jussi (jnu@iki.fi)
 """
 
-from builtins import object
 from collections import defaultdict
 
 # list of all our models

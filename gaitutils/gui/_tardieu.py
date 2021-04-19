@@ -21,9 +21,6 @@ TODO:
 @author: Jussi (jnu@iki.fi)
 """
 
-from builtins import zip
-from builtins import str
-from builtins import object
 import matplotlib
 from matplotlib.figure import Figure
 import matplotlib.gridspec as gridspec

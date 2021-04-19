@@ -6,8 +6,6 @@ PyQt graphical interface to gaitutils
 @author: Jussi (jnu@iki.fi)
 """
 
-
-from builtins import str
 from PyQt5 import QtGui, QtCore, uic, QtWidgets
 from PyQt5.QtCore import QRunnable, QThreadPool, pyqtSignal, QObject
 from pkg_resources import resource_filename

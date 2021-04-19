@@ -8,8 +8,6 @@ Read gait trials.
 """
 
 
-from builtins import range
-from builtins import object
 from collections import defaultdict
 import numpy as np
 import re

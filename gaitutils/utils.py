@@ -6,10 +6,6 @@ Utility functions for processing gait data.
 @author: Jussi (jnu@iki.fi)
 """
 
-
-from builtins import range
-from builtins import str
-from builtins import zip
 from scipy import signal
 from matplotlib import path
 import matplotlib.pyplot as plt

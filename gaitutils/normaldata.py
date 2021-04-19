@@ -6,8 +6,6 @@ Normal data readers
 """
 
 
-from builtins import next
-from builtins import zip
 import numpy as np
 import openpyxl
 import os.path as op

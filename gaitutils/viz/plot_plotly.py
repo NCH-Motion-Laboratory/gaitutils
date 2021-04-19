@@ -5,9 +5,7 @@ plotly based plotting functions
 @author: Jussi (jnu@iki.fi)
 """
 
-from builtins import zip
 import logging
-from builtins import range
 from collections import defaultdict
 from functools import partial
 import sys

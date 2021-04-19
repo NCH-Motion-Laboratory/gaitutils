@@ -6,7 +6,6 @@ Non-Qt GUI stuff (Windows native dialogs etc.)
 @author: Jussi (jnu@iki.fi)
 """
 
-from builtins import str
 import ctypes
 import sys
 import logging

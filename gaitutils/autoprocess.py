@@ -7,7 +7,6 @@ Functions for automated processing of data in Nexus.
 """
 
 
-from builtins import zip
 import os
 import os.path as op
 import numpy as np

@@ -5,7 +5,6 @@ Handles gaitutils config files.
 @author: Jussi (jnu@iki.fi)
 """
 
-from builtins import str
 from pathlib import Path
 import io
 import logging

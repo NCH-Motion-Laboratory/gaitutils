@@ -8,7 +8,6 @@ called via the read_data module.
 @author: Jussi (jnu@iki.fi)
 """
 
-from builtins import zip
 from collections import defaultdict
 import logging
 import numpy as np
@@ -88,6 +87,8 @@ def _get_c3dacq(c3dfile):
     except RuntimeError as e:
         # this is a workaround for an unresolved BTK Python 3 bug, where
         # filenames containing extended characters cannot be read
+        # this is somehow related to Windows character set handling, since
+        # it only manifests on some machines
         if not _is_ascii(c3dfile) and sys.version_info.major == 3:
             logger.warning('trying to work around possible btk extended chars bug')
             # just copy the file into another directory

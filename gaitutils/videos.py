@@ -5,7 +5,6 @@ Video file related code.
 @author: Jussi (jnu@iki.fi)
 """
 
-from builtins import zip
 import logging
 import os
 import os.path as op

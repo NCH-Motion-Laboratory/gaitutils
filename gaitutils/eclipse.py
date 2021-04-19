@@ -6,8 +6,6 @@ Eclipse (database) hacks.
 
 @author: Jussi (jnu@iki.fi)
 """
-from builtins import str
-from builtins import object
 import logging
 import io
 import configobj

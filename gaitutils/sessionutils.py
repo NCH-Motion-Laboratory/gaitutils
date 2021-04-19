@@ -6,7 +6,6 @@ Session related functions
 @author: Jussi (jnu@iki.fi)
 """
 
-from builtins import str
 import io
 import os.path as op
 import json

@@ -6,8 +6,6 @@ Plotting functionality shared between backends.
 @author: Jussi (jnu@iki.fi)
 """
 
-
-from builtins import next
 from itertools import cycle
 from collections import defaultdict, namedtuple
 import logging

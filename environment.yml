@@ -27,7 +27,6 @@ dependencies:
     - kaleido
     - dash-daq
     - pytest
-    - pathlib
     - https://github.com/jjnurminen/gaitutils/archive/master.zip
     - https://github.com/jjnurminen/ulstools/archive/master.zip
     - https://github.com/jjnurminen/configdot/archive/master.zip

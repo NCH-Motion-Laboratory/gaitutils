@@ -450,17 +450,20 @@ def dash_report(
                                 color_by=color_by,
                                 big_fonts=True,
                             )
-                        elif layout_spec == 'emg_auto' and emg_auto_layout is not None:
-                            figdata = plot_trials(
-                                trials_dyn,
-                                emg_auto_layout,
-                                emg_mode=emg_mode,
-                                legend_type=legend_type,
-                                style_by=style_by,
-                                color_by=color_by,
-                                supplementary_data=supplementary_default,
-                                big_fonts=True,
-                            )
+                        elif layout_spec == 'emg_auto':
+                            if emg_auto_layout is None:  # no valid EMG channels
+                                raise RuntimeError
+                            else:
+                                figdata = plot_trials(
+                                    trials_dyn,
+                                    emg_auto_layout,
+                                    emg_mode=emg_mode,
+                                    legend_type=legend_type,
+                                    style_by=style_by,
+                                    color_by=color_by,
+                                    supplementary_data=supplementary_default,
+                                    big_fonts=True,
+                                )
                         elif layout_spec == 'kinematics_average':
                             layout_ = cfg.layouts.lb_kinematics
                             figdata = plot_trials(
@@ -472,9 +475,9 @@ def dash_report(
                                 big_fonts=True,
                             )
                         elif layout_spec == 'disabled':
-                            # will be caught, resulting in empty menu item
+                            # exception will be caught in this loop, resulting in empty menu item
                             raise RuntimeError
-                        else:  # unrecognized layout; this is not caught by us
+                        else:  # unrecognized layout; this will cause an exception
                             raise Exception(
                                 'Invalid page layout: %s' % str(layout_spec)
                             )

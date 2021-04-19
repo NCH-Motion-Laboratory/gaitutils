@@ -356,7 +356,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
             event.ignore()
 
 
-class Markers(object):
+class Markers():
     """Manage vertical marker lines at multiple axes.
     The markers are created as matplotlib axvline()s."""
 
@@ -451,7 +451,7 @@ class Markers(object):
         return zip(self._markers.keys(), annotations, cols_in_use)
 
 
-class TardieuPlot(object):
+class TardieuPlot():
     """ Create matplotlib graphs for Tardieu analysis """
 
     def __init__(self):

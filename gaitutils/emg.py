@@ -18,7 +18,7 @@ from .config import cfg
 logger = logging.getLogger(__name__)
 
 
-class EMG(object):
+class EMG():
     """Class for processing and storing EMG data.
 
     Parameters

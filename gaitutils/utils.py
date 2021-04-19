@@ -24,7 +24,7 @@ from .numutils import rising_zerocross, digitize_array, falling_zerocross, _base
 logger = logging.getLogger(__name__)
 
 
-class TrialEvents(object):
+class TrialEvents():
     """A struct-like container for gait event data.
     A dataclass would be better, but requires Python 3.7.
     Logically this might belong in trial.py, but low-level readers (e.g

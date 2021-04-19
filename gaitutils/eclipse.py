@@ -20,7 +20,7 @@ from .envutils import GaitDataError
 logger = logging.getLogger(__name__)
 
 
-class FileFilter(object):
+class FileFilter():
     """Filter class for configobj.
 
     File-like class that will replace strings according to the replace

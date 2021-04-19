@@ -66,7 +66,7 @@ def _dict_with_side(di, append_side=False):
     return dict(_dict_with_side_gen(di, append_side=append_side))
 
 
-class GaitModel(object):
+class GaitModel():
     """A class for storing information about a gait model.
 
     The data describes model-specific variable names etc. and is intended

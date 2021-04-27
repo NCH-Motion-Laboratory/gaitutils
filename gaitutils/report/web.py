@@ -312,7 +312,10 @@ def dash_report(
                     sessionutils.get_session_date(session) for session in sessions
                 ]
                 ages = [age_from_hetu(info['hetu'], d) for d in session_dates]
-                age = max(ages)
+                try:
+                    age = max(ages)
+                except TypeError:
+                    age = None
 
             # create Markdown text for patient info
             patient_info_text = '##### %s ' % (

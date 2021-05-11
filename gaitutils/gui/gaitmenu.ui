@@ -47,13 +47,6 @@
         </property>
        </widget>
       </item>
-      <item row="16" column="3">
-       <widget class="QPushButton" name="btnAveragePlot">
-        <property name="text">
-         <string>Average selected</string>
-        </property>
-       </widget>
-      </item>
       <item row="11" column="2">
        <widget class="QPushButton" name="btnAddSession">
         <property name="text">
@@ -381,6 +374,20 @@
         </property>
        </widget>
       </item>
+      <item row="16" column="3">
+       <widget class="QPushButton" name="btnReviewTrials">
+        <property name="text">
+         <string>Review selected</string>
+        </property>
+       </widget>
+      </item>
+      <item row="16" column="4" colspan="2">
+       <widget class="QPushButton" name="btnAveragePlot">
+        <property name="text">
+         <string>Average selected</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>
@@ -607,6 +614,16 @@
   <action name="actionExport_current_trial_to_EDF_format">
    <property name="text">
     <string>Export selected trials to EDF</string>
+   </property>
+  </action>
+  <action name="actionProcess_and_review_trial">
+   <property name="text">
+    <string>Review Nexus trial</string>
+   </property>
+  </action>
+  <action name="actionReview_Nexus_trial">
+   <property name="text">
+    <string>Review Nexus trial</string>
    </property>
   </action>
  </widget>

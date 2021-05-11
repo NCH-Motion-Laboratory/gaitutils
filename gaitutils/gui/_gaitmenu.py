@@ -20,6 +20,9 @@ import traceback
 import socket
 import ulstools
 import configdot
+# this is needed to work around a plotly bug (?) that causes ImportErrors due to
+# circular imports; see https://stackoverflow.com/questions/66149087/getting-import-error-quite-randomly-when-using-plotly-express-and-having-multipl
+from plotly import validator_cache, graph_objects
 
 from .qt_dialogs import (
     OptionsDialog,
@@ -454,6 +457,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnSelectAll.clicked.connect(self._select_all_trials)
         self.btnClearSelected.clicked.connect(self._remove_selected_trials)
         self.btnPlotTrials.clicked.connect(self._plot_selected_trials)
+        self.btnReviewTrials.clicked.connect(self._review_trials)        
         self.btnAveragePlot.clicked.connect(self._average_trials)
         self.actionCreate_PDF_report.triggered.connect(
             lambda ev: self._create_pdf_report()
@@ -467,6 +471,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         )
         self.actionAutoprocess_session.triggered.connect(self._autoproc_session)
         self.actionAutoprocess_single_trial.triggered.connect(self._autoproc_trial)
+
         self.actionPDF_report_from_Nexus_session.triggered.connect(
             self._create_pdf_report_nexus
         )
@@ -623,6 +628,11 @@ class Gaitmenu(QtWidgets.QMainWindow):
             autoproc_trial, finished_func=self._enable_main_ui, signals=signals
         )
 
+    def _review_trials(self):
+        """Review currently selected trials (uses configured review layouts)"""
+        for layout_name in cfg.plot.review_layouts:
+            self._plot_selected_trials(layout_name=layout_name)
+
     def _plot_timedist_average(self):
         """Plot time-distance average"""
         session = _get_nexus_sessionpath()
@@ -776,19 +786,20 @@ class Gaitmenu(QtWidgets.QMainWindow):
                 'Exported %d edf file(s) into %s' % (n_out, tr.sessionpath)
             )
 
-    def _plot_selected_trials(self):
+    def _plot_selected_trials(self, layout_name=None):
+        """Plot user selected trials from list"""
         if not self._selected_rows:
             return
         if any(tr.is_static for tr in self._selected_trials):
             qt_message_dialog(
                 'One or more trials are static, plotting all trials as unnormalized'
             )
-            self._plot_trials(self._selected_trials, normalized=False)
+            self._plot_trials(self._selected_trials, normalized=False, layout_name=layout_name)
         else:
-            self._plot_trials(self._selected_trials)
+            self._plot_trials(self._selected_trials, layout_name=layout_name)
 
-    def _plot_trials(self, trials, normalized=True):
-        """Plot specified trials, or selected trials from menu"""
+    def _plot_trials(self, trials, normalized=True, layout_name=None):
+        """Plot specified trials"""
         have_avgtrials = any(isinstance(tr, stats.AvgTrial) for tr in trials)
         if not normalized or self.xbPlotUnnorm.checkState():
             if have_avgtrials:
@@ -797,8 +808,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
             cycles = 'unnormalized'
         else:
             cycles = None
-        layout_desc = self.cbLayout.currentText()
-        layout_name = self.layouts_map[layout_desc]
+        if layout_name is None:
+            layout_desc = self.cbLayout.currentText()
+            layout_name = self.layouts_map[layout_desc]
         # FIXME: this is a bit kludgy
         is_emg_layout = 'EMG' in layout_name.upper()
         if self.xbEMGEnvelope.checkState():

@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 def qt_matplotlib_window(fig):
-    """Show matplotlib figure fig in new Qt window. Window is returned"""
+    """Show matplotlib figure fig in new Qt window. Return the window."""
     _mpl_win = QtWidgets.QDialog()
     # _mpl_win.setGeometry(100, 100, 1500, 1000)
     _mpl_win._canvas = FigureCanvas(fig)

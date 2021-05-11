@@ -24,7 +24,7 @@ def _show_plotly_fig(fig):
     """Show a Plotly fig in the configured browser"""
     tmp_html = _named_tempfile('.html')
     plotly.offline.plot(fig, filename=tmp_html, auto_open=False, validate=False)
-    _browse_localhost(url='file:///%s' % tmp_html)
+    _browse_localhost(url=f'file:///{tmp_html}')
 
 
 def _browse_localhost(url=None, port=None):
@@ -69,8 +69,7 @@ def show_fig(fig):
     """Show a figure created by the plotting functions.
 
     What actually happens depends on the backend. Plotly figures are shown in a
-    browser window. For matplotlib plots, a new Qt window is created and the
-    plot is shown there.
+    browser window and matplotlib plots are shown in a new Qt window.
 
     Parameters
     ----------

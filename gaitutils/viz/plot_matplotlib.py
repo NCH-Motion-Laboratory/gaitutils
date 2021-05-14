@@ -292,12 +292,12 @@ def time_dist_barchart(
                 ypos, vals_this, thickness, align='edge', color=color, xerr=xerr
             )
             # x axis scaling
-            FULL_AXIS = 1.2  # how many percent is the full axis
+            FULL_AXIS = 1.5  # how many percent is the full axis
             if var in bar_scaling:
                 xmax = bar_scaling[var]
             else:
                 xmax = max(vals_this)
-            xmax /= FULL_AXIS
+            xmax *= FULL_AXIS
             ax.set_xlim([0, xmax])
             texts = list()
             for val, std, unit in zip(vals_this, stddevs_this, units_this):

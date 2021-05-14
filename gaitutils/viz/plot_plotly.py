@@ -120,6 +120,7 @@ def time_dist_barchart(
     color=None,
     stddev_bars=True,
     plotvars=None,
+    bar_scaling=None,
     big_fonts=False,
     figtitle=None,
 ):
@@ -148,6 +149,9 @@ def time_dist_barchart(
         The variables to plot and their order. If None, plot all variables.
     figtitle : str, optional
         Title of the plot.
+    bar_scaling : dict | None
+        Scaling of the bars. Should be a dict with varnames as keys and
+        the x scales as values.
     big_fonts : bool, optional
         If True, increase font sizes somewhat.
 
@@ -156,6 +160,9 @@ def time_dist_barchart(
     dict
         The chart.
     """
+
+    if bar_scaling is None:
+        bar_scaling = dict()
 
     conds, vars, units = _pick_common_vars(values, plotvars)
     vars = vars[::-1]  # plotly yaxis starts from bottom
@@ -191,10 +198,15 @@ def time_dist_barchart(
                     for val, unit in zip(data[cond][ctxt], units)
                 ]
 
-    # scale vars according to their maximums over all conditions
+    # flatten the scaling the same way as the data, replace missing vars with np.nan
+    _bar_scaling = [bar_scaling[var] if var in bar_scaling else np.nan for var in vars]
+
     scaler = dict()
     for ctxt in ctxts:
-        scaler[ctxt] = np.max(np.array([data[c][ctxt] for c in conds]), axis=0)
+        # preferentially use given scales; if not available, use max over all conditions
+        max_scaler = np.max(np.array([data[c][ctxt] for c in conds]), axis=0)
+        scaler[ctxt] = np.array([x if not np.isnan(x) else max_scaler[k] for k, x in enumerate(_bar_scaling)])
+    # scale data to % of scaler
     for cond in conds:
         for ctxt in ctxts:
             data[cond][ctxt] /= scaler[ctxt] * 0.01
@@ -210,6 +222,7 @@ def time_dist_barchart(
         subplot_titles=ctxts,
     )
 
+    FULL_AXIS = 150  # how many percent is the full axis
     # ordering the bars properly is a bit tricky. seemingly, there's no way to control
     # ordering of bars within a category, and they seem to be plotted from bottom to up by default.
     # a dirty solution is to plot in reversed order and then reverse the legend also.
@@ -237,8 +250,9 @@ def time_dist_barchart(
             # increase var label size a bit
             fig['layout']['yaxis%d' % k].update(tickfont={'size': label_fontsize + 2})
             fig['layout']['xaxis%d' % k].update(
-                title={'text': '% of maximum', 'font': {'size': label_fontsize}}
+                title={'text': '% of reference', 'font': {'size': label_fontsize}}
             )
+            fig['layout']['xaxis%d' % k].update({'range': [0, FULL_AXIS]})
 
     margin = go.layout.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
     legend = dict(font=dict(size=legend_fontsize))

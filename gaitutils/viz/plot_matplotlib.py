@@ -210,6 +210,7 @@ def time_dist_barchart(
     stddev_bars=True,
     plotvars=None,
     figtitle=None,
+    bar_scaling=None,
     big_fonts=None,
 ):
     """Multi-variable and multi-condition barchart plot.
@@ -222,9 +223,10 @@ def time_dist_barchart(
         Nested dict of values to plot. Keys are values[condition][var][context].
         Matches the output of group_analysis_trials().
     stddev : dict | None
-        Similar to values, but provides standard deviation for each variable.
+        Similar to values, but provides standard deviation for each variable. If None,
+        do not plot the deviations.
     thickness : float, optional
-        Y direction thickness of the bars, by default 0.5
+        Y direction thickness of the bars, by default 0.5.
     color : list, optional
         List of colors for the different conditions. If None, use default values.
     stddev_bars : bool, optional
@@ -233,6 +235,9 @@ def time_dist_barchart(
         The variables to plot and their order. If None, plot all variables.
     figtitle : str, optional
         Title of the plot.
+    bar_scaling : dict | None
+        Scaling of the bars. Should be a dict with varnames as keys and
+        the x scales as values.
     big_fonts : bool, optional
         If True, increase font sizes somewhat.
 
@@ -244,9 +249,12 @@ def time_dist_barchart(
 
     fig = Figure()
 
+    if bar_scaling is None:
+        bar_scaling = dict()
+
     def _plot_label(ax, rects, texts):
         """Plot a label inside each rect"""
-        # FIXME: just a rough heuristic for font size
+        # XXX: just a rough heuristic for font size
         fontsize = 6 if len(rects) >= 3 else 8
         for rect, txt in zip(rects, texts):
             ax.text(
@@ -283,8 +291,12 @@ def time_dist_barchart(
             rects = ax.barh(
                 ypos, vals_this, thickness, align='edge', color=color, xerr=xerr
             )
-            # FIXME: set axis scale according to var normal values
-            ax.set_xlim([0, 1.5 * max(vals_this)])
+            if var in bar_scaling:
+                xmax = bar_scaling[var]
+            else:
+                # if no scaling is provided, it will be set at 150% of var maximum
+                xmax = 1.5 * max(vals_this)
+            ax.set_xlim([0, xmax])
             texts = list()
             for val, std, unit in zip(vals_this, stddevs_this, units_this):
                 if val == 0:

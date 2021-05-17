@@ -55,7 +55,7 @@ def group_analysis(an_list, fun=np.mean):
     if not_in_all:
         logger.warning(
             'Some analysis dicts are missing the following variables: %s'
-            % ' '.join(not_in_all)
+            % ', '.join(not_in_all)
         )
 
     # gather data and apply function

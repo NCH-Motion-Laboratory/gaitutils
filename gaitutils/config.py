@@ -26,6 +26,9 @@ def _handle_cfg_defaults(cfg):
     if cfg.general.normaldata_files == 'default':
         fn = resource_filename('gaitutils', 'data/normal.gcd')
         cfg.general.normaldata_files = [fn]
+    if cfg.general.timedist_normaldata == 'default':
+        fn = resource_filename('gaitutils', 'data/timedist_normaldata.json')
+        cfg.general.timedist_normaldata = fn
     if cfg.emg.normaldata_file == 'default':
         fn = resource_filename('gaitutils', 'data/emg_normaldata.json')
         cfg.emg.normaldata_file = fn

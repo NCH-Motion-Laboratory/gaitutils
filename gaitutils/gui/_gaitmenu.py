@@ -456,7 +456,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnAddNexusTrial.clicked.connect(self._add_nexus_trial)
         self.btnSelectAll.clicked.connect(self._select_all_trials)
         self.btnClearSelected.clicked.connect(self._remove_selected_trials)
-        self.btnPlotTrials.clicked.connect(self._plot_selected_trials)
+        self.btnPlotTrials.clicked.connect(lambda ev: self._plot_selected_trials())
         self.btnReviewTrials.clicked.connect(self._review_trials)        
         self.btnAveragePlot.clicked.connect(self._average_trials)
         self.actionCreate_PDF_report.triggered.connect(

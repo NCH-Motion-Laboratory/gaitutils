@@ -65,9 +65,9 @@ def _get_c3d_metadata_field(acq, field, subfield):
             raise RuntimeError('Invalid c3d metadata field: %s' % child)
 
     info = _get_child(_get_child(meta, field), subfield).GetInfo()
-    if info.GetFormatAsString() == 'Char':
+    if (strformat := info.GetFormatAsString()) == 'Char':
         return [s.strip() for s in info.ToString()]
-    elif info.GetFormatAsString() == 'Real':
+    elif strformat == 'Real':
         return [x for x in info.ToDouble()]
     else:
         raise RuntimeError('Unhandled btk meta info type')

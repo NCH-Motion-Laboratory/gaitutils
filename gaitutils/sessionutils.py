@@ -199,11 +199,13 @@ def get_session_date(sessionpath):
     enfs = get_enfs(sessionpath)
     x1ds = [enf_to_trialfile(fn, 'x1d') for fn in enfs]
     if not x1ds:
-        raise GaitDataError('Invalid session %s' % sessionpath)
+        raise GaitDataError(f'Invalid session: {sessionpath}')
     else:
-        x1d = x1ds[0]
-        if not op.isfile(x1d):
-            raise GaitDataError('x1d trial file %s does not exist' % x1d)
+        x1ds = [x1d for x1d in x1ds if op.isfile(x1d)]
+        if not x1ds:
+            raise GaitDataError('cannot find any .x1d trial files in session')
+        else:
+            x1d = x1ds[-1]
         return datetime.datetime.fromtimestamp(op.getmtime(x1d))
 
 

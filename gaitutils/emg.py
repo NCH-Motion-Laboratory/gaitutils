@@ -27,7 +27,7 @@ class EMG:
         After read, the EMG data is multiplied by this factor.
     """
 
-    def __init__(self, source, correction_factor=1):
+    def __init__(self, source, correction_factor=1, chs_disabled=None):
         logger.debug('new EMG instance from %s' % source)
         self.source = source
         self.passband = cfg.emg.passband
@@ -35,6 +35,9 @@ class EMG:
         self.t = None
         self.sfrate = None
         self.correction_factor = correction_factor
+        self.chs_disabled = chs_disabled
+        if self.chs_disabled is None:
+            self.chs_disabled = list()
 
     @property
     def data(self):
@@ -204,6 +207,8 @@ class EMG:
         """
         if not self.has_channel(chname):
             return False
+        elif chname in self.chs_disabled:
+            return False
         elif cfg.emg.chs_disabled and chname in cfg.emg.chs_disabled:
             return False
         data = self.get_channel_data(chname)
@@ -261,7 +266,9 @@ class AvgEMG(EMG):
         return self._data[chname]
 
     def status_ok(self, chname):
-        if cfg.emg.chs_disabled and chname in cfg.emg.chs_disabled:
+        if chname in self.chs_disabled:
+            return False
+        elif cfg.emg.chs_disabled and chname in cfg.emg.chs_disabled:
             return False
         else:
             return self.has_channel(chname)

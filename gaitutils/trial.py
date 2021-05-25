@@ -277,7 +277,11 @@ class Trial:
         # handle session quirks
         self._handle_quirks()
         # data are lazily read
-        self.emg = EMG(self.source, correction_factor=self.emg_correction_factor)
+        self.emg = EMG(
+            self.source,
+            correction_factor=self.emg_correction_factor,
+            chs_disabled=self.emg_chs_disabled,
+        )
         self._forceplate_data = None
         self._marker_data = None
         if not self.is_static:
@@ -300,10 +304,12 @@ class Trial:
         """Handle session quirks"""
         quirks = sessionutils.load_quirks(self.sessionpath)
         if 'emg_chs_disabled' in quirks:
-            cfg.emg.chs_disabled = quirks['emg_chs_disabled']
+            self.emg_chs_disabled = quirks['emg_chs_disabled']
             logger.warning(
                 'using quirk: disable EMG channels %s' % quirks['emg_chs_disabled']
             )
+        else:
+            self.emg_chs_disabled = None
         if 'emg_correction_factor' in quirks:
             self.emg_correction_factor = quirks['emg_correction_factor']
             logger.warning(

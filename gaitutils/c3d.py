@@ -267,7 +267,7 @@ def _get_metadata(c3dfile):
         markers = _get_c3d_metadata_field(acq, 'POINT', 'LABELS')
     except RuntimeError:
         markers = list()
-    # not sure what the '*xx' markers are, but delete them for now
+    # XXX: not sure what the '*xx' markers are, but delete them for now
     markers = [m for m in markers if m[0] != '*']
 
     #  get events

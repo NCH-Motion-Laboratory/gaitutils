@@ -19,7 +19,6 @@ from . import sessionutils, numutils
 from .numutils import _isfloat
 from ulstools.num import age_from_hetu
 from .models import models_all
-from .envutils import lru_cache_checkfile
 
 
 logger = logging.getLogger(__name__)
@@ -71,7 +70,6 @@ def _read_session_normaldata(session):
     return _read_configured_model_normaldata(age)
 
 
-@lru_cache_checkfile
 def _read_timedist_normaldata_file(filename):
     """Read time-distance normal data."""
     logger.debug(f'reading time-distance normal data from {filename}')
@@ -82,7 +80,6 @@ def _read_timedist_normaldata_file(filename):
     return timedist_normals
 
 
-@lru_cache_checkfile
 def _read_emg_normaldata_file(filename):
     """Read JSON formatted EMG normal data.
 
@@ -103,7 +100,6 @@ def _read_emg_normaldata_file(filename):
     return {k: np.array(v) for k, v in emg_normals.items()}
 
 
-@lru_cache_checkfile
 def _read_model_normaldata_file(filename):
     """Read model normaldata from a file.
 

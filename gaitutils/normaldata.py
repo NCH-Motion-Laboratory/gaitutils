@@ -53,6 +53,11 @@ def _read_configured_emg_normaldata():
     return _read_emg_normaldata_file(cfg.emg.normaldata_file)
 
 
+def _read_configured_timedist_normaldata():
+    """Read time-distance normal data defined in config."""
+    return _read_timedist_normaldata_file(cfg.general.timedist_normaldata)
+
+
 def _read_session_normaldata(session):
     """Read model normal data according to patient in given session.
 
@@ -67,6 +72,17 @@ def _read_session_normaldata(session):
 
 
 @lru_cache_checkfile
+def _read_timedist_normaldata_file(filename):
+    """Read time-distance normal data."""
+    logger.debug(f'reading time-distance normal data from {filename}')
+    if not op.isfile(filename):
+        raise GaitDataError(f'No such file {filename}')
+    with io.open(filename, 'r', encoding='utf-8') as f:
+        timedist_normals = json.load(f)
+    return timedist_normals
+
+
+@lru_cache_checkfile
 def _read_emg_normaldata_file(filename):
     """Read JSON formatted EMG normal data.
 
@@ -75,11 +91,9 @@ def _read_emg_normaldata_file(filename):
     correspond to EMG activation in the range 0..1 and the index corresponds to
     % of the gait cycle.
     """
-    if filename is None:
-        filename = cfg.emg.normaldata_file
-    logger.debug('reading EMG normal data from %s' % filename)
+    logger.debug(f'reading EMG normal data from {filename}')
     if not op.isfile(filename):
-        raise GaitDataError('No such file %s' % filename)
+        raise GaitDataError(f'No such file {filename}')
     with io.open(filename, 'r', encoding='utf-8') as f:
         emg_normals = json.load(f)
     for k, v in emg_normals.items():
@@ -235,8 +249,8 @@ def _write_xlsx(normaldata, filename):
     wb.save(filename=filename)
 
 
-def normals_from_data(data):
-    """Compute normaldata from data dict output by stats.collect_trial_data"""
+def _normals_from_data(data):
+    """Compute normal data from dict output by stats.collect_trial_data"""
     normaldata = dict()
     for mod in models_all:
         thevars = mod.varlabels_noside

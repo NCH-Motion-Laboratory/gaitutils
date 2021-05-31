@@ -47,16 +47,6 @@ def _read_configured_model_normaldata(age=None):
     return model_normaldata
 
 
-def _read_configured_emg_normaldata():
-    """Read the EMG normal data defined in config."""
-    return _read_emg_normaldata_file(cfg.emg.normaldata_file)
-
-
-def _read_configured_timedist_normaldata():
-    """Read time-distance normal data defined in config."""
-    return _read_timedist_normaldata_file(cfg.general.timedist_normaldata)
-
-
 def _read_session_normaldata(session):
     """Read model normal data according to patient in given session.
 
@@ -93,9 +83,8 @@ def _read_emg_normaldata_file(filename):
         raise GaitDataError(f'No such file {filename}')
     with io.open(filename, 'r', encoding='utf-8') as f:
         emg_normals = json.load(f)
-    for k, v in emg_normals.items():
-        if len(v) != 101:
-            raise GaitDataError('EMG normal data has invalid dims')
+    if any(len(v) != 101 for v in emg_normals.values()):
+        raise GaitDataError('EMG normal data has invalid dims')
     # convert lists into numpy arrays
     return {k: np.array(v) for k, v in emg_normals.items()}
 

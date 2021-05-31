@@ -109,9 +109,9 @@ def _read_model_normaldata_file(filename):
     max values, respectively. (Typically mean-stddev and mean+stddev).
     GCD and XLSX (Polygon) formats are currently supported.
     """
-    logger.debug('reading normal data from %s' % filename)
+    logger.debug(f'reading normal data from {filename}')
     if not op.isfile(filename):
-        raise GaitDataError('No such file %s' % filename)
+        raise GaitDataError(f'No such file {filename}')
     type_ = op.splitext(filename)[1].lower()
     if type_ == '.gcd':
         return _read_gcd(filename)
@@ -127,7 +127,7 @@ def _find_normaldata_for_age(age):
         return None
     for age_range, filename in cfg.general.normaldata_age.items():
         if age_range[0] <= age <= age_range[1]:
-            logger.debug('found normal data file %s for age %d' % (filename, age))
+            logger.debug(f'found normal data file {filename} for age {age}')
             return filename
 
 
@@ -170,8 +170,7 @@ def _read_gcd(filename):
         for model in models_all:
             if nvarname in model.gcd_normaldata_map:
                 logger.debug(
-                    'mapping normal data variable %s -> %s'
-                    % (nvarname, model.gcd_normaldata_map[nvarname])
+                    f'mapping normal data variable {nvarname} -> {model.gcd_normaldata_map[nvarname]}'
                 )
                 nvarname = model.gcd_normaldata_map[nvarname]
                 break

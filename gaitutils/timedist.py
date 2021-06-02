@@ -106,6 +106,8 @@ def _pick_common_vars(values, vars_wanted=None):
     """Helper to pick analysis vars data that exist for
     all conditions. Returns vars and corresponding units"""
     conds = list(values.keys())
+    if not conds:
+        raise GaitDataError('no analysis values')
     vals_1 = values[conds[0]]
     varsets = [set(values[cond].keys()) for cond in conds]
     # vars common to all conditions

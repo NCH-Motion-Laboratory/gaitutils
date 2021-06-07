@@ -8,7 +8,6 @@ plotly based plotting functions
 import logging
 from collections import defaultdict
 from functools import partial
-import sys
 
 import numpy as np
 import plotly
@@ -71,9 +70,7 @@ def plot_extracted_box(curve_vals, vardefs):
             vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
             for session, session_vals in curve_vals.items():
                 if vardef_ctxt[0] not in session_vals:
-                    logger.debug(
-                        '%s was not collected for this session' % vardef_ctxt[0]
-                    )
+                    logger.debug(f'{vardef_ctxt[0]} was not collected for this session')
                     continue
                 this_vals = _nested_get(session_vals, vardef_ctxt)
                 vals.extend(this_vals)
@@ -97,7 +94,7 @@ def plot_extracted_box(curve_vals, vardefs):
             )
             fig.append_trace(box, row=row + 1, col=1)
             ylabel = _plotly_var_ylabel(vardef_ctxt[0])
-            xaxis, yaxis = _get_plotly_axis_labels(row, 0, ncols=1)
+            _, yaxis = _get_plotly_axis_labels(row, 0, ncols=1)
             fig['layout'][yaxis].update(
                 title={
                     'font': {'size': cfg.plot_plotly.label_fontsize},
@@ -140,11 +137,12 @@ def time_dist_barchart(
         Dict with structure similar to values, but provides standard deviation
         for each variable.
     thickness : float, optional
-        Y direction thickness of the bars, by default 0.5
+        Y direction thickness of the bars. XXX: not implemented
     color : list, optional
         List of colors for the different conditions. If None, use default values.
+        XXX: not implemented
     stddev_bars : bool, optional
-        Whether to plot standard deviation also as bars.
+        Whether to plot standard deviation as bars. XXX: not implemented
     plotvars : list, optional
         The variables to plot and their order. If None, plot all variables.
     figtitle : str, optional
@@ -194,8 +192,7 @@ def time_dist_barchart(
                 ]
             else:
                 texts[cond][ctxt] = [
-                    f'{val:.2f} {unit}'
-                    for val, unit in zip(data[cond][ctxt], units)
+                    f'{val:.2f} {unit}' for val, unit in zip(data[cond][ctxt], units)
                 ]
 
     # flatten the scaling the same way as the data, replace missing vars with np.nan
@@ -203,9 +200,15 @@ def time_dist_barchart(
 
     scaler = dict()
     for ctxt in ctxts:
-        # preferentially use given scales; if not available, use max over all conditions
+        # preferentially use given scales; if not given, use max value of
+        # variable over all conditions
         max_scaler = np.max(np.array([data[c][ctxt] for c in conds]), axis=0)
-        scaler[ctxt] = np.array([x if not np.isnan(x) else max_scaler[k] for k, x in enumerate(_bar_scaling)])
+        scaler[ctxt] = np.array(
+            [
+                x if not np.isnan(x) else max_scaler[k]
+                for k, x in enumerate(_bar_scaling)
+            ]
+        )
     # scale data to % of scaler
     for cond in conds:
         for ctxt in ctxts:
@@ -222,7 +225,7 @@ def time_dist_barchart(
         subplot_titles=ctxts,
     )
 
-    FULL_AXIS = 150  # how many percent is the full axis
+
     # ordering the bars properly is a bit tricky. seemingly, there's no way to control
     # ordering of bars within a category, and they seem to be plotted from bottom to up by default.
     # a dirty solution is to plot in reversed order and then reverse the legend also.
@@ -230,7 +233,7 @@ def time_dist_barchart(
     for condn, cond in enumerate(reversed(conds)):
         barcolor = cfg.plot.colors[condn]
         for k, ctxt in enumerate(ctxts, 1):
-            show_legend = k == 1
+            show_legend = k == 1  # legend entry is created only once per condition
             trace_l = go.Bar(
                 y=varlabels,
                 x=data[cond][ctxt],
@@ -315,7 +318,7 @@ def plot_trials_browser(trials, layout, **kwargs):
 def _get_plotly_axis_labels(row, col, ncols):
     """Gets plotly axis labels from zero-based row and col indices"""
     plot_ind = row * ncols + col + 1  # plotly subplot index
-    return 'xaxis%d' % plot_ind, 'yaxis%d' % plot_ind
+    return f'xaxis{plot_ind}', f'yaxis{plot_ind}'
 
 
 def _plotly_var_ylabel(var, themodel=None):
@@ -326,8 +329,7 @@ def _plotly_var_ylabel(var, themodel=None):
     if yunit == 'deg':
         yunit = '\u00B0'  # Unicode degree sign
     ydesc = [s[:3] for s in themodel.ydesc[var]]  # shorten
-    ylabel = '%s %s %s' % (ydesc[0], yunit, ydesc[1])
-    return ylabel
+    return f'{ydesc[0]} {yunit} {ydesc[1]}'
 
 
 def plot_trials(

@@ -73,6 +73,9 @@ def plot_comparison(sessions, tags=None, big_fonts=False, backend=None):
     fig : Figure | dict
         The figure object. Type depends on backend. Use show_fig() to show it.
     """
+    if not isinstance(sessions, list):
+        sessions = [sessions]
+
     if tags is None:
         tags = cfg.eclipse.tags
     trials = dict()
@@ -87,7 +90,7 @@ def plot_comparison(sessions, tags=None, big_fonts=False, backend=None):
     return plot_trials(trials, big_fonts=big_fonts, backend=backend)
 
 
-def plot_trials(c3dfiles, plotvars=None, title=None, big_fonts=False, backend=None):
+def plot_trials(c3dfiles, plotvars=None, title=None, bar_scaling=None, big_fonts=False, backend=None):
     """Plot a time-distance barchart from given c3d files.
 
     Parameters
@@ -99,6 +102,9 @@ def plot_trials(c3dfiles, plotvars=None, title=None, big_fonts=False, backend=No
         order.
     title : str, optional
         Plot title.
+    bar_scaling : dict | None
+        Scaling of the bars. Should be a dict with varnames as keys and
+        the x scales as values.
     big_fonts : bool, optional
         Increase font size (plotly backend only).
     backend : str | None
@@ -120,6 +126,7 @@ def plot_trials(c3dfiles, plotvars=None, title=None, big_fonts=False, backend=No
         stddev_bars=False,
         plotvars=plotvars,
         figtitle=title,
+        bar_scaling=bar_scaling,
         big_fonts=big_fonts,
     )
 

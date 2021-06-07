@@ -304,9 +304,9 @@ def time_dist_barchart(
                 if val == 0:
                     texts += ['']
                 elif std:
-                    texts += ['%.2f ± %.2f %s' % (val, std, unit)]
+                    texts += [f'{val:.2f} ± {std:.2f} {unit}']
                 else:
-                    texts += ['%.2f %s' % (val, unit)]
+                    texts += [f'{val:.2f} {unit}']
             _plot_label(ax, rects, texts)
         # return the last set of rects for legend
         return rects

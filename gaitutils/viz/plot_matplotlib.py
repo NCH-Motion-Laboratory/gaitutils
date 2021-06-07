@@ -266,16 +266,34 @@ def time_dist_barchart(
                 size=fontsize,
             )
 
-    def _plot_oneside(vars, context, col):
+    def _plot_oneside(vars, context, col, conds):
         """Do the bar plots for given context and column"""
+        largest_x = 0
+        var_axes = list()
         for ind, var in enumerate(vars):
             ax = fig.add_subplot(gs[ind, col])
+            var_axes.append(ax)
             if ind == 0:
                 ax.set_title(context)
-
-            ax.axis('off')
-            # may have several bars (conditions) per variable
-            vals_this = [values[cond][var][context] for cond in conds]
+            if var != vars[-1]:
+                ax.axis('off')
+            else:  # the last plot
+                # we want x axis ticks and label
+                ax.set_xlabel('% of reference')
+                ax.set_frame_on(False)
+                ax.axes.get_yaxis().set_visible(False)                
+            # scale var values to % of reference; if reference is not given, use
+            # maximum for the variable over all conditions
+            if var in bar_scaling and bar_scaling[var] is not None:
+                scaler = bar_scaling[var]
+            else:
+                scaler = max([values[cond][var][context] for cond in conds])
+            # we may have several bars (conditions) per variable
+            vals_this = np.array([values[cond][var][context] for cond in conds]) 
+            scaled_vals_this = vals_this / scaler * 100
+            # use uniform x scaling according to largest relative value
+            if vals_this > largest_x:
+                largest_x = vals_this
             if not np.count_nonzero(~np.isnan(vals_this)):
                 continue
             if stddev is None:
@@ -286,16 +304,8 @@ def time_dist_barchart(
             ypos = np.arange(len(vals_this) * thickness, 0, -thickness)
             xerr = stddevs_this if stddev_bars else None
             rects = ax.barh(
-                ypos, vals_this, thickness, align='edge', color=color, xerr=xerr
+                ypos, scaled_vals_this, thickness, align='edge', color=color, xerr=xerr
             )
-            # x axis scaling
-            FULL_AXIS = 1.5  # how many percent is the full axis
-            if var in bar_scaling:
-                xmax = bar_scaling[var]
-            else:
-                xmax = max(vals_this)
-            xmax *= FULL_AXIS
-            ax.set_xlim([0, xmax])
             texts = list()
             for val, std, unit in zip(vals_this, stddevs_this, units_this):
                 if val == 0:
@@ -305,6 +315,11 @@ def time_dist_barchart(
                 else:
                     texts += [f'{val:.2f} {unit}']
             _plot_label(ax, rects, texts)
+        for ax in var_axes:
+            ax.set_xlim([0, largest_x])
+            if ax == var_axes[-1]:
+                ax.set_xticks(np.arange(0, largest_x, 20))
+
         # return the last set of rects for legend
         return rects
 
@@ -332,8 +347,8 @@ def time_dist_barchart(
         #label = '%s (%s)' % (var, unit) if unit else var
         textax.text(0, 0.5, label, ha='left', va='center')
 
-    rects = _plot_oneside(thevars, 'Left', 1)
-    rects = _plot_oneside(thevars, 'Right', 2)
+    rects = _plot_oneside(thevars, 'Left', 1, conds)
+    rects = _plot_oneside(thevars, 'Right', 2, conds)
 
     if len(conds) > 1:
         fig.legend(

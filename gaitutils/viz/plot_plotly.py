@@ -255,7 +255,12 @@ def time_dist_barchart(
             fig['layout']['xaxis%d' % k].update(
                 title={'text': '% of reference', 'font': {'size': label_fontsize}}
             )
-            fig['layout']['xaxis%d' % k].update({'range': [0, FULL_AXIS]})
+            # this sets the full x scale for all bars simultaneously; it is set
+            # to the maximum scaled value among all vars and conditions (i.e. if
+            # biggest scaled variable is 160% of its reference, the full x scale
+            # will be 160%)
+            max_val_this = np.max(np.array([data[c][ctxt] for c in conds]))
+            fig['layout']['xaxis%d' % k].update({'range': [0, max_val_this]})
 
     margin = go.layout.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
     legend = dict(font=dict(size=legend_fontsize))

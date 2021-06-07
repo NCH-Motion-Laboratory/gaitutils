@@ -52,7 +52,9 @@ def plot_session_average(session, tags=None, backend=None):
     return fig
 
 
-def plot_comparison(sessions, tags=None, big_fonts=False, backend=None):
+def plot_comparison(
+    sessions, tags=None, bar_scaling=None, big_fonts=False, backend=None
+):
     """Plot time-dist comparison of multiple sessions.
 
     Parameters
@@ -62,6 +64,9 @@ def plot_comparison(sessions, tags=None, big_fonts=False, backend=None):
     tags : list | None, optional
         Pick trials with given Eclipse tags. None to use default tags from
         config. To collect all trials, use tags=[].
+    bar_scaling : dict | None
+        Scaling of the bars. Should be a dict with varnames as keys and
+        the x scales as values.
     big_fonts : bool, optional
         Increase font size (plotly backend only).
     backend : str | None
@@ -87,10 +92,14 @@ def plot_comparison(sessions, tags=None, big_fonts=False, backend=None):
         cond_label = op.split(session)[-1]
         trials[cond_label] = c3ds
 
-    return plot_trials(trials, big_fonts=big_fonts, backend=backend)
+    return plot_trials(
+        trials, bar_scaling=bar_scaling, big_fonts=big_fonts, backend=backend
+    )
 
 
-def plot_trials(c3dfiles, plotvars=None, title=None, bar_scaling=None, big_fonts=False, backend=None):
+def plot_trials(
+    c3dfiles, plotvars=None, title=None, bar_scaling=None, big_fonts=False, backend=None
+):
     """Plot a time-distance barchart from given c3d files.
 
     Parameters

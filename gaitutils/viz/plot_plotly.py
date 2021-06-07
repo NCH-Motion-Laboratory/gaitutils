@@ -261,6 +261,8 @@ def time_dist_barchart(
             # will be 160%)
             max_val_this = np.max(np.array([data[c][ctxt] for c in conds]))
             fig['layout']['xaxis%d' % k].update({'range': [0, max_val_this]})
+            # make ticks bit more dense            
+            fig['layout']['xaxis%d' % k].update({'dtick': 20})
 
     margin = go.layout.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
     legend = dict(font=dict(size=legend_fontsize))

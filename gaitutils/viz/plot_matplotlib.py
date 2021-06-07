@@ -271,10 +271,7 @@ def time_dist_barchart(
         for ind, var in enumerate(vars):
             ax = fig.add_subplot(gs[ind, col])
             if ind == 0:
-                if col == 0:
-                    ax.set_title('Left')
-                elif col == 2:
-                    ax.set_title('Right')
+                ax.set_title(context)
 
             ax.axis('off')
             # may have several bars (conditions) per variable
@@ -322,20 +319,21 @@ def time_dist_barchart(
             'tab:olive',
         ]
 
-    conds, vars, units = _pick_common_vars(values, plotvars)
+    conds, thevars, units = _pick_common_vars(values, plotvars)
 
     # 3 columns: bars, labels, bars
-    gs = gridspec.GridSpec(len(vars), 3, width_ratios=[1, 1 / 3.0, 1])
+    gs = gridspec.GridSpec(len(thevars), 3, width_ratios=[1/2, 1, 1])
 
-    # variable names into the center column
-    for ind, (var, unit) in enumerate(zip(vars, units)):
-        textax = fig.add_subplot(gs[ind, 1])
+    # variable names go into their own column
+    for ind, (var, unit) in enumerate(zip(thevars, units)):
+        textax = fig.add_subplot(gs[ind, 0])
         textax.axis('off')
-        label = '%s (%s)' % (var, unit) if unit else var
-        textax.text(0, 0.5, label, ha='center', va='center')
+        label = f'{var}'
+        #label = '%s (%s)' % (var, unit) if unit else var
+        textax.text(0, 0.5, label, ha='left', va='center')
 
-    rects = _plot_oneside(vars, 'Left', 0)
-    rects = _plot_oneside(vars, 'Right', 2)
+    rects = _plot_oneside(thevars, 'Left', 1)
+    rects = _plot_oneside(thevars, 'Right', 2)
 
     if len(conds) > 1:
         fig.legend(
@@ -353,7 +351,7 @@ def time_dist_barchart(
 
 
 def _annotate_axis(ax, text):
-    """Annotate at center of mpl axis"""
+    """Annotate at center of matplotlib axis"""
     ax.annotate(
         text,
         xy=(0.5, 0.5),
@@ -365,6 +363,7 @@ def _annotate_axis(ax, text):
 
 
 def _remove_ticks_and_labels(ax):
+    """Remove all ticks and labels"""
     ax.tick_params(
         axis='both',
         which='both',

@@ -159,6 +159,7 @@ def time_dist_barchart(
     dict
         The chart.
     """
+    XTICK_SPACING = 20  # spacing in %
 
     if timedist_normaldata is None:
         timedist_normaldata = normaldata._read_timedist_normaldata_file(cfg.general.timedist_normaldata)
@@ -266,8 +267,8 @@ def time_dist_barchart(
             # will be 160%)
             max_val_this = np.max(np.array([data[c][ctxt] for c in conds]))
             fig['layout']['xaxis%d' % k].update({'range': [0, max_val_this]})
-            # make ticks bit more dense            
-            fig['layout']['xaxis%d' % k].update({'dtick': 20})
+            # set spacing
+            fig['layout']['xaxis%d' % k].update({'dtick': XTICK_SPACING})
 
     margin = go.layout.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
     legend = dict(font=dict(size=legend_fontsize))

@@ -248,6 +248,8 @@ def time_dist_barchart(
         The chart.
     """
 
+    XTICK_SPACING = 20  # spacing in %
+
     fig = Figure()
 
     if timedist_normaldata is None:
@@ -282,6 +284,7 @@ def time_dist_barchart(
                 # we want x axis ticks and label
                 ax.set_xlabel('% of reference')
                 ax.set_frame_on(False)
+                ax.grid(False)
                 ax.axes.get_yaxis().set_visible(False)                
             # scale var values to % of reference; if reference is not given, use
             # maximum for the variable over all conditions
@@ -319,7 +322,7 @@ def time_dist_barchart(
         for ax in var_axes:
             ax.set_xlim([0, largest_x])
             if ax == var_axes[-1]:
-                ax.set_xticks(np.arange(0, largest_x, 20))
+                ax.set_xticks(np.arange(0, largest_x, XTICK_SPACING))
 
         # return the last set of rects for legend
         return rects

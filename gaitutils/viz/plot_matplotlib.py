@@ -462,7 +462,7 @@ def plot_trials(
         model_normaldata = normaldata._read_configured_model_normaldata()
 
     if emg_normaldata is None:
-        emg_normaldata = normaldata._read_emg_normaldata_file(cfg.emg.normaldata_file)()
+        emg_normaldata = normaldata._read_emg_normaldata_file(cfg.emg.normaldata_file)
 
     if emg_mode not in (None, 'envelope'):
         raise ValueError('invalid EMG mode parameter')

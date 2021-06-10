@@ -196,7 +196,12 @@ def time_dist_barchart(
                 ]
 
     # flatten the scaling the same way as the data, replace missing vars with np.nan
-    _bar_scaling = [bar_scaling[var] if var in bar_scaling else np.nan for var in vars]
+    _bar_scaling = list()
+    for var in vars:
+        if var in bar_scaling and bar_scaling[var] is not None:
+            _bar_scaling.append(bar_scaling[var])
+        else:
+            _bar_scaling.append(np.nan)
 
     scaler = dict()
     for ctxt in ctxts:
@@ -224,7 +229,6 @@ def time_dist_barchart(
         horizontal_spacing=0.05,
         subplot_titles=ctxts,
     )
-
 
     # ordering the bars properly is a bit tricky. seemingly, there's no way to control
     # ordering of bars within a category, and they seem to be plotted from bottom to up by default.

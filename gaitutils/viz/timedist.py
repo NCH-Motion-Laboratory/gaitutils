@@ -27,8 +27,8 @@ def plot_session_average(session, tags=None, backend=None):
     session : str
         The session directory.
     tags : list | None, optional
-        Pick trials with given Eclipse tags. None to use default tags from
-        config. To collect all trials, use tags=[].
+        Pick trials with given Eclipse tags. None to use default tags from cfg.
+        To collect all trials, use tags=[].
     backend : str | None
         Name of backend to use, currently 'plotly' or 'matplotlib'. If None,
         taken from cfg.

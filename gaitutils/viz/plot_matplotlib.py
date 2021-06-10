@@ -210,7 +210,7 @@ def time_dist_barchart(
     stddev_bars=True,
     plotvars=None,
     figtitle=None,
-    bar_scaling=None,
+    timedist_normaldata=None,
     big_fonts=None,
 ):
     """Multi-variable and multi-condition barchart plot.
@@ -235,9 +235,10 @@ def time_dist_barchart(
         The variables to plot and their order. If None, plot all variables.
     figtitle : str, optional
         Title of the plot.
-    bar_scaling : dict | None
-        Scaling of the bars. Should be a dict with varnames as keys and
-        the x scales as values.
+    timedist_normaldata : dict | None
+        Time-distance normal data. Determines scaling of the bars. Should be a
+        dict with varnames as keys and the x scales as values. If None, will be
+        read from cfg.
     big_fonts : bool, optional
         If True, increase font sizes somewhat.
 
@@ -249,8 +250,8 @@ def time_dist_barchart(
 
     fig = Figure()
 
-    if bar_scaling is None:
-        bar_scaling = dict()
+    if timedist_normaldata is None:
+        timedist_normaldata = normaldata._read_timedist_normaldata_file(cfg.general.timedist_normaldata)
 
     def _plot_label(ax, rects, texts):
         """Plot a label inside each rect"""
@@ -284,8 +285,8 @@ def time_dist_barchart(
                 ax.axes.get_yaxis().set_visible(False)                
             # scale var values to % of reference; if reference is not given, use
             # maximum for the variable over all conditions
-            if var in bar_scaling and bar_scaling[var] is not None:
-                scaler = bar_scaling[var]
+            if var in timedist_normaldata and timedist_normaldata[var] is not None:
+                scaler = timedist_normaldata[var]
             else:
                 scaler = max([values[cond][var][context] for cond in conds])
             # we may have several bars (conditions) per variable

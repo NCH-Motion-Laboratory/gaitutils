@@ -117,7 +117,7 @@ def time_dist_barchart(
     color=None,
     stddev_bars=True,
     plotvars=None,
-    bar_scaling=None,
+    timedist_normaldata=None,
     big_fonts=False,
     figtitle=None,
 ):
@@ -147,9 +147,10 @@ def time_dist_barchart(
         The variables to plot and their order. If None, plot all variables.
     figtitle : str, optional
         Title of the plot.
-    bar_scaling : dict | None
-        Scaling of the bars. Should be a dict with varnames as keys and
-        the x scales as values.
+    timedist_normaldata : dict | None
+        Time-distance normal data. Determines scaling of the bars. Should be a
+        dict with varnames as keys and the x scales as values. If None, will be
+        read from cfg.
     big_fonts : bool, optional
         If True, increase font sizes somewhat.
 
@@ -159,8 +160,8 @@ def time_dist_barchart(
         The chart.
     """
 
-    if bar_scaling is None:
-        bar_scaling = dict()
+    if timedist_normaldata is None:
+        timedist_normaldata = normaldata._read_timedist_normaldata_file(cfg.general.timedist_normaldata)
 
     conds, vars, units = _pick_common_vars(values, plotvars)
     vars = vars[::-1]  # plotly yaxis starts from bottom
@@ -196,12 +197,12 @@ def time_dist_barchart(
                 ]
 
     # flatten the scaling the same way as the data, replace missing vars with np.nan
-    _bar_scaling = list()
+    _timedist_normaldata = list()
     for var in vars:
-        if var in bar_scaling and bar_scaling[var] is not None:
-            _bar_scaling.append(bar_scaling[var])
+        if var in timedist_normaldata and timedist_normaldata[var] is not None:
+            _timedist_normaldata.append(timedist_normaldata[var])
         else:
-            _bar_scaling.append(np.nan)
+            _timedist_normaldata.append(np.nan)
 
     scaler = dict()
     for ctxt in ctxts:
@@ -211,7 +212,7 @@ def time_dist_barchart(
         scaler[ctxt] = np.array(
             [
                 x if not np.isnan(x) else max_scaler[k]
-                for k, x in enumerate(_bar_scaling)
+                for k, x in enumerate(_timedist_normaldata)
             ]
         )
     # scale data to % of scaler

@@ -53,7 +53,7 @@ def plot_session_average(session, tags=None, backend=None):
 
 
 def plot_comparison(
-    sessions, tags=None, bar_scaling=None, big_fonts=False, backend=None
+    sessions, tags=None, timedist_normaldata=None, big_fonts=False, backend=None
 ):
     """Plot time-dist comparison of multiple sessions.
 
@@ -64,7 +64,7 @@ def plot_comparison(
     tags : list | None, optional
         Pick trials with given Eclipse tags. None to use default tags from
         config. To collect all trials, use tags=[].
-    bar_scaling : dict | None
+    timedist_normaldata : dict | None
         Scaling of the bars. Should be a dict with varnames as keys and
         the x scales as values.
     big_fonts : bool, optional
@@ -93,12 +93,12 @@ def plot_comparison(
         trials[cond_label] = c3ds
 
     return plot_trials(
-        trials, bar_scaling=bar_scaling, big_fonts=big_fonts, backend=backend
+        trials, timedist_normaldata=timedist_normaldata, big_fonts=big_fonts, backend=backend
     )
 
 
 def plot_trials(
-    c3dfiles, plotvars=None, title=None, bar_scaling=None, big_fonts=False, backend=None
+    c3dfiles, plotvars=None, title=None, timedist_normaldata=None, big_fonts=False, backend=None
 ):
     """Plot a time-distance barchart from given c3d files.
 
@@ -111,7 +111,7 @@ def plot_trials(
         order.
     title : str, optional
         Plot title.
-    bar_scaling : dict | None
+    timedist_normaldata : dict | None
         Scaling of the bars. Should be a dict with varnames as keys and
         the x scales as values.
     big_fonts : bool, optional
@@ -135,7 +135,7 @@ def plot_trials(
         stddev_bars=False,
         plotvars=plotvars,
         figtitle=title,
-        bar_scaling=bar_scaling,
+        timedist_normaldata=timedist_normaldata,
         big_fonts=big_fonts,
     )
 

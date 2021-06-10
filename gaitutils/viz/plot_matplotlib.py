@@ -419,7 +419,7 @@ def plot_trials(
     layout : list
         The plot layout to use.
     model_normaldata : dict | None
-        Normaldata for model variables. If None, taken from cfg.
+        Normal data for model variables. If None, taken from cfg.
     emg_normaldata : dict | None
         Normal data for EMG variables. If None, taken from cfg.
     cycles : dict | str | int | tuple | list

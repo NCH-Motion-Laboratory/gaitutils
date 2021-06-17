@@ -295,9 +295,10 @@ def time_dist_barchart(
             # we may have several bars (conditions) per variable
             vals_this = np.array([values[cond][var][context] for cond in conds]) 
             scaled_vals_this = vals_this / scaler * 100
-            # use uniform x scaling according to largest relative value
-            if vals_this > largest_x:
-                largest_x = vals_this
+            # collect the largest x value among all vars (determines the full
+            # scale of the bars)
+            if vals_this.max() > largest_x:
+                largest_x = vals_this.max()
             if not np.count_nonzero(~np.isnan(vals_this)):
                 continue
             if stddev is None:

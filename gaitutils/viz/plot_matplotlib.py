@@ -297,8 +297,8 @@ def time_dist_barchart(
             scaled_vals_this = vals_this / scaler * 100
             # collect the largest x value among all vars (determines the full
             # scale of the bars)
-            if vals_this.max() > largest_x:
-                largest_x = vals_this.max()
+            if scaled_vals_this.max() > largest_x:
+                largest_x = scaled_vals_this.max()
             if not np.count_nonzero(~np.isnan(vals_this)):
                 continue
             if stddev is None:

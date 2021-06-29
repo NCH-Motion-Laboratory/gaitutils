@@ -32,6 +32,7 @@ from .plot_common import (
     _compose_varname,
     _nested_get,
     _var_unit,
+    _tick_spacing,
 )
 from .. import models, normaldata, utils
 from ..config import cfg
@@ -248,8 +249,6 @@ def time_dist_barchart(
         The chart.
     """
 
-    XTICK_SPACING = 20  # spacing in %
-
     fig = Figure()
 
     if timedist_normaldata is None:
@@ -323,7 +322,7 @@ def time_dist_barchart(
         for ax in var_axes:
             ax.set_xlim([0, largest_x])
             if ax == var_axes[-1]:
-                ax.set_xticks(np.arange(0, largest_x, XTICK_SPACING))
+                ax.set_xticks(_tick_spacing(0, largest_x))
 
         # return the last set of rects for legend
         return rects

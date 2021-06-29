@@ -36,6 +36,7 @@ from .plot_common import (
     _triage_var,
     _compose_varname,
     _nested_get,
+    _tick_spacing,
 )
 
 
@@ -159,8 +160,6 @@ def time_dist_barchart(
     dict
         The chart.
     """
-    XTICK_SPACING = 20  # spacing in %
-
     if timedist_normaldata is None:
         timedist_normaldata = normaldata._read_timedist_normaldata_file(cfg.general.timedist_normaldata)
 
@@ -263,12 +262,13 @@ def time_dist_barchart(
             )
             # this sets the full x scale for all bars simultaneously; it is set
             # to the maximum scaled value among all vars and conditions (i.e. if
-            # biggest scaled variable is 160% of its reference, the full x scale
-            # will be 160%)
+            # biggest scaled variable is 160% of its reference value, the full x
+            # scale will be 160%)
             max_val_this = np.max(np.array([data[c][ctxt] for c in conds]))
-            fig['layout']['xaxis%d' % k].update({'range': [0, max_val_this]})
-            # set spacing
-            fig['layout']['xaxis%d' % k].update({'dtick': XTICK_SPACING})
+            # set ticks 
+            tickvals = _tick_spacing(0, max_val_this)
+            fig['layout']['xaxis%d' % k].update({'range': [0, max(tickvals)]})
+            fig['layout']['xaxis%d' % k].update({'tickmode': 'array', 'tickvals': tickvals})
 
     margin = go.layout.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
     legend = dict(font=dict(size=legend_fontsize))

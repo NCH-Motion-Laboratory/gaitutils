@@ -10,6 +10,7 @@ from itertools import cycle
 from collections import defaultdict, namedtuple
 import logging
 import numpy as np
+from matplotlib import ticker
 
 from .. import models, sessionutils
 from ..config import cfg
@@ -17,6 +18,14 @@ from ..envutils import GaitDataError
 
 
 logger = logging.getLogger(__name__)
+
+
+def _tick_spacing(vmin, vmax, max_nticks=None):
+    """Calculate tick spacing for a given max. number of ticks"""
+    if max_nticks is None:
+        max_nticks = 10
+    locator = ticker.MaxNLocator(nbins=max_nticks - 1)
+    return locator.tick_values(vmin, vmax)
 
 
 def _var_unit(vardef):

@@ -312,14 +312,15 @@ def time_dist_barchart(
             rects = ax.barh(
                 ypos, scaled_vals_this, thickness, align='edge', color=color, xerr=xerr
             )
+            # set the bar labels
             texts = list()
-            for val, std, unit in zip(vals_this, stddevs_this, units_this):
+            for val, scaled_val, std, unit in zip(vals_this, scaled_vals_this, stddevs_this, units_this):
                 if val == 0:
                     texts += ['']
                 elif std:
-                    texts += [f'{val:.2f} ± {std:.2f} {unit}']
+                    texts += [f'{val:.2f} ± {std:.2f} {unit} ({scaled_val:.0f}%)']
                 else:
-                    texts += [f'{val:.2f} {unit}']
+                    texts += [f'{val:.2f} {unit} ({scaled_val:.0f}%)']
             _plot_label(ax, rects, texts)
         for ax in var_axes:
             ax.set_xlim([0, largest_x])

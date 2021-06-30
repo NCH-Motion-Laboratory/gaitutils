@@ -252,7 +252,9 @@ def time_dist_barchart(
     fig = Figure()
 
     if timedist_normaldata is None:
-        timedist_normaldata = normaldata._read_timedist_normaldata_file(cfg.general.timedist_normaldata)
+        timedist_normaldata = normaldata._read_timedist_normaldata_file(
+            cfg.general.timedist_normaldata
+        )
 
     def _plot_label(ax, rects, texts):
         """Plot a label inside each rect"""
@@ -284,7 +286,7 @@ def time_dist_barchart(
                 ax.set_xlabel('% of reference')
                 ax.set_frame_on(False)
                 ax.grid(False)
-                ax.axes.get_yaxis().set_visible(False)                
+                ax.axes.get_yaxis().set_visible(False)
             # scale var values to % of reference; if reference is not given, use
             # maximum for the variable over all conditions
             if var in timedist_normaldata and timedist_normaldata[var] is not None:
@@ -292,7 +294,7 @@ def time_dist_barchart(
             else:
                 scaler = max([values[cond][var][context] for cond in conds])
             # we may have several bars (conditions) per variable
-            vals_this = np.array([values[cond][var][context] for cond in conds]) 
+            vals_this = np.array([values[cond][var][context] for cond in conds])
             scaled_vals_this = vals_this / scaler * 100
             # collect the largest x value among all vars (determines the full
             # scale of the bars)
@@ -323,6 +325,8 @@ def time_dist_barchart(
             ax.set_xlim([0, largest_x])
             if ax == var_axes[-1]:
                 ax.set_xticks(_tick_spacing(0, largest_x))
+                # this is a bit of a hack to get a vertical line at 100%; I don't understand ymax=13 
+                ax.axvline(x=100, ymin=0, ymax=13, c='k', ls='--', lw=1, zorder=0, clip_on=False)
 
         # return the last set of rects for legend
         return rects
@@ -341,14 +345,14 @@ def time_dist_barchart(
     conds, thevars, units = _pick_common_vars(values, plotvars)
 
     # 3 columns: bars, labels, bars
-    gs = gridspec.GridSpec(len(thevars), 3, width_ratios=[1/2, 1, 1])
+    gs = gridspec.GridSpec(len(thevars), 3, width_ratios=[1 / 2, 1, 1])
 
     # variable names go into their own column
     for ind, (var, unit) in enumerate(zip(thevars, units)):
         textax = fig.add_subplot(gs[ind, 0])
         textax.axis('off')
         label = f'{var}'
-        #label = '%s (%s)' % (var, unit) if unit else var
+        # label = '%s (%s)' % (var, unit) if unit else var
         textax.text(0, 0.5, label, ha='left', va='center')
 
     rects = _plot_oneside(thevars, 'Left', 1, conds)

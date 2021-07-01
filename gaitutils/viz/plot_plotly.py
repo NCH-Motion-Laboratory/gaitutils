@@ -61,8 +61,8 @@ def plot_extracted_box(curve_vals, vardefs):
     legendgroups = set()
 
     # the plotting logic is a bit weird due to the way go.Box() works:
-    # -we first consolidate one variable's data from all sessions into a 1-d array
-    # -this is done separately for L/R context
+    # -we first consolidate a single variable's data from all sessions into a 1-d array
+    # -this is done separately for L/R
     # -the consolidated data is then plotted along with the session identifiers
     for row, vardef in enumerate(vardefs):
         for ctxt, _ in contexts:
@@ -161,7 +161,9 @@ def time_dist_barchart(
         The chart.
     """
     if timedist_normaldata is None:
-        timedist_normaldata = normaldata._read_timedist_normaldata_file(cfg.general.timedist_normaldata)
+        timedist_normaldata = normaldata._read_timedist_normaldata_file(
+            cfg.general.timedist_normaldata
+        )
 
     conds, vars, units = _pick_common_vars(values, plotvars)
     vars = vars[::-1]  # plotly yaxis starts from bottom
@@ -175,26 +177,14 @@ def time_dist_barchart(
         label_fontsize += 2
         subtitle_fontsize += 2
 
-    data = dict()
-    texts = dict()
     ctxts = ['Left', 'Right']
+
+    # flatten data into simple arrays of nvars x 1
+    data = dict()
     for cond in conds:
         data[cond] = dict()
-        texts[cond] = dict()
         for ctxt in ctxts:
-            # flatten data into simple arrays of nvars x 1
             data[cond][ctxt] = np.array([values[cond][var][ctxt] for var in vars])
-            if stddev:
-                stddevs = np.array([stddev[cond][var][ctxt] for var in vars])
-            if stddev and stddevs.max() > 0:
-                texts[cond][ctxt] = [
-                    f'{val:.2f} ± {std:.2f} {unit}'
-                    for val, std, unit in zip(data[cond][ctxt], stddevs, units)
-                ]
-            else:
-                texts[cond][ctxt] = [
-                    f'{val:.2f} {unit}' for val, unit in zip(data[cond][ctxt], units)
-                ]
 
     # flatten the scaling the same way as the data, replace missing vars with np.nan
     _timedist_normaldata = list()
@@ -204,9 +194,10 @@ def time_dist_barchart(
         else:
             _timedist_normaldata.append(np.nan)
 
+    # scale the data
     scaler = dict()
     for ctxt in ctxts:
-        # preferentially use given scales; if not given, use max value of
+        # preferentially use given scales; if not available, use max value of
         # variable over all conditions
         max_scaler = np.max(np.array([data[c][ctxt] for c in conds]), axis=0)
         scaler[ctxt] = np.array(
@@ -215,10 +206,33 @@ def time_dist_barchart(
                 for k, x in enumerate(_timedist_normaldata)
             ]
         )
-    # scale data to % of scaler
+    data_scaled = dict()
     for cond in conds:
+        data_scaled[cond] = dict()
         for ctxt in ctxts:
-            data[cond][ctxt] /= scaler[ctxt] * 0.01
+            data_scaled[cond][ctxt] = 100 * data[cond][ctxt] / scaler[ctxt]
+
+    # create bar labels
+    bar_labels = dict()
+    for cond in conds:
+        bar_labels[cond] = dict()
+        for ctxt in ctxts:
+            if stddev:
+                stddevs = np.array([stddev[cond][var][ctxt] for var in vars])
+            if stddev and stddevs.max() > 0:
+                bar_labels[cond][ctxt] = [
+                    f'{val:.2f} ± {std:.2f} {unit} ({scaled_val:.0f}%)'
+                    for val, scaled_val, std, unit in zip(
+                        data[cond][ctxt], data_scaled[cond][ctxt], stddevs, units
+                    )
+                ]
+            else:
+                bar_labels[cond][ctxt] = [
+                    f'{val:.2f} {unit} ({scaled_val:.0f}%)'
+                    for val, scaled_val, unit in zip(
+                        data[cond][ctxt], data_scaled[cond][ctxt], units
+                    )
+                ]
 
     fig = plotly.subplots.make_subplots(
         rows=1,
@@ -241,11 +255,11 @@ def time_dist_barchart(
             show_legend = k == 1  # legend entry is created only once per condition
             trace_l = go.Bar(
                 y=varlabels,
-                x=data[cond][ctxt],
+                x=data_scaled[cond][ctxt],
                 orientation='h',
                 name=cond,
                 legendgroup=cond,
-                text=texts[cond][ctxt],
+                text=bar_labels[cond][ctxt],
                 textfont={'size': label_fontsize + 2},
                 textposition='auto',
                 showlegend=show_legend,
@@ -264,11 +278,13 @@ def time_dist_barchart(
             # to the maximum scaled value among all vars and conditions (i.e. if
             # biggest scaled variable is 160% of its reference value, the full x
             # scale will be 160%)
-            max_val_this = np.max(np.array([data[c][ctxt] for c in conds]))
-            # set ticks 
+            max_val_this = np.max(np.array([data_scaled[c][ctxt] for c in conds]))
+            # set ticks
             tickvals = _tick_spacing(0, max_val_this)
             fig['layout']['xaxis%d' % k].update({'range': [0, max(tickvals)]})
-            fig['layout']['xaxis%d' % k].update({'tickmode': 'array', 'tickvals': tickvals})
+            fig['layout']['xaxis%d' % k].update(
+                {'tickmode': 'array', 'tickvals': tickvals}
+            )
 
     margin = go.layout.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
     legend = dict(font=dict(size=legend_fontsize))

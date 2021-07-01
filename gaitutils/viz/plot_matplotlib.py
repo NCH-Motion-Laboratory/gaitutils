@@ -329,14 +329,17 @@ def time_dist_barchart(
             ax.set_xlim([0, largest_x])
             if ax == var_axes[-1]:
                 ax.set_xticks(_tick_spacing(0, largest_x))
-                # draw a vertical marker line at 100%
+                # draw a vertical marker line at 100% use get_xaxis_transform()
+                # to transform the x coordinate only, so that y coordinate can
+                # be specified as an axes coordinate (axis height may vary due
+                # to varying number of bars)
                 con = ConnectionPatch(
-                    xyA=(100, 0.5),
-                    xyB=(100, 1.5),
+                    xyA=(100, 0),
+                    xyB=(100, 1),
                     axesA=ax,
                     axesB=var_axes[0],
-                    coordsA=ax.transData,
-                    coordsB=var_axes[0].transData,
+                    coordsA=ax.get_xaxis_transform(),
+                    coordsB=var_axes[0].get_xaxis_transform(),
                     linestyle='--',
                 )
                 con.set_color((0, 0, 0, 0.3))  # set opacity

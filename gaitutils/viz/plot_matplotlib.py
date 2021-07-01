@@ -12,6 +12,7 @@ import itertools
 import matplotlib
 from matplotlib.figure import Figure
 import matplotlib.gridspec as gridspec
+from matplotlib.patches import ConnectionPatch
 import plotly.graph_objs as go
 import plotly.io as pio
 import numpy as np
@@ -314,7 +315,9 @@ def time_dist_barchart(
             )
             # set the bar labels
             texts = list()
-            for val, scaled_val, std, unit in zip(vals_this, scaled_vals_this, stddevs_this, units_this):
+            for val, scaled_val, std, unit in zip(
+                vals_this, scaled_vals_this, stddevs_this, units_this
+            ):
                 if val == 0:
                     texts += ['']
                 elif std:
@@ -326,8 +329,18 @@ def time_dist_barchart(
             ax.set_xlim([0, largest_x])
             if ax == var_axes[-1]:
                 ax.set_xticks(_tick_spacing(0, largest_x))
-                # this is a bit of a hack to get a vertical line at 100%; I don't understand ymax=13 
-                ax.axvline(x=100, ymin=0, ymax=13, c='k', ls='--', lw=1, zorder=0, clip_on=False)
+                # draw a vertical marker line at 100%
+                con = ConnectionPatch(
+                    xyA=(100, 0.5),
+                    xyB=(100, 1.5),
+                    axesA=ax,
+                    axesB=var_axes[0],
+                    coordsA=ax.transData,
+                    coordsB=var_axes[0].transData,
+                    linestyle='--',
+                )
+                con.set_color((0, 0, 0, 0.3))  # set opacity
+                ax.add_artist(con)
 
         # return the last set of rects for legend
         return rects

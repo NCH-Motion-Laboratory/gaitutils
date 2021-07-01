@@ -302,6 +302,8 @@ def time_dist_barchart(
     for anno in fig['layout']['annotations']:
         anno['font']['size'] = subtitle_fontsize
 
+    # add vertical line at 100%
+    fig.add_vline(x=100, line_width=1, line_dash='dash', opacity=0.5)
     return fig
 
 

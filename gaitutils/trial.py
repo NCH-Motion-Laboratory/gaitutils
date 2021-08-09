@@ -297,7 +297,11 @@ class Trial:
         # normalized x-axis of 0, 1, 2 .. 100%
         self.tn = np.linspace(0, 100, 101)
         self.samplesperframe = self.analograte / self.framerate
-        self.cycles = list() if self.is_static else list(self._scan_cycles())
+        # create the gait cycles
+        if not self.is_static:
+            self.cycles = list(self._scan_cycles())
+        else:
+            self.cycles = list()
         self.ncycles = len(self.cycles)
 
     def _handle_quirks(self):
@@ -631,19 +635,12 @@ class Trial:
         be matched with forceplate events. A tolerance of STRIKE_TOL is used for
         the matching.
         """
-        STRIKE_TOL = 7
+        STRIKE_TOL = 7  # frames
         sidestrs = {'R': 'right', 'L': 'left'}
-        for strikes in [self.events.lstrikes, self.events.rstrikes]:
-            len_s = len(strikes)
-            if len_s < 2:
+        for context, strikes, toeoffs in zip('LR', [self.events.lstrikes, self.events.rstrikes], [self.events.ltoeoffs, self.events.rtoeoffs]):
+            if len(strikes) < 2:
                 continue
-            if strikes == self.events.lstrikes:
-                toeoffs = self.events.ltoeoffs
-                context = 'L'
-            else:
-                toeoffs = self.events.rtoeoffs
-                context = 'R'
-            for k in range(0, len_s - 1):
+            for k in range(0, len(strikes) - 1):
                 start = strikes[k]
                 # see if cycle starts on forceplate strike
                 fp_strikes = np.array(self.fp_events[context + '_strikes'])

@@ -81,6 +81,7 @@ def _report_name(sessions, long_name=True):
 def dash_report(
     sessions,
     info=None,
+    max_cycles=None,
     tags=None,
     signals=None,
     recreate_plots=None,
@@ -95,6 +96,9 @@ def dash_report(
         report.
     info : dict | None
         The patient info.
+    max_cycles : dict | None
+        Maximum number of cycles to plot for each variable type. If None, taken
+        from cfg.
     tags : list | None
         Eclipse tags for finding dynamic gait trials. If None, will be taken from config.
     signals : ProgressSignals | None
@@ -497,6 +501,7 @@ def dash_report(
                                 trials_dyn,
                                 layout,
                                 model_normaldata=model_normaldata,
+                                max_cycles=max_cycles,
                                 emg_mode=emg_mode,
                                 legend_type=legend_type,
                                 style_by=style_by,

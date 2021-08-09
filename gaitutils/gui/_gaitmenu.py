@@ -143,11 +143,20 @@ class WebReportInfoDialog(QtWidgets.QDialog):
         uic.loadUi(uifile, self)
         # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.check_info = check_info
+        self.sbLimitCycles.setEnabled(False)
+        self.xbLimitCycles.stateChanged.connect(self._toggle_spinbox)
         if info is not None:
             if info['fullname'] is not None:
                 self.lnFullName.setText(info['fullname'])
             if info['hetu'] is not None:
                 self.lnHetu.setText(info['hetu'])
+        # XXX: these should be automatically connected by Qt Designer, but somehow weren't
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+    def _toggle_spinbox(self, checked):
+        """Set spinbox state according to checkbox"""
+        self.sbLimitCycles.setEnabled(bool(checked))
 
     def accept(self):
         """Update config and close dialog, if widget inputs are ok. Otherwise
@@ -157,6 +166,11 @@ class WebReportInfoDialog(QtWidgets.QDialog):
         self.video_only = self.xbVideoOnly.checkState()
         self.hetu = self.lnHetu.text().strip()
         self.fullname = self.lnFullName.text().strip()
+        if self.xbLimitCycles.checkState():
+            self.max_model_cycles = self.sbLimitCycles.value()
+            self.recreate_plots = True  # we need to recreate if max_model_cycles is explicitly set
+        else:
+            self.max_model_cycles = 0
         if self.check_info:
             ok = self.fullname and check_hetu(self.hetu)
         else:
@@ -252,6 +266,7 @@ class WebReportDialog(QtWidgets.QDialog):
             recreate_plots = dlg_info.recreate_plots
             force_convert_videos = dlg_info.force_convert_videos
             video_only = dlg_info.video_only
+            max_model_cycles = dlg_info.max_model_cycles
             info.update(new_info)
 
             # update info files in all sessions according to the user input
@@ -290,6 +305,10 @@ class WebReportDialog(QtWidgets.QDialog):
         if force_convert_videos or not convert_videos(vidfiles, check_only=True):
             self.parent._convert_vidfiles(vidfiles, signals)
 
+        max_cycles = cfg.plot.max_cycles.copy()
+        if max_model_cycles:
+            max_cycles['model'] = max_model_cycles
+
         # launch the report creation thread
         self.parent._run_in_thread(
             web.dash_report,
@@ -298,6 +317,7 @@ class WebReportDialog(QtWidgets.QDialog):
             result_func=self._web_report_ready,
             sessions=sessions,
             info=info,
+            max_cycles=max_cycles,
             tags=tags,
             signals=signals,
             recreate_plots=recreate_plots,

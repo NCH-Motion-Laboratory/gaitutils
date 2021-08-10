@@ -563,22 +563,22 @@ class Trial:
 
         Parameters
         ----------
-        cyclespec : dict | str | int | tuple | list | None
-            The cycles to get. For a context specific cyclespec, it can be dict with
-            keys: 'R' and 'L', values: cyclespec as below. If not a dict, the given
-            cyclespec will be applied to both contexts.
-
+        cyclespec : dict | str | int | tuple | list | None 
+            The cycles to get. For a context specific cyclespec, supply a dict with keys:
+            'R' and 'L', values: cyclespec as below. If not a dict, the same cyclespec
+            will be applied to both contexts.
             For string args: 'all' gets all trial cycles. 'forceplate' gets cycles
             starting with valid forceplate contact. 'unnormalized' (or None) gets a
-            Noncycle that is used as a sentinel for unnormalized data.
-            If int or a list of int, get the specified cycle(s) from the
-            trial. Note that cycle numbering starts from 0.
+            Noncycle that indicates a request for unnormalized data.
+            If int or a list of int, get the cycle(s) with given indices.
+            Note that cycle numbering starts from 0.
             A tuple can be used to try different cyclespecs and return the first
             one that has matching cycle. For example, ('forceplate', 0) would return
             forceplate cycles if any, and the first cycle otherwise.
 
         max_cycles_per_context : int | None
-            Maximum number of cycles returned per context.
+            Maximum number of cycles returned per context. Forceplate cycles are
+            given priority.
 
         Returns
         -------
@@ -612,6 +612,20 @@ class Trial:
             else:
                 raise TypeError('Invalid argument')
 
+        def _limit_cycles(cycles, n):
+            """Limit the number of cycles to n. Prioritize forceplate cycles"""
+            if n is None or n >= len(cycles):
+                cycs_ok = cycles
+            else:
+                fp_cycs = [c for c in cycles if c.on_forceplate]
+                if len(fp_cycs) >= n:
+                    cycs_ok = fp_cycs[:n]
+                else:
+                    non_fp_cycs = [c for c in cycles if not c.on_forceplate]
+                    n_fp_cycs = n - len(fp_cycs)
+                    cycs_ok = fp_cycs + non_fp_cycs[:n_fp_cycs]
+            return cycs_ok
+
         if not isinstance(cyclespec, dict):
             cyclespec = {'R': cyclespec, 'L': cyclespec}
 
@@ -621,8 +635,7 @@ class Trial:
             cycles_ = [c for c in self.cycles if c.context == context.upper()]
             # filter them according to cyclespec
             good_cycles = _filter_cycles(cycles_, context, cyclespec[context])
-            if max_cycles_per_context is not None:
-                good_cycles = good_cycles[:max_cycles_per_context]
+            good_cycles = _limit_cycles(good_cycles, max_cycles_per_context)
             cycs_ok.extend(good_cycles)
 
         return sorted(cycs_ok, key=lambda cyc: cyc.start)

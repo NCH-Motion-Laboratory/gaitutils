@@ -6,3 +6,4 @@ An example operation would be "read a trial from Vicon Nexus, extract all gait c
 
 ## Installation
 See the Wiki page for installation instructions.
+

@@ -143,8 +143,13 @@ class WebReportInfoDialog(QtWidgets.QDialog):
         uic.loadUi(uifile, self)
         # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.check_info = check_info
-        self.sbLimitCycles.setEnabled(False)
         self.xbLimitCycles.stateChanged.connect(self._toggle_spinbox)
+        if cfg.plot.max_cycles['model'] is None:
+            self.xbLimitCycles.setChecked(False)
+            self.sbLimitCycles.setEnabled(False)
+        else:
+            self.xbLimitCycles.setChecked(True)
+            self.sbLimitCycles.setValue(cfg.plot.max_cycles['model'])
         if info is not None:
             if info['fullname'] is not None:
                 self.lnFullName.setText(info['fullname'])

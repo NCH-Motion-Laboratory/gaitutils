@@ -440,6 +440,7 @@
     </property>
     <addaction name="actionTardieu_analysis"/>
     <addaction name="actionExport_current_trial_to_EDF_format"/>
+    <addaction name="actionUpdate"/>
    </widget>
    <widget class="QMenu" name="menuProcessing">
     <property name="title">
@@ -624,6 +625,11 @@
   <action name="actionReview_Nexus_trial">
    <property name="text">
     <string>Review Nexus trial</string>
+   </property>
+  </action>
+  <action name="actionUpdate">
+   <property name="text">
+    <string>Update package...</string>
    </property>
   </action>
  </widget>

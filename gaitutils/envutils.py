@@ -59,7 +59,7 @@ def _make_gaitutils_shortcut():
     env.make_shortcut('gaitutils', 'gui/gaitmenu.py', 'gaitutils menu')
 
 
-def _git_autoupdate():
+def _git_update():
     """Update the package git repository.
 
     This works, if the package was installed into user directory by cloning the
@@ -77,23 +77,16 @@ def _git_autoupdate():
     if git_mode:
         logger.debug('running git autoupdate')
         try:
-            o = subprocess.check_output(['git', 'pull'], cwd=pkg_parent)
+            o = subprocess.check_output(['git', 'pull'], cwd=pkg_parent, encoding='utf-8')
         except subprocess.CalledProcessError:
-            logger.warning('git pull returned exit status 1')
-            return False
-        # check git output to see if update was done; this is fragile
-        # better idea might be to use python-git
-        updated = 'pdating' in o
-        if updated:
-            logger.debug('autoupdate status: %s' % o)
-            return True
+            status = (False, 'cannot retrieve or merge update')
+        if 'lready' in o:
+            status = (False, 'package already up to date')
         else:
-            logger.debug('package already up to date')
-            return False
+            status = (True, o)
     else:  # not a git repo
-        logger.debug('%s is not a git repo, not running autoupdate' % pkg_parent)
-        return False
-
+        status = (False, 'cannot update, gaitutils is not installed in git mode')
+    return status
 
 def _register_gui_exception_handler(full_traceback=False):
     """Registers an exception handler that reports exceptions via GUI"""

@@ -20,6 +20,7 @@ import traceback
 import socket
 import ulstools
 import configdot
+
 # this is needed to work around a plotly bug (?) that causes ImportErrors due to
 # circular imports; see https://stackoverflow.com/questions/66149087/getting-import-error-quite-randomly-when-using-plotly-express-and-having-multipl
 from plotly import validator_cache, graph_objects
@@ -173,7 +174,9 @@ class WebReportInfoDialog(QtWidgets.QDialog):
         self.fullname = self.lnFullName.text().strip()
         if self.xbLimitCycles.checkState():
             self.max_model_cycles = self.sbLimitCycles.value()
-            self.recreate_plots = True  # we need to recreate if max_model_cycles is explicitly set
+            self.recreate_plots = (
+                True  # we need to recreate if max_model_cycles is explicitly set
+            )
         else:
             self.max_model_cycles = 0
         if self.check_info:
@@ -482,7 +485,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
         self.btnSelectAll.clicked.connect(self._select_all_trials)
         self.btnClearSelected.clicked.connect(self._remove_selected_trials)
         self.btnPlotTrials.clicked.connect(lambda ev: self._plot_selected_trials())
-        self.btnReviewTrials.clicked.connect(self._review_trials)        
+        self.btnReviewTrials.clicked.connect(self._review_trials)
         self.btnAveragePlot.clicked.connect(self._average_trials)
         self.actionCreate_PDF_report.triggered.connect(
             lambda ev: self._create_pdf_report()
@@ -521,6 +524,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             _copy_session_videos
         )
         self.actionAutomark_events.triggered.connect(self._automark_trial)
+        self.actionUpdate.triggered.connect(self._update_package)
         # trials table settings
         # force "item selected" style, otherwise it will depend on focus; set font size
         table_sheet = "QTableView{ selection-background-color: rgba(0, 0, 255, 50%); font-size: 8pt; }"
@@ -819,7 +823,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog(
                 'One or more trials are static, plotting all trials as unnormalized'
             )
-            self._plot_trials(self._selected_trials, normalized=False, layout_name=layout_name)
+            self._plot_trials(
+                self._selected_trials, normalized=False, layout_name=layout_name
+            )
         else:
             self._plot_trials(self._selected_trials, layout_name=layout_name)
 
@@ -993,6 +999,18 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog('No trials in session to run postprocessing for')
         elif not cfg.autoproc.postproc_pipelines:
             qt_message_dialog('No postprocessing pipelines defined')
+
+    def _update_package(self):
+        """Update the package from git repository."""
+        status, msg = envutils._git_update()
+        if status:
+            status_str = 'Update was successful. '
+            status_str += 'Please restart the application to use the new version. '
+            status_str += f'Details:\n\n{msg}'
+        else:
+            status_str = f'Package was not updated. Details:\n\n{msg}'
+        qt_message_dialog(status_str)
+        return
 
     def closeEvent(self, event):
         """Confirm and close application."""

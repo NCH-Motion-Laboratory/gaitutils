@@ -1,2 +1,7 @@
+version: 2
+
+conda:
+  environment: environment.yml
+
 python:
   version: 3.8

@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('../gaitutils'))
 
 # for autodoc
-autodoc_mock_imports = ['scipy', 'configdot', 'ulstools', 'configobj', 'PyQt5', 'numpy', 'psutil', 'matplotlib', 'openpyxl']
+autodoc_mock_imports = ['scipy', 'configdot', 'ulstools', 'configobj', 'PyQt5', 'numpy', 'psutil', 'matplotlib', 'openpyxl', 'plotly']
 
 # -- Project information -----------------------------------------------------
 

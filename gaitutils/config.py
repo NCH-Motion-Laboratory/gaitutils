@@ -21,7 +21,7 @@ def _handle_cfg_defaults(cfg):
     """Handle deprecated and default config values"""
     if not isinstance(cfg.plot.emg_yscale, float):
         ysc = cfg.plot.emg_yscale[1]
-        logger.warning('emg_yscale was changed to float, using %g' % ysc)
+        logger.warning(f'emg_yscale was changed to float, using {ysc})
         cfg.plot.emg_yscale = str(cfg.plot.emg_yscale[1])
     if cfg.general.normaldata_files == 'default':
         fn = resource_filename('gaitutils', 'data/normal.gcd')

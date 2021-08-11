@@ -245,10 +245,9 @@ class EMG:
 class AvgEMG(EMG):
     """Class for storing averaged RMS EMG.
 
-    This tries to match the API of the EMG class, but differs in following ways:
-    -precomputed RMS data is stored in self._data
-    -only the RMS data can be returned
-    -no filtering is done
+    Tries to match the API of the EMG class, but differs in following ways:
+    precomputed RMS data is stored in self._data, only the RMS data can be
+    returned, and no filtering is done.
 
     Parameters
     ----------

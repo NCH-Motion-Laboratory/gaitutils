@@ -3,13 +3,19 @@
 .. toctree::
    :maxdepth: 2
    
-.. include:: ../README.rst
+   readme
 
 Links
 =====
-
 .. toctree::
    Gaitutils on GitHub <http://github.com/jjnurminen/gaitutils>
+
+Install
+=======
+..toctree::
+   :maxdepth: 2
+   
+   install
 
 Indices and tables
 ==================

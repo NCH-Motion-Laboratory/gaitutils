@@ -1,9 +1,6 @@
 .. gaitutils documentation master file
 
-.. toctree::
-   :maxdepth: 2
-   
-   readme
+.. include:: readme.rst
 
 Links
 =====

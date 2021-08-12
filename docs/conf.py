@@ -12,13 +12,27 @@
 #
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('../gaitutils'))
 
 # for autodoc
-autodoc_mock_imports = ['scipy', 'configdot', 'ulstools', 'configobj', 'PyQt5', 'numpy',
-                        'psutil', 'matplotlib', 'openpyxl', 'plotly', 'dash', 'dash_core_components',
-                        'dash_html_components', 'flask']
+autodoc_mock_imports = [
+    'scipy',
+    'configdot',
+    'ulstools',
+    'configobj',
+    'PyQt5',
+    'numpy',
+    'psutil',
+    'matplotlib',
+    'openpyxl',
+    'plotly',
+    'dash',
+    'dash_core_components',
+    'dash_html_components',
+    'flask',
+]
 
 # -- Project information -----------------------------------------------------
 
@@ -32,7 +46,9 @@ author = 'Jussi Nurminen'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [ 'sphinx.ext.napoleon', 'sphinx.ext.viewcode',
+extensions = [
+    'sphinx.ext.napoleon',
+    'sphinx.ext.viewcode',
 ]
 
 napoleon_google_docstring = False

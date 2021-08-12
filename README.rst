@@ -11,6 +11,7 @@ Example: to read the current trial from Vicon Nexus and plot the Plug-in Gait
 lower body kinematics:
 
 ::
+
   import gaitutils
 
   tr = gaitutils.trial.nexus_trial()

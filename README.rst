@@ -17,10 +17,6 @@ lower body kinematics:
   tr = gaitutils.trial.nexus_trial()
   gaitutils.viz.plots.plot_trials(tr)
 
-Typical result:
-
-  
-
 
 The package also includes a PyQt5-based GUI for plotting and processing
 operations.

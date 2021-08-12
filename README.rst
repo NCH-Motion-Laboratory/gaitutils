@@ -14,7 +14,6 @@ This can be accomplished with just a couple of lines of code. The
 package also includes a PyQt5-based GUI for plotting and processing
 operations.
 
-Installation
-------------
+See the documentation_.
 
-See the Wiki page for installation instructions.
+.. _documentation: https://gaitutils.readthedocs.io/en/latest/

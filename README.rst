@@ -7,16 +7,17 @@ provides higher-level interface, with abstractions such as 'trial' and
 'gait cycle'. Data can be read from Vicon Nexus or directly from c3d
 files.
 
-An example operation would be "read a trial from Vicon Nexus, extract
-all gait cycles with valid forceplate contact, normalize the kinetics
-data to those cycles, and plot the ankle dorsi/plantarflexion moment".
-This can be accomplished with just a couple of lines of code:
+Example: to read the current trial from Vicon Nexus and plot the Plug-in Gait
+lower body kinematics:
 
 ::
+  import gaitutils
 
-  from gaitutils import trial
-  
-  tr = trial.nexus_trial()
+  tr = gaitutils.trial.nexus_trial()
+  gaitutils.viz.plots.plot_trials(tr)
+
+Typical result:
+
   
 
 

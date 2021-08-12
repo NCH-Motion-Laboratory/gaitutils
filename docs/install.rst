@@ -1,10 +1,3 @@
-News
-====
-
-**14.4.2021**: gaitutils now supports Python 3.6+ only. You also need
-Nexus 2.12. If you still need Python 2 support, check out the py2 branch
-(will not be actively maintained).
-
 Overview
 ========
 

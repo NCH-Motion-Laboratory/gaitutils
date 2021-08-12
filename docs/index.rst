@@ -1,5 +1,7 @@
 .. gaitutils documentation master file
 
+.. include:: news.rst
+
 .. include:: readme.rst
 
 Links
@@ -13,6 +15,12 @@ Install
    :maxdepth: 2
    
    install
+
+API reference
+=============
+
+.. include:: modules.rst
+
 
 Indices and tables
 ==================

@@ -14,9 +14,9 @@ import time
 from gaitutils import nexus, config, cfg
 
 
-# reset the config so that user settings do not affect testing
-# works by mutating the singleton cfg object
-# note that the reset occurs whenever this file is imported, so be
+# reset the config so that user settings do not affect the tests
+# -works by mutating the singleton cfg object
+# -note that the reset occurs whenever this file is imported, so be
 # careful about importing it
 cfg_default = config.parse_config(config.cfg_template_fn)
 config.update_config(cfg, cfg_default)
@@ -27,9 +27,8 @@ LOCAL_TESTDATA = homedir / 'gaitutils/tests/gaitutils_testdata'
 if LOCAL_TESTDATA.is_dir():
     testdata_root = LOCAL_TESTDATA  # local version for faster tests
 else:
-    testdata_root = Path(
-        r'Z:\gaitutils_testdata'
-    )  # authoritative version on network drive
+    # authoritative version on network drive
+    testdata_root = Path(r'Z:\gaitutils_testdata')
 
 
 def start_nexus():

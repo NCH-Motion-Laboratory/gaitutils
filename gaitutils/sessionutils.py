@@ -168,8 +168,8 @@ def enf_to_trialfile(fname, ext):
 
     Parameters
     ----------
-    fname : str
-        The .enf file name.
+    fname : str | Path
+        The .enf file path.
     ext : str
         File extension, e.g. 'c3d'. Can be supplied with a leading dot.
 
@@ -178,6 +178,7 @@ def enf_to_trialfile(fname, ext):
     str
         The converted filename.
     """
+    fname = str(fname)
     if ext[0] == '.':
         ext = ext[1:]
     enfre = r'\.*.Trial\d*.enf'  # .Trial followed by zero or more digits
@@ -214,10 +215,11 @@ def get_session_date(sessionpath):
 
 
 def _get_session_enfs(sessionpath):
-    """Return list of .enf files for the session """
+    """Return list of .enf files for the session"""
     # we could use pathlib here too, but it's really not intended for globs
     enfglob = op.join(sessionpath, '*Trial*.enf')
-    yield from glob.iglob(enfglob)
+    for fp in glob.iglob(enfglob):
+        yield Path(fp)
 
 
 def _filter_by_eclipse_keys(enfs, patterns, eclipse_keys):

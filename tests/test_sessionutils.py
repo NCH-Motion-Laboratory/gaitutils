@@ -9,7 +9,6 @@ Test session utils.
 import pytest
 import logging
 import tempfile
-import os.path as op
 from pathlib import Path
 
 from gaitutils import sessionutils, GaitDataError
@@ -18,12 +17,11 @@ from utils import _file_path
 logger = logging.getLogger(__name__)
 
 
-# test session
+# define test sessions
 sessiondir_ = 'test_subjects/D0063_RR/2018_12_17_preOp_RR'
 sessiondir_abs = _file_path(sessiondir_)
 sessiondir2_ = 'test_subjects/D0063_RR/2018_12_17_preOp_tuet_RR'
 sessiondir2_abs = _file_path(sessiondir2_)
-sessiondir__ = op.split(sessiondir_)[-1]
 sessions = [sessiondir_abs, sessiondir2_abs]
 tmpdir = tempfile.gettempdir()
 

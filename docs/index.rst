@@ -4,27 +4,15 @@
 
 .. include:: readme.rst
 
-Links
-=====
-.. toctree::
-   Gaitutils on GitHub <http://github.com/jjnurminen/gaitutils>
-
-Install
-=======
-.. toctree::
-   :maxdepth: 2
-   
-   install
+.. include:: install.rst
 
 API reference
 =============
 
-.. include:: modules.rst
+:ref:`modindex`
 
+Links
+=====
 
-Indices and tables
-==================
+   Gaitutils on GitHub <http://github.com/jjnurminen/gaitutils>
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

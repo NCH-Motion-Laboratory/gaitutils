@@ -1,15 +1,3 @@
-Overview
-========
-
-Gaitutils can be used to extract, process and visualize gait data
-(marker data, model outputs, EMG data). It supports reading data from
-Vicon Nexus or directly from c3d files. Note that it is still under
-heavy development.
-
-This is a 'quick start' guide to help with installation and use of the
-graphical interface. The Python API is not comprehensively documented
-but may be in the future, especially if I get requests for that.
-
 Installation
 ============
 
@@ -25,12 +13,9 @@ Python 3.6 or newer.
 Installation via environment file
 ---------------------------------
 
-Conda supports a feature called environments. Each enviroment can have
-its own Python version and a set of packages.
-
-Gaitutils comes with a conda enviroment file that allows you to
-conveniently install all required packages into an environment. If you
-want to install the packages manually, see the Appendix instead.
+It is possible to install gaitutils via pip. However as there are quite a lot of
+dependencies, it is usually easier to install everything at once using a conda
+feature called environments.
 
 Open Anaconda Prompt from Windows menu. Download the environment
 specification by giving the command:

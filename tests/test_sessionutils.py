@@ -84,3 +84,19 @@ def test_enf_to_trialfile():
     assert fn == 'foo1.c3d'
     with pytest.raises(GaitDataError):
         fn = sessionutils.enf_to_trialfile('foo1.trial01.enf', '.c3d')
+
+
+def test_load_quirks():
+    """Test quirks"""
+    quirks = sessionutils.load_quirks(sessiondir_abs)
+    assert 'emg_chs_disabled' in quirks
+    assert 'LPer' in quirks['emg_chs_disabled']
+
+
+def test_load_info():
+    """Test info"""
+    info = sessionutils.load_info(sessiondir_abs)
+    for key in ['hetu', 'fullname', 'session_description']:
+        assert key in info
+        assert info[key]
+        

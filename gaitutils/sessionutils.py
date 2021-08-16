@@ -8,6 +8,7 @@ Session related functions
 
 import io
 import os.path as op
+from pathlib import Path
 import json
 import datetime
 import glob
@@ -45,7 +46,7 @@ def load_quirks(session):
 
     Parameters
     ----------
-    session : str
+    session : str | Path
         The session path.
 
     Returns
@@ -53,10 +54,11 @@ def load_quirks(session):
     dict
         The quirks in a dict.
     """
-
+    if isinstance(session, str):
+        session = Path(session)
+    fname = session / 'quirks.json'
     quirks = dict()
-    fname = op.join(session, 'quirks.json')
-    if op.isfile(fname):
+    if fname.is_file():
         with io.open(fname, 'r', encoding='utf-8') as f:
             try:
                 quirks.update(json.load(f))
@@ -81,7 +83,7 @@ def load_info(session):
 
     Parameters
     ----------
-    session : str
+    session : str | Path
         The session path.
 
     Returns
@@ -89,8 +91,10 @@ def load_info(session):
     dict
         The patient info.
     """
-    fname = op.join(session, 'patient_info.json')
-    if op.isfile(fname):
+    if isinstance(session, str):
+        session = Path(session)
+    fname = session / 'patient_info.json'
+    if fname.is_file():
         with io.open(fname, 'r', encoding='utf-8') as f:
             try:
                 info = json.load(f)

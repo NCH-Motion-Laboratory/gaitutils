@@ -8,6 +8,7 @@ Video file related code.
 import logging
 import os
 import os.path as op
+from pathlib import Path
 import glob
 import itertools
 import ctypes
@@ -29,18 +30,19 @@ def convert_videos(vidfiles, check_only=False):
 
     Parameters
     ----------
-    vidfiles : list | str
+    vidfiles : list | str | Path
         List of video filenames, or a single filename
     check_only : bool, optional
         Instead of converting, return True if all files are already converted
         (target exists).
     """
-    CONV_EXT = '.ogv'  # extension for converted files
+    TARGET_SUFFIX = '.ogv'  # extension for converted files
     if not isinstance(vidfiles, list):
         vidfiles = [vidfiles]
+    vidfiles = [Path(vidfile) for vidfile in vidfiles]
     # result files
-    convfiles = {vidfile: op.splitext(vidfile)[0] + CONV_EXT for vidfile in vidfiles}
-    converted = [op.isfile(fn) for fn in convfiles.values()]  # already done
+    convfiles = {vidfile: vidfile.with_suffix(TARGET_SUFFIX) for vidfile in vidfiles}
+    converted = [p.is_file() for p in convfiles.values()]  # files that are already done
     if check_only:
         return all(converted)
 
@@ -49,10 +51,10 @@ def convert_videos(vidfiles, check_only=False):
     SEM_NOGPFAULTERRORBOX = 0x0002  # From MSDN
     ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX)
 
-    vidconv_bin = cfg.general.videoconv_path
+    vidconv_bin = Path(cfg.general.videoconv_path)
     vidconv_opts = cfg.general.videoconv_opts
-    if not (op.isfile(vidconv_bin) and os.access(vidconv_bin, os.X_OK)):
-        raise RuntimeError('Invalid video converter executable: %s' % vidconv_bin)
+    if not (vidconv_bin.is_file() and os.access(vidconv_bin, os.X_OK)):
+        raise RuntimeError(f'Invalid configured video converter: {vidconv_bin}')
     procs = []
     for vidfile in convfiles:
         cmd = [vidconv_bin] + vidconv_opts.split() + [vidfile]

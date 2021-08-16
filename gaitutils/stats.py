@@ -10,7 +10,6 @@ Compute statistics across/within trials
 import logging
 import numpy as np
 import scipy
-import os.path as op
 import itertools
 from collections import defaultdict
 
@@ -91,7 +90,7 @@ class AvgTrial(Trial):
         self.nfiles = nfiles
         if sessionpath:
             self.sessionpath = sessionpath
-            self.sessiondir = op.split(sessionpath)[-1]
+            self.sessiondir = sessionpath.name
             self.trialname = '%s avg. (%d trials)' % (self.sessiondir, self.nfiles)
         else:
             self.trialname = '%d trial avg.' % self.nfiles

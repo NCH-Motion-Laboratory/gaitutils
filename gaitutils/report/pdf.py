@@ -9,7 +9,7 @@ import itertools
 
 import logging
 import io
-import os.path as op
+from pathlib import Path
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from collections import defaultdict
@@ -87,7 +87,7 @@ def create_report(
 
     Parameters
     ----------
-    sessionpath : str
+    sessionpath : str | Path
         Path to session.
     info : dict, optional
         Patient info dict.
@@ -114,6 +114,7 @@ def create_report(
     str
         A status message.
     """
+    sessionpath = Path(sessionpath)
     if info is None:
         info = defaultdict(lambda: '')
     fullname = info['fullname'] or ''
@@ -126,12 +127,12 @@ def create_report(
 
     do_emg_consistency = True
 
-    session_root, sessiondir = op.split(sessionpath)
-    patient_code = op.split(session_root)[1]
+    session_root, sessiondir = sessionpath.parent, sessionpath.name
+    patient_code = session_root.name
     if destdir is None:
         destdir = sessionpath
     pdfname = sessiondir + '.pdf'
-    pdfpath = op.join(destdir, pdfname)
+    pdfpath = destdir / pdfname
 
     tagged_trials = sessionutils._get_tagged_dynamic_c3ds_from_sessions(
         [sessionpath], tags=cfg.eclipse.tags
@@ -278,7 +279,7 @@ def create_report(
         allvars = [vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs]
         from_models = set(models.model_from_var(var) for var in allvars)
         curve_vals = {
-            op.split(sessionpath)[-1]: stats._trials_extract_values(
+            sessionpath.name: stats._trials_extract_values(
                 tagged_trials, from_models=from_models
             )
         }
@@ -312,7 +313,7 @@ def create_report(
     if write_timedist:
         _timedist_txt = _session_analysis_text(sessionpath)
         timedist_txt_file = sessiondir + '_time_distance.txt'
-        timedist_txt_path = op.join(destdir, timedist_txt_file)
+        timedist_txt_path = destdir / timedist_txt_file
         with io.open(timedist_txt_path, 'w', encoding='utf8') as f:
             logger.debug('writing timedist text data into %s' % timedist_txt_path)
             f.write(_timedist_txt)
@@ -321,7 +322,7 @@ def create_report(
     if write_extracted:
         extracted_txt = '\n'.join(_curve_extracted_text(curve_vals, vardefs_dict))
         extracted_txt_file = sessiondir + '_curve_values.txt'
-        extracted_txt_path = op.join(destdir, extracted_txt_file)
+        extracted_txt_path = destdir / extracted_txt_file
         with io.open(extracted_txt_path, 'w', encoding='utf8') as f:
             logger.debug('writing extracted text data into %s' % extracted_txt_path)
             f.write(extracted_txt)
@@ -386,8 +387,8 @@ def create_comparison_report(
     if destdir is None:
         destdir = sessionpath
     # XXX: filenames can become very long here
-    pdfname = ' VS '.join(op.split(sp)[1] for sp in sessionpaths) + '.pdf'
-    pdfpath = op.join(destdir, pdfname)
+    pdfname = ' VS '.join(sp.name for sp in sessionpaths) + '.pdf'
+    pdfpath = destdir / pdfname
 
     # read model normaldata according to first session
     # age may be different for different sessions but this is probably good enough
@@ -487,7 +488,7 @@ def create_comparison_report(
         allvars = [vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs]
         from_models = set(models.model_from_var(var) for var in allvars)
         curve_vals = {
-            op.split(session)[-1]: stats._trials_extract_values(
+            session.name: stats._trials_extract_values(
                 trials, from_models=from_models
             )
             for session, trials in trials_dict.items()
@@ -524,9 +525,9 @@ def create_comparison_report(
     # save the curve extraced values into a text file
     if write_extracted:
         extracted_txt = '\n'.join(_curve_extracted_text(curve_vals, vardefs_dict))
-        extracted_txt_file = ' VS '.join(op.split(sp)[1] for sp in sessionpaths)
+        extracted_txt_file = ' VS '.join(sp.name for sp in sessionpaths)
         extracted_txt_file += '_curve_values.txt'
-        extracted_txt_path = op.join(destdir, extracted_txt_file)
+        extracted_txt_path = destdir / extracted_txt_file
         with io.open(extracted_txt_path, 'w', encoding='utf8') as f:
             logger.debug('writing extracted text data into %s' % extracted_txt_path)
             f.write(extracted_txt)

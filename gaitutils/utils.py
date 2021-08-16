@@ -224,7 +224,7 @@ def avg_markerdata(mkrdata, markers, roi=None, fail_on_gaps=True, avg_velocity=F
 
 # FIXME: marker sets could be moved into models.py?
 def _pig_markerset(fullbody=True, sacr=True):
-    """ PiG marker set as dict (empty values) """
+    """PiG marker set as dict (empty values)"""
     _pig = [
         'LASI',
         'RASI',

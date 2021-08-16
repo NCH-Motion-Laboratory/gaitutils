@@ -9,7 +9,7 @@ Test session utils.
 import pytest
 import logging
 import tempfile
-import os.path as op
+from pathlib import Path
 
 from gaitutils import sessionutils, GaitDataError
 from utils import _file_path
@@ -17,12 +17,11 @@ from utils import _file_path
 logger = logging.getLogger(__name__)
 
 
-# test session
+# define test sessions
 sessiondir_ = 'test_subjects/D0063_RR/2018_12_17_preOp_RR'
 sessiondir_abs = _file_path(sessiondir_)
 sessiondir2_ = 'test_subjects/D0063_RR/2018_12_17_preOp_tuet_RR'
 sessiondir2_abs = _file_path(sessiondir2_)
-sessiondir__ = op.split(sessiondir_)[-1]
 sessions = [sessiondir_abs, sessiondir2_abs]
 tmpdir = tempfile.gettempdir()
 
@@ -79,8 +78,23 @@ def test_get_session_date():
 def test_enf_to_trialfile():
     """Test trialname converter"""
     fn = sessionutils.enf_to_trialfile('foo.Trial.enf', 'c3d')
-    assert fn == 'foo.c3d'
+    assert fn == Path('foo.c3d')
     fn = sessionutils.enf_to_trialfile('foo1.Trial01.enf', '.c3d')
-    assert fn == 'foo1.c3d'
+    assert fn == Path('foo1.c3d')
     with pytest.raises(GaitDataError):
         fn = sessionutils.enf_to_trialfile('foo1.trial01.enf', '.c3d')
+
+
+def test_load_quirks():
+    """Test quirks"""
+    quirks = sessionutils.load_quirks(sessiondir_abs)
+    assert 'emg_chs_disabled' in quirks
+    assert 'LPer' in quirks['emg_chs_disabled']
+
+
+def test_load_info():
+    """Test info"""
+    info = sessionutils.load_info(sessiondir_abs)
+    for key in ['hetu', 'fullname', 'session_description']:
+        assert key in info
+        assert info[key]

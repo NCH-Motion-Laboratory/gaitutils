@@ -12,9 +12,8 @@ from numpy.testing import assert_allclose, assert_equal
 import logging
 
 from gaitutils import read_data, utils
-from gaitutils.trial import Trial
 from gaitutils.utils import detect_forceplate_events, marker_gaps
-from utils import _trial_path, _c3d_path, _file_path, cfg
+from utils import _trial_path, _c3d_path, _file_path
 
 
 logger = logging.getLogger(__name__)
@@ -23,9 +22,9 @@ logger = logging.getLogger(__name__)
 def test_c3d_extended_chars():
     """See if we can read filenames with extended chars"""
     c3dfile = _c3d_path('2020_11_10_postOp5v_säärituet_SSD06.c3d')
-    an_ = read_data.get_analysis(c3dfile, 'c3dtest')
+    read_data.get_analysis(c3dfile, 'c3dtest')
     mkrset = ['RASI', 'LASI']
-    mkrdata = read_data.get_marker_data(c3dfile, mkrset)
+    read_data.get_marker_data(c3dfile, mkrset)
 
 
 def test_c3d_marker_data():

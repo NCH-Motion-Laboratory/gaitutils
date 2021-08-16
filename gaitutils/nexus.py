@@ -9,9 +9,8 @@ called via the read_data module.
 """
 
 from collections import defaultdict
-import sys
 import numpy as np
-import os.path as op
+from pathlib import Path
 import psutil
 import glob
 import logging
@@ -19,13 +18,14 @@ import time
 import multiprocessing
 import subprocess
 
-from .numutils import _change_coords, _isfloat, _isint, _rigid_body_extrapolate_markers
+from .numutils import _change_coords, _isfloat, _rigid_body_extrapolate_markers
 from .utils import TrialEvents
 from .envutils import GaitDataError
 from .config import cfg
 
 logger = logging.getLogger(__name__)
 
+vicon_ = None  # global SDK connection object
 
 try:
     from viconnexusapi import ViconNexus
@@ -43,14 +43,15 @@ def _find_nexus_path(vicon_path=None):
     """
     if vicon_path is None:
         vicon_path = r'C:\Program Files (x86)\Vicon'  # educated guess
-    if not op.isdir(vicon_path):
+    vicon_path = Path(vicon_path)
+    if not vicon_path.is_dir():
         return None
-    nexus_glob = op.join(vicon_path, 'Nexus?.*')
-    nexus_dirs = glob.glob(nexus_glob)
+    nexus_glob = str(vicon_path / 'Nexus?.*')
+    nexus_dirs = [Path(dir) for dir in glob.iglob(nexus_glob)]
     if not nexus_dirs:
         return None
-    nexus_vers = [op.split(dir_)[1][5:] for dir_ in nexus_dirs]
-    # convert into major,minor lists: [[2,1], [2,10]] etc.
+    nexus_vers = [dir.name[5:] for dir in nexus_dirs]
+    # convert into major, minor lists: [[2,1], [2,10]] etc.
     try:
         nexus_vers = [[int(s) for s in v.split('.')] for v in nexus_vers]
     except ValueError:
@@ -63,9 +64,9 @@ def _find_nexus_path(vicon_path=None):
 def _nexus_pid():
     """Try to return the PID of the currently running Nexus process"""
     PROCNAME = "Nexus.exe"
-    for proc in psutil.process_iter():
+    for proc in psutil.process_iter(['name']):
         try:
-            if proc.name() == PROCNAME:
+            if proc.info['name'] == PROCNAME:
                 return proc.pid
         # catch NoSuchProcess for procs that disappear inside loop
         except (psutil.AccessDenied, psutil.NoSuchProcess):
@@ -91,9 +92,8 @@ def _nexus_ver_greater(major, minor):
 
 def _start_nexus():
     """Start Vicon Nexus"""
-    exe = op.join(_find_nexus_path(), 'Nexus.exe')
-    p = subprocess.Popen([exe])
-    return p
+    exe_path = _find_nexus_path() / 'Nexus.exe'
+    return subprocess.Popen([exe_path])
 
 
 def _kill_nexus(p=None, restart=False):
@@ -117,8 +117,14 @@ def viconnexus():
     ViconNexus
         The instance.
     """
-    _check_nexus()
-    return ViconNexus.ViconNexus()
+    global vicon_
+    # if SDK connection has not been established yet or server info looks
+    # invalid, we reestablish the connection; the latter condition occurs e.g.
+    # when Nexus has been restarted (SDK object becomes stale)
+    if vicon_ is None or vicon_.GetServerInfo()[0] != 'Nexus':
+        _check_nexus()
+        vicon_ = ViconNexus.ViconNexus()
+    return vicon_
 
 
 def _close_trial():
@@ -134,12 +140,13 @@ def _close_trial():
 
 def _open_trial(trialpath, close_first=True):
     """Open trial in Nexus"""
+    trialpath = Path(trialpath)
     vicon = viconnexus()
     if close_first:
         _close_trial()
-    # Nexus wants the path without filename extension (e.g. .c3d)
-    trialpath_ = op.splitext(trialpath)[0]
-    vicon.OpenTrial(trialpath_, 60)
+    # Nexus wants the path without filename extension
+    trialpath_ = trialpath.with_suffix('')
+    vicon.OpenTrial(str(trialpath_), 60)
 
 
 def get_subjectnames(single_only=True):
@@ -172,8 +179,9 @@ def get_subjectnames(single_only=True):
 
 def _check_nexus():
     """Check whether Nexus is currently running"""
-    if not _nexus_pid():
+    if not (pid := _nexus_pid()):
         raise GaitDataError('Vicon Nexus does not seem to be running')
+    return pid
 
 
 def get_sessionpath():
@@ -181,8 +189,8 @@ def get_sessionpath():
 
     Returns
     -------
-    str
-        The path.
+    Path | None
+        The session path, or None if it cannot be acquired.
     """
     try:
         vicon = viconnexus()
@@ -193,7 +201,7 @@ def get_sessionpath():
         raise GaitDataError(
             'Cannot get Nexus session path, no session or maybe in Live mode?'
         )
-    return op.normpath(sessionpath)
+    return Path(sessionpath)
 
 
 def _run_pipeline(pipeline, foo, timeout):
@@ -211,7 +219,7 @@ def _run_pipelines(pipelines):
     if type(pipelines) != list:
         pipelines = [pipelines]
     for pipeline in pipelines:
-        logger.debug('running pipeline: %s' % pipeline)
+        logger.debug(f'running pipeline: {pipeline}')
         _run_pipeline(pipeline, '', cfg.autoproc.nexus_timeout)
 
 
@@ -226,7 +234,7 @@ def _run_pipelines_multiprocessing(pipelines):
     if type(pipelines) != list:
         pipelines = [pipelines]
     for pipeline in pipelines:
-        logger.debug('running pipeline via multiprocessing module: %s' % pipeline)
+        logger.debug(f'running pipeline via multiprocessing module: {pipeline}')
         args = (pipeline, '', cfg.autoproc.nexus_timeout)
         p = multiprocessing.Process(target=_run_pipeline, args=args)
         p.start()
@@ -237,8 +245,7 @@ def _run_pipelines_multiprocessing(pipelines):
 def _get_trialname():
     """Get current Nexus trialname without the session path"""
     vicon = viconnexus()
-    trialname_ = vicon.GetTrialName()
-    return trialname_[1]
+    return vicon.GetTrialName()[1]
 
 
 def _is_vicon_instance(obj):

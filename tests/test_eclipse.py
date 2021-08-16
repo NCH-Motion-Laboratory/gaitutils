@@ -7,14 +7,11 @@ Misc unit tests.
 """
 
 import pytest
-import numpy as np
-from numpy.testing import assert_allclose
 from shutil import copyfile
 import logging
-import sys
 
 from gaitutils import eclipse
-from utils import _file_path, cfg
+from utils import _file_path
 
 
 logger = logging.getLogger(__name__)

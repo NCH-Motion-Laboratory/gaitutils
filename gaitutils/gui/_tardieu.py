@@ -54,7 +54,7 @@ def read_nexus_starting_angle():
 
 
 class LoadDialog(QtWidgets.QDialog):
-    """ Dialog for loading data """
+    """Dialog for loading data"""
 
     def __init__(self):
 
@@ -69,7 +69,7 @@ class LoadDialog(QtWidgets.QDialog):
 
 
 class EMGFilterDialog(QtWidgets.QDialog):
-    """ Dialog for setting the EMG filter """
+    """Dialog for setting the EMG filter"""
 
     def __init__(self, emg_passband):
 
@@ -81,7 +81,7 @@ class EMGFilterDialog(QtWidgets.QDialog):
 
 
 class HelpDialog(QtWidgets.QDialog):
-    """ Dialog for help"""
+    """Dialog for help"""
 
     def __init__(self):
 
@@ -91,7 +91,7 @@ class HelpDialog(QtWidgets.QDialog):
 
 
 class SimpleToolbar(NavigationToolbar2QT):
-    """ Simplified mpl navigation toolbar with some items removed """
+    """Simplified mpl navigation toolbar with some items removed"""
 
     toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] in ('Pan', 'Zoom')]
 
@@ -256,7 +256,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
             self._reset_emg_filter(dlg.spEMGLow.value(), dlg.spEMGHigh.value())
 
     def _load_dialog(self, source):
-        """Dialog for loading data """
+        """Dialog for loading data"""
         dlg = LoadDialog()
         if not dlg.exec_():
             return
@@ -449,7 +449,7 @@ class Markers:
 
 
 class TardieuPlot:
-    """ Create matplotlib graphs for Tardieu analysis """
+    """Create matplotlib graphs for Tardieu analysis"""
 
     def __init__(self):
         """Initialize but do not plot anything yet"""
@@ -722,7 +722,7 @@ class TardieuPlot:
         return np.round(rate * np.array(times)).astype(int)
 
     def tight_layout(self):
-        """ Auto set spacing between/around axes """
+        """Auto set spacing between/around axes"""
         self.fig.set_tight_layout(True)
         # not sure if works/needed
         # self.gs.update(hspace=self.hspace, wspace=self.wspace,

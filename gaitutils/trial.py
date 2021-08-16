@@ -11,8 +11,8 @@ Read gait trials.
 from collections import defaultdict
 import numpy as np
 import re
-import os.path as op
 import logging
+from pathlib import Path
 
 from .emg import EMG
 from .config import cfg
@@ -49,13 +49,13 @@ def nexus_trial(from_c3d=False):
     if not trname[1]:
         raise GaitDataError('No trial loaded in Nexus')
     if from_c3d:
-        c3dfile = op.join(*trname) + '.c3d'
-        if op.isfile(c3dfile):
+        c3dfile = trname[0] / Path(trname[1]).with_suffix('.c3d')
+        if c3dfile.is_file():
             return Trial(c3dfile)
         else:
             logger.info(
-                'no c3d file %s for currently loaded trial, loading '
-                'directly from Nexus' % c3dfile
+                f'no c3d file {c3dfile} for currently loaded trial, loading '
+                'directly from Nexus'
             )
             return Trial(nexus.viconnexus())
     else:
@@ -79,7 +79,7 @@ class Noncycle:
     def __init__(self, context, trial=None):
         self.context = context
         self.trial = trial
-        self.name = 'unnorm. (%s)' % context
+        self.name = f'unnorm. ({context})'
         self.toeoffn = None
         self.on_forceplate = False
         self.start = 0  # to allow cycle sorting
@@ -154,11 +154,11 @@ class Gaitcycle:
 
     def __repr__(self):
         s = '<Gaitcycle |'
-        s += ' start: %d,' % self.start
-        s += ' end: %d,' % self.end
-        s += ' context: %s,' % self.context
+        s += f' start: {self.start}, '
+        s += f' end: {self.end}, '
+        s += f' context: {self.context}, '
         s += ' on forceplate,' if self.on_forceplate else ' not on forceplate,'
-        s += ' toeoff: %d' % self.toeoff
+        s += f' toeoff: {self.toeoff}'
         s += '>'
         return s
 
@@ -204,9 +204,8 @@ class Trial:
 
     Parameters
     ----------
-    source : str | instance of ViconNexus
-        Source to read data from. Can be a c3d filename or a ViconNexus
-        connection.
+    source : str | Path | instance of ViconNexus
+        Source to read the data from. Can be a c3d file or a ViconNexus SDK object.
 
     Attributes
     ----------
@@ -215,8 +214,8 @@ class Trial:
     eclipse_data : dict
         The Eclipse data for the trial. Keys are Eclipse fields and values are
         the corresponding data.
-    sessionpath : str
-        Full path to session directory.
+    sessionpath : Path
+        Path to session directory.
     length : int
         Trial length in frames.
     offset : int
@@ -246,7 +245,7 @@ class Trial:
         return s
 
     def __init__(self, source):
-        logger.debug('new trial instance from %s' % source)
+        logger.debug(f'new trial instance from {source}')
         self.source = source
         meta = read_data.get_metadata(source)
         # insert metadata dict directly as instance attributes (those are
@@ -254,19 +253,19 @@ class Trial:
         self.__dict__.update(meta)
         # match events with frame data
         self.events.subtract_offset(self.offset)
-        self.sessiondir = op.split(self.sessionpath)[-1]
+        self.sessiondir = self.sessionpath.name
         # try to locate trial .enf (we do not require it)
-        enfpath = op.join(self.sessionpath, '%s.Trial.enf' % self.trialname)
+        enfpath = self.sessionpath / Path(self.trialname).with_suffix('.Trial.enf')
         # also look for alternative (older style?) enf name
-        if not op.isfile(enfpath):
+        if not enfpath.is_file():
             trialn_re = re.search('\.*(\d*)$', self.trialname)
             trialn = trialn_re.group(1)
             if trialn:
-                trialname_ = '%s.Trial%s.enf' % (self.trialname, trialn)
-                enfpath = op.join(self.sessionpath, trialname_)
+                trialname_ = f'{self.trialname}.Trial{trialn}.enf'
+                enfpath = self.sessionpath / trialname_
         self.enfpath = enfpath
-        if op.isfile(self.enfpath):
-            logger.debug('reading Eclipse info from %s' % self.enfpath)
+        if self.enfpath.is_file():
+            logger.debug(f'reading Eclipse info from {self.enfpath}')
             edata = eclipse.get_eclipse_keys(self.enfpath)
             # for convenience, eclipse_data returns '' for nonexistent keys
             self.eclipse_data = defaultdict(lambda: '', edata)
@@ -310,7 +309,7 @@ class Trial:
         if 'emg_chs_disabled' in quirks:
             self.emg_chs_disabled = quirks['emg_chs_disabled']
             logger.warning(
-                'using quirk: disable EMG channels %s' % quirks['emg_chs_disabled']
+                f"using quirk: disable EMG channels {quirks['emg_chs_disabled']}"
             )
         else:
             self.emg_chs_disabled = None
@@ -336,8 +335,7 @@ class Trial:
         vidfiles : list
             List of filenames.
         """
-        trialbase = op.join(self.sessionpath, self.trialname)
-        return videos.get_trial_videos(trialbase)
+        return videos.get_trial_videos(self.sessionpath / self.trialname)
 
     @property
     def eclipse_tag(self):
@@ -436,7 +434,7 @@ class Trial:
         """Return (unnormalized) data for a model variable."""
         model_ = models.model_from_var(var)
         if not model_:
-            raise ValueError('No model found for %s' % var)
+            raise ValueError(f'No model found for {var}')
         if model_.desc not in self._models_data:
             # read and cache model data
             modeldata = read_data.get_model_data(self.source, model_)
@@ -563,7 +561,7 @@ class Trial:
 
         Parameters
         ----------
-        cyclespec : dict | str | int | tuple | list | None 
+        cyclespec : dict | str | int | tuple | list | None
             The cycles to get. For a context specific cyclespec, supply a dict with keys:
             'R' and 'L', values: cyclespec as below. If not a dict, the same cyclespec
             will be applied to both contexts.
@@ -650,7 +648,11 @@ class Trial:
         """
         STRIKE_TOL = 7  # frames
         sidestrs = {'R': 'right', 'L': 'left'}
-        for context, strikes, toeoffs in zip('LR', [self.events.lstrikes, self.events.rstrikes], [self.events.ltoeoffs, self.events.rtoeoffs]):
+        for context, strikes, toeoffs in zip(
+            'LR',
+            [self.events.lstrikes, self.events.rstrikes],
+            [self.events.ltoeoffs, self.events.rtoeoffs],
+        ):
             if len(strikes) < 2:
                 continue
             for k in range(0, len(strikes) - 1):

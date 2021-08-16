@@ -11,13 +11,12 @@ from PyQt5.QtCore import QRunnable, QThreadPool, pyqtSignal, QObject
 from pkg_resources import resource_filename
 from functools import partial
 import sys
-import os.path as op
-import os
 import time
 import requests
 import logging
 import traceback
 import socket
+from pathlib import Path
 import ulstools
 import configdot
 
@@ -470,12 +469,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
             )
             sys.exit()
 
-        if cfg.general.git_autoupdate:
-            if envutils._git_autoupdate():
-                # update was done, restart the script
-                menu_script = op.join(envutils.pkg_dir, 'gui/gaitmenu.py')
-                os.execv(sys.executable, ['python'] + [menu_script])
-
         self._web_report_dialog = WebReportDialog(self)
 
         # connect ui widgets
@@ -709,7 +702,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             tr.trialname,
             tr.eclipse_data['DESCRIPTION'],
             tr.eclipse_data['NOTES'],
-            tr.sessionpath,
+            str(tr.sessionpath),
         )
         for k, txt in enumerate(texts):
             item_ = QtWidgets.QTableWidgetItem(txt)
@@ -722,19 +715,19 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _add_c3dfiles(self, c3dfiles):
         """Add given c3d files to trials list"""
-        c3dfiles = (op.normpath(fn) for fn in c3dfiles)
+        c3dfiles = (Path(fn) for fn in c3dfiles)
         self._disable_main_ui()  # in case it takes a while
         for c3dfile in c3dfiles:
-            if not op.isfile(c3dfile):
+            if not c3dfile.is_file():
                 qt_message_dialog(
-                    'Could not find the C3D file (%s) for this trial. Please make sure the trial has been processed and saved.'
-                    % c3dfile
+                    f'Could not find the c3d file {c3dfile} for this trial. '
+                    'Please make sure the trial has been processed and saved.'
                 )
                 continue
             try:
                 tr = trial.Trial(c3dfile)
             except GaitDataError as e:
-                title = 'Could not load trial %s. Details:' % op.split(c3dfile)[-1]
+                title = f'Could not load trial {c3dfile.stem}. Details:'
                 _report_exception(e, title=title)
             else:
                 self._add_trial_to_table(tr)
@@ -801,19 +794,17 @@ class Gaitmenu(QtWidgets.QMainWindow):
             return
         n_out = 0
         for tr in self._selected_trials:
-            default_edfname = op.join(tr.sessionpath, tr.trialname + '.edf')
-            if op.isfile(default_edfname):
+            default_edfname = tr.sessionpath / Path(tr.trialname).with_suffix('.edf')
+            if default_edfname.is_file():
                 reply = qt_yesno_dialog(
-                    'File %s already exists. Overwrite?' % default_edfname
+                    f'File {default_edfname} already exists. Overwrite?'
                 )
                 if reply == QtWidgets.QMessageBox.NoRole:
                     continue
             tr.emg._edf_export(default_edfname)
             n_out += 1
         if n_out:
-            qt_message_dialog(
-                'Exported %d edf file(s) into %s' % (n_out, tr.sessionpath)
-            )
+            qt_message_dialog(f'Exported {n_out} edf file(s) into {tr.sessionpath}')
 
     def _plot_selected_trials(self, layout_name=None):
         """Plot user selected trials from list"""
@@ -957,8 +948,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             """Helper function that will be run in a separate thread"""
             nexus._close_trial()
             for k, tr in enumerate(trials, 1):
-                trbase = op.splitext(tr)[0]
-                vicon.OpenTrial(trbase, cfg.autoproc.nexus_timeout)
+                nexus._open_trial(tr)
                 nexus._run_pipelines_multiprocessing(cfg.autoproc.postproc_pipelines)
                 prog_txt = 'Running postprocessing pipelines: %s for %d trials' % (
                     cfg.autoproc.postproc_pipelines,
@@ -982,7 +972,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         )
         if trials and cfg.autoproc.postproc_pipelines:
             logger.debug('running postprocessing for %s' % trials)
-            vicon = nexus.viconnexus()
             self.prog = ProgressBar('Running postprocessing pipelines...')
             self.prog.update(
                 'Running postprocessing pipelines: %s for %d '
@@ -1079,7 +1068,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             if all(descs):  # use session descriptions if they exist
                 info['session_description'] = ' vs. '.join(descs)
             else:  # we don't have description for every session - use dir names instead
-                _session_dirs = (op.split(_session)[-1] for _session in sessions)
+                _session_dirs = (_session.name for _session in sessions)
                 info['session_description'] = ' vs. '.join(_session_dirs)
 
         # get inputs from user
@@ -1254,8 +1243,6 @@ def main():
         logger.debug('Running from a git repository')
     else:
         logger.debug('Running from a pip install')
-    if cfg.general.git_autoupdate:
-        logger.debug('git autoupdate enabled')
     if not c3d.BTK_IMPORTED:
         logger.warning('cannot find btk module; unable to read .c3d files')
     if not nexus.NEXUS_IMPORTED:

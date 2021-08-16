@@ -50,7 +50,7 @@ cfg_user_fn = Path.home() / '.gaitutils.cfg'
 # provide the global cfg instance
 # read template config
 cfg = parse_config(cfg_template_fn)
-if cfg_user_fn.exists():
+if cfg_user_fn.is_file():
     logger.debug('reading user config from %s' % cfg_user_fn)
     cfg_user = parse_config(cfg_user_fn)
     # update config from user file, but do not overwrite comments

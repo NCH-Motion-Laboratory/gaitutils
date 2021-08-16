@@ -6,13 +6,8 @@ Test video related functions.
 @author: Jussi (jnu@iki.fi)
 """
 
-import pytest
-import numpy as np
 import logging
 import tempfile
-import os
-import os.path as op
-from pkg_resources import resource_filename
 
 from gaitutils import videos, sessionutils
 import time
@@ -24,7 +19,6 @@ logger = logging.getLogger(__name__)
 # test session
 sessiondir_ = 'test_subjects/D0063_RR/2018_12_17_preOp_RR'  # rel path
 sessiondir_abs = _file_path(sessiondir_)  # absolute path
-sessiondir__ = op.split(sessiondir_)[-1]  # dirname
 tmpdir = tempfile.gettempdir()
 
 
@@ -37,7 +31,7 @@ def test_convert_videos():
     target_vids = videos.get_trial_videos(c3d_file, vid_ext='.ogv', overlay=False)
     # remove target videos if they exist
     for vidfile in target_vids:
-        os.remove(vidfile)
+        vidfile.unlink()
     # check should not find target videos any more
     assert not videos.convert_videos(original_vids, check_only=True)
     # start conversion process
@@ -61,12 +55,12 @@ def test_collect_session_videos():
 
 def test_get_trial_videos():
     # this trial has one extra video (two vids for front camera)
-    trialfile_ = "2018_12_17_preOp_RR07.c3d"
-    trialfile = op.join(sessiondir_abs, trialfile_)
+    trialfile_ = '2018_12_17_preOp_RR07.c3d'
+    trialfile = sessiondir_abs / trialfile_
     vids = videos.get_trial_videos(trialfile)  # get all
     assert len(vids) == 7
     for vid in vids:
-        assert op.isfile(vid)
+        assert vid.is_file()
     vids = videos.get_trial_videos(
         trialfile, camera_label='Front camera', vid_ext='.avi'
     )
@@ -76,8 +70,8 @@ def test_get_trial_videos():
     )
     # get single video, must be one with the most recent timestamp
     assert len(vids) == 1
-    assert vids[0] == op.join(
-        sessiondir_abs, "2018_12_17_preOp_RR07.2114551.20181317142825.avi"
+    assert (
+        vids[0] == sessiondir_abs / '2018_12_17_preOp_RR07.2114551.20181317142825.avi'
     )
     vids = videos.get_trial_videos(trialfile, vid_ext='.ogv')
     assert len(vids) == 3

@@ -33,8 +33,8 @@ def get_metadata(source):
 
     Parameters
     ----------
-    source : ViconNexus | str
-        The data source. Can be a c3d filename or a ViconNexus instance.
+    source : str | Path | instance of ViconNexus
+        Source to read the data from. Can be a c3d file or a ViconNexus SDK object.
 
     Returns
     -------
@@ -46,8 +46,8 @@ def get_metadata(source):
         eclipse_data : dict
             The Eclipse data for the trial. Keys are Eclipse fields and values are
             the corresponding data.
-        sessionpath : str
-            Full path to session directory.
+        sessionpath : Path
+            Path to session directory.
         length : int
             Trial length in frames.
         offset : int

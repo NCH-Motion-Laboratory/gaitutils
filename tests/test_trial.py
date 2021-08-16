@@ -6,7 +6,6 @@ Test trial related functionality
 @author: jussi (jnu@iki.fi)
 """
 
-import pytest
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 import logging
@@ -14,7 +13,7 @@ import logging
 from gaitutils import models
 from gaitutils.trial import Trial
 from gaitutils.utils import _pig_markerset
-from utils import _trial_path, _c3d_path, _file_path, cfg
+from utils import _trial_path
 
 
 logger = logging.getLogger(__name__)
@@ -31,6 +30,8 @@ def test_trial_metadata():
     assert_equal(tr.framerate, 100.0)
     assert_allclose(tr.subj_params['Bodymass'], 24.0)
     assert_equal(tr.name, 'Iiris')
+    assert_equal(tr.trialname, c3dfile.stem)
+    assert_equal(tr.sessionpath, c3dfile.parent)
     assert_equal(tr.n_forceplates, 1)
     assert_equal(tr.length, 794)
     assert_equal(tr.samplesperframe, 10.0)

@@ -7,8 +7,8 @@ Functions for automated processing of data in Nexus.
 """
 
 
+from pathlib import Path
 import os
-import os.path as op
 import numpy as np
 import time
 import logging
@@ -105,18 +105,15 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
 
     # init trials dict
     for enffile in enffiles:
-        filepath = enffile[: enffile.find('.Trial')]  # rm .TrialXXX and .enf
+        filepath = sessionutils.enf_to_trialfile(enffile, None)
         trials[filepath] = dict()
 
     # run preprocessing operations
     for ind, enffile in enumerate(enffiles):
-
-        # skip preprocessing completely
         if cfg.autoproc.run_models_only:
-            break
-
-        filepath = enffile[: enffile.find('.Trial')]  # rm .TrialXXX and .enf
-        filename = os.path.split(filepath)[1]
+            break  # skip preprocessing completely
+        filepath = sessionutils.enf_to_trialfile(enffile, None)
+        filename = filepath.name
         trial = trials[filepath]
 
         signals.progress.emit(
@@ -127,7 +124,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
 
         if not do_current:
             logger.debug(f'loading in Nexus: {filename}')
-            vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
+            nexus._open_trial(filepath)
         try:
             nexus._get_metadata(vicon)
         except GaitDataError:
@@ -330,10 +327,10 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
     logger.debug('\n2nd pass - processing %d trials\n' % len(sel_trials))
 
     for ind, (filepath, trial) in enumerate(sel_trials.items()):
-        filename = os.path.split(filepath)[1]
+        filename = filepath.name
         logger.debug('loading in Nexus: %s' % filename)
-        vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
-        enf_file = filepath + '.Trial.enf'
+        nexus._open_trial(filepath)
+        enf_file = filepath.with_suffix('.Trial.enf')
 
         signals.progress.emit(
             'Events and models: %s' % filename, int(100 * ind / len(sel_trials))
@@ -396,7 +393,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
         # holding the .enf file open
         time.sleep(0.1)
         for filepath, trial in trials.items():
-            enf_file = filepath + '.Trial.enf'
+            enf_file = filepath.with_suffix('.Trial.enf')
             try:
                 eclipse.set_eclipse_keys(
                     enf_file,
@@ -424,9 +421,9 @@ def _delete_c3ds(enffiles):
     logger.debug('deleting previous c3d files')
     c3dfiles = sessionutils._filter_to_c3ds(enffiles)
     for enffile, c3dfile in zip(enffiles, c3dfiles):
-        if not op.isfile(c3dfile):
+        if not c3dfile.is_file():
             continue
-        if not op.isfile(enffile):
+        if not enffile.is_file():
             logger.warning('.enf file %s does not exist' % enffile)
         edata = eclipse.get_eclipse_keys(enffile, return_empty=True)
         # do not delete static .c3d files (needed for dynamic processing)
@@ -438,9 +435,9 @@ def _delete_c3ds(enffiles):
         # x1d and x2d do not exist
         x1dfile = sessionutils.enf_to_trialfile(enffile, 'x1d')
         x2dfile = sessionutils.enf_to_trialfile(enffile, 'x2d')
-        if op.isfile(x1dfile) and op.isfile(x2dfile):
+        if x1dfile.is_file() and x2dfile.is_file():
             logger.debug('deleting existing c3d file %s' % c3dfile)
-            os.remove(c3dfile)
+            c3dfile.unlink()
         else:
             logger.debug(
                 'refusing to delete c3d file %s since original '
@@ -448,14 +445,11 @@ def _delete_c3ds(enffiles):
             )
 
 
-def autoproc_session(patterns=None, signals=None):
+def autoproc_session(signals=None):
     """Autoprocess the currently open Nexus session.
 
     Parameters
     ----------
-    patterns : list, optional
-        Limit the processing to trialnames that contain given strings. if None,
-        all trials will be processed (but see relevant config options).
     signals : ProgressSignals | None
         This is used to emit processing-related status signals. If None, a dummy
         instance will be created.
@@ -464,9 +458,6 @@ def autoproc_session(patterns=None, signals=None):
     enffiles = sessionutils.get_enfs(sessionpath)
     if not enffiles:
         raise GaitDataError('No trials found (no .enf files in session)')
-    if patterns:
-        # filter trial names according to patterns
-        enffiles = [s for s in enffiles if any([p in s for p in patterns])]
     if enffiles:
         _do_autoproc(enffiles, signals=signals)
 
@@ -485,7 +476,7 @@ def autoproc_trial(signals=None):
         raise GaitDataError('No trial open in Nexus')
     # XXX: this may fail with old-style enf naming (2015 and pre)
     fn += '.Trial.enf'
-    enffiles = [op.join(nexus.get_sessionpath(), fn)]  # listify single enf
+    enffiles = [nexus.get_sessionpath() / fn]
     # for single trial autoprocess, running pipelines in separate processes is
     # not really necessary and seems to cause slowdowns
     if enffiles:
@@ -518,8 +509,8 @@ def _copy_session_videos():
     """Copy Nexus session videos to desktop"""
     nexus._check_nexus()
 
-    dest_dir = op.join(op.expanduser('~'), 'Desktop', 'nexus_videos')
-    if not op.isdir(dest_dir):
+    dest_dir = Path.home() / 'Desktop' / 'nexus_videos'
+    if not dest_dir.is_dir():
         os.mkdir(dest_dir)
 
     sessionpath = nexus.get_sessionpath()

@@ -54,8 +54,7 @@ def load_quirks(session):
     dict
         The quirks in a dict.
     """
-    if isinstance(session, str):
-        session = Path(session)
+    session = Path(session)
     fname = session / 'quirks.json'
     quirks = dict()
     if fname.is_file():
@@ -91,8 +90,7 @@ def load_info(session):
     dict
         The patient info.
     """
-    if isinstance(session, str):
-        session = Path(session)
+    session = Path(session)
     fname = session / 'patient_info.json'
     if fname.is_file():
         with io.open(fname, 'r', encoding='utf-8') as f:
@@ -116,7 +114,7 @@ def load_info(session):
                     for key in missing_keys:
                         info[key] = default_info()[key]
             except json_exceptions:
-                raise GaitDataError('Error loading patient info file %s' % fname)
+                raise GaitDataError(f'Error loading patient info file {fname}')
     else:
         info = None
     return info
@@ -127,21 +125,23 @@ def save_info(session, patient_info):
 
     Parameters
     ----------
-    session : str
+    session : str | Path
         The session path.
     patient_info : dict
         The patient info.
     """
-    fname = op.join(session, 'patient_info.json')
+    session = Path(session)
+    fname = session / 'patient_info.json'
     try:
         with io.open(fname, 'w', encoding='utf-8') as f:
             f.write(str(json.dumps(patient_info, ensure_ascii=False)))
     except json_exceptions:
-        raise GaitDataError('Error saving patient info file %s ' % fname)
+        raise GaitDataError(f'Error saving patient info file {fname}')
 
 
 def _merge_session_info(sessions):
     """Merge patient info files across sessions.
+
     The fullname and hetu keys must match.
     Returns a 2-tuple with: dict of individual session infos, merged info"""
     session_infos = {
@@ -183,8 +183,8 @@ def enf_to_trialfile(fname, ext):
     enfre = r'\.*.Trial\d*.enf'  # .Trial followed by zero or more digits
     res = re.search(enfre, fname)
     if res is None:
-        raise GaitDataError('Filename %s is not a trial .enf' % fname)
-    return fname.replace(res.group(), '.%s' % ext)
+        raise GaitDataError(f'Filename {fname} is not a trial .enf')
+    return Path(fname.replace(res.group(), f'.{ext}'))
 
 
 def get_session_date(sessionpath):
@@ -192,7 +192,7 @@ def get_session_date(sessionpath):
 
     Parameters
     ----------
-    sessionpath : str
+    sessionpath : str | Path
         The session path.
 
     Returns
@@ -205,16 +205,17 @@ def get_session_date(sessionpath):
     if not x1ds:
         raise GaitDataError(f'Invalid session: {sessionpath}')
     else:
-        x1ds = [x1d for x1d in x1ds if op.isfile(x1d)]
+        x1ds = [x1d for x1d in x1ds if x1d.is_file()]
         if not x1ds:
             raise GaitDataError('cannot find any .x1d trial files in session')
         else:
             x1d = x1ds[-1]
-        return datetime.datetime.fromtimestamp(op.getmtime(x1d))
+        return datetime.datetime.fromtimestamp(x1d.lstat().st_mtime)
 
 
 def _get_session_enfs(sessionpath):
     """Return list of .enf files for the session """
+    # we could use pathlib here too, but it's really not intended for globs
     enfglob = op.join(sessionpath, '*Trial*.enf')
     yield from glob.iglob(enfglob)
 
@@ -251,7 +252,7 @@ def _filter_to_c3ds(enfs):
 
 def _filter_exists(files):
     for f in files:
-        if op.isfile(f):
+        if Path(f).is_file():
             yield f
 
 
@@ -260,7 +261,7 @@ def get_enfs(sessionpath, tags=None, trial_type=None, check_if_exists=True):
 
     Parameters
     ----------
-    sessionpath : str
+    sessionpath : str | Path
         The session path.
     tags : list, optional
         List of Eclipse tags to filter for. E.g. ['T1'] would return only .enf

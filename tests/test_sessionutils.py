@@ -10,6 +10,7 @@ import pytest
 import logging
 import tempfile
 import os.path as op
+from pathlib import Path
 
 from gaitutils import sessionutils, GaitDataError
 from utils import _file_path
@@ -79,9 +80,9 @@ def test_get_session_date():
 def test_enf_to_trialfile():
     """Test trialname converter"""
     fn = sessionutils.enf_to_trialfile('foo.Trial.enf', 'c3d')
-    assert fn == 'foo.c3d'
+    assert fn == Path('foo.c3d')
     fn = sessionutils.enf_to_trialfile('foo1.Trial01.enf', '.c3d')
-    assert fn == 'foo1.c3d'
+    assert fn == Path('foo1.c3d')
     with pytest.raises(GaitDataError):
         fn = sessionutils.enf_to_trialfile('foo1.trial01.enf', '.c3d')
 
@@ -99,4 +100,3 @@ def test_load_info():
     for key in ['hetu', 'fullname', 'session_description']:
         assert key in info
         assert info[key]
-        

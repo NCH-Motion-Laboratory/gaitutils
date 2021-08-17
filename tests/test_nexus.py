@@ -23,10 +23,8 @@ from gaitutils.trial import Trial
 from gaitutils.viz import plots
 from utils import _trial_path, start_nexus
 
-# this global is a 'caching' mechanism for starting Nexus and acquiring the
-# ViconNexus control object
-vicon = None
 
+start_nexus()
 
 def test_find_nexus_path():
     """Test _find_nexus_path()"""
@@ -37,9 +35,7 @@ def test_find_nexus_path():
 @pytest.mark.nexus
 def test_nexus_reader():
     """Test basic data reading and Trial instance creation"""
-    global vicon
-    if vicon is None:
-        vicon = start_nexus()
+    vicon = nexus.viconnexus()
     # from old Helsinki lab
     trialname = '2015_10_22_girl6v_IN13'
     subject = 'girl6v'
@@ -96,9 +92,7 @@ def test_nexus_reader():
 @pytest.mark.nexus
 def test_nexus_plot():
     """Test basic plot from Nexus"""
-    global vicon
-    if vicon is None:
-        vicon = start_nexus()
+    vicon = nexus.viconnexus()
     trialname = '2015_10_22_girl6v_IN13'
     subject = 'girl6v'
     trialpath = _trial_path(subject, trialname)
@@ -111,9 +105,7 @@ def test_nexus_plot():
 @pytest.mark.nexus
 def test_nexus_get_forceplate_ids():
     """Test forceplate id getter"""
-    global vicon
-    if vicon is None:
-        vicon = start_nexus()
+    vicon = nexus.viconnexus()
     subj = 'D0063_RR'
     trialname = '2018_12_17_preOp_RR06.c3d'
     session = 'autoproc_session'
@@ -126,9 +118,7 @@ def test_nexus_get_forceplate_ids():
 @pytest.mark.nexus
 def test_nexus_get_forceplate_data():
     """Test forceplate data getter"""
-    global vicon
-    if vicon is None:
-        vicon = start_nexus()
+    vicon = nexus.viconnexus()
     subj = 'D0063_RR'
     trialname = '2018_12_17_preOp_RR06.c3d'
     session = 'autoproc_session'
@@ -184,9 +174,7 @@ def test_nexus_get_forceplate_data():
 @pytest.mark.nexus
 def test_nexus_set_forceplate_data():
     """Test forceplate data setter"""
-    global vicon
-    if vicon is None:
-        vicon = start_nexus()
+    vicon = nexus.viconnexus()
     subj = 'D0063_RR'
     trialname = '2018_12_17_preOp_RR06.c3d'
     session = 'autoproc_session'
@@ -215,9 +203,7 @@ def test_nexus_set_forceplate_data():
 @pytest.mark.nexus
 def test_compare_to_c3d():
     """Compare data reads from Nexus and corresponding Nexus written .c3d"""
-    global vicon
-    if vicon is None:
-        vicon = start_nexus()
+    vicon = nexus.viconnexus()
     # set the correct EMG device name for the old data
     cfg.emg.devname = 'Myon'
     # can only get 3 decimals of agreement between Nexus/c3d model vars (??)
@@ -279,9 +265,7 @@ def test_compare_to_c3d():
 @pytest.mark.nexus
 def test_event_marking():
     """Test automarking of events"""
-    global vicon
-    if vicon is None:
-        vicon = start_nexus()
+    vicon = nexus.viconnexus()
     ev_tol = 4  # tolerance for event marking (frames)
     events_dict = dict()  # ground truth with forceplate info
     events_dict['Right'] = dict()
@@ -340,9 +324,6 @@ def test_autoproc():
     This requires preprocessing and model pipelines to be set up correctly in
     Nexus.
     """
-    global vicon
-    if vicon is None:
-        vicon = start_nexus()
     # SDK does not have open_session(), so we need to open a trial
     subj = 'D0063_RR'
     trialname = '2018_12_17_preOp_RR04.c3d'

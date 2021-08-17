@@ -42,9 +42,10 @@ def convert_videos(vidfiles, check_only=False):
     vidfiles = [Path(vidfile) for vidfile in vidfiles]
     # result files
     convfiles = {vidfile: vidfile.with_suffix(TARGET_SUFFIX) for vidfile in vidfiles}
-    converted = [p.is_file() for p in convfiles.values()]  # files that are already done
+
     if check_only:
-        return all(converted)
+        # return True if all conversion targets already exists
+        return all(p.is_file() for p in convfiles.values())
 
     # XXX: this disables Windows protection fault dialogs
     # needed since ffmpeg2theora may crash after conversion is complete (?)
@@ -105,8 +106,8 @@ def get_trial_videos(
 
     Parameters
     ----------
-    trialfile : str
-        The name of the file.
+    trialfile : str | Path
+        Trial file path.
     camera_label : [type], optional
         If not None, return only videos corresponding to given camera label.
     vid_ext : str
@@ -122,12 +123,12 @@ def get_trial_videos(
     list
         The list of video filenames.
     """
-    trialbase = op.splitext(trialfile)[0]
     # XXX: should really be case insensitive, but it does not matter on Windows
     vid_exts = ['.avi', '.ogv']
     if vid_ext is not None and vid_ext not in vid_exts:
-        raise ValueError('unrecognized video extension %s' % vid_ext)
-    globs_ = ('%s.*%s' % (trialbase, vid_ext) for vid_ext in vid_exts)
+        raise ValueError(f'unrecognized video extension {vid_ext}')
+    trialbase = Path(trialfile).with_suffix('')
+    globs_ = (f'{trialbase}.*{vid_ext}' for vid_ext in vid_exts)
     vids = itertools.chain.from_iterable(glob.iglob(glob_) for glob_ in globs_)
     if camera_label is not None:
         vids = _filter_by_label(vids, camera_label)
@@ -135,7 +136,8 @@ def get_trial_videos(
         vids = _filter_by_extension(vids, vid_ext)
     if overlay is not None:
         vids = _filter_by_overlay(vids, overlay)
-    return sorted(vids)[-1:] if single_file else sorted(vids)
+    vids = sorted(vids)[-1:] if single_file else sorted(vids)
+    return [Path(vid) for vid in vids]
 
 
 def _filter_by_label(vids, camera_label):
@@ -154,7 +156,7 @@ def _filter_by_label(vids, camera_label):
 def _filter_by_extension(vids, ext):
     """Filter videos by filename extension. Case insensitive"""
     for vid in vids:
-        if op.splitext(vid)[1].upper() == ext.upper():
+        if Path(vid).suffix.upper() == ext.upper():
             yield vid
 
 
@@ -176,9 +178,6 @@ def _filter_by_overlay(vids, overlay=True):
 
 def _camera_id(fname):
     """Return camera id for a video file"""
-    # camera id should be the second component of dot-separated filename
-    fn_split = op.split(fname)[-1].split('.')
-    id_ = fn_split[1]
-    if not numutils._isint(id_):
-        return None
-    return id_
+    # camera id should be the second component of dot-delimited filename
+    id_ = Path(fname).name.split('.')[1]
+    return id_ if numutils._isint(id_) else None

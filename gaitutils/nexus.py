@@ -25,7 +25,7 @@ from .config import cfg
 
 logger = logging.getLogger(__name__)
 
-_sdk_object_cache = dict()
+vicon = None
 
 try:
     from viconnexusapi import ViconNexus
@@ -117,11 +117,15 @@ def viconnexus():
     ViconNexus
         The instance.
     """
-    global _sdk_object_cache
-    pid = _check_nexus()
-    if pid not in _sdk_object_cache:
-        _sdk_object_cache[pid] = ViconNexus.ViconNexus()
-    return _sdk_object_cache[pid]
+    global vicon
+    # if SDK connection has not been established yet or server info looks
+    # invalid, we reestablish the connection; the latter condition occurs e.g.
+    # when Nexus has been restarted (SDK object becomes stale)
+    if vicon is None or vicon.GetServerInfo()[0] != 'Nexus':
+        _check_nexus()
+        vicon = ViconNexus.ViconNexus()
+    return vicon
+
 
 def _close_trial():
     """Try to close currently opened Nexus trial"""

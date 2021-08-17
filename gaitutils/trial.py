@@ -13,6 +13,7 @@ import numpy as np
 import re
 import os.path as op
 import logging
+from pathlib import Path
 
 from .emg import EMG
 from .config import cfg
@@ -49,13 +50,13 @@ def nexus_trial(from_c3d=False):
     if not trname[1]:
         raise GaitDataError('No trial loaded in Nexus')
     if from_c3d:
-        c3dfile = op.join(*trname) + '.c3d'
-        if op.isfile(c3dfile):
+        c3dfile = trname[0] / Path(trname[1]).with_suffix('.c3d')
+        if c3dfile.is_file():
             return Trial(c3dfile)
         else:
             logger.info(
-                'no c3d file %s for currently loaded trial, loading '
-                'directly from Nexus' % c3dfile
+                f'no c3d file {c3dfile} for currently loaded trial, loading '
+                'directly from Nexus'
             )
             return Trial(nexus.viconnexus())
     else:
@@ -246,7 +247,7 @@ class Trial:
         return s
 
     def __init__(self, source):
-        logger.debug('new trial instance from %s' % source)
+        logger.debug(f'new trial instance from {source}')
         self.source = source
         meta = read_data.get_metadata(source)
         # insert metadata dict directly as instance attributes (those are
@@ -254,11 +255,11 @@ class Trial:
         self.__dict__.update(meta)
         # match events with frame data
         self.events.subtract_offset(self.offset)
-        self.sessiondir = op.split(self.sessionpath)[-1]
+        self.sessiondir = self.sessionpath.name
         # try to locate trial .enf (we do not require it)
-        enfpath = op.join(self.sessionpath, '%s.Trial.enf' % self.trialname)
+        enfpath = self.sessionpath / Path(self.trialname).with_suffix('.Trial.enf')
         # also look for alternative (older style?) enf name
-        if not op.isfile(enfpath):
+        if not enfpath.is_file():
             trialn_re = re.search('\.*(\d*)$', self.trialname)
             trialn = trialn_re.group(1)
             if trialn:

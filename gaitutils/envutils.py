@@ -10,14 +10,13 @@ Stuff related to Python environment
 import sys
 import traceback
 import subprocess
-import os.path as op
 from ulstools import env
 from pkg_resources import resource_filename
 import logging
 import hashlib
 import os
 import tempfile
-import binascii
+from pathlib import Path
 from functools import lru_cache
 
 from .gui._windows import error_exit
@@ -26,9 +25,9 @@ from .gui._windows import error_exit
 logger = logging.getLogger(__name__)
 
 
-pkg_dir = resource_filename('gaitutils', '')  # package directory
-pkg_parent = op.abspath(op.join(pkg_dir, op.pardir))
-git_mode = op.isdir(op.join(pkg_parent, '.git'))
+pkg_dir = Path(resource_filename('gaitutils', ''))  # package directory
+pkg_parent = pkg_dir.parent 
+git_mode = (pkg_parent / '.git').is_dir()
 
 
 class GaitDataError(Exception):
@@ -77,7 +76,9 @@ def _git_update():
     if git_mode:
         logger.debug('running git autoupdate')
         try:
-            o = subprocess.check_output(['git', 'pull'], cwd=pkg_parent, encoding='utf-8')
+            o = subprocess.check_output(
+                ['git', 'pull'], cwd=pkg_parent, encoding='utf-8'
+            )
         except subprocess.CalledProcessError:
             status = (False, 'cannot retrieve or merge update')
         if 'lready' in o:
@@ -87,6 +88,7 @@ def _git_update():
     else:  # not a git repo
         status = (False, 'cannot update, gaitutils is not installed in git mode')
     return status
+
 
 def _register_gui_exception_handler(full_traceback=False):
     """Registers an exception handler that reports exceptions via GUI"""
@@ -156,4 +158,4 @@ def _named_tempfile(suffix=None):
     basename = os.urandom(LEN)  # get random bytes
     # convert to hex string
     basename = basename.hex()
-    return os.path.join(tempfile.gettempdir(), basename + suffix)
+    return tempfile.gettempdir() / Path(basename).with_suffix(suffix)

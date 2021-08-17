@@ -39,7 +39,7 @@ def _is_c3d_file(source):
     XXX: Currently we just check existence.
     """
     try:
-        return Path(source).exists()
+        return Path(source).is_file()
     except TypeError:
         return False
 
@@ -80,7 +80,7 @@ def _get_c3dacq(c3dfile):
     Object is returned from cache if filename and digest match.
     """
     reader = btk.btkAcquisitionFileReader()
-    c3dfile = str(c3dfile)  # str conversion to accept Path objects too
+    c3dfile = str(c3dfile)  # accept Path objects too (btk won't eat those)
     reader.SetFilename(c3dfile)
     try:
         reader.Update()
@@ -94,14 +94,14 @@ def _get_c3dacq(c3dfile):
             # just copy the file into another directory
             temp_path = _named_tempfile(suffix='.c3d')
             shutil.copy2(c3dfile, temp_path)
-            logger.warning('using %s' % temp_path)
+            logger.warning(f'using {temp_path}')
             # we need to create a new reader here
             # (the previous update call screws it up somehow)
             reader = btk.btkAcquisitionFileReader()
             reader.SetFilename(temp_path)
             reader.Update()
             # we should be able to remove the temp file now
-            os.remove(temp_path)
+            temp_path.unlink()
         else:
             # something else went wrong during read
             raise e

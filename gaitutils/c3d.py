@@ -98,7 +98,7 @@ def _get_c3dacq(c3dfile):
             # we need to create a new reader here
             # (the previous update call screws it up somehow)
             reader = btk.btkAcquisitionFileReader()
-            reader.SetFilename(temp_path)
+            reader.SetFilename(str(temp_path))
             reader.Update()
             # we should be able to remove the temp file now
             temp_path.unlink()
@@ -113,8 +113,8 @@ def get_analysis(c3dfile, condition='unknown'):
 
     Parameters
     ----------
-    c3dfile : str
-        Name of the file.
+    c3dfile : str | Path
+        Path to the file.
     condition : str, optional
         The condition name, by default 'unknown'.
 
@@ -124,7 +124,7 @@ def get_analysis(c3dfile, condition='unknown'):
         A nested dict of the analysis values, keyed by variable name and
         context. The first key is the condition name.
     """
-    logger.debug('getting analysis values from %s' % c3dfile)
+    logger.debug(f'getting analysis values from {c3dfile}')
     acq = _get_c3dacq(c3dfile)
     try:
         vars_ = _get_c3d_metadata_field(acq, 'ANALYSIS', 'NAMES')
@@ -132,7 +132,7 @@ def get_analysis(c3dfile, condition='unknown'):
         contexts = _get_c3d_metadata_field(acq, 'ANALYSIS', 'CONTEXTS')
         vals = _get_c3d_metadata_field(acq, 'ANALYSIS', 'VALUES')
     except RuntimeError:
-        raise GaitDataError('Cannot read time-distance parameters from %s' % c3dfile)
+        raise GaitDataError(f'Cannot read time-distance parameters from {c3dfile}')
 
     # build a nice output dict
     di = defaultdict(lambda: defaultdict(dict))
@@ -147,14 +147,14 @@ def get_analysis(c3dfile, condition='unknown'):
         for context in ['Left', 'Right']:
             if context not in di_[var]:
                 logger.warning(
-                    '%s has missing value: %s / %s' % (c3dfile, var, context)
+                    f'{c3dfile} has missing value: {var} / {context}'
                 )
                 di_[var][context] = np.nan
 
-    # Nexus <2.8 did not output step width into c3d, so compute it here if
-    # needed
+    # Nexus version <2.8 did not output step width into c3d, so compute it here
+    # if needed
     if 'Step Width' not in di_:
-        logger.warning('computing step widths (not found in %s)' % c3dfile)
+        logger.warning(f'computing step widths (not found in {c3dfile})')
         sw = _step_width(c3dfile)
         di[condition]['Step Width'] = dict()
         # XXX: currently uses average of all cycles from trial
@@ -205,7 +205,7 @@ def _get_analog_data(c3dfile, devname):
         }
     else:
         raise GaitDataError(
-            'No analog channels matching device %s found in data' % devname
+            f'No analog channels matching device {devname} found in data'
         )
 
 
@@ -223,10 +223,10 @@ def _get_marker_data(c3dfile, markers, ignore_missing=False):
             mkrdata[marker] = np.squeeze(acq.GetPoint(marker).GetValues())
         except RuntimeError:
             if ignore_missing:
-                logger.warning('Cannot read trajectory %s from c3d file' % marker)
+                logger.warning(f'Cannot read trajectory {marker} from c3d file')
                 continue
             else:
-                raise GaitDataError('Cannot read trajectory %s from c3d file' % marker)
+                raise GaitDataError(f'Cannot read trajectory {marker} from c3d file')
     return mkrdata
 
 
@@ -234,7 +234,7 @@ def _get_c3d_subject_param(acq, param):
     try:
         param = _get_c3d_metadata_field(acq, 'PROCESSING', param)[0]
     except RuntimeError:
-        logger.warning('Cannot get subject parameter %s' % param)
+        logger.warning(f'Cannot get subject parameter {param}')
         param = None
     return param
 
@@ -301,13 +301,13 @@ def _get_metadata(c3dfile):
     try:
         par_names = _get_c3d_metadata_subfields(acq, 'PROCESSING')
     except RuntimeError:
-        raise GaitDataError('%s is missing required subject info' % c3dfile)
+        raise GaitDataError(f'{c3dfile} is missing required subject info')
     subj_params = defaultdict(lambda: None)
     subj_params.update({par: _get_c3d_subject_param(acq, par) for par in par_names})
 
     return {
         'trialname': trialname,
-        'sessionpath': str(sessionpath),  # XXX: we can eventually return Paths here
+        'sessionpath': sessionpath,
         'offset': offset,
         'framerate': framerate,
         'analograte': analograte,

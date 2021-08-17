@@ -105,18 +105,15 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
 
     # init trials dict
     for enffile in enffiles:
-        filepath = enffile[: enffile.find('.Trial')]  # rm .TrialXXX and .enf
+        filepath = sessionutils.enf_to_trialfile(enffile, None)
         trials[filepath] = dict()
 
     # run preprocessing operations
     for ind, enffile in enumerate(enffiles):
-
-        # skip preprocessing completely
         if cfg.autoproc.run_models_only:
-            break
-
-        filepath = enffile[: enffile.find('.Trial')]  # rm .TrialXXX and .enf
-        filename = os.path.split(filepath)[1]
+            break  # skip preprocessing completely
+        filepath = sessionutils.enf_to_trialfile(enffile, None)
+        filename = filepath.name
         trial = trials[filepath]
 
         signals.progress.emit(
@@ -127,7 +124,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
 
         if not do_current:
             logger.debug(f'loading in Nexus: {filename}')
-            vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
+            nexus._open_trial(filepath)
         try:
             nexus._get_metadata(vicon)
         except GaitDataError:
@@ -330,10 +327,10 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
     logger.debug('\n2nd pass - processing %d trials\n' % len(sel_trials))
 
     for ind, (filepath, trial) in enumerate(sel_trials.items()):
-        filename = os.path.split(filepath)[1]
+        filename = filepath.name
         logger.debug('loading in Nexus: %s' % filename)
-        vicon.OpenTrial(filepath, cfg.autoproc.nexus_timeout)
-        enf_file = filepath + '.Trial.enf'
+        nexus._open_trial(filepath)
+        enf_file = filepath.with_suffix('.Trial.enf')
 
         signals.progress.emit(
             'Events and models: %s' % filename, int(100 * ind / len(sel_trials))
@@ -448,14 +445,11 @@ def _delete_c3ds(enffiles):
             )
 
 
-def autoproc_session(patterns=None, signals=None):
+def autoproc_session(signals=None):
     """Autoprocess the currently open Nexus session.
 
     Parameters
     ----------
-    patterns : list, optional
-        Limit the processing to trialnames that contain given strings. if None,
-        all trials will be processed (but see relevant config options).
     signals : ProgressSignals | None
         This is used to emit processing-related status signals. If None, a dummy
         instance will be created.
@@ -464,9 +458,6 @@ def autoproc_session(patterns=None, signals=None):
     enffiles = sessionutils.get_enfs(sessionpath)
     if not enffiles:
         raise GaitDataError('No trials found (no .enf files in session)')
-    if patterns:
-        # filter trial names according to patterns
-        enffiles = [s for s in enffiles if any([p in s for p in patterns])]
     if enffiles:
         _do_autoproc(enffiles, signals=signals)
 
@@ -485,7 +476,7 @@ def autoproc_trial(signals=None):
         raise GaitDataError('No trial open in Nexus')
     # XXX: this may fail with old-style enf naming (2015 and pre)
     fn += '.Trial.enf'
-    enffiles = [op.join(nexus.get_sessionpath(), fn)]  # listify single enf
+    enffiles = [nexus.get_sessionpath() / fn]
     # for single trial autoprocess, running pipelines in separate processes is
     # not really necessary and seems to cause slowdowns
     if enffiles:

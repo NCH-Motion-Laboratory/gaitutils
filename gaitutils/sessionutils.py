@@ -172,20 +172,23 @@ def enf_to_trialfile(fname, ext):
         The .enf file path.
     ext : str
         File extension, e.g. 'c3d'. Can be supplied with a leading dot.
+        If None, trial name is returned without extension.
 
     Returns
     -------
-    str
+    Path
         The converted filename.
     """
     fname = str(fname)
-    if ext[0] == '.':
-        ext = ext[1:]
+    if ext is None:
+        ext = ''
+    elif ext[0] != '.':
+        ext = f'.{ext}'
     enfre = r'\.*.Trial\d*.enf'  # .Trial followed by zero or more digits
     res = re.search(enfre, fname)
     if res is None:
         raise GaitDataError(f'Filename {fname} is not a trial .enf')
-    return Path(fname.replace(res.group(), f'.{ext}'))
+    return Path(fname.replace(res.group(), ext))
 
 
 def get_session_date(sessionpath):

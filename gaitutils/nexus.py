@@ -111,6 +111,11 @@ def viconnexus():
 
     Raises an exception if Nexus is not running.
 
+    NB: we could cache the control object instead of reacquiring it at every API
+    call. However, this could lead to stale control objects if Nexus is
+    restarted during application lifetime. Also acquiring the object does not
+    seem to be very expensive.
+
     Returns
     -------
     ViconNexus

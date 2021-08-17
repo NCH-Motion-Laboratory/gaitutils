@@ -22,9 +22,11 @@ cfg_default = config.parse_config(config.cfg_template_fn)
 config.update_config(cfg, cfg_default)
 config._handle_cfg_defaults(cfg)
 
+USE_LOCAL_TESTDATA = True
+
 homedir = Path.home()
 LOCAL_TESTDATA = homedir / 'gaitutils/tests/gaitutils_testdata'
-if LOCAL_TESTDATA.is_dir():
+if LOCAL_TESTDATA.is_dir() and USE_LOCAL_TESTDATA:
     testdata_root = LOCAL_TESTDATA  # local version for faster tests
 else:
     # authoritative version on network drive

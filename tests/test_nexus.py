@@ -28,6 +28,12 @@ from utils import _trial_path, start_nexus
 vicon = None
 
 
+def test_find_nexus_path():
+    """Test _find_nexus_path()"""
+    p = nexus._find_nexus_path()
+    assert p.is_dir()
+
+
 @pytest.mark.nexus
 def test_nexus_reader():
     """Test basic data reading and Trial instance creation"""

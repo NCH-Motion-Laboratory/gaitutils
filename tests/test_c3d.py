@@ -12,9 +12,8 @@ from numpy.testing import assert_allclose, assert_equal
 import logging
 
 from gaitutils import read_data, utils
-from gaitutils.trial import Trial
 from gaitutils.utils import detect_forceplate_events, marker_gaps
-from utils import _trial_path, _c3d_path, _file_path, cfg
+from utils import _trial_path, _c3d_path, _file_path
 
 
 logger = logging.getLogger(__name__)

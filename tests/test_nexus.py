@@ -352,7 +352,7 @@ def test_autoproc():
     nexus._open_trial(trialpath)
     # check that we ended up in correct session
     # (otherwise autoproc could take forever, or cause damage)
-    assert 'autoproc' in nexus.get_sessionpath()
+    assert 'autoproc' in str(nexus.get_sessionpath())
     # run the autoprocessing
     autoprocess.autoproc_session()
     # check the resulting c3d files

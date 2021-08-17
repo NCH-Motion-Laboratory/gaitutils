@@ -25,6 +25,7 @@ from .config import cfg
 
 logger = logging.getLogger(__name__)
 
+_sdk_object_cache = dict()
 
 try:
     from viconnexusapi import ViconNexus
@@ -63,9 +64,9 @@ def _find_nexus_path(vicon_path=None):
 def _nexus_pid():
     """Try to return the PID of the currently running Nexus process"""
     PROCNAME = "Nexus.exe"
-    for proc in psutil.process_iter():
+    for proc in psutil.process_iter(['name']):
         try:
-            if proc.name() == PROCNAME:
+            if proc.info['name'] == PROCNAME:
                 return proc.pid
         # catch NoSuchProcess for procs that disappear inside loop
         except (psutil.AccessDenied, psutil.NoSuchProcess):
@@ -111,19 +112,16 @@ def viconnexus():
 
     Raises an exception if Nexus is not running.
 
-    NB: we could cache the control object instead of reacquiring it at every API
-    call. However, this could lead to stale control objects if Nexus is
-    restarted during application lifetime. Also acquiring the object does not
-    seem to be very expensive.
-
     Returns
     -------
     ViconNexus
         The instance.
     """
-    _check_nexus()
-    return ViconNexus.ViconNexus()
-
+    global _sdk_object_cache
+    pid = _check_nexus()
+    if pid not in _sdk_object_cache:
+        _sdk_object_cache[pid] = ViconNexus.ViconNexus()
+    return _sdk_object_cache[pid]
 
 def _close_trial():
     """Try to close currently opened Nexus trial"""
@@ -177,9 +175,9 @@ def get_subjectnames(single_only=True):
 
 def _check_nexus():
     """Check whether Nexus is currently running"""
-    if not _nexus_pid():
+    if not (pid := _nexus_pid()):
         raise GaitDataError('Vicon Nexus does not seem to be running')
-
+    return pid
 
 def get_sessionpath():
     """Get path to current Nexus session.

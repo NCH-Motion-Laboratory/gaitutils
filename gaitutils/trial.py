@@ -80,7 +80,7 @@ class Noncycle:
     def __init__(self, context, trial=None):
         self.context = context
         self.trial = trial
-        self.name = 'unnorm. (%s)' % context
+        self.name = f'unnorm. ({context})'
         self.toeoffn = None
         self.on_forceplate = False
         self.start = 0  # to allow cycle sorting
@@ -155,11 +155,11 @@ class Gaitcycle:
 
     def __repr__(self):
         s = '<Gaitcycle |'
-        s += ' start: %d,' % self.start
-        s += ' end: %d,' % self.end
-        s += ' context: %s,' % self.context
+        s += f' start: {self.start}, '
+        s += f' end: {self.end}, '
+        s += f' context: {self.context}, '
         s += ' on forceplate,' if self.on_forceplate else ' not on forceplate,'
-        s += ' toeoff: %d' % self.toeoff
+        s += f' toeoff: {self.toeoff}'
         s += '>'
         return s
 

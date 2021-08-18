@@ -6,7 +6,6 @@ Higher level plotting functions (backend agnostic).
 """
 
 import numpy as np
-import os.path as op
 import logging
 
 from ..config import cfg
@@ -204,10 +203,10 @@ def plot_trial_velocities(session, backend=None):
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
     if not c3ds:
         raise GaitDataError('No dynamic trials found for %s' % session)
-    labels = [op.splitext(op.split(f)[1])[0] for f in c3ds]
+    labels = [f.stem for f in c3ds]
     vels = np.array([utils._trial_median_velocity(tr) for tr in c3ds])
     figtitle = 'Walking speed for %s (average %.2f m/s)' % (
-        op.split(session)[-1],
+        session.name,
         np.nanmean(vels),
     )
     return get_backend(backend)._plot_vels(vels, labels, title=figtitle)
@@ -234,11 +233,11 @@ def plot_trial_timedep_velocities(session, backend=None):
     if not c3ds:
         raise GaitDataError('No dynamic trials found for %s' % session)
     vels = list()
-    labels = [op.splitext(op.split(f)[1])[0] for f in c3ds]
+    labels = [f.stem for f in c3ds]
     # get velocity curves
     for c3d in c3ds:
         _, vel = utils._trial_median_velocity(c3d, return_curve=True)
         # vel = signal.medfilt(vel, 3)  # can be used to filter out spikes
         vels.append(vel)
-    figtitle = 'Time-dependent trial velocities for %s' % op.split(session)[-1]
+    figtitle = 'Time-dependent trial velocities for %s' % session.name
     return get_backend(backend)._plot_timedep_vels(vels, labels, title=figtitle)

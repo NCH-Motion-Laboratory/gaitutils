@@ -8,7 +8,7 @@ Reporting in text format.
 
 import logging
 import numpy as np
-import os.path as op
+from pathlib import Path
 
 from .translations import translate
 from .. import utils, sessionutils
@@ -120,8 +120,8 @@ def _print_analysis_text(trials, vars_=None, main_label=None):
 
 def _session_analysis_text(sessionpath):
     """Return session time-distance vars as text"""
-
-    sessiondir = op.split(sessionpath)[-1]
+    sessionpath = Path(sessionpath)
+    sessiondir = sessionpath.name
     tagged_trials = sessionutils.get_c3ds(
         sessionpath, tags=cfg.eclipse.tags, trial_type='dynamic'
     )

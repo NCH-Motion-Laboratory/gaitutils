@@ -15,6 +15,7 @@ from flask import request
 import logging
 import base64
 import pickle
+from pathlib import Path
 
 from ulstools.num import age_from_hetu
 
@@ -269,9 +270,9 @@ def dash_report(
         logger.debug('report data digest: %s' % digest)
         # data is always saved into alphabetically first session
         data_dir = sorted(sessions)[0]
-        data_fn = data_dir / 'web_report_%s.dat' % digest
+        data_fn = data_dir / f'web_report_{digest}.dat'
         if data_fn.is_file() and not recreate_plots:
-            logger.debug('loading saved report data from %s' % data_fn)
+            logger.info(f'loading saved report data from {data_fn}')
             signals.progress.emit('Loading saved report...', 0)
             try:
                 with open(data_fn, 'rb') as f:
@@ -282,7 +283,7 @@ def dash_report(
                 saved_report_data = dict()
         else:
             saved_report_data = dict()
-            logger.debug('no saved data found or recreate forced')
+            logger.info('no saved data found or recreate forced')
 
         # make Trial instances for all dynamic and static trials
         # this is currently necessary even if saved figures are used

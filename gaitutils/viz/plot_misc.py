@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 def _show_plotly_fig(fig):
     """Show a Plotly fig in the configured browser"""
-    tmp_html = _named_tempfile('.html')
+    tmp_html = str(_named_tempfile('.html'))
     plotly.offline.plot(fig, filename=tmp_html, auto_open=False, validate=False)
     _browse_localhost(url=f'file:///{tmp_html}')
 

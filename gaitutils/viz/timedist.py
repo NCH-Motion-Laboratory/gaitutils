@@ -7,7 +7,6 @@ Time-distance plots.
 """
 
 import logging
-import os.path as op
 
 from ..envutils import GaitDataError
 from ..config import cfg
@@ -43,7 +42,7 @@ def plot_session_average(session, tags=None, backend=None):
     trials = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
     if not trials:
         raise GaitDataError('No tagged trials found for session %s' % session)
-    session_ = op.split(session)[-1]
+    session_ = session.name
     fig = plot_trials(
         {session_: trials},
         title='Time-distance average, session %s' % session_,
@@ -89,7 +88,7 @@ def plot_comparison(
         c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
         if not c3ds:
             raise RuntimeError('No tagged trials found in session %s' % session)
-        cond_label = op.split(session)[-1]
+        cond_label = session.name
         trials[cond_label] = c3ds
 
     return plot_trials(
@@ -146,20 +145,3 @@ def plot_trials(
         timedist_normaldata=timedist_normaldata,
         big_fonts=big_fonts,
     )
-
-
-def _plot_single_trial(c3dfile, backend=None):
-    """Plot single trial time-distance"""
-    _, c3dfile_ = op.split(c3dfile)
-    fig = plot_trials(
-        {c3dfile_: [c3dfile]},
-        title='Time-distance variables, %s' % c3dfile_,
-        backend=backend,
-    )
-    return fig
-
-
-def _plot_multitrial(c3dfiles, show=True, backend=None):
-    """Plot multiple trial comparison time-distance"""
-    trials = {op.split(c3d)[-1]: [c3d] for c3d in c3dfiles}
-    return plot_trials(trials, backend=backend)

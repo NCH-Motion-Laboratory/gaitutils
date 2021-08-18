@@ -5,7 +5,6 @@ Create web-based gait report using dash.
 @author: Jussi (jnu@iki.fi)
 """
 
-from numpy import save
 import plotly.graph_objs as go
 import dash
 import dash_core_components as dcc
@@ -14,7 +13,6 @@ from dash.dependencies import Input, Output, State
 import flask
 from flask import request
 import logging
-import os.path as op
 import base64
 import pickle
 
@@ -68,7 +66,7 @@ def _shutdown_server():
 
 def _report_name(sessions, long_name=True):
     """Create a title for the dash report"""
-    sessions_str = ' / '.join(op.split(s)[-1] for s in sessions)
+    sessions_str = ' / '.join(s.name for s in sessions)
     if long_name:
         report_type = (
             'Single session report' if len(sessions) == 1 else 'Comparison report'
@@ -116,6 +114,7 @@ def dash_report(
     dash.Dash | None
         The dash (flask) app, or None if report creation failed.
     """
+    sessions = [Path(s) for s in sessions]
 
     if recreate_plots is None:
         recreate_plots = False
@@ -191,7 +190,7 @@ def dash_report(
         sts = sessionutils.get_enfs(session, trial_type='static')
         for st in reversed(sts):  # newest first
             st_c3d = sessionutils.enf_to_trialfile(st, '.c3d')
-            if op.isfile(st_c3d):
+            if st_c3d.is_file():
                 static_trial = [st]
                 break
         else:
@@ -234,7 +233,7 @@ def dash_report(
                         )
                         if vids_this:
                             vid = vids_this[0]
-                            url = '/static/%s' % op.split(vid)[1]
+                            url = '/static/%s' % vid.name
                             vid_urls[tag][camera_label].append(url)
 
     # build dcc.Dropdown options list for cameras and tags
@@ -257,10 +256,10 @@ def dash_report(
     if not video_only:
         data_c3ds = [enf_to_trialfile(enffile, 'c3d') for enffile in data_enfs]
         # at this point, all the c3ds need to exist
-        missing = [fn for fn in data_c3ds if not op.isfile(fn)]
+        missing = [fn for fn in data_c3ds if not fn.is_file()]
         if missing:
             missing_trials = ', '.join(
-                [op.splitext(op.split(fn)[-1])[0] for fn in missing]
+                [fn.stem for fn in missing]
             )
             raise GaitDataError(
                 'C3D files are missing for following trials: %s' % missing_trials
@@ -270,8 +269,8 @@ def dash_report(
         logger.debug('report data digest: %s' % digest)
         # data is always saved into alphabetically first session
         data_dir = sorted(sessions)[0]
-        data_fn = op.join(data_dir, 'web_report_%s.dat' % digest)
-        if op.isfile(data_fn) and not recreate_plots:
+        data_fn = data_dir / 'web_report_%s.dat' % digest
+        if data_fn.is_file() and not recreate_plots:
             logger.debug('loading saved report data from %s' % data_fn)
             signals.progress.emit('Loading saved report...', 0)
             try:
@@ -352,7 +351,7 @@ def dash_report(
             if None in from_models:
                 raise GaitDataError('unknown variables in extract list: %s' % allvars)
             curve_vals = {
-                op.split(session)[-1]: _trials_extract_values(
+                session.name: _trials_extract_values(
                     trials, from_models=from_models
                 )
                 for session, trials in trials_dyn_dict.items()
@@ -763,9 +762,9 @@ def dash_report(
     @app.server.route('/static/<resource>')
     def serve_file(resource):
         for session in sessions:
-            filepath = op.join(session, resource)
-            if op.isfile(filepath):
-                return flask.send_from_directory(session, resource)
+            filepath = session / resource
+            if filepath.is_file():
+                return flask.send_from_directory(str(session), resource)
         return None
 
     # add shutdown method - see http://flask.pocoo.org/snippets/67/

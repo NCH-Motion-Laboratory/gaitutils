@@ -25,7 +25,7 @@ from .config import cfg
 
 logger = logging.getLogger(__name__)
 
-vicon = None
+vicon_ = None  # global SDK connection object
 
 try:
     from viconnexusapi import ViconNexus
@@ -117,14 +117,14 @@ def viconnexus():
     ViconNexus
         The instance.
     """
-    global vicon
+    global vicon_
     # if SDK connection has not been established yet or server info looks
     # invalid, we reestablish the connection; the latter condition occurs e.g.
     # when Nexus has been restarted (SDK object becomes stale)
-    if vicon is None or vicon.GetServerInfo()[0] != 'Nexus':
+    if vicon_ is None or vicon_.GetServerInfo()[0] != 'Nexus':
         _check_nexus()
-        vicon = ViconNexus.ViconNexus()
-    return vicon
+        vicon_ = ViconNexus.ViconNexus()
+    return vicon_
 
 
 def _close_trial():

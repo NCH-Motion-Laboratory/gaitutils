@@ -8,7 +8,7 @@ Normal data readers
 
 import numpy as np
 import openpyxl
-import os.path as op
+from pathlib import Path
 import json
 import io
 import logging
@@ -63,7 +63,8 @@ def _read_session_normaldata(session):
 def _read_timedist_normaldata_file(filename):
     """Read time-distance normal data."""
     logger.debug(f'reading time-distance normal data from {filename}')
-    if not op.isfile(filename):
+    filename = Path(filename)
+    if not filename.is_file():
         raise GaitDataError(f'No such file {filename}')
     with io.open(filename, 'r', encoding='utf-8') as f:
         timedist_normals = json.load(f)
@@ -79,7 +80,8 @@ def _read_emg_normaldata_file(filename):
     % of the gait cycle.
     """
     logger.debug(f'reading EMG normal data from {filename}')
-    if not op.isfile(filename):
+    filename = Path(filename)
+    if not filename.is_file():
         raise GaitDataError(f'No such file {filename}')
     with io.open(filename, 'r', encoding='utf-8') as f:
         emg_normals = json.load(f)
@@ -99,12 +101,13 @@ def _read_model_normaldata_file(filename):
     GCD and XLSX (Polygon) formats are currently supported.
     """
     logger.debug(f'reading normal data from {filename}')
-    if not op.isfile(filename):
+    filename = Path(filename)
+    if not filename.is_file():
         raise GaitDataError(f'No such file {filename}')
-    type_ = op.splitext(filename)[1].lower()
-    if type_ == '.gcd':
+    ext = filename.suffix.lower()
+    if ext == '.gcd':
         return _read_gcd(filename)
-    elif type_ == '.xlsx':
+    elif ext == '.xlsx':
         return _read_xlsx(filename)
     else:
         raise GaitDataError('Only .gcd or .xlsx file formats are supported')

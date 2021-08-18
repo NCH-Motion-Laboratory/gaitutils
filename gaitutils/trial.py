@@ -11,7 +11,6 @@ Read gait trials.
 from collections import defaultdict
 import numpy as np
 import re
-import os.path as op
 import logging
 from pathlib import Path
 

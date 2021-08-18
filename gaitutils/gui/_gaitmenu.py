@@ -948,8 +948,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             """Helper function that will be run in a separate thread"""
             nexus._close_trial()
             for k, tr in enumerate(trials, 1):
-                trbase = tr.with_suffix('')
-                vicon.OpenTrial(trbase, cfg.autoproc.nexus_timeout)
+                nexus._open_trial(tr)
                 nexus._run_pipelines_multiprocessing(cfg.autoproc.postproc_pipelines)
                 prog_txt = 'Running postprocessing pipelines: %s for %d trials' % (
                     cfg.autoproc.postproc_pipelines,
@@ -973,7 +972,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         )
         if trials and cfg.autoproc.postproc_pipelines:
             logger.debug('running postprocessing for %s' % trials)
-            vicon = nexus.viconnexus()
             self.prog = ProgressBar('Running postprocessing pipelines...')
             self.prog.update(
                 'Running postprocessing pipelines: %s for %d '

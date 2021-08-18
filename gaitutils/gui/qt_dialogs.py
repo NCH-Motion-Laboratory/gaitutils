@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QDialogButtonBox
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from pkg_resources import resource_filename
-import os.path as op
+from pathlib import Path
 import ast
 import io
 from collections import defaultdict
@@ -288,7 +288,7 @@ class OptionsDialog(QtWidgets.QDialog):
     def load_config_dialog(self):
         """Bring up load dialog and load selected file"""
         fout = QtWidgets.QFileDialog.getOpenFileName(
-            self, 'Load config file', op.expanduser('~'), 'Config files (*.cfg)'
+            self, 'Load config file', Path.home(), 'Config files (*.cfg)'
         )
         fname = fout[0]
         if fname:
@@ -316,7 +316,7 @@ class OptionsDialog(QtWidgets.QDialog):
             )
         else:
             fout = QtWidgets.QFileDialog.getSaveFileName(
-                self, 'Save config file', op.expanduser('~'), 'Config files (*.cfg)'
+                self, 'Save config file', Path.home(), 'Config files (*.cfg)'
             )
             fname = fout[0]
             if fname:
@@ -401,12 +401,12 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
                 return
         else:
             dirs = qt_dir_chooser()
-        dirs = [op.normpath(d) for d in dirs]
+        dirs = [Path(d) for d in dirs]
         for dir_ in dirs:
             if dir_ in self.sessions:
                 qt_message_dialog('Session %s already loaded' % dir_)
             else:
-                self.listSessions.add_item(dir_, data=dir_)
+                self.listSessions.add_item(str(dir_), data=dir_)
 
     @property
     def sessions(self):

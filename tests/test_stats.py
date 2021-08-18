@@ -7,12 +7,10 @@ Tests for trial stats
 """
 
 import numpy as np
-from numpy.testing import assert_allclose, assert_equal
-import pytest
 import logging
 
 from gaitutils import sessionutils, stats, models
-from utils import _trial_path, _c3d_path, _file_path, cfg
+from utils import _file_path, cfg
 
 
 logger = logging.getLogger(__name__)

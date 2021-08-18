@@ -6,15 +6,14 @@ Test trial related functionality
 @author: jussi (jnu@iki.fi)
 """
 
-import pytest
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 import logging
 
-from gaitutils import c3d, models
+from gaitutils import models
 from gaitutils.trial import Trial
 from gaitutils.utils import _pig_markerset
-from utils import _trial_path, _c3d_path, _file_path, cfg
+from utils import _trial_path
 
 
 logger = logging.getLogger(__name__)

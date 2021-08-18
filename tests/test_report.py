@@ -27,6 +27,7 @@ sessiondir__ = op.split(sessiondir_)[-1]
 tmpdir = tempfile.gettempdir()
 
 
+@pytest.mark.slow
 def test_pdf_report():
     """Test creation of pdf report + time-distance text report"""
     pdfname = sessiondir__ + '.pdf'
@@ -44,6 +45,7 @@ def test_pdf_report():
     assert op.isfile(timedist_path)
 
 
+@pytest.mark.slow
 def test_pdf_comparison_report():
     """Test creation of pdf comparison report"""
     sessionpaths = [sessiondir_abs, sessiondir2_abs]

@@ -9,7 +9,6 @@ Unit tests on a running instance of Vicon Nexus.
 from numpy.testing import assert_allclose, assert_almost_equal
 import pytest
 import numpy as np
-import os.path as op
 from numpy.testing import (
     assert_array_equal,
     assert_array_almost_equal,
@@ -24,8 +23,7 @@ from gaitutils.viz import plots
 from utils import _trial_path, start_nexus
 
 
-start_nexus()
-
+@pytest.mark.nexus
 def test_find_nexus_path():
     """Test _find_nexus_path()"""
     p = nexus._find_nexus_path()
@@ -35,6 +33,7 @@ def test_find_nexus_path():
 @pytest.mark.nexus
 def test_nexus_reader():
     """Test basic data reading and Trial instance creation"""
+    start_nexus()
     vicon = nexus.viconnexus()
     # from old Helsinki lab
     trialname = '2015_10_22_girl6v_IN13'
@@ -92,6 +91,7 @@ def test_nexus_reader():
 @pytest.mark.nexus
 def test_nexus_plot():
     """Test basic plot from Nexus"""
+    start_nexus()
     vicon = nexus.viconnexus()
     trialname = '2015_10_22_girl6v_IN13'
     subject = 'girl6v'
@@ -105,6 +105,7 @@ def test_nexus_plot():
 @pytest.mark.nexus
 def test_nexus_get_forceplate_ids():
     """Test forceplate id getter"""
+    start_nexus()
     vicon = nexus.viconnexus()
     subj = 'D0063_RR'
     trialname = '2018_12_17_preOp_RR06.c3d'
@@ -118,6 +119,7 @@ def test_nexus_get_forceplate_ids():
 @pytest.mark.nexus
 def test_nexus_get_forceplate_data():
     """Test forceplate data getter"""
+    start_nexus()
     vicon = nexus.viconnexus()
     subj = 'D0063_RR'
     trialname = '2018_12_17_preOp_RR06.c3d'
@@ -174,6 +176,7 @@ def test_nexus_get_forceplate_data():
 @pytest.mark.nexus
 def test_nexus_set_forceplate_data():
     """Test forceplate data setter"""
+    start_nexus()
     vicon = nexus.viconnexus()
     subj = 'D0063_RR'
     trialname = '2018_12_17_preOp_RR06.c3d'
@@ -203,6 +206,7 @@ def test_nexus_set_forceplate_data():
 @pytest.mark.nexus
 def test_compare_to_c3d():
     """Compare data reads from Nexus and corresponding Nexus written .c3d"""
+    start_nexus()
     vicon = nexus.viconnexus()
     # set the correct EMG device name for the old data
     cfg.emg.devname = 'Myon'
@@ -265,6 +269,7 @@ def test_compare_to_c3d():
 @pytest.mark.nexus
 def test_event_marking():
     """Test automarking of events"""
+    start_nexus()
     vicon = nexus.viconnexus()
     ev_tol = 4  # tolerance for event marking (frames)
     events_dict = dict()  # ground truth with forceplate info
@@ -325,11 +330,11 @@ def test_autoproc():
     Nexus.
     """
     # SDK does not have open_session(), so we need to open a trial
+    start_nexus()
     subj = 'D0063_RR'
     trialname = '2018_12_17_preOp_RR04.c3d'
     session = 'autoproc_session'
     trialpath = _trial_path(subj, trialname, session=session)
-    sessionpath = op.split(trialpath)[0]
     nexus._open_trial(trialpath)
     # check that we ended up in correct session
     # (otherwise autoproc could take forever, or cause damage)
@@ -339,11 +344,11 @@ def test_autoproc():
     # check the resulting c3d files
     for c3dn in [1, 4, 5, 6]:
         c3dname = '2018_12_17_preOp_RR0%d.c3d' % c3dn
-        c3dpath = op.join(sessionpath, c3dname)
-        assert op.isfile(c3dpath)
+        c3dpath = trialpath.parent / c3dname
+        assert c3dpath.is_file()
         # check that dynamic files were modified in the last 10 minutes,
         # and static is older (unmodified by processing)
-        mtime = datetime.fromtimestamp(op.getmtime(c3dpath))
+        mtime = datetime.fromtimestamp(c3dpath.lstat().st_mtime)
         if c3dn == 4:
             assert (datetime.now() - mtime).total_seconds() > 3600
         else:

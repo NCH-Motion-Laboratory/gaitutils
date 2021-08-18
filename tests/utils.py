@@ -34,6 +34,7 @@ else:
 
 
 def start_nexus():
+    """Start Nexus if needed"""
     if not nexus._nexus_pid():
         # try to start Nexus for tests...
         exe = nexus._find_nexus_path() / 'Nexus.exe'
@@ -42,7 +43,7 @@ def start_nexus():
         subprocess.Popen([exe], stdout=blackhole)
         time.sleep(9)
         if not nexus._nexus_pid():
-            raise Exception('Failed to start Nexus, please start it manually')
+            raise Exception('Failed to start Vicon Nexus')
     return nexus.viconnexus()
 
 

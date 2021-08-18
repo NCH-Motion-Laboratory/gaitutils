@@ -74,7 +74,7 @@ def _git_update():
     """
 
     if git_mode:
-        logger.debug('running git autoupdate')
+        logger.info('running git update')
         try:
             o = subprocess.check_output(
                 ['git', 'pull'], cwd=pkg_parent, encoding='utf-8'

@@ -470,12 +470,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
             )
             sys.exit()
 
-        if cfg.general.git_autoupdate:
-            if envutils._git_autoupdate():
-                # update was done, restart the script
-                menu_script = op.join(envutils.pkg_dir, 'gui/gaitmenu.py')
-                os.execv(sys.executable, ['python'] + [menu_script])
-
         self._web_report_dialog = WebReportDialog(self)
 
         # connect ui widgets
@@ -1254,8 +1248,6 @@ def main():
         logger.debug('Running from a git repository')
     else:
         logger.debug('Running from a pip install')
-    if cfg.general.git_autoupdate:
-        logger.debug('git autoupdate enabled')
     if not c3d.BTK_IMPORTED:
         logger.warning('cannot find btk module; unable to read .c3d files')
     if not nexus.NEXUS_IMPORTED:

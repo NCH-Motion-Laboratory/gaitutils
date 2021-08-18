@@ -702,7 +702,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             tr.trialname,
             tr.eclipse_data['DESCRIPTION'],
             tr.eclipse_data['NOTES'],
-            tr.sessionpath,
+            str(tr.sessionpath),
         )
         for k, txt in enumerate(texts):
             item_ = QtWidgets.QTableWidgetItem(txt)

@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 pkg_dir = Path(resource_filename('gaitutils', ''))  # package directory
-pkg_parent = pkg_dir.parent 
+pkg_parent = pkg_dir.parent
 git_mode = (pkg_parent / '.git').is_dir()
 
 

@@ -183,6 +183,7 @@ def _check_nexus():
         raise GaitDataError('Vicon Nexus does not seem to be running')
     return pid
 
+
 def get_sessionpath():
     """Get path to current Nexus session.
 

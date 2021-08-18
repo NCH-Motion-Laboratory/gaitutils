@@ -146,9 +146,7 @@ def get_analysis(c3dfile, condition='unknown'):
     for var in di_:
         for context in ['Left', 'Right']:
             if context not in di_[var]:
-                logger.warning(
-                    f'{c3dfile} has missing value: {var} / {context}'
-                )
+                logger.warning(f'{c3dfile} has missing value: {var} / {context}')
                 di_[var][context] = np.nan
 
     # Nexus version <2.8 did not output step width into c3d, so compute it here

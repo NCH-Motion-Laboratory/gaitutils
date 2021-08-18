@@ -804,9 +804,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             tr.emg._edf_export(default_edfname)
             n_out += 1
         if n_out:
-            qt_message_dialog(
-                f'Exported {n_out} edf file(s) into {tr.sessionpath}'
-            )
+            qt_message_dialog(f'Exported {n_out} edf file(s) into {tr.sessionpath}')
 
     def _plot_selected_trials(self, layout_name=None):
         """Plot user selected trials from list"""

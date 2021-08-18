@@ -24,4 +24,3 @@ def test_named_tempfile():
     tmp = envutils._named_tempfile(suffix='.tmp')
     assert tmp.suffix == '.tmp'
     assert tmp.parent.is_dir()
-    

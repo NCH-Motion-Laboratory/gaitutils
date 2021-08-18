@@ -93,12 +93,20 @@ def plot_comparison(
         trials[cond_label] = c3ds
 
     return plot_trials(
-        trials, timedist_normaldata=timedist_normaldata, big_fonts=big_fonts, backend=backend
+        trials,
+        timedist_normaldata=timedist_normaldata,
+        big_fonts=big_fonts,
+        backend=backend,
     )
 
 
 def plot_trials(
-    c3dfiles, plotvars=None, title=None, timedist_normaldata=None, big_fonts=False, backend=None
+    c3dfiles,
+    plotvars=None,
+    title=None,
+    timedist_normaldata=None,
+    big_fonts=False,
+    backend=None,
 ):
     """Plot a time-distance barchart from given c3d files.
 

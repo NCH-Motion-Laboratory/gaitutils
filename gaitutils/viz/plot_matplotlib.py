@@ -58,9 +58,7 @@ def _plot_extracted_table(curve_vals, vardefs):
             for ctxt, _ in contexts:
                 vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
                 if vardef_ctxt[0] not in session_vals:
-                    logger.debug(
-                        f'{vardef_ctxt[0]} was not collected for this session'
-                    )
+                    logger.debug(f'{vardef_ctxt[0]} was not collected for this session')
                     continue
                 this_vals = _nested_get(
                     session_vals, vardef_ctxt
@@ -482,6 +480,8 @@ def plot_trials(
 
     if supplementary_data is None:
         supplementary_data = dict()
+    else:
+        logger.warning('plot_matplotlib does not implement supplementary data yet')
 
     if model_normaldata is None:
         model_normaldata = normaldata._read_configured_model_normaldata()
@@ -511,15 +511,6 @@ def plot_trials(
     gridspec_ = gridspec.GridSpec(
         nrows + 1, ncols, figure=fig, height_ratios=plotheightratios, width_ratios=None
     )
-    # spacing adjustments for the plot, see Figure.tight_layout()
-    # pad == plot margins
-    # w_pad, h_pad == horizontal and vertical subplot padding
-    # rect leaves extra space for figtitle
-    # auto_spacing_params = dict(pad=.2, w_pad=.3, h_pad=.3,
-    #                            rect=(0, 0, 1, .95))
-    # fig = Figure(figsize=(figw, figh),
-    #              tight_layout=auto_spacing_params)
-    # fig = Figure(figsize=(figw, figh))
 
     normalized = cycles != 'unnormalized'
     cycles = _handle_cyclespec(cycles)
@@ -595,7 +586,9 @@ def plot_trials(
 
                         # plot normal data before first cycle
                         if model_normaldata is not None and first_cyc and normalized:
-                            nvar = var if var in themodel.varlabels_nocontext else var[1:]
+                            nvar = (
+                                var if var in themodel.varlabels_nocontext else var[1:]
+                            )
                             key = nvar if nvar in model_normaldata else None
                             ndata = (
                                 model_normaldata[key]
@@ -879,10 +872,10 @@ def plot_trials(
     if figtitle is not None:
         fig.suptitle(figtitle, fontsize=10)
 
-
     if legend:
-        # put legend into its own axis, since constrained_layout does not handle fig.legend yet
+        # XXX: put legend into its own axis, since constrained_layout does not handle fig.legend yet
         # see https://github.com/matplotlib/matplotlib/issues/13023
+        # once the above PR is merged, a simple fig.legend() call should work
         axleg = fig.add_subplot(gridspec_[i + 1, :])
         axleg.axis('off')
         leg_entries_ = dict()
@@ -891,6 +884,7 @@ def plot_trials(
         if emg_normal_lines_:
             leg_entries_['EMG norm.'] = emg_normal_lines_
         leg_entries_.update(leg_entries)
+        # set legend n of columns = n of figure columns (just a simple heuristic)
         leg_ncols = ncols
         leg = axleg.legend(
             leg_entries_.values(),

@@ -877,13 +877,8 @@ def plot_trials(
                         ax.xaxis.label.set_fontsize(cfg.plot_matplotlib.label_fontsize)
 
     if figtitle is not None:
-        # constrained_layout does not work well with suptitle
-        # (https://github.com/matplotlib/matplotlib/issues/13672)
-        # hack: add extra \n to create whitespace
-        # Py2: this hack is no longer necessary in matplotlib 3.x or newer
-        if figtitle and figtitle[-1] != '\n':
-            figtitle = figtitle + '\n'
         fig.suptitle(figtitle, fontsize=10)
+
 
     if legend:
         # put legend into its own axis, since constrained_layout does not handle fig.legend yet

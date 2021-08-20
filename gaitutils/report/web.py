@@ -259,9 +259,7 @@ def dash_report(
         # at this point, all the c3ds need to exist
         missing = [fn for fn in data_c3ds if not fn.is_file()]
         if missing:
-            missing_trials = ', '.join(
-                [fn.stem for fn in missing]
-            )
+            missing_trials = ', '.join([fn.stem for fn in missing])
             raise GaitDataError(
                 'C3D files are missing for following trials: %s' % missing_trials
             )
@@ -352,9 +350,7 @@ def dash_report(
             if None in from_models:
                 raise GaitDataError('unknown variables in extract list: %s' % allvars)
             curve_vals = {
-                session.name: _trials_extract_values(
-                    trials, from_models=from_models
-                )
+                session.name: _trials_extract_values(trials, from_models=from_models)
                 for session, trials in trials_dyn_dict.items()
             }
 
@@ -378,12 +374,13 @@ def dash_report(
         page_layouts = dict(cfg.web_report.page_layouts)
 
         # pick desired single variables from model and append
-        # Py2: dict merge below can be done more elegantly once Py2 is dropped
-        pig_singlevars_ = models.pig_lowerbody.varlabels_noside.copy()
-        pig_singlevars_.update(models.pig_lowerbody_kinetics.varlabels_noside)
-        pig_singlevars = sorted(pig_singlevars_.items(), key=lambda item: item[1])
-        singlevars = {varlabel: ('layout', [[var]]) for var, varlabel in pig_singlevars}
-        page_layouts.update(singlevars)
+        pigvars = (
+            models.pig_lowerbody.varlabels_noside
+            | models.pig_lowerbody_kinetics.varlabels_noside
+        )
+        pigvars = sorted(pigvars.items(), key=lambda item: item[1])
+        pigvars_louts = {varlabel: ('layout', [[var]]) for var, varlabel in pigvars}
+        page_layouts.update(pigvars_louts)
 
         # add supplementary data for normal layouts
         supplementary_default = dict()

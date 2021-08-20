@@ -480,7 +480,7 @@ def plot_trials(
             for j, var in enumerate(row):
                 themodel = models.model_from_var(var)
                 if themodel and model_normaldata:
-                    nvar = var if var in themodel.varlabels_noside else var[1:]
+                    nvar = var if var in themodel.varlabels_nocontext else var[1:]
                     key = nvar if nvar in model_normaldata else None
                     ndata = model_normaldata[key] if key in model_normaldata else None
                     if ndata is not None:
@@ -561,7 +561,7 @@ def plot_trials(
                     if vartype == 'model':
                         do_plot = cyc in cyclebunch.model_cycles
                         themodel = models.model_from_var(var)
-                        if var in themodel.varnames_noside:
+                        if var in themodel.varnames_nocontext:
                             # var context was unspecified, so choose it
                             # according to cycle context
                             var = context + var

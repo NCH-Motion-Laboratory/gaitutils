@@ -289,10 +289,10 @@ def test_event_marking():
 
     def _events_check(events_dict):
         """Helper to check whether Nexus events are close to ground truth"""
-        for side, sidedict in events_dict.items():
-            for event_type, events in sidedict.items():
+        for context, contextdict in events_dict.items():
+            for event_type, events in contextdict.items():
                 nexus_events = vicon.GetEvents(
-                    vicon.GetSubjectNames()[0], side, event_type
+                    vicon.GetSubjectNames()[0], context, event_type
                 )[0]
                 assert_equal(len(events), len(nexus_events))
                 for j, ev in enumerate(nexus_events):

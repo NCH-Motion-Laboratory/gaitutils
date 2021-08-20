@@ -153,7 +153,7 @@ def _step_width(source):
         mname = context + mkr
         mname_co = context_co + mkr
         for j, strike in enumerate(strikes):
-            if strike == strikes[-1]:  # last strike on this side
+            if strike == strikes[-1]:  # last strike on this context
                 break
             pos_this = mkrdata[mname][strike]
             pos_next = mkrdata[mname][strikes[j + 1]]
@@ -287,14 +287,14 @@ def _check_markers_flipped(mkrdata):
     Yields pairs of flipped markers"""
     MAX_ANGLE = 90  # max angle to consider vectors 'similarly oriented'
     # HEE-TOE checks
-    for side in ['L', 'R']:
+    for context in ['L', 'R']:
         # compare HEE-TOE line to pelvis orientation
-        mkr_toe, mkr_hee = '%sTOE' % side, '%sHEE' % side
+        mkr_toe, mkr_hee = '%sTOE' % context, '%sHEE' % context
         ht = _normalize(mkrdata[mkr_toe] - mkrdata[mkr_hee])
-        if side + 'PSI' in mkrdata:
-            pa = _normalize(mkrdata[side + 'ASI'] - mkrdata[side + 'PSI'])
+        if context + 'PSI' in mkrdata:
+            pa = _normalize(mkrdata[context + 'ASI'] - mkrdata[context + 'PSI'])
         elif 'SACR' in mkrdata:
-            pa = _normalize(mkrdata[side + 'ASI'] - mkrdata['SACR'])
+            pa = _normalize(mkrdata[context + 'ASI'] - mkrdata['SACR'])
         angs = np.arccos(np.sum(ht * pa, axis=1)) / np.pi * 180
         if np.nanmedian(angs) > MAX_ANGLE:
             yield mkr_toe, mkr_hee
@@ -480,13 +480,13 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
     to roi.
     """
 
-    def _foot_plate_check(fpdata, mkrdata, fr0, side, footlen):
+    def _foot_plate_check(fpdata, mkrdata, fr0, context, footlen):
         """Helper for foot-plate check.
 
         Returns 0, 1, 2 for: completely outside plate, partially outside plate,
         inside plate, respectively.
         """
-        allpts = _get_foot_points(mkrdata, side, footlen)
+        allpts = _get_foot_points(mkrdata, context, footlen)
         poly = fpdata['plate_corners']
         pts_ok = list()
         for label, pts in allpts.items():
@@ -641,8 +641,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             # to eliminate double contacts, check that contralateral foot is not on plate
             # this needs marker-based events
             if foot_contacts_ok and events_0 is not None:
-                contra_side = 'R' if this_context == 'L' else 'L'
-                contra_strikes = events_0[contra_side + '_strikes']
+                contra_context = 'R' if this_context == 'L' else 'L'
+                contra_strikes = events_0[contra_context + '_strikes']
                 contra_strikes_next = contra_strikes[
                     np.where(contra_strikes > strike_fr)
                 ]
@@ -658,7 +658,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
                             '(at frame %d)' % fr0
                         )
                         contra_next_ok = (
-                            _foot_plate_check(fp, mkrdata, fr0, contra_side, footlen)
+                            _foot_plate_check(fp, mkrdata, fr0, contra_context, footlen)
                             == 0
                         )
                         foot_contacts_ok &= contra_next_ok
@@ -674,7 +674,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
                         'foot (at frame %d)' % fr0
                     )
                     contra_prev_ok = (
-                        _foot_plate_check(fp, mkrdata, fr0, contra_side, footlen) == 0
+                        _foot_plate_check(fp, mkrdata, fr0, contra_context, footlen) == 0
                     )
                     foot_contacts_ok &= contra_prev_ok
             context = this_context if foot_contacts_ok else None
@@ -819,7 +819,7 @@ def automark_events(
     for context, footctrP, footctrv in zip(
         ('R', 'L'), (rfootctrP, lfootctrP), (rfootctrv, lfootctrv)
     ):
-        logger.debug('marking side %s' % context)
+        logger.debug('marking context %s' % context)
         # foot center position
         # filter scalar velocity data to suppress noise and spikes
         footctrv = signal.medfilt(footctrv, PREFILTER_MEDIAN_WIDTH)
@@ -836,7 +836,7 @@ def automark_events(
         else:
             threshold_rise_ = maxv * cfg.autoproc.toeoff_vel_threshold
         logger.debug(
-            'side: %s, default thresholds fall/rise: %.2f/%.2f'
+            'context: %s, default thresholds fall/rise: %.2f/%.2f'
             % (
                 context,
                 maxv * cfg.autoproc.strike_vel_threshold,

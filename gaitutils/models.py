@@ -33,7 +33,7 @@ def model_from_var(var_):
     elif not isinstance(var_, str):
         raise TypeError('Variable name must be a string or None')
     for model in models_all:
-        if var_ in model.varnames or var_ in model.varnames_noside:
+        if var_ in model.varnames or var_ in model.varnames_nocontext:
             return model
     return None
 
@@ -41,28 +41,28 @@ def model_from_var(var_):
 # convenience methods for model creation
 
 
-def _list_with_side(vars_):
+def _list_with_context(vars_):
     """Prepend variable names in vars_ with 'L' and 'R'."""
-    return [side + var for var in vars_ for side in 'LR']
+    return [context + var for var in vars_ for context in 'LR']
 
 
-def _dict_with_side_gen(di, append_side=False):
+def _dict_with_context_gen(di, append_context=False):
     """Prepend all dict keys in di with 'R' and 'L' and return new dict.
-    If append_side, also append corresponding ' (R)' or ' (L)' to every dict
+    If append_context, also append corresponding ' (R)' or ' (L)' to every dict
     value."""
     for key, val in di.items():
         for ctxt in 'RL':
-            if append_side:
+            if append_context:
                 yield ctxt + key, '%s (%s)' % (val, ctxt)
             else:
                 yield ctxt + key, val
 
 
-def _dict_with_side(di, append_side=False):
+def _dict_with_context(di, append_context=False):
     """Prepend all dict keys in di with 'R' and 'L' and return new dict.
-    If append_side, also append corresponding ' (R)' or ' (L)' to every dict
+    If append_context, also append corresponding ' (R)' or ' (L)' to every dict
     value."""
-    return dict(_dict_with_side_gen(di, append_side=append_side))
+    return dict(_dict_with_context_gen(di, append_context=append_context))
 
 
 class GaitModel:
@@ -82,8 +82,8 @@ class GaitModel:
         self.read_strategy = None
         self.desc = ''  # description of model
         self.varnames = list()  # resulting variable names
-        self.varnames_noside = list()  # variables without side
-        self.varlabels_noside = dict()  # variables without side
+        self.varnames_nocontext = list()  # variables without context
+        self.varlabels_nocontext = dict()  # variables without context
         self.varlabels = dict()  # descriptive label for each variable
         # mapping from variable names to gcd normal data variables
         self.gcd_normaldata_map = dict()
@@ -105,9 +105,9 @@ ofm = GaitModel()
 ofm.desc = 'Oxford foot model kinematics'
 ofm.read_strategy = 'split_xyz'
 
-ofm.read_vars = _list_with_side(['FFHFA', 'FFTBA', 'HFTBA', 'HFTFL', 'HXFFA', 'TIBA'])
+ofm.read_vars = _list_with_context(['FFHFA', 'FFTBA', 'HFTBA', 'HFTFL', 'HXFFA', 'TIBA'])
 
-ofm.varlabels_noside = {
+ofm.varlabels_nocontext = {
     'FFHFAX': 'Forefoot-hindfoot dorsiflexion',
     'FFHFAY': 'Forefoot-hindfoot adduction',
     'FFHFAZ': 'Forefoot-hindfoot supination',
@@ -129,7 +129,7 @@ ofm.varlabels_noside = {
 }
 
 ofm.units = defaultdict(lambda: 'deg')
-ofm.ydesc = _dict_with_side(
+ofm.ydesc = _dict_with_context(
     {
         'FFHFAX': ('Plantarflexion', 'Dorsiflexion'),
         'FFHFAY': ('Abduction', 'Adduction'),
@@ -153,9 +153,9 @@ ofm.ydesc = _dict_with_side(
 )
 
 
-ofm.varlabels = _dict_with_side(ofm.varlabels_noside)
+ofm.varlabels = _dict_with_context(ofm.varlabels_nocontext)
 ofm.varnames = ofm.varlabels.keys()
-ofm.varnames_noside = ofm.varlabels_noside.keys()
+ofm.varnames_nocontext = ofm.varlabels_nocontext.keys()
 
 models_all.append(ofm)
 
@@ -167,7 +167,7 @@ pig_upperbody = GaitModel()
 pig_upperbody.desc = 'Plug-in Gait upper body kinematics'
 pig_upperbody.read_strategy = 'split_xyz'
 
-pig_upperbody.read_vars = _list_with_side(
+pig_upperbody.read_vars = _list_with_context(
     [
         'ThoraxAngles',
         'ShoulderAngles',
@@ -179,7 +179,7 @@ pig_upperbody.read_vars = _list_with_side(
     ]
 )
 
-pig_upperbody.varlabels_noside = {
+pig_upperbody.varlabels_nocontext = {
     'ThoraxAnglesX': 'Thorax flex/ext',
     'ThoraxAnglesY': 'Thorax lateral flex',
     'ThoraxAnglesZ': 'Thorax rotation',
@@ -207,7 +207,7 @@ pig_upperbody.varlabels_noside = {
 pig_upperbody.units = defaultdict(lambda: 'deg')
 # FIXME: incomplete y descriptions
 pig_upperbody.ydesc = defaultdict(lambda: ('', ''))  # FIXME: see Vicon docs
-upperbody_ydesc_partial = _dict_with_side(
+upperbody_ydesc_partial = _dict_with_context(
     {
         'ThoraxAnglesX': ('Backward', 'Forward'),
         'ThoraxAnglesY': ('Lateral', 'Medial'),
@@ -215,9 +215,9 @@ upperbody_ydesc_partial = _dict_with_side(
     }
 )
 pig_upperbody.ydesc.update(upperbody_ydesc_partial)
-pig_upperbody.varlabels = _dict_with_side(pig_upperbody.varlabels_noside)
+pig_upperbody.varlabels = _dict_with_context(pig_upperbody.varlabels_nocontext)
 pig_upperbody.varnames = pig_upperbody.varlabels.keys()
-pig_upperbody.varnames_noside = pig_upperbody.varlabels_noside.keys()
+pig_upperbody.varnames_nocontext = pig_upperbody.varlabels_nocontext.keys()
 
 models_all.append(pig_upperbody)
 
@@ -228,7 +228,7 @@ models_all.append(pig_upperbody)
 pig_lowerbody = GaitModel()
 pig_lowerbody.desc = 'Plug-in Gait lower body kinematics'
 pig_lowerbody.read_strategy = 'split_xyz'
-pig_lowerbody.read_vars = _list_with_side(
+pig_lowerbody.read_vars = _list_with_context(
     [
         'HipAngles',
         'KneeAngles',
@@ -239,7 +239,7 @@ pig_lowerbody.read_vars = _list_with_side(
     ]
 )
 
-pig_lowerbody.varlabels_noside = {
+pig_lowerbody.varlabels_nocontext = {
     'AnkleAnglesX': 'Ankle dorsi/plant',
     'AnkleAnglesY': 'Ankle adduction',
     'AnkleAnglesZ': 'Ankle rotation',
@@ -258,10 +258,10 @@ pig_lowerbody.varlabels_noside = {
     'PelvisAnglesZ': 'Pelvic rotation',
 }
 
-pig_lowerbody.varlabels = _dict_with_side(pig_lowerbody.varlabels_noside)
+pig_lowerbody.varlabels = _dict_with_context(pig_lowerbody.varlabels_nocontext)
 
 pig_lowerbody.varnames = pig_lowerbody.varlabels.keys()
-pig_lowerbody.varnames_noside = pig_lowerbody.varlabels_noside.keys()
+pig_lowerbody.varnames_nocontext = pig_lowerbody.varlabels_nocontext.keys()
 
 pig_lowerbody.gcd_normaldata_map = {
     'DorsiPlanFlex': 'AnkleAnglesX',
@@ -281,7 +281,7 @@ pig_lowerbody.gcd_normaldata_map = {
 # unit is degrees for each kinematic variable
 pig_lowerbody.units = defaultdict(lambda: 'deg')
 
-pig_lowerbody.ydesc = _dict_with_side(
+pig_lowerbody.ydesc = _dict_with_context(
     {
         'AnkleAnglesX': ('Plantarflexion', 'Dorsiflexion'),
         'AnkleAnglesY': ('Abduction', 'Adduction'),
@@ -311,7 +311,7 @@ models_all.append(pig_lowerbody)
 pig_lowerbody_kinetics = GaitModel()
 pig_lowerbody_kinetics.desc = 'Plug-in Gait lower body kinetics'
 pig_lowerbody_kinetics.read_strategy = 'split_xyz'
-pig_lowerbody_kinetics.read_vars = _list_with_side(
+pig_lowerbody_kinetics.read_vars = _list_with_context(
     [
         'HipMoment',
         'KneeMoment',
@@ -323,7 +323,7 @@ pig_lowerbody_kinetics.read_vars = _list_with_side(
     ]
 )
 
-pig_lowerbody_kinetics.varlabels_noside = {
+pig_lowerbody_kinetics.varlabels_nocontext = {
     'AnkleMomentX': 'Ankle dors/plan moment',
     'AnkleMomentY': 'Ankle ab/add moment',
     'AnkleMomentZ': 'Ankle rotation moment',
@@ -341,12 +341,12 @@ pig_lowerbody_kinetics.varlabels_noside = {
     'NormalisedGRFZ': 'Norm. GRF (z)',
 }
 
-pig_lowerbody_kinetics.varlabels = _dict_with_side(
-    pig_lowerbody_kinetics.varlabels_noside
+pig_lowerbody_kinetics.varlabels = _dict_with_context(
+    pig_lowerbody_kinetics.varlabels_nocontext
 )
 
 pig_lowerbody_kinetics.varnames = pig_lowerbody_kinetics.varlabels.keys()
-pig_lowerbody_kinetics.varnames_noside = pig_lowerbody_kinetics.varlabels_noside.keys()
+pig_lowerbody_kinetics.varnames_nocontext = pig_lowerbody_kinetics.varlabels_nocontext.keys()
 
 pig_lowerbody_kinetics.gcd_normaldata_map = {
     'AnklePower': 'AnklePowerZ',
@@ -363,7 +363,7 @@ pig_lowerbody_kinetics.gcd_normaldata_map = {
     'KneeValgVarMoment': 'KneeMomentY',
 }
 
-pig_lowerbody_kinetics.units = _dict_with_side(
+pig_lowerbody_kinetics.units = _dict_with_context(
     {
         'AnkleMomentX': 'Nm/kg',
         'AnkleMomentY': 'Nm/kg',
@@ -383,7 +383,7 @@ pig_lowerbody_kinetics.units = _dict_with_side(
     }
 )
 
-pig_lowerbody_kinetics.ydesc = _dict_with_side(
+pig_lowerbody_kinetics.ydesc = _dict_with_context(
     {
         'AnkleMomentX': ('Dorsiflexion', 'Plantarflexion'),
         'AnkleMomentY': ('Adduction', 'Abduction'),
@@ -415,7 +415,7 @@ musclelen = GaitModel()
 musclelen.desc = 'Muscle length (MuscleLength.mod)'
 musclelen.read_strategy = 'last'
 
-musclelen.varlabels_noside = {
+musclelen.varlabels_nocontext = {
     'AdBrLength': 'AdBrLength',
     'AdLoLength': 'AdLoLength',
     'AdMaInfLength': 'AdMaInfLength',
@@ -460,10 +460,10 @@ musclelen.varlabels_noside = {
     'VaMeLength': 'VaMeLength',
 }
 
-musclelen.varlabels = _dict_with_side(musclelen.varlabels_noside)
+musclelen.varlabels = _dict_with_context(musclelen.varlabels_nocontext)
 musclelen.read_vars = musclelen.varlabels.keys()
 musclelen.varnames = musclelen.read_vars
-musclelen.varnames_noside = musclelen.varlabels_noside.keys()
+musclelen.varnames_nocontext = musclelen.varlabels_nocontext.keys()
 
 musclelen.units = defaultdict(lambda: 'Norm length')  # FIXME: % of what?
 musclelen.ydesc = defaultdict(lambda: ('', ''))

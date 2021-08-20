@@ -59,7 +59,7 @@ def _plot_extracted_table(curve_vals, vardefs):
                 vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
                 if vardef_ctxt[0] not in session_vals:
                     logger.debug(
-                        '%s was not collected for this session' % vardef_ctxt[0]
+                        f'{vardef_ctxt[0]} was not collected for this session'
                     )
                     continue
                 this_vals = _nested_get(
@@ -576,7 +576,7 @@ def plot_trials(
                     if vartype == 'model':
                         do_plot = cyc in cyclebunch.model_cycles
                         themodel = models.model_from_var(var)
-                        if var in themodel.varnames_noside:
+                        if var in themodel.varnames_nocontext:
                             # var context was unspecified, so choose it
                             # according to cycle context
                             var = context + var
@@ -595,7 +595,7 @@ def plot_trials(
 
                         # plot normal data before first cycle
                         if model_normaldata is not None and first_cyc and normalized:
-                            nvar = var if var in themodel.varlabels_noside else var[1:]
+                            nvar = var if var in themodel.varlabels_nocontext else var[1:]
                             key = nvar if nvar in model_normaldata else None
                             ndata = (
                                 model_normaldata[key]

@@ -240,7 +240,7 @@ def _normals_from_data(data):
     """Compute normal data from dict output by stats.collect_trial_data"""
     normaldata = dict()
     for mod in models_all:
-        thevars = mod.varlabels_noside
+        thevars = mod.varlabels_nocontext
         for var in thevars:
             rvar, lvar = 'R' + var, 'L' + var
             rcurves, lcurves = data[rvar], data[lvar]

@@ -647,7 +647,7 @@ class Trial:
         the matching.
         """
         STRIKE_TOL = 7  # frames
-        sidestrs = {'R': 'right', 'L': 'left'}
+        contextstrs = {'R': 'right', 'L': 'left'}
         for context, strikes, toeoffs in zip(
             'LR',
             [self.events.lstrikes, self.events.rstrikes],
@@ -673,7 +673,7 @@ class Trial:
                     else:
                         plate_idx = None
                     logger.debug(
-                        'side %s: cycle start: %d, '
+                        'context %s: cycle start: %d, '
                         'detected fp events: %s' % (context, start, fp_strikes)
                     )
                 end = strikes[k + 1]
@@ -716,7 +716,7 @@ class Trial:
                 else:
                     toeoff = toeoff[0]
                 fp_str = ' (f)' if on_forceplate else ''
-                name = '%s%d%s' % (sidestrs[context], (k + 1), fp_str)
+                name = '%s%d%s' % (contextstrs[context], (k + 1), fp_str)
                 yield Gaitcycle(
                     start,
                     end,

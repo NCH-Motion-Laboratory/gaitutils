@@ -375,8 +375,8 @@ def dash_report(
 
         # pick desired single variables from model and append
         pigvars = (
-            models.pig_lowerbody.varlabels_noside
-            | models.pig_lowerbody_kinetics.varlabels_noside
+            models.pig_lowerbody.varlabels_nocontext
+            | models.pig_lowerbody_kinetics.varlabels_nocontext
         )
         pigvars = sorted(pigvars.items(), key=lambda item: item[1])
         pigvars_louts = {varlabel: ('layout', [[var]]) for var, varlabel in pigvars}

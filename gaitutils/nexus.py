@@ -643,12 +643,12 @@ def _get_model_data(vicon, model):
 def _create_events(vicon, context, strikes, toeoffs):
     """Create foot strike and toeoff events in Nexus"""
     logger.debug('marking events in Nexus')
-    side_str = 'Right' if context == 'R' else 'Left'
+    context_str = 'Right' if context == 'R' else 'Left'
     subjectname = get_subjectnames()
     for fr in strikes:
-        vicon.CreateAnEvent(subjectname, side_str, 'Foot Strike', int(fr + 1), 0)
+        vicon.CreateAnEvent(subjectname, context_str, 'Foot Strike', int(fr + 1), 0)
     for fr in toeoffs:
-        vicon.CreateAnEvent(subjectname, side_str, 'Foot Off', int(fr + 1), 0)
+        vicon.CreateAnEvent(subjectname, context_str, 'Foot Off', int(fr + 1), 0)
 
 
 def rigid_body_extrapolate(

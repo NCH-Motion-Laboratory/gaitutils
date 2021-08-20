@@ -51,7 +51,7 @@ def _compose_varname(vardef):
     varname = vardef[0]
     # get variable description from gaitutils.models
     themodel = models.model_from_var(varname)
-    name = themodel.varlabels_noside[varname]
+    name = themodel.varlabels_nocontext[varname]
     if vardef[1] == 'contact':
         name += ' at IC'
     elif vardef[1] in ['peaks', 'extrema']:
@@ -230,8 +230,8 @@ def _var_title(var):
     """Get proper title for a variable"""
     mod = models.model_from_var(var)
     if mod:
-        if var in mod.varlabels_noside:
-            return mod.varlabels_noside[var]
+        if var in mod.varlabels_nocontext:
+            return mod.varlabels_nocontext[var]
         elif var in mod.varlabels:
             return mod.varlabels[var]
     elif var in cfg.emg.channel_labels:

@@ -23,7 +23,7 @@ def test_read_xlsx_normaldata():
     ndata = normaldata._read_xlsx(fn_xlsx)
     normaldata._check_normaldata(ndata)
     ndata_vars = ndata.keys()
-    pigvars = models.pig_lowerbody.varlabels_noside.keys()
+    pigvars = models.pig_lowerbody.varlabels_nocontext.keys()
     # no normaldata for following vars
     not_in_normal = {
         'AnkleAnglesY',
@@ -44,7 +44,7 @@ def test_write_normaldata():
         assert_allclose(ndata[var], ndata2[var])
     normaldata._check_normaldata(ndata2)
     ndata_vars = ndata2.keys()
-    pigvars = models.pig_lowerbody.varlabels_noside.keys()
+    pigvars = models.pig_lowerbody.varlabels_nocontext.keys()
     # no normaldata for following vars
     not_in_normal = {
         'AnkleAnglesY',

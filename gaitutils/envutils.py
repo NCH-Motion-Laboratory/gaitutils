@@ -76,8 +76,13 @@ def _git_update():
     if git_mode:
         logger.info('running git update')
         try:
+            startupinfo = None
+            if os.name == 'nt':
+                # hides the console on Windows
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
             o = subprocess.check_output(
-                ['git', 'pull'], cwd=pkg_parent, encoding='utf-8'
+                ['git', 'pull'], cwd=pkg_parent, encoding='utf-8', startupinfo=startupinfo,
             )
         except subprocess.CalledProcessError:
             status = (False, 'cannot retrieve or merge update')

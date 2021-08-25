@@ -382,9 +382,9 @@ def _get_analog_data(vicon, devname):
         if vicon.GetDeviceDetails(id_)[0].lower() == devname.lower()
     ]
     if len(ids) > 1:
-        raise GaitDataError('Multiple matching analog devices for %s' % devname)
+        raise GaitDataError(f'Multiple matching analog devices for {devname}')
     elif len(ids) == 0:
-        raise GaitDataError('No matching analog devices for %s' % devname)
+        raise GaitDataError(f'No matching analog devices for {devname}')
     dev_id = ids[0]
     dname, dtype, drate, outputids, _, _ = vicon.GetDeviceDetails(dev_id)
     # gather device outputs; there does not seem to be any reliable way to
@@ -414,7 +414,7 @@ def _get_analog_data(vicon, devname):
                     'merging output %s and channel name %s for a unique name'
                     % (outputname, chname)
                 )
-                chname = '%s_%s' % (outputname, chname)
+                chname = f'{outputname}_{chname}'
             if chname in data:
                 raise RuntimeError('duplicate EMG channel; check Nexus device settings')
             data[chname] = np.array(chdata)
@@ -456,7 +456,7 @@ def set_forceplate_data(vicon, fp_index, data, kind='Force'):
     """
     kinds = ['Force', 'Moment', 'CoP']
     if kind not in kinds:
-        raise ValueError('kind argument needs to be one of %s' % ', '.join(kinds))
+        raise ValueError(f"kind argument needs to be one of {', '.join(kinds)}")
     fpids = _get_forceplate_ids(vicon)
     if not fpids:
         raise RuntimeError('no forceplates detected')
@@ -610,11 +610,11 @@ def _get_marker_data(vicon, markers, ignore_missing=False):
         x, y, z, _ = vicon.GetTrajectory(subj, marker)
         if len(x) == 0:
             if ignore_missing:
-                logger.warning('Cannot read trajectory %s from Nexus' % marker)
+                logger.warning(f'Cannot read trajectory {marker} from Nexus')
                 continue
             else:
                 raise GaitDataError(
-                    'Cannot read marker trajectory from Nexus: %s' % marker
+                    f'Cannot read marker trajectory from Nexus: {marker}'
                 )
         mkrdata[marker] = np.array([x, y, z]).transpose()
     return mkrdata
@@ -633,7 +633,7 @@ def _get_model_data(vicon, model):
         if nums:
             data = np.squeeze(np.array(nums))
         else:
-            logger.info('cannot read variable %s, returning nans' % var)
+            logger.info(f'cannot read variable {var}, returning nans')
             data = np.empty(var_dims)
             data[:] = np.nan
         modeldata[var] = data
@@ -706,7 +706,7 @@ def rigid_body_extrapolate(
     try:
         mdata_ref = _get_marker_data(vicon, allmarkers)
     except GaitDataError:
-        raise GaitDataError('cannot read markers from reference trial %s' % ref_trial)
+        raise GaitDataError(f'cannot read markers from reference trial {ref_trial}')
     mdata_ref_ = np.row_stack(
         [mdata_ref[marker][ref_frame, :] for marker in allmarkers]
     )
@@ -719,7 +719,7 @@ def rigid_body_extrapolate(
             mdata_ref = _get_marker_data(vicon, ref_markers)
         except GaitDataError:
             raise GaitDataError(
-                'cannot read markers from extrapolation trial %s' % extrap_trial
+                f'cannot read markers from extrapolation trial {extrap_trial}'
             )
         for frame in range(vicon.GetFrameCount()):
             mdata_thisframe = np.row_stack(

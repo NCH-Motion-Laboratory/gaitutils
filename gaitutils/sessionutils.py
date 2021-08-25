@@ -62,7 +62,7 @@ def load_quirks(session):
             try:
                 quirks.update(json.load(f))
             except json_exceptions:
-                logger.warning('cannot load quirks file %s' % fname)
+                logger.warning(f'cannot load quirks file {fname}')
     return quirks
 
 
@@ -100,15 +100,14 @@ def load_info(session):
                 extra_keys = set(info.keys()) - set(json_keys)
                 if extra_keys:
                     logger.warning(
-                        'Extra keys %s in patient info file %s' % (extra_keys, fname)
+                        f'Extra keys {extra_keys} in patient info file {fname}'
                     )
                     for key in extra_keys:
                         info.pop(key)
                 missing_keys = set(json_keys) - set(info.keys())
                 if missing_keys:
                     logger.warning(
-                        'Missing keys %s in patient info file %s'
-                        % (missing_keys, fname)
+                        f'Missing keys {missing_keys} in patient info file {fname}'
                     )
                     # supply default values for missing keys
                     for key in missing_keys:
@@ -333,7 +332,7 @@ def _get_tagged_dynamic_c3ds_from_sessions(sessions, tags=None):
         c3ds = get_c3ds(session, tags=tags, trial_type='dynamic')
         # we require at least on tagged trial for each session
         if not c3ds:
-            raise GaitDataError('No tagged trials found for session %s' % session)
+            raise GaitDataError(f'No tagged trials found for session {session}')
         c3ds_all.extend(c3ds)
     return c3ds_all
 

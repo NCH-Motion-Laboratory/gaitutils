@@ -237,10 +237,10 @@ class Trial:
 
     def __repr__(self):
         s = '<Trial |'
-        s += ' trial: %s' % self.trialname
-        s += ', data source: %s' % self.source
-        s += ', subject: %s' % self.name
-        s += ', gait cycles: %s' % self.ncycles
+        s += f' trial: {self.trialname}'
+        s += f', data source: {self.source}'
+        s += f', subject: {self.name}'
+        s += f', gait cycles: {self.ncycles}'
         s += '>'
         return s
 
@@ -316,7 +316,7 @@ class Trial:
         if 'emg_correction_factor' in quirks:
             self.emg_correction_factor = quirks['emg_correction_factor']
             logger.warning(
-                'using quirk: EMG correction factor = %g' % self.emg_correction_factor
+                f'using quirk: EMG correction factor = {self.emg_correction_factor:g}'
             )
         else:
             self.emg_correction_factor = 1

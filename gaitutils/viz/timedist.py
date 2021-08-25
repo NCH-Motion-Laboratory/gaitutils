@@ -41,11 +41,11 @@ def plot_session_average(session, tags=None, backend=None):
         tags = cfg.eclipse.tags
     trials = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
     if not trials:
-        raise GaitDataError('No tagged trials found for session %s' % session)
+        raise GaitDataError(f'No tagged trials found for session {session}')
     session_ = session.name
     fig = plot_trials(
         {session_: trials},
-        title='Time-distance average, session %s' % session_,
+        title=f'Time-distance average, session {session_}',
         backend=backend,
     )
     return fig
@@ -87,7 +87,7 @@ def plot_comparison(
     for session in sessions:
         c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
         if not c3ds:
-            raise RuntimeError('No tagged trials found in session %s' % session)
+            raise RuntimeError(f'No tagged trials found in session {session}')
         cond_label = session.name
         trials[cond_label] = c3ds
 

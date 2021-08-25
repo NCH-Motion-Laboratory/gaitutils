@@ -163,7 +163,7 @@ def outliers(x, axis=0, single_mad=None, p_threshold=1e-3):
     """
     zs = modified_zscore(x, axis=axis, single_mad=single_mad)
     z_threshold = np.sqrt(2) * erfcinv(p_threshold)
-    logger.debug('Z threshold: %.2f' % z_threshold)
+    logger.debug(f'Z threshold: {z_threshold:.2f}')
     return np.where(abs(zs) > z_threshold)
 
 
@@ -413,7 +413,7 @@ def envelope(data, sfrate=None, axis=None):
     elif cfg.emg.envelope_method == 'rms':
         data = rms(data, cfg.emg.rms_win, axis=axis)
     else:
-        raise RuntimeError('Invalid envelope method: %s' % cfg.emg.envelope_method)
+        raise RuntimeError(f'Invalid envelope method: {cfg.emg.envelope_method}')
     return data
 
 

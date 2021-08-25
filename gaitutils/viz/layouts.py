@@ -32,7 +32,7 @@ def get_layout(layout_name):
     try:
         return getattr(cfg.layouts, layout_name)
     except AttributeError:
-        raise GaitDataError('No such layout %s' % layout_name)
+        raise GaitDataError(f'No such layout {layout_name}')
 
 
 def _check_layout(layout):
@@ -53,10 +53,10 @@ def _check_layout(layout):
     nrows = len(layout)
     ncols = len(layout[0])
     if ncols < 1:
-        raise TypeError('Invalid plotting layout: %s' % layout)
+        raise TypeError(f'Invalid plotting layout: {layout}')
     for col in layout:
         if not isinstance(col, list) or len(col) != ncols:
-            raise TypeError('Inconsistent plotting layout: %s' % layout)
+            raise TypeError(f'Inconsistent plotting layout: {layout}')
     return nrows, ncols
 
 

@@ -143,7 +143,7 @@ def get_trial_videos(
 def _filter_by_label(vids, camera_label):
     """Filter videos by given camera label"""
     if camera_label not in cfg.general.camera_labels.values():
-        raise ValueError('unconfigured camera label %s' % camera_label)
+        raise ValueError(f'unconfigured camera label {camera_label}')
     ids = [
         id_ for id_, label in cfg.general.camera_labels.items() if camera_label == label
     ]

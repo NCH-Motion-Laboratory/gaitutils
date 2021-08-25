@@ -43,7 +43,7 @@ class FileFilter:
             self.fp = io.open(self.fname, encoding='utf8')
             data = self.fp.read()
         except UnicodeDecodeError:
-            logger.warning('Cannot interpret %s as utf-8, trying latin-1' % self.fname)
+            logger.warning(f'Cannot interpret {self.fname} as utf-8, trying latin-1')
             self.fp = io.open(self.fname, encoding='latin-1')
             data = self.fp.read()
         # filter
@@ -65,7 +65,7 @@ def _enf_reader(fname_enf):
     try:
         cp = ConfigObj(fp, encoding='utf8', list_values=False, write_empty_values=True)
     except configobj.ParseError:
-        raise GaitDataError('Cannot parse config file %s' % fname_enf)
+        raise GaitDataError(f'Cannot parse config file {fname_enf}')
     if 'TRIAL_INFO' not in cp.sections:
         raise GaitDataError('No trial info in .enf file')
     return cp
@@ -126,7 +126,7 @@ def set_eclipse_keys(fname_enf, eclipse_dict, update_existing=False):
             cp['TRIAL_INFO'][key] = val
             did_set = True
     if did_set:
-        logger.debug('writing %s' % fname_enf)
+        logger.debug(f'writing {fname_enf}')
         # output the config lines; this writes utf8-encoded bytes
         out = cp.write()
         # they must be converted to str for writing

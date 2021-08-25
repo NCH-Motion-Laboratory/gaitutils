@@ -93,7 +93,7 @@ def _group_analysis_trials(trials):
                 an = c3d.get_analysis(c3dfile, condition=cond_label)
                 ans.append(an)
             except GaitDataError:
-                logger.warning('no analysis values found in %s' % c3dfile)
+                logger.warning(f'no analysis values found in {c3dfile}')
         if ans:
             res_avg = group_analysis(ans)
             res_std = group_analysis(ans, fun=np.std)
@@ -118,8 +118,7 @@ def _pick_common_vars(values, vars_wanted=None):
         vars_ok = set.intersection(vars_wanted_set, vars_common)
         if vars_wanted_set - vars_ok:
             logger.warning(
-                'some conditions are missing variables: %s'
-                % (vars_wanted_set - vars_ok)
+                f'some conditions are missing variables: {vars_wanted_set - vars_ok}'
             )
         # preserve original var order
         vars_ = [var for var in vars_wanted if var in vars_ok]

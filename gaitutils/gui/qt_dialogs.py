@@ -215,7 +215,7 @@ class OptionsDialog(QtWidgets.QDialog):
             _save_widget = True
             desc = configdot.get_description(item)
             if not desc:
-                raise RuntimeError('Config item %s missing a description' % item)
+                raise RuntimeError(f'Config item {item} missing a description')
             if isinstance(item.value, bool):  # use simple checkbox for boolean items
                 input_widget = QtWidgets.QCheckBox()
                 input_widget.setChecked(item.value)
@@ -302,7 +302,7 @@ class OptionsDialog(QtWidgets.QDialog):
                     update_comments=False,
                 )
             except ValueError:
-                qt_message_dialog('Could not parse %s' % fname)
+                qt_message_dialog(f'Could not parse {fname}')
             else:
                 self._update_inputs()
 
@@ -311,8 +311,7 @@ class OptionsDialog(QtWidgets.QDialog):
         wname, txt = self._update_cfg()
         if wname is not None:
             qt_message_dialog(
-                'Invalid input for item %s: %s\n'
-                'Please fix before saving' % (wname, txt)
+                f'Invalid input for item {wname}: {txt}\nPlease fix before saving'
             )
         else:
             fout = QtWidgets.QFileDialog.getSaveFileName(
@@ -404,7 +403,7 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
         dirs = [Path(d) for d in dirs]
         for dir_ in dirs:
             if dir_ in self.sessions:
-                qt_message_dialog('Session %s already loaded' % dir_)
+                qt_message_dialog(f'Session {dir_} already loaded')
             else:
                 self.listSessions.add_item(str(dir_), data=dir_)
 

@@ -51,7 +51,7 @@ cfg_user_fn = Path.home() / '.gaitutils.cfg'
 # read template config
 cfg = parse_config(cfg_template_fn)
 if cfg_user_fn.is_file():
-    logger.debug('reading user config from %s' % cfg_user_fn)
+    logger.debug(f'reading user config from {cfg_user_fn}')
     cfg_user = parse_config(cfg_user_fn)
     # update config from user file, but do not overwrite comments
     # new config items are only allowed in layouts section
@@ -63,7 +63,7 @@ if cfg_user_fn.is_file():
         update_comments=False,
     )
 else:
-    logger.warning('no config file, trying to create %s' % cfg_user_fn)
+    logger.warning(f'no config file, trying to create {cfg_user_fn}')
     cfg_txt = dump_config(cfg)
     with io.open(cfg_user_fn, 'w', encoding='utf8') as f:
         f.writelines(cfg_txt)

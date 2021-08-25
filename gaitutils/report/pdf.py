@@ -66,7 +66,7 @@ def _savefig(pdf, fig, header=None, footer=None):
     if fig is None:
         return
     elif not isinstance(fig, Figure):
-        raise TypeError('fig must be matplotlib Figure, got %s' % fig)
+        raise TypeError(f'fig must be matplotlib Figure, got {fig}')
     if header is not None:
         _add_header(fig, header)
     if footer is not None:
@@ -150,24 +150,24 @@ def create_report(
 
     # make header page
     # timestr = time.strftime('%d.%m.%Y')  # current time, not currently used
-    title_txt = '%s\n' % cfg.report.laboratory_name
-    title_txt += '%s\n' % translate('Results of gait analysis')
+    title_txt = f'{cfg.report.laboratory_name}\n'
+    title_txt += f"{translate('Results of gait analysis')}\n"
     title_txt += '\n'
-    title_txt += '%s: %s\n' % (translate('Name'), fullname)
+    title_txt += f"{translate('Name')}: {fullname}\n"
     title_txt += '%s: %s\n' % (
         translate('Social security number'),
         hetu if hetu else translate('unknown'),
     )
     age_str = '%d %s' % (age, translate('years')) if age else translate('unknown')
-    title_txt += '%s: %s\n' % (translate('Age at time of measurement'), age_str)
-    title_txt += '%s: %s\n' % (translate('Session'), sessiondir)
+    title_txt += f"{translate('Age at time of measurement')}: {age_str}\n"
+    title_txt += f"{translate('Session')}: {sessiondir}\n"
     if session_description:
-        title_txt += '%s: %s\n' % (translate('Description'), session_description)
+        title_txt += f"{translate('Description')}: {session_description}\n"
     title_txt += '%s: %s\n' % (
         translate('Session date'),
         session_t.strftime('%d.%m.%Y'),
     )
-    title_txt += '%s: %s\n' % (translate('Patient code'), patient_code)
+    title_txt += f"{translate('Patient code')}: {patient_code}\n"
     fig_title = _make_text_fig(title_txt)
 
     header = '%s: %s %s: %s' % (
@@ -178,7 +178,7 @@ def create_report(
     )
     musclelen_ndata = normaldata._find_normaldata_for_age(age)
     footer_musclelen = (
-        ' %s: %s' % (translate('Normal data'), musclelen_ndata)
+        f" {translate('Normal data')}: {musclelen_ndata}"
         if musclelen_ndata
         else ''
     )
@@ -214,7 +214,7 @@ def create_report(
             color_by=color_by,
             style_by=style_by,
             backend=pdf_backend,
-            figtitle='Kinematics consistency for %s' % sessiondir,
+            figtitle=f'Kinematics consistency for {sessiondir}',
             legend_type=legend_type,
             legend=False,
         )
@@ -230,7 +230,7 @@ def create_report(
             color_by=color_by,
             style_by=style_by,
             backend=pdf_backend,
-            figtitle='Kinetics consistency for %s' % sessiondir,
+            figtitle=f'Kinetics consistency for {sessiondir}',
             legend_type=legend_type,
             legend=False,
         )
@@ -246,7 +246,7 @@ def create_report(
             style_by=style_by,
             model_normaldata=model_normaldata,
             backend=pdf_backend,
-            figtitle='Muscle length consistency for %s' % sessiondir,
+            figtitle=f'Muscle length consistency for {sessiondir}',
             legend_type=legend_type,
             legend=False,
         )
@@ -259,7 +259,7 @@ def create_report(
             layout_name='std_emg',
             color_by=color_by,
             style_by=style_by,
-            figtitle='EMG consistency for %s' % sessiondir,
+            figtitle=f'EMG consistency for {sessiondir}',
             legend_type=legend_type,
             legend=False,
             backend=pdf_backend,
@@ -292,11 +292,11 @@ def create_report(
             fig = _plot_extracted_table_plotly(curve_vals, vardefs)
             fig.tight_layout()
             fig.set_dpi(300)
-            fig.suptitle('Curve extracted values: %s' % title)
+            fig.suptitle(f'Curve extracted values: {title}')
             figs_extracted.append(fig)
 
     # save the pdf file
-    logger.debug('creating multipage pdf %s' % pdfpath)
+    logger.debug(f'creating multipage pdf {pdfpath}')
     with PdfPages(pdfpath) as pdf:
         _savefig(pdf, fig_title)
         _savefig(pdf, fig_vel, header)
@@ -315,7 +315,7 @@ def create_report(
         timedist_txt_file = sessiondir + '_time_distance.txt'
         timedist_txt_path = destdir / timedist_txt_file
         with io.open(timedist_txt_path, 'w', encoding='utf8') as f:
-            logger.debug('writing timedist text data into %s' % timedist_txt_path)
+            logger.debug(f'writing timedist text data into {timedist_txt_path}')
             f.write(_timedist_txt)
 
     # save the curve extraced values into a text file
@@ -324,10 +324,10 @@ def create_report(
         extracted_txt_file = sessiondir + '_curve_values.txt'
         extracted_txt_path = destdir / extracted_txt_file
         with io.open(extracted_txt_path, 'w', encoding='utf8') as f:
-            logger.debug('writing extracted text data into %s' % extracted_txt_path)
+            logger.debug(f'writing extracted text data into {extracted_txt_path}')
             f.write(extracted_txt)
 
-    return 'Created %s' % pdfpath
+    return f'Created {pdfpath}'
 
 
 def create_comparison_report(
@@ -397,13 +397,13 @@ def create_comparison_report(
     # make header page
     fullname = info['fullname'] or ''
     hetu = info['hetu'] or ''
-    title_txt = '%s\n' % cfg.report.laboratory_name
-    title_txt += '%s\n' % translate('Comparison report')
+    title_txt = f'{cfg.report.laboratory_name}\n'
+    title_txt += f"{translate('Comparison report')}\n"
     title_txt += '\n'
     title_txt += info['session_description']
     title_txt += '\n'
-    title_txt += '%s: %s\n' % (translate('Name'), fullname)
-    title_txt += '%s: %s\n' % (translate('Social security number'), hetu)
+    title_txt += f"{translate('Name')}: {fullname}\n"
+    title_txt += f"{translate('Social security number')}: {hetu}\n"
     fig_title = _make_text_fig(title_txt)
 
     # make the figures
@@ -502,7 +502,7 @@ def create_comparison_report(
             fig = _plot_extracted_table_plotly(curve_vals, vardefs)
             fig.tight_layout()
             fig.set_dpi(300)
-            fig.suptitle('Curve extracted values: %s' % title)
+            fig.suptitle(f'Curve extracted values: {title}')
             figs_extracted.append(fig)
 
     header = '%s: %s %s: %s' % (
@@ -511,7 +511,7 @@ def create_comparison_report(
         translate('Social security number'),
         hetu,
     )
-    logger.debug('creating multipage comparison pdf %s' % pdfpath)
+    logger.debug(f'creating multipage comparison pdf {pdfpath}')
     with PdfPages(pdfpath) as pdf:
         _savefig(pdf, fig_title)
         _savefig(pdf, fig_timedist, header)
@@ -529,7 +529,7 @@ def create_comparison_report(
         extracted_txt_file += '_curve_values.txt'
         extracted_txt_path = destdir / extracted_txt_file
         with io.open(extracted_txt_path, 'w', encoding='utf8') as f:
-            logger.debug('writing extracted text data into %s' % extracted_txt_path)
+            logger.debug(f'writing extracted text data into {extracted_txt_path}')
             f.write(extracted_txt)
 
-    return 'Created %s\nin %s' % (pdfname, sessionpath)
+    return f'Created {pdfname}\nin {sessionpath}'

@@ -62,7 +62,7 @@ def _get_c3d_metadata_field(acq, field, subfield):
         try:
             return field.GetChild(child)
         except RuntimeError:
-            raise RuntimeError('Invalid c3d metadata field: %s' % child)
+            raise RuntimeError(f'Invalid c3d metadata field: {child}')
 
     info = _get_child(_get_child(meta, field), subfield).GetInfo()
     if (strformat := info.GetFormatAsString()) == 'Char':
@@ -332,7 +332,7 @@ def _get_model_data(c3dfile, model):
             vals = acq.GetPoint(var).GetValues()
             modeldata[var] = np.transpose(np.squeeze(vals))
         except RuntimeError:
-            logger.info('cannot read model variable %s, returning nans' % var)
+            logger.info(f'cannot read model variable {var}, returning nans')
             data = np.empty(var_dims)
             data[:] = np.nan
             modeldata[var] = data
@@ -347,7 +347,7 @@ def _get_forceplate_data(c3dfile):
 
     See read_data.get_forceplate_data() for details.
     """
-    logger.debug('reading forceplate data from %s' % c3dfile)
+    logger.debug(f'reading forceplate data from {c3dfile}')
     read_chs = ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz']
     acq = _get_c3dacq(c3dfile)
     fpe = btk.btkForcePlatformsExtractor()

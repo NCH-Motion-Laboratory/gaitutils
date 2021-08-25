@@ -650,8 +650,8 @@ def plot_trials(
                                         y - sdata,
                                         y + sdata,
                                         fillcolor=fillcolor,
-                                        name='Stddev, %s' % cyclename,
-                                        legendgroup='Stddev, %s' % cyclename,
+                                        name=f'Stddev, {cyclename}',
+                                        legendgroup=f'Stddev, {cyclename}',
                                         showlegend=show_legend,
                                         line=dict(width=0),
                                     )  # no border lines
@@ -662,8 +662,7 @@ def plot_trials(
                                 supdata = supplementary_data[cyc]
                                 if var in supdata:
                                     logger.debug(
-                                        'plotting supplementary data '
-                                        'for var %s' % var
+                                        f'plotting supplementary data for var {var}'
                                     )
                                     t_sup = supdata[var]['t']
                                     data_sup = supdata[var]['data']
@@ -726,7 +725,7 @@ def plot_trials(
                                     width=cfg.plot.model_linewidth, dash=sty, color=col
                                 )
                                 # dim-specific tracename
-                                tracename_marker = 'mkr_%s:%s' % (datadim, cyclename)
+                                tracename_marker = f'mkr_{datadim}:{cyclename}'
                                 # dimension- and trial-based grouping
                                 # legendgroup = 'mkr_%s:%s' % (datadim, trial.trialname)
                                 # dimension- and cycle-based grouping
@@ -847,11 +846,11 @@ def plot_trials(
                             subplot_adjusted[(i, j)] = True
 
                     elif vartype == 'unknown':
-                        raise GaitDataError('cannot interpret variable %s' % var)
+                        raise GaitDataError(f'cannot interpret variable {var}')
 
                     else:
                         raise GaitDataError(
-                            'plotting not implemented for variable %s' % var
+                            f'plotting not implemented for variable {var}'
                         )
 
     # set subplot title font size

@@ -117,7 +117,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
         trial = trials[filepath]
 
         signals.progress.emit(
-            'Preprocessing: %s' % filename, int(100 * ind / len(enffiles))
+            f'Preprocessing: {filename}', int(100 * ind / len(enffiles))
         )
         if signals.canceled:
             return None
@@ -278,12 +278,12 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
         ):
             dir_str = 'dir_forward' if gait_dir > 0 else 'dir_backward'
             dir_desc = cfg.autoproc.enf_descriptions[dir_str]
-            eclipse_str += '%s,' % dir_desc
+            eclipse_str += f'{dir_desc},'
 
         # compute gait velocity
         median_vel = utils._trial_median_velocity(vicon)
-        logger.debug('median forward velocity: %.2f m/s' % median_vel)
-        eclipse_str += '%.2f m/s' % median_vel
+        logger.debug(f'median forward velocity: {median_vel:.2f} m/s')
+        eclipse_str += f'{median_vel:.2f} m/s'
 
         _save_trial()
         trial['description'] = eclipse_str
@@ -306,7 +306,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
                 logger.debug('ignoring Eclipse forceplate info')
         except IOError:
             logger.warning(
-                'failed to update Eclipse forceplate info ' 'in %s' % enffile
+                f'failed to update Eclipse forceplate info in {enffile}'
             )
 
     # all preprocessing done
@@ -328,12 +328,12 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
 
     for ind, (filepath, trial) in enumerate(sel_trials.items()):
         filename = filepath.name
-        logger.debug('loading in Nexus: %s' % filename)
+        logger.debug(f'loading in Nexus: {filename}')
         nexus._open_trial(filepath)
         enf_file = filepath.with_suffix('.Trial.enf')
 
         signals.progress.emit(
-            'Events and models: %s' % filename, int(100 * ind / len(sel_trials))
+            f'Events and models: {filename}', int(100 * ind / len(sel_trials))
         )
         if signals.canceled:
             return None
@@ -401,7 +401,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
                     update_existing=True,
                 )
             except IOError:
-                logger.warning('failed to update Eclipse description in %s' % enf_file)
+                logger.warning(f'failed to update Eclipse description in {enf_file}')
     else:
         logger.debug('not updating Eclipse data')
 
@@ -424,11 +424,11 @@ def _delete_c3ds(enffiles):
         if not c3dfile.is_file():
             continue
         if not enffile.is_file():
-            logger.warning('.enf file %s does not exist' % enffile)
+            logger.warning(f'.enf file {enffile} does not exist')
         edata = eclipse.get_eclipse_keys(enffile, return_empty=True)
         # do not delete static .c3d files (needed for dynamic processing)
         if edata['TYPE'] == 'Static':
-            logger.debug('keeping static c3d file %s' % c3dfile)
+            logger.debug(f'keeping static c3d file {c3dfile}')
             continue
 
         # to prevent data loss, do not delete c3d if original
@@ -436,7 +436,7 @@ def _delete_c3ds(enffiles):
         x1dfile = sessionutils.enf_to_trialfile(enffile, 'x1d')
         x2dfile = sessionutils.enf_to_trialfile(enffile, 'x2d')
         if x1dfile.is_file() and x2dfile.is_file():
-            logger.debug('deleting existing c3d file %s' % c3dfile)
+            logger.debug(f'deleting existing c3d file {c3dfile}')
             c3dfile.unlink()
         else:
             logger.debug(
@@ -525,5 +525,5 @@ def _copy_session_videos():
         raise GaitDataError('No video files found for representative trials')
 
     for vidfile in vidfiles:
-        logger.debug('copying %s -> %s' % (vidfile, dest_dir))
+        logger.debug(f'copying {vidfile} -> {dest_dir}')
         shutil.copy2(vidfile, dest_dir)

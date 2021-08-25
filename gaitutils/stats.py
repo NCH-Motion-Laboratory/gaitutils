@@ -33,8 +33,8 @@ class AvgTrial(Trial):
 
     def __repr__(self):
         s = '<AvgTrial |'
-        s += ' trial name: %s' % self.trialname
-        s += ', trials: %s' % self.source
+        s += f' trial name: {self.trialname}'
+        s += f', trials: {self.source}'
         s += '>'
         return s
 
@@ -141,7 +141,7 @@ class AvgTrial(Trial):
         try:
             data = self._model_data[var]
         except KeyError:
-            logger.info('no averaged data for %s, returning nans' % var)
+            logger.info(f'no averaged data for {var}, returning nans')
             var_dims = (3, 101)  # is this universal?
             data = np.empty(var_dims)
             data[:] = np.nan
@@ -307,7 +307,7 @@ def average_model_data(data, reject_zeros=None, reject_outliers=None, use_median
             n_ok = vardata.shape[0]
             # do the outlier rejection
             if n_ok > 0 and reject_outliers is not None and not use_medians:
-                logger.info('%s:' % var)
+                logger.info(f'{var}:')
                 vardata = _robust_reject_rows(vardata, reject_outliers)
             n_ok = vardata.shape[0]
             if n_ok == 0:
@@ -414,7 +414,7 @@ def collect_trial_data(
     for trial_ in trials:
         # create Trial instance in case we got filenames as args
         trial = trial_ if isinstance(trial_, Trial) else Trial(trial_)
-        logger.info('collecting data for %s' % trial.trialname)
+        logger.info(f'collecting data for {trial.trialname}')
         trial_types.append(trial.is_static)
         if any(trial_types) and not all(trial_types):
             raise GaitDataError('Cannot mix dynamic and static trials')
@@ -439,7 +439,7 @@ def collect_trial_data(
                             continue
                     _, data = trial.get_model_data(var, cycle=cycle)
                     if np.all(np.isnan(data)):
-                        logger.debug('no data for %s/%s' % (trial.trialname, var))
+                        logger.debug(f'no data for {trial.trialname}/{var}')
                     else:
                         cycles_all['model'][var].append(cycle)
                         if var not in data_all['model']:
@@ -456,12 +456,12 @@ def collect_trial_data(
                     continue
                 # get data on analog sampling grid
                 try:
-                    logger.debug('collecting EMG channel %s from %s' % (ch, cycle))
+                    logger.debug(f'collecting EMG channel {ch} from {cycle}')
                     _, data = trial.get_emg_data(
                         ch, cycle=cycle, envelope=analog_envelope
                     )
                 except (KeyError, GaitDataError):
-                    logger.warning('no channel %s for %s' % (ch, trial))
+                    logger.warning(f'no channel {ch} for {trial}')
                     continue
                 # resample to requested grid
                 data_cyc = scipy.signal.resample(data, analog_len)
@@ -611,5 +611,5 @@ def _trials_extract_values(trials, from_models=None):
         if data_var is not None and toeoffs_var is not None:
             vals[var] = curve_extract_values(data_var, toeoffs_var)
         else:
-            logger.info('no data for %s' % var)
+            logger.info(f'no data for {var}')
     return vals

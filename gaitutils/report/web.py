@@ -74,7 +74,7 @@ def _report_name(sessions, long_name=True):
         )
     else:
         report_type = 'Single' if len(sessions) == 1 else 'Comparison'
-    return '%s: %s' % (report_type, sessions_str)
+    return f'{report_type}: {sessions_str}'
 
 
 def dash_report(
@@ -176,14 +176,14 @@ def dash_report(
         for tag in dyn_tags:
             dyns = sessionutils.get_enfs(session, tags=tag, trial_type='dynamic')
             if len(dyns) > 1:
-                logger.warning('multiple tagged trials (%s) for %s' % (tag, session))
+                logger.warning(f'multiple tagged trials ({tag}) for {session}')
             dyn_trial = dyns[-1:]
             enfs[session]['dynamic'][tag] = dyn_trial  # may be empty list
             if dyn_trial:
                 data_enfs.extend(dyn_trial)
         # require at least one dynamic trial for each session
         if not any(enfs[session]['dynamic'][tag] for tag in dyn_tags):
-            raise GaitDataError('No tagged dynamic trials found for %s' % (session))
+            raise GaitDataError(f'No tagged dynamic trials found for {session}')
         # collect static trial (at most 1 per session)
         # -prefer enfs that have a corresponding c3d file, even for a video-only report
         # (so that the same static gets used for both video-only and full reports)
@@ -205,7 +205,7 @@ def dash_report(
             dyn_vids = sessionutils.get_enfs(session, tags=tag)
             if len(dyn_vids) > 1:
                 logger.warning(
-                    'multiple tagged video-only trials (%s) for %s' % (tag, session)
+                    f'multiple tagged video-only trials ({tag}) for {session}'
                 )
             enfs[session]['vid_only'][tag] = dyn_vids[-1:]
 
@@ -234,7 +234,7 @@ def dash_report(
                         )
                         if vids_this:
                             vid = vids_this[0]
-                            url = '/static/%s' % vid.name
+                            url = f'/static/{vid.name}'
                             vid_urls[tag][camera_label].append(url)
 
     # build dcc.Dropdown options list for cameras and tags
@@ -247,7 +247,7 @@ def dash_report(
     opts_tags = list()
     for tag in all_tags:
         if any(vid_urls[tag][camera_label] for camera_label in camera_labels):
-            opts_tags.append({'label': '%s' % tag, 'value': tag})
+            opts_tags.append({'label': f'{tag}', 'value': tag})
     # add null entry in case we got no videos at all
     if not opts_tags:
         opts_tags.append({'label': 'No videos', 'value': 'no videos', 'disabled': True})
@@ -261,11 +261,11 @@ def dash_report(
         if missing:
             missing_trials = ', '.join([fn.stem for fn in missing])
             raise GaitDataError(
-                'C3D files are missing for following trials: %s' % missing_trials
+                f'C3D files are missing for following trials: {missing_trials}'
             )
         # see whether we can load report figures from disk
         digest = numutils._files_digest(data_c3ds)
-        logger.debug('report data digest: %s' % digest)
+        logger.debug(f'report data digest: {digest}')
         # data is always saved into alphabetically first session
         data_dir = sorted(sessions)[0]
         data_fn = data_dir / f'web_report_{digest}.dat'
@@ -324,7 +324,7 @@ def dash_report(
                 info['fullname'] if info['fullname'] else 'Name unknown'
             )
             if info['hetu']:
-                patient_info_text += '(%s)' % info['hetu']
+                patient_info_text += f"({info['hetu']})"
             patient_info_text += '\n\n'
             # if age:
             #     patient_info_text += 'Age at measurement time: %d\n\n' % age
@@ -348,7 +348,7 @@ def dash_report(
             ]
             from_models = set(models.model_from_var(var) for var in allvars)
             if None in from_models:
-                raise GaitDataError('unknown variables in extract list: %s' % allvars)
+                raise GaitDataError(f'unknown variables in extract list: {allvars}')
             curve_vals = {
                 session.name: _trials_extract_values(trials, from_models=from_models)
                 for session, trials in trials_dyn_dict.items()
@@ -392,7 +392,7 @@ def dash_report(
         report_data_new = dict()
         for k, (page_label, layout_spec) in enumerate(page_layouts.items()):
             signals.progress.emit(
-                'Creating plot: %s' % page_label, 100 * k / len(page_layouts)
+                f'Creating plot: {page_label}', 100 * k / len(page_layouts)
             )
             if signals.canceled:
                 return None
@@ -412,14 +412,14 @@ def dash_report(
 
             try:
                 if saved_report_data:
-                    logger.debug('loading %s from saved report data' % page_label)
+                    logger.debug(f'loading {page_label} from saved report data')
                     if page_label not in saved_report_data:
                         # will be caught, resulting in empty menu item
                         raise RuntimeError
                     else:
                         figdata = saved_report_data[page_label]
                 else:
-                    logger.debug('creating figure data for %s' % page_label)
+                    logger.debug(f'creating figure data for {page_label}')
                     # the 'special' layouts are indicated by a string
                     if isinstance(layout_spec, str):
                         if layout_spec == 'time_dist':
@@ -481,7 +481,7 @@ def dash_report(
                             raise RuntimeError
                         else:  # unrecognized layout; this will cause an exception
                             raise Exception(
-                                'Invalid page layout: %s' % str(layout_spec)
+                                f'Invalid page layout: {str(layout_spec)}'
                             )
 
                     # regular layouts and curve-extracted layouts are indicated by tuple
@@ -511,10 +511,10 @@ def dash_report(
                             figdata = plot_extracted_box(curve_vals, the_vardefs)
                         else:
                             raise Exception(
-                                'Invalid page layout: %s' % str(layout_spec)
+                                f'Invalid page layout: {str(layout_spec)}'
                             )
                     else:
-                        raise Exception('Invalid page layout: %s' % str(layout_spec))
+                        raise Exception(f'Invalid page layout: {str(layout_spec)}')
 
                 # save the newly created data
                 if not saved_report_data:
@@ -540,12 +540,12 @@ def dash_report(
                 # encoded svg
                 if layout_spec == 'time_dist' and _is_base64(figdata):
                     graph_upper = html.Img(
-                        src='data:image/svg+xml;base64,{}'.format(figdata),
+                        src=f'data:image/svg+xml;base64,{figdata}',
                         id='gaitgraph%d' % k,
                         style={'height': '100%'},
                     )
                     graph_lower = html.Img(
-                        src='data:image/svg+xml;base64,{}'.format(figdata),
+                        src=f'data:image/svg+xml;base64,{figdata}',
                         id='gaitgraph%d' % (len(page_layouts) + k),
                         style={'height': '100%'},
                     )
@@ -566,7 +566,7 @@ def dash_report(
                 dd_opts_multi_lower.append({'label': page_label, 'value': graph_lower})
 
             except (RuntimeError, GaitDataError) as e:  # could not create a figure
-                logger.warning('failed to create figure for %s: %s' % (page_label, e))
+                logger.warning(f'failed to create figure for {page_label}: {e}')
                 # insert the menu options but make them disabled
                 dd_opts_multi_upper.append(
                     {'label': page_label, 'value': page_label, 'disabled': True}
@@ -581,7 +581,7 @@ def dash_report(
 
         # if plots were newly created, save them to disk
         if not saved_report_data:
-            logger.debug('saving report data into %s' % data_fn)
+            logger.debug(f'saving report data into {data_fn}')
             signals.progress.emit('Saving report data to disk...', 99)
             with open(data_fn, 'wb') as f:
                 pickle.dump(report_data_new, f, protocol=-1)
@@ -640,8 +640,8 @@ def dash_report(
         11: 'eleven',
         12: 'twelve',
     }
-    classname_left = '%s columns' % num2words[LEFT_WIDTH]
-    classname_right = '%s columns' % num2words[12 - LEFT_WIDTH]
+    classname_left = f'{num2words[LEFT_WIDTH]} columns'
+    classname_right = f'{num2words[12 - LEFT_WIDTH]} columns'
 
     if video_only:
         app.layout = html.Div(

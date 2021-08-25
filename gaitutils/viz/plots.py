@@ -167,7 +167,7 @@ def _plot_session_average(
 
     c3ds = sessionutils.get_c3ds(session, tags=tags, trial_type='dynamic')
     if not c3ds:
-        raise GaitDataError('No dynamic trials found for %s' % session)
+        raise GaitDataError(f'No dynamic trials found for {session}')
 
     reject_outliers = cfg.trial.outlier_rejection_threshold
     atrial = stats.AvgTrial.from_trials(
@@ -202,13 +202,10 @@ def plot_trial_velocities(session, backend=None):
     """
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
     if not c3ds:
-        raise GaitDataError('No dynamic trials found for %s' % session)
+        raise GaitDataError(f'No dynamic trials found for {session}')
     labels = [f.stem for f in c3ds]
     vels = np.array([utils._trial_median_velocity(tr) for tr in c3ds])
-    figtitle = 'Walking speed for %s (average %.2f m/s)' % (
-        session.name,
-        np.nanmean(vels),
-    )
+    figtitle = f'Walking speed for {session.name} (average {np.nanmean(vels):.2f} m/s)'
     return get_backend(backend)._plot_vels(vels, labels, title=figtitle)
 
 
@@ -231,7 +228,7 @@ def plot_trial_timedep_velocities(session, backend=None):
     """
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
     if not c3ds:
-        raise GaitDataError('No dynamic trials found for %s' % session)
+        raise GaitDataError(f'No dynamic trials found for {session}')
     vels = list()
     labels = [f.stem for f in c3ds]
     # get velocity curves
@@ -239,5 +236,5 @@ def plot_trial_timedep_velocities(session, backend=None):
         _, vel = utils._trial_median_velocity(c3d, return_curve=True)
         # vel = signal.medfilt(vel, 3)  # can be used to filter out spikes
         vels.append(vel)
-    figtitle = 'Time-dependent trial velocities for %s' % session.name
+    figtitle = f'Time-dependent trial velocities for {session.name}'
     return get_backend(backend)._plot_timedep_vels(vels, labels, title=figtitle)

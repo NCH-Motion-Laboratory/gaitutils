@@ -59,9 +59,9 @@ def _compose_varname(vardef):
         valtype = vardef[3]  # min, max etc.
         val_trans = {'max': 'max.', 'min': 'min.'}
         if phase == 'overall':
-            name += ', %s %s' % (phase, val_trans[valtype])
+            name += f', {phase} {val_trans[valtype]}'
         else:
-            name += ', %s phase %s' % (phase, val_trans[valtype])
+            name += f', {phase} phase {val_trans[valtype]}'
         if vardef[1] == 'peaks':
             name += ' peak'
     return name
@@ -80,7 +80,7 @@ def _get_trial_cycles(trial, cycles, max_cycles):
     )
     allcycles = list(set.union(set(model_cycles), set(marker_cycles), set(emg_cycles)))
     if not allcycles:
-        logger.debug('trial %s has no cycles of specified type' % trial.trialname)
+        logger.debug(f'trial {trial.trialname} has no cycles of specified type')
     logger.debug(
         'got total of %d cycles for %s (%d model, %d marker, %d EMG)'
         % (
@@ -134,7 +134,7 @@ def _color_by_params(spec, mapper, trial, cyc, context, dimension=None):
     elif spec is None:
         return mapper[None]
     else:
-        raise RuntimeError('Unexpected colorspec: %s' % spec)
+        raise RuntimeError(f'Unexpected colorspec: {spec}')
 
 
 def _style_by_params(spec, mapper, trial, cyc, context, dimension=None):
@@ -154,7 +154,7 @@ def _style_by_params(spec, mapper, trial, cyc, context, dimension=None):
     elif spec is None:
         return mapper[None]
     else:
-        raise RuntimeError('Unexpected colorspec: %s' % spec)
+        raise RuntimeError(f'Unexpected colorspec: {spec}')
 
 
 def _cyclical_mapper(it):
@@ -204,7 +204,7 @@ def _handle_style_and_color_args(style_by, color_by):
     for k in set(style_by_defaults) - set(style_by):
         style_by[k] = style_by_defaults[k]  # update missing values
     if not set(style_by.values()).issubset(vals_ok):
-        raise ValueError('invalid style_by argument in %s' % style_by.items())
+        raise ValueError(f'invalid style_by argument in {style_by.items()}')
 
     color_by_defaults = cfg.plot.color_by
     if color_by is None:
@@ -216,7 +216,7 @@ def _handle_style_and_color_args(style_by, color_by):
     for k in set(color_by_defaults) - set(color_by):
         color_by[k] = color_by_defaults[k]  # update missing values
     if not set(color_by.values()).issubset(vals_ok):
-        raise ValueError('invalid color_by argument in %s' % color_by.items())
+        raise ValueError(f'invalid color_by argument in {color_by.items()}')
 
     return style_by, color_by
 
@@ -252,24 +252,21 @@ def _truncate_trialname(trialname):
 def _get_cycle_name(trial, cyc, name_type):
     """Return descriptive name for a gait cycle"""
     if name_type == 'name_with_tag':
-        cyclename = '%s/%s' % (trial.trialname, trial.eclipse_tag)
+        cyclename = f'{trial.trialname}/{trial.eclipse_tag}'
     elif name_type == 'short_name_with_tag':
-        cyclename = '%s / %s' % (
-            _truncate_trialname(trial.trialname),
-            trial.eclipse_tag,
-        )
+        cyclename = f'{_truncate_trialname(trial.trialname)} / {trial.eclipse_tag}'
     elif name_type == 'short_name_with_tag_and_cycle':
         cyclename = _truncate_trialname(trial.trialname)
         if trial.eclipse_tag is not None:
-            cyclename += ' %s/%s' % (trial.eclipse_tag, cyc.name)
+            cyclename += f' {trial.eclipse_tag}/{cyc.name}'
     elif name_type == 'tag_only':
         cyclename = trial.eclipse_tag
     elif name_type == 'tag_with_cycle':
-        cyclename = '%s/%s' % (trial.eclipse_tag, cyc.name)
+        cyclename = f'{trial.eclipse_tag}/{cyc.name}'
     elif name_type == 'full':
-        cyclename = '%s/%s' % (trial.name_with_description, cyc.name)
+        cyclename = f'{trial.name_with_description}/{cyc.name}'
     elif name_type == 'short_name_with_cyclename':
-        cyclename = '%s/%s' % (_truncate_trialname(trial.trialname), cyc.name)
+        cyclename = f'{_truncate_trialname(trial.trialname)}/{cyc.name}'
     else:
         raise ValueError('Invalid name_type')
     return cyclename
@@ -293,8 +290,7 @@ def _triage_var(var, trial):
     if list(categs.values()).count(True) > 1:
         categs_matching = [key for key, val in categs.items() if val]
         raise GaitDataError(
-            'ambiguous variable name %s (matches categories %s)'
-            % (var, categs_matching)
+            f'ambiguous variable name {var} (matches categories {categs_matching})'
         )
     else:
         for k, v in categs.items():

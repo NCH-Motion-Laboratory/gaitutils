@@ -77,7 +77,7 @@ def _report_exception(e, title=None):
     if title is None:
         title = 'There was an error running the operation. Details:'
     e_msg = _exception_msg(e)
-    msg = '%s\n%s' % (title, e_msg)
+    msg = f'{title}\n{e_msg}'
     qt_message_dialog(msg)
 
 
@@ -98,7 +98,7 @@ class PdfReportDialog(QtWidgets.QDialog):
         ui_filename = (
             'pdf_report_dialog_comparison.ui' if comparison else 'pdf_report_dialog.ui'
         )
-        uifile = resource_filename('gaitutils', 'gui/%s' % ui_filename)
+        uifile = resource_filename('gaitutils', f'gui/{ui_filename}')
         uic.loadUi(uifile, self)
         # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         if info is not None:
@@ -239,7 +239,7 @@ class WebReportDialog(QtWidgets.QDialog):
         existing_names = [item.text for item in self.listActiveReports.items]
         if report_name in existing_names:
             reply = qt_yesno_dialog(
-                'There is already a report for %s. Recreate?' % report_name
+                f'There is already a report for {report_name}. Recreate?'
             )
             if reply == QtWidgets.QMessageBox.YesRole:
                 # delete the existing one
@@ -358,7 +358,7 @@ class WebReportDialog(QtWidgets.QDialog):
         item = self.listActiveReports.currentItem()
         if item is None:
             return
-        msg = 'Are you sure you want to delete the report for %s?' % item.text
+        msg = f'Are you sure you want to delete the report for {item.text}?'
         reply = qt_yesno_dialog(msg)
         if reply == QtWidgets.QMessageBox.YesRole:
             self._delete_report(item)
@@ -445,7 +445,7 @@ class AddSessionDialog(QtWidgets.QDialog):
             if self.c3ds:
                 self.done(QtWidgets.QDialog.Accepted)
             else:
-                qt_message_dialog('No trials found for session %s' % session)
+                qt_message_dialog(f'No trials found for session {session}')
 
 
 class Gaitmenu(QtWidgets.QMainWindow):
@@ -925,7 +925,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             qt_message_dialog(_exception_msg(e))
             return
         if not vidfiles:
-            qt_message_dialog('Cannot find any video files for session %s' % session)
+            qt_message_dialog(f'Cannot find any video files for session {session}')
             return
         if convert_videos(vidfiles, check_only=True):
             reply = qt_yesno_dialog(
@@ -971,7 +971,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             session, trial_type='static', check_if_exists=False
         )
         if trials and cfg.autoproc.postproc_pipelines:
-            logger.debug('running postprocessing for %s' % trials)
+            logger.debug(f'running postprocessing for {trials}')
             self.prog = ProgressBar('Running postprocessing pipelines...')
             self.prog.update(
                 'Running postprocessing pipelines: %s for %d '
@@ -1236,9 +1236,9 @@ def main():
 
     gaitmenu = Gaitmenu()
     gaitmenu.show()
-    logger.debug('Python interpreter: %s' % sys.executable)
-    logger.debug('Python version: %s' % sys.version)
-    logger.debug('Package directory: %s' % envutils.pkg_dir)
+    logger.debug(f'Python interpreter: {sys.executable}')
+    logger.debug(f'Python version: {sys.version}')
+    logger.debug(f'Package directory: {envutils.pkg_dir}')
     if envutils.git_mode:
         logger.debug('Running from a git repository')
     else:
@@ -1249,6 +1249,6 @@ def main():
         logger.warning(
             'could not import Vicon Nexus SDK; make sure the viconnexusapi package is installed'
         )
-    nexus_status = 'Vicon Nexus is %srunning' % ('' if nexus._nexus_pid() else 'not ')
+    nexus_status = f"Vicon Nexus is {'' if nexus._nexus_pid() else 'not '}running"
     logger.debug(nexus_status)
     app.exec_()

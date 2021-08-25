@@ -76,7 +76,7 @@ def translate(text):
     elif language not in translations:
         raise ValueError('Unknown translation language')
     elif text.lower() not in translations[language]:
-        logger.info('no translation for %s' % text)
+        logger.info(f'no translation for {text}')
         return text
     else:
         return translations[language][text.lower()]

@@ -25,7 +25,7 @@ def _reader_module(source):
     elif c3d._is_c3d_file(source):
         return c3d
     else:
-        raise RuntimeError('Unknown type for data source %s' % source)
+        raise RuntimeError(f'Unknown type for data source {source}')
 
 
 def get_metadata(source):
@@ -248,6 +248,6 @@ def get_model_data(source, model):
                 if c3d._is_c3d_file(source):
                     tibt /= np.pi / 180
                 if np.abs(tibt) > 1e-2:  # do not add insignificant values
-                    logger.info('adding %s tibial torsion: %g deg' % (ctxt, tibt))
+                    logger.info(f'adding {ctxt} tibial torsion: {tibt:g} deg')
                     modeldata[var_knee] += tibt
     return modeldata

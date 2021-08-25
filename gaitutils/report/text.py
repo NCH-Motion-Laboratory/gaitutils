@@ -49,17 +49,17 @@ def _curve_extracted_text(curve_vals, vardefs_dict):
     # write out main title
     is_comparison = len(curve_vals) > 1
     sessions_str = ' vs. '.join(curve_vals.keys())
-    yield '\nCurve extracted values for %s' % sessions_str
+    yield f'\nCurve extracted values for {sessions_str}'
     # write the pages
     for title, vardefs in vardefs_dict.items():
         # the page title
-        yield '\n\n%s' % title
+        yield f'\n\n{title}'
         yield '-' * len(title)  # underline
         rowtitle_len = max(len(_compose_varname(vardef)) for vardef in vardefs) + 5
         for session, session_vals in curve_vals.items():
             # session header (only for multiple sessions)
             if is_comparison:
-                yield '\n%s:' % session
+                yield f'\n{session}:'
             # context header
             hdr = ' ' * rowtitle_len
             hdr += ''.join(ctxt_name.ljust(COL_WIDTH) for _, ctxt_name in contexts)
@@ -71,7 +71,7 @@ def _curve_extracted_text(curve_vals, vardefs_dict):
                     vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
                     if vardef_ctxt[0] not in session_vals:
                         logger.debug(
-                            '%s was not collected for this session' % vardef_ctxt[0]
+                            f'{vardef_ctxt[0]} was not collected for this session'
                         )
                         continue
                     this_vals = _nested_get(session_vals, vardef_ctxt)
@@ -81,7 +81,7 @@ def _curve_extracted_text(curve_vals, vardefs_dict):
                         unit = '\u00B0'  # Unicode degree sign
                     else:
                         unit = ' ' + unit
-                    element = '%.2f±%.2f%s' % (mean, std, unit)
+                    element = f'{mean:.2f}±{std:.2f}{unit}'
                     row += element.ljust(COL_WIDTH)
                 yield row
 
@@ -93,9 +93,9 @@ def _print_analysis_text(trials, vars_=None, main_label=None):
     if vars_ is None:
         vars_ = _timedist_vars
     res_avg_all, res_std_all = _group_analysis_trials(trials)
-    hdr = '\n%s\n' % translate('Time-distance variables')
+    hdr = f"\n{translate('Time-distance variables')}\n"
     hdr += '-' * len(hdr)
-    hdr += '\n\n%s:' % main_label if main_label else '\n\n'
+    hdr += f'\n\n{main_label}:' if main_label else '\n\n'
     yield hdr
     for cond, cond_data in res_avg_all.items():
         varnames_trans = [translate(varname) for varname in vars_]
@@ -112,7 +112,7 @@ def _print_analysis_text(trials, vars_=None, main_label=None):
             li = ''
             li += varname_trans.ljust(rowtitle_len)
             for _, ctxt_name in contexts:
-                element = '%.2f±%.2f %s' % (val[ctxt_name], val_std[ctxt_name], unit)
+                element = f'{val[ctxt_name]:.2f}±{val_std[ctxt_name]:.2f} {unit}'
                 li += element.ljust(COL_WIDTH)
             yield li
     yield ''

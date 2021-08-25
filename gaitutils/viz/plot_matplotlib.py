@@ -69,7 +69,7 @@ def _plot_extracted_table(curve_vals, vardefs):
                     unit = '\u00B0'  # Unicode degree sign
                 else:
                     unit = ' ' + unit
-                element += '%s: %.2f±%.2f%s' % (ctxt, mean, std, unit)
+                element += f'{ctxt}: {mean:.2f}±{std:.2f}{unit}'
             row.append(element)
         table.append(row)
     return _plot_tabular_data(table, row_labels, col_labels)
@@ -96,7 +96,7 @@ def _plot_extracted_table_plotly(curve_vals, vardefs):
                 vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
                 if vardef_ctxt[0] not in session_vals:
                     logger.debug(
-                        '%s was not collected for this session' % vardef_ctxt[0]
+                        f'{vardef_ctxt[0]} was not collected for this session'
                     )
                     continue
                 this_vals = _nested_get(
@@ -108,7 +108,7 @@ def _plot_extracted_table_plotly(curve_vals, vardefs):
                     unit = '\u00B0'  # Unicode degree sign
                 else:
                     unit = ' ' + unit
-                row.append('%.2f±%.2f%s' % (mean, std, unit))
+                row.append(f'{mean:.2f}±{std:.2f}{unit}')
         table.append(row)
     return _plot_tabular_data_via_plotly(table, row_labels, col_labels)
 
@@ -655,7 +655,7 @@ def plot_trials(
                                         color=col,
                                         alpha=cfg.plot.model_stddev_alpha,
                                     )
-                                    leg_entries['Stddev for %s' % cyclename] = stddev_
+                                    leg_entries[f'Stddev for {cyclename}'] = stddev_
 
                             # add supplementary data
                             # XXX: not implemented for matplotlib
@@ -666,7 +666,7 @@ def plot_trials(
                                 if yunit == 'deg':
                                     yunit = '\u00B0'  # degree sign
                                 ydesc = [s[:3] for s in themodel.ydesc[var]]  # shorten
-                                ylabel_ = '%s %s %s' % (ydesc[0], yunit, ydesc[1])
+                                ylabel_ = f'{ydesc[0]} {yunit} {ydesc[1]}'
                                 ax.set(ylabel=ylabel_)
 
                                 ax.xaxis.label.set_fontsize(
@@ -733,7 +733,7 @@ def plot_trials(
                                 )[0]
 
                                 # dim-specific tracename
-                                tracename_marker = 'mkr_%s:%s' % (datadim, cyclename)
+                                tracename_marker = f'mkr_{datadim}:{cyclename}'
                                 leg_entries[tracename_marker] = line_
 
                                 # add toeoff marker
@@ -814,7 +814,7 @@ def plot_trials(
                             title = _var_title(var)
                             if not emg_any_ok[var]:
                                 _remove_ticks_and_labels(ax)
-                                _annotate_axis(ax, '%s disconnected' % title)
+                                _annotate_axis(ax, f'{title} disconnected')
                             else:
                                 if title:
                                     ax.set_title(title)
@@ -855,11 +855,11 @@ def plot_trials(
                                     )
 
                     elif vartype == 'unknown':
-                        raise GaitDataError('cannot interpret variable %s' % var)
+                        raise GaitDataError(f'cannot interpret variable {var}')
 
                     else:
                         raise GaitDataError(
-                            'plotting not implemented for variable %s' % var
+                            f'plotting not implemented for variable {var}'
                         )
 
                     # adjustments common to all plots

@@ -28,7 +28,7 @@ class EMG:
     """
 
     def __init__(self, source, correction_factor=1, chs_disabled=None):
-        logger.debug('new EMG instance from %s' % source)
+        logger.debug(f'new EMG instance from {source}')
         self.source = source
         self.passband = cfg.emg.passband
         self._data = None
@@ -59,7 +59,7 @@ class EMG:
     def _read_data(self):
         """Actually read the EMG data from source"""
         meta = read_data.get_metadata(self.source)
-        logger.debug('reading EMG from %s' % meta['trialname'])
+        logger.debug(f"reading EMG from {meta['trialname']}")
         self.sfrate = meta['analograte']
         emgdi = read_data.get_emg_data(self.source)
         self._data = emgdi['data']
@@ -99,7 +99,7 @@ class EMG:
             if chname.find('Voltage.') == 0:
                 chname = chname[8:]
             # try to conform with the EDF channel label standard
-            chname = 'EMG %s' % chname
+            chname = f'EMG {chname}'
             # EDF stores data as 16 bit ints
             # since ranges can be set per-channel, we map individual
             # range of each signal into the 16-bit digital scale
@@ -124,15 +124,15 @@ class EMG:
     def _match_name(self, chname):
         """Fuzzily match channel name"""
         if not (isinstance(chname, str) and len(chname)) >= 2:
-            raise ValueError('invalid channel name: %s' % chname)
+            raise ValueError(f'invalid channel name: {chname}')
         matches = [x for x in self.data if x.find(chname) >= 0]
         if len(matches) == 0:
-            raise KeyError('No matching channel for %s' % chname)
+            raise KeyError(f'No matching channel for {chname}')
         else:
             ch = min(matches, key=len)  # choose shortest matching name
         if len(matches) > 1:
             logger.warning(
-                'multiple channel matches for %s: %s -> %s' % (chname, matches, ch)
+                f'multiple channel matches for {chname}: {matches} -> {ch}'
             )
         return ch
 

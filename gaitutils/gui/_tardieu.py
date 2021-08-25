@@ -131,7 +131,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
         self.emg_passband = cfg.emg.passband
         self.lblEMGPassband.setText(
-            '%.1f Hz - %.1f Hz' % (self.emg_passband[0], self.emg_passband[1])
+            f'{self.emg_passband[0]:.1f} Hz - {self.emg_passband[1]:.1f} Hz'
         )
 
         # keep some controls disabled until data is loaded
@@ -185,7 +185,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
     def _reset_emg_filter(self, f1, f2):
         """Re-set the EMG filter"""
         self.emg_passband = [f1, f2]
-        self.lblEMGPassband.setText('%.1f Hz - %.1f Hz' % (f1, f2))
+        self.lblEMGPassband.setText(f'{f1:.1f} Hz - {f2:.1f} Hz')
         self._tardieu_plot._reset_emg_filter(f1, f2)
         self.canvas.draw()
 
@@ -236,7 +236,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
         try:
             vicon = nexus.viconnexus()
         except GaitDataError as e:
-            qt_message_dialog('Error: %s' % str(e))
+            qt_message_dialog(f'Error: {str(e)}')
             return
         self._load_dialog(vicon)
 
@@ -269,7 +269,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
         try:
             self._tardieu_plot.load_data(source, emg_chs, self.emg_passband, ang0_nexus)
         except GaitDataError as e:
-            qt_message_dialog('Error: %s' % str(e))
+            qt_message_dialog(f'Error: {str(e)}')
             self._resp()
             return
 
@@ -323,7 +323,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
                 pdf.savefig(figx)
         except IOError:
             qt_message_dialog(
-                'Error writing %s, check that file is not already open.' % fname
+                f'Error writing {fname}, check that file is not already open.'
             )
             return
 
@@ -431,7 +431,7 @@ class Markers:
                     (0, 1), (0, 0), linewidth=self.marker_width, color=col
                 )
             )
-            legtxts.append('%.3f s: %s' % (mkr, anno))
+            legtxts.append(f'{mkr:.3f} s: {anno}')
         ax.legend(
             artists,
             legtxts,
@@ -507,7 +507,7 @@ class TardieuPlot:
             try:
                 accsigs = [accdata_[ch] for ch in cfg.tardieu.acc_chs]
             except KeyError:
-                raise GaitDataError('No such accelerometer channel %s' % ch)
+                raise GaitDataError(f'No such accelerometer channel {ch}')
             acctot = np.stack(accsigs)
             self.acctot = np.sqrt(np.sum(acctot ** 2, 0))
         else:
@@ -657,7 +657,7 @@ class TardieuPlot:
                 if any([s in ch for s in self.emg_automark_chs]):
                     rmsdata = self.emg_rms[ch][smin:smax]
                     rmsmaxind = np.argmax(rmsdata) / self.trial.analograte + tmin_
-                    markers.add(rmsmaxind, annotation='%s max. RMS' % ch)
+                    markers.add(rmsmaxind, annotation=f'{ch} max. RMS')
 
             # connect callbacks
             for ax in self.data_axes:
@@ -698,7 +698,7 @@ class TardieuPlot:
 
     def _reset_emg_filter(self, f1, f2):
         """Takes new EMG lowpass and highpass values"""
-        logger.debug('reset EMG filter to %.2f-%.2f' % (f1, f2))
+        logger.debug(f'reset EMG filter to {f1:.2f}-{f2:.2f}')
         self.trial.emg.passband = [f1, f2]
         for ind, ch in enumerate(self.emg_chs):
             t_, self.emgdata[ch] = self.trial.get_emg_data(ch)
@@ -795,18 +795,18 @@ class TardieuPlot:
         # each marker gets text of its own color
         for marker, anno, col in self.markers.marker_info:
             frame = self._time_to_frame(marker, self.trial.framerate)
-            s += u"<font color='%s'>" % col
+            s += f"<font color='{col}'>"
             # len of acc signal is nframes - 2
             if frame < 0 or frame >= self.nframes - 2:
                 s += 'Marker outside data range'
             else:
-                s += 'Marker @%.3f s' % marker
+                s += f'Marker @{marker:.3f} s'
                 s += (' (%s):<br>') % anno if anno else ':<br>'
                 s += 'dflex: %.2f° vel: %.2f°/s' % (
                     self.angd[frame],
                     self.angveld[frame],
                 )
-                s += ' acc: %.2f°/s²<br><br>' % self.angaccd[frame]
+                s += f' acc: {self.angaccd[frame]:.2f}°/s²<br><br>'
             s += '</font>'
         return s
 
@@ -817,12 +817,12 @@ class TardieuPlot:
         # find the limits of the data that is shown
         tmin_ = max(self.time[0], self.tmin)
         tmax_ = min(self.time[-1], self.tmax)
-        s = 'Trial name: %s\n' % self.trial.trialname
-        s += 'Description: %s\n' % (self.trial.eclipse_data['DESCRIPTION'])
-        s += 'Notes: %s\n' % (self.trial.eclipse_data['NOTES'])
+        s = f'Trial name: {self.trial.trialname}\n'
+        s += f"Description: {self.trial.eclipse_data['DESCRIPTION']}\n"
+        s += f"Notes: {self.trial.eclipse_data['NOTES']}\n"
         s += 'Angle offset: '
-        s += (' %.1f°\n' % self.ang0_nexus) if self.ang0_nexus else 'none\n'
-        s += 'Data range shown: %.2f - %.2f s\n' % (tmin_, tmax_)
+        s += f' {self.ang0_nexus:.1f}°\n' if self.ang0_nexus else 'none\n'
+        s += f'Data range shown: {tmin_:.2f} - {tmax_:.2f} s\n'
         # frame indices corresponding to time limits
         fmin, fmax = self._time_to_frame([tmin_, tmax_], self.trial.framerate)
         if fmin == fmax:
@@ -846,14 +846,14 @@ class TardieuPlot:
             velmax = np.nanmax(velr)
             velmaxind = np.nanargmax(velr) / self.trial.framerate + tmin_
             s += 'Values for range shown:\n'
-            s += 'Max. dorsiflexion: %.2f° @ %.2f s\n' % (angmax, angmaxind)
-            s += 'Max. plantarflexion: %.2f° @ %.2f s\n' % (angmin, angminind)
-            s += 'Max velocity: %.2f°/s @ %.2f s\n' % (velmax, velmaxind)
+            s += f'Max. dorsiflexion: {angmax:.2f}° @ {angmaxind:.2f} s\n'
+            s += f'Max. plantarflexion: {angmin:.2f}° @ {angminind:.2f} s\n'
+            s += f'Max velocity: {velmax:.2f}°/s @ {velmaxind:.2f} s\n'
             for ch in self.emg_chs:
                 rmsdata = self.emg_rms[ch][smin:smax]
                 rmsmax = rmsdata.max()
                 rmsmaxind = np.argmax(rmsdata) / self.trial.analograte + tmin_
-                s += '%s max RMS: %.2f mV @ %.2f s\n' % (ch, rmsmax * 1e3, rmsmaxind)
+                s += f'{ch} max RMS: {rmsmax * 1000.0:.2f} mV @ {rmsmaxind:.2f} s\n'
             return s
 
 

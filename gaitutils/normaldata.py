@@ -207,7 +207,7 @@ def _write_xlsx(normaldata, filename):
     ws = wb.active
     ws.title = 'Normal'
     for n, var in enumerate(sorted(normaldata), 1):
-        logger.debug('writing %s' % var)
+        logger.debug(f'writing {var}')
         data = normaldata[var]
         nrows, ncols = data.shape
         if nrows not in (51, 1) or ncols != 2:
@@ -232,7 +232,7 @@ def _write_xlsx(normaldata, filename):
             )  # supposed to be unit, not used by us
             for k, val in enumerate(coldata):
                 ws.cell(column=col, row=4 + k, value=val)
-    logger.debug('saving %s' % filename)
+    logger.debug(f'saving {filename}')
     wb.save(filename=filename)
 
 
@@ -245,7 +245,7 @@ def _normals_from_data(data):
             rvar, lvar = 'R' + var, 'L' + var
             rcurves, lcurves = data[rvar], data[lvar]
             if rcurves is None or lcurves is None:
-                logger.warning('cannot get model data for %s' % var)
+                logger.warning(f'cannot get model data for {var}')
                 continue
             # combine data for L/R
             curves = np.concatenate([rcurves, lcurves])

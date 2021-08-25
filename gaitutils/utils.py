@@ -47,7 +47,7 @@ class TrialEvents:
             if k > 0:
                 s += ','
             ev_vals = getattr(self, evtype)
-            s += ' %s: %s' % (evtype, ev_vals)
+            s += f' {evtype}: {ev_vals}'
         s += '>'
         return s
 
@@ -61,7 +61,7 @@ class TrialEvents:
         elif attr in TrialEvents.secret_stuff:
             super(TrialEvents, self).__setattr__(attr, value)
         else:
-            raise AttributeError('%s is not a valid attribute' % attr)
+            raise AttributeError(f'{attr} is not a valid attribute')
 
     def subtract_offset(self, offset):
         """Subtract given offset from events."""
@@ -207,10 +207,10 @@ def avg_markerdata(mkrdata, markers, roi=None, fail_on_gaps=True, avg_velocity=F
         gap_frames = marker_gaps(mdata)
         if np.intersect1d(roi_frames, gap_frames).size > 0:
             if fail_on_gaps:
-                raise GaitDataError('Averaging data for %s has gaps' % marker)
+                raise GaitDataError(f'Averaging data for {marker} has gaps')
             else:
                 logger.warning(
-                    'marker %s cannot be included in average due to gaps' % marker
+                    f'marker {marker} cannot be included in average due to gaps'
                 )
                 continue
         else:
@@ -289,7 +289,7 @@ def _check_markers_flipped(mkrdata):
     # HEE-TOE checks
     for context in ['L', 'R']:
         # compare HEE-TOE line to pelvis orientation
-        mkr_toe, mkr_hee = '%sTOE' % context, '%sHEE' % context
+        mkr_toe, mkr_hee = f'{context}TOE', f'{context}HEE'
         ht = _normalize(mkrdata[mkr_toe] - mkrdata[mkr_hee])
         if context + 'PSI' in mkrdata:
             pa = _normalize(mkrdata[context + 'ASI'] - mkrdata[context + 'PSI'])
@@ -492,7 +492,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
         for label, pts in allpts.items():
             pt = pts[fr0, :]
             pt_ok = _point_in_poly(poly, pt)
-            logger.debug('%s point %son plate' % (label, '' if pt_ok else 'not '))
+            logger.debug(f"{label} point {'' if pt_ok else 'not '}on plate")
             pts_ok.append(pt_ok)
         if all(pts_ok):
             return 2
@@ -518,7 +518,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
                 'body mass unknown, thresholding force at %.2f N', f_threshold
             )
         else:
-            logger.debug('body mass %.2f kg' % bodymass)
+            logger.debug(f'body mass {bodymass:.2f} kg')
             f_threshold = cfg.autoproc.forceplate_contact_threshold * bodymass * 9.81
             if fmax < cfg.autoproc.forceplate_min_weight * bodymass * 9.81:
                 logger.debug('insufficient max. force on plate')
@@ -553,7 +553,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
         context = None
         if fp_info is not None and plate in fp_info:
             eclipse_context = fp_info[plate]
-            logger.debug('using Eclipse forceplate info: %s' % eclipse_context)
+            logger.debug(f'using Eclipse forceplate info: {eclipse_context}')
             if eclipse_context == 'Right':
                 detect_context = False
                 context = 'R'
@@ -573,7 +573,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
 
     from . import read_data
 
-    logger.debug('detecting forceplate events from %s' % source)
+    logger.debug(f'detecting forceplate events from {source}')
     results = _empty_fp_events()
 
     # get subject info
@@ -581,7 +581,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
     fpdata = read_data.get_forceplate_data(source)
     if cfg.autoproc.nexus_forceplate_devnames:
         logger.info(
-            'using configured plates: %s' % cfg.autoproc.nexus_forceplate_devnames
+            f'using configured plates: {cfg.autoproc.nexus_forceplate_devnames}'
         )
     if not fpdata:
         logger.warning('no forceplates')
@@ -590,11 +590,11 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
     rfootlen = info['subj_params']['RFootLen']
     lfootlen = info['subj_params']['LFootLen']
     if footlen is not None:
-        logger.debug('(obsolete) single foot length parameter set to %.2f' % footlen)
+        logger.debug(f'(obsolete) single foot length parameter set to {footlen:.2f}')
         rfootlen = lfootlen = footlen
     elif rfootlen is not None and lfootlen is not None:
         logger.debug(
-            'foot length parameters set to r=%.2f, l=%.2f' % (rfootlen, lfootlen)
+            f'foot length parameters set to r={rfootlen:.2f}, l={lfootlen:.2f}'
         )
     else:
         logger.debug('foot length parameter not set')
@@ -634,7 +634,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             if this_context is None:
                 raise GaitDataError('cannot determine leading foot from marker data')
             footlen = rfootlen if this_context == 'R' else lfootlen
-            logger.debug('checking contact for leading foot: %s' % this_context)
+            logger.debug(f'checking contact for leading foot: {this_context}')
             foot_contacts_ok = (
                 _foot_plate_check(fp, mkrdata, fr0, this_context, footlen) == 2
             )
@@ -819,7 +819,7 @@ def automark_events(
     for context, footctrP, footctrv in zip(
         ('R', 'L'), (rfootctrP, lfootctrP), (rfootctrv, lfootctrv)
     ):
-        logger.debug('marking context %s' % context)
+        logger.debug(f'marking context {context}')
         # foot center position
         # filter scalar velocity data to suppress noise and spikes
         footctrv = signal.medfilt(footctrv, PREFILTER_MEDIAN_WIDTH)
@@ -843,7 +843,7 @@ def automark_events(
                 maxv * cfg.autoproc.toeoff_vel_threshold,
             )
         )
-        logger.debug('using thresholds: %.2f/%.2f' % (threshold_fall_, threshold_rise_))
+        logger.debug(f'using thresholds: {threshold_fall_}/{threshold_rise_}')
         # find point where velocity crosses threshold
         # foot strikes (velocity decreases)
         cross = falling_zerocross(footctrv - threshold_fall_)
@@ -908,8 +908,8 @@ def automark_events(
                 )
                 toeoffs = np.delete(toeoffs, to_this[:-1])
 
-        logger.debug('autodetected strike events: %s' % strikes)
-        logger.debug('autodetected toeoff events: %s' % toeoffs)
+        logger.debug(f'autodetected strike events: {strikes}')
+        logger.debug(f'autodetected toeoff events: {toeoffs}')
 
         # select events for which the foot is close enough to center frame
         if events_range:
@@ -927,7 +927,7 @@ def automark_events(
         # correct foot strikes with force plate autodetected events
         if fp_events and fp_events[context + '_strikes']:
             fp_strikes = fp_events[context + '_strikes']
-            logger.debug('forceplate strikes: %s' % fp_strikes)
+            logger.debug(f'forceplate strikes: {fp_strikes}')
             # find best fp matches for all strikes
             fpc = digitize_array(strikes, fp_strikes)
             ok_ind = np.where(np.abs(fpc - strikes) < FP_EVENT_TOL)[0]
@@ -938,10 +938,10 @@ def automark_events(
             else:
                 # replace with fp detected strikes
                 strikes[ok_ind] = fpc[ok_ind]
-                logger.debug('fp corrected strikes: %s' % strikes)
+                logger.debug(f'fp corrected strikes: {strikes}')
             # toeoffs
             fp_toeoffs = fp_events[context + '_toeoffs']
-            logger.debug('forceplate toeoffs: %s' % fp_toeoffs)
+            logger.debug(f'forceplate toeoffs: {fp_toeoffs}')
             fpc = digitize_array(toeoffs, fp_toeoffs)
             ok_ind = np.where(np.abs(fpc - toeoffs) < FP_EVENT_TOL)[0]
             if ok_ind.size == 0:
@@ -950,7 +950,7 @@ def automark_events(
                 )
             else:
                 toeoffs[ok_ind] = fpc[ok_ind]
-                logger.debug('fp corrected toeoffs: %s' % toeoffs)
+                logger.debug(f'fp corrected toeoffs: {toeoffs}')
             # delete strikes before (actual) 1st forceplate contact
             if start_on_forceplate and len(fp_strikes) > 0:
                 # use a tolerance here to avoid deleting possible (uncorrected)
@@ -958,7 +958,7 @@ def automark_events(
                 not_ok = np.where(strikes < fp_strikes[0] - FP_EVENT_TOL)[0]
                 if not_ok.size > 0:
                     logger.debug(
-                        'deleting foot strikes before forceplate: %s' % strikes[not_ok]
+                        f'deleting foot strikes before forceplate: {strikes[not_ok]}'
                     )
                     strikes = np.delete(strikes, not_ok)
 
@@ -980,8 +980,8 @@ def automark_events(
         )
         toeoffs = np.delete(toeoffs, not_ok)
 
-        logger.debug('final strike events: %s' % strikes)
-        logger.debug('final toeoff events: %s' % toeoffs)
+        logger.debug(f'final strike events: {strikes}')
+        logger.debug(f'final toeoff events: {toeoffs}')
 
         if mark:
             if not nexus._is_vicon_instance(source):

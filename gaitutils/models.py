@@ -53,7 +53,7 @@ def _dict_with_context_gen(di, append_context=False):
     for key, val in di.items():
         for ctxt in 'RL':
             if append_context:
-                yield ctxt + key, '%s (%s)' % (val, ctxt)
+                yield ctxt + key, f'{val} ({ctxt})'
             else:
                 yield ctxt + key, val
 

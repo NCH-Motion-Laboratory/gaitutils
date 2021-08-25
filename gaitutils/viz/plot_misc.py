@@ -39,7 +39,7 @@ def _browse_localhost(url=None, port=None):
         logger.debug('new browser pid %d' % proc.pid)
     except Exception:
         raise RuntimeError(
-            'Cannot start configured web browser: %s' % cfg.general.browser_path
+            f'Cannot start configured web browser: {cfg.general.browser_path}'
         )
 
 
@@ -61,7 +61,7 @@ def get_backend(backend_name):
         backend_name = cfg.plot.backend
     backends = {'plotly': plot_plotly, 'matplotlib': plot_matplotlib}
     if backend_name not in backends:
-        raise ValueError('no such plotting backend %s' % backend_name)
+        raise ValueError(f'no such plotting backend {backend_name}')
     return backends[backend_name]
 
 

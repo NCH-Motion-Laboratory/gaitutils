@@ -57,9 +57,9 @@ class TrialEvents:
                 raise AttributeError('attribute must be a list')
             else:
                 # sort to make sure that event frames are in increasing order
-                super(TrialEvents, self).__setattr__(attr, sorted(value))
+                super().__setattr__(attr, sorted(value))
         elif attr in TrialEvents.secret_stuff:
-            super(TrialEvents, self).__setattr__(attr, value)
+            super().__setattr__(attr, value)
         else:
             raise AttributeError(f'{attr} is not a valid attribute')
 

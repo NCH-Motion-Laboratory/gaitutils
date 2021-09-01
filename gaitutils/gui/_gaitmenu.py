@@ -1171,7 +1171,7 @@ class Runner(QRunnable):
     """Encapsulates threaded functions for QThreadPool"""
 
     def __init__(self, fun):
-        super(Runner, self).__init__()
+        super().__init__()
         self.fun = fun
         self.signals = RunnerSignals()
 

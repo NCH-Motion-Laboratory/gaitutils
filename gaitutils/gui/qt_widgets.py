@@ -16,38 +16,38 @@ class NiceListWidgetItem(QtWidgets.QListWidgetItem):
     def __init__(self, *args, **kwargs):
         # don't pass this arg to superclass __init__
         checkable = kwargs.pop('checkable')
-        super(NiceListWidgetItem, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if checkable:
             self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
 
     @property
     def text(self):
-        return super(NiceListWidgetItem, self).text()
+        return super().text()
 
     @property
     def userdata(self):
-        return super(NiceListWidgetItem, self).data(QtCore.Qt.UserRole)
+        return super().data(QtCore.Qt.UserRole)
 
     @userdata.setter
     def userdata(self, _data):
         if _data is not None:
-            super(NiceListWidgetItem, self).setData(QtCore.Qt.UserRole, _data)
+            super().setData(QtCore.Qt.UserRole, _data)
 
     @property
     def checkstate(self):
-        return super(NiceListWidgetItem, self).checkState()
+        return super().checkState()
 
     @checkstate.setter
     def checkstate(self, checked):
         state = QtCore.Qt.Checked if checked else QtCore.Qt.Unchecked
-        super(NiceListWidgetItem, self).setCheckState(state)
+        super().setCheckState(state)
 
 
 class NiceListWidget(QtWidgets.QListWidget):
     """Adds some conveniences to QListWidget"""
 
     def __init__(self, parent=None):
-        super(NiceListWidget, self).__init__(parent)
+        super().__init__(parent)
 
     @property
     def items(self):
@@ -174,7 +174,7 @@ class ProgressSignals(QObject):
     progress = pyqtSignal(object, object)
 
     def __init__(self):
-        super(ProgressSignals, self).__init__()
+        super().__init__()
         # this flag can be checked to see whether the operation was canceled
         self.canceled = False
 

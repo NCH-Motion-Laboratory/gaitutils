@@ -104,7 +104,7 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
     def __init__(self, parent=None):
 
-        super(TardieuWindow, self).__init__(parent)
+        super().__init__(parent)
 
         uifile = resource_filename('gaitutils', 'gui/tardieu.ui')
         uic.loadUi(uifile, self)

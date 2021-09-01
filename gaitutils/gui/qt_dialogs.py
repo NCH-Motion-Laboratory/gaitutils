@@ -87,7 +87,7 @@ class QCompoundEditorDict(QtWidgets.QDialog):
     """Compound editor for dicts"""
 
     def __init__(self, data, parent=None):
-        super(QCompoundEditorDict, self).__init__(parent=parent)
+        super().__init__(parent=parent)
         root_layout = QtWidgets.QVBoxLayout()
         self.datable = QtWidgets.QTableWidget()
         self.data = data

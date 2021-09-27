@@ -324,7 +324,6 @@ def time_dist_barchart(
                     texts += [f'{val:.2f} {unit} ({scaled_val:.0f}%)']
             _plot_label(ax, rects, texts)
         for ax in var_axes:
-            ax.set_xlim([0, largest_x])
             if ax == var_axes[-1]:
                 ax.set_xticks(_tick_spacing(0, largest_x))
                 # draw a vertical marker line at 100% use get_xaxis_transform()
@@ -342,6 +341,8 @@ def time_dist_barchart(
                 )
                 con.set_color((0, 0, 0, 0.3))  # set opacity
                 ax.add_artist(con)
+            # set_xticks() above may change the limits, so better set them here
+            ax.set_xlim([0, largest_x])
 
         # return the last set of rects for legend
         return rects

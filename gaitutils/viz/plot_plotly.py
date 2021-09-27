@@ -278,7 +278,7 @@ def time_dist_barchart(
             # to the maximum scaled value among all vars and conditions (i.e. if
             # biggest scaled variable is 160% of its reference value, the full x
             # scale will be 160%)
-            max_val_this = np.max(np.array([data_scaled[c][ctxt] for c in conds]))
+            max_val_this = np.nanmax(np.array([data_scaled[c][ctxt] for c in conds]))
             # set ticks
             tickvals = _tick_spacing(0, max_val_this)
             fig['layout']['xaxis%d' % k].update({'range': [0, max(tickvals)]})

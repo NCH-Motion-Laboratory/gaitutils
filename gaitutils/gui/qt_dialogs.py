@@ -288,7 +288,7 @@ class OptionsDialog(QtWidgets.QDialog):
     def load_config_dialog(self):
         """Bring up load dialog and load selected file"""
         fout = QtWidgets.QFileDialog.getOpenFileName(
-            self, 'Load config file', Path.home(), 'Config files (*.cfg)'
+            self, 'Load config file', str(Path.home()), 'Config files (*.cfg)'
         )
         fname = fout[0]
         if fname:
@@ -315,7 +315,7 @@ class OptionsDialog(QtWidgets.QDialog):
             )
         else:
             fout = QtWidgets.QFileDialog.getSaveFileName(
-                self, 'Save config file', Path.home(), 'Config files (*.cfg)'
+                self, 'Save config file', str(Path.home()), 'Config files (*.cfg)'
             )
             fname = fout[0]
             if fname:

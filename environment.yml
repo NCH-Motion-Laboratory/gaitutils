@@ -16,6 +16,7 @@ dependencies:
   - plotly
   - pyqt
   - spyder
+  - psutil
   - jupyter
   - urllib3
   - werkzeug

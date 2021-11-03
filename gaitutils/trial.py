@@ -251,6 +251,8 @@ class Trial:
         # insert metadata dict directly as instance attributes (those are
         # documented above)
         self.__dict__.update(meta)
+        if self.length == 1:
+            raise GaitDataError('Cannot deal with single-frame trials (yet)')
         # match events with frame data
         self.events.subtract_offset(self.offset)
         self.sessiondir = self.sessionpath.name

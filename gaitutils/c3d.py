@@ -193,7 +193,8 @@ def _get_analog_data(c3dfile, devname):
     chnames = []
     for i in btk.Iterate(acq.GetAnalogs()):
         if i.GetDescription().find(devname) >= 0:
-            chname = i.GetLabel()
+            if (chname := i.GetLabel()) in chnames:
+                raise GaitDataError('Duplicate channel names in C3D file. Please rename your channels.')
             chnames.append(chname)
             data[chname] = np.squeeze(i.GetValues())
     if chnames:

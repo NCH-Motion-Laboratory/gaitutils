@@ -5,9 +5,10 @@ Create web-based gait report using dash.
 @author: Jussi (jnu@iki.fi)
 """
 
+from re import I
 import plotly.graph_objs as go
 import dash
-from dash import dcc, html
+
 from dash.dependencies import Input, Output, State
 import flask
 from flask import request
@@ -33,6 +34,12 @@ from ..viz.plot_plotly import plot_trials, plot_extracted_box
 from ..viz import timedist, layouts
 from ..stats import AvgTrial, _trials_extract_values
 from ..gui.qt_widgets import ProgressSignals
+
+try:
+    from dash import dcc, html  # new style
+except ImportError:
+    import dash_core_components as dcc  # old style
+    import dash_html_components as html
 
 
 logger = logging.getLogger(__name__)

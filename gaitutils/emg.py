@@ -125,6 +125,8 @@ class EMG:
         """Fuzzily match channel name"""
         if not isinstance(chname, str):
             raise ValueError(f'invalid channel name: {chname}')
+        if len(chname) < 3:
+            logger.warning('Use of very short EMG channel names is discouraged')
         matches = [x for x in self.data if x.find(chname) >= 0]
         if len(matches) == 0:
             raise KeyError(f'No matching channel for {chname}')

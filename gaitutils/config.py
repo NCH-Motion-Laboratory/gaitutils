@@ -19,9 +19,9 @@ logger = logging.getLogger(__name__)
 
 def _handle_cfg_defaults(cfg):
     """Handle deprecated and default config values"""
-    if not isinstance(cfg.plot.emg_yscale, float):
+    if isinstance(cfg.plot.emg_yscale, tuple):
         ysc = cfg.plot.emg_yscale[1]
-        logger.warning(f'emg_yscale was changed to float, using {ysc}')
+        logger.warning(f'emg_yscale was changed to a float variable, using {ysc}')
         cfg.plot.emg_yscale = str(cfg.plot.emg_yscale[1])
     if cfg.general.normaldata_files == 'default':
         fn = resource_filename('gaitutils', 'data/normal.gcd')

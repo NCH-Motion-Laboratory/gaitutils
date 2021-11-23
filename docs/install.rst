@@ -243,7 +243,7 @@ using the matplotlib backend.
 
    c3ds = ['data1.c3d', 'data2.c3d']
 
-   fig = plots.plot_c3ds(c3ds, layout_name='lb_kin', backend='matplotlib')
+   fig = plots.plot_trials(c3ds, layout='lb_kin', backend='matplotlib')
    show_fig(fig)
 
 Package configuration

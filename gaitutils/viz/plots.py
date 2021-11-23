@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 def plot_trials(
     trials,
-    layout_name=None,
+    layout=None,
     backend=None,
     model_normaldata=None,
     emg_normaldata=None,
@@ -43,8 +43,9 @@ def plot_trials(
     ----------
     trials : list
         List of Trial instances to plot.
-    layout_name : str | None
-        Name of the plot layout to use (layouts are defined in cfg).
+    layout : str | None | list
+        Name of the plot layout to use (layouts are defined in config). Alternatively,
+        can directly specify a layout as a list of lists.
     backend : str | None
         Name of backend to use, currently 'plotly' or 'matplotlib'. If None,
         taken from cfg.
@@ -80,15 +81,15 @@ def plot_trials(
     """
 
     backend_lib = get_backend(backend)
-    layout = layouts.get_layout(layout_name)
+    the_layout = layouts.get_layout(layout)
 
-    if auto_adjust_emg_layout and 'EMG' in layout_name.upper():
+    if auto_adjust_emg_layout and 'EMG' in the_layout.upper():
         emgs = [tr.emg for tr in trials]
-        layout = layouts._rm_dead_channels(emgs, layout)
+        the_layout = layouts._rm_dead_channels(emgs, the_layout)
 
     return backend_lib.plot_trials(
         trials,
-        layout,
+        the_layout,
         model_normaldata=model_normaldata,
         emg_normaldata=emg_normaldata,
         cycles=cycles,
@@ -107,7 +108,7 @@ def _plot_sessions(
     sessions,
     tagged_only=True,
     tags=None,
-    layout_name=None,
+    layout=None,
     backend=None,
     model_normaldata=None,
     cycles=None,
@@ -132,7 +133,7 @@ def _plot_sessions(
 
     return plot_trials(
         trials,
-        layout_name=layout_name,
+        layout=layout,
         backend=backend,
         model_normaldata=model_normaldata,
         cycles=cycles,
@@ -149,7 +150,7 @@ def _plot_sessions(
 
 def _plot_session_average(
     session,
-    layout_name=None,
+    layout=None,
     tagged_only=True,
     tags=None,
     model_normaldata=None,
@@ -157,7 +158,7 @@ def _plot_session_average(
 ):
     """Average trials from session and plot."""
 
-    layout = layouts.get_layout(layout_name)
+    the_layout = layouts.get_layout(layout)
     backend_lib = get_backend(backend)
 
     if tags is None:
@@ -177,7 +178,7 @@ def _plot_session_average(
 
     return backend_lib.plot_trials(
         atrial,
-        layout,
+        the_layout,
         model_normaldata=model_normaldata,
         color_by='context',
         figtitle=maintitle_,

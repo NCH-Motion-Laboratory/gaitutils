@@ -22,18 +22,6 @@ def _console_init():
     logging.basicConfig(level=logging.DEBUG)
     _register_gui_exception_handler()
 
-
-def plot_nexus_trial():
-    """Plot currently loaded Nexus trial"""
-    _console_init()
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--layout', type=str)
-    parser.add_argument('--backend', type=str)
-    args = parser.parse_args()
-    fig = plots.plot_nexus_trial(layout_name=args.layout, backend=args.backend)
-    show_fig(fig)
-
-
 def plot_nexus_session():
     """Plot tagged dynamic trials from current Nexus session"""
     _console_init()
@@ -44,7 +32,7 @@ def plot_nexus_session():
     args = parser.parse_args()
     sessions = [nexus.get_sessionpath()]
     fig = plots._plot_sessions(
-        sessions, tags=args.tags, backend=args.backend, layout_name=args.layout
+        sessions, tags=args.tags, backend=args.backend, layout=args.layout
     )
     show_fig(fig)
 
@@ -58,6 +46,6 @@ def plot_nexus_session_average():
     args = parser.parse_args()
     session = nexus.get_sessionpath()
     fig = plots._plot_session_average(
-        session, layout_name=args.layout, backend=args.backend
+        session, layout=args.layout, backend=args.backend
     )
     show_fig(fig)

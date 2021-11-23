@@ -847,7 +847,7 @@ class Gaitmenu(QtWidgets.QMainWindow):
             finished_func=self._enable_main_ui,
             result_func=self._show_plots,
             trials=trials,
-            layout_name=layout_name,
+            layout=layout_name,
             backend=self._plotting_backend,
             cycles=cycles,
             emg_mode=emg_mode,

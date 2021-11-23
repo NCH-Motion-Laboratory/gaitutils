@@ -5,6 +5,7 @@ Create gait reports in pdf format.
 @author: Jussi (jnu@iki.fi)
 """
 
+
 import itertools
 
 import logging
@@ -209,7 +210,7 @@ def create_report(
         logger.debug('creating kinematics consistency plot')
         fig_kinematics_cons = _plot_sessions(
             sessions=[sessionpath],
-            layout_name='lb_kinematics',
+            layout='lb_kinematics',
             model_normaldata=model_normaldata,
             color_by=color_by,
             style_by=style_by,
@@ -225,7 +226,7 @@ def create_report(
         logger.debug('creating kinetics consistency plot')
         fig_kinetics_cons = _plot_sessions(
             sessions=[sessionpath],
-            layout_name='lb_kinetics_web',
+            layout='lb_kinetics_web',
             model_normaldata=model_normaldata,
             color_by=color_by,
             style_by=style_by,
@@ -241,7 +242,7 @@ def create_report(
         logger.debug('creating muscle length consistency plot')
         fig_musclelen_cons = _plot_sessions(
             sessions=[sessionpath],
-            layout_name='musclelen',
+            layout='musclelen',
             color_by=color_by,
             style_by=style_by,
             model_normaldata=model_normaldata,
@@ -256,7 +257,7 @@ def create_report(
         logger.debug('creating EMG consistency plot')
         fig_emg_cons = _plot_sessions(
             sessions=[sessionpath],
-            layout_name='std_emg',
+            layout='std_emg',
             color_by=color_by,
             style_by=style_by,
             figtitle=f'EMG consistency for {sessiondir}',
@@ -422,7 +423,7 @@ def create_comparison_report(
         _plot_sessions(
             sessionpaths,
             tags=cfg.eclipse.repr_tags,
-            layout_name='lb_kinematics',
+            layout='lb_kinematics',
             model_normaldata=model_normaldata,
             figtitle='Kinematics comparison',
             style_by=style_by,
@@ -438,7 +439,7 @@ def create_comparison_report(
         _plot_sessions(
             sessionpaths,
             tags=cfg.eclipse.repr_tags,
-            layout_name='lb_kinetics_web',
+            layout='lb_kinetics_web',
             model_normaldata=model_normaldata,
             figtitle='Kinetics comparison',
             style_by=style_by,
@@ -454,7 +455,7 @@ def create_comparison_report(
         _plot_sessions(
             sessionpaths,
             tags=cfg.eclipse.repr_tags,
-            layout_name='musclelen',
+            layout='musclelen',
             model_normaldata=model_normaldata,
             figtitle='Muscle length comparison',
             style_by=style_by,
@@ -470,7 +471,7 @@ def create_comparison_report(
         _plot_sessions(
             sessionpaths,
             tags=cfg.eclipse.repr_tags,
-            layout_name='std_emg',
+            layout='std_emg',
             emg_mode=emg_mode,
             figtitle='EMG comparison',
             style_by=style_by,

@@ -18,14 +18,18 @@ def get_layout(layout_name):
 
     Parameters
     ----------
-    layout_name : str
-        Name of layout.
+    layout_name : str | None | list
+        Name of layout. If None, a default layout will be
+        returned. If list, the parameter is already assumed to be a layout
+        and is returned unchanged.
 
     Returns
     -------
     list
         The layout.
     """
+    if isinstance(layout_name, list):
+        return layout_name
     # our default layout is PiG lower body kinematics
     if layout_name is None:
         layout_name = 'lb_kinematics'

@@ -52,9 +52,10 @@ def run_from_ipython():
         return False
 
 
-# fake stdout and stderr not being available if run
-# under pythonw.exe on Windows
-if (
+# fake stdout and stderr if run under pythonw.exe on Windows;
+# this prevents errors on print() calls
+# also if no stdout output is desired, the same lines accomplish that
+if cfg.general.quiet_stdout or (
     sys.platform.find('win') != -1
     and sys.executable.find('pythonw') != -1
     and not run_from_ipython()

@@ -12,8 +12,6 @@ console_entries = [
     'nexus_autoproc_session=gaitutils.autoprocess:autoproc_session',
     'nexus_autoproc_trial=gaitutils.autoprocess:autoproc_trial',
     'nexus_automark_trial=gaitutils.autoprocess:automark_trial',
-    'nexus_plot_session_avg=gaitutils.viz.console:plot_nexus_session_average',
-    'nexus_plot_session=gaitutils.viz.console:plot_nexus_session',
     'gaitmenu_make_shortcut=gaitutils.envutils:_make_gaitutils_shortcut',
 ]
 

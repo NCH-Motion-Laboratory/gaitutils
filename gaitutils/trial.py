@@ -168,7 +168,8 @@ class Gaitcycle:
         Parameters
         ----------
         var : ndarray
-            NxM array of frame-based data to normalize. N is the number of frames.
+            NxM array of frame-based data to normalize. N is the number of frames and
+            M is number of variables (columns).
 
         Returns
         -------
@@ -384,7 +385,7 @@ class Trial:
         ----------
         data : ndarray
             A Nxd ndarray, where N is number of frames and d is number of variables.
-        cycle : Gaitcycle | Noncycle | None | int
+        cycle : Gaitcycle | Noncycle | None | int | list
             The gait cycle to normalize to. If Noncycle or None, returns unnormalized
             data. If int, return nth cycle from the trial cycles list.
         """
@@ -393,13 +394,19 @@ class Trial:
                 raise ValueError('No such cycle')
             cycle = self.cycles[cycle]
         if isinstance(cycle, Gaitcycle):
-            t, data = cycle.normalize(data)
+            t, ndata = cycle.normalize(data)
         elif cycle is None or isinstance(cycle, Noncycle):
             # return unnormalized time axis and data as it is
             t = self.t
+        elif isinstance(cycle, list):
+            data_all = list()
+            for cyc in cycle:
+                t, ndata = cyc.normalize(data)
+                data_all.append(ndata)
+            ndata = np.array(data_all)
         else:
             raise ValueError('invalid type for cycle argument')
-        return t, data
+        return t, ndata
 
     def normalize_analog_to_cycle(self, data, cycle):
         """Normalize analog data to a gait cycle.
@@ -450,14 +457,16 @@ class Trial:
         ----------
         var : string
             The name of the model variable (e.g. 'LHipMomentX')
-        cycle : Gaitcycle
+        cycle : Gaitcycle | list | None
             The cycle to normalize to. None for no normalization.
-
+            Can be a list of cycles, in which case a NxM array will be returned
+            in data.
         Returns
         -------
         t_data : tuple
             Tuple of (t, data) where t is the time axis as 1-dim ndarray, and data
-            is the model variable data as 1-dim ndarray.
+            is the model variable data as ndarray. Shape of data is (N,) for a single
+            cycle and (N,M) for multiple cycles.
         """
         data = self._get_modelvar(var)
         return self.normalize_to_cycle(data, cycle)

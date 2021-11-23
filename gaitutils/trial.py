@@ -126,8 +126,7 @@ class Gaitcycle:
         name=None,
         index=None,
     ):
-        self.len = end - start
-        # convert frame indices to 0-based
+        self.len = end - start  # length of cycle in frames
         self.start = start
         self.end = end
         self.toeoff = toeoff
@@ -177,6 +176,8 @@ class Gaitcycle:
             A tuple of (tn, ndata) where tn is the normalized time (0..100%) and ndata
             is the normalized data.
         """
+        if self.end > var.shape[0]:
+            raise GaitDataError('Cycle frame numbers exceed the available data')
         # convert 1D arrays to 2D
         if len(var.shape) == 1:
             var = var[:, np.newaxis]

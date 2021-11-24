@@ -23,7 +23,7 @@ from .gui.qt_widgets import ProgressSignals
 logger = logging.getLogger(__name__)
 
 
-def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=False):
+def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
     """Run autoprocessing for given enf files."""
     if not cfg.autoproc.run_models_only and cfg.autoproc.delete_c3ds:
         _delete_c3ds(enffiles)
@@ -100,8 +100,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
     if nexus_ver_major is not None:
         logger.debug(f'running Nexus version: {nexus_ver_major}.{nexus_ver_minor}')
     # close trial to prevent 'Save trial?' dialog on first open
-    if not do_current:
-        nexus._close_trial()
+    nexus._close_trial()
 
     # init trials dict
     for enffile in enffiles:
@@ -122,9 +121,9 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
         if signals.canceled:
             return None
 
-        if not do_current:
-            logger.debug(f'loading in Nexus: {filename}')
-            nexus._open_trial(filepath)
+        logger.debug(f'loading in Nexus: {filename}')
+        nexus._open_trial(filepath)
+
         try:
             nexus._get_metadata(vicon)
         except GaitDataError:
@@ -365,17 +364,18 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
                 return None
 
             # crop trial around events
-            if cfg.autoproc.crop_margin is not None and nexus._nexus_ver_greater(2, 5):
-                evs_all = list(itertools.chain.from_iterable(evs.values()))
-                if evs_all:
-                    # when setting roi, do not go beyond trial range
-                    minfr, maxfr = vicon.GetTrialRange()
-                    roistart = max(min(evs_all) - cfg.autoproc.crop_margin, minfr)
-                    roiend = min(max(evs_all) + cfg.autoproc.crop_margin, maxfr)
-                    # method cannot take numpy.int64
-                    vicon.SetTrialRegionOfInterest(int(roistart), int(roiend))
-            else:
-                logger.info('current Nexus API version does not support cropping')
+            if cfg.autoproc.crop_margin is not None:
+                if nexus._nexus_ver_greater(2, 5):
+                    evs_all = list(itertools.chain.from_iterable(evs.values()))
+                    if evs_all:
+                        # when setting roi, do not go beyond trial range
+                        minfr, maxfr = vicon.GetTrialRange()
+                        roistart = max(min(evs_all) - cfg.autoproc.crop_margin, minfr)
+                        roiend = min(max(evs_all) + cfg.autoproc.crop_margin, maxfr)
+                        # method cannot take numpy.int64
+                        vicon.SetTrialRegionOfInterest(int(roistart), int(roiend))
+                else:
+                    logger.info('Nexus API version does not support cropping, please update Nexus')
 
             eclipse_str = '%s,%s' % (
                 cfg.autoproc.enf_descriptions['ok'],
@@ -481,7 +481,7 @@ def autoproc_trial(signals=None):
     # not really necessary and seems to cause slowdowns
     if enffiles:
         _do_autoproc(
-            enffiles, pipelines_in_proc=False, signals=signals, do_current=True
+            enffiles, pipelines_in_proc=False, signals=signals
         )
 
 

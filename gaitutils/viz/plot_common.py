@@ -176,8 +176,8 @@ def _cyclical_mapper(it):
 def _handle_cyclespec(cycles):
     """Handle cyclespec argument to plotter functions"""
     default_cycles = cfg.plot.default_cycles
-    if cycles == 'unnormalized':
-        cycles = {vartype: 'unnormalized' for vartype in default_cycles}
+    if cycles in ['all', 'unnormalized']:
+        cycles = {vartype: cycles for vartype in default_cycles}
     elif cycles is None:
         cycles = default_cycles
     elif isinstance(cycles, dict):

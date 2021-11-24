@@ -365,7 +365,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True, do_current=Fals
                 return None
 
             # crop trial around events
-            if nexus._nexus_ver_greater(2, 5):
+            if cfg.autoproc.crop_margin is not None and nexus._nexus_ver_greater(2, 5):
                 evs_all = list(itertools.chain.from_iterable(evs.values()))
                 if evs_all:
                     # when setting roi, do not go beyond trial range

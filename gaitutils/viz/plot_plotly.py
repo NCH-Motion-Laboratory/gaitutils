@@ -385,26 +385,41 @@ def plot_trials(
     ----------
     trials : list
         List of Trial instances to plot.
-    layout : list,
+    layout : list
         The plot layout to use.
     model_normaldata : dict | None
-        Normal data for model variables. If None, taken from cfg.
+        Normal data for model variables. If None, taken from config.
     emg_normaldata : dict | None
-        Normal data for EMG variables. If None, taken from cfg.
-    cycles : dict | str | int | tuple | list
-        Cycles to plot. See Trial.get_cycles() for details.
+        Normal data for EMG variables. If None, taken from config.
+    cycles : dict | str | None
+        Gait cycles to plot. 
+        If dict, specifies cycles to plot for each variable type. Currently
+        allowed keys are 'model', 'marker' and 'emg'. Currently allowed
+        specifier values are: 'forceplate' to get forceplate cycles, 'all' to
+        get all cycles, 'unnormalized' to get data without cycle normalization.
+        Alternatively, integer values can be supplied to get a specific cycle
+        index (note that indices start from 0).
+        If str, the same specifier will be applied to all variable types. The
+        allowed specifiers are same as above. Examples:
+        Plot all cycles for all variable types:
+        cycles = 'all'
+        Plot forceplate cycles for model variables:
+        cycles = {'model': 'forceplate'}
+        Plot 1st cycle for EMG:
+        cycles = {'emg': 0}
     max_cycles : dict | None
-        Maximum number of cycles to plot for each variable type. If None, taken
-        from cfg.
+        Maximum number of cycles to plot for each variable type. Values not
+        specified are taken from config. If None, all values are taken from
+        config.
     emg_mode : str | None
         If 'envelope', plot EMG in envelope mode.
     legend_type : str | None
         Legend type for gait cycles (see _get_cycle_name for options). If None,
-        taken from cfg.
+        taken from config.
     style_by : dict | None
-        How to style each variable type. If None, taken from cfg.
+        How to style each variable type. If None, taken from config.
     color_by : dict | None
-        How to color each variable type. If None, taken from cfg.
+        How to color each variable type. If None, taken from config.
     supplementary_data : dict | None
         Supplementary data to plot for each variable.
     legend : bool

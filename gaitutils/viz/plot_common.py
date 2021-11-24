@@ -180,11 +180,13 @@ def _cyclical_mapper(it):
 def _handle_cyclespec(cycles):
     """Handle cyclespec argument to plotter functions"""
     default_cycles = cfg.plot.default_cycles
-    if cycles in ['all', 'unnormalized']:
+    if cycles in ['all', 'unnormalized', 'forceplate']:
+        cycles = {vartype: cycles for vartype in default_cycles}
+    elif isinstance(cycles, int):
         cycles = {vartype: cycles for vartype in default_cycles}
     elif cycles is None:
         cycles = default_cycles
-    elif isinstance(cycles, dict):
+    elif isinstance(cycles, dict):  # dict keyed with variable type
         if set(cycles) - set(default_cycles):  # unknown keys
             raise ValueError('invalid cycle argument')
         _defcycles = default_cycles.copy()

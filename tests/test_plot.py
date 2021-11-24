@@ -69,39 +69,51 @@ def test_rm_dead_channels():
     assert layouts._rm_dead_channels(emgs, lout) == lout_
 
 
-# XXX: currently we only test that the plotting funcs run without errors
-# matplotlib backend; would be good to test also other backends and check the
-# resulting plots are ok
-
 
 def test_plot_trials():
     """Test individual trial plotter"""
     c3ds = sessionutils.get_c3ds(sessiondir_abs)
     trials = [trial.Trial(fn) for fn in c3ds]
-    fig = plots.plot_trials(trials, backend='matplotlib')
-    # fig = plots.plot_trials(trials, backend='plotly')
-
+    for backend in ['plotly', 'matplotlib']:
+        # XXX: we don't test the figs for the time being
+        fig = plots.plot_trials(trials, backend=backend)
+        # fig = plots.plot_trials(trials, backend='plotly')
+        tr = trials[0]
+        # test different cycle args
+        fig = plots.plot_trials(tr, cycles='all', backend=backend)
+        fig = plots.plot_trials(tr, cycles='forceplate', backend=backend)
+        fig = plots.plot_trials(tr, cycles='unnormalized', backend=backend)
+        with pytest.raises(ValueError):
+            fig = plots.plot_trials(tr, cycles='foo', backend=backend)
+        fig = plots.plot_trials(tr, cycles={'emg': 'all'}, backend=backend)
+        fig = plots.plot_trials(tr, cycles={'emg': 0}, backend=backend)
 
 def test_plot_sessions():
     """Test individual trial plotter"""
-    fig = plots._plot_sessions(sessions, backend='matplotlib')
+    for backend in ['plotly', 'matplotlib']:
+        fig = plots._plot_sessions(sessions, backend=backend)
 
 
 def test_plot_session_average():
-    fig = plots._plot_session_average(sessiondir_abs, backend='matplotlib')
+    for backend in ['plotly', 'matplotlib']:
+        fig = plots._plot_session_average(sessiondir_abs, backend=backend)
 
 
 def test_plot_trial_velocities():
-    fig = plots.plot_trial_velocities(sessiondir_abs, backend='matplotlib')
+    for backend in ['plotly', 'matplotlib']:
+        fig = plots.plot_trial_velocities(sessiondir_abs, backend=backend)
 
 
 def test_plot_trial_timedep_velocities():
-    fig = plots.plot_trial_timedep_velocities(sessiondir_abs, backend='matplotlib')
+    for backend in ['plotly', 'matplotlib']:
+        fig = plots.plot_trial_timedep_velocities(sessiondir_abs, backend=backend)
 
 
 def test_timedist_average():
-    fig = timedist.plot_session_average(sessiondir2_abs, backend='matplotlib')
+    for backend in ['plotly', 'matplotlib']:
+        fig = timedist.plot_session_average(sessiondir2_abs, backend=backend)
 
 
 def test_timedist_comparison():
-    fig = timedist.plot_comparison(sessions, backend='matplotlib')
+    for backend in ['plotly', 'matplotlib']:
+        fig = timedist.plot_comparison(sessions, backend=backend)

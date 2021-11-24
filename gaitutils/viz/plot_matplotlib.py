@@ -445,13 +445,13 @@ def plot_trials(
     cycles : dict | str | int | tuple | list
         Cycles to plot. See Trial.get_cycles() for details.
     max_cycles : dict | None
-        Maximum number of cycles to plot for each variable type. If None, taken
-        from cfg.
+        Maximum number of cycles to plot for each variable type. If None, all
+        values are taken from config.
     emg_mode : str | None
         If 'envelope', plot EMG in envelope mode.
     legend_type : str | None
         Legend type for gait cycles (see _get_cycle_name for options). If None,
-        taken from cfg.
+        taken from config.
     style_by : dict | None
         How to style each variable type. If None, taken from cfg.
     color_by : dict | None

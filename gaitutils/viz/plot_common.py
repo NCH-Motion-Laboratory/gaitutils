@@ -69,14 +69,18 @@ def _compose_varname(vardef):
 
 def _get_trial_cycles(trial, cycles, max_cycles):
     """Get the specified cycles from a trial"""
+    # supply missing values as None
+    def_cycles = defaultdict(lambda: None)
+    _max_cycles = def_cycles | max_cycles
+
     model_cycles = trial.get_cycles(
-        cycles['model'], max_cycles_per_context=max_cycles['model']
+        cycles['model'], max_cycles_per_context=_max_cycles['model']
     )
     marker_cycles = trial.get_cycles(
-        cycles['marker'], max_cycles_per_context=max_cycles['marker']
+        cycles['marker'], max_cycles_per_context=_max_cycles['marker']
     )
     emg_cycles = trial.get_cycles(
-        cycles['emg'], max_cycles_per_context=max_cycles['emg']
+        cycles['emg'], max_cycles_per_context=_max_cycles['emg']
     )
     allcycles = list(set.union(set(model_cycles), set(marker_cycles), set(emg_cycles)))
     if not allcycles:

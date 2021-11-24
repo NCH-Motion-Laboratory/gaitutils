@@ -83,7 +83,7 @@ def plot_trials(
     backend_lib = get_backend(backend)
     the_layout = layouts.get_layout(layout)
 
-    if auto_adjust_emg_layout and 'EMG' in the_layout.upper():
+    if auto_adjust_emg_layout and 'EMG' in layout.upper():
         emgs = [tr.emg for tr in trials]
         the_layout = layouts._rm_dead_channels(emgs, the_layout)
 

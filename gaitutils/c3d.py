@@ -304,7 +304,6 @@ def _get_metadata(c3dfile):
         name = 'Unknown'
 
     subj_params = defaultdict(lambda: None)
-    logger.warning('foo')
     try:
         par_names = _get_c3d_metadata_subfields(acq, 'PROCESSING')
     except RuntimeError:

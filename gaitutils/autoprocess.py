@@ -25,6 +25,10 @@ logger = logging.getLogger(__name__)
 
 def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
     """Run autoprocessing for given enf files."""
+
+    # require a minimum amount of forceplate-based velocity stats
+    MIN_VEL_DATA_LEN = 8
+
     if not cfg.autoproc.run_models_only and cfg.autoproc.delete_c3ds:
         _delete_c3ds(enffiles)
 
@@ -308,11 +312,19 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
                 f'failed to update Eclipse forceplate info in {enffile}'
             )
 
+    #
     # all preprocessing done
-    # compute velocity thresholds using all trials
-    vel_th = {
-        key: (np.median(x) if x.size > 0 else None) for key, x in foot_vel.items()
-    }
+    #
+
+    # compute velocity thresholds using data from all trials
+    vel_th = dict()
+    for key, data in foot_vel.items():
+        if data.size >= MIN_VEL_DATA_LEN:
+            logger.debug(f'using forceplate derived velocity for {key}')
+            vel_th[key] = np.median(data)
+        else:
+            logger.debug(f'not enough velocity data for {key}, ignoring')
+            vel_th[key] = None
 
     # if preprocessing was skipped, mark all trials for subsequent processing
     if cfg.autoproc.run_models_only:

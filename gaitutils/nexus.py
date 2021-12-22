@@ -654,12 +654,9 @@ def _create_events(vicon, context, strikes, toeoffs):
     for fr in strikes:
         vicon.CreateAnEvent(subjectname, context_str,
                             'Foot Strike', int(fr + 1), 0)
-        # rapid calls to CreateAnEvent lead to some events not being created
-        time.sleep(.01)  
     for fr in toeoffs:
         vicon.CreateAnEvent(subjectname, context_str,
                             'Foot Off', int(fr + 1), 0)
-        time.sleep(.01)
 
 
 def rigid_body_extrapolate(

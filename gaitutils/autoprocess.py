@@ -62,7 +62,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             s += '%dL' % nl
         return s or cfg.autoproc.enf_descriptions['context_none']
 
-    def _fail(trial, reason):
+    def _fail(trial_info, reason):
         """Abort processing: mark and save trial"""
         fail_desc = (
             cfg.autoproc.enf_descriptions[reason]
@@ -70,8 +70,8 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             else reason
         )
         logger.info(f'preprocessing failed: {fail_desc}')
-        trial['recon_ok'] = False
-        trial['description'] = fail_desc
+        trial_info['recon_ok'] = False
+        trial_info['description'] = fail_desc
         _save_trial()
 
     def _range_to_roi(subj_pos, gait_dim, mov_range):
@@ -117,7 +117,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             break  # skip preprocessing completely
         filepath = sessionutils.enf_to_trialfile(enffile, None)
         filename = filepath.name
-        trial = trials[filepath]
+        trial_info = trials[filepath]
 
         signals.progress.emit(
             f'Preprocessing: {filename}', int(100 * ind / len(enffiles))
@@ -133,8 +133,8 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         except GaitDataError:
             # may indicate broken or video-only trial
             logger.warning('cannot read metadata')
-            trial['recon_ok'] = False
-            trial['description'] = 'skipped'
+            trial_info['recon_ok'] = False
+            trial_info['description'] = 'skipped'
             continue
 
         edata = eclipse.get_eclipse_keys(enffile, return_empty=True)
@@ -146,8 +146,8 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         # check whether to skip trial
         if edata['TYPE'] in cfg.autoproc.type_skip:
             logger.debug(f'skipping based on type: {edata["TYPE"]}')
-            trial['recon_ok'] = False
-            trial['description'] = 'skipped'
+            trial_info['recon_ok'] = False
+            trial_info['description'] = 'skipped'
             continue
         skip = [s.upper() for s in cfg.autoproc.eclipse_skip]
         if any([s in edata['DESCRIPTION'].upper() for s in skip]) or any(
@@ -159,8 +159,8 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             # will work
             run_pipelines(cfg.autoproc.pre_pipelines)
             _save_trial()
-            trial['recon_ok'] = False
-            trial['description'] = 'skipped'
+            trial_info['recon_ok'] = False
+            trial_info['description'] = 'skipped'
             continue
 
         # try to run preprocessing pipelines
@@ -169,7 +169,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         # check trial length
         trange = vicon.GetTrialRange()
         if (trange[1] - trange[0]) < cfg.autoproc.min_trial_duration:
-            _fail(trial, 'short')
+            _fail(trial_info, 'short')
             continue
 
         # check for valid marker data
@@ -178,7 +178,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             mkrdata = read_data.get_marker_data(vicon, allmarkers, ignore_missing=True)
         except GaitDataError:
             logger.info('get_marker_data failed')
-            _fail(trial, 'label_failure')
+            _fail(trial_info, 'label_failure')
             continue
 
         # fail on any gaps in trial (off by default)
@@ -190,14 +190,14 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
                     gaps_found = True
                     break
             if gaps_found:
-                _fail(trial, 'gaps')
+                _fail(trial_info, 'gaps')
                 continue
 
         # check for valid Plug-in Gait set
         if cfg.autoproc.check_marker_set:
             if not utils.is_plugingait_set(mkrdata):
                 logger.info('marker set does not correspond to Plug-in Gait')
-                _fail(trial, 'label_failure')
+                _fail(trial_info, 'label_failure')
                 continue
         # check for flipped markers
         flipped = list(utils._check_markers_flipped(mkrdata))
@@ -211,7 +211,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             subj_pos = utils.avg_markerdata(mkrdata, cfg.autoproc.track_markers)
         except GaitDataError:
             logger.info('gaps in tracking markers')
-            _fail(trial, 'label_failure')
+            _fail(trial_info, 'label_failure')
             continue
         gait_dim = utils._principal_movement_direction(subj_pos)
         # our roi (in frames) according to events_range (which is in lab coords)
@@ -219,9 +219,9 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         try:
             roi = _range_to_roi(subj_pos, gait_dim, cfg.autoproc.events_range)
             logger.debug(f'events range corresponds to frames {roi[0]}-{roi[1]}')
-            trial['roi'] = roi
+            trial_info['roi'] = roi
         except GaitDataError:
-            _fail(trial, 'no_frames_in_range')
+            _fail(trial_info, 'no_frames_in_range')
             continue
 
         if signals.canceled:
@@ -239,24 +239,24 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             )
         except GaitDataError:
             logger.warning('cannot determine forceplate events, possibly due to gaps')
-            _fail(trial, 'gaps')
+            _fail(trial_info, 'gaps')
             continue
         # get foot velocity info for all events (do not reduce to median)
         try:
             vel = utils._get_foot_contact_vel(mkrdata, fpev, medians=False, roi=roi)
         except GaitDataError:
             logger.warning('cannot determine foot velocity, possibly due to gaps')
-            _fail(trial, 'gaps')
+            _fail(trial_info, 'gaps')
             continue
 
         # preprocessing looks ok at this stage
-        trial['recon_ok'] = True
-        trial['mkrdata'] = mkrdata
+        trial_info['recon_ok'] = True
+        trial_info['mkrdata'] = mkrdata
 
         eclipse_str += _context_desc(fpev)
         valid = fpev['valid']
-        trial['valid'] = valid
-        trial['fpev'] = fpev
+        trial_info['valid'] = valid
+        trial_info['fpev'] = fpev
 
         if signals.canceled:
             return None
@@ -289,7 +289,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         eclipse_str += f'{median_vel:.2f} m/s'
 
         _save_trial()
-        trial['description'] = eclipse_str
+        trial_info['description'] = eclipse_str
 
         # write Eclipse fp values according to our detection, or reset them
         # note that Eclipse fp data affects e.g. Plug-in Gait functioning
@@ -337,7 +337,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
     }
     logger.debug('\n2nd pass - processing %d trials\n' % len(sel_trials))
 
-    for ind, (filepath, trial) in enumerate(sel_trials.items()):
+    for ind, (filepath, trial_info) in enumerate(sel_trials.items()):
         filename = filepath.name
         logger.debug(f'loading in Nexus: {filename}')
         nexus._open_trial(filepath)
@@ -356,20 +356,20 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
                 evs = utils.automark_events(
                     vicon,
                     vel_thresholds=vel_th,
-                    mkrdata=trial['mkrdata'],
-                    fp_events=trial['fpev'],
+                    mkrdata=trial_info['mkrdata'],
+                    fp_events=trial_info['fpev'],
                     events_range=cfg.autoproc.events_range,
                     start_on_forceplate=cfg.autoproc.start_on_forceplate,
-                    roi=trial['roi'],
+                    roi=trial_info['roi'],
                 )
             except GaitDataError:  # cannot automark
                 eclipse_str = '%s,%s' % (
-                    trial['description'],
+                    trial_info['description'],
                     cfg.autoproc.enf_descriptions['automark_failure'],
                 )
                 logger.debug('automark failed')
                 _save_trial()
-                trial['description'] = eclipse_str
+                trial_info['description'] = eclipse_str
                 continue  # next trial
 
             if signals.canceled:
@@ -391,9 +391,9 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
 
             eclipse_str = '%s,%s' % (
                 cfg.autoproc.enf_descriptions['ok'],
-                trial['description'],
+                trial_info['description'],
             )
-            trial['description'] = eclipse_str
+            trial_info['description'] = eclipse_str
 
         # run model pipeline and save
         run_pipelines(cfg.autoproc.model_pipelines)
@@ -404,12 +404,12 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         # try to avoid a possible race condition where Nexus is still
         # holding the .enf file open
         time.sleep(0.1)
-        for filepath, trial in trials.items():
+        for filepath, trial_info in trials.items():
             enf_file = filepath.with_suffix('.Trial.enf')
             try:
                 eclipse.set_eclipse_keys(
                     enf_file,
-                    {cfg.autoproc.eclipse_write_key: trial['description']},
+                    {cfg.autoproc.eclipse_write_key: trial_info['description']},
                     update_existing=True,
                 )
             except IOError:

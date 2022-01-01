@@ -26,9 +26,6 @@ logger = logging.getLogger(__name__)
 def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
     """Run autoprocessing for given enf files."""
 
-    # require a minimum amount of forceplate-based velocity stats
-    MIN_VEL_DATA_LEN = 8
-
     if not cfg.autoproc.run_models_only and cfg.autoproc.delete_c3ds:
         _delete_c3ds(enffiles)
 
@@ -88,13 +85,6 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         else:
             raise GaitDataError('no frames inside given range')
 
-    # used to store stats about foot velocity
-    foot_vel = {
-        'L_strike': np.array([]),
-        'R_strike': np.array([]),
-        'L_toeoff': np.array([]),
-        'R_toeoff': np.array([]),
-    }
     # 1st pass
     logger.debug(f'\n1st pass - processing {len(enffiles)} trial(s)\n')
     trials = dict()
@@ -243,7 +233,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             continue
         # get foot velocity info for all events (do not reduce to median)
         try:
-            vel = utils._get_foot_contact_vel(mkrdata, fpev, medians=False, roi=roi)
+            foot_vel = utils._get_foot_contact_vel(mkrdata, fpev, medians=False, roi=roi)
         except GaitDataError:
             logger.warning('cannot determine foot velocity, possibly due to gaps')
             _fail(trial_info, 'gaps')
@@ -254,20 +244,15 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         trial_info['mkrdata'] = mkrdata
 
         eclipse_str += _context_desc(fpev)
+        eclipse_str += ','
+
         valid = fpev['valid']
         trial_info['valid'] = valid
         trial_info['fpev'] = fpev
+        trial_info['foot_vel'] = foot_vel
 
         if signals.canceled:
             return None
-
-        # save velocity data
-        for context in valid:
-            nv = np.append(foot_vel[context + '_strike'], vel[context + '_strike'])
-            foot_vel[context + '_strike'] = nv
-            nv = np.append(foot_vel[context + '_toeoff'], vel[context + '_toeoff'])
-            foot_vel[context + '_toeoff'] = nv
-        eclipse_str += ','
 
         # main direction in lab frame (1,2,3 for x,y,z)
         inds_ok = np.where(np.any(subj_pos, axis=1))  # ignore gaps
@@ -316,16 +301,6 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
     # all preprocessing done
     #
 
-    # compute velocity thresholds using data from all trials
-    vel_th = dict()
-    for key, data in foot_vel.items():
-        if data.size >= MIN_VEL_DATA_LEN:
-            logger.debug(f'using forceplate derived velocity for {key}')
-            vel_th[key] = np.median(data)
-        else:
-            logger.debug(f'not enough velocity data for {key}, ignoring')
-            vel_th[key] = None
-
     # if preprocessing was skipped, mark all trials for subsequent processing
     if cfg.autoproc.run_models_only:
         for tr in trials.values():
@@ -348,6 +323,14 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         )
         if signals.canceled:
             return None
+
+        # reduce trial specific foot contact velocities to their median values
+        vel_th = dict()
+        for key, val in trial_info['foot_vel'].items():
+            if val.size > 1:
+                vel_th[key] = np.median(val)
+            else:
+                vel_th[key] = val
 
         if not cfg.autoproc.run_models_only:
             # automark using global velocity thresholds
@@ -389,11 +372,8 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
                 else:
                     logger.info('Nexus API version does not support cropping, please update Nexus')
 
-            eclipse_str = '%s,%s' % (
-                cfg.autoproc.enf_descriptions['ok'],
-                trial_info['description'],
-            )
-            trial_info['description'] = eclipse_str
+            desc = f"{cfg.autoproc.enf_descriptions['ok']},{trial_info['description']}"
+            trial_info['description'] = desc
 
         # run model pipeline and save
         run_pipelines(cfg.autoproc.model_pipelines)

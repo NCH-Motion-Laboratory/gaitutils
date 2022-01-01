@@ -233,7 +233,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             continue
         # get foot velocity info for all events (do not reduce to median)
         try:
-            foot_vel = utils._get_foot_contact_vel(mkrdata, fpev, medians=False, roi=roi)
+            foot_vel = utils._get_foot_contact_vel(mkrdata, fpev, medians=True, roi=roi)
         except GaitDataError:
             logger.warning('cannot determine foot velocity, possibly due to gaps')
             _fail(trial_info, 'gaps')
@@ -293,9 +293,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             else:
                 logger.debug('ignoring Eclipse forceplate info')
         except IOError:
-            logger.warning(
-                f'failed to update Eclipse forceplate info in {enffile}'
-            )
+            logger.warning(f'failed to update Eclipse forceplate info in {enffile}')
 
     #
     # all preprocessing done
@@ -324,21 +322,13 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         if signals.canceled:
             return None
 
-        # reduce trial specific foot contact velocities to their median values
-        vel_th = dict()
-        for key, val in trial_info['foot_vel'].items():
-            if val.size > 1:
-                vel_th[key] = np.median(val)
-            else:
-                vel_th[key] = val
-
         if not cfg.autoproc.run_models_only:
             # automark using global velocity thresholds
             try:
                 vicon.ClearAllEvents()
                 evs = utils.automark_events(
                     vicon,
-                    vel_thresholds=vel_th,
+                    vel_thresholds=trial_info['foot_vel'],
                     mkrdata=trial_info['mkrdata'],
                     fp_events=trial_info['fpev'],
                     events_range=cfg.autoproc.events_range,
@@ -370,7 +360,9 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
                         # method cannot take numpy.int64
                         vicon.SetTrialRegionOfInterest(int(roistart), int(roiend))
                 else:
-                    logger.info('Nexus API version does not support cropping, please update Nexus')
+                    logger.info(
+                        'Nexus API version does not support cropping, please update Nexus'
+                    )
 
             desc = f"{cfg.autoproc.enf_descriptions['ok']},{trial_info['description']}"
             trial_info['description'] = desc
@@ -472,9 +464,7 @@ def autoproc_trial(signals=None):
     # for single trial autoprocess, running pipelines in separate processes is
     # not really necessary and seems to cause slowdowns
     if enffiles:
-        _do_autoproc(
-            enffiles, pipelines_in_proc=False, signals=signals
-        )
+        _do_autoproc(enffiles, pipelines_in_proc=False, signals=signals)
 
 
 def automark_trial(plot=False):

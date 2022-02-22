@@ -234,8 +234,7 @@ def _run_pipelines_multiprocessing(pipelines):
     if type(pipelines) != list:
         pipelines = [pipelines]
     for pipeline in pipelines:
-        logger.debug(
-            f'running pipeline via multiprocessing module: {pipeline}')
+        logger.debug(f'running pipeline via multiprocessing module: {pipeline}')
         args = (pipeline, '', cfg.autoproc.nexus_timeout)
         p = multiprocessing.Process(target=_run_pipeline, args=args)
         p.start()
@@ -273,8 +272,7 @@ def _get_marker_names(vicon, trajs_only=True):
     markers = vicon.GetMarkerNames(subjname)
     # only get markers with trajectories - excludes calibration markers
     if trajs_only:
-        markers = [
-            mkr for mkr in markers if vicon.HasTrajectory(subjname, mkr)]
+        markers = [mkr for mkr in markers if vicon.HasTrajectory(subjname, mkr)]
     return markers
 
 
@@ -418,8 +416,7 @@ def _get_analog_data(vicon, devname):
                 )
                 chname = f'{outputname}_{chname}'
             if chname in data:
-                raise RuntimeError(
-                    'duplicate EMG channel; check Nexus device settings')
+                raise RuntimeError('duplicate EMG channel; check Nexus device settings')
             data[chname] = np.array(chdata)
     # WIP: sanity checks for data (channel lengths equal, etc.)
     t = np.arange(len(chdata)) / drate  # time axis
@@ -459,8 +456,7 @@ def set_forceplate_data(vicon, fp_index, data, kind='Force'):
     """
     kinds = ['Force', 'Moment', 'CoP']
     if kind not in kinds:
-        raise ValueError(
-            f"kind argument needs to be one of {', '.join(kinds)}")
+        raise ValueError(f"kind argument needs to be one of {', '.join(kinds)}")
     fpids = _get_forceplate_ids(vicon)
     if not fpids:
         raise RuntimeError('no forceplates detected')
@@ -519,8 +515,7 @@ def _get_1_forceplate_data(vicon, devid, coords='global'):
     elif coords == 'local':
         getter_fun = vicon.GetDeviceChannel
     else:
-        raise ValueError(
-            'Invalid coords argument, must be "global" or "local"')
+        raise ValueError('Invalid coords argument, must be "global" or "local"')
     logger.debug('reading forceplate data from devid %d' % devid)
     dname, dtype, drate, outputids, nfp, _ = vicon.GetDeviceDetails(devid)
     kinds = ['Force', 'Moment', 'CoP']
@@ -557,8 +552,7 @@ def _get_1_forceplate_data(vicon, devid, coords='global'):
     cop_ok = np.logical_and(cop[:, 0] >= lb[0], cop[:, 0] <= ub[0]).all()
     cop_ok &= np.logical_and(cop[:, 1] >= lb[1], cop[:, 1] <= ub[1]).all()
     if not cop_ok:
-        logger.warning(
-            'center of pressure outside plate boundaries, clipping to plate')
+        logger.warning('center of pressure outside plate boundaries, clipping to plate')
         cop[:, 0] = np.clip(cop[:, 0], lb[0], ub[0])
         cop[:, 1] = np.clip(cop[:, 1], lb[1], ub[1])
     return {
@@ -652,11 +646,9 @@ def _create_events(vicon, context, strikes, toeoffs):
     context_str = 'Right' if context == 'R' else 'Left'
     subjectname = get_subjectnames()
     for fr in strikes:
-        vicon.CreateAnEvent(subjectname, context_str,
-                            'Foot Strike', int(fr + 1), 0)
+        vicon.CreateAnEvent(subjectname, context_str, 'Foot Strike', int(fr + 1), 0)
     for fr in toeoffs:
-        vicon.CreateAnEvent(subjectname, context_str,
-                            'Foot Off', int(fr + 1), 0)
+        vicon.CreateAnEvent(subjectname, context_str, 'Foot Off', int(fr + 1), 0)
 
 
 def rigid_body_extrapolate(
@@ -714,8 +706,7 @@ def rigid_body_extrapolate(
     try:
         mdata_ref = _get_marker_data(vicon, allmarkers)
     except GaitDataError:
-        raise GaitDataError(
-            f'cannot read markers from reference trial {ref_trial}')
+        raise GaitDataError(f'cannot read markers from reference trial {ref_trial}')
     mdata_ref_ = np.row_stack(
         [mdata_ref[marker][ref_frame, :] for marker in allmarkers]
     )
@@ -734,8 +725,7 @@ def rigid_body_extrapolate(
             mdata_thisframe = np.row_stack(
                 [mdata_ref[marker][frame, :] for marker in ref_markers]
             )
-            mdata_extrap = _rigid_body_extrapolate_markers(
-                mdata_ref_, mdata_thisframe)
+            mdata_extrap = _rigid_body_extrapolate_markers(mdata_ref_, mdata_thisframe)
             for marker, pos in zip(extrap_markers, mdata_extrap):
                 extrap_coords[marker].append(pos)
         # write extrapolated data

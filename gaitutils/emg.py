@@ -133,9 +133,7 @@ class EMG:
         else:
             ch = min(matches, key=len)  # choose shortest matching name
         if len(matches) > 1:
-            logger.warning(
-                f'multiple channel matches for {chname}: {matches} -> {ch}'
-            )
+            logger.warning(f'multiple channel matches for {chname}: {matches} -> {ch}')
         return ch
 
     def get_channel_data(self, chname, envelope=False):

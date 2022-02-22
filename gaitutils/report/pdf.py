@@ -180,9 +180,7 @@ def create_report(
     )
     musclelen_ndata = normaldata._find_normaldata_for_age(age)
     footer_musclelen = (
-        f" {translate('Normal data')}: {musclelen_ndata}"
-        if musclelen_ndata
-        else ''
+        f" {translate('Normal data')}: {musclelen_ndata}" if musclelen_ndata else ''
     )
 
     # make the figures
@@ -507,9 +505,7 @@ def create_comparison_report(
         allvars = [vardef[0] for vardefs in vardefs_dict.values() for vardef in vardefs]
         from_models = set(models.model_from_var(var) for var in allvars)
         curve_vals = {
-            session.name: stats._trials_extract_values(
-                trials, from_models=from_models
-            )
+            session.name: stats._trials_extract_values(trials, from_models=from_models)
             for session, trials in trials_dict.items()
         }
 

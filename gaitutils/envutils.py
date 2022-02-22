@@ -82,7 +82,10 @@ def _git_update():
                 startupinfo = subprocess.STARTUPINFO()
                 startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
             o = subprocess.check_output(
-                ['git', 'pull'], cwd=pkg_parent, encoding='utf-8', startupinfo=startupinfo,
+                ['git', 'pull'],
+                cwd=pkg_parent,
+                encoding='utf-8',
+                startupinfo=startupinfo,
             )
         except subprocess.CalledProcessError:
             status = (False, 'cannot retrieve or merge update')

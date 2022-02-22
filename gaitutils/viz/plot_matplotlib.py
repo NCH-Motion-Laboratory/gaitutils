@@ -95,9 +95,7 @@ def _plot_extracted_table_plotly(curve_vals, vardefs):
             for ctxt, _ in contexts:
                 vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
                 if vardef_ctxt[0] not in session_vals:
-                    logger.debug(
-                        f'{vardef_ctxt[0]} was not collected for this session'
-                    )
+                    logger.debug(f'{vardef_ctxt[0]} was not collected for this session')
                     continue
                 this_vals = _nested_get(
                     session_vals, vardef_ctxt
@@ -443,7 +441,7 @@ def plot_trials(
     emg_normaldata : dict | None
         Normal data for EMG variables. If None, taken from config.
     cycles : dict | str | None
-        Gait cycles to plot. 
+        Gait cycles to plot.
         If dict, specifies cycles to plot for each variable type. Currently
         allowed keys are 'model', 'marker' and 'emg'. Currently allowed
         specifier values are: 'forceplate' to get forceplate cycles, 'all' to

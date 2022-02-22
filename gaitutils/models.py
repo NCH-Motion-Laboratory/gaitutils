@@ -105,7 +105,9 @@ ofm = GaitModel()
 ofm.desc = 'Oxford foot model kinematics'
 ofm.read_strategy = 'split_xyz'
 
-ofm.read_vars = _list_with_context(['FFHFA', 'FFTBA', 'HFTBA', 'HFTFL', 'HXFFA', 'TIBA'])
+ofm.read_vars = _list_with_context(
+    ['FFHFA', 'FFTBA', 'HFTBA', 'HFTFL', 'HXFFA', 'TIBA']
+)
 
 ofm.varlabels_nocontext = {
     'FFHFAX': 'Forefoot-hindfoot dorsiflexion',
@@ -346,7 +348,9 @@ pig_lowerbody_kinetics.varlabels = _dict_with_context(
 )
 
 pig_lowerbody_kinetics.varnames = pig_lowerbody_kinetics.varlabels.keys()
-pig_lowerbody_kinetics.varnames_nocontext = pig_lowerbody_kinetics.varlabels_nocontext.keys()
+pig_lowerbody_kinetics.varnames_nocontext = (
+    pig_lowerbody_kinetics.varlabels_nocontext.keys()
+)
 
 pig_lowerbody_kinetics.gcd_normaldata_map = {
     'AnklePower': 'AnklePowerZ',

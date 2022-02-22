@@ -315,7 +315,7 @@ def _plot_vels(vels, labels, title=None):
         xaxis=dict(title='Trial', automargin=True),
         yaxis=dict(title='Speed (m/s)', rangemode='tozero'),
     )
-    
+
     return dict(data=[trace], layout=layout)
 
 
@@ -393,7 +393,7 @@ def plot_trials(
     emg_normaldata : dict | None
         Normal data for EMG variables. If None, taken from config.
     cycles : dict | str | None
-        Gait cycles to plot. 
+        Gait cycles to plot.
         If dict, specifies cycles to plot for each variable type. Currently
         allowed keys are 'model', 'marker' and 'emg'. Currently allowed
         specifier values are: 'forceplate' to get forceplate cycles, 'all' to

@@ -69,7 +69,6 @@ def test_rm_dead_channels():
     assert layouts._rm_dead_channels(emgs, lout) == lout_
 
 
-
 def test_plot_trials():
     """Test individual trial plotter"""
     c3ds = sessionutils.get_c3ds(sessiondir_abs)
@@ -87,6 +86,7 @@ def test_plot_trials():
             fig = plots.plot_trials(tr, cycles='foo', backend=backend)
         fig = plots.plot_trials(tr, cycles={'emg': 'all'}, backend=backend)
         fig = plots.plot_trials(tr, cycles={'emg': 0}, backend=backend)
+
 
 def test_plot_sessions():
     """Test individual trial plotter"""

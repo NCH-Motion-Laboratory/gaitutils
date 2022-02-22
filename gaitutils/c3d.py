@@ -90,8 +90,7 @@ def _get_c3dacq(c3dfile):
         # this is somehow related to Windows character set handling, since
         # it only manifests on some machines
         if not _is_ascii(c3dfile) and sys.version_info.major == 3:
-            logger.warning(
-                'trying to work around possible btk extended chars bug')
+            logger.warning('trying to work around possible btk extended chars bug')
             # just copy the file into another directory
             temp_path = _named_tempfile(suffix='.c3d')
             shutil.copy2(c3dfile, temp_path)
@@ -133,8 +132,7 @@ def get_analysis(c3dfile, condition='unknown'):
         contexts = _get_c3d_metadata_field(acq, 'ANALYSIS', 'CONTEXTS')
         vals = _get_c3d_metadata_field(acq, 'ANALYSIS', 'VALUES')
     except RuntimeError:
-        raise GaitDataError(
-            f'Cannot read time-distance parameters from {c3dfile}')
+        raise GaitDataError(f'Cannot read time-distance parameters from {c3dfile}')
 
     # build a nice output dict
     di = defaultdict(lambda: defaultdict(dict))
@@ -148,8 +146,7 @@ def get_analysis(c3dfile, condition='unknown'):
     for var in di_:
         for context in ['Left', 'Right']:
             if context not in di_[var]:
-                logger.warning(
-                    f'{c3dfile} has missing value: {var} / {context}')
+                logger.warning(f'{c3dfile} has missing value: {var} / {context}')
                 di_[var][context] = np.nan
 
     # Nexus version <2.8 did not output step width into c3d, so compute it here
@@ -198,7 +195,8 @@ def _get_analog_data(c3dfile, devname):
         if i.GetDescription().find(devname) >= 0:
             if (chname := i.GetLabel()) in chnames:
                 raise GaitDataError(
-                    'Duplicate channel names in C3D file. Please rename your channels.')
+                    'Duplicate channel names in C3D file. Please rename your channels.'
+                )
             chnames.append(chname)
             data[chname] = np.squeeze(i.GetValues())
     if chnames:
@@ -226,12 +224,10 @@ def _get_marker_data(c3dfile, markers, ignore_missing=False):
             mkrdata[marker] = np.squeeze(acq.GetPoint(marker).GetValues())
         except RuntimeError:
             if ignore_missing:
-                logger.warning(
-                    f'Cannot read trajectory {marker} from c3d file')
+                logger.warning(f'Cannot read trajectory {marker} from c3d file')
                 continue
             else:
-                raise GaitDataError(
-                    f'Cannot read trajectory {marker} from c3d file')
+                raise GaitDataError(f'Cannot read trajectory {marker} from c3d file')
     return mkrdata
 
 
@@ -307,11 +303,12 @@ def _get_metadata(c3dfile):
     try:
         par_names = _get_c3d_metadata_subfields(acq, 'PROCESSING')
     except RuntimeError:
-        logger.warning(f'{c3dfile} is missing the PROCESSING section that contains '
-                       'subject info (bodyweight etc.)')
+        logger.warning(
+            f'{c3dfile} is missing the PROCESSING section that contains '
+            'subject info (bodyweight etc.)'
+        )
     else:
-        subj_params.update({par: _get_c3d_subject_param(acq, par)
-                           for par in par_names})
+        subj_params.update({par: _get_c3d_subject_param(acq, par) for par in par_names})
 
     return {
         'trialname': trialname,
@@ -370,16 +367,14 @@ def _get_forceplate_data(c3dfile):
         nplate += 1
         if plate.GetType() != 2:
             # Nexus should always write forceplates as type 2
-            raise GaitDataError(
-                'Only type 2 forceplates are supported for now')
+            raise GaitDataError('Only type 2 forceplates are supported for now')
         rawdata = dict()
         data = dict()
         for ch in btk.Iterate(plate.GetChannels()):
             label = ch.GetLabel()[-3:-1]  # strip descriptor and plate number
             rawdata[label] = np.squeeze(ch.GetData().GetValues())
         if not all([ch in rawdata for ch in read_chs]):
-            logger.warning(
-                'could not read force/moment data for plate %d' % nplate)
+            logger.warning('could not read force/moment data for plate %d' % nplate)
             continue
         F = np.stack([rawdata['Fx'], rawdata['Fy'], rawdata['Fz']], axis=1)
         M = np.stack([rawdata['Mx'], rawdata['My'], rawdata['Mz']], axis=1)

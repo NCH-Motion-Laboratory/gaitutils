@@ -486,9 +486,7 @@ def dash_report(
                             # exception will be caught in this loop, resulting in empty menu item
                             raise RuntimeError
                         else:  # unrecognized layout; this will cause an exception
-                            raise Exception(
-                                f'Invalid page layout: {str(layout_spec)}'
-                            )
+                            raise Exception(f'Invalid page layout: {str(layout_spec)}')
 
                     # regular layouts and curve-extracted layouts are indicated by tuple
                     elif isinstance(layout_spec, tuple):
@@ -516,9 +514,7 @@ def dash_report(
                             the_vardefs = vardefs_dict[layout_spec[1]]
                             figdata = plot_extracted_box(curve_vals, the_vardefs)
                         else:
-                            raise Exception(
-                                f'Invalid page layout: {str(layout_spec)}'
-                            )
+                            raise Exception(f'Invalid page layout: {str(layout_spec)}')
                     else:
                         raise Exception(f'Invalid page layout: {str(layout_spec)}')
 

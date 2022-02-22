@@ -98,6 +98,7 @@ def create_report(
         'TrialVelocity'
         'TimeDistAverage'
         'KinematicsCons'
+        'TorsoKinematicsCons'
         'KineticsCons'
         'MuscleLenCons'
         'KinAverage'
@@ -203,7 +204,7 @@ def create_report(
             sessionpath, backend=pdf_backend
         )
 
-    # for next 2 plots, disable the legends (there are typically too many cycles)
+    # for next few plots, disable the legends (there are typically too many cycles)
     # kin consistency
     fig_kinematics_cons = None
     if pages['KinematicsCons']:
@@ -232,6 +233,22 @@ def create_report(
             style_by=style_by,
             backend=pdf_backend,
             figtitle=f'Kinetics consistency for {sessiondir}',
+            legend_type=legend_type,
+            legend=False,
+        )
+
+    # torso consistency
+    fig_torso_kinematics_cons = None
+    if pages['TorsoKinematicsCons']:
+        logger.debug('creating torso kinematics consistency plot')
+        fig_torso_kinematics_cons = _plot_sessions(
+            sessions=[sessionpath],
+            layout='torso',
+            model_normaldata=model_normaldata,
+            color_by=color_by,
+            style_by=style_by,
+            backend=pdf_backend,
+            figtitle=f'Torso kinematics consistency for {sessiondir}',
             legend_type=legend_type,
             legend=False,
         )
@@ -303,6 +320,7 @@ def create_report(
         _savefig(pdf, fig_vel, header)
         _savefig(pdf, fig_timedist_avg, header)
         _savefig(pdf, fig_kinematics_cons, header)
+        _savefig(pdf, fig_torso_kinematics_cons, header)
         _savefig(pdf, fig_kinetics_cons, header)
         _savefig(pdf, fig_musclelen_cons, header, footer_musclelen)
         _savefig(pdf, fig_emg_cons, header)

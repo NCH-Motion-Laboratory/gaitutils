@@ -10,6 +10,7 @@ import logging
 
 from ..config import cfg
 from ..envutils import GaitDataError
+from ..numutils import modified_zscore
 from .. import trial, sessionutils, stats, utils
 from . import layouts
 from .plot_misc import get_backend
@@ -201,13 +202,19 @@ def plot_trial_velocities(session, backend=None):
     fig : Figure | dict
         The figure object. Type depends on backend. Use show_fig() to show it.
     """
+    REJECT_THRESHOLD = 6  # reject velocities that differ from median by more than x stds
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
     if not c3ds:
         raise GaitDataError(f'No dynamic trials found for {session}')
     labels = [f.stem for f in c3ds]
     vels = np.array([utils._trial_median_velocity(tr) for tr in c3ds])
+    zsc = modified_zscore(vels)
+    ok_inds = np.where(abs(zsc) < REJECT_THRESHOLD)[0]
+    logger.debug(f'rejected {len(vels) - len(ok_inds)} trials as velocity outliers')
+    vels_ok = vels[ok_inds]
+    labels_ok = [labels[k] for k in ok_inds]
     figtitle = f'Walking speed for {session.name} (average {np.nanmean(vels):.2f} m/s)'
-    return get_backend(backend)._plot_vels(vels, labels, title=figtitle)
+    return get_backend(backend)._plot_vels(vels_ok, labels_ok, title=figtitle)
 
 
 def plot_trial_timedep_velocities(session, backend=None):

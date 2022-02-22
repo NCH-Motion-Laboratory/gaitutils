@@ -313,8 +313,9 @@ def _plot_vels(vels, labels, title=None):
     layout = dict(
         title=title,
         xaxis=dict(title='Trial', automargin=True),
-        yaxis=dict(title='Speed (m/s)'),
+        yaxis=dict(title='Speed (m/s)', rangemode='tozero'),
     )
+    
     return dict(data=[trace], layout=layout)
 
 

@@ -163,7 +163,7 @@ class ProgressBar(QtWidgets.QProgressDialog):
     def update(self, text, p):
         """Update bar, showing text and bar at p%"""
         self.setLabelText(text)
-        self.setValue(p)
+        self.setValue(int(p))
         # update right away in case that thread is blocked
         QtWidgets.QApplication.processEvents()
 

@@ -41,8 +41,8 @@ def test_collect_trial_data():
     assert len(cycles_all['model']['LHipMomentX']) == 17
     assert data_model['LHipMomentX'].shape[0] == 17
     assert data_model['RAnkleMomentX'].shape[0] == 19
-    assert len(cycles_all['model']['RKneeAnglesX']) == 54
-    assert data_model['RKneeAnglesX'].shape[0] == 54
+    assert len(cycles_all['model']['RKneeAnglesX']) == 46
+    assert data_model['RKneeAnglesX'].shape[0] == 46
     assert data_model['fubar'] is None
     # forceplate cycles only
     data_all, cycles_all = stats.collect_trial_data(c3ds, fp_cycles_only=True)
@@ -58,8 +58,8 @@ def test_collect_trial_data():
     assert 'model' not in data_all
     data_emg = data_all['emg']
     assert set(data_emg.keys()) == set(cfg.emg.channel_labels.keys())
-    assert all(data.shape[0] == 53 for ch, data in data_emg.items() if ch[0] == 'L')
-    assert all(data.shape[0] == 54 for ch, data in data_emg.items() if ch[0] == 'R')
+    assert all(data.shape[0] == 46 for ch, data in data_emg.items() if ch[0] == 'R')
+    assert all(data.shape[0] == 42 for ch, data in data_emg.items() if ch[0] == 'L')
     assert all(data.shape[1] == 501 for data in data_emg.values())
 
 

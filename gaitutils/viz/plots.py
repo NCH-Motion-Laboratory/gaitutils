@@ -202,9 +202,8 @@ def plot_trial_velocities(session, backend=None):
     fig : Figure | dict
         The figure object. Type depends on backend. Use show_fig() to show it.
     """
-    REJECT_THRESHOLD = (
-        6  # reject velocities that differ from median by more than x stds
-    )
+    # reject velocities that differ from median by more than x stds
+    REJECT_THRESHOLD = 8
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
     if not c3ds:
         raise GaitDataError(f'No dynamic trials found for {session}')

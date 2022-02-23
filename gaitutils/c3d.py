@@ -124,6 +124,7 @@ def get_analysis(c3dfile, condition='unknown'):
         A nested dict of the analysis values, keyed by variable name and
         context. The first key is the condition name.
     """
+    UNIT_CONVERSIONS = {'steps/min' : '1/min'}
     logger.debug(f'getting analysis values from {c3dfile}')
     acq = _get_c3dacq(c3dfile)
     try:
@@ -139,6 +140,8 @@ def get_analysis(c3dfile, condition='unknown'):
     di_ = di[condition]
 
     for (var, unit, context, val) in zip(vars_, units, contexts, vals):
+        if unit in UNIT_CONVERSIONS:
+            unit = UNIT_CONVERSIONS[unit]
         di_[var]['unit'] = unit
         di_[var][context] = val
 

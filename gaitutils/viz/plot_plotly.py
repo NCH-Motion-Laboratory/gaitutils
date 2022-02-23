@@ -219,20 +219,17 @@ def time_dist_barchart(
         for ctxt in ctxts:
             if stddev:
                 stddevs = np.array([stddev[cond][var][ctxt] for var in vars])
-            if stddev and stddevs.max() > 0:
-                bar_labels[cond][ctxt] = [
-                    f'{val:.2f} ± {std:.2f} {unit} ({scaled_val:.0f}%)'
-                    for val, scaled_val, std, unit in zip(
-                        data[cond][ctxt], data_scaled[cond][ctxt], stddevs, units
-                    )
-                ]
             else:
-                bar_labels[cond][ctxt] = [
-                    f'{val:.2f} {unit} ({scaled_val:.0f}%)'
-                    for val, scaled_val, unit in zip(
-                        data[cond][ctxt], data_scaled[cond][ctxt], units
-                    )
-                ]
+                stddevs = [''] * len(vars)
+            bar_labels[cond][ctxt] = list()
+            do_stddevs = stddev and stddevs.max() > 0
+            for val, scaled_val, std, unit in zip(
+                data[cond][ctxt], data_scaled[cond][ctxt], stddevs, units
+            ):
+                stddev_txt = f'±{std:.2f}' if do_stddevs else ''
+                spacer = '' if unit == '%' else ' '
+                txt = f'{val:.2f}{stddev_txt}{spacer}{unit} ({scaled_val:.0f}%)'
+                bar_labels[cond][ctxt].append(txt)
 
     fig = plotly.subplots.make_subplots(
         rows=1,

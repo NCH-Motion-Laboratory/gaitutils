@@ -321,6 +321,7 @@ def time_dist_barchart(
                 else:
                     texts += [f'{val:.2f} {unit} ({scaled_val:.0f}%)']
             _plot_label(ax, rects, texts)
+
         for ax in var_axes:
             if ax == var_axes[-1]:
                 ax.set_xticks(_tick_spacing(0, largest_x))
@@ -361,13 +362,21 @@ def time_dist_barchart(
     # 3 columns: bars, labels, bars
     gs = gridspec.GridSpec(len(thevars), 3, width_ratios=[1 / 2, 1, 1])
 
+    def _space_unit(unit):
+        """Inserts a space before unit, except for %"""
+        return f'{unit}' if unit == '%' else f' {unit}'
+
     # variable names go into their own column
     for ind, (var, unit) in enumerate(zip(thevars, units)):
         textax = fig.add_subplot(gs[ind, 0])
         textax.axis('off')
-        label = f'{var}'
-        # label = '%s (%s)' % (var, unit) if unit else var
-        textax.text(0, 0.5, label, ha='left', va='center')
+        if var in timedist_normaldata:
+            ref = timedist_normaldata[var]
+            unit_s = _space_unit(unit)
+            label = f'{var} (ref. {ref:.2f}{unit_s})'
+        else:
+            label = f'{var}'
+        textax.text(0, 0.5, label, ha='left', va='center', fontsize=8)
 
     rects = _plot_oneside(thevars, 'Left', 1, conds)
     rects = _plot_oneside(thevars, 'Right', 2, conds)

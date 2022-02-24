@@ -160,6 +160,10 @@ def time_dist_barchart(
     dict
         The chart.
     """
+    def _space_unit(unit):
+        """Inserts a space before unit, except for %"""
+        return f'{unit}' if unit == '%' else f' {unit}'
+
     if timedist_normaldata is None:
         timedist_normaldata = normaldata._read_timedist_normaldata_file(
             cfg.general.timedist_normaldata
@@ -227,8 +231,8 @@ def time_dist_barchart(
                 data[cond][ctxt], data_scaled[cond][ctxt], stddevs, units
             ):
                 stddev_txt = f'±{std:.2f}' if do_stddevs else ''
-                spacer = '' if unit == '%' else ' '
-                txt = f'{val:.2f}{stddev_txt}{spacer}{unit} ({scaled_val:.0f}%)'
+                unit_s = _space_unit(unit)
+                txt = f'{val:.2f}{stddev_txt}{unit_s} ({scaled_val:.0f}%)'
                 bar_labels[cond][ctxt].append(txt)
 
     fig = plotly.subplots.make_subplots(
@@ -245,7 +249,15 @@ def time_dist_barchart(
     # ordering the bars properly is a bit tricky. seemingly, there's no way to control
     # ordering of bars within a category, and they seem to be plotted from bottom to up by default.
     # a dirty solution is to plot in reversed order and then reverse the legend also.
-    varlabels = [s + ' ' for s in vars]  # hack: add spaces to create some margin
+    varlabels = list()
+    for var, unit in zip(vars, units):
+        # insert reference values if we have them
+        if var in timedist_normaldata:
+            ref = timedist_normaldata[var]
+            unit_s = _space_unit(unit)
+            varlabels.append(f'{var} (ref. {ref:.2f}{unit_s}) ')
+        else:
+            varlabels.append(f'{var} ')
     for condn, cond in enumerate(reversed(conds)):
         barcolor = cfg.plot.colors[condn]
         for k, ctxt in enumerate(ctxts, 1):

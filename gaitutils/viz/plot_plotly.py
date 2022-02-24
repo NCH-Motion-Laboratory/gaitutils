@@ -169,8 +169,8 @@ def time_dist_barchart(
             cfg.general.timedist_normaldata
         )
 
-    conds, vars, units = _pick_common_vars(values, plotvars)
-    vars = vars[::-1]  # plotly yaxis starts from bottom
+    conds, thevars, units = _pick_common_vars(values, plotvars)
+    thevars = thevars[::-1]  # plotly yaxis starts from bottom
     units = units[::-1]
 
     legend_fontsize = cfg.plot_plotly.legend_fontsize
@@ -188,11 +188,11 @@ def time_dist_barchart(
     for cond in conds:
         data[cond] = dict()
         for ctxt in ctxts:
-            data[cond][ctxt] = np.array([values[cond][var][ctxt] for var in vars])
+            data[cond][ctxt] = np.array([values[cond][var][ctxt] for var in thevars])
 
     # flatten the scaling the same way as the data, replace missing vars with np.nan
     _timedist_normaldata = list()
-    for var in vars:
+    for var in thevars:
         if var in timedist_normaldata and timedist_normaldata[var] is not None:
             _timedist_normaldata.append(timedist_normaldata[var])
         else:
@@ -222,9 +222,9 @@ def time_dist_barchart(
         bar_labels[cond] = dict()
         for ctxt in ctxts:
             if stddev:
-                stddevs = np.array([stddev[cond][var][ctxt] for var in vars])
+                stddevs = np.array([stddev[cond][var][ctxt] for var in thevars])
             else:
-                stddevs = [''] * len(vars)
+                stddevs = [''] * len(thevars)
             bar_labels[cond][ctxt] = list()
             do_stddevs = stddev and stddevs.max() > 0
             for val, scaled_val, std, unit in zip(
@@ -250,7 +250,7 @@ def time_dist_barchart(
     # ordering of bars within a category, and they seem to be plotted from bottom to up by default.
     # a dirty solution is to plot in reversed order and then reverse the legend also.
     varlabels = list()
-    for var, unit in zip(vars, units):
+    for var, unit in zip(thevars, units):
         # insert reference values if we have them
         if var in timedist_normaldata:
             ref = timedist_normaldata[var]

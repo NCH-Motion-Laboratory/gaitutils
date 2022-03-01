@@ -47,32 +47,29 @@ def group_analysis(an_list, fun=np.mean):
     if not all(cset == conds for cset in condsets):
         raise RuntimeError('Conditions need to match between analysis dicts')
 
-    # figure out variables that are in all of the analysis dicts
     for cond in conds:
         varsets = [set(an[cond].keys()) for an in an_list for cond in conds]
-    vars_ = set.intersection(*varsets)
-    not_in_all = set.union(*varsets) - vars_
+    vars_common = set.intersection(*varsets)
+    vars_all = set.union(*varsets)
+    not_in_all =  vars_all - vars_common
     if not_in_all:
         logger.warning(
             'Some analysis dicts are missing the following variables: %s'
             % ', '.join(not_in_all)
         )
 
-    # gather data and apply function
+    # gather analysis values and apply the reducing function
     res = defaultdict(lambda: defaultdict(dict))
     for cond in conds:
-        for var in vars_:
-            # this will fail if vars are not strictly matched between dicts
-            res[cond][var]['unit'] = an_list[0][cond][var]['unit']
+        for var in vars_all:
             for context in ['Right', 'Left']:
-                # gather valus from analysis dicts
-                allvals = np.array(
-                    [
-                        an[cond][var][context]
-                        for an in an_list
-                        if context in an[cond][var]
-                    ]
-                )
+                allvals = list()
+                for an in an_list:
+                    if var in an[cond] and context in an[cond][var]:
+                        allvals.append(an[cond][var][context])
+                    if 'unit' not in res[cond][var]:
+                        res[cond][var]['unit'] = an[cond][var]['unit']
+                allvals = np.array(allvals)
                 # filter out missing values (nans)
                 allvals = allvals[~np.isnan(allvals)]
                 res[cond][var][context] = fun(allvals) if allvals.size else np.nan

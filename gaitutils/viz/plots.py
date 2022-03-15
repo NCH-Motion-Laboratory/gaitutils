@@ -207,8 +207,14 @@ def plot_trial_velocities(session, backend=None):
     c3ds = sessionutils.get_c3ds(session, trial_type='dynamic')
     if not c3ds:
         raise GaitDataError(f'No dynamic trials found for {session}')
-    labels = [f.stem for f in c3ds]
-    vels = np.array([utils._trial_median_velocity(tr) for tr in c3ds])
+    vels = list()
+    labels = list()
+    for fn in c3ds:
+        vel = utils._trial_median_velocity(fn)
+        if not np.isnan(vel):
+            vels.append(vel)
+            labels.append(fn.stem)
+    vels = np.array(vels)
     zsc = modified_zscore(vels)
     ok_inds = np.where(abs(zsc) < REJECT_THRESHOLD)[0]
     logger.debug(f'rejected {len(vels) - len(ok_inds)} trials as velocity outliers')

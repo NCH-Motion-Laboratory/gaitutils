@@ -71,12 +71,12 @@ def plot_extracted_box(curve_vals, vardefs):
             vardef_ctxt = [ctxt + vardef[0]] + vardef[1:]
             for session, session_vals in curve_vals.items():
                 if vardef_ctxt[0] not in session_vals:
-                    logger.debug(f'{vardef_ctxt[0]} was not collected for this session')
+                    logger.debug(f"{vardef_ctxt[0]} was not collected for this session")
                     continue
                 this_vals = _nested_get(session_vals, vardef_ctxt)
                 vals.extend(this_vals)
                 # do not add session label on x axis if we only have a single session
-                label = session if len(curve_vals) > 1 else ''
+                label = session if len(curve_vals) > 1 else ""
                 groupnames.extend([label] * len(this_vals))
             # show entry in legend only if it was not already shown
             show_legend = ctxt not in legendgroups
@@ -96,18 +96,18 @@ def plot_extracted_box(curve_vals, vardefs):
             fig.append_trace(box, row=row + 1, col=1)
             ylabel = _plotly_var_ylabel(vardef_ctxt[0])
             _, yaxis = _get_plotly_axis_labels(row, 0, ncols=1)
-            fig['layout'][yaxis].update(
+            fig["layout"][yaxis].update(
                 title={
-                    'font': {'size': cfg.plot_plotly.label_fontsize},
-                    'text': ylabel,
-                    'standoff': 0,
+                    "font": {"size": cfg.plot_plotly.label_fontsize},
+                    "text": ylabel,
+                    "standoff": 0,
                 }
             )
     # group together boxes of the different traces for each value of x
-    fig.update_layout(boxmode='group')
+    fig.update_layout(boxmode="group")
     # set subplot title font size
-    for anno in fig['layout']['annotations']:
-        anno['font']['size'] = cfg.plot_plotly.subtitle_fontsize
+    for anno in fig["layout"]["annotations"]:
+        anno["font"]["size"] = cfg.plot_plotly.subtitle_fontsize
     return fig
 
 
@@ -160,9 +160,10 @@ def time_dist_barchart(
     dict
         The chart.
     """
+
     def _space_unit(unit):
         """Inserts a space before unit, except for %"""
-        return f'{unit}' if unit == '%' else f' {unit}'
+        return f"{unit}" if unit == "%" else f" {unit}"
 
     if timedist_normaldata is None:
         timedist_normaldata = normaldata._read_timedist_normaldata_file(
@@ -181,7 +182,7 @@ def time_dist_barchart(
         label_fontsize += 2
         subtitle_fontsize += 2
 
-    ctxts = ['Left', 'Right']
+    ctxts = ["Left", "Right"]
 
     # flatten data into simple arrays of nvars x 1
     data = dict()
@@ -224,16 +225,19 @@ def time_dist_barchart(
             if stddev:
                 stddevs = np.array([stddev[cond][var][ctxt] for var in thevars])
             else:
-                stddevs = [''] * len(thevars)
+                stddevs = [""] * len(thevars)
             bar_labels[cond][ctxt] = list()
             do_stddevs = stddev and stddevs.max() > 0
             for val, scaled_val, std, unit in zip(
                 data[cond][ctxt], data_scaled[cond][ctxt], stddevs, units
             ):
-                stddev_txt = f'±{std:.2f}' if do_stddevs else ''
+                stddev_txt = f"±{std:.2f}" if do_stddevs else ""
                 unit_s = _space_unit(unit)
-                txt = f'{val:.2f}{stddev_txt}{unit_s} ({scaled_val:.0f}%)'
+                txt = f"{val:.2f}{stddev_txt}{unit_s} ({scaled_val:.0f}%)"
                 bar_labels[cond][ctxt].append(txt)
+
+    # compose bold subplot titles
+    subplot_titles = [f"<b>{s}</b>" for s in ctxts]
 
     fig = plotly.subplots.make_subplots(
         rows=1,
@@ -243,7 +247,7 @@ def time_dist_barchart(
         shared_yaxes=True,
         vertical_spacing=0,
         horizontal_spacing=0.05,
-        subplot_titles=ctxts,
+        subplot_titles=subplot_titles,
     )
 
     # ordering the bars properly is a bit tricky. seemingly, there's no way to control
@@ -255,9 +259,13 @@ def time_dist_barchart(
         if var in timedist_normaldata:
             ref = timedist_normaldata[var]
             unit_s = _space_unit(unit)
-            varlabels.append(f'{var} (ref. {ref:.2f}{unit_s}) ')
+            if var == thevars[0]:
+                this_label = f"foo\n{var} (ref. {ref:.2f}{unit_s}) "
+            else:
+                this_label = f"{var} (ref. {ref:.2f}{unit_s}) "
+            varlabels.append(this_label)
         else:
-            varlabels.append(f'{var} ')
+            varlabels.append(f"{var} ")
     for condn, cond in enumerate(reversed(conds)):
         barcolor = cfg.plot.colors[condn]
         for k, ctxt in enumerate(ctxts, 1):
@@ -265,23 +273,23 @@ def time_dist_barchart(
             trace_l = go.Bar(
                 y=varlabels,
                 x=data_scaled[cond][ctxt],
-                orientation='h',
+                orientation="h",
                 name=cond,
                 legendgroup=cond,
                 text=bar_labels[cond][ctxt],
-                textfont={'size': label_fontsize + 2},
-                textposition='auto',
+                textfont={"size": label_fontsize + 2},
+                textposition="auto",
                 showlegend=show_legend,
                 hoverlabel=dict(namelength=-1),
-                hoverinfo='y+text+name',
+                hoverinfo="y+text+name",
                 marker_color=barcolor,
             )
             fig.add_trace(trace_l, 1, k)
-            fig['layout']['legend']['traceorder'] = 'reversed'
+            fig["layout"]["legend"]["traceorder"] = "reversed"
             # increase var label size a bit
-            fig['layout']['yaxis%d' % k].update(tickfont={'size': label_fontsize + 2})
-            fig['layout']['xaxis%d' % k].update(
-                title={'text': '% of reference', 'font': {'size': label_fontsize}}
+            fig["layout"]["yaxis%d" % k].update(tickfont={"size": label_fontsize + 2})
+            fig["layout"]["xaxis%d" % k].update(
+                title={"text": "% of reference", "font": {"size": label_fontsize}}
             )
             # this sets the full x scale for all bars simultaneously; it is set
             # to the maximum scaled value among all vars and conditions (i.e. if
@@ -290,9 +298,9 @@ def time_dist_barchart(
             max_val_this = np.nanmax(np.array([data_scaled[c][ctxt] for c in conds]))
             # set ticks
             tickvals = _tick_spacing(0, max_val_this)
-            fig['layout']['xaxis%d' % k].update({'range': [0, max(tickvals)]})
-            fig['layout']['xaxis%d' % k].update(
-                {'tickmode': 'array', 'tickvals': tickvals}
+            fig["layout"]["xaxis%d" % k].update({"range": [0, max(tickvals)]})
+            fig["layout"]["xaxis%d" % k].update(
+                {"tickmode": "array", "tickvals": tickvals}
             )
 
     margin = go.layout.Margin(l=50, r=0, b=50, t=50, pad=4)  # NOQA: 741
@@ -300,29 +308,43 @@ def time_dist_barchart(
     plotly_layout = go.Layout(
         margin=margin,
         legend=legend,
-        paper_bgcolor='rgba(255,255,255,0)',  # no background please
-        plot_bgcolor='rgba(255,255,255,0)',
-        font={'size': label_fontsize},
-        hovermode='closest',
+        paper_bgcolor="rgba(255,255,255,0)",  # no background please
+        plot_bgcolor="rgba(255,255,255,0)",
+        font={"size": label_fontsize},
+        hovermode="closest",
         title=figtitle,
     )
 
-    fig['layout'].update(plotly_layout)
-    for anno in fig['layout']['annotations']:
-        anno['font']['size'] = subtitle_fontsize
+    fig["layout"].update(plotly_layout)
+    for anno in fig["layout"]["annotations"]:
+        anno["font"]["size"] = subtitle_fontsize
 
     # add vertical line at 100%
-    fig.add_vline(x=100, line_width=1, line_dash='dash', opacity=0.5)
+    fig.add_vline(x=100, line_width=1, line_dash="dash", opacity=0.5)
+    # add annotation "reference" for reference values
+    # this is a bit hacky, since negative x coords don't seem to work
+    anno_text = f"<b>Reference values{10 * ' '}</b>"  # margin by spaces
+    fig.add_annotation(
+        x=0,
+        y=len(thevars),
+        text=anno_text,
+        xref="x",
+        yref="y",
+        showarrow=False,
+        font={"size": subtitle_fontsize},
+        xanchor="right",
+    )
+
     return fig
 
 
 def _plot_vels(vels, labels, title=None):
     """Plot trial velocities as a stem plot"""
-    trace = dict(y=vels, x=labels, mode='markers')
+    trace = dict(y=vels, x=labels, mode="markers")
     layout = dict(
         title=title,
-        xaxis=dict(title='Trial', automargin=True),
-        yaxis=dict(title='Speed (m/s)', rangemode='tozero'),
+        xaxis=dict(title="Trial", automargin=True),
+        yaxis=dict(title="Speed (m/s)", rangemode="tozero"),
     )
 
     return dict(data=[trace], layout=layout)
@@ -332,13 +354,13 @@ def _plot_timedep_vels(vels, labels, title=None):
     """Plot trial time-dependent velocities"""
     traces = list()
     for vel, label in zip(vels, labels):
-        trace = dict(y=vel, text=label, name=label, hoverinfo='x+y+text')
+        trace = dict(y=vel, text=label, name=label, hoverinfo="x+y+text")
         traces.append(trace)
     # FIXME: labels get truncated, not fixed by automargin
     layout = dict(
         title=title,
-        xaxis=dict(title='% of trial', automargin=True),
-        yaxis=dict(title='Velocity (m/s)'),
+        xaxis=dict(title="% of trial", automargin=True),
+        yaxis=dict(title="Velocity (m/s)"),
     )
     return dict(data=traces, layout=layout)
 
@@ -347,7 +369,7 @@ def _plotly_fill_between(x, ylow, yhigh, **kwargs):
     """Fill area between ylow and yhigh"""
     x_ = np.concatenate([x, x[::-1]])  # construct a closed curve
     y_ = np.concatenate([yhigh, ylow[::-1]])
-    return dict(x=x_, y=y_, fill='toself', mode='none', hoverinfo='none', **kwargs)
+    return dict(x=x_, y=y_, fill="toself", mode="none", hoverinfo="none", **kwargs)
 
 
 def plot_trials_browser(trials, layout, **kwargs):
@@ -359,7 +381,7 @@ def plot_trials_browser(trials, layout, **kwargs):
 def _get_plotly_axis_labels(row, col, ncols):
     """Gets plotly axis labels from zero-based row and col indices"""
     plot_ind = row * ncols + col + 1  # plotly subplot index
-    return f'xaxis{plot_ind}', f'yaxis{plot_ind}'
+    return f"xaxis{plot_ind}", f"yaxis{plot_ind}"
 
 
 def _plotly_var_ylabel(var, themodel=None):
@@ -367,10 +389,10 @@ def _plotly_var_ylabel(var, themodel=None):
     if themodel is None:
         themodel = models.model_from_var(var)
     yunit = themodel.units[var]
-    if yunit == 'deg':
-        yunit = '\u00B0'  # Unicode degree sign
+    if yunit == "deg":
+        yunit = "\u00B0"  # Unicode degree sign
     ydesc = [s[:3] for s in themodel.ydesc[var]]  # shorten
-    return f'{ydesc[0]} {yunit} {ydesc[1]}'
+    return f"{ydesc[0]} {yunit} {ydesc[1]}"
 
 
 def plot_trials(
@@ -446,7 +468,7 @@ def plot_trials(
     """
 
     if not trials:
-        raise GaitDataError('No trials')
+        raise GaitDataError("No trials")
 
     if not isinstance(trials, list):
         trials = [trials]
@@ -454,7 +476,7 @@ def plot_trials(
     style_by, color_by = _handle_style_and_color_args(style_by, color_by)
 
     if legend_type is None:
-        legend_type = 'short_name_with_cyclename'
+        legend_type = "short_name_with_cyclename"
 
     if supplementary_data is None:
         supplementary_data = dict()
@@ -465,9 +487,9 @@ def plot_trials(
     if emg_normaldata is None:
         emg_normaldata = normaldata._read_emg_normaldata_file(cfg.emg.normaldata_file)
 
-    if emg_mode not in (None, 'envelope'):
-        raise ValueError('invalid EMG mode parameter')
-    use_envelope = emg_mode == 'envelope'
+    if emg_mode not in (None, "envelope"):
+        raise ValueError("invalid EMG mode parameter")
+    use_envelope = emg_mode == "envelope"
 
     nrows, ncols = layouts._check_layout(layout)
 
@@ -485,7 +507,7 @@ def plot_trials(
     model_normaldata_legend = True
     emg_normaldata_legend = True
 
-    normalized = cycles != 'unnormalized'
+    normalized = cycles != "unnormalized"
     cycles = _handle_cyclespec(cycles)
     if max_cycles is None:
         max_cycles = cfg.plot.max_cycles
@@ -518,8 +540,8 @@ def plot_trials(
                             ndata[:, 0],
                             ndata[:, 1],
                             fillcolor=fillcolor,
-                            name='Norm.',
-                            legendgroup='Norm.',
+                            name="Norm.",
+                            legendgroup="Norm.",
                             showlegend=model_normaldata_legend,
                             line=dict(width=0),
                         )  # no border lines
@@ -546,13 +568,13 @@ def plot_trials(
                         z=z,
                         y=y,
                         x=x,
-                        colorscale='reds',
+                        colorscale="reds",
                         zmin=0,
                         zmax=1,
                         opacity=0.5,
                         showscale=False,
-                        name='EMG norm.',
-                        legendgroup='EMG norm.',
+                        name="EMG norm.",
+                        legendgroup="EMG norm.",
                         showlegend=emg_normaldata_legend,
                     )
                     fig.add_trace(heatmap, i + 1, j + 1)
@@ -581,9 +603,9 @@ def plot_trials(
                     xaxis, yaxis = _get_plotly_axis_labels(i, j, ncols)
 
                     cyclename = _get_cycle_name(trial, cyc, name_type=legend_type)
-                    cyclename_full = _get_cycle_name(trial, cyc, name_type='full')
+                    cyclename_full = _get_cycle_name(trial, cyc, name_type="full")
 
-                    if vartype == 'model':
+                    if vartype == "model":
                         do_plot = cyc in cyclebunch.model_cycles
                         themodel = models.model_from_var(var)
                         if var in themodel.varnames_nocontext:
@@ -609,11 +631,11 @@ def plot_trials(
 
                         if do_plot:
                             sty = _style_by_params(
-                                style_by['model'], trace_styles, trial, cyc, context
+                                style_by["model"], trace_styles, trial, cyc, context
                             )
                             sty = _style_mpl_to_plotly(sty)
                             col = _color_by_params(
-                                color_by['model'], trace_colors, trial, cyc, context
+                                color_by["model"], trace_colors, trial, cyc, context
                             )
 
                             line = dict(
@@ -633,20 +655,20 @@ def plot_trials(
                                 legendgroup=legendgroup,
                                 showlegend=show_legend,
                                 hoverlabel=dict(namelength=-1),
-                                hoverinfo='x+y+text',
+                                hoverinfo="x+y+text",
                                 line=line,
                             )
 
                             # add toeoff marker
                             if cyc.toeoffn is not None:
-                                marker = dict(color=col, symbol='triangle-up', size=8)
+                                marker = dict(color=col, symbol="triangle-up", size=8)
                                 toeoff_marker = dict(
                                     x=t[cyc.toeoffn : cyc.toeoffn + 1],
                                     y=y[cyc.toeoffn : cyc.toeoffn + 1],
                                     showlegend=False,
                                     legendgroup=legendgroup,
-                                    hoverinfo='skip',
-                                    mode='markers',
+                                    hoverinfo="skip",
+                                    mode="markers",
                                     marker=marker,
                                 )
                                 fig.add_trace(toeoff_marker, i + 1, j + 1)
@@ -675,8 +697,8 @@ def plot_trials(
                                         y - sdata,
                                         y + sdata,
                                         fillcolor=fillcolor,
-                                        name=f'Stddev, {cyclename}',
-                                        legendgroup=f'Stddev, {cyclename}',
+                                        name=f"Stddev, {cyclename}",
+                                        legendgroup=f"Stddev, {cyclename}",
                                         showlegend=show_legend,
                                         line=dict(width=0),
                                     )  # no border lines
@@ -687,11 +709,11 @@ def plot_trials(
                                 supdata = supplementary_data[cyc]
                                 if var in supdata:
                                     logger.debug(
-                                        f'plotting supplementary data for var {var}'
+                                        f"plotting supplementary data for var {var}"
                                     )
-                                    t_sup = supdata[var]['t']
-                                    data_sup = supdata[var]['data']
-                                    label_sup = supdata[var]['label']
+                                    t_sup = supdata[var]["t"]
+                                    data_sup = supdata[var]["data"]
+                                    label_sup = supdata[var]["label"]
 
                                     strace = dict(
                                         x=t_sup,
@@ -700,7 +722,7 @@ def plot_trials(
                                         text=label_sup,
                                         line=line,
                                         legendgroup=cyclename,
-                                        hoverinfo='x+y+text',
+                                        hoverinfo="x+y+text",
                                         showlegend=False,
                                     )
                                     fig.add_trace(strace, i + 1, j + 1)
@@ -709,18 +731,18 @@ def plot_trials(
                             # adjust subplot once
                             if not subplot_adjusted[(i, j)]:
                                 ylabel = _plotly_var_ylabel(var, themodel)
-                                fig['layout'][yaxis].update(
+                                fig["layout"][yaxis].update(
                                     title={
-                                        'text': ylabel,
-                                        'font': {'size': label_fontsize},
-                                        'standoff': 0,
+                                        "text": ylabel,
+                                        "font": {"size": label_fontsize},
+                                        "standoff": 0,
                                     }
                                 )
                                 # less decimals on hover label
-                                fig['layout'][yaxis].update(hoverformat='.2f')
+                                fig["layout"][yaxis].update(hoverformat=".2f")
                                 subplot_adjusted[(i, j)] = True
 
-                    elif vartype == 'marker':
+                    elif vartype == "marker":
                         do_plot = cyc in cyclebunch.marker_cycles
                         t, mdata = trial.get_marker_data(var, cycle=cyc)
                         if mdata is None:
@@ -728,9 +750,9 @@ def plot_trials(
 
                         if do_plot:
 
-                            for datadim, data in zip('XYZ', mdata.T):
+                            for datadim, data in zip("XYZ", mdata.T):
                                 sty = _style_by_params(
-                                    style_by['marker'],
+                                    style_by["marker"],
                                     trace_styles,
                                     trial,
                                     cyc,
@@ -739,7 +761,7 @@ def plot_trials(
                                 )
                                 sty = _style_mpl_to_plotly(sty)
                                 col = _color_by_params(
-                                    color_by['marker'],
+                                    color_by["marker"],
                                     trace_colors,
                                     trial,
                                     cyc,
@@ -750,7 +772,7 @@ def plot_trials(
                                     width=cfg.plot.model_linewidth, dash=sty, color=col
                                 )
                                 # dim-specific tracename
-                                tracename_marker = f'mkr_{datadim}:{cyclename}'
+                                tracename_marker = f"mkr_{datadim}:{cyclename}"
                                 # dimension- and trial-based grouping
                                 # legendgroup = 'mkr_%s:%s' % (datadim, trial.trialname)
                                 # dimension- and cycle-based grouping
@@ -764,7 +786,7 @@ def plot_trials(
                                     legendgroup=legendgroup,
                                     showlegend=show_legend,
                                     hoverlabel=dict(namelength=-1),
-                                    hoverinfo='x+y+name',
+                                    hoverinfo="x+y+name",
                                     line=line,
                                 )
                                 fig.add_trace(trace, i + 1, j + 1)
@@ -774,15 +796,15 @@ def plot_trials(
                                 if cyc.toeoffn is not None:
                                     cyc.toeoffn = int(cyc.toeoffn)
                                     marker = dict(
-                                        color=col, symbol='triangle-up', size=8
+                                        color=col, symbol="triangle-up", size=8
                                     )
                                     toeoff_marker = dict(
                                         x=t[cyc.toeoffn : cyc.toeoffn + 1],
                                         y=data[cyc.toeoffn : cyc.toeoffn + 1],
                                         showlegend=False,
                                         legendgroup=legendgroup,
-                                        hoverinfo='skip',
-                                        mode='markers',
+                                        hoverinfo="skip",
+                                        mode="markers",
                                         marker=marker,
                                     )
                                     fig.add_trace(toeoff_marker, i + 1, j + 1)
@@ -790,20 +812,20 @@ def plot_trials(
                             # adjust subplot once
                             if not subplot_adjusted[(i, j)]:
                                 # fig['layout'][xaxis].update(showticklabels=False)
-                                ylabel = 'mm'
-                                fig['layout'][yaxis].update(
+                                ylabel = "mm"
+                                fig["layout"][yaxis].update(
                                     title={
-                                        'text': ylabel,
-                                        'font': {'size': label_fontsize},
-                                        'standoff': 0,
+                                        "text": ylabel,
+                                        "font": {"size": label_fontsize},
+                                        "standoff": 0,
                                     }
                                 )
                                 # less decimals on hover label
-                                fig['layout'][yaxis].update(hoverformat='.2f')
+                                fig["layout"][yaxis].update(hoverformat=".2f")
                                 subplot_adjusted[(i, j)] = True
 
                     # plot EMG variable
-                    elif vartype == 'emg':
+                    elif vartype == "emg":
                         do_plot = (
                             trial.emg.context_ok(var, cyc.context)
                             and trial.emg.status_ok(var)
@@ -813,7 +835,7 @@ def plot_trials(
                         # _no_ticks_or_labels(ax)
                         # _axis_annotate(ax, 'disconnected')
                         if do_plot:
-                            tracename_emg = 'EMG:' + cyclename
+                            tracename_emg = "EMG:" + cyclename
 
                             t_, y = trial.get_emg_data(
                                 var, envelope=use_envelope, cycle=cyc
@@ -821,7 +843,7 @@ def plot_trials(
                             t = t_ if normalized else t_ / trial.samplesperframe
 
                             col = _color_by_params(
-                                color_by['emg'], emg_trace_colors, trial, cyc, context
+                                color_by["emg"], emg_trace_colors, trial, cyc, context
                             )
                             col = merge_color_and_opacity(col, cfg.plot.emg_alpha)
                             lw = (
@@ -829,7 +851,7 @@ def plot_trials(
                                 if use_envelope
                                 else cfg.plot.emg_linewidth
                             )
-                            line = {'width': lw, 'color': col}
+                            line = {"width": lw, "color": col}
 
                             # EMG traces get grouped according to cycle (same
                             # legendgroup as model traces)
@@ -852,43 +874,43 @@ def plot_trials(
 
                         # adjust subplot once
                         if not subplot_adjusted[(i, j)]:
-                            fig['layout'][yaxis].update(
+                            fig["layout"][yaxis].update(
                                 title={
-                                    'text': cfg.plot.emg_ylabel,
-                                    'font': {'size': label_fontsize},
-                                    'standoff': 0,
+                                    "text": cfg.plot.emg_ylabel,
+                                    "font": {"size": label_fontsize},
+                                    "standoff": 0,
                                 },
                                 range=_emg_yscale(emg_mode),
                             )
                             # prevent changes due to legend clicks etc.
                             if normalized:
-                                fig['layout'][xaxis].update(range=[0, 100])
+                                fig["layout"][xaxis].update(range=[0, 100])
                             # rm x tick labels, plot too crowded
                             # fig['layout'][xaxis].update(showticklabels=False)
                             # less decimals on hover label
                             # XXX: this is not working?
-                            fig['layout'][yaxis].update(hoverformat='.2f')
+                            fig["layout"][yaxis].update(hoverformat=".2f")
                             subplot_adjusted[(i, j)] = True
 
-                    elif vartype == 'unknown':
-                        raise GaitDataError(f'cannot interpret variable {var}')
+                    elif vartype == "unknown":
+                        raise GaitDataError(f"cannot interpret variable {var}")
 
                     else:
                         raise GaitDataError(
-                            f'plotting not implemented for variable {var}'
+                            f"plotting not implemented for variable {var}"
                         )
 
     # set subplot title font size
-    for anno in fig['layout']['annotations']:
-        anno['font']['size'] = subtitle_fontsize
+    for anno in fig["layout"]["annotations"]:
+        anno["font"]["size"] = subtitle_fontsize
 
     # put x labels on last row only, re-enable tick labels for last row
     inds_last = range((nrows - 1) * ncols, nrows * ncols)
-    axes_last = ['xaxis%d' % (ind + 1) for ind in inds_last]
-    xlabel = '% of gait cycle' if normalized else 'frame'
+    axes_last = ["xaxis%d" % (ind + 1) for ind in inds_last]
+    xlabel = "% of gait cycle" if normalized else "frame"
     for ax in axes_last:
-        fig['layout'][ax].update(
-            title={'text': xlabel, 'font': {'size': label_fontsize}},
+        fig["layout"][ax].update(
+            title={"text": xlabel, "font": {"size": label_fontsize}},
             showticklabels=True,
         )
 
@@ -897,10 +919,10 @@ def plot_trials(
     plotly_layout = go.Layout(
         margin=margin,
         legend=legend,
-        font={'size': label_fontsize},
-        hovermode='closest',
+        font={"size": label_fontsize},
+        hovermode="closest",
         title=figtitle,
     )
 
-    fig['layout'].update(plotly_layout)
+    fig["layout"].update(plotly_layout)
     return fig

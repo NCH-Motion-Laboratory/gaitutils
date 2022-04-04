@@ -377,6 +377,8 @@ def time_dist_barchart(
         else:
             label = f'{var}'
         textax.text(0, 0.5, label, ha='left', va='center', fontsize=8)
+        if ind == 0:
+            textax.set_title('Reference values')
 
     rects = _plot_oneside(thevars, 'Left', 1, conds)
     rects = _plot_oneside(thevars, 'Right', 2, conds)

@@ -67,8 +67,8 @@ def group_analysis(an_list, fun=np.mean):
                 for an in an_list:
                     if var in an[cond] and context in an[cond][var]:
                         allvals.append(an[cond][var][context])
-                    if 'unit' not in res[cond][var]:
-                        res[cond][var]['unit'] = an[cond][var]['unit']
+                        if 'unit' not in res[cond][var]:
+                            res[cond][var]['unit'] = an[cond][var]['unit']
                 allvals = np.array(allvals)
                 # filter out missing values (nans)
                 allvals = allvals[~np.isnan(allvals)]

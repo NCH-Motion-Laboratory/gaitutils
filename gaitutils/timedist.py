@@ -51,7 +51,7 @@ def group_analysis(an_list, fun=np.mean):
         varsets = [set(an[cond].keys()) for an in an_list for cond in conds]
     vars_common = set.intersection(*varsets)
     vars_all = set.union(*varsets)
-    not_in_all =  vars_all - vars_common
+    not_in_all = vars_all - vars_common
     if not_in_all:
         logger.warning(
             'Some analysis dicts are missing the following variables: %s'

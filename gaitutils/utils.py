@@ -436,7 +436,7 @@ def _trial_median_velocity(source, return_curve=False):
         frate = read_data.get_metadata(source)['framerate']
         mkrdata = read_data.get_marker_data(source, cfg.autoproc.track_markers)
         vel_3 = avg_markerdata(mkrdata, cfg.autoproc.track_markers, avg_velocity=True)
-        vel_ = np.sqrt(np.sum(vel_3 ** 2, 1))  # scalar velocity
+        vel_ = np.sqrt(np.sum(vel_3**2, 1))  # scalar velocity
     except (GaitDataError, ValueError):
         if return_curve:
             nanvec = np.empty((100, 1))

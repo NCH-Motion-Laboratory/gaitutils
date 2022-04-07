@@ -28,14 +28,11 @@ def test_collect_trial_data():
     collected_vars = set(data_model.keys())
     # test whether data was collected for all vars
     # except CGM2 forefoot (which are not in the c3d data)
-    desired_vars = (
-        set.union(
-            set(models.pig_lowerbody.varnames),
-            set(models.pig_lowerbody_kinetics.varnames),
-            set(models.musclelen.varnames),
-        )
-        - set([var for var in models.pig_lowerbody.varnames if 'ForeFoot' in var])
-    )
+    desired_vars = set.union(
+        set(models.pig_lowerbody.varnames),
+        set(models.pig_lowerbody_kinetics.varnames),
+        set(models.musclelen.varnames),
+    ) - set([var for var in models.pig_lowerbody.varnames if 'ForeFoot' in var])
     assert collected_vars == desired_vars
     # check that the correct number of cycles was collected
     assert len(cycles_all['model']['LHipMomentX']) == 17
@@ -73,14 +70,11 @@ def test_average_model_data():
     )
     # test whether data was averaged for all vars
     # except CGM2 forefoot (which are not in the c3d data)
-    desired_vars = (
-        set.union(
-            set(models.pig_lowerbody.varnames),
-            set(models.pig_lowerbody_kinetics.varnames),
-            set(models.musclelen.varnames),
-        )
-        - set([var for var in models.pig_lowerbody.varnames if 'ForeFoot' in var])
-    )
+    desired_vars = set.union(
+        set(models.pig_lowerbody.varnames),
+        set(models.pig_lowerbody_kinetics.varnames),
+        set(models.musclelen.varnames),
+    ) - set([var for var in models.pig_lowerbody.varnames if 'ForeFoot' in var])
     for var in desired_vars:
         assert avgdata[var] is not None and avgdata[var].shape == (101,)
         assert stddata[var] is not None and stddata[var].shape == (101,)

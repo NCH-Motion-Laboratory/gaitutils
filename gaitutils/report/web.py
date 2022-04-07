@@ -97,24 +97,26 @@ def dash_report(
     Parameters
     ----------
     sessions : list
-        List of session directories. Up to three sessions can be compared in the
-        report.
+        List of session directories. For more than one session dirs, a
+        comparison report will be created. Up to three sessions can be compared
+        in the report.
     info : dict | None
-        The patient info.
+        The patient info. If not None, some info will be shown in the report.
     max_cycles : dict | None
-        Maximum number of cycles to plot for each variable type. If None, taken
-        from cfg.
+        Maximum number of gait cycles to plot for each variable type. If None,
+        taken from config.
     tags : list | None
         Eclipse tags for finding dynamic gait trials. If None, will be taken from config.
     signals : ProgressSignals | None
         Instance of ProgressSignals, used to send progress updates across
-        threads and track cancel flag. If None, a dummy one will be created.
+        threads and track the cancel flag which aborts the creation of the
+        report. If None, a dummy one will be created.
     recreate_plots : bool
-        If True, force recreation of report figures. Otherwise, figures cached
-        to disk will be used, unless the report c3d files have changed (a
+        If True, force recreation of the report figures. Otherwise, cached
+        figure data will be used, unless the report c3d files have changed (a
         checksum mechanism is used to verify this).
     video_only : bool
-        If True, create a video-only report.
+        If True, create a video-only report (no gait curves).
 
     Returns
     -------
@@ -191,9 +193,10 @@ def dash_report(
         if not any(enfs[session]['dynamic'][tag] for tag in dyn_tags):
             raise GaitDataError(f'No tagged dynamic trials found for {session}')
         # collect static trial (at most 1 per session)
+        # rules:
         # -prefer enfs that have a corresponding c3d file, even for a video-only report
         # (so that the same static gets used for both video-only and full reports)
-        # -prefer the newest enf file
+        # -prefer the newest static trial
         sts = sessionutils.get_enfs(session, trial_type='static')
         for st in reversed(sts):  # newest first
             st_c3d = sessionutils.enf_to_trialfile(st, '.c3d')
@@ -267,12 +270,12 @@ def dash_report(
         if missing:
             missing_trials = ', '.join([fn.stem for fn in missing])
             raise GaitDataError(
-                f'C3D files are missing for following trials: {missing_trials}'
+                f'c3d files missing for following trials: {missing_trials}'
             )
         # see whether we can load report figures from disk
         digest = numutils._files_digest(data_c3ds)
         logger.debug(f'report data digest: {digest}')
-        # data is always saved into alphabetically first session
+        # the cached data is always saved into alphabetically first session
         data_dir = sorted(sessions)[0]
         data_fn = data_dir / f'web_report_{digest}.dat'
         if data_fn.is_file() and not recreate_plots:
@@ -533,6 +536,7 @@ def dash_report(
                 # make the upper and lower panel graphs from figdata, depending
                 # on data type
                 def _is_base64(s):
+                    """Test for valid base64 encoding"""
                     try:
                         return base64.b64encode(base64.b64decode(s)) == s
                     except Exception:

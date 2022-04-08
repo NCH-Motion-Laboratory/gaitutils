@@ -60,7 +60,7 @@ def _rigid_body_extrapolate_markers(P0, Pr):
     -apply R and t to P0 to get the extrapolated positions
     """
     nref = Pr.shape[0]
-    if P0.shape <= nref:
+    if P0.shape[0] <= nref:
         raise ValueError('1st dim of P0 needs to be larger than 1st dim of Pr')
     Pr0 = P0[:nref, :]  # reference markers
     # find rotation and translation that take the static reference position to the

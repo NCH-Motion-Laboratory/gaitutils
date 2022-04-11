@@ -188,7 +188,7 @@ Loading the trial into Python:
    from gaitutils import trial
 
    tr = trial.nexus_trial()
-   print tr
+   print(tr)
 
 Result:
 

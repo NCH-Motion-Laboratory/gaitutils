@@ -692,15 +692,16 @@ def rigid_body_extrapolate(
     extrap_markers : list
         The markers to extrapolate.
     ref_frame : int or None
-        The reference frame to use from the reference trial. If not given, defaults to 0.
+        The reference frame to use from the reference trial. If None, defaults to 0.
     save_trials : bool
-        Whether to save the extrapolated trials.
+        Whether to save the extrapolated trials (True by default).
     """
     if ref_frame is None:
         ref_frame = 0
     if not isinstance(extrap_trials, list):
         extrap_trials = [extrap_trials]
     # read data from reference trial
+    logger.debug(f'opening reference trial {ref_trial}')
     _open_trial(ref_trial)
     allmarkers = ref_markers + extrap_markers
     try:
@@ -713,6 +714,7 @@ def rigid_body_extrapolate(
     # read reference marker data from extrapolation trials
     for extrap_trial in extrap_trials:
         extrap_coords = defaultdict(list)
+        logger.debug(f'opening extrapolation trial {ref_trial}')        
         _open_trial(extrap_trial)
         subjname = get_subjectnames()
         try:
@@ -729,6 +731,7 @@ def rigid_body_extrapolate(
             for marker, pos in zip(extrap_markers, mdata_extrap):
                 extrap_coords[marker].append(pos)
         # write extrapolated data
+        logger.debug(f'all frames complete, writing extrapolated data for {extrap_trial}')
         for marker, vals in extrap_coords.items():
             vals_x, vals_y, vals_z = np.array(vals).T
             data_exists = [True] * vicon.GetFrameCount()

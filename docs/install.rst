@@ -4,30 +4,30 @@ Installation
 Python
 ------
 
-`Anaconda <https://www.anaconda.com/distribution/#download-section>`__
-is the recommended distribution. Alternatively you can use
-`Miniconda <https://docs.conda.io/en/latest/miniconda.html>`__ for a
-smaller download. It's recommended to install a 64-bit version with
-Python 3.6 or newer.
+As a prerequisite, you need a Python environment. `Anaconda
+<https://www.anaconda.com/distribution/#download-section>`__ is the recommended
+distribution. Alternatively you can use `Miniconda
+<https://docs.conda.io/en/latest/miniconda.html>`__ for a smaller download. It's
+recommended to install a 64-bit version with Python 3.6 or newer.
 
 Installation via environment file
 ---------------------------------
 
 It is possible to install gaitutils via pip. However as there are quite a lot of
-dependencies, it is usually easier to install everything at once using a conda
-feature called environments.
+dependencies, it is usually easier to install them all at the same time using a
+conda feature called environments.
 
-Open Anaconda Prompt from Windows menu. Download the environment
-specification by giving the command:
+To install using environments, open Anaconda Prompt from Windows menu. Download
+the environment specification by giving the command:
 
 ::
 
    curl -O http://raw.githubusercontent.com/jjnurminen/gaitutils/master/environment.yml
 
-Alternatively, if ``curl`` does not work, download ``environment.yml``
-by visiting the link given in the above command and saving the file.
-Make sure that it is saved under the correct filename - the browser save
-dialog may change the name. Then create the environment by typing:
+Alternatively, if ``curl`` does not work, download ``environment.yml`` by
+visiting the link given in the above command and saving the file. Make sure that
+it is saved under the correct filename - the browser save dialog may change the
+name. Then create the environment by typing:
 
 ::
 
@@ -40,20 +40,24 @@ To activate the environment in Anaconda Prompt, type
    conda activate gaitutils
 
 This will activate the environment for the current session only. For
-instructions on how to activate it every time you open the shell, see
-the Appendix.
+instructions on how to activate it every time you open the shell, see the
+Appendix.
 
 Install viconnexusapi
 ---------------------
 
-To use gaitutils with Vicon Nexus (version 2.12 and above), you need to
-install the ``viconnexusapi`` package that comes with Nexus. After
-activating the environment as above, give the following commands:
+To use gaitutils with Vicon Nexus (version 2.12 and above), you need to install
+the ``viconnexusapi`` package that comes with Nexus. After activating the
+environment as above, give the following commands:
 
 ::
 
    C:\>cd "C:\Program Files (x86)\Vicon\Nexus2.12\SDK\Win64\Python"
    pip install ./viconnexusapi
+
+The install may sometimes fail due to "Permission denied" or similar error. In
+that case, try to start Anaconda Prompt as superuser.
+
 
 Starting the menu
 -----------------
@@ -64,7 +68,7 @@ After activating the environment, you can run
 
    gaitmenu
 
-to start the graphical user interface to gaitutils.
+to start the graphical user interface (GUI) to gaitutils.
 
 Creating a desktop shortcut
 ---------------------------
@@ -75,111 +79,108 @@ In the activated environment, type
 
    gaitmenu_make_shortcut
 
-An icon should appear on your desktop, which will start the menu in the
-correct environment.
+An icon should appear on your desktop, which will activate the correct
+environment and start the GUI.
 
-Using the graphical menu
-========================
+Using the GUI
+=============
 
 Plotting trials
 ---------------
 
-The graphical interface allows plotting of trials from c3d files or a
-running Vicon Nexus instance. Click "Add session..." to add either
-tagged trials or all trials from a given session. Alternatively, "Add
-C3D files..." can be used to load C3D files via the OS file dialog.
+The graphical interface allows plotting of trials from C3D files or a running
+Vicon Nexus instance. Click "Add session..." to add either tagged trials or all
+trials from a given session. Alternatively, use "Add C3D files..." to load C3D
+files via the OS file dialog.
 
-The plot layout defines the variables to plot. Some common layouts such
-as Plug-in Gait come predefined with the software. You can also define
-your own layouts in the config (see below).
+The plot layout defines the variables to plot. Some common layouts such as
+Plug-in Gait come predefined with gaitutils. You can also define your own
+layouts in the config (see below).
 
-Two different plotting backends are currently supported: plotly and
-matplotlib. The Plotly backend creates interactive plots in a web
-browser and is somewhat more polished. The matplotlib package creates
-static plots that may be more useful for hardcopies (e.g. PDF reports).
+Two different plotting backends are currently supported: plotly and matplotlib.
+The Plotly backend creates interactive plots in a web browser and is somewhat
+more polished. The matplotlib package creates static plots that may be more
+useful for hardcopies (e.g. PDF reports).
 
 Tagging trials
 --------------
 
-In gaitutils, the trials of interest are marked by tagging. This means
-that you mark the Eclipse Notes or Description fields of the desired
-trials with specific strings. The default tag strings are "E1", "E2",
-"E3", "E4", "T1", "T2", "T3", "T4", but this can be changed in the
-config (see below).
+In gaitutils, the trials of interest are identified by tagging. For example, the
+gait report function picks the tagged trials into the report. Tagging means that
+you mark the Eclipse "Notes" or "Description" fields of the desired trials with
+specific strings. The default tag strings are "E1", "E2", "E3", "E4", "T1",
+"T2", "T3", "T4", but this can be changed in the config (see below). Note that the
+Eclipse fields can also contain other information, as long as the tag is present.
+
 
 Autoprocessing
 --------------
 
-The autoprocessing functionality is intended for processing of dynamic
-trials in gait sessions (may also work for running, but less tested). It
-works in conjunction with Vicon Nexus and performs the following tasks:
+The autoprocessing functionality is intended for processing of dynamic trials in
+gait sessions (may also work for running, but less tested). It works in
+conjunction with Vicon Nexus and performs the following tasks:
 
 -  run preprocessing pipeline(s)
 -  evaluate forceplate contact for each forceplate and mark the
    corresponding Eclipse database fields
--  mark gait events (foot strike and toeoff)
+-  automatically mark gait events (foot strike and toeoff)
 -  run dynamic model(s)
 -  write trial info (processing results) into Eclipse, e.g. Description
    or Notes field
 
-You should first create two pipelines in Nexus, called "Preprocessing"
-and "Dynamic model". (These are default names for the preprocessing and
-model pipelines, but this can be configured). The preprocessing pipeline
-should yield filtered marker trajectories, i.e. it should perform
-reconstruct, label gap fill (if necessary) and filter operations. You
-may also want to filter analog (forceplate) data. The modeling pipeline
-should run any subsequent modeling operations, e.g. Plug-in Gait. Note
-that save operations are not needed in either pipeline (and they will
-unnecessarily slow down the processing).
+You should first create two pipelines in Nexus, called "Preprocessing" and
+"Dynamic model". (These are default names for the preprocessing and model
+pipelines, but this can be configured). The preprocessing pipeline should yield
+filtered marker trajectories, i.e. it should perform reconstruct, label gap fill
+(if necessary) and filter operations. You may also want to filter analog
+(forceplate) data. The modeling pipeline should run any subsequent modeling
+operations, e.g. Plug-in Gait. Note that save operations are not needed in
+either pipeline (and they will unnecessarily slow down the processing).
 
-NOTE: it has been found out that long pipelines with multiple operations
-may occasionally cause Nexus to crash. If you experience this, break
-your preprocessing pipeline into a set of several smaller pipelines and
-specify those in the configuration instead (see Options/Autoprocessing).
+NOTE: it has been found out that long pipelines with multiple operations may
+occasionally cause Nexus to crash. If you experience this, break your
+preprocessing pipeline into a set of several smaller pipelines and specify those
+in the configuration instead (see Options/Autoprocessing).
 
-In Nexus Data management window, browse to the session you want to
-process. Make sure the static trial has been processed so that labeling
-will work for dynamic trials. Start up the gaitutils menu. Select
-"Autoprocess session" or "Autoprocess single trial". The event detection
-is more accurate when processing the whole session, since it uses
-session level statistics.
+In Nexus Data management window, browse to the session you want to process. Make
+sure the static trial has been processed, so that labeling will work for dynamic
+trials. This needs to be done manually.
 
-You can improve the accuracy of forceplate detection by including foot
-lengths into your subject info (labeling skeleton template). In Nexus,
-click on the subject and select "Add parameter..." Add parameters called
-RightFootLen and LeftFootLen with the unit set as mm. Empty out all
-parameters and save the labeling skeleton as a new template. When taking
-subject measurements, measure the maximum length of the foot (or shoe)
-from heel to toe.
+Start up the gaitutils menu. Select "Autoprocess session" or "Autoprocess single
+trial". The event detection is more accurate when processing the whole session,
+since it uses session level statistics.
+
+You can improve the accuracy of forceplate contact detection by including foot
+lengths into your subject info (labeling skeleton template). In Nexus, click on
+the subject and select "Add parameter..." Add parameters called RightFootLen and
+LeftFootLen with the unit set as mm. Empty out all parameters and save the
+labeling skeleton as a new template. When taking subject measurements, measure
+the maximum length of the foot from heel to toe. If the subject is wearing
+shoes, measure the shoe instead.
 
 Report creation
 ---------------
 
-The package includes simple PDF and web-based (interactive) gait
-reports. These can be created from the Reports menu. The report
-functionality requires tagging the trials of interest (see above). The
-tagged trials will be included into the report. Note that the reports
-are currently a bit specific to the Helsinki gait lab.
+The package includes simple PDF and web-based (interactive) gait reports. These
+can be created from the Reports menu. The report functionality requires first
+tagging the trials of interest (see above). The tagged trials will be included
+into the report.
 
 Using the package API in your own scripts
 =========================================
 
-In addition to the graphical user interface, you can import the package
-in your own Python scripts. To try it out, launch e.g. the Spyder IDE
-that comes with Anaconda and run some of the examples below. Note that
-you have to start the Python interpreter in the gaitutils environment -
-if you installed Anaconda, the Windows menu should already have an entry
-that runs Spyder in the correct environment.
+In addition to the graphical user interface, you can import the package in your
+own Python scripts. Note that you have to run the scripts in the gaitutils
+environment for the package to be available.
 
 Example: extracting data from a gait trial in Python
 ----------------------------------------------------
 
-To do your own data processing in Python, you can extract trial data as
-numpy arrays.
+To do your own data processing in Python, you can extract trial data as numpy
+arrays.
 
-Load a gait trial in Nexus. Run at least reconstruct, label and the
-Plug-in Gait model. Also mark some foot strikes and toeoffs (at least
-one gait cycle).
+Load a gait trial in Nexus. Run at least reconstruct, label and the Plug-in Gait
+model. Also mark some foot strikes and toeoffs (at least one gait cycle).
 
 Loading the trial into Python:
 
@@ -208,17 +209,16 @@ Extracting Plug-in Gait outputs:
 
    t, mdata = tr.get_model_data('LPelvisAnglesX')
 
-These will give frame-based data for the whole trial. ``t`` gives the
-frame number and has length equal to the data. To get data normalized to
-the first gait cycle, do:
+These will give frame-based data for the whole trial. ``t`` gives the frame
+number and has length equal to the data. To get data normalized to the first
+gait cycle, do:
 
 ::
 
    t, mdata = tr.get_model_data('LPelvisAnglesX', 0)
 
-Note that cycle numbering is 0-based. Now ``t`` is the percentage of
-gait cycle 0..100% and ``mdata`` is the normalized LPelvisAnglesX
-variable.
+Note that cycle numbering is 0-based. Now ``t`` is the percentage of gait cycle
+0..100% and ``mdata`` is the normalized LPelvisAnglesX variable.
 
 ``get_cycles`` can be used to get a specific gait cycle. For example, to
 normalize to first cycle with right context and forceplate contact, do:
@@ -232,10 +232,9 @@ normalize to first cycle with right context and forceplate contact, do:
 Example: plotting data
 ----------------------
 
-The plotter supports a number of predefined layouts such as Plug-in Gait
-lower body kinematics. It handles normalization of data etc. This
-example plots lower body kinematics and kinetics from two c3d files
-using the matplotlib backend.
+The plotter supports a number of predefined layouts, such as Plug-in Gait lower
+body kinematics. This example plots lower body kinematics and kinetics from two
+C3D files using the matplotlib backend.
 
 ::
 
@@ -249,45 +248,40 @@ using the matplotlib backend.
 Package configuration
 =====================
 
-The first import of the package (see 'Verification' above) should create
-a config file named ``.gaitutils.cfg`` in your home directory. You can
-edit the file to reflect your own system settings. You can also change
-config items from the graphical user interface (go to File/Options) and
-save either into ``.gaitutils.cfg`` (will be automatically loaded on
-startup) or some other file.
+The first import of the package (see 'Verification' above) should create a
+config file named ``.gaitutils.cfg`` in your home directory. You can edit the
+file to reflect your own system settings. You can also change config items from
+the graphical user interface (go to File/Options) and save either into
+``.gaitutils.cfg`` (will be automatically loaded on startup) or some other file.
 
-The most important settings to customize are described below, by
-section:
+The most important settings to customize are described below, by section:
 
 [general]
 ---------
 
 If you want to plot normal data for Plug-in Gait variables, edit
-``normaldata_files`` to reflect the path to your normaldata file.
-``.gcd`` and ``.xlsx`` (Polygon normal data export) file formats are
-supported.
+``normaldata_files`` to reflect the path to your normaldata file. ``.gcd`` and
+``.xlsx`` (Polygon normal data export) file formats are supported.
 
 [emg]
 -----
 
-Set ``devname`` to name of your EMG device shown in Nexus (for example
-'Myon EMG'). When reading data from Nexus, analog devices cannot be
-reliably identified, except by name. This setting does not affect
-reading c3d files.
+Set ``devname`` to name of your EMG device shown in Nexus (for example 'Myon
+EMG'). When reading data from Nexus, analog devices cannot be reliably
+identified, except by name. This setting does not affect reading c3d files.
 
-``channel_labels`` has the following structure:
-``{'ch1': 'EMG channel 1', 'ch2': 'EMG channel 2', ...}`` Edit ``ch1``,
-``ch2`` etc. to match your EMG channel names (as shown in Nexus). Edit
-the descriptions as you desire. Partial matches for channel names are
-sufficient, e.g. if you have a channel named 'RGas14' in Nexus you can
-specify the name as 'RGas'. In case of conflicting names, a warning will
-be given and the shortest matching name will be picked.
+``channel_labels`` has the following structure: ``{'ch1': 'EMG channel 1',
+'ch2': 'EMG channel 2', ...}`` Edit ``ch1``, ``ch2`` etc. to match your EMG
+channel names (as shown in Nexus). Edit the descriptions as you desire. Partial
+matches for channel names are sufficient, e.g. if you have a channel named
+'RGas14' in Nexus you can specify the name as 'RGas'. In case of conflicting
+names, a warning will be given and the shortest matching name will be picked.
 
 [plot]
 ------
 
-``default_model_cycles`` and ``default_emg_cycles`` specify which gait
-cycles to plot. The options are
+``default_model_cycles`` and ``default_emg_cycles`` specify which gait cycles to
+plot by default. The options are
 
 -  ``'all'``: plot all gait cycles
 -  ``'forceplate'``: plot all cycles that begin on valid forceplate
@@ -302,13 +296,14 @@ cycles to plot. The options are
 [autoproc]
 ----------
 
-Set ``eclipse_write_key`` to e.g. ``'DESCRIPTION'`` to automatically
-update Eclipse fields after processing. Set it to None if you want to
-leave the Eclipse fields alone. The ``enf_descriptions`` determines what
-to write into the Eclipse field.
+Set ``events_range`` to limit automatically marked events to certain coordinate
+range in the principal gait direction.
 
-Set ``events_range`` to limit automatically marked events to certain
-coordinate range in the principal gait direction.
+Set ``eclipse_write_key`` to e.g. ``'DESCRIPTION'`` to automatically update
+Eclipse fields after processing. Set it to None if you want to leave the Eclipse
+fields alone. The ``enf_descriptions`` determines what to write into the Eclipse
+field.
+
 
 [layouts]
 ---------
@@ -323,13 +318,12 @@ layouts such as
                      ['KneeAnglesX', 'KneeAnglesY', 'KneeAnglesZ'],
                      ['AnkleAnglesX', 'FootProgressAnglesZ', 'AnkleAnglesZ']]
 
-This would be 4 rows and 3 columns of PiG variables. Rows are inside the
-inner brackets, separated by commas. You can add your own layouts.
+This would be 4 rows and 3 columns of PiG variables. Rows are inside the inner
+brackets, separated by commas. You can add your own layouts.
 
-Currently, reading data from the following models is supported: Plug-in
-Gait upper and lower body, CGM2, Oxford foot model, muscle length. The
-variable names are not yet documented here, but see ``models.py`` for
-details.
+Currently, reading data from the following models is supported: Plug-in Gait
+upper and lower body, CGM2, Oxford foot model, muscle length. The variable names
+are not yet documented here, but see ``models.py`` for details.
 
 Appendix
 ========

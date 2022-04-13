@@ -259,10 +259,7 @@ def time_dist_barchart(
         if var in timedist_normaldata:
             ref = timedist_normaldata[var]
             unit_s = _space_unit(unit)
-            if var == thevars[0]:
-                this_label = f"foo\n{var} (ref. {ref:.2f}{unit_s}) "
-            else:
-                this_label = f"{var} (ref. {ref:.2f}{unit_s}) "
+            this_label = f"{var} (ref. {ref:.2f}{unit_s}) "
             varlabels.append(this_label)
         else:
             varlabels.append(f"{var} ")

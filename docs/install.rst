@@ -8,7 +8,7 @@ As a prerequisite, you need a Python environment. `Anaconda
 <https://www.anaconda.com/distribution/#download-section>`__ is the recommended
 distribution. Alternatively you can use `Miniconda
 <https://docs.conda.io/en/latest/miniconda.html>`__ for a smaller download. It's
-recommended to install a 64-bit version with Python 3.6 or newer.
+recommended to install a 64-bit version, with Python 3.9 or newer.
 
 Installation via environment file
 ---------------------------------
@@ -362,21 +362,6 @@ following lines there:
 These commands will activate the gaitutils enviroment whenever you open
 git bash. Change ``c/Anaconda2`` to your Anaconda install directory.
 ``c`` is the drive letter.
-
-Installing btk (for legacy Python 2 versions only)
---------------------------------------------------
-
-gaitutils needs the btk package to read c3d files. A 64-bit version for
-Python 2.7 is bundled. If you prefer to run 32-bit Python, you need to
-install btk yourself.
-
-Download and run the installer from
-https://pypi.python.org/pypi/btk/0.3#files. The btk installer always
-puts the package into the conda root environment. Thus, after
-installation you need to copy the folder
-``C:\Anaconda2\Lib\site-packages\btk`` into
-``C:\Anaconda2\envs\gaitutils\Lib\site-packages\btk`` (modify paths
-depending on where you installed Anaconda)
 
 Known issues
 ============

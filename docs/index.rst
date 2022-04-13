@@ -6,6 +6,15 @@
 
 .. include:: install.rst
 
+.. include:: gui.rst
+
+.. include:: api.rst
+
+.. include:: config.rst
+
+.. include:: appendix.rst
+
+
 Technical documentation
 =======================
 

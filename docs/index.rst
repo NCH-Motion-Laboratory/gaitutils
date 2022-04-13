@@ -11,7 +11,7 @@ Technical documentation
 
 The below is aimed for developers and those who want more in-depth info.
 
-:ref:`techdoc`
+:ref:`techdoc.rst`
 
 
 API reference

@@ -135,7 +135,7 @@ that automatically updates the online documentation when the master branch is
 updated. Locally, the documentation can be recreated by running
 
 ::
-    
+
     ./make.bat html
 
 in the ``docs`` directory. The resulting html documentation will appear in
@@ -152,38 +152,38 @@ from the ``tests/`` directory by typing
     python -m pytest --runslow --runnexus
 
 The ``--runnexus`` option runs also tests that require a working installation of
-Vicon Nexus. ``--runslow`` runs additional tests that are marked as slow (e.g.
-report creation.) The tests require test data that is currently not distributed
-with the package, so they can be run only at the Helsinki gait lab.
+Vicon Nexus. Leave it out if you don't have Nexus. ``--runslow`` runs additional
+tests that are marked as slow (e.g. report creation.) 
+
+The tests require test data that is currently not distributed with the package,
+so they can currently be run only at the Helsinki gait lab.
 
 
 
 Configuration
 =============
 
-The package is configured via an INI file. INI files consists of simple ``item =
-value`` statements that can be placed inside sections, marked as ``[section]``.
-The user-specific INI file ``.gaitutils.cfg`` file is located in the users' home
-directory. Initially it is a copy of ``data/default.cfg`` from the package. The
-user can then modify it either from a text editor or via the GUI configuration
-interface.
+The package is configured via an INI file. The user-specific INI file
+``.gaitutils.cfg`` file is located in the users' home directory. Initially it is
+a copy of ``data/default.cfg`` from the package. The user can modify it either
+from a text editor or via the GUI configuration interface.
 
 The configuration INI files are parsed and written by the ``configdot`` package
 written by the author. The idea of ``configdot`` is to support direct definition
 of Python objects in config files, among other features not provided by standard
 packages such as ``ConfigObj``.
 
-During startup, a config object called ``cfg`` is created by reading the default
-configuration values and overriding them with any user-specified values. 
-After importing the config (``from gaitutils import cfg``), the items defined in
-the config are accessible as ``cfg.section.item``. For example,
-``print(cfg.autoproc.crop_margin)`` will print ``10`` in the default
-configuration. The values can be set using similar syntax, i.e.
+During module import, a config object called ``cfg`` is created in ``config.py``
+by reading the default configuration values and overriding them with any
+user-specified values. After importing the config (``from gaitutils import
+cfg``), the items defined in the config are accessible as ``cfg.section.item``.
+For example, ``print(cfg.autoproc.crop_margin)`` will print ``10`` in the
+default configuration. The values can be set using similar syntax, i.e.
 ``cfg.autoproc.crop_margin = 15``. The configuration changes will immediately be
 reflected in any other piece of code that uses ``cfg``.
 
-New config items can be defined simply by inserting the item into a section in
-``gaitutils/data/default.cfg``. 
+New config items can be defined simply by inserting the item and its default
+value into a section in ``gaitutils/data/default.cfg``.
 
 The GUI has dialog under File/Options that will automatically display all
 configuration items defined in ``default.cfg`` on a tabbed page and allow the
@@ -193,9 +193,9 @@ user to edit them.
 Algorithms
 ==========
 
-The two important algorithms in gaitutils are 1) automatic detection of gait
-events (foot strikes and toeoffs) and 2) automatic detection of forceplate
-contacts. These are defined in ``utils.py``.
+Two important algorithms in gaitutils are 1) automatic detection of gait events
+(foot strikes and toeoffs) and 2) automatic detection of forceplate contacts.
+These are defined in ``utils.py``.
 
 Event detection
 ---------------
@@ -258,30 +258,30 @@ The GUI provides a convenient way to run most common operations from the
 gaitutils API. It also provides an interface for loading and plotting gait
 trials, usually used for review purposes.
 
-The GUI is currently compatible with PyQt5. With very minor modifications, it
-should work with PySide2 and PyQt6.
+The GUI is currently written for PyQt5. With very minor modifications, it should
+also work with PySide2 and PyQt6.
 
 Threads are used to keep the GUI responsive during long running operations. The
-function ``run_in_thread()`` is used to run a long-running operation in a worker
-thread. It's recommended for any operation that is expected to take longer than
-a second or two. The point is not for the user to be able to run several
-operations in parallel, but just to keep the GUI (e.g. the progress meter and
-the cancel button) responsive. In fact, by default ``run_in_thread()`` disables
-the elements of the main UI window, so that the user cannot start multiple
-operations at the same time. ``run_in_thread()`` also handles any exceptions
-raised during the operation and reports them via a GUI window, without
-terminating the program.
+function ``gui/_gaitmenu/run_in_thread()`` is used to run a long-running
+operation in a worker thread. It's recommended for any operation that is
+expected to take longer than a second or two. The point is not for the user to
+be able to run several operations in parallel, but just to keep the GUI (e.g.
+the progress meter and the cancel button) responsive. In fact, by default
+``run_in_thread()`` disables the elements of the main UI window, so that the
+user cannot start multiple operations at the same time. ``run_in_thread()`` also
+handles any exceptions raised during the operation and reports them via a GUI
+window, without terminating the program.
 
 Long-running Vicon Nexus operations (typically Nexus pipelines) require special
 care. Seemingly, it should be enough to run the operation in a worker thread, as
 described above. However, Python has a restriction known as the Global
 Interpreter Lock (GIL): only one thread of a process can execute Python bytecode
-at a time. It appears that the Nexus API does not release the GIL until the API
-call is finished. Thus, running a Nexus operation in a thread also stops all
-other threads, until the operation is complete. A simple workaround is to run
-any Nexus pipeline operations in a separate process instead of a thread (i.e. a
-new interpreter is started for the operation). This is accomplished by
-``gaitutils.nexus._run_pipelines_multiprocessing()``.  
+at a time. It appears that the Nexus API does not release the GIL until the
+invoked Nexus operation is finished. Thus, running a Nexus operation in a thread
+also stops all other threads, potentially for a long time. A simple workaround
+is to run any Nexus pipeline operations in a separate process instead of a
+thread (i.e. a new interpreter is started for the operation). This is
+accomplished by ``gaitutils.nexus._run_pipelines_multiprocessing()``.  
 
 For GUI operations that are not started via ``run_in_thread()``, you must catch
 any exceptions yourself, otherwise they will cause a termination. Unhandled

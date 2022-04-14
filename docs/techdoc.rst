@@ -20,50 +20,6 @@ A lot of the functionality is based on the ``Trial`` class, which handles data
 normalization etc. The package functionality can be accessed in scripts via
 (``import gaitutils``) or from a PyQt5-based GUI.
 
-Code guidelines
-===============
-
-I have tried to adhere to the following guidelines (not always succesfully):
-
-- Use NumPy-style docstrings. This is also assumed by the API documentation
-  generator.
-
-- Properly document at least the functions intended for API.
-
-- Functions not intended for API are prefixed with underscore.
-
-- Add unit tests for functions, especially API ones.
-
-- Avoid writing lots of classes, especially thin ones that don't provide much
-  functionality. Classes are great, but they also introduce hidden "magic" that
-  can make it difficult for others to reason about the code.
-
-Code formatting
----------------
-
-From time to time, all the code has been formatted with ``black``, using the
-``-S`` option (no string normalization, i.e. both single and double quotes are
-preserved and can be used as preferred). New code can be formatted in-place by
-running
-
-::
-
-    black -S .
-
-in the root package directory. Various IDEs such as VS Code also support
-formatting with black.
-
-Version control
-===============
-
-The code is stored at a public GitHub repository at
-https://github.com/jjnurminen/gaitutils. In the past, PyPi packages for
-gaitutils were actively created for gaitutils, but currently the philosophy is
-to install directly from the latest GitHub master branch. Thus, the PyPi
-packages are likely to be out of date. ``pip`` can install directly from GitHub
-master using a URL specifier such as
-https://github.com/jjnurminen/gaitutils/archive/master.zip.
-
 
 Installation and dependencies
 =============================
@@ -179,8 +135,8 @@ user-specified values. After importing the config (``from gaitutils import
 cfg``), the items defined in the config are accessible as ``cfg.section.item``.
 For example, ``print(cfg.autoproc.crop_margin)`` will print ``10`` in the
 default configuration. The values can be set using similar syntax, i.e.
-``cfg.autoproc.crop_margin = 15``. The configuration changes will immediately be
-reflected in any other piece of code that uses ``cfg``.
+``cfg.autoproc.crop_margin = 15``. The configuration is package-global, i.e. any
+changes will immediately be reflected in any other code that uses ``cfg``
 
 New config items can be defined simply by inserting the item and its default
 value into a section in ``gaitutils/data/default.cfg``.
@@ -193,34 +149,38 @@ user to edit them.
 Algorithms
 ==========
 
-Two important algorithms in gaitutils are 1) automatic detection of gait events
-(foot strikes and toeoffs) and 2) automatic detection of forceplate contacts.
+Two important algorithms in gaitutils are
+
+- automatic detection of gait events
+- automatic detection of forceplate contacts
+
 These are defined in ``utils.py``.
 
 Event detection
 ---------------
 
 gaitutils is able to detect gait events based purely on marker data. The
-algorithm is based on velocity thresholding. When the velocity of the foot falls
-below a certain threshold, a foot strike is interpreted to have occurred. When
-the velocity rises above another threshold, it is interpreted as a toeoff. The
-foot velocity is computed from the foot markers (ankle, toe and heel).
+algorithm is based on velocity thresholding. At a frame where the velocity of
+the foot falls below a certain threshold, a foot strike event is created. When
+the velocity rises above another threshold, a toeoff event is created. The foot
+velocity is computed from the foot markers (ankle, toe and heel).
 
-If forceplate data with valid foot contacts is available, that will provide the
+If forceplate data with valid foot contacts is available, it will provide the
 "golden standard" for gait events: both foot strike and toeoff can be accurately
 determined from the force data. Thus, gaitutils uses the force plate data to
 replace events determined by velocity thresholding, when appropriate. This uses
 a tolerance of a few frames. For example, if velocity thresholding results in a
 foot strike at frame 204 and a valid forceplate contact is determined to occur
-almost simultaneously at frame 202, the foot strike event is placed at frame 202.
+almost simultaneously at frame 202, the foot strike event is placed at frame 202
+and not at 204.
 
 The velocity thresholds can be determined based on heuristics. The default
 heuristic is that foot strike occur at 20% and 45% of the subject's peak foot
 velocity during the trial, respectively. This gives surprisingly good results
-for most subjects. However, more accurate thresholds can be determined from the
-forceplates. That is, if a valid forceplate contact is available for the trial,
-the foot velocity is determined at the moment of foot strike and toeoff, and
-those values are used as thresholds. 
+for most subjects. However, more accurate thresholds can be determined based on
+the forceplate data. That is, if a valid forceplate contact is available for the
+trial, the foot velocity is determined at the moment of foot strike and toeoff,
+and those values are used as thresholds. 
 
 
 Evaluation of forceplate contacts
@@ -238,6 +198,54 @@ during the cycle.
 In gaitutils, the foot is modelled as a simple triangle. The
 vertices of the triangle are estimated from marker data. If the triangle is
 completely inside the forceplate boundaries, the contact is judged as valid.
+
+Contributing
+============
+
+Code guidelines
+---------------
+
+I have tried to adhere to the following guidelines (not always succesfully):
+
+- Use NumPy-style docstrings. This is also assumed by the API documentation
+  generator.
+
+- Properly document at least the functions intended for API.
+
+- Functions not intended for API are prefixed with underscore.
+
+- Add unit tests for functions, especially API ones.
+
+- Avoid writing lots of classes, especially thin ones that don't provide much
+  functionality. Classes are great, but they also introduce hidden "magic" that
+  can make it difficult for others to reason about the code.
+
+Code formatting
+---------------
+
+From time to time, all the code has been formatted with ``black``, using the
+``-S`` option (no string normalization, i.e. both single and double quotes are
+preserved and can be used as preferred). New code can be formatted in-place by
+running
+
+::
+
+    black -S .
+
+in the root package directory. Various IDEs such as VS Code also support
+formatting with black.
+
+Version control
+---------------
+
+The code is stored at a public GitHub repository at
+https://github.com/jjnurminen/gaitutils. In the past, PyPi packages for
+gaitutils were actively created for gaitutils, but currently the philosophy is
+to install directly from the latest GitHub master branch. Thus, the PyPi
+packages are likely to be out of date. ``pip`` can install directly from GitHub
+master using a URL specifier such as
+https://github.com/jjnurminen/gaitutils/archive/master.zip.
+
 
 
 Miscellaneous technical notes

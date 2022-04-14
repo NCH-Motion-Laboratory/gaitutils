@@ -5,203 +5,233 @@ gaitutils technical documentation
 Overview
 ========
 
-The core of the package is the Trial object defined in trial.py, which
-represents a gait trial. Typically, a “gait trial” is a short unidirectional
-walk, perhaps from one end of the walking track to the other. Several trials
-(perhaps dozens) are recorded during a gait session. The trials are recorded
-into individual files. Then, successful representative trials are selected for
-further analysis.
+gaitutils provides the following core functions:
 
-The trial data may include subject information, 3D marker data, model data
-derived from the marker data (such as kinematics and kinetics data), analog data
-such as forceplate, EMG and accelerometer data etc. Trials typically contain
-several gait cycles. A gait cycle is defined as the period from one foot strike
-to the subsequent foot strike on the same side. Gait data is typically
-normalized to the gait cycles. The Trial object handles normalization and
-provides easy access to data from the desired cycles. A lot of the package
-functionality operates on Trial instances.
+- automatically process gait data using Vicon Nexus
+- load data from C3D files or Vicon Nexus
+- plot gait curves, EMG data, time-distance parameters etc.
+- create reports based on the plots
 
-Trials may be created directly from Vicon Nexus via the Python API, or from C3D
-files created by Nexus. Usually it is preferable to load trials from C3D files,
-as it is faster than using the Nexus API.
+A lot of the functionality is based on the ``Trial`` class, which handles data
+normalization etc. 
 
-Configuration
+The functions can be accessed via a Python API (``import gaitutils``) or from a
+PyQt5-based GUI.
+
+Code guidelines
+===============
+
+I have tried to adhere to the following guidelines (but not always succesfully):
+
+- Use NumPy-style docstrings.
+
+- Properly document at least the functions intended for API.
+
+- Add unit tests for functions (especially API ones).
+
+- Functions not intended for API are prefixed with underscore.
+
+- Avoid writing lots of classes, especially thin ones that don't provide much
+  functionality. Classes are great, but they also introduce hidden "magic" that
+  can make it difficult for others to reason about the code.
+
+From time to time, all the code has been reformatted with the ``black`` code
+formatter, using the ``-S`` option (no string normalization, i.e. both single
+and double quotes are preserved and can be used as preferred). Format by running
+
+::
+
+    black -S .
+
+in the 
+
+Version control
+===============
+
+The code is stored at a public GitHub repository at
+https://github.com/jjnurminen/gaitutils. In the past, PyPi packages for
+gaitutils were actively created for gaitutils, but currently the philosophy is
+to install directly from the latest GitHub master branch. ``pip`` can do this
+using a URL specifier such as
+https://github.com/jjnurminen/gaitutils/archive/master.zip.
+
+
+Installation and dependencies
+=============================
+
+gaitutils depends on a lot of other packages, including ``PyQt, SciPy, NumPy,
+dash, plotly, matplotlib, btk`` etc. To facilitate the installation, a Conda
+``environment.yml`` file is provided, which should install all the dependencies.
+One potentially problematic dependency is the ``btk`` package (Biomechanical
+ToolKit), which is no longer maintained. However, an unofficial Python 3
+compatible release of ``btk`` is available at
+https://anaconda.org/conda-forge/btk. 
+
+The Vicon Nexus Python API and ``btk`` are "soft" dependencies. It's not necessary
+to have Vicon Nexus installed to run gaitutils. Without Nexus, you can still
+read data from C3D files. Obviously autoprocessing will not work. Though ``btk``
+is technically a soft dependency, the package cannot do very much without it.
+
+The Vicon Nexus Python API is currently (as of Nexus 2.12) provided as a ``pip``
+package in the Vicon Nexus installation. After creating the conda environment,
+the API package still needs to be installed as follows (edit the Nexus path as
+necessary).
+
+::
+
+   C:\>cd "C:\Program Files (x86)\Vicon\Nexus2.12\SDK\Win64\Python"
+   pip install ./viconnexusapi
+
+
+
+
+Documentation
 =============
 
-The package is configured via an INI file. A .gaitutils.cfg file is located in
-the users' home directory. Initially it is a copy of default.cfg that is
-provided with the installation. The user can then modify gaitutils.cfg by a text
-editor or via the GUI configuration interface. Default values are used for
-config items that are not in gaitutils.cfg.
-
-The configuration files are parsed and written by the configdot package written
-by the author. The idea of configdot is to support direct definition of Python
-objects in config files, among other features not provided by standard packages
-such as ConfigObj.
-
-The configuration affects several functions, such as autoprocessing and
-plotting. Some hardware and lab specific settings need to be correct for the
-package to function (e.g. name of EMG device, possibly names of forceplate
-devices, etc.)
-
-After doing from gaitutils import cfg, the Items defined in the config are
-accessible as cfg.section.item. For example, print(cfg.autoproc.crop_margin)
-will print 10 in the default configuration.
-
-New config items can be defined simply by inserting the item into a section in
-gaitutils/data/default.cfg. They will automatically be shown in the
-configuration GUI.
-
-Algorithms gaitutils contains two important algorithms: automatic detection of
-gait events and automatic detection of forceplate contacts. These are defined in
-utils.py.
-
-gaitutils is able to detect gait events (foot strikes and toeoffs) based purely
-on marker data. The algorithm is based on velocity thresholding. When the
-velocity of the foot falls below a certain threshold, it is interpreted as foot
-strike. When it rises above another threshold, it is interpreted as a toeoff.
-The foot velocity is computed from the foot markers (ankle, toe and heel).
-
-Detection of forceplate contacts is necessary for kinetic models. If a gait
-cycle starts with a valid foot contact, we will be able know the reaction force
-for the duration of the cycle. From this force, various kinetic values can be
-computed, such as the moment at the knee joint.
-
-“Valid” forceplate contact means that 1) the foot is completely inside the
-forceplate area and 2) the contralateral foot does not contact the same plate
-during the cycle. The foot is modelled as a simple triangle. The vertices of the
-triangle are estimated from marker data. If the triangle is completely inside
-the forceplate boundaries, the contact is judged as valid.
-
-Autoprocessing
-==============
-
-Autoprocessing refers to automated processing of “raw” gait data into a form
-where it can be reviewed. Typically, it involves reconstruction and labelling of
-marker data, filling gaps, running filters, determining gait events and running
-the relevant models. gaitutils performs autoprocessing by a mixture of its own
-algorithms and Vicon Nexus operations run automatically via the Nexus Python
-API. For example, marker reconstruction is performed by running Nexus
-operations, while event detection uses gaitutils' own algorithm.
-
-Autoprocessing is done in two stages. In the first stage, the marker data is
-reconstructed, labeled and filtered. The second stage is run only for trials
-that have valid reconstructions and are otherwise of good quality (e.g. not too
-short). The second stage involves determination of gait events, execution of
-desired gait models, and saving the data into C3D files.
-
-Gait models A gait model is a biomechanical model that takes marker data and
-subject information as input and outputs various values such as the knee flexion
-angle or the ankle moment. gaitutils does not perform computations related to
-biomechanical models, but it still needs to know various details about commonly
-used models, e.g. which variables are available, their descriptive names,
-whether they require forceplate data to be available etc. This facilitates
-plotting and extraction of data. This knowledge is contained in models.py, which
-contains data for common models such as Plug-in Gait and the Oxford foot model.
-New models can be defined by instantiating the GaitModel class with the relevant
-data and adding the instance into the models.models_all list. EMG
-
-Plotting
-========
-
-gaitutils can plot marker, model and analog data from trials. It can plot to
-different backends. Currently supported backends are plotly and matplotlib.
-Plotly can be used to create interactive plots that are viewable in a web
-browser (or inside e.g. Jupyter Notebooks). matplotlib plots are mostly for
-creating hardcopies (e.g. PDF files), since plotly cannot generate high quality
-hardcopies yet.
-
-The plotting functionality is defined under gaitutils.viz. The core plotting
-function is gaitutils.viz.plots.plot_trials(). It takes a list of trials, as
-well as different specifications, such as the cycles to plot, colors and styles,
-backend etc. The functions in plots.py delegate the actual plotting to the
-specific backends such as plot_plotly.py.
-
-Plots are defined using layouts. A layout is simply a nested list of variables
-to plot, where the inner lists represent rows. For example, the following would
-plot two rows (three columns) of Plug-in Gait kinematics variables:
+The documentation is written in RST using Sphinx. It is available online at
+https://gaitutils.readthedocs.io/en/latest/#. There is an automatic
 
 
-my_kinematics = [['PelvisAnglesX', 'PelvisAnglesY', 'PelvisAnglesZ'],
- ['HipAnglesX', 'HipAnglesY', 'HipAnglesZ']]
 
-The variable names in a layout are interpreted automatically, according to rules
-defined in plot_common.py. Different interpretations are tried in sequence until
-a match is found. An ambiguous definition (multiple category matches) raises an
-error. The interpretation goes in the following sequence:
+Unit tests
+==========
 
-is it a model variable from models.py is it a marker is it a configured EMG
-channel
+The package includes unit tests written with ``pytest``. The tests can be run
+from the ``tests/`` directory by typing
 
-TODO: how to plot e.g. accelerometer channels?
+::
+    
+    python -m pytest --runslow --runnexus
 
-Reporting
-=========
-
-Built on top of the plotting functions are gait reports. Two types of reports
-are supported: a PDF report, and an interactive report that runs in a web
-browser (web report). 
-
-The PDF report is mostly just a collection of matplotlib plots in a PDF file.
-
-The web report is a Dash application. Dash is a Python “dashboard” library that
-provides interactive data visualization in a web browser. It is built on top of
-plotly.
-
-Eclipse
-=======
-
-Vicon Eclipse is a software component that stores trial-related metadata into
-.enf files. It is integrated into Vicon Nexus and Vicon Polygon. The package
-provides some functionality for accessing this metadata. It is useful e.g. for
-reading Notes and Description fields for a given trial, as well as determining
-trial type.
-
-Related to Eclipse is the concept of tags. Tags are short strings that are used
-to mark trials in Eclipse. They may be inserted in the NOTES or DESCRIPTION
-fields of Eclipse. Default tags used in the Helsinki gait lab are 'E1', 'E2',
-'E3', 'E4' and 'T1', 'T2', 'T3', and 'T4', but any tags can be used (they are
-set in the config). 
-
-The main point of tags is to mark the trials of interest. Usually there is no
-need to plot all of the trials in the session. Using the tags functionality,
-e.g. the plotting functions can just automatically plot the trials of interest
-from a session.
-
-TODO: sessionutils.py Normal data The gait data is typically plotted along with
-corresponding normal data (taken from the relevant healthy population).
-gaitutils can read normal data from the old GCD files or XLSX files (Polygon
-normal data format). The normal data operations are defined in normaldata.py. In
-addition, gaitutils defines its own JSON format for EMG normal data (expected
-ranges of muscle activation). Statistics
+The ``--runnexus`` option runs also tests that require a working installation of
+Vicon Nexus. ``--runslow`` runs additional tests that are marked as slow (e.g.
+report creation.) The tests require test data that is currently not distributed
+with the package, so they can be run only at the Helsinki gait lab.
 
 
-Handling of video data
-======================
+Description of modules and other files
+======================================
 
-Some routines for handling video data are included in the package. These are
-defined in videos.py. Notes on dependencies and installation
+``autoprocess.py``
+    Automatically process gait data using Vicon Nexus.
 
-gaitutils depends on a lot of packages. The most critical one is btk
-(biomechanical toolkit) that provides routines to access C3D files.
-Unfortunately btk is no longer maintained, but a Python 3 compatible version is
-provided on conda-forge for now.
+``c3d.py``
+    Load data from C3D files. Mostly wrappers around the btk library.
 
-Other major dependencies include dash, plotly, numpy, scipy, matplotlib and
-pyqt. gaitutils provides an environment.yml file that should create a suitable
-conda environment with all necessary packages (except for the Vicon API; see
-below).
+``config.py``
+    Read and write package configuration data.
 
-Note that an installation of Vicon Nexus isn't required. Without Nexus, you can
-still load data from C3D files and create reports etc. If you want to use Nexus,
-you need to install the Vicon-provided pip package into the environment.
+``eclipse.py``
+    Read and write Vicon database (Eclipse) files.
 
-After installation, you can run gaitutils_create_shortcut.exe from the activated
-conda environment. This will create a desktop shortcut for the GUI.
+``emg.py``
+    Handle EMG data.
 
-Ideas for enhancements
-======================
+``envutils.py``
+    Functionality related to the operating system and environment.
 
-the configuration GUI is a bit limited more unit tests are needed web report:
-sync of gait and video data proper 3D display of skeleton model
+``models.py``
+    Definitions for various gait models, such as Plug-in Gait.
+
+``nexus.py``
+    Communicate with Vicon Nexus. Mostly wrappers around the Nexus API.
+
+``normaldata.py``
+    Load and save normal (reference) data.
+
+``numutils.py``
+    Utilities for numerical computation.
+
+``read_data.py``
+    Data reader functions intended for the end user. They delegate to either C3D
+    or Nexus readers as needed.
+
+``sessionutils.py``
+    Utilities for handling gait sessions, e.g. for finding trials of interest.
+
+``stats.py``
+    Aggregate gait data into NumPy arrays and perform statistics.
+
+``timedist.py``
+    Handle gait parameters (time-distance data).
+
+``trial.py``
+    Defines the ``Trial`` class and related functionality.
+
+``utils.py``
+    Utility functions related to gait data, e.g. for recognizing gait events and
+    extrapolating marker data.
+
+``videos.py``
+    Facilities for handling gait videos.
+
+``assets/``
+    Miscellaneous data used by the web report.
+
+``data/``
+    Package data. Includes some reference data and default configuration etc.
+
+``gui/``
+    The PyQt5 GUI and related functionality.
+
+    ``gui/_gaitmenu.py``
+        Main code for the PyQt5 GUI.
+
+    ``gui/gaitmenu.ui``
+        UI file for the GUI, created in Qt Designer.
+
+    ``gui/_tardieu.py``
+        A GUI for Tardieu tests (not actively maintained, may not work).
+
+    ``gui/_windows.py``
+        GUI functionality specific to Microsoft Windows.
+
+    ``gui/qt_dialogs.py``
+    ``gui/qt_widgets.py``    
+        Various Qt dialogs and widgets.
+
+``report/``
+    Web and PDF-based reports.
+
+    ``report/web.py``
+        Web report based on the Dash package.
+
+    ``report/pdf.py``
+        PDF report based on matplotlib.
+
+    ``report/text.py``
+        Text reports.
+
+    ``report/translations.py``
+        Provides simple translations.
+
+``thirdparty/``
+    Modules and executables provided by third parties.
+
+``viz/``
+    Visualization functions.
+
+    ``viz/plot_common.py``
+        Common functions shared by all backends.
+
+    ``viz/plot_matplotlib.py``
+        Plot using the matplotlib library.
+
+    ``viz/plot_misc.py``
+        Utility functions.
+
+    ``viz/plot_plotly.py``
+        Plot using the Plotly library.
+
+    ``viz/plots.py``
+        The API to plotting trial data (e.g. gait curves and EMG).
+
+    ``viz/timedist.py``
+        The API to time-distance plots.
+
+``docs/``
+    This (and other) documentation.
+
+``tests/``
+    Unit tests.
 

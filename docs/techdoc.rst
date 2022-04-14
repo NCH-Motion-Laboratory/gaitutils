@@ -135,6 +135,7 @@ that automatically updates the online documentation when the master branch is
 updated. Locally, the documentation can be recreated by running
 
 ::
+    
     ./make.bat html
 
 in the ``docs`` directory. The resulting html documentation will appear in

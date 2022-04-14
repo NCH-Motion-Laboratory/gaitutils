@@ -509,7 +509,7 @@ class TardieuPlot:
             except KeyError:
                 raise GaitDataError(f'No such accelerometer channel {ch}')
             acctot = np.stack(accsigs)
-            self.acctot = np.sqrt(np.sum(acctot**2, 0))
+            self.acctot = np.sqrt(np.sum(acctot ** 2, 0))
         else:
             self.acctot = None
 

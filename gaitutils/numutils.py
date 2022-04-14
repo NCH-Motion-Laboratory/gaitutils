@@ -390,7 +390,7 @@ def rms(data, win, axis=None, pad_mode=None):
     datalen = len(data) if axis is None else data.shape[axis]
     if win > datalen:
         raise ValueError('Need win length < data length')
-    rms_ = np.sqrt(_running_sum(data**2, win, axis=axis) / win)
+    rms_ = np.sqrt(_running_sum(data ** 2, win, axis=axis) / win)
     # pad RMS data so that lengths are matched
     padw = int((win - 1) / 2)
     padarg_axis = (padw, padw)

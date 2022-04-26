@@ -115,7 +115,6 @@ The tests require test data that is currently not distributed with the package,
 so they can currently be run only at the Helsinki gait lab.
 
 
-
 Configuration
 =============
 
@@ -159,8 +158,10 @@ These are defined in ``utils.py``.
 Event detection
 ---------------
 
+Code: ``utils.py/automark_events()``
+
 gaitutils is able to detect gait events based purely on marker data. The
-algorithm is based on velocity thresholding. At a frame where the velocity of
+algorithm is based on velocity thresholding. At the frame where the velocity of
 the foot falls below a certain threshold, a foot strike event is created. When
 the velocity rises above another threshold, a toeoff event is created. The foot
 velocity is computed from the foot markers (ankle, toe and heel).
@@ -169,10 +170,10 @@ If forceplate data with valid foot contacts is available, it will provide the
 "golden standard" for gait events: both foot strike and toeoff can be accurately
 determined from the force data. Thus, gaitutils uses the force plate data to
 replace events determined by velocity thresholding, when appropriate. This uses
-a tolerance of a few frames. For example, if velocity thresholding results in a
-foot strike at frame 204 and a valid forceplate contact is determined to occur
-almost simultaneously at frame 202, the foot strike event is placed at frame 202
-and not at 204.
+a tolerance of 7 frames (currently hardcoded). For example, if velocity
+thresholding results in a foot strike at frame 204 and a valid forceplate
+contact is determined to occur almost simultaneously at frame 202, the foot
+strike event is placed at frame 202 and not at 204.
 
 The velocity thresholds can be determined based on heuristics. The default
 heuristic is that foot strike occur at 20% and 45% of the subject's peak foot
@@ -180,11 +181,12 @@ velocity during the trial, respectively. This gives surprisingly good results
 for most subjects. However, more accurate thresholds can be determined based on
 the forceplate data. That is, if a valid forceplate contact is available for the
 trial, the foot velocity is determined at the moment of foot strike and toeoff,
-and those values are used as thresholds. 
-
+and those values are used as thresholds.
 
 Evaluation of forceplate contacts
 ---------------------------------
+
+Code: ``utils.py/detect_forceplate_events()``
 
 Detection of forceplate contacts is necessary for kinetic models. If a gait
 cycle starts with a valid foot contact, we will be able know the reaction force
@@ -195,9 +197,14 @@ computed, such as the moment at the knee joint.
 forceplate area and 2) the contralateral foot does not contact the same plate
 during the cycle.
 
-In gaitutils, the foot is modelled as a simple triangle. The
-vertices of the triangle are estimated from marker data. If the triangle is
-completely inside the forceplate boundaries, the contact is judged as valid.
+In gaitutils, the foot is modelled as a simple triangle. The vertices of the
+triangle are estimated from marker data. The position of the heel marker is used
+as the heel vertex. For the other two vertices ("big toe" and "little toe")
+there are no markers available. Thus, the code attempts to estimate their
+positions. If explicit information about foot length is available, the accuracy
+will be improved. Foot length can be supplied as an extra model parameter in
+Nexus (``RightFootLen`` and ``LeftFootLen``).
+
 
 Contributing
 ============
@@ -285,16 +292,16 @@ care. Seemingly, it should be enough to run the operation in a worker thread, as
 described above. However, Python has a restriction known as the Global
 Interpreter Lock (GIL): only one thread of a process can execute Python bytecode
 at a time. It appears that the Nexus API does not release the GIL until the
-invoked Nexus operation is finished. Thus, running a Nexus operation in a thread
-also stops all other threads, potentially for a long time. A simple workaround
-is to run any Nexus pipeline operations in a separate process instead of a
-thread (i.e. a new interpreter is started for the operation). This is
-accomplished by ``gaitutils.nexus._run_pipelines_multiprocessing()``.  
+Nexus operation is finished. Thus, starting a Nexus operation in a thread
+freezes all other threads, potentially for a long time. A simple workaround is
+to run any Nexus pipeline operations in a separate process instead of a thread
+(i.e. a new interpreter is started for the operation). This is accomplished by
+``gaitutils.nexus._run_pipelines_multiprocessing()``.  
 
 For GUI operations that are not started via ``run_in_thread()``, you must catch
-any exceptions yourself, otherwise they will cause a termination. Unhandled
-exceptions are propagated to a custom exception hook (``my_excepthook()``) that
-will display a message and terminate the GUI.
+and handle any exceptions yourself, otherwise they will cause a termination.
+Such unhandled exceptions are propagated to a custom exception hook
+(``my_excepthook()``) that will display a message and terminate the GUI.
 
 The GUI includes a logging window that will display any messages emitted via the
 standard Python logging module. This is implemented via a special logging

@@ -97,6 +97,9 @@ updated. Locally, the documentation can be recreated by running
 in the ``docs`` directory. The resulting html documentation will appear in
 ``docs/_build/html``.
 
+To build the documentation, you need to have the ``sphinx_rtd_theme`` package
+installed. It can be installed using ``pip``.
+
 Unit tests
 ==========
 
@@ -111,8 +114,8 @@ The ``--runnexus`` option runs also tests that require a working installation of
 Vicon Nexus. Leave it out if you don't have Nexus. ``--runslow`` runs additional
 tests that are marked as slow (e.g. report creation.) 
 
-The tests require test data that is currently not distributed with the package,
-so they can currently be run only at the Helsinki gait lab.
+Many of the tests require test data that is currently not distributed with the
+package, so they can currently be run only at the Helsinki gait lab.
 
 
 Configuration
@@ -158,7 +161,7 @@ These are defined in ``utils.py``.
 Event detection
 ---------------
 
-Code: ``utils.py/automark_events()``
+See :func:`gaitutils.utils.automark_events`.
 
 gaitutils is able to detect gait events based purely on marker data. The
 algorithm is based on velocity thresholding. At the frame where the velocity of
@@ -176,17 +179,22 @@ contact is determined to occur almost simultaneously at frame 202, the foot
 strike event is placed at frame 202 and not at 204.
 
 The velocity thresholds can be determined based on heuristics. The default
-heuristic is that foot strike occur at 20% and 45% of the subject's peak foot
-velocity during the trial, respectively. This gives surprisingly good results
-for most subjects. However, more accurate thresholds can be determined based on
-the forceplate data. That is, if a valid forceplate contact is available for the
-trial, the foot velocity is determined at the moment of foot strike and toeoff,
-and those values are used as thresholds.
+heuristic is that the foot strike and toeoff occur at 20% and 45% of the
+subject's peak foot velocity during the trial, respectively. This gives
+surprisingly good results for most subjects. However, more accurate thresholds
+can be determined based on the forceplate data. That is, if a valid forceplate
+contact is available for the trial, the foot velocity is determined at the
+moment of foot strike and toeoff, and those values are used as thresholds. When
+processing a whole gait session, it would in principle be possible to use all
+trials to determine the velocity threshold. However, this doesn't work in cases
+where there is a lot of intertrial variance (the threshold doesn't generalize
+across trials).
+
 
 Evaluation of forceplate contacts
 ---------------------------------
 
-Code: ``utils.py/detect_forceplate_events()``
+For the implementation, see :func:`gaitutils.utils.detect_forceplate_events`.
 
 Detection of forceplate contacts is necessary for kinetic models. If a gait
 cycle starts with a valid foot contact, we will be able know the reaction force
@@ -212,7 +220,7 @@ Contributing
 Code guidelines
 ---------------
 
-I have tried to adhere to the following guidelines (not always succesfully):
+I have tried to adhere to the following guidelines (not always successfully):
 
 - Use NumPy-style docstrings. This is also assumed by the API documentation
   generator.
@@ -269,23 +277,19 @@ data (the exact meaning depends on the function).
 GUI
 ---
 
-The GUI provides a convenient way to run most common operations from the
-gaitutils API. It also provides an interface for loading and plotting gait
-trials, usually used for review purposes.
-
 The GUI is currently written for PyQt5. With very minor modifications, it should
 also work with PySide2 and PyQt6.
 
 Threads are used to keep the GUI responsive during long running operations. The
-function ``gui/_gaitmenu/run_in_thread()`` is used to run a long-running
-operation in a worker thread. It's recommended for any operation that is
-expected to take longer than a second or two. The point is not for the user to
-be able to run several operations in parallel, but just to keep the GUI (e.g.
-the progress meter and the cancel button) responsive. In fact, by default
-``run_in_thread()`` disables the elements of the main UI window, so that the
-user cannot start multiple operations at the same time. ``run_in_thread()`` also
-handles any exceptions raised during the operation and reports them via a GUI
-window, without terminating the program.
+method :meth:`gaitutils.gui._gaitmenu.Gaitmenu._run_in_thread` is used to run a
+long-running operation in a worker thread. It's recommended to use this for any
+operation that is expected to take longer than a second or two. The point is not
+for the user to be able to run several operations in parallel, but just to keep
+the GUI (e.g. the progress meter and the cancel button) responsive. In fact, by
+default ``_run_in_thread()`` disables the elements of the main UI window, so that
+the user cannot start multiple operations at the same time. ``_run_in_thread()``
+also handles any exceptions raised during the operation and reports them via a
+GUI window, without terminating the program.
 
 Long-running Vicon Nexus operations (typically Nexus pipelines) require special
 care. Seemingly, it should be enough to run the operation in a worker thread, as
@@ -298,7 +302,7 @@ to run any Nexus pipeline operations in a separate process instead of a thread
 (i.e. a new interpreter is started for the operation). This is accomplished by
 ``gaitutils.nexus._run_pipelines_multiprocessing()``.  
 
-For GUI operations that are not started via ``run_in_thread()``, you must catch
+For GUI operations that are not started via ``_run_in_thread()``, you must catch
 and handle any exceptions yourself, otherwise they will cause a termination.
 Such unhandled exceptions are propagated to a custom exception hook
 (``my_excepthook()``) that will display a message and terminate the GUI.
@@ -308,11 +312,36 @@ standard Python logging module. This is implemented via a special logging
 handler ``QtHandler()``. The logging level can be set in the configuration.
 
 
+Wishlist/TODO
+=============
+
+Ideas on how to improve the package.
+
+- Reading accelerometer data is supported, but there is no specific support for
+  plotting it it (or other non-EMG analog data). Something similar to EMG
+  handling should be implemented (i.e. list of accelerometer channel names,
+  etc.) 
+
+- Some of the configuration values really need to be adjusted for each
+  particular lab (such as EMG channel names) and some can be left as they are.
+  It would be nice to have a list of "critical" config values and maybe a GUI
+  wizard that would allow the user to set them easily.
+
+- The configuration GUI is a bit half-baked. It doesn't know about the potential
+  types of config items, thus it has to use a "universal" line input widget for
+  most items. This enables the user to input basically any Python type. However,
+  if we know that a certain value is e.g. numerical only (and can't be None or a
+  string etc.), we could use a spinbox, which would be neater. This would
+  require a system for declaring types for config items. There could be a
+  separate file that would list the allowable types (and possibly e.g. ranges of
+  values) for each config type.
+
+
 Description of modules and other files
 ======================================
 
-This is a list of files included in the package. It is not 100% complete yet,
-but should contain the most important components.
+This is a list of modules and other files included in the package. It is not
+100% complete yet, but should contain the most important components.
 
 ``autoprocess.py``
     Automatically process gait data using Vicon Nexus.
@@ -393,7 +422,7 @@ but should contain the most important components.
 
     ``gui/qt_dialogs.py``
     ``gui/qt_widgets.py``    
-        Various Qt custom components.
+        Various custom Qt components.
 
 ``report/``
     Web and PDF-based reports.
@@ -412,6 +441,10 @@ but should contain the most important components.
 
 ``thirdparty/``
     Modules and executables provided by third parties.
+
+    ``thirdparty/ffmpeg2theora.exe``
+        Used to provide conversion from Nexus AVI video files to Theora. The web
+        report needs this in order to show videos.
 
 ``viz/``
     Visualization functions.

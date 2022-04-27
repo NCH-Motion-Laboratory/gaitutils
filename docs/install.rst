@@ -24,10 +24,10 @@ the environment specification by giving the command:
 
    curl -O http://raw.githubusercontent.com/jjnurminen/gaitutils/master/environment.yml
 
-Alternatively, if ``curl`` does not work, download ``environment.yml`` by
-visiting the link given in the above command and saving the file. Make sure that
-it is saved under the correct filename - the browser save dialog may change the
-name. Then create the environment by typing:
+Alternatively, if ``curl`` does not work, visit the link
+https://raw.githubusercontent.com/jjnurminen/gaitutils/master/environment.yml
+and save the file. Make sure that it is saved with the ``.yml`` extension. Then
+create the environment by typing:
 
 ::
 
@@ -52,7 +52,7 @@ environment as above, give the following commands:
 
 ::
 
-   C:\>cd "C:\Program Files (x86)\Vicon\Nexus2.12\SDK\Win64\Python"
+   cd "C:\Program Files (x86)\Vicon\Nexus2.12\SDK\Win64\Python"
    pip install ./viconnexusapi
 
 The install may sometimes fail due to "Permission denied" or similar error. In
@@ -91,15 +91,15 @@ To update, give the command
 
    pip install --upgrade https://github.com/jjnurminen/gaitutils/archive/master.zip
 
-Occassionally it may be beneficial or necessary to upgrade the
-dependencies as well. Unfortunately, there's currently no easy way to do
-this. The best way may be to simply delete the whole environment with
+Occassionally it may be beneficial or necessary to upgrade the dependencies as
+well. Unfortunately, there's currently no simple way to do this. The best way
+may be to simply delete the whole environment with
 
 ::
 
    conda activate base
    conda env remove -n gaitutils
 
-and reinstall via ``conda env create -f environment.yml``
+and reinstall.
 
 

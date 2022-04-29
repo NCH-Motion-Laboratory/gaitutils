@@ -36,30 +36,37 @@ except ImportError:
     NEXUS_IMPORTED = False
 
 
-def _find_nexus_path(vicon_path=None):
-    """Return path to most recent Nexus version.
-
-    vicon_path is the Vicon root directory.
-    """
-    if vicon_path is None:
-        vicon_path = r'C:\Program Files (x86)\Vicon'  # educated guess
-    vicon_path = Path(vicon_path)
-    if not vicon_path.is_dir():
+def _find_nexus_path():
+    """Return path to install dir of the most recent Nexus version"""
+    # educated guess for Vicon software install path
+    # from 2.13 onwards, Nexus will reside in the 64-bit dir
+    # most preferable paths are last in the list
+    vicon_paths = [Path(r'C:\Program Files (x86)\Vicon'),
+                   Path(r'C:\Program Files\Vicon')]
+    nexus_dirs_all = list()
+    # get the latest version for each path
+    for vicon_path in vicon_paths:
+        if not vicon_path.is_dir():
+            return None
+        nexus_glob = str(vicon_path / 'Nexus?.*')
+        nexus_dirs = [Path(dir) for dir in glob.iglob(nexus_glob)]
+        logger.debug(f'found Nexus dirs {nexus_dirs}')
+        if not nexus_dirs:
+            return None
+        nexus_vers = [dir.name[5:] for dir in nexus_dirs]
+        # convert into major, minor lists: [[2,1], [2,10]] etc.
+        try:
+            nexus_vers = [[int(s) for s in v.split('.')] for v in nexus_vers]
+        except ValueError:
+            return None
+        # 2-key sort using first major and then minor version number
+        idx = nexus_vers.index(max(nexus_vers, key=lambda l: (l[0], l[1])))
+        nexus_dirs_all.append(nexus_dirs[idx])
+    # return preferable version (64-bit if both are available)
+    if nexus_dirs_all:
+        return nexus_dirs_all[-1]
+    else:
         return None
-    nexus_glob = str(vicon_path / 'Nexus?.*')
-    nexus_dirs = [Path(dir) for dir in glob.iglob(nexus_glob)]
-    if not nexus_dirs:
-        return None
-    nexus_vers = [dir.name[5:] for dir in nexus_dirs]
-    # convert into major, minor lists: [[2,1], [2,10]] etc.
-    try:
-        nexus_vers = [[int(s) for s in v.split('.')] for v in nexus_vers]
-    except ValueError:
-        return None
-    # 2-key sort using first major and then minor version number
-    idx = nexus_vers.index(max(nexus_vers, key=lambda l: (l[0], l[1])))
-    return nexus_dirs[idx]
-
 
 def _nexus_pid():
     """Try to return the PID of the currently running Nexus process"""

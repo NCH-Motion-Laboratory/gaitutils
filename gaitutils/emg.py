@@ -256,6 +256,7 @@ class AvgEMG(EMG):
     """
 
     def __init__(self, data):
+        self.chs_disabled = list()  # not supported at the moment
         self._data = data
 
     def get_channel_data(self, chname, envelope=None):

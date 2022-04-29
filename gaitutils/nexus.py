@@ -216,7 +216,7 @@ def _run_pipelines(pipelines):
     Note: this version will stall the calling Python interpreter until the
     pipeline is finished.
     """
-    if type(pipelines) != list:
+    if not isinstance(pipelines, list):
         pipelines = [pipelines]
     for pipeline in pipelines:
         logger.debug(f'running pipeline: {pipeline}')
@@ -231,7 +231,7 @@ def _run_pipelines_multiprocessing(pipelines):
     pipeline, this version causes the invoking thread to sleep and release the
     GIL while the pipeline is running.
     """
-    if type(pipelines) != list:
+    if not isinstance(pipelines, list):
         pipelines = [pipelines]
     for pipeline in pipelines:
         logger.debug(f'running pipeline via multiprocessing module: {pipeline}')
@@ -258,7 +258,7 @@ def _get_nexus_subject_param(vicon, name, param):
     value = vicon.GetSubjectParam(name, param)
     # for unknown reasons, above method may return tuple or float
     # depending on whether script is run from Nexus or outside
-    if type(value) == tuple:
+    if isinstance(value, tuple):
         value = value[0] if value[1] else None
     return value
 

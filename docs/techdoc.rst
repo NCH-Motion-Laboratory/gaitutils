@@ -318,9 +318,9 @@ Wishlist/TODO
 Ideas on how to improve the package.
 
 - Reading accelerometer data is supported, but there is no specific support for
-  plotting it it (or other non-EMG analog data). Something similar to EMG
-  handling should be implemented (i.e. list of accelerometer channel names,
-  etc.) 
+  plotting it it (or other non-EMG analog data, such as raw forceplate data).
+  Something similar to EMG handling should be implemented (i.e. list of
+  accelerometer channel names, etc.) 
 
 - Some of the configuration values really need to be adjusted for each
   particular lab (such as EMG channel names) and some can be left as they are.

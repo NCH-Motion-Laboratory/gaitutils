@@ -82,7 +82,7 @@ class AvgTrial(Trial):
         nfiles=None,
     ):
         if avgdata_model is None and avgdata_emg is None:
-            raise ValueError('no data for average')
+            raise ValueError('no averaged data supplied')
 
         if nfiles is None:
             raise ValueError('nfiles must be supplied')
@@ -105,7 +105,8 @@ class AvgTrial(Trial):
 
         if avgdata_emg is None:
             avgdata_emg = dict()
-        self.emg = AvgEMG(avgdata_emg)
+
+        self.emg = AvgEMG(avgdata_emg, stddata_emg)
         analog_npts = 1000  # default
         for ch in list(avgdata_emg.keys()):
             if avgdata_emg[ch] is not None:
@@ -147,6 +148,7 @@ class AvgTrial(Trial):
             data[:] = np.nan
         return self.t, data
 
+    # XXX: why the cycle argument?
     def get_emg_data(self, ch, envelope=None, cycle=None):
         """Get averaged EMG RMS data.
 
@@ -158,6 +160,16 @@ class AvgTrial(Trial):
         if not envelope:
             raise ValueError('AvgTrial only supports EMG in RMS mode')
         return self.tn_analog, self.emg.get_channel_data(ch, envelope=True)
+
+    def get_emg_stddata(self, ch):
+        """Get averaged EMG RMS standard deviation.
+
+        Parameters
+        ----------
+        ch : str
+            The channel name.
+        """
+        return self.tn_analog, self.emg.get_channel_stddata(ch)
 
     def get_marker_data(self, marker, cycle=None):
         raise GaitDataError('AvgTrial does not average marker data yet')

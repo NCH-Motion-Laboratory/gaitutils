@@ -255,15 +255,20 @@ class AvgEMG(EMG):
         The averaged data, e.g. from stats.average_analog.data().
     """
 
-    def __init__(self, data):
+    def __init__(self, avgdata, stddata=None):
         self.chs_disabled = list()  # not supported at the moment
-        self._data = data
+        self._avgdata = avgdata
+        self._stddata = stddata
 
     def get_channel_data(self, chname, envelope=None):
         if not envelope:
             raise RuntimeError('AvgEMG can only return enveloped and averaged data')
         chname = self._match_name(chname)
-        return self._data[chname]
+        return self._avgdata[chname]
+
+    def get_channel_stddata(self, chname):
+        chname = self._match_name(chname)
+        return self._stddata[chname]
 
     def status_ok(self, chname):
         if chname in self.chs_disabled:

@@ -47,12 +47,12 @@ def _find_nexus_path():
     # get the latest version for each path
     for vicon_path in vicon_paths:
         if not vicon_path.is_dir():
-            return None
+            continue
         nexus_glob = str(vicon_path / 'Nexus?.*')
         nexus_dirs = [Path(dir) for dir in glob.iglob(nexus_glob)]
         logger.debug(f'found Nexus dirs {nexus_dirs}')
         if not nexus_dirs:
-            return None
+            continue
         nexus_vers = [dir.name[5:] for dir in nexus_dirs]
         # convert into major, minor lists: [[2,1], [2,10]] etc.
         try:

@@ -289,12 +289,12 @@ def _get_metadata(vicon):
     See read.data.get_metadata for details."""
     _check_nexus()
     logger.debug('reading metadata from Vicon Nexus')
-    subjname = get_subjectnames()
-    params_available = vicon.GetSubjectParamNames(subjname)
+    subj_name = get_subjectnames()
+    params_available = vicon.GetSubjectParamNames(subj_name)
     subj_params = defaultdict(lambda: None)
     subj_params.update(
         {
-            par: _get_nexus_subject_param(vicon, subjname, par)
+            par: _get_nexus_subject_param(vicon, subj_name, par)
             for par in params_available
         }
     )
@@ -305,10 +305,10 @@ def _get_metadata(vicon):
     markers = _get_marker_names(vicon)
     # get foot strike and toeoffevents. GetEvents() indices seem to often be 1
     # frame less than on Nexus display - only happens with ROI?
-    lstrikes = vicon.GetEvents(subjname, "Left", "Foot Strike")[0]
-    rstrikes = vicon.GetEvents(subjname, "Right", "Foot Strike")[0]
-    ltoeoffs = vicon.GetEvents(subjname, "Left", "Foot Off")[0]
-    rtoeoffs = vicon.GetEvents(subjname, "Right", "Foot Off")[0]
+    lstrikes = vicon.GetEvents(subj_name, "Left", "Foot Strike")[0]
+    rstrikes = vicon.GetEvents(subj_name, "Right", "Foot Strike")[0]
+    ltoeoffs = vicon.GetEvents(subj_name, "Left", "Foot Off")[0]
+    rtoeoffs = vicon.GetEvents(subj_name, "Right", "Foot Off")[0]
     events = TrialEvents(
         rstrikes=rstrikes, lstrikes=lstrikes, rtoeoffs=rtoeoffs, ltoeoffs=ltoeoffs
     )
@@ -346,7 +346,7 @@ def _get_metadata(vicon):
         'offset': offset,
         'framerate': framerate,
         'analograte': analograte,
-        'name': subjname,
+        'subject_name': subj_name,
         'subj_params': subj_params,
         'events': events,
         'length': length,

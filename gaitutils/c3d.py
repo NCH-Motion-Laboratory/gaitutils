@@ -297,10 +297,10 @@ def _get_metadata(c3dfile):
 
     # get subject info
     try:
-        name = _get_c3d_metadata_field(acq, 'SUBJECTS', 'NAMES')[0]
+        subj_name = _get_c3d_metadata_field(acq, 'SUBJECTS', 'NAMES')[0]
     except RuntimeError:
         logger.warning('Cannot get subject name')
-        name = 'Unknown'
+        subj_name = 'Unknown'
 
     subj_params = defaultdict(lambda: None)
     try:
@@ -319,7 +319,7 @@ def _get_metadata(c3dfile):
         'offset': offset,
         'framerate': framerate,
         'analograte': analograte,
-        'name': name,
+        'subject_name': subj_name,
         'subj_params': subj_params,
         'events': events,
         'length': length,

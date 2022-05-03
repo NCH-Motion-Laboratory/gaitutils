@@ -115,7 +115,7 @@ class AvgTrial(Trial):
         self.tn_analog = np.linspace(0, 100, analog_npts)
 
         self.source = 'averaged data'
-        self.name = 'Unknown'
+        self.subject_name = 'Unknown'
         self.is_static = False
         # self.n_ok = n_ok  XXX
         self.t = np.arange(101)  # data is on normalized cycle 0..100%

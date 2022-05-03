@@ -240,7 +240,7 @@ class Trial:
         s = '<Trial |'
         s += f' trial: {self.trialname}'
         s += f', data source: {self.source}'
-        s += f', subject: {self.name}'
+        s += f', subject: {self.subject_name}'
         s += f', gait cycles: {self.ncycles}'
         s += '>'
         return s

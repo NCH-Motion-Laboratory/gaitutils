@@ -45,7 +45,7 @@ def test_nexus_reader():
     assert_equal(tr.analograte, 1000.0)
     assert_equal(tr.framerate, 100.0)
     # assert_equal(tr.bodymass, 24.0)
-    assert_equal(tr.name, 'Iiris')
+    assert_equal(tr.subject_name, 'Iiris')
     assert_equal(tr.n_forceplates, 1)
     assert_equal(tr.samplesperframe, 10.0)
     assert_equal(tr.length, 488)
@@ -72,7 +72,7 @@ def test_nexus_reader():
     assert_equal(tr.analograte, 1000.0)
     assert_equal(tr.framerate, 200.0)
     # assert_equal(tr.bodymass, 70.0)
-    assert_equal(tr.name, 'Astrid')
+    assert_equal(tr.subject_name, 'Astrid')
     assert_equal(tr.n_forceplates, 3)
     assert_equal(tr.samplesperframe, 5.0)
     assert_equal(tr.length, 1986)
@@ -225,7 +225,7 @@ def test_compare_to_c3d():
     attrs = [
         'analograte',
         'framerate',
-        'name',
+        'subject_name',
         'n_forceplates',
         'samplesperframe',
         'length',

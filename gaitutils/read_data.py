@@ -58,7 +58,7 @@ def get_metadata(source):
             Frame rate for capture (frames / sec).
         analograte : float
             Sampling rate for analog devices (samples / sec)-
-        name : str
+        subject_name : str
             Subject name.
         subj_params : dict
             Other subject parameters (bodymass etc.)

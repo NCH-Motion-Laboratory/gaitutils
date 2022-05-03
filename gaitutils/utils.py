@@ -27,10 +27,17 @@ class TrialEvents:
     nexus.py) need it, so keeping it here makes imports simpler.
     """
 
-    # these are the event types we accept
-    event_types = ['rstrikes', 'lstrikes', 'rtoeoffs', 'ltoeoffs', 'general']
-    # these are our internal stuff
-    secret_stuff = ['_offset']
+    # the event types we accept
+    event_types = ["rstrikes", "lstrikes", "rtoeoffs", "ltoeoffs", "general"]
+    # corresponding descriptions
+    event_descriptions = [
+        "Right foot strikes",
+        "Left foot strikes",
+        "Right foot toeoffs",
+        "Left foot toeoffs",
+        "General events",
+    ]
+    secret_stuff = ["_offset"]  # stores the offset in frames
 
     def __init__(self, **kwargs):
         self._offset = None
@@ -42,31 +49,34 @@ class TrialEvents:
             setattr(self, key, val)
 
     def __repr__(self):
-        s = '<TrialEvents |'
-        for k, evtype in enumerate(TrialEvents.event_types):
+        s = "<TrialEvents |"
+        for k, (evtype, evdesc) in enumerate(
+            zip(TrialEvents.event_types, TrialEvents.event_descriptions)
+        ):
             if k > 0:
-                s += ','
+                s += ","
             ev_vals = getattr(self, evtype)
-            s += f' {evtype}: {ev_vals}'
-        s += '>'
+            s += f" {evdesc}: {ev_vals}"
+        s += ">"
         return s
 
     def __setattr__(self, attr, value):
+        """Set an attribute"""
         if attr in TrialEvents.event_types:  # regular event list
             if not isinstance(value, list):
-                raise AttributeError('attribute must be a list')
+                raise AttributeError("attribute must be a list")
             else:
                 # sort to make sure that event frames are in increasing order
                 super().__setattr__(attr, sorted(value))
         elif attr in TrialEvents.secret_stuff:
             super().__setattr__(attr, value)
         else:
-            raise AttributeError(f'{attr} is not a valid attribute')
+            raise AttributeError(f"{attr} is not a valid attribute")
 
     def subtract_offset(self, offset):
-        """Subtract given offset from events."""
+        """Subtract given offset from events"""
         if self._offset:
-            raise RuntimeError('offset can be subtracted only once')
+            raise RuntimeError("offset can be subtracted only once")
         for evtype in TrialEvents.event_types:
             events = getattr(self, evtype)
             events_offset = [e - offset for e in events]

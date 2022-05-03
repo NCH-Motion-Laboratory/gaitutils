@@ -22,8 +22,11 @@ logger = logging.getLogger(__name__)
 
 class TrialEvents:
     """A struct-like container for gait event data.
-    A dataclass would be better, but requires Python 3.7.
-    Logically this might belong in trial.py, but low-level readers (e.g
+    Intended to store events read from Nexus or C3D data.
+    Note that forceplate-related information (e.g. whether a foot strike occurs
+    on a forceplate) is not stored here, but in a separate fp_events dict.
+    In the future, the forceplate information should perhaps be merged into this class.
+    Logically the class might belong in trial.py, but low-level readers (e.g
     nexus.py) need it, so keeping it here makes imports simpler.
     """
 

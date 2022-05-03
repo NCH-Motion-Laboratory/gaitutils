@@ -545,8 +545,9 @@ def plot_trials(
                         fig.add_trace(ntrace, i + 1, j + 1)
                         model_normaldata_legend = False  # mark as plotted
 
+                # plot EMG normal data as a heatmap
                 elif var in cfg.emg.channel_labels and var in emg_normaldata:
-                    # build x, y, z triplets for heatmap
+                    # build x, y, z triplets for the heatmap
                     # cell size is automatically determined from y values, which is a bit clumsy
                     # the idea is to build two strips of normal data at nearby y values, which fixes
                     # the cell size at a small value (dy)

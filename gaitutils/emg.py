@@ -246,7 +246,7 @@ class AvgEMG(EMG):
     """Class for storing averaged RMS EMG.
 
     Tries to match the API of the EMG class, but differs in following ways:
-    precomputed RMS data is stored in self._data, only the RMS data can be
+    stores precomputed data only (average/std of RMS), only the RMS data can be
     returned, and no filtering is done.
 
     Parameters
@@ -259,6 +259,11 @@ class AvgEMG(EMG):
         self.chs_disabled = list()  # not supported at the moment
         self._avgdata = avgdata
         self._stddata = stddata
+
+    @property
+    def data(self):
+        """Get the averaged RMS data."""
+        return self._avgdata
 
     def get_channel_data(self, chname, envelope=None):
         if not envelope:

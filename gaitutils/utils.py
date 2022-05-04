@@ -819,8 +819,7 @@ def automark_events(
     rfootctrP = mkrdata['RANK']
     lfootctrP = mkrdata['LANK']
 
-    strikes_all = {}
-    toeoffs_all = {}
+    events = GaitEvents()
 
     # loop: same operations for left / right foot
     for context, footctrP, footctrv in zip(
@@ -996,8 +995,13 @@ def automark_events(
             vicon = nexus.viconnexus()
             nexus._create_events(vicon, context, strikes, toeoffs)
 
-        strikes_all[context] = strikes
-        toeoffs_all[context] = toeoffs
+        for fr in strikes:
+            e = GaitEvent(fr, 'strike', context)
+            events.append(e)
+
+        for fr in toeoffs:
+            e = GaitEvent(fr, 'toeoff', context)
+            events.append(e)
 
         # plot velocities w/ thresholds and marked events
         if plot:
@@ -1019,12 +1023,4 @@ def automark_events(
     if plot:
         plt.show()
 
-    events = GaitEvents()
-    for context in 'LR':
-        for fr in strikes_all[context]:
-            e = GaitEvent(fr, 'strike', context)
-            events.append(e)
-        for fr in toeoffs_all[context]:
-            e = GaitEvent(fr, 'toeoff', context)
-            events.append(e)
     return events

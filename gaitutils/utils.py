@@ -710,12 +710,9 @@ def automark_events(
     source,
     mkrdata=None,
     events_range=None,
-    fp_events=None,
     vel_thresholds=None,
     roi=None,
-    start_on_forceplate=False,
     plot=False,
-    mark=True,
 ):
     """Automatically mark foot strike and toeoff events.
 
@@ -739,23 +736,14 @@ def automark_events(
     events_range : array_like, optional
         If specified, the events will be restricted to given coordinate range in
         the principal gait direction. E.g. [-1000, 1000]
-    fp_events : dict, optional
-        If not None, specifies the forceplate detected strikes and toeoffs
-        (see utils.detect_forceplate_events). These will be then considered the
-        ground truth and will replace nearby autodetected events.
     vel_thresholds : dict, optional
         Absolute velocity thresholds for identifying events. These can be obtained
         from forceplate data (utils.check_forceplate_contact). If None, relative
         thresholds will be computed based on marker data.
     roi : array_like, optional
         If not None, specifies a ROI (in frames) inside which to mark events.
-    start_on_forceplate : bool, optional
-        If True, try to start the first gait cycle on forceplate, i.e. events
-        earlier than the first forceplate contact will not be marked.
     plot : bool, optional
         Plot velocity curves and events using matplotlib. Mostly for debug purposes.
-    mark : bool, optional
-        If False, do not actually insert the marker events into Nexus.
     """
 
     from .read_data import get_metadata, get_marker_data
@@ -778,8 +766,6 @@ def automark_events(
     MIN_SWING_VELOCITY = 0.5
     # median prefilter width
     PREFILTER_MEDIAN_WIDTH = 3
-    # tolerance for matching forceplate and vel. thresholded events
-    FP_EVENT_TOL = 10
 
     if vel_thresholds is None:
         vel_thresholds = {
@@ -930,44 +916,6 @@ def automark_events(
             dist_ok = np.logical_and(dist_ok, strike_pos != 0)
             strikes = strikes[dist_ok]
 
-        # correct foot strikes with force plate autodetected events
-        if fp_events and fp_events[context + '_strikes']:
-            fp_strikes = fp_events[context + '_strikes']
-            logger.debug(f'forceplate strikes: {fp_strikes}')
-            # find best fp matches for all strikes
-            fpc = digitize_array(strikes, fp_strikes)
-            ok_ind = np.where(np.abs(fpc - strikes) < FP_EVENT_TOL)[0]
-            if ok_ind.size == 0:
-                logger.warning(
-                    'could not match forceplate strike with an autodetected strike'
-                )
-            else:
-                # replace with fp detected strikes
-                strikes[ok_ind] = fpc[ok_ind]
-                logger.debug(f'fp corrected strikes: {strikes}')
-            # toeoffs
-            fp_toeoffs = fp_events[context + '_toeoffs']
-            logger.debug(f'forceplate toeoffs: {fp_toeoffs}')
-            fpc = digitize_array(toeoffs, fp_toeoffs)
-            ok_ind = np.where(np.abs(fpc - toeoffs) < FP_EVENT_TOL)[0]
-            if ok_ind.size == 0:
-                logger.warning(
-                    'could not match forceplate toeoff with an autodetected toeoff'
-                )
-            else:
-                toeoffs[ok_ind] = fpc[ok_ind]
-                logger.debug(f'fp corrected toeoffs: {toeoffs}')
-            # delete strikes before (actual) 1st forceplate contact
-            if start_on_forceplate and len(fp_strikes) > 0:
-                # use a tolerance here to avoid deleting possible (uncorrected)
-                # strike near the fp
-                not_ok = np.where(strikes < fp_strikes[0] - FP_EVENT_TOL)[0]
-                if not_ok.size > 0:
-                    logger.debug(
-                        f'deleting foot strikes before forceplate: {strikes[not_ok]}'
-                    )
-                    strikes = np.delete(strikes, not_ok)
-
         if roi is not None:
             strikes = np.extract(
                 np.logical_and(roi[0] <= strikes + 1, strikes + 1 <= roi[1]), strikes
@@ -988,12 +936,6 @@ def automark_events(
 
         logger.debug(f'final strike events: {strikes}')
         logger.debug(f'final toeoff events: {toeoffs}')
-
-        if mark:
-            if not nexus._is_vicon_instance(source):
-                raise ValueError('event marking supported only for Nexus')
-            vicon = nexus.viconnexus()
-            nexus._create_events(vicon, context, strikes, toeoffs)
 
         for fr in strikes:
             e = GaitEvent(fr, 'strike', context)

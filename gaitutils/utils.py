@@ -90,13 +90,13 @@ class GaitEvents:
         return list(events)
 
     def merge_forceplate_events(self, fp_events):
-        """Merge forceplate event info"""
+        """Merge forceplate-based event info"""
         FRAME_TOL = 7
-        for ev, fp_ev in product(self.events, fp_events):
+        for ev, fp_ev in product(self.events, fp_events.events):
             if ev.context == fp_ev.context:
                 if abs(ev.frame - fp_ev.frame) < FRAME_TOL:
+                    ev.frame = fp_ev.frame
                     ev.forceplate_index = fp_ev.forceplate_index
-
 
 
 def get_contexts(right_first=False):

@@ -11,7 +11,8 @@ from matplotlib import path
 import matplotlib.pyplot as plt
 import numpy as np
 import logging
-from dataclasses import dataclass, field
+from itertools import product
+from dataclasses import dataclass
 
 from .envutils import GaitDataError
 from .config import cfg
@@ -88,6 +89,15 @@ class GaitEvents:
             events = self.filter_forceplate(events)
         return list(events)
 
+    def merge_forceplate_events(self, fp_events):
+        """Merge forceplate event info"""
+        FRAME_TOL = 7
+        for ev, fp_ev in product(self.events, fp_events):
+            if ev.context == fp_ev.context:
+                if abs(ev.frame - fp_ev.frame) < FRAME_TOL:
+                    ev.forceplate_index = fp_ev.forceplate_index
+
+
 
 def get_contexts(right_first=False):
     """Return the usual contexts and their names as pairs.
@@ -99,20 +109,6 @@ def get_contexts(right_first=False):
         _contexts.reverse()
     return _contexts
 
-
-def _empty_fp_events():
-    """Container for forceplate events"""
-    return dict(
-        R_strikes=[],
-        R_toeoffs=[],
-        L_strikes=[],
-        L_toeoffs=[],
-        valid=set(),
-        R_strikes_plate=[],
-        L_strikes_plate=[],
-        our_fp_info={},
-        coded='',
-    )
 
 
 def marker_gaps(mdata, ignore_edge_gaps=True):
@@ -325,7 +321,7 @@ def _get_foot_contact_vel(mkrdata, fp_events, medians=True, roi=None):
     """Return foot velocities during forceplate strike/toeoff frames.
     fp_events is from detect_forceplate_events() If medians=True, return median
     values."""
-    results = dict()
+    vels = dict()
     for context, markers in zip(
         ('R', 'L'), [cfg.autoproc.right_foot_markers, cfg.autoproc.left_foot_markers]
     ):
@@ -341,14 +337,14 @@ def _get_foot_contact_vel(mkrdata, fp_events, medians=True, roi=None):
         footctrv = np.linalg.norm(footctrv_, axis=1)
         strikes = fp_events[context + '_strikes']
         toeoffs = fp_events[context + '_toeoffs']
-        results[context + '_strike'] = footctrv[strikes]
-        results[context + '_toeoff'] = footctrv[toeoffs]
+        vels[context + '_strike'] = footctrv[strikes]
+        vels[context + '_toeoff'] = footctrv[toeoffs]
     if medians:
-        results = {
+        vels = {
             key: (np.array([np.median(x)]) if x.size > 0 else x)
-            for key, x in results.items()
+            for key, x in vels.items()
         }
-    return results
+    return vels
 
 
 def _get_foot_swing_velocity(footctrv, max_peak_velocity, min_swing_velocity):
@@ -589,7 +585,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
     from . import read_data
 
     logger.debug(f'detecting forceplate events from {source}')
-    results = _empty_fp_events()
+    results = GaitEvents()
 
     # get subject info
     info = read_data.get_metadata(source)
@@ -624,8 +620,8 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
 
     datalen = mkrdata[cfg.autoproc.track_markers[0]].shape[0]
 
-    logger.debug('acquiring gait events')
-    events_0 = automark_events(source, mkrdata=mkrdata, mark=False, roi=roi)
+    logger.debug('acquiring marker-based gait events')
+    events_marker = automark_events(source, mkrdata=mkrdata, mark=False, roi=roi)
 
     # loop over the plates; our internal forceplate index is 0-based
     for plate_ind, fp in enumerate(fpdata):
@@ -655,9 +651,10 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             )
             # to eliminate double contacts, check that contralateral foot is not on plate
             # this needs marker-based events
-            if foot_contacts_ok and events_0 is not None:
+            if foot_contacts_ok and events_marker is not None:
                 contra_context = 'R' if this_context == 'L' else 'L'
-                contra_strikes = events_0[contra_context + '_strikes']
+                contra_strikes = [ev.frame for ev in events_marker.get_events('strike', contra_context)]
+                contra_strikes = np.array(contra_strikes)
                 contra_strikes_next = contra_strikes[
                     np.where(contra_strikes > strike_fr)
                 ]
@@ -700,18 +697,12 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
                 'plate %d: valid foot strike on %s at frame %d'
                 % (plate_ind, context, strike_fr)
             )
-            results['valid'].add(context)
-            results[context + '_strikes'].append(strike_fr)
-            results[context + '_toeoffs'].append(toeoff_fr)
-            results[context + '_strikes_plate'].append(plate_ind)
-            results['our_fp_info'][plate] = 'Right' if context == 'R' else 'Left'
-            results['coded'] += context
+            strike_ev = GaitEvent(strike_fr, 'strike', context, forceplate_index=plate_ind)
+            toeoff_ev = GaitEvent(toeoff_fr, 'toeoff', context, forceplate_index=plate_ind)
+            results.append(strike_ev)
+            results.append(toeoff_ev)
         else:
             logger.debug('plate %d: no valid foot strike' % plate_ind)
-            results['our_fp_info'][plate] = 'Invalid'
-            results['coded'] += 'X'
-
-    logger.debug(results)
     return results
 
 

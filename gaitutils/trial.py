@@ -254,8 +254,6 @@ class Trial:
         self.__dict__.update(meta)
         if self.length == 1:
             raise GaitDataError('Cannot deal with single-frame trials (yet)')
-        # match events with frame data
-        self.events.subtract_offset(self.offset)
         self.sessiondir = self.sessionpath.name
         # try to locate trial .enf (we do not require it)
         enfpath = self.sessionpath / Path(self.trialname).with_suffix('.Trial.enf')
@@ -288,8 +286,9 @@ class Trial:
         self._marker_data = None
         if not self.is_static:
             self.fp_events = self._get_fp_events()
+            self.events.merge_forceplate_events(self.fp_events)
         else:
-            self.fp_events = utils._empty_fp_events()
+            self.fp_events = utils.GaitEvents()
         self._models_data = dict()
         self.stddev_data = None  # AvgTrial only
         # frames 0...length
@@ -554,7 +553,7 @@ class Trial:
             return utils.detect_forceplate_events(self.source, fp_info=fp_info)
         except GaitDataError:
             logger.warning('Could not detect forceplate events')
-            return utils._empty_fp_events()
+            return utils.GaitEvents()
 
     def get_cycles(self, cyclespec, max_cycles_per_context=None):
         """Get specified gait cycles from the trial.
@@ -642,6 +641,70 @@ class Trial:
         return sorted(cycs_ok, key=lambda cyc: cyc.start)
 
     def _scan_cycles(self):
+        for context, context_desc in utils.get_contexts():
+            strike_events = self.events.get_events('strike', context)
+            toeoff_events = self.events.get_events('toeoff', context)
+            toeoff_frames = [ev.frame for ev in toeoff_events]
+
+            for k, (ev0, ev1) in enumerate(zip(strike_events[:-1], strike_events[1:])):
+                on_forceplate = ev0.forceplate_index is not None
+                fp_str = ' (f)' if on_forceplate else ''
+                name = f'{context_desc}{k+1}{fp_str}'
+                start, end = ev0.frame, ev1.frame
+                toeoff = [fr for fr in toeoff_frames if fr > start and fr < end]
+                if len(toeoff) == 0:
+                    if cfg.trial.no_toeoff == 'error':
+                        raise GaitDataError(
+                            '%s: no toeoff for cycle starting at %d'
+                            % (self.trialname, start)
+                        )
+                    elif cfg.trial.no_toeoff == 'reject':
+                        logger.warning(
+                            'no toeoff for cycle starting at %d, rejecting cycle' % start
+                        )
+                        continue
+                    else:
+                        raise RuntimeError('invalid no_toeoff parameter in config')
+                elif len(toeoff) > 1:
+                    if cfg.trial.multiple_toeoffs == 'error':
+                        raise GaitDataError(
+                            '%s: multiple toeoffs for cycle starting at %d'
+                            % (self.trialname, start)
+                        )
+                    elif cfg.trial.multiple_toeoffs == 'accept_first':
+                        logger.warning(
+                            'multiple toeoffs for cycle starting at %d, picking the first one'
+                            % start
+                        )
+                        toeoff = toeoff[0]
+                    elif cfg.trial.multiple_toeoffs == 'reject':
+                        logger.warning(
+                            'multiple toeoffs for cycle starting at %d, skipping cycle'
+                            % start
+                        )
+                        continue
+                    else:
+                        raise RuntimeError(
+                            'invalid multiple_toeoffs parameter in config'
+                        )
+                else:
+                    toeoff = toeoff[0]
+
+                yield Gaitcycle(
+                    start,
+                    end,
+                    toeoff,
+                    context,
+                    on_forceplate,
+                    ev0.forceplate_index,
+                    self.samplesperframe,
+                    trial=self,
+                    index=k + 1,
+                    name=name,
+                )
+
+
+    def __scan_cycles(self):
         """Create Gaitcycle instances for this trial.
 
         Cycle detection is based on trial strike/toeoff markers. To identify
@@ -650,7 +713,7 @@ class Trial:
         the matching.
         """
         STRIKE_TOL = 7  # frames
-        contextstrs = {'R': 'right', 'L': 'left'}
+        context_strs = {'R': 'right', 'L': 'left'}
         for context, strikes, toeoffs in zip(
             'LR',
             [self.events.lstrikes, self.events.rstrikes],
@@ -719,7 +782,7 @@ class Trial:
                 else:
                     toeoff = toeoff[0]
                 fp_str = ' (f)' if on_forceplate else ''
-                name = '%s%d%s' % (contextstrs[context], (k + 1), fp_str)
+                name = '%s%d%s' % (context_strs[context], (k + 1), fp_str)
                 yield Gaitcycle(
                     start,
                     end,

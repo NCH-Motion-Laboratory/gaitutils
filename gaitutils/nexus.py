@@ -320,7 +320,6 @@ def _get_metadata(vicon):
                 fr_offset = fr - offset
                 ev = GaitEvent(fr_offset, ev_type_ours, context[0], None)
                 events.append(ev)
-       
 
     length = vicon.GetFrameCount()
     framerate = vicon.GetFrameRate()

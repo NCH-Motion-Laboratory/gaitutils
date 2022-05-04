@@ -278,7 +278,7 @@ def _get_metadata(c3dfile):
     events = GaitEvents()
     for i in btk.Iterate(acq.GetEvents()):
         fr = i.GetFrame()
-        context = i.GetContext()
+        context = i.GetContext()[0]
         ev_type = i.GetLabel()
         if ev_type == 'Foot Strike':
             ev_type_ours = 'strike'
@@ -286,7 +286,8 @@ def _get_metadata(c3dfile):
             ev_type_ours = 'toeoff'
         else:
             ev_type_ours = ev_type
-        ev = GaitEvent(fr, ev_type_ours, context)
+        fr_offset = fr - offset
+        ev = GaitEvent(fr_offset, ev_type_ours, context)
         events.append(ev)
 
     # get subject info

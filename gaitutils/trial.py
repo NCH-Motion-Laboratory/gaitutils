@@ -645,7 +645,7 @@ class Trial:
         """Create Gaitcycle instances for this trial.
 
         Cycle detection is based on trial strike/toeoff markers. To identify
-        cycles starting with forceplate contact, the foot strike markers need to
+        cycles starting with forceplate contact, the foot strike events need to
         be matched with forceplate events. A tolerance of STRIKE_TOL is used for
         the matching.
         """

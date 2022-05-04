@@ -19,7 +19,7 @@ import multiprocessing
 import subprocess
 
 from .numutils import _change_coords, _isfloat, _rigid_body_extrapolate_markers
-from .utils import TrialEvents
+from .utils import GaitEvent, GaitEvents
 from .envutils import GaitDataError
 from .config import cfg
 
@@ -303,20 +303,25 @@ def _get_metadata(vicon):
         raise GaitDataError('No trial loaded in Nexus')
     sessionpath = get_sessionpath()
     markers = _get_marker_names(vicon)
-    # Get foot strike and toeoff events.
-    # XXX: GetEvents() indices sometimes seem to often be 1 frame less than what
-    # is shown on Nexus display - only happens with ROI?
-    lstrikes = vicon.GetEvents(subj_name, "Left", "Foot Strike")[0]
-    rstrikes = vicon.GetEvents(subj_name, "Right", "Foot Strike")[0]
-    ltoeoffs = vicon.GetEvents(subj_name, "Left", "Foot Off")[0]
-    rtoeoffs = vicon.GetEvents(subj_name, "Right", "Foot Off")[0]
-    events = TrialEvents(
-        rstrikes=rstrikes, lstrikes=lstrikes, rtoeoffs=rtoeoffs, ltoeoffs=ltoeoffs
-    )
+
     # The offset will be subtracted from event frame numbers to get the correct
     # (0-based) indices for events. For Nexus, the offset is always 1 (Nexus
     # uses 1-based frame numbering).
     offset = 1
+    events = GaitEvents()
+    # Get the foot strike and toeoff events.
+    # XXX: GetEvents() indices sometimes seem to often be 1 frame less than what
+    # is shown on Nexus display - only happens with ROI?
+    for context in ['Left', 'Right']:
+        for ev_type in ['Foot Strike', 'Foot Off']:
+            ev_type_ours = 'strike' if ev_type == 'Foot Strike' else 'toeoff'
+            event_frames = vicon.GetEvents(subj_name, context, ev_type)[0]
+            for fr in event_frames:
+                fr_offset = fr - offset
+                ev = GaitEvent(fr_offset, ev_type_ours, context[0], None)
+                events.append(ev)
+       
+
     length = vicon.GetFrameCount()
     framerate = vicon.GetFrameRate()
     # get analog rate. this may not be mandatory if analog devices

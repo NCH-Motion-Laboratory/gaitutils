@@ -17,7 +17,7 @@ import sys
 import shutil
 
 from .numutils import center_of_pressure, _change_coords, _is_ascii
-from .utils import TrialEvents, _step_width
+from .utils import GaitEvents, GaitEvent, _step_width
 from .envutils import lru_cache_checkfile, _named_tempfile, GaitDataError
 
 
@@ -275,25 +275,19 @@ def _get_metadata(c3dfile):
     markers = [m for m in markers if m[0] != '*']
 
     #  get events
-    rstrikes, lstrikes, rtoeoffs, ltoeoffs = [], [], [], []
+    events = GaitEvents()
     for i in btk.Iterate(acq.GetEvents()):
-        if i.GetLabel() == "Foot Strike":
-            if i.GetContext() == "Right":
-                rstrikes.append(i.GetFrame())
-            elif i.GetContext() == "Left":
-                lstrikes.append(i.GetFrame())
-            else:
-                raise GaitDataError("Unknown context on foot strike event")
-        elif i.GetLabel() == "Foot Off":
-            if i.GetContext() == "Right":
-                rtoeoffs.append(i.GetFrame())
-            elif i.GetContext() == "Left":
-                ltoeoffs.append(i.GetFrame())
-            else:
-                raise GaitDataError("Unknown context on foot strike event")
-    events = TrialEvents(
-        rstrikes=rstrikes, lstrikes=lstrikes, rtoeoffs=rtoeoffs, ltoeoffs=ltoeoffs
-    )
+        fr = i.GetFrame()
+        context = i.GetContext()
+        ev_type = i.GetLabel()
+        if ev_type == 'Foot Strike':
+            ev_type_ours = 'strike'
+        elif ev_type == 'Foot Off':
+            ev_type_ours = 'toeoff'
+        else:
+            ev_type_ours = ev_type
+        ev = GaitEvent(fr, ev_type_ours, context)
+        events.append(ev)
 
     # get subject info
     try:

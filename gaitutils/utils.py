@@ -11,6 +11,7 @@ from matplotlib import path
 import matplotlib.pyplot as plt
 import numpy as np
 import logging
+from dataclasses import dataclass, field
 
 from .envutils import GaitDataError
 from .config import cfg
@@ -20,71 +21,72 @@ from .numutils import rising_zerocross, digitize_array, falling_zerocross, _base
 logger = logging.getLogger(__name__)
 
 
-class TrialEvents:
-    """A struct-like container for gait event data.
-    Intended to store events read from Nexus or C3D data.
-    Note that forceplate-related information (e.g. whether a foot strike occurs
-    on a forceplate) is not stored here, but in a separate fp_events dict.
-    In the future, the forceplate information should perhaps be merged into this class.
-    Logically the class might belong in trial.py, but low-level readers (e.g
-    nexus.py) need it, so keeping it here makes imports simpler.
-    """
+@dataclass
+class GaitEvent:
+    """A gait event"""
+    _event_types = ['strike', 'toeoff', 'general']  # supported event types
+    _contexts = [None, 'L', 'R']  # supported context values
+    frame : str
+    event_type : str
+    context : str = None
+    forceplate_index : int = None
 
-    # the event types we accept
-    event_types = ["rstrikes", "lstrikes", "rtoeoffs", "ltoeoffs", "general"]
-    # corresponding descriptions
-    event_descriptions = [
-        "Right foot strikes",
-        "Left foot strikes",
-        "Right foot toeoffs",
-        "Left foot toeoffs",
-        "General events",
-    ]
-    secret_stuff = ["_offset"]  # stores the offset in frames
+    def __post_init__(self):
+        """Validate arguments"""
+        if self.context not in GaitEvent._contexts:
+            raise ValueError('Invalid context')
+        if self.event_type not in GaitEvent._event_types:
+            raise ValueError('Invalid event type')
 
-    def __init__(self, **kwargs):
-        self._offset = None
-        # init empty lists for all event types
-        for evtype in TrialEvents.event_types:
-            setattr(self, evtype, list())
-        # init event lists via kwargs
-        for key, val in kwargs.items():
-            setattr(self, key, val)
+class GaitEvents:
+    """A (mutable) collection of gait events"""
 
-    def __repr__(self):
-        s = "<TrialEvents |"
-        for k, (evtype, evdesc) in enumerate(
-            zip(TrialEvents.event_types, TrialEvents.event_descriptions)
-        ):
-            if k > 0:
-                s += ","
-            ev_vals = getattr(self, evtype)
-            s += f" {evdesc}: {ev_vals}"
-        s += ">"
+    def __init__(self):
+        self.events = list()
+
+    def __repr__(self) -> str:
+        s = '<GaitEvents |\n'
+        for ev in sorted(self.events, key=lambda ev: ev.frame):
+            s += f'{ev.context} {ev.event_type} at {ev.frame}'
+            if ev.forceplate_index is not None:
+                s += '(on forceplate)'
+            s += '\n'
+        s += '>'
         return s
 
-    def __setattr__(self, attr, value):
-        """Set an attribute"""
-        if attr in TrialEvents.event_types:  # regular event list
-            if not isinstance(value, list):
-                raise AttributeError("attribute must be a list")
-            else:
-                # sort to make sure that event frames are in increasing order
-                super().__setattr__(attr, sorted(value))
-        elif attr in TrialEvents.secret_stuff:
-            super().__setattr__(attr, value)
-        else:
-            raise AttributeError(f"{attr} is not a valid attribute")
+    def append(self, event):
+        """Append a gait event"""
+        if not isinstance(event, GaitEvent):
+            raise ValueError('append() can only accept GaitEvent instances')
+        self.events.append(event)
 
-    def subtract_offset(self, offset):
-        """Subtract given offset from events"""
-        if self._offset:
-            raise RuntimeError("offset can be subtracted only once")
-        for evtype in TrialEvents.event_types:
-            events = getattr(self, evtype)
-            events_offset = [e - offset for e in events]
-            setattr(self, evtype, events_offset)
-        self._offset = offset
+    @staticmethod
+    def filter_context(events, context):
+        for ev in events:
+            if ev.context == context:
+                yield ev
+
+    @staticmethod
+    def filter_type(events, ev_type):
+        for ev in events:
+            if ev.event_type == ev_type:
+                yield ev
+
+    @staticmethod
+    def filter_forceplate(events):
+        for ev in events:
+            if ev.forceplate_index is not None:
+                yield ev
+
+    def get_events(self, event_type=None, context=None, forceplate=None):
+        events = self.events
+        if event_type is not None:
+            events = self.filter_type(events, event_type)
+        if context is not None:
+            events = self.filter_context(events, context)
+        if forceplate is not None:
+            events = self.filter_forceplate(events)
+        return list(events)
 
 
 def get_contexts(right_first=False):
@@ -660,14 +662,14 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
                     np.where(contra_strikes > strike_fr)
                 ]
                 if contra_strikes_next.size == 0:
-                    logger.debug('no following contralateral strike')
+                    logger.debug('no subsequent contralateral strike')
                 else:
                     fr0 = contra_strikes_next[0] + settle_fr
                     if fr0 > datalen:  # data overrun
-                        logger.debug('no following contralateral strike (overrun)')
+                        logger.debug('no subsequent contralateral strike (overrun)')
                     else:
                         logger.debug(
-                            'checking the following contralateral strike '
+                            'checking the subsequent contralateral strike '
                             '(at frame %d)' % fr0
                         )
                         contra_next_ok = (
@@ -1026,9 +1028,12 @@ def automark_events(
     if plot:
         plt.show()
 
-    return {
-        'R_strikes': strikes_all['R'],
-        'L_strikes': strikes_all['L'],
-        'R_toeoffs': toeoffs_all['R'],
-        'L_toeoffs': toeoffs_all['L'],
-    }
+    events = GaitEvents()
+    for context in 'LR':
+        for fr in strikes_all[context]:
+            e = GaitEvent(fr, 'strike', context)
+            events.append(e)
+        for fr in toeoffs_all[context]:
+            e = GaitEvent(fr, 'toeoff', context)
+            events.append(e)
+    return events

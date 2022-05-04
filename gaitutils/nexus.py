@@ -303,8 +303,9 @@ def _get_metadata(vicon):
         raise GaitDataError('No trial loaded in Nexus')
     sessionpath = get_sessionpath()
     markers = _get_marker_names(vicon)
-    # get foot strike and toeoffevents. GetEvents() indices seem to often be 1
-    # frame less than on Nexus display - only happens with ROI?
+    # Get foot strike and toeoff events.
+    # XXX: GetEvents() indices sometimes seem to often be 1 frame less than what
+    # is shown on Nexus display - only happens with ROI?
     lstrikes = vicon.GetEvents(subj_name, "Left", "Foot Strike")[0]
     rstrikes = vicon.GetEvents(subj_name, "Right", "Foot Strike")[0]
     ltoeoffs = vicon.GetEvents(subj_name, "Left", "Foot Off")[0]
@@ -312,10 +313,9 @@ def _get_metadata(vicon):
     events = TrialEvents(
         rstrikes=rstrikes, lstrikes=lstrikes, rtoeoffs=rtoeoffs, ltoeoffs=ltoeoffs
     )
-
-    # offset will be subtracted from event frame numbers to get correct
-    # 0-based index for frame data. for Nexus, it is always 1 (Nexus uses
-    # 1-based frame numbering)
+    # The offset will be subtracted from event frame numbers to get the correct
+    # (0-based) indices for events. For Nexus, the offset is always 1 (Nexus
+    # uses 1-based frame numbering).
     offset = 1
     length = vicon.GetFrameCount()
     framerate = vicon.GetFrameRate()

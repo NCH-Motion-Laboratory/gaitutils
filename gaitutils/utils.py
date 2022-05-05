@@ -453,7 +453,7 @@ def _leading_foot(mkrdata, roi=None):
     # FIXME: should not use a single dim here
     gait_dim = _principal_movement_direction(subj_pos)
     pos_diff = np.diff(subj_pos, axis=0)[:, gait_dim]
-    gait_dir = np.median(pos_diff[np.where(pos_diff > 0)])
+    gait_dir = np.median(pos_diff[np.where(pos_diff != 0.0)])
     if gait_dir > 0:
         cmpfun = np.greater
     elif gait_dir < 0:

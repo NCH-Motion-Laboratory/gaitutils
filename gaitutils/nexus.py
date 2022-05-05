@@ -656,9 +656,9 @@ def _create_events(vicon, gaitevents):
     subjectname = get_subjectnames()
     for ev in gaitevents.get_events():
         context_str = 'Right' if ev.context == 'R' else 'Left'
-        frame = ev.frame + 1
+        frame = ev.frame + 1  # Nexus uses 1-based frame numbering
         ev_type_nexus = 'Foot Strike' if ev.event_type == 'strike' else 'Foot Off'
-        vicon.CreateAnEvent(subjectname, context_str, ev_type_nexus, frame, 0)
+        vicon.CreateAnEvent(subjectname, context_str, ev_type_nexus, frame, 0.0)
 
 def rigid_body_extrapolate(
     vicon,

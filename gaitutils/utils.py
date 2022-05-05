@@ -27,7 +27,7 @@ class GaitEvent:
     """A gait event"""
     _event_types = ['strike', 'toeoff', 'general']  # supported event types
     _contexts = [None, 'L', 'R']  # supported context values
-    frame : str
+    frame : int
     event_type : str
     context : str = None
     forceplate_index : int = None
@@ -38,6 +38,8 @@ class GaitEvent:
             raise ValueError('Invalid context')
         if self.event_type not in GaitEvent._event_types:
             raise ValueError('Invalid event type')
+        if not isinstance(self.frame, int):
+            raise TypeError(f'Frame needs to be an int (not {type(self.frame)})')
 
 class GaitEvents:
     """A (mutable) collection of gait events"""
@@ -938,11 +940,11 @@ def automark_events(
         logger.debug(f'final toeoff events: {toeoffs}')
 
         for fr in strikes:
-            e = GaitEvent(fr, 'strike', context)
+            e = GaitEvent(int(fr), 'strike', context)
             events.append(e)
 
         for fr in toeoffs:
-            e = GaitEvent(fr, 'toeoff', context)
+            e = GaitEvent(int(fr), 'toeoff', context)
             events.append(e)
 
         # plot velocities w/ thresholds and marked events

@@ -47,16 +47,16 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         vicon.SaveTrial(cfg.autoproc.nexus_timeout)
 
     def _context_desc(fpev):
-        """Get Eclipse description string for given forceplate events dict"""
+        """Eclipse description string for a given events dict"""
+        nr = len(fpev.get_events(context='R', forceplate=True))
+        nl = len(fpev.get_events(context='L', forceplate=True))
         s = ""
-        nr = len(fpev['R_strikes'])
         if nr:
-            s += '%dR' % nr
-        nl = len(fpev['L_strikes'])
+            s += f'{nr}R'
         if nr and nl:
             s += '/'
         if nl:
-            s += '%dL' % nl
+            s += f'{nl}L'
         return s or cfg.autoproc.enf_descriptions['context_none']
 
     def _fail(trial_info, reason):

@@ -321,8 +321,8 @@ def _principal_movement_direction(mdata):
 
 def _get_foot_contact_vel(mkrdata, fp_events, medians=True, roi=None):
     """Return foot velocities during forceplate strike/toeoff frames.
-    fp_events is from detect_forceplate_events() If medians=True, return median
-    values."""
+    fp_events is output from detect_forceplate_events().
+    If medians=True, return median values."""
     vels = dict()
     for context, markers in zip(
         ('R', 'L'), [cfg.autoproc.right_foot_markers, cfg.autoproc.left_foot_markers]
@@ -337,8 +337,8 @@ def _get_foot_contact_vel(mkrdata, fp_events, medians=True, roi=None):
             avg_velocity=True,
         )
         footctrv = np.linalg.norm(footctrv_, axis=1)
-        strikes = fp_events[context + '_strikes']
-        toeoffs = fp_events[context + '_toeoffs']
+        strikes = [ev.frame for ev in fp_events.get_events(event_type='strike', context=context)]
+        toeoffs = [ev.frame for ev in fp_events.get_events(event_type='toeoff', context=context)]
         vels[context + '_strike'] = footctrv[strikes]
         vels[context + '_toeoff'] = footctrv[toeoffs]
     if medians:
@@ -623,7 +623,7 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
     datalen = mkrdata[cfg.autoproc.track_markers[0]].shape[0]
 
     logger.debug('acquiring marker-based gait events')
-    events_marker = automark_events(source, mkrdata=mkrdata, mark=False, roi=roi)
+    events_marker = automark_events(source, mkrdata=mkrdata, roi=roi)
 
     # loop over the plates; our internal forceplate index is 0-based
     for plate_ind, fp in enumerate(fpdata):

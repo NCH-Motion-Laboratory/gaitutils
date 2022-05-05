@@ -220,9 +220,13 @@ class Trial:
     length : int
         Trial length in frames.
     offset : int
-        Frame offset of data from beginning of trial. The event numbers will be
-        interpreted relative to the offset, e.g. if the trial offset is 100 and
-        an event occurs at frame 150, its index in the frame data array is 50.
+        Offset of events from beginning of trial (in frames). Gaitutils
+        internally stores events as zero-based, i.e. event at 0 means an event
+        at first frame. Thus, these events can be used directly to index e.g.
+        marker and model data arrays. To recover the original indices of events,
+        you can add the offset. For example, the offset for Nexus is 1 (Nexus
+        uses 1-based index for the frames). Thus, a gaitutils event at frame 0
+        occurs in Nexus at frame 1. For C3D files, the offset is variable.
     framerate : float
         Frame rate for capture (frames / sec).
     analograte : float

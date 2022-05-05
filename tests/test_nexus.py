@@ -317,7 +317,9 @@ def test_event_marking():
     )
     vel = utils._get_foot_contact_vel(mkrdata, fpe)
     evs = utils.automark_events(
-        vicon, vel_thresholds=vel, events_range=[-1500, 1500],
+        vicon,
+        vel_thresholds=vel,
+        events_range=[-1500, 1500],
     )
     nexus._create_events(vicon, evs)
     _events_check(events_dict)

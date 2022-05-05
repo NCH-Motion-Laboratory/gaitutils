@@ -48,8 +48,12 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
 
     def _context_desc(events):
         """Eclipse description string for a given events dict"""
-        n_right = len(events.get_events(context='R', event_type='strike', forceplate=True))
-        n_left = len(events.get_events(context='L', event_type='strike', forceplate=True))
+        n_right = len(
+            events.get_events(context='R', event_type='strike', forceplate=True)
+        )
+        n_left = len(
+            events.get_events(context='L', event_type='strike', forceplate=True)
+        )
         s = ""
         if n_right:
             s += f'{n_right}R'
@@ -437,7 +441,7 @@ def autoproc_session(signals=None):
         instance will be created.
     """
     sessionpath = nexus.get_sessionpath()
-    if (enffiles := sessionutils.get_enfs(sessionpath)):
+    if enffiles := sessionutils.get_enfs(sessionpath):
         _do_autoproc(enffiles, signals=signals)
     else:
         raise GaitDataError('No trials found (no .enf files in session)')

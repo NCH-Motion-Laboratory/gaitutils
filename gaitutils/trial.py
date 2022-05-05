@@ -678,7 +678,8 @@ class Trial:
                         )
                     elif cfg.trial.no_toeoff == 'reject':
                         logger.warning(
-                            'no toeoff for cycle starting at %d, rejecting cycle' % start
+                            'no toeoff for cycle starting at %d, rejecting cycle'
+                            % start
                         )
                         continue
                     else:
@@ -723,4 +724,3 @@ class Trial:
                 cycles.append(cyc)
 
         return cycles
-

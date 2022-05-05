@@ -25,12 +25,13 @@ logger = logging.getLogger(__name__)
 @dataclass
 class GaitEvent:
     """A gait event"""
+
     _event_types = ['strike', 'toeoff', 'general']  # supported event types
     _contexts = [None, 'L', 'R']  # supported context values
-    frame : int
-    event_type : str
-    context : str = None
-    forceplate_index : int = None
+    frame: int
+    event_type: str
+    context: str = None
+    forceplate_index: int = None
 
     def __post_init__(self):
         """Validate arguments"""
@@ -40,6 +41,7 @@ class GaitEvent:
             raise ValueError('Invalid event type')
         if not isinstance(self.frame, int):
             raise TypeError(f'Frame needs to be an int (not {type(self.frame)})')
+
 
 class GaitEvents:
     """A collection of gait events"""
@@ -132,7 +134,6 @@ def get_contexts(right_first=False):
     return _contexts
 
 
-
 def marker_gaps(mdata, ignore_edge_gaps=True):
     """Find gaps for a marker.
 
@@ -177,7 +178,10 @@ def _step_width(source):
     # XXX: could use cycles here, instead of iterating over foot strikes
     strike_frames = dict()
     for context in 'LR':
-        strike_frames[context] = [ev.frame for ev in tr.events.get_events(event_type='strike', context=context)]
+        strike_frames[context] = [
+            ev.frame
+            for ev in tr.events.get_events(event_type='strike', context=context)
+        ]
     for context in 'LR':
         strikes = strike_frames[context]
         sw[context] = list()
@@ -364,8 +368,14 @@ def _get_foot_contact_vel(mkrdata, fp_events, medians=True, roi=None):
             avg_velocity=True,
         )
         footctrv = np.linalg.norm(footctrv_, axis=1)
-        strikes = [ev.frame for ev in fp_events.get_events(event_type='strike', context=context)]
-        toeoffs = [ev.frame for ev in fp_events.get_events(event_type='toeoff', context=context)]
+        strikes = [
+            ev.frame
+            for ev in fp_events.get_events(event_type='strike', context=context)
+        ]
+        toeoffs = [
+            ev.frame
+            for ev in fp_events.get_events(event_type='toeoff', context=context)
+        ]
         vels[context + '_strike'] = footctrv[strikes]
         vels[context + '_toeoff'] = footctrv[toeoffs]
     if medians:
@@ -443,7 +453,6 @@ def _get_foot_points(mkrdata, context, footlen=None):
     return {'heel': heel_edge, 'lateral': lat_edge, 'medial': med_edge, 'toe': foot_end}
 
 
-
 def _leading_foot(mkrdata, roi=None):
     """Determine which foot is leading (ahead in the direction of gait).
     Returns n-length list of 'R' or 'L' correspondingly (n = number of
@@ -485,7 +494,7 @@ def _trial_median_velocity(source, return_curve=False):
         frate = read_data.get_metadata(source)['framerate']
         mkrdata = read_data.get_marker_data(source, cfg.autoproc.track_markers)
         vel_3 = avg_markerdata(mkrdata, cfg.autoproc.track_markers, avg_velocity=True)
-        vel_ = np.sqrt(np.sum(vel_3 ** 2, 1))  # scalar velocity
+        vel_ = np.sqrt(np.sum(vel_3**2, 1))  # scalar velocity
     except (GaitDataError, ValueError):
         if return_curve:
             nanvec = np.empty((100, 1))
@@ -511,7 +520,9 @@ def _point_in_poly(poly, pt):
     return p.contains_point(pt)
 
 
-def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None, return_nplates=False):
+def detect_forceplate_events(
+    source, mkrdata=None, fp_info=None, roi=None, return_nplates=False
+):
     """Detect frames where valid forceplate strikes and toeoffs occur.
     Uses forceplate data and estimated foot shape.
 
@@ -693,7 +704,10 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None, retur
             # this needs marker-based events
             if foot_contacts_ok and events_marker is not None:
                 contra_context = 'R' if this_context == 'L' else 'L'
-                contra_strikes = [ev.frame for ev in events_marker.get_events('strike', contra_context)]
+                contra_strikes = [
+                    ev.frame
+                    for ev in events_marker.get_events('strike', contra_context)
+                ]
                 contra_strikes = np.array(contra_strikes)
                 contra_strikes_next = contra_strikes[
                     np.where(contra_strikes > strike_fr)
@@ -737,8 +751,12 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None, retur
                 'plate %d: valid foot strike on %s at frame %d'
                 % (plate_ind, context, strike_fr)
             )
-            strike_ev = GaitEvent(strike_fr, 'strike', context, forceplate_index=plate_ind)
-            toeoff_ev = GaitEvent(toeoff_fr, 'toeoff', context, forceplate_index=plate_ind)
+            strike_ev = GaitEvent(
+                strike_fr, 'strike', context, forceplate_index=plate_ind
+            )
+            toeoff_ev = GaitEvent(
+                toeoff_fr, 'toeoff', context, forceplate_index=plate_ind
+            )
             results.append(strike_ev)
             results.append(toeoff_ev)
         else:

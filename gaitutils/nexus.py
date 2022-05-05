@@ -41,8 +41,10 @@ def _find_nexus_path():
     # educated guess for Vicon software install path
     # from 2.13 onwards, Nexus will reside in the 64-bit dir
     # most preferable paths are last in the list
-    vicon_paths = [Path(r'C:\Program Files (x86)\Vicon'),
-                   Path(r'C:\Program Files\Vicon')]
+    vicon_paths = [
+        Path(r'C:\Program Files (x86)\Vicon'),
+        Path(r'C:\Program Files\Vicon'),
+    ]
     nexus_dirs_all = list()
     # get the latest version for each path
     for vicon_path in vicon_paths:
@@ -67,6 +69,7 @@ def _find_nexus_path():
         return nexus_dirs_all[-1]
     else:
         return None
+
 
 def _nexus_pid():
     """Try to return the PID of the currently running Nexus process"""
@@ -650,6 +653,7 @@ def _get_model_data(vicon, model):
         modeldata[var] = data
     return modeldata
 
+
 def _create_events(vicon, gaitevents):
     """Create foot strike and toeoff events in Nexus"""
     logger.debug('marking events in Nexus')
@@ -659,6 +663,7 @@ def _create_events(vicon, gaitevents):
         frame = ev.frame + 1  # Nexus uses 1-based frame numbering
         ev_type_nexus = 'Foot Strike' if ev.event_type == 'strike' else 'Foot Off'
         vicon.CreateAnEvent(subjectname, context_str, ev_type_nexus, frame, 0.0)
+
 
 def rigid_body_extrapolate(
     vicon,

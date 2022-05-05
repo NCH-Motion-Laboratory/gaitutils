@@ -24,14 +24,29 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class GaitEvent:
-    """A gait event"""
+    """A gait event.
+    
+    Events are usually either foot strike or toeoff, but we also support a
+    "general" event. Events can have a context: either right foot, left foot or
+    None (mostly useful for general events).
 
+    Events occur at a given frame. We use 0-based indexing for the frames, i.e.
+    the first frame is 0. Thus, frames can directly be used to index data
+    arrays. Note that gaitutils internal frame numbers differ from event frames
+    shown in Nexus or C3D files. When data is read, the frames are corrected for
+    the Nexus or C3d offset. The offset is available in the Nexus or C3D
+    metadata.
+
+    Foot strike and toeoff may occur on a forceplate. For such events, the
+    forceplate_index can be set. Our internal forceplate index is also 0-based,
+    i.e. the first Nexus forceplate ("FP1" in Eclipse) is denoted by 0.
+    """
     _event_types = ['strike', 'toeoff', 'general']  # supported event types
     _contexts = [None, 'L', 'R']  # supported context values
-    frame: int
-    event_type: str
-    context: str = None
-    forceplate_index: int = None
+    frame: int  # the frame of occurence
+    event_type: str  # the type of event
+    context: str = None  # the context
+    forceplate_index: int = None  # forceplate index
 
     def __post_init__(self):
         """Validate arguments"""

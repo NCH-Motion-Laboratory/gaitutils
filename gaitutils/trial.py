@@ -288,11 +288,6 @@ class Trial:
         )
         self._forceplate_data = None
         self._marker_data = None
-        if not self.is_static:
-            self.fp_events = self._get_fp_events()
-            self.events.merge_forceplate_events(self.fp_events)
-        else:
-            self.fp_events = utils.GaitEvents()
         self._models_data = dict()
         self.stddev_data = None  # AvgTrial only
         # frames 0...length
@@ -304,7 +299,7 @@ class Trial:
         self.samplesperframe = self.analograte / self.framerate
         # create the gait cycles
         if not self.is_static:
-            self.cycles = list(self._scan_cycles())
+            self.cycles = self._scan_cycles()
         else:
             self.cycles = list()
         self.ncycles = len(self.cycles)
@@ -545,20 +540,6 @@ class Trial:
         """Return accelerometer data."""
         raise NotImplementedError
 
-    def _get_fp_events(self):
-        """Read the forceplate events."""
-        try:
-            fp_info = (
-                eclipse._eclipse_forceplate_keys(self.eclipse_data)
-                if cfg.trial.use_eclipse_fp_info and self.use_eclipse_fp_info
-                else None
-            )
-            # FIXME: marker data already read?
-            return utils.detect_forceplate_events(self.source, fp_info=fp_info)
-        except GaitDataError:
-            logger.warning('Could not detect forceplate events')
-            return utils.GaitEvents()
-
     def get_cycles(self, cyclespec, max_cycles_per_context=None):
         """Get specified gait cycles from the trial.
 
@@ -645,15 +626,20 @@ class Trial:
         return sorted(cycs_ok, key=lambda cyc: cyc.start)
 
     def _scan_cycles(self):
+        """Make gait cycles based on foot strike and toeoff events"""
+
+        cycles = list()
+
         for context, context_desc in utils.get_contexts():
             strike_events = self.events.get_events('strike', context)
             toeoff_events = self.events.get_events('toeoff', context)
             toeoff_frames = [ev.frame for ev in toeoff_events]
 
+            # this relies on events being sorted by frame (but they should be)
             for k, (ev0, ev1) in enumerate(zip(strike_events[:-1], strike_events[1:])):
                 on_forceplate = ev0.forceplate_index is not None
                 fp_str = ' (f)' if on_forceplate else ''
-                name = f'{context_desc}{k+1}{fp_str}'
+                cyclename = f'{context_desc}{k+1}{fp_str}'
                 start, end = ev0.frame, ev1.frame
                 toeoff = [fr for fr in toeoff_frames if fr > start and fr < end]
                 if len(toeoff) == 0:
@@ -694,7 +680,7 @@ class Trial:
                 else:
                     toeoff = toeoff[0]
 
-                yield Gaitcycle(
+                cyc = Gaitcycle(
                     start,
                     end,
                     toeoff,
@@ -704,5 +690,9 @@ class Trial:
                     self.samplesperframe,
                     trial=self,
                     index=k + 1,
-                    name=name,
+                    name=cyclename,
                 )
+                cycles.append(cyc)
+
+        return cycles
+

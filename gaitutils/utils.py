@@ -536,12 +536,12 @@ def _point_in_poly(poly, pt):
 
 
 def detect_forceplate_events(
-    source, mkrdata=None, fp_info=None, roi=None, return_nplates=False
+    source, marker_data=None, fp_info=None, roi=None, return_nplates=False
 ):
     """Detect frames where valid forceplate strikes and toeoffs occur.
     Uses forceplate data and estimated foot shape.
 
-    If supplied, mkrdata must include foot and pelvis markers. Otherwise
+    If supplied, marker_data must include foot and pelvis markers. Otherwise
     it will be read.
 
     If fp_info dict is supplied, no marker-based checks will be done;
@@ -555,13 +555,13 @@ def detect_forceplate_events(
     to roi.
     """
 
-    def _foot_plate_check(fpdata, mkrdata, fr0, context, footlen):
+    def _foot_plate_check(fpdata, marker_data, fr0, context, footlen):
         """Helper for foot-plate check.
 
         Returns 0, 1, 2 for: completely outside plate, partially outside plate,
         inside plate, respectively.
         """
-        foot_points = _get_foot_points(mkrdata, context, footlen)
+        foot_points = _get_foot_points(marker_data, context, footlen)
         plate_corners = fpdata['plate_corners']
         logger.debug(f'{plate_corners=}')
         pts_ok = list()
@@ -676,18 +676,18 @@ def detect_forceplate_events(
     else:
         logger.debug('foot length parameter not set')
     bodymass = info['subj_params']['Bodymass']
-    if mkrdata is None:  # not supplied as parameter
+    if marker_data is None:  # not supplied as parameter
         mkrs = (
             cfg.autoproc.right_foot_markers
             + cfg.autoproc.left_foot_markers
             + cfg.autoproc.track_markers
         )
-        mkrdata = read_data.get_marker_data(source, mkrs)
+        marker_data = read_data.get_marker_data(source, mkrs)
 
-    datalen = mkrdata[cfg.autoproc.track_markers[0]].shape[0]
+    datalen = marker_data[cfg.autoproc.track_markers[0]].shape[0]
 
     logger.debug('acquiring marker-based gait events')
-    events_marker = automark_events(source, mkrdata=mkrdata, roi=roi)
+    events_marker = automark_events(source, mkrdata=marker_data, roi=roi)
 
     # loop over the plates; our internal forceplate index is 0-based
     for plate_ind, fp in enumerate(fpdata):
@@ -707,13 +707,13 @@ def detect_forceplate_events(
             settle_fr = int(50 / 1000 * info['framerate'])
             fr0 = strike_fr + settle_fr
             # context is determined by leading foot at strike time
-            this_context = _leading_foot(mkrdata, roi=roi)[fr0]
+            this_context = _leading_foot(marker_data, roi=roi)[fr0]
             if this_context is None:
                 raise GaitDataError('cannot determine leading foot from marker data')
             footlen = rfootlen if this_context == 'R' else lfootlen
             logger.debug(f'checking contact for leading foot: {this_context}')
             foot_contacts_ok = (
-                _foot_plate_check(fp, mkrdata, fr0, this_context, footlen) == 2
+                _foot_plate_check(fp, marker_data, fr0, this_context, footlen) == 2
             )
             # to eliminate double contacts, check that contralateral foot is not on plate
             # this needs marker-based events
@@ -739,7 +739,7 @@ def detect_forceplate_events(
                             '(at frame %d)' % fr0
                         )
                         contra_next_ok = (
-                            _foot_plate_check(fp, mkrdata, fr0, contra_context, footlen)
+                            _foot_plate_check(fp, marker_data, fr0, contra_context, footlen)
                             == 0
                         )
                         foot_contacts_ok &= contra_next_ok
@@ -755,7 +755,7 @@ def detect_forceplate_events(
                         'foot (at frame %d)' % fr0
                     )
                     contra_prev_ok = (
-                        _foot_plate_check(fp, mkrdata, fr0, contra_context, footlen)
+                        _foot_plate_check(fp, marker_data, fr0, contra_context, footlen)
                         == 0
                     )
                     foot_contacts_ok &= contra_prev_ok

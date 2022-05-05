@@ -13,6 +13,7 @@ import numpy as np
 import re
 import logging
 from pathlib import Path
+from copy import copy
 
 from .emg import EMG
 from .config import cfg
@@ -259,6 +260,8 @@ class Trial:
         # to avoid boilerplate, insert the metadata directly as instance
         # attributes
         self.__dict__.update(meta)
+        # just in case, let's keep the original events (unmodified by forceplate data)
+        self._raw_events = copy(self.events)
         if self.length == 1:
             raise GaitDataError('Cannot deal with single-frame trials (yet)')
         self.sessiondir = self.sessionpath.name
@@ -292,6 +295,8 @@ class Trial:
         )
         self._forceplate_data = None
         self._marker_data = None
+        # read forceplate events and update the event data, since we need to
+        # know which gait cycles start on a forceplate
         if not self.is_static:
             self.fp_events = self._get_fp_events()
             self.events.merge_forceplate_events(self.fp_events)

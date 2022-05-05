@@ -81,11 +81,11 @@ def test_nexus_reader():
     assert_equal(tr.offset, 1)
     cycs = tr.get_cycles({'L': 'all'})
     cyc = cycs[1]
-    assert_equal(cyc.start, 1161)
+    assert_equal(cyc.start, 1162)
     assert_equal(cyc.end, 1387)
     assert_equal(cyc.context, 'L')
     assert_equal(cyc.on_forceplate, True)
-    assert_equal(cyc.toeoff, 1303)
+    assert_equal(cyc.toeoff, 1299)
 
 
 @pytest.mark.nexus

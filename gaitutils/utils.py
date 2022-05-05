@@ -100,6 +100,24 @@ class GaitEvents:
                     ev.frame = fp_ev.frame
                     ev.forceplate_index = fp_ev.forceplate_index
 
+    def get_forceplate_info(self, n_plates):
+        """Return Eclipse-style forceplate info dict and a coded string"""
+        fp_dict = dict()
+        coded = ''
+        for ind in range(n_plates):
+            strike_events = self.get_events(event_type='strike', forceplate=True)
+            plate_strikes = [ev for ev in strike_events if ev.forceplate_index == ind]
+            if plate_strikes:
+                strike = plate_strikes[0]
+                plate_context = 'Right' if strike.context == 'R' else 'Left'
+                coded += strike.context
+            else:
+                plate_context = 'Invalid'
+                coded += 'X'
+            plate_name = f'FP{ind + 1}'  # Eclipse uses 1-based index
+            fp_dict[plate_name] = plate_context
+        return fp_dict, coded
+
 
 def get_contexts(right_first=False):
     """Return the usual contexts and their names as pairs.

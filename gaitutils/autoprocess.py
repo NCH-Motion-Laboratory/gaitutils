@@ -46,10 +46,10 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         logger.debug('saving trial')
         vicon.SaveTrial(cfg.autoproc.nexus_timeout)
 
-    def _context_desc(fpev):
+    def _context_desc(events):
         """Eclipse description string for a given events dict"""
-        nr = len(fpev.get_events(context='R', forceplate=True))
-        nl = len(fpev.get_events(context='L', forceplate=True))
+        nr = len(events.get_events(context='R', forceplate=True))
+        nl = len(events.get_events(context='L', forceplate=True))
         s = ""
         if nr:
             s += f'{nr}R'
@@ -246,8 +246,6 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         eclipse_str += _context_desc(fpev)
         eclipse_str += ','
 
-        valid = fpev['valid']
-        trial_info['valid'] = valid
         trial_info['fpev'] = fpev
         trial_info['foot_vel'] = foot_vel
 
@@ -330,11 +328,11 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
                     vicon,
                     vel_thresholds=trial_info['foot_vel'],
                     mkrdata=trial_info['mkrdata'],
-                    fp_events=trial_info['fpev'],
                     events_range=cfg.autoproc.events_range,
-                    start_on_forceplate=cfg.autoproc.start_on_forceplate,
                     roi=trial_info['roi'],
                 )
+                evs.merge_forceplate_events(trial_info['fpev'])
+                nexus._create_events(vicon, evs)
             except GaitDataError:  # cannot automark
                 eclipse_str = '%s,%s' % (
                     trial_info['description'],

@@ -69,7 +69,7 @@ class GaitEvents:
         for ev in self.events:
             s += f'{ev.context} {ev.event_type} at {ev.frame}'
             if ev.forceplate_index is not None:
-                s += ' (on forceplate FP{ev.forceplate_index + 1})'
+                s += f' (on forceplate FP{ev.forceplate_index + 1})'
             s += '\n'
         s += '>'
         return s

@@ -196,22 +196,47 @@ Evaluation of forceplate contacts
 
 For the implementation, see :func:`gaitutils.utils.detect_forceplate_events`.
 
-Detection of forceplate contacts is necessary for kinetic models. If a gait
-cycle starts with a valid foot contact, we will be able know the reaction force
-for the duration of the cycle. From this force, various kinetic values can be
-computed, such as the moment at the knee joint.
+Detection of forceplate contacts is necessary for kinetic models. We only want
+to consider cycles where valid forceplate contact occurs. For such cycles, we
+will be able know the reaction force for the duration of the cycle. From this
+force, various kinetic values can be computed, such as the moment at the knee
+joint.
+
+Nexus stores forceplate contact information in the Eclipse database. However for
+each plate, only the context (right, left or invalid) is stored. Nexus does not
+e.g. store the frames where the contacts occur. Thus, we have to detect them
+ourselves.
 
 “Valid” forceplate contact means that 1) the foot is completely inside the
 forceplate area and 2) the contralateral foot does not contact the same plate
-during the cycle.
+during the cycle ("double contact"). In gaitutils, the foot is modelled as a
+simple triangle. The vertices of the triangle are estimated from marker data.
+The position of the heel marker is used as the heel vertex. For the other two
+vertices ("big toe" and "little toe") there are no markers available. Thus, the
+code attempts to estimate their positions. If explicit information about foot
+length is available, the accuracy will be improved. Foot length can be supplied
+as an extra model parameter in Nexus (``RightFootLen`` and ``LeftFootLen``).
 
-In gaitutils, the foot is modelled as a simple triangle. The vertices of the
-triangle are estimated from marker data. The position of the heel marker is used
-as the heel vertex. For the other two vertices ("big toe" and "little toe")
-there are no markers available. Thus, the code attempts to estimate their
-positions. If explicit information about foot length is available, the accuracy
-will be improved. Foot length can be supplied as an extra model parameter in
-Nexus (``RightFootLen`` and ``LeftFootLen``).
+
+Creation of Trial objects
+-------------------------
+
+Creation of Trial() instances goes roughly as follows:
+
+- Trial metadata (events, subject information etc.) is read from source (Nexus or C3D).
+
+- Forceplate contacts are detected automatically. This needs to be done at trial
+  creation, since we need to know which gait cycles have valid forceplate
+  contact (see above).
+
+- Model, marker and EMG data is read, mostly lazily (not yet at trial creation).
+  For C3D-based trial objects, the laziness is largely inconsequential. For
+  trials that read directly from Nexus, this presents a potential problem, as the
+  underlying Nexus data may change between the API calls. On the other hand, the Nexus
+  data may change at any time due to e.g. user switching trials etc. Thus, it is
+  recommended to read data from C3D files. It is also faster.
+
+- Finally, gait cycles are created based on the events.
 
 
 Contributing

@@ -298,6 +298,7 @@ class Trial:
         # read forceplate events and update the event data, since we need to
         # know which gait cycles start on a forceplate
         if not self.is_static:
+            logger.debug('updating events with forceplate info')
             self.fp_events = self._get_fp_events()
             self.events.merge_forceplate_events(self.fp_events)
         else:

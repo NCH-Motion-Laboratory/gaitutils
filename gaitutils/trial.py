@@ -203,6 +203,9 @@ class Gaitcycle:
 class Trial:
     """Gait trial class.
 
+    Represents a single gait trial (Nexus trial or C3D file).
+    Used as a container for gait data, gait cycles and related metadata.
+
     Parameters
     ----------
     source : str | Path | instance of ViconNexus
@@ -213,7 +216,7 @@ class Trial:
     trialname : str
         Name of trial.
     eclipse_data : dict
-        The Eclipse data for the trial. Keys are Eclipse fields and values are
+        Vicon Eclipse data for the trial. Keys are Eclipse fields and values are
         the corresponding data.
     sessionpath : Path
         Path to session directory.
@@ -253,8 +256,8 @@ class Trial:
         logger.debug(f'new trial instance from {source}')
         self.source = source
         meta = read_data.get_metadata(source)
-        # insert metadata dict directly as instance attributes (those are
-        # documented above)
+        # to avoid boilerplate, insert the metadata directly as instance
+        # attributes
         self.__dict__.update(meta)
         if self.length == 1:
             raise GaitDataError('Cannot deal with single-frame trials (yet)')
@@ -277,6 +280,7 @@ class Trial:
         else:
             logger.debug('no .enf file found')
             self.eclipse_data = defaultdict(lambda: '', {})
+        # heuristic for static trials
         self.is_static = self.eclipse_data['TYPE'].upper() == 'STATIC'
         # handle session quirks
         self._handle_quirks()

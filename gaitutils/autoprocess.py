@@ -277,6 +277,8 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         # write Eclipse fp values according to our detection, or reset them
         # note that Eclipse fp data affects e.g. Plug-in Gait functioning
         fp_info = fpev['our_fp_info']
+        n_plates = len(nexus._get_forceplate_ids())
+        fp_info, coded = fpev.get_forceplate_info(n_plates)
         # try to avoid a possible race condition where Nexus is still
         # holding the .enf file open
         time.sleep(0.1)
@@ -480,9 +482,11 @@ def automark_trial(plot=False):
     foot_markers = cfg.autoproc.left_foot_markers + cfg.autoproc.right_foot_markers
     mkrs = foot_markers + utils._pig_pelvis_markers()
     mkrdata = read_data.get_marker_data(vicon, mkrs, ignore_missing=True)
-    fpe = utils.detect_forceplate_events(vicon, mkrdata, roi=roi)
-    vel = utils._get_foot_contact_vel(mkrdata, fpe, roi=roi)
-    utils.automark_events(vicon, vel_thresholds=vel, fp_events=fpe, roi=roi, plot=plot)
+    fpev = utils.detect_forceplate_events(vicon, mkrdata, roi=roi)
+    vel = utils._get_foot_contact_vel(mkrdata, fpev, roi=roi)
+    evs = utils.automark_events(vicon, vel_thresholds=vel, roi=roi, plot=plot)
+    evs.merge_forceplate_events(fpev)
+    nexus._create_events(vicon, evs)
 
 
 def _copy_session_videos():

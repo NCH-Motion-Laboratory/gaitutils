@@ -224,9 +224,10 @@ class Trial:
         internally stores events as zero-based, i.e. event at 0 means an event
         at first frame. Thus, these events can be used directly to index e.g.
         marker and model data arrays. To recover the original indices of events,
-        you can add the offset. For example, the offset for Nexus is 1 (Nexus
-        uses 1-based index for the frames). Thus, a gaitutils event at frame 0
-        occurs in Nexus at frame 1. For C3D files, the offset is variable.
+        you can add the offset. For example, the offset for Nexus is always 1
+        (Nexus uses 1-based index for the frames). Thus, a gaitutils event at
+        frame 0 occurs in Nexus at frame 1. For C3D files, the offset is
+        variable.
     framerate : float
         Frame rate for capture (frames / sec).
     analograte : float
@@ -235,9 +236,8 @@ class Trial:
         Subject name.
     subj_params : dict
         Other subject parameters (bodymass etc.)
-    events : TrialEvents
-        Trial events (foot strikes, toeoffs etc.). These events are read from
-        the trial data (i.e. not autodetected).
+    events : GaitEvents
+        Trial events (foot strikes, toeoffs etc.).
     """
 
     def __repr__(self):

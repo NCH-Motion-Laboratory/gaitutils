@@ -305,7 +305,8 @@ def test_event_marking():
 
     # automatic thresholding (do not respect fp events)
     vicon.ClearAllEvents()
-    utils.automark_events(vicon, events_range=[-1500, 1500])
+    evs = utils.automark_events(vicon, events_range=[-1500, 1500])
+    nexus._create_events(vicon, evs)
     _events_check(events_dict_nofp)
 
     # using forceplate thresholds
@@ -315,9 +316,10 @@ def test_event_marking():
         vicon, cfg.autoproc.left_foot_markers + cfg.autoproc.right_foot_markers
     )
     vel = utils._get_foot_contact_vel(mkrdata, fpe)
-    utils.automark_events(
-        vicon, vel_thresholds=vel, events_range=[-1500, 1500], fp_events=fpe
+    evs = utils.automark_events(
+        vicon, vel_thresholds=vel, events_range=[-1500, 1500],
     )
+    nexus._create_events(vicon, evs)
     _events_check(events_dict)
 
 

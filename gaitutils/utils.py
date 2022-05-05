@@ -42,17 +42,17 @@ class GaitEvent:
             raise TypeError(f'Frame needs to be an int (not {type(self.frame)})')
 
 class GaitEvents:
-    """A (mutable) collection of gait events"""
+    """A collection of gait events"""
 
     def __init__(self):
         self.events = list()
 
     def __repr__(self) -> str:
         s = '<GaitEvents |\n'
-        for ev in sorted(self.events, key=lambda ev: ev.frame):
+        for ev in self.events:
             s += f'{ev.context} {ev.event_type} at {ev.frame}'
             if ev.forceplate_index is not None:
-                s += '(on forceplate)'
+                s += ' (on forceplate FP{ev.forceplate_index + 1})'
             s += '\n'
         s += '>'
         return s
@@ -62,6 +62,8 @@ class GaitEvents:
         if not isinstance(event, GaitEvent):
             raise ValueError('append() can only accept GaitEvent instances')
         self.events.append(event)
+        # keep events sorted
+        self.events.sort(key=lambda ev: ev.frame)
 
     @staticmethod
     def filter_context(events, context):

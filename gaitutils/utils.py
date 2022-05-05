@@ -413,7 +413,9 @@ def _get_foot_points(mkrdata, context, footlen=None):
     if footlen is None:
         # rough estimate based on marker distances
         logger.debug('using estimated foot length')
-        footlen = np.median(ha_len) * cfg.autoproc.foot_relative_len
+        # a lot of zero entries (gaps) can throw off the median computation
+        ha_len_nonzero = ha_len[np.where(ha_len > 0)]
+        footlen = np.median(ha_len_nonzero) * cfg.autoproc.foot_relative_len
     foot_end = heeP + htVn * footlen
     # projection of HEE-ANK to HEE-TOE line
     ha_htV = htVn * np.sum(haV * htVn, axis=1)[:, np.newaxis]

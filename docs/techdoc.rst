@@ -196,11 +196,11 @@ Evaluation of forceplate contacts
 
 For the implementation, see :func:`gaitutils.utils.detect_forceplate_events`.
 
-Detection of forceplate contacts is necessary for kinetic models. We only want
-to consider cycles where valid forceplate contact occurs. For such cycles, we
-will be able know the reaction force for the duration of the cycle. From this
-force, various kinetic values can be computed, such as the moment at the knee
-joint.
+Detection of forceplate contacts is necessary for kinetic models, for which we
+only want to consider cycles where valid forceplate contact occurs. For such
+cycles, we will be able know the reaction force for the duration of the cycle.
+From this force, various kinetic values can be computed, such as the moment at
+the knee joint.
 
 Nexus stores forceplate contact information in the Eclipse database. However for
 each plate, only the context (right, left or invalid) is stored. Nexus does not
@@ -209,13 +209,14 @@ ourselves.
 
 “Valid” forceplate contact means that 1) the foot is completely inside the
 forceplate area and 2) the contralateral foot does not contact the same plate
-during the cycle ("double contact"). In gaitutils, the foot is modelled as a
-simple triangle. The vertices of the triangle are estimated from marker data.
-The position of the heel marker is used as the heel vertex. For the other two
-vertices ("big toe" and "little toe") there are no markers available. Thus, the
-code attempts to estimate their positions. If explicit information about foot
-length is available, the accuracy will be improved. Foot length can be supplied
-as an extra model parameter in Nexus (``RightFootLen`` and ``LeftFootLen``).
+during the cycle (which would be a "double contact" and invalidate the force
+data). In gaitutils, the foot is modelled as a simple triangle. The vertices of
+the triangle are estimated from marker data. The position of the heel marker is
+used as the heel vertex. For the other two vertices ("big toe" and "little toe")
+there are no markers available. Thus, the code attempts to estimate their
+positions. If explicit information about foot length is available, the accuracy
+will be improved. Foot length can be supplied as an extra model parameter in
+Nexus (``RightFootLen`` and ``LeftFootLen``).
 
 
 Creation of Trial objects

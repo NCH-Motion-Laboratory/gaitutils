@@ -48,15 +48,15 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
 
     def _context_desc(events):
         """Eclipse description string for a given events dict"""
-        nr = len(events.get_events(context='R', forceplate=True))
-        nl = len(events.get_events(context='L', forceplate=True))
+        n_right = len(events.get_events(context='R', event_type='strike', forceplate=True))
+        n_left = len(events.get_events(context='L', event_type='strike', forceplate=True))
         s = ""
-        if nr:
-            s += f'{nr}R'
-        if nr and nl:
+        if n_right:
+            s += f'{n_right}R'
+        if n_right and n_left:
             s += '/'
-        if nl:
-            s += f'{nl}L'
+        if n_left:
+            s += f'{n_left}L'
         return s or cfg.autoproc.enf_descriptions['context_none']
 
     def _fail(trial_info, reason):
@@ -276,8 +276,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
 
         # write Eclipse fp values according to our detection, or reset them
         # note that Eclipse fp data affects e.g. Plug-in Gait functioning
-        fp_info = fpev['our_fp_info']
-        n_plates = len(nexus._get_forceplate_ids())
+        n_plates = len(nexus._get_forceplate_ids(vicon))
         fp_info, coded = fpev.get_forceplate_info(n_plates)
         # try to avoid a possible race condition where Nexus is still
         # holding the .enf file open
@@ -351,12 +350,12 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             # crop trial around events
             if cfg.autoproc.crop_margin is not None:
                 if nexus._nexus_ver_greater(2, 5):
-                    evs_all = list(itertools.chain.from_iterable(evs.values()))
-                    if evs_all:
+                    ev_frames = [ev.frame for ev in evs.get_events()]
+                    if ev_frames:
                         # when setting roi, do not go beyond trial range
                         minfr, maxfr = vicon.GetTrialRange()
-                        roistart = max(min(evs_all) - cfg.autoproc.crop_margin, minfr)
-                        roiend = min(max(evs_all) + cfg.autoproc.crop_margin, maxfr)
+                        roistart = max(min(ev_frames) - cfg.autoproc.crop_margin, minfr)
+                        roiend = min(max(ev_frames) + cfg.autoproc.crop_margin, maxfr)
                         # method cannot take numpy.int64
                         vicon.SetTrialRegionOfInterest(int(roistart), int(roiend))
                 else:
@@ -439,11 +438,10 @@ def autoproc_session(signals=None):
         instance will be created.
     """
     sessionpath = nexus.get_sessionpath()
-    enffiles = sessionutils.get_enfs(sessionpath)
-    if not enffiles:
-        raise GaitDataError('No trials found (no .enf files in session)')
-    if enffiles:
+    if (enffiles := sessionutils.get_enfs(sessionpath)):
         _do_autoproc(enffiles, signals=signals)
+    else:
+        raise GaitDataError('No trials found (no .enf files in session)')
 
 
 def autoproc_trial(signals=None):
@@ -455,8 +453,7 @@ def autoproc_trial(signals=None):
         This is used to emit processing-related status signals. If None, a dummy
         instance will be created.
     """
-    fn = nexus._get_trialname()
-    if not fn:
+    if not (fn := nexus._get_trialname()):
         raise GaitDataError('No trial open in Nexus')
     # XXX: this may fail with old-style enf naming (2015 and pre)
     fn += '.Trial.enf'

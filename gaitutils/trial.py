@@ -292,6 +292,11 @@ class Trial:
         )
         self._forceplate_data = None
         self._marker_data = None
+        if not self.is_static:
+            self.fp_events = self._get_fp_events()
+            self.events.merge_forceplate_events(self.fp_events)
+        else:
+            self.fp_events = utils.GaitEvents()
         self._models_data = dict()
         self.stddev_data = None  # AvgTrial only
         # frames 0...length
@@ -543,6 +548,20 @@ class Trial:
     def get_accelerometer_data(self):
         """Return accelerometer data."""
         raise NotImplementedError
+
+    def _get_fp_events(self):
+        """Read the forceplate events."""
+        try:
+            fp_info = (
+                eclipse._eclipse_forceplate_keys(self.eclipse_data)
+                if cfg.trial.use_eclipse_fp_info and self.use_eclipse_fp_info
+                else None
+            )
+            # FIXME: marker data already read?
+            return utils.detect_forceplate_events(self.source, fp_info=fp_info)
+        except GaitDataError:
+            logger.warning('Could not detect forceplate events')
+            return utils.GaitEvents()
 
     def get_cycles(self, cyclespec, max_cycles_per_context=None):
         """Get specified gait cycles from the trial.

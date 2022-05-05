@@ -206,7 +206,7 @@ def get_sessionpath():
         vicon = viconnexus()
         sessionpath = vicon.GetTrialName()[0]
     except IOError:  # may be raised if Nexus was just terminated
-        sessionpath = None
+        raise GaitDataError('Cannot communicate with Nexus')
     if not sessionpath:
         raise GaitDataError(
             'Cannot get Nexus session path, no session or maybe in Live mode?'
@@ -256,6 +256,17 @@ def _get_trialname():
     """Get current Nexus trialname without the session path"""
     vicon = viconnexus()
     return vicon.GetTrialName()[1]
+
+
+def _check_nexus_trial_identity(sessionpath, trialname):
+    """Check if currently loaded trial matches the given sessionpath and trialname."""
+    try:
+        sp = get_sessionpath()
+        tr = _get_trialname()
+    except GaitDataError:
+        return False
+    if not (sp == sessionpath and tr == trialname):
+        raise GaitDataError('The underlying Nexus trial has changed.')
 
 
 def _is_vicon_instance(obj):

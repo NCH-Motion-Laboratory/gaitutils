@@ -229,12 +229,13 @@ Creation of Trial() instances goes roughly as follows:
   creation, since we need to know which gait cycles have valid forceplate
   contact (see above).
 
-- Model, marker and EMG data is read, mostly lazily (not yet at trial creation).
-  For C3D-based trial objects, the laziness is largely inconsequential. For
-  trials that read directly from Nexus, this presents a potential problem, as the
-  underlying Nexus data may change between the API calls. On the other hand, the Nexus
-  data may change at any time due to e.g. user switching trials etc. Thus, it is
-  recommended to read data from C3D files. It is also faster.
+- Model, marker and EMG data is read, mostly lazily (not at trial creation, but
+  later when the data is needed). For C3D-based trial objects, the laziness is
+  largely inconsequential. For trials that read directly from Nexus, this
+  presents a potential problem, as the underlying Nexus data may change between
+  the API calls. gaitutils tries to keep track of when the underlying data has
+  changed. However, for this and other reasons (e.g. speed), it is recommended
+  to create trial objects from C3D files instead.
 
 - Finally, gait cycles are created based on the events.
 

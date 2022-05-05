@@ -256,6 +256,7 @@ class Trial:
     def __init__(self, source):
         logger.debug(f'new trial instance from {source}')
         self.source = source
+        self._source_is_nexus = nexus._is_vicon_instance(source)
         meta = read_data.get_metadata(source)
         # to avoid boilerplate, insert the metadata directly as instance
         # attributes
@@ -318,6 +319,15 @@ class Trial:
         else:
             self.cycles = list()
         self.ncycles = len(self.cycles)
+
+    def _check_nexus_trial_still_valid(self):
+        """Check if Nexus still has the original trial loaded.
+        
+        Lazy reads using Vicon Nexus are problematic, since the Nexus trial may
+        change at any time due to e.g. user actions. Thus we should try to
+        ensure that the original trial instance is still loaded in Nexus.
+        """
+        nexus._check_nexus_trial_identity(self.sessionpath, self.trialname)
 
     def _handle_quirks(self):
         """Handle session quirks"""
@@ -443,6 +453,8 @@ class Trial:
     def _full_marker_data(self):
         """Return the full marker data dict."""
         if self._marker_data is None:
+            if self._source_is_nexus:
+                self._check_nexus_trial_still_valid()
             self._marker_data = read_data.get_marker_data(self.source, self.markers)
         return self._marker_data
 
@@ -453,6 +465,8 @@ class Trial:
             raise ValueError(f'No model found for {var}')
         if model_.desc not in self._models_data:
             # read and cache model data
+            if self._source_is_nexus:
+                self._check_nexus_trial_still_valid()
             modeldata = read_data.get_model_data(self.source, model_)
             self._models_data[model_.desc] = modeldata
         return self._models_data[model_.desc][var]
@@ -538,6 +552,8 @@ class Trial:
             and data is the marker data as a (Nt, 3) ndarray.
         """
         if not self._forceplate_data:
+            if self._source_is_nexus:
+                self._check_nexus_trial_still_valid()
             self._forceplate_data = read_data.get_forceplate_data(self.source)
         if nplate < 0 or nplate >= len(self._forceplate_data):
             raise GaitDataError('Invalid plate index %d' % nplate)

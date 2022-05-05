@@ -336,7 +336,10 @@ def _check_markers_flipped(mkrdata):
 
 
 def _principal_movement_direction(mdata):
-    """Return principal movement direction (dimension of maximum variance)"""
+    """Return principal movement direction (dimension of maximum variance).
+    Used to find out whether gait occurs in the x- or y-dimension of lab frame.
+    Returns 0 for x, 1 for y.
+    """
     inds_ok = np.where(np.any(mdata, axis=1))  # make sure that gaps are ignored
     return np.argmax(np.var(mdata[inds_ok], axis=0))
 
@@ -438,6 +441,7 @@ def _get_foot_points(mkrdata, context, footlen=None):
     return {'heel': heel_edge, 'lateral': lat_edge, 'medial': med_edge, 'toe': foot_end}
 
 
+
 def _leading_foot(mkrdata, roi=None):
     """Determine which foot is leading (ahead in the direction of gait).
     Returns n-length list of 'R' or 'L' correspondingly (n = number of
@@ -448,14 +452,20 @@ def _leading_foot(mkrdata, roi=None):
     )
     # FIXME: should not use a single dim here
     gait_dim = _principal_movement_direction(subj_pos)
-    gait_dir = np.median(np.diff(subj_pos, axis=0), axis=0)[gait_dim]
+    pos_diff = np.diff(subj_pos, axis=0)[:, gait_dim]
+    gait_dir = np.median(pos_diff[np.where(pos_diff > 0)])
+    if gait_dir > 0:
+        cmpfun = np.greater
+    elif gait_dir < 0:
+        cmpfun = np.less
+    else:
+        raise GaitDataError('cannot determine gait direction')
     lfoot = avg_markerdata(
         mkrdata, cfg.autoproc.left_foot_markers, roi=roi, fail_on_gaps=False
     )[:, gait_dim]
     rfoot = avg_markerdata(
         mkrdata, cfg.autoproc.right_foot_markers, roi=roi, fail_on_gaps=False
     )[:, gait_dim]
-    cmpfun = np.greater if gait_dir > 0 else np.less
     return [
         None if R == 0.0 or L == 0.0 else ('R' if cmpfun(R, L) else 'L')
         for R, L in zip(rfoot, lfoot)
@@ -523,12 +533,14 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None, retur
         Returns 0, 1, 2 for: completely outside plate, partially outside plate,
         inside plate, respectively.
         """
-        allpts = _get_foot_points(mkrdata, context, footlen)
-        poly = fpdata['plate_corners']
+        foot_points = _get_foot_points(mkrdata, context, footlen)
+        plate_corners = fpdata['plate_corners']
+        logger.debug(f'{plate_corners=}')
         pts_ok = list()
-        for label, pts in allpts.items():
-            pt = pts[fr0, :]
-            pt_ok = _point_in_poly(poly, pt)
+        for label, pts in foot_points.items():
+            foot_point = pts[fr0, :]
+            logger.debug(f'{foot_point=}')
+            pt_ok = _point_in_poly(plate_corners, foot_point)
             logger.debug(f"{label} point {'' if pt_ok else 'not '}on plate")
             pts_ok.append(pt_ok)
         if all(pts_ok):

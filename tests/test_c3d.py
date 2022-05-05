@@ -82,8 +82,8 @@ def test_c3d_analysis_data():
 def test_c3d_fp_detection():
     """Test forceplate contact detection on c3d files"""
     c3dfile = _trial_path('adult_3fp', 'astrid_080515_02.c3d')
+    evs, nplates = detect_forceplate_events(c3dfile, return_nplates=True)    
     _, coded = evs.get_forceplate_info(nplates)
-    assert coded == 'XRLXX'
     assert coded == 'LRL'
     c3dfile = _trial_path('runner', 'JL brooks 2,8 51.c3d')
     evs, nplates = detect_forceplate_events(c3dfile, return_nplates=True)

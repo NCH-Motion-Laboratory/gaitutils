@@ -224,8 +224,8 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
             else None
         )
         try:
-            fpev = utils.detect_forceplate_events(
-                vicon, mkrdata, fp_info=fp_info, roi=roi
+            fpev, n_plates = utils.detect_forceplate_events(
+                vicon, mkrdata, fp_info=fp_info, roi=roi, return_nplates=True
             )
         except GaitDataError:
             logger.warning('cannot determine forceplate events, possibly due to gaps')
@@ -276,8 +276,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
 
         # write Eclipse fp values according to our detection, or reset them
         # note that Eclipse fp data affects e.g. Plug-in Gait functioning
-        n_plates = len(nexus._get_forceplate_ids(vicon))
-        fp_info, coded = fpev.get_forceplate_info(n_plates)
+        fp_info, _ = fpev.get_forceplate_info(n_plates)
         # try to avoid a possible race condition where Nexus is still
         # holding the .enf file open
         time.sleep(0.1)

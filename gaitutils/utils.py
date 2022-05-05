@@ -497,7 +497,7 @@ def _point_in_poly(poly, pt):
     return p.contains_point(pt)
 
 
-def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
+def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None, return_nplates=False):
     """Detect frames where valid forceplate strikes and toeoffs occur.
     Uses forceplate data and estimated foot shape.
 
@@ -727,7 +727,10 @@ def detect_forceplate_events(source, mkrdata=None, fp_info=None, roi=None):
             results.append(toeoff_ev)
         else:
             logger.debug('plate %d: no valid foot strike' % plate_ind)
-    return results
+    if return_nplates:
+        return results, len(fpdata)
+    else:
+        return results
 
 
 def automark_events(

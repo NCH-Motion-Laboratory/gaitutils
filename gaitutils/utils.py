@@ -151,15 +151,15 @@ class GaitEvents:
             The forceplate events.
         """
         FRAME_TOL = 7
-        for ev, fp_ev in product(self._events, fp_events.events):
-            if (
-                ev.context == fp_ev.context
-                and ev.event_type == fp_ev.event_type
-                and abs(ev.frame - fp_ev.frame) < FRAME_TOL
-            ):
-                # here we could correct the frame according to forceplate data
-                # ev.frame = fp_ev.frame
-                ev.forceplate_index = fp_ev.forceplate_index
+        for context in 'LR':
+            for event_type in ['strike', 'toeoff']:
+                events_this = self.get_events(event_type=event_type, context=context)
+                fp_events_this = fp_events.get_events(event_type=event_type, context=context)
+                for ev, fp_ev in product(events_this, fp_events_this):
+                    if abs(ev.frame - fp_ev.frame) < FRAME_TOL:
+                        # here we could correct the frame according to forceplate data
+                        # ev.frame = fp_ev.frame
+                        ev.forceplate_index = fp_ev.forceplate_index
 
     def get_forceplate_info(self, n_plates):
         """Return Eclipse-style forceplate info dict and a coded string.

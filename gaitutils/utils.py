@@ -25,22 +25,23 @@ logger = logging.getLogger(__name__)
 @dataclass
 class GaitEvent:
     """A gait event.
-    
+
     Events are usually either foot strike or toeoff, but we also support a
     "general" event. Events can have a context: either right foot, left foot or
     None (mostly useful for general events).
 
-    Events occur at a given frame. We use 0-based indexing for the frames, i.e.
-    the first frame is 0. Thus, frames can directly be used to index data
-    arrays. Note that gaitutils internal frame numbers differ from event frames
-    shown in Nexus or C3D files. When data is read, the frames are corrected for
-    the Nexus or C3d offset. The offset is available in the Nexus or C3D
-    metadata.
+    Events occur at a given frame. We use 0-based frame numbering. Thus, frames
+    can directly be used to index data arrays (model data, marker data etc.)
+    Note that due to this choice, gaitutils internal frame numbers differ from
+    event frames shown in Nexus or C3D files. When data is read, the frames are
+    automatically corrected for the Nexus or C3D offset. The offset is available
+    in the Nexus or C3D metadata.
 
-    Foot strike and toeoff may occur on a forceplate. For such events, the
-    forceplate_index can be set. Our internal forceplate index is also 0-based,
-    i.e. the first Nexus forceplate ("FP1" in Eclipse) is denoted by 0.
+    Foot strike and toeoff events may occur on a forceplate. For such events,
+    the forceplate_index can be set. Our internal forceplate index is also
+    0-based, i.e. the first Nexus forceplate ("FP1" in Eclipse) is denoted by 0.
     """
+
     _event_types = ['strike', 'toeoff', 'general']  # supported event types
     _contexts = [None, 'L', 'R']  # supported context values
     frame: int  # the frame of occurence
@@ -59,14 +60,14 @@ class GaitEvent:
 
 
 class GaitEvents:
-    """A collection of gait events"""
+    """A collection of gait events (GaitEvent instances)"""
 
     def __init__(self):
-        self.events = list()
+        self._events = list()
 
     def __repr__(self) -> str:
         s = '<GaitEvents |\n'
-        for ev in self.events:
+        for ev in self._events:
             s += f'{ev.context} {ev.event_type} at {ev.frame}'
             if ev.forceplate_index is not None:
                 s += f' (on forceplate FP{ev.forceplate_index + 1})'
@@ -75,52 +76,109 @@ class GaitEvents:
         return s
 
     def append(self, event):
-        """Append a gait event"""
+        """Append a gait event.
+
+        Parameters
+        ----------
+        event : GaitEvent
+            The event to add.
+        """
         if not isinstance(event, GaitEvent):
             raise ValueError('append() can only accept GaitEvent instances')
-        self.events.append(event)
-        # keep events sorted
-        self.events.sort(key=lambda ev: ev.frame)
+        self._events.append(event)
+        self._events.sort(key=lambda ev: ev.frame)  # keep events sorted
 
     @staticmethod
-    def filter_context(events, context):
+    def _filter_context(events, context):
         for ev in events:
             if ev.context == context:
                 yield ev
 
     @staticmethod
-    def filter_type(events, ev_type):
+    def _filter_type(events, ev_type):
         for ev in events:
             if ev.event_type == ev_type:
                 yield ev
 
     @staticmethod
-    def filter_forceplate(events):
+    def _filter_forceplate(events):
         for ev in events:
             if ev.forceplate_index is not None:
                 yield ev
 
     def get_events(self, event_type=None, context=None, forceplate=None):
-        events = self.events
+        """Get desired events.
+
+        Parameters
+        ----------
+        event_type : str | None
+            The desired event type. If None, include all event types.
+        context : str | None
+            The desired context. If None, include all.
+        forceplate : bool | None
+            If True, get forceplate events only. If None, get all events.
+
+        Returns
+        -------
+        list
+            List of GaitEvent instances.
+        """
+        events = self._events
         if event_type is not None:
-            events = self.filter_type(events, event_type)
+            events = self._filter_type(events, event_type)
         if context is not None:
-            events = self.filter_context(events, context)
+            events = self._filter_context(events, context)
         if forceplate is not None:
-            events = self.filter_forceplate(events)
+            events = self._filter_forceplate(events)
         return list(events)
 
     def merge_forceplate_events(self, fp_events):
-        """Merge forceplate-based event info"""
+        """Read forceplate-based event info and update our events.
+
+        Nexus and C3D events do not include any info about forceplates. Thus,
+        forceplate contacts have to be detected separately. This method can be
+        used to update events with information from forceplate detected events.
+        A tolerance of FRAME_TOL is used to determine if the events are "the
+        same".
+
+        For example, if self.events includes a foot strike at frame 100 and
+        fp_events has a foot strike on forceplate 0 at frame 101, the foot
+        strike at frame 100 will be updated with the forceplate index.
+
+        Parameters
+        ----------
+        fp_events : GaitEvents
+            The forceplate events.
+        """
         FRAME_TOL = 7
-        for ev, fp_ev in product(self.events, fp_events.events):
-            if ev.context == fp_ev.context:
-                if abs(ev.frame - fp_ev.frame) < FRAME_TOL:
-                    ev.frame = fp_ev.frame
-                    ev.forceplate_index = fp_ev.forceplate_index
+        for ev, fp_ev in product(self._events, fp_events.events):
+            if (
+                ev.context == fp_ev.context
+                and ev.event_type == fp_ev.event_type
+                and abs(ev.frame - fp_ev.frame) < FRAME_TOL
+            ):
+                # here we could correct the frame according to forceplate data
+                # ev.frame = fp_ev.frame
+                ev.forceplate_index = fp_ev.forceplate_index
 
     def get_forceplate_info(self, n_plates):
-        """Return Eclipse-style forceplate info dict and a coded string"""
+        """Return Eclipse-style forceplate info dict and a coded string.
+        
+        Parameters
+        ----------
+        n_plates : int
+            Number of forceplates.
+
+        Returns
+        -------
+        tuple
+            A tuple of (fp_dict, fp_coded) where fp_dict contains Eclipse-style
+            forceplate contact info. Example for three forceplates:
+            {'FP1': 'Right', 'FP2': 'Invalid', 'FP3': 'Left'}
+            fp_coded is the same info coded into a string, used by CGM2. 'X'
+            marks invalid context. For the same data as the above dict it would
+            be 'RXL'.
+        """
         fp_dict = dict()
         coded = ''
         for ind in range(n_plates):
@@ -739,7 +797,9 @@ def detect_forceplate_events(
                             '(at frame %d)' % fr0
                         )
                         contra_next_ok = (
-                            _foot_plate_check(fp, marker_data, fr0, contra_context, footlen)
+                            _foot_plate_check(
+                                fp, marker_data, fr0, contra_context, footlen
+                            )
                             == 0
                         )
                         foot_contacts_ok &= contra_next_ok

@@ -48,7 +48,7 @@ class EMG:
 
     def _check_nexus_trial_still_valid(self):
         """Check if Nexus still has the original trial loaded.
-        
+
         Lazy reads using Vicon Nexus are problematic, since the Nexus trial may
         change at any time due to e.g. user actions. Thus we should try to
         ensure that the original trial instance is still loaded in Nexus.

@@ -322,7 +322,7 @@ class Trial:
 
     def _check_nexus_trial_still_valid(self):
         """Check if Nexus still has the original trial loaded.
-        
+
         Lazy reads using Vicon Nexus are problematic, since the Nexus trial may
         change at any time due to e.g. user actions. Thus we should try to
         ensure that the original trial instance is still loaded in Nexus.
@@ -579,7 +579,9 @@ class Trial:
             else:
                 fp_info = None
             marker_data = self._full_marker_data
-            return utils.detect_forceplate_events(self.source, marker_data=marker_data, fp_info=fp_info)
+            return utils.detect_forceplate_events(
+                self.source, marker_data=marker_data, fp_info=fp_info
+            )
         except GaitDataError:
             logger.warning('Could not detect forceplate events')
             return utils.GaitEvents()  # return empty events

@@ -57,6 +57,11 @@ class GaitEvent:
             raise ValueError('Invalid event type')
         if not isinstance(self.frame, int):
             raise TypeError(f'Frame needs to be an int (not {type(self.frame)})')
+        if self.forceplate_index is not None:
+            if self.context is None:
+                raise ValueError('forceplate events are required to have a context')
+            if not isinstance(self.forceplate_index, int) or self.forceplate_index < 0:
+                raise ValueError('forceplate index needs to be an integer > 0')
 
 
 class GaitEvents:

@@ -433,13 +433,13 @@ def _delete_c3ds(enffiles):
 
 
 def autoproc_session(signals=None):
-    """Autoprocess the currently open Nexus session.
+    """Autoprocess the current Nexus session.
 
     Parameters
     ----------
     signals : ProgressSignals | None
-        This is used to emit processing-related status signals. If None, a dummy
-        instance will be created.
+        This is used to emit processing-related status signals for the GUI. If
+        None, a dummy instance will be created.
     """
     sessionpath = nexus.get_sessionpath()
     if enffiles := sessionutils.get_enfs(sessionpath):

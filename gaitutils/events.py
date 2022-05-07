@@ -31,8 +31,7 @@ class GaitEvent:
     metadata.
 
     Foot strike and toeoff events may occur on a forceplate. For such events,
-    the forceplate_index can be set. Our internal forceplate index is also
-    0-based, i.e. the first Nexus forceplate ("FP1" in Eclipse) is denoted by 0.
+    the forceplate_index can be set. This index is also 0-based.
 
     This class only stores event data, so it's defined as a dataclass.
     """

@@ -72,10 +72,8 @@ class GaitEvents:
 
     def __repr__(self) -> str:
         s = '<GaitEvents |\n'
-        for ev in self._events:
-            s += f'{ev.context} {ev.event_type} at {ev.frame}'
-            if ev.forceplate_index is not None:
-                s += f' (on forceplate FP{ev.forceplate_index + 1})'
+        for ev in self.get_events():
+            s += repr(ev)
             s += '\n'
         s += '>'
         return s

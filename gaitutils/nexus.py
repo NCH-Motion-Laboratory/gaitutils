@@ -450,11 +450,19 @@ def _get_analog_data(vicon, devname):
 
 def _get_forceplate_ids(vicon):
     """Return Nexus forceplate device IDs"""
-    return [
-        id_
-        for id_ in vicon.GetDeviceIDs()
-        if vicon.GetDeviceDetails(id_)[1].lower() == 'forceplate'
+    devids = [
+        id
+        for id in vicon.GetDeviceIDs()
+        if vicon.GetDeviceDetails(id)[1].lower() == 'forceplate'
     ]
+    # filter by device names, if they are configured
+    if cfg.autoproc.nexus_forceplate_devnames:
+        devids = [
+            id
+            for id in devids
+            if vicon.GetDeviceDetails(id)[0] in cfg.autoproc.nexus_forceplate_devnames
+        ]
+    return devids
 
 
 def set_forceplate_data(vicon, fp_index, data, kind='Force'):
@@ -603,13 +611,6 @@ def _get_forceplate_data(vicon):
         logger.debug('no forceplates detected')
         return None
     logger.debug('detected %d forceplate(s)' % len(devids))
-    # filter by device names, if they are configured
-    if cfg.autoproc.nexus_forceplate_devnames:
-        devids = [
-            id
-            for id in devids
-            if vicon.GetDeviceDetails(id)[0] in cfg.autoproc.nexus_forceplate_devnames
-        ]
     return [_get_1_forceplate_data(vicon, devid) for devid in devids]
 
 

@@ -61,7 +61,7 @@ class GaitEvent:
 
 class GaitEvents:
     """A collection of gait events (GaitEvent instances).
-    
+
     This class stores events, allows getting them by their properties and offers
     a few utility functions.
     """

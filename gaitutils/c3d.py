@@ -17,7 +17,8 @@ import sys
 import shutil
 
 from .numutils import center_of_pressure, _change_coords, _is_ascii
-from .utils import GaitEvents, GaitEvent, _step_width
+from .events import GaitEvents, GaitEvent
+from .utils import _step_width
 from .envutils import lru_cache_checkfile, _named_tempfile, GaitDataError
 
 

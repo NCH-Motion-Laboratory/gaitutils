@@ -19,7 +19,7 @@ import multiprocessing
 import subprocess
 
 from .numutils import _change_coords, _isfloat, _rigid_body_extrapolate_markers
-from .utils import GaitEvent, GaitEvents
+from .events import GaitEvent, GaitEvents
 from .envutils import GaitDataError
 from .config import cfg
 

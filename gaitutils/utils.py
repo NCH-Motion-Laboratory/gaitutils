@@ -135,7 +135,7 @@ class GaitEvents:
             events = self._filter_forceplate(events)
         return list(events)
 
-    def merge_forceplate_events(self, fp_events):
+    def merge_forceplate_events(self, fp_events, adjust_frames=False):
         """Read forceplate-based event info and update our events.
 
         Nexus and C3D events do not include any info about forceplates. Thus,
@@ -148,10 +148,18 @@ class GaitEvents:
         fp_events has a foot strike on forceplate 0 at frame 101, the foot
         strike at frame 100 will be updated with the forceplate index.
 
+        If adjust_frames is True, the event frames will be adjusted according to
+        the forceplate data (which is usually regarded as the golden standard).
+        This option is not used when e.g. loading trials, so that user-defined
+        events are kept as they are.
+
         Parameters
         ----------
         fp_events : GaitEvents
             The forceplate events.
+        adjust_frames : bool
+            If True, the frames of the events will be adjusted according to the
+            forceplate data.
         """
         FRAME_TOL = 7
         for context in 'LR':
@@ -160,9 +168,10 @@ class GaitEvents:
                 fp_events_this = fp_events.get_events(event_type=event_type, context=context)
                 for ev, fp_ev in product(events_this, fp_events_this):
                     if abs(ev.frame - fp_ev.frame) < FRAME_TOL:
-                        # here we could correct the frame according to forceplate data
-                        # ev.frame = fp_ev.frame
                         ev.forceplate_index = fp_ev.forceplate_index
+                        if adjust_frames:
+                            ev.frame = fp_ev.frame
+
 
     def get_forceplate_info(self, n_plates):
         """Return Eclipse-style forceplate info dict and a coded string.

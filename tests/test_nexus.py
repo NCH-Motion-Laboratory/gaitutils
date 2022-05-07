@@ -309,7 +309,7 @@ def test_event_marking():
     nexus._create_events(vicon, evs)
     _events_check(events_dict_nofp)
 
-    # using forceplate thresholds
+    # using forceplate-based velocity thresholds
     vicon.ClearAllEvents()
     fpe = utils.detect_forceplate_events(vicon)
     mkrdata = read_data.get_marker_data(

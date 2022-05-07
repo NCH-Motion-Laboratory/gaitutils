@@ -335,7 +335,8 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
                     events_range=cfg.autoproc.events_range,
                     roi=trial_info['roi'],
                 )
-                evs.merge_forceplate_events(trial_info['fpev'])
+                # adjust the marker-based events according to forceplate data
+                evs.merge_forceplate_events(trial_info['fpev'], adjust_frames=True)
                 nexus._create_events(vicon, evs)
             except GaitDataError:  # cannot automark
                 eclipse_str = '%s,%s' % (
@@ -485,7 +486,7 @@ def automark_trial(plot=False):
     fpev = utils.detect_forceplate_events(vicon, mkrdata, roi=roi)
     vel = utils._get_foot_contact_vel(mkrdata, fpev, roi=roi)
     evs = utils.automark_events(vicon, vel_thresholds=vel, roi=roi, plot=plot)
-    evs.merge_forceplate_events(fpev)
+    evs.merge_forceplate_events(fpev, adjust_frames=True)
     nexus._create_events(vicon, evs)
 
 

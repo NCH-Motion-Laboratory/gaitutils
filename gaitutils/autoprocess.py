@@ -229,7 +229,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         )
         try:
             fpev, n_plates = utils.detect_forceplate_events(
-                vicon, mkrdata, fp_info=fp_info, roi=roi, return_nplates=True
+                vicon, mkrdata, eclipse_fp_info=fp_info, roi=roi, return_nplates=True
             )
         except GaitDataError:
             logger.warning('cannot determine forceplate events, possibly due to gaps')

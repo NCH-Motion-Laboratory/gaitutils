@@ -581,7 +581,7 @@ class Trial:
                 fp_info = None
             marker_data = self._full_marker_data
             return utils.detect_forceplate_events(
-                self.source, marker_data=marker_data, fp_info=fp_info
+                self.source, marker_data=marker_data, eclipse_fp_info=fp_info
             )
         except GaitDataError:
             logger.warning('Could not detect forceplate events')

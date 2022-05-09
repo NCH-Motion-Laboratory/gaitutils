@@ -373,7 +373,7 @@ def _get_forceplate_data(c3dfile):
             label = ch.GetLabel()[-3:-1]  # strip descriptor and plate number
             rawdata[label] = np.squeeze(ch.GetData().GetValues())
         if not all([ch in rawdata for ch in read_chs]):
-            logger.warning('could not read force/moment data for plate %d' % nplate)
+            logger.warning(f'could not read force/moment data for plate {nplate}')
             continue
         F = np.stack([rawdata['Fx'], rawdata['Fy'], rawdata['Fz']], axis=1)
         M = np.stack([rawdata['Mx'], rawdata['My'], rawdata['Mz']], axis=1)

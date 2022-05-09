@@ -127,10 +127,11 @@ def viconnexus():
     ViconNexus
         The instance.
     """
+    # by default, just use the global instance
     global vicon_
-    # if SDK connection has not been established yet or server info looks
-    # invalid, we reestablish the connection; the latter condition occurs e.g.
-    # when Nexus has been restarted (SDK object becomes stale)
+    # however, if SDK connection has not been established yet or server info
+    # looks invalid, we reestablish the connection; the latter condition occurs
+    # e.g. when Nexus has been restarted (SDK object becomes stale)
     if vicon_ is None or vicon_.GetServerInfo()[0] != 'Nexus':
         _check_nexus()
         vicon_ = ViconNexus.ViconNexus()
@@ -447,6 +448,9 @@ def _get_analog_data(vicon, devname):
 
 def _get_forceplate_ids(vicon):
     """Get Nexus forceplate device IDs and the corresponding Eclipse keys.
+
+    If cfg.autoproc.nexus_forceplate_devnames is set, this will only return the
+    desired plates.
     
     XXX: the relationship about the Nexus forceplates and the Eclipse keys is a
     bit unclear. The current understanding is that 'FP1' always corresponds to
@@ -454,15 +458,15 @@ def _get_forceplate_ids(vicon):
     seems to return the plates in the configured order (as shown in the Nexus
     system pane).
     """
-    # all forceplate ids
+    # get all forceplate ids
     devids = [
         id
         for id in vicon.GetDeviceIDs()
         if vicon.GetDeviceDetails(id)[1].lower() == 'forceplate'
     ]
-    # the corresponding Eclipse keys
+    # generate the corresponding Eclipse keys
     eclipse_keys = [f'FP{d+1}' for d in range(len(devids))]
-    # filter for the configured plates
+    # filter plates and keys for the configured plate names
     if cfg.autoproc.nexus_forceplate_devnames:
         logger.info(
             f'using configured plates: {cfg.autoproc.nexus_forceplate_devnames}'

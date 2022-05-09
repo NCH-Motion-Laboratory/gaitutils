@@ -293,7 +293,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
                 fp_info_auto = {k: 'Auto' for k, v in fp_info.items()}
                 eclipse.set_eclipse_keys(enffile, fp_info_auto, update_existing=True)
             else:
-                logger.debug('ignoring Eclipse forceplate info')
+                logger.debug('not setting Eclipse forceplate info')
         except IOError:
             logger.warning(f'failed to update Eclipse forceplate info in {enffile}')
 

@@ -572,8 +572,8 @@ def detect_forceplate_events(
     # loop over the plates; our internal forceplate index is 0-based
     for plate_ind, fpdata_this in enumerate(fpdata):
         logger.debug(f'analyzing plate {plate_ind}')
-        context, detect_context = _context_from_eclipse(eclipse_fp_info, fpdata['eclipse_key'])
-
+        eclipse_key = fpdata_this['eclipse_key']
+        context, detect_context = _context_from_eclipse(eclipse_fp_info, eclipse_key)
         strike_fr, toeoff_fr, force_checks_ok = _threshold_forceplate(fpdata_this, bodymass)
         if not force_checks_ok:
             context = None

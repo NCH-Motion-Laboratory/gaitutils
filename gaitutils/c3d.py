@@ -360,10 +360,8 @@ def _get_forceplate_data(c3dfile):
     fpe.SetInput(acq)
     fpe.Update()
     fpdata = list()
-    nplate = 0
-    for plate in btk.Iterate(fpe.GetOutput()):
-        logger.debug('reading from plate %d' % nplate)
-        nplate += 1
+    for plate_ind, plate in enumerate(btk.Iterate(fpe.GetOutput())):
+        logger.debug('reading from plate %d' % plate_ind)
         if plate.GetType() != 2:
             # Nexus should always write forceplates as type 2
             raise GaitDataError('Only type 2 forceplates are supported for now')
@@ -373,7 +371,7 @@ def _get_forceplate_data(c3dfile):
             label = ch.GetLabel()[-3:-1]  # strip descriptor and plate number
             rawdata[label] = np.squeeze(ch.GetData().GetValues())
         if not all([ch in rawdata for ch in read_chs]):
-            logger.warning(f'could not read force/moment data for plate {nplate}')
+            logger.warning(f'could not read force/moment data for plate {plate_ind}')
             continue
         F = np.stack([rawdata['Fx'], rawdata['Fy'], rawdata['Fz']], axis=1)
         M = np.stack([rawdata['Mx'], rawdata['My'], rawdata['Mz']], axis=1)
@@ -414,5 +412,7 @@ def _get_forceplate_data(c3dfile):
         data['wR'] = wR
         data['wT'] = wT
         data['plate_corners'] = cor.T
+        # compose Eclipse key - note that our plate index is zero-based
+        data['eclipse_key'] = f'FP{plate_ind + 1}'
         fpdata.append(data)
     return fpdata

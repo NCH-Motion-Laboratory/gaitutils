@@ -538,8 +538,9 @@ def _get_1_forceplate_data(vicon, devid, coords='global'):
 
     Returns
     -------
-    dict
-        Forceplace dict with the following keys and values:
+    dict | None
+        If data can't be read (happens at least with paused plates), returns None.
+        Otherwise, returns a forceplace dict with the following keys and values:
 
         F : ndarray
             Nx3 matrix of force data.
@@ -576,6 +577,9 @@ def _get_1_forceplate_data(vicon, devid, coords='global'):
             chname = kind[0] + dim  # e.g. 'Fx'
             chid = vicon.GetDeviceChannelIDFromName(devid, outputid, chname)
             data, chready, chrate = getter_fun(devid, outputid, chid)
+            if not data:
+                logger.warning('could not read force data from {devid=} {outputid=}')
+                return None
             datalist.append(data)
         alldata[kind] = np.array(datalist).T
     Ftot = np.linalg.norm(alldata['Force'], axis=1)
@@ -630,8 +634,9 @@ def _get_forceplate_data(vicon):
     logger.debug(f'detected {len(devids)} forceplate(s)')
     for devid, eclipse_key in zip(devids, eclipse_keys):
         fpdata_1 = _get_1_forceplate_data(vicon, devid)
-        fpdata_1['eclipse_key'] = eclipse_key
-        fpdata.append(fpdata_1)
+        if fpdata_1 is not None:
+            fpdata_1['eclipse_key'] = eclipse_key
+            fpdata.append(fpdata_1)
     return fpdata
 
 

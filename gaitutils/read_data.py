@@ -109,6 +109,8 @@ def get_forceplate_data(source):
             Sampling rate.
         samplesperframe : int
             Analog samples per capture frame.
+        eclipse_key : str
+            The Eclipse key corresponding to the forceplate.
     """
     return _reader_module(source)._get_forceplate_data(source)
 

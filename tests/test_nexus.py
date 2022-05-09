@@ -112,7 +112,7 @@ def test_nexus_get_forceplate_ids():
     session = 'autoproc_session'
     trialpath = _trial_path(subj, trialname, session=session)
     nexus._open_trial(trialpath)
-    fpids = nexus._get_forceplate_ids(vicon)[0]
+    fpids = nexus._get_forceplate_ids(vicon)
     assert fpids == [1, 2, 3, 5]
 
 
@@ -197,7 +197,7 @@ def test_nexus_set_forceplate_data():
     nexus.set_forceplate_data(vicon, 0, data)
     # try reading the data back
     # get device id corresponding to plate index
-    devid = nexus._get_forceplate_ids(vicon)[0][0]
+    devid = nexus._get_forceplate_ids(vicon)[0]
     fpdata = nexus._get_1_forceplate_data(vicon, devid)
     F_read = fpdata['F']
     data_global = np.dot(fpdata['wR'], data.T).T

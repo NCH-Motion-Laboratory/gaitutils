@@ -449,8 +449,8 @@ def _get_analog_data(vicon, devname):
 def _get_forceplate_ids(vicon):
     """Get Nexus forceplate device IDs and the corresponding Eclipse keys.
 
-    If cfg.autoproc.nexus_forceplate_devnames is set, this will only return the
-    desired plates.
+    If cfg.autoproc.nexus_forceplate_devnames is set, this function will only
+    return the desired plates.
     
     XXX: the relationship about the Nexus forceplates and the Eclipse keys is a
     bit unclear. The current understanding is that 'FP1' always corresponds to
@@ -539,16 +539,16 @@ def _get_1_forceplate_data(vicon, devid, coords='global'):
     Returns
     -------
     dict
-        Force dict with the following keys and values:
+        Forceplace dict with the following keys and values:
 
         F : ndarray
-            Nx3 matrix of force.
+            Nx3 matrix of force data.
         Ftot : ndarray
             Nx1 matrix of force magnitude.
         M : ndarray
             Nx3 matrix of moment.
         CoP : ndarray
-            Nx3 matrix of center of pressure.
+            Nx3 matrix of center of pressure data.
         wR : ndarray
             3x3 rotation matrix for local -> global frame.
         wT : ndarray
@@ -621,13 +621,18 @@ def _get_forceplate_data(vicon):
     See read_data.get_forceplate_data() for details.
     """
     # get forceplate ids
+    fpdata = list()
     logger.debug('reading forceplate data from Vicon Nexus')
-    devids = _get_forceplate_ids(vicon)[0]
+    devids, eclipse_keys = _get_forceplate_ids(vicon)
     if not devids:
         logger.info('no forceplates detected')
         return None
     logger.debug(f'detected {len(devids)} forceplate(s)')
-    return [_get_1_forceplate_data(vicon, devid) for devid in devids]
+    for devid, eclipse_key in zip(devids, eclipse_keys):
+        fpdata_1 = _get_1_forceplate_data(vicon, devid)
+        fpdata_1['eclipse_key'] = eclipse_key
+        fpdata.append(fpdata_1)
+    return fpdata
 
 
 def _swap_markers(vicon, marker1, marker2):

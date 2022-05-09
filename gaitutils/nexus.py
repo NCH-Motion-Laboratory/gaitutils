@@ -354,7 +354,7 @@ def _get_metadata(vicon):
         'offset @ %d, %d frames, framerate %d Hz, %d samples per '
         'frame' % (offset, length, framerate, samplesperframe)
     )
-    n_forceplates = len(_get_forceplate_ids(vicon)[0])
+    n_forceplates = len(_get_forceplate_ids(vicon))
 
     return {
         'trialname': trialname,
@@ -447,38 +447,12 @@ def _get_analog_data(vicon, devname):
 
 
 def _get_forceplate_ids(vicon):
-    """Get Nexus forceplate device IDs and the corresponding Eclipse keys.
-
-    If cfg.autoproc.nexus_forceplate_devnames is set, this function will only
-    return the desired plates.
-    
-    XXX: the relationship about the Nexus forceplates and the Eclipse keys is a
-    bit unclear. The current understanding is that 'FP1' always corresponds to
-    the first configured plate in Nexus, 'FP2' to the second etc. GetDeviceIDs()
-    seems to return the plates in the configured order (as shown in the Nexus
-    system pane).
-    """
-    # get all forceplate ids
-    devids = [
+    """Get device IDs of Nexus forceplate devices"""
+    return [
         id
         for id in vicon.GetDeviceIDs()
         if vicon.GetDeviceDetails(id)[1].lower() == 'forceplate'
     ]
-    # generate the corresponding Eclipse keys
-    eclipse_keys = [f'FP{d+1}' for d in range(len(devids))]
-    # filter plates and keys for the configured plate names
-    if cfg.autoproc.nexus_forceplate_devnames:
-        logger.info(
-            f'using configured plates: {cfg.autoproc.nexus_forceplate_devnames}'
-        )
-        inds_configured = [
-            k
-            for k, id in enumerate(devids)
-            if vicon.GetDeviceDetails(id)[0] in cfg.autoproc.nexus_forceplate_devnames
-        ]
-        devids = [devids[k] for k in inds_configured]
-        eclipse_keys = [eclipse_keys[k] for k in inds_configured]
-    return devids, eclipse_keys
 
 
 def set_forceplate_data(vicon, fp_index, data, kind='Force'):
@@ -506,7 +480,7 @@ def set_forceplate_data(vicon, fp_index, data, kind='Force'):
     kinds = ['Force', 'Moment', 'CoP']
     if kind not in kinds:
         raise ValueError(f"kind argument needs to be one of {', '.join(kinds)}")
-    fpids = _get_forceplate_ids(vicon)[0]
+    fpids = _get_forceplate_ids(vicon)
     if not fpids:
         raise RuntimeError('no forceplates detected')
     else:
@@ -627,15 +601,16 @@ def _get_forceplate_data(vicon):
     # get forceplate ids
     fpdata = list()
     logger.debug('reading forceplate data from Vicon Nexus')
-    devids, eclipse_keys = _get_forceplate_ids(vicon)
+    devids = _get_forceplate_ids(vicon)
     if not devids:
         logger.info('no forceplates detected')
         return None
     logger.debug(f'detected {len(devids)} forceplate(s)')
-    for devid, eclipse_key in zip(devids, eclipse_keys):
+    for eclipse_ind, devid in enumerate(devids, 1):
         fpdata_1 = _get_1_forceplate_data(vicon, devid)
         if fpdata_1 is not None:
-            fpdata_1['eclipse_key'] = eclipse_key
+            # generate the Eclipse key
+            fpdata_1['eclipse_key'] = f'FP{eclipse_ind}'
             fpdata.append(fpdata_1)
     return fpdata
 

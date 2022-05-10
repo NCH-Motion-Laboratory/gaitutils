@@ -571,8 +571,8 @@ def detect_forceplate_events(
 
     # loop over the plates; our internal forceplate index is 0-based
     for plate_ind, fpdata_this in enumerate(fpdata):
-        logger.debug(f'analyzing plate {plate_ind}')
         eclipse_key = fpdata_this['eclipse_key']
+        logger.debug(f'analyzing plate {eclipse_key}')
         context, detect_context = _context_from_eclipse(eclipse_fp_info, eclipse_key)
         strike_fr, toeoff_fr, force_checks_ok = _threshold_forceplate(
             fpdata_this, bodymass
@@ -647,10 +647,7 @@ def detect_forceplate_events(
             context = this_context if foot_contacts_ok else None
 
         if context:
-            logger.debug(
-                'plate %d: valid foot strike on %s at frame %d'
-                % (plate_ind, context, strike_fr)
-            )
+            logger.debug(f'{eclipse_key}: {context} strike at frame {strike_fr}')
             strike_ev = GaitEvent(
                 strike_fr, 'strike', context, forceplate_index=plate_ind
             )
@@ -660,7 +657,7 @@ def detect_forceplate_events(
             results.append(strike_ev)
             results.append(toeoff_ev)
         else:
-            logger.debug('plate %d: no valid foot strike' % plate_ind)
+            logger.debug(f'{eclipse_key}: no valid foot strike')
     if return_nplates:
         return results, len(fpdata)
     else:

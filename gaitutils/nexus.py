@@ -467,8 +467,8 @@ def set_forceplate_data(vicon, fp_index, data, kind='Force'):
     vicon : ViconNexus
         The SDK object.
     fp_index : int
-        The index of the forceplate (0...N). Note that this is not the same as
-        Nexus device ID.
+        The (zero-based) index of the forceplate. Note that this is not the same
+        as Nexus device ID.
     data : ndarray
         Tx3 array of data, where T is number of analog frames in current data. T
         needs to equal the number of analog samples in the current Nexus trial

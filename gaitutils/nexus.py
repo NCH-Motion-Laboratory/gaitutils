@@ -458,9 +458,9 @@ def _get_forceplate_ids(vicon):
 def set_forceplate_data(vicon, fp_index, data, kind='Force'):
     """Set forceplate data in Nexus.
 
-    This always sets the data in the device local frame. To set data in the
-    global frame, you need to get the local->global transformation from Nexus,
-    invert it, and apply the resulting global->local transformation to inputs.
+    Sets the data in the device local frame. To set data in the global frame,
+    you need to get the local->global transformation from Nexus, invert it, and
+    apply the resulting global->local transformation to inputs.
 
     Parameters
     ----------
@@ -488,8 +488,7 @@ def set_forceplate_data(vicon, fp_index, data, kind='Force'):
             fpid = fpids[fp_index]
         except IndexError:
             raise RuntimeError(
-                'Invalid plate index %d (detected %d forceplates)'
-                % (fp_index, len(fpids))
+                f'Invalid plate index {fp_index} (detected {len(fpids)} forceplates)'
             )
     outputid = vicon.GetDeviceOutputIDFromName(fpid, kind)
     for dim, data_dim in zip('xyz', data.T):

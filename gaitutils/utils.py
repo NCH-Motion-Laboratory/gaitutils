@@ -574,7 +574,9 @@ def detect_forceplate_events(
         logger.debug(f'analyzing plate {plate_ind}')
         eclipse_key = fpdata_this['eclipse_key']
         context, detect_context = _context_from_eclipse(eclipse_fp_info, eclipse_key)
-        strike_fr, toeoff_fr, force_checks_ok = _threshold_forceplate(fpdata_this, bodymass)
+        strike_fr, toeoff_fr, force_checks_ok = _threshold_forceplate(
+            fpdata_this, bodymass
+        )
         if not force_checks_ok:
             context = None
 
@@ -591,7 +593,8 @@ def detect_forceplate_events(
             footlen = rfootlen if this_context == 'R' else lfootlen
             logger.debug(f'checking contact for leading foot: {this_context}')
             foot_contacts_ok = (
-                _foot_plate_check(fpdata_this, marker_data, fr0, this_context, footlen) == 2
+                _foot_plate_check(fpdata_this, marker_data, fr0, this_context, footlen)
+                == 2
             )
             # to eliminate double contacts, check that contralateral foot is not on plate
             # this needs marker-based events
@@ -635,7 +638,9 @@ def detect_forceplate_events(
                         'foot (at frame %d)' % fr0
                     )
                     contra_prev_ok = (
-                        _foot_plate_check(fpdata_this, marker_data, fr0, contra_context, footlen)
+                        _foot_plate_check(
+                            fpdata_this, marker_data, fr0, contra_context, footlen
+                        )
                         == 0
                     )
                     foot_contacts_ok &= contra_prev_ok

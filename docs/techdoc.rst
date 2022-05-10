@@ -52,10 +52,9 @@ Misc dependencies
 -----------------
 
 The package depends on two other packages by the author: ``ulstools`` and
-``configdot``. ``ulstools`` contains various functions shared by the
-applications used in the Helsinki gait lab, such as the desktop shortcut
-mechanism. ``configdot`` provides an extended mechanism for reading and writing
-INI files.
+``configdot``. ``ulstools`` contains various functionality shared by the
+applications used in the Helsinki gait lab ``configdot`` provides an extended
+mechanism for reading and writing INI files.
 
 
 Installation for development
@@ -163,20 +162,12 @@ Event detection
 
 See :func:`gaitutils.utils.automark_events`.
 
-gaitutils is able to detect gait events based purely on marker data. The
-algorithm is based on velocity thresholding. At the frame where the velocity of
-the foot falls below a certain threshold, a foot strike event is created. When
-the velocity rises above another threshold, a toeoff event is created. The foot
-velocity is computed from the foot markers (ankle, toe and heel).
-
-If forceplate data with valid foot contacts is available, it will provide the
-"golden standard" for gait events: both foot strike and toeoff can be accurately
-determined from the force data. Thus, gaitutils uses the force plate data to
-replace events determined by velocity thresholding, when appropriate. This uses
-a tolerance of 7 frames (currently hardcoded). For example, if velocity
-thresholding results in a foot strike at frame 204 and a valid forceplate
-contact is determined to occur almost simultaneously at frame 202, the foot
-strike event is placed at frame 202 and not at 204.
+gaitutils can detect gait events (foot strikes and toeoffs) based purely on
+marker data. The algorithm is based on velocity thresholding. At the frame where
+the velocity of the foot falls below a certain threshold, a foot strike event is
+created. When the velocity rises above another threshold, a toeoff event is
+created. The foot velocity is computed as the average velocity of the foot
+markers (ankle, toe and heel).
 
 The velocity thresholds can be determined based on heuristics. The default
 heuristic is that the foot strike and toeoff occur at 20% and 45% of the
@@ -185,16 +176,14 @@ surprisingly good results for most subjects. However, more accurate thresholds
 can be determined based on the forceplate data. That is, if a valid forceplate
 contact is available for the trial, the foot velocity is determined at the
 moment of foot strike and toeoff, and those values are used as thresholds. When
-processing a whole gait session, it would in principle be possible to use all
-trials to determine the velocity threshold. However, this doesn't work in cases
-where there is a lot of intertrial variance (the threshold doesn't generalize
-across trials).
+processing a whole gait session, it would be possible to use all trials to
+determine the velocity threshold. However, this doesn't work in cases where
+there is a lot of intertrial variance (the threshold doesn't generalize across
+trials).
 
 
 Evaluation of forceplate contacts
 ---------------------------------
-
-For the implementation, see :func:`gaitutils.utils.detect_forceplate_events`.
 
 Detection of forceplate contacts is necessary for kinetic models, for which we
 only want to consider cycles where valid forceplate contact occurs. For such
@@ -218,13 +207,19 @@ estimate their positions. If explicit information about foot length is
 available, the accuracy will be improved. Foot length can be supplied as an
 extra model parameter in Nexus (``RightFootLen`` and ``LeftFootLen``).
 
+For the implementation, see :func:`gaitutils.utils.detect_forceplate_events`.
 
-Creation of Trial objects
--------------------------
 
-Creation of Trial() instances goes roughly as follows:
 
-- Trial metadata (events, subject information etc.) is read from source (Nexus or C3D).
+The Trial object
+================
+
+Trial objects store trial data and related metadata. They also provide
+normalization of data to gait cycles. Creation of Trial() instances goes roughly
+as follows:
+
+- Trial metadata (events, subject information etc.) is read from the source
+  (Nexus or C3D).
 
 - Forceplate contacts are detected automatically. This needs to be done at trial
   creation, since we need to know which gait cycles have valid forceplate
@@ -265,12 +260,6 @@ Plug-in Gait should try to perform autodetection of the foot contact, "Invalid"
 means that the contact will not be taken into account, and "Left" and "Right"
 can be used to force a valid contact. 
 
-By default, the autoprocessing operation in gaitutils does its own detection of
-forceplate contacts and writes the Eclipse forceplate keys as either "Right",
-"Left" or "Invalid", according to the detected contacts. The keys can also be
-reset by setting ``cfg.autoproc.write_eclipse_fp_info`` to ``reset``. This will
-set the keys to "Auto" so that autodetection occurs in Plug-in Gait.
-
 The Eclipse forceplate information is also used by default when loading trials.
 This can be used to force kinetics data to be available for given cycles. For
 example, if there is poor forceplate contact for plate 1 (e.g. partial contact)
@@ -287,6 +276,41 @@ Tags
 Tags are short strings in the Eclipse Notes or Description fields, used to mark
 trials for inclusion in reports etc. The tags can be defined by the user in
 ``cfg.eclipse.tags`` config item.
+
+
+Autoprocessing
+==============
+
+gaitutils can automatically process gait data in conjuction with Vicon Nexus. This includes:
+
+- Running preprocessing pipelines in Nexus (typically reconstruct, label, gap fill, filter)
+
+- Detection of forceplate contacts
+
+- Identification of trials with good data
+
+- Automatic creation of gait events (foot strikes and toeoffs)
+
+- Running various gait models (e.g. Plug-in Gait)
+
+In addition to Nexus pipelines, autoprocessing relies on the two algorithms described above. Some notes:
+
+- The autoprocessing operation deletes C3D files for the dynamic trials to be
+  processed. This is the only way to ensure that the data in Nexus is unmodified
+  (and not e.g. cropped). When C3D file for a trial is not available, Nexus
+  loads the original data from the X1D and X2D files.
+
+- By default, the autoprocessing operation does its own detection of
+  forceplate contacts and writes the Eclipse forceplate keys as either "Right",
+  "Left" or "Invalid", according to the detected contacts. The keys can also be
+  reset by setting ``cfg.autoproc.write_eclipse_fp_info`` to ``reset``. This will
+  set the keys to "Auto" so that autodetection occurs in Plug-in Gait.
+
+
+Reporting
+=========
+
+
 
 
 Contributing
@@ -397,8 +421,8 @@ Ideas on how to improve the package.
   Something similar to EMG handling should be implemented (i.e. list of
   accelerometer channel names, etc.) 
 
-- Some of the configuration values really need to be adjusted for each
-  particular lab (such as EMG channel names) and some can be left as they are.
+- Some of the configuration values are mandatory to be adjust for each
+  particular lab (such as EMG channel names) and others can be left as they are.
   It would be nice to have a list of "critical" config values and maybe a GUI
   wizard that would allow the user to set them easily.
 
@@ -410,6 +434,7 @@ Ideas on how to improve the package.
   require a system for declaring types for config items. There could be a
   separate file that would list the allowable types (and possibly e.g. ranges of
   values) for each config type.
+
 
 
 Description of modules and other files

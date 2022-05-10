@@ -447,11 +447,11 @@ def detect_forceplate_events(
         """
         foot_points = _get_foot_points(marker_data, context, footlen)
         plate_corners = fpdata['plate_corners']
-        logger.debug(f'{plate_corners=}')
+        # logger.debug(f'{plate_corners=}')
         pts_ok = list()
         for label, pts in foot_points.items():
             foot_point = pts[fr0, :]
-            logger.debug(f'{foot_point=}')
+            # logger.debug(f'{foot_point=}')
             pt_ok = _point_in_poly(plate_corners, foot_point)
             logger.debug(f"{label} point {'' if pt_ok else 'not '}on plate")
             pts_ok.append(pt_ok)

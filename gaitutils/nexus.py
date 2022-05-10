@@ -350,10 +350,7 @@ def _get_metadata(vicon):
     if analograte == 0.0:
         raise GaitDataError('Cannot determine analog rate')
     samplesperframe = analograte / framerate
-    logger.debug(
-        'offset @ %d, %d frames, framerate %d Hz, %d samples per '
-        'frame' % (offset, length, framerate, samplesperframe)
-    )
+    logger.debug(f'{offset=}, {length} frames, {framerate=} {samplesperframe=}'
     n_forceplates = len(_get_forceplate_ids(vicon))
 
     return {

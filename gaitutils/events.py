@@ -172,36 +172,39 @@ class GaitEvents:
                         if adjust_frames:
                             ev.frame = fp_ev.frame
 
-    def get_forceplate_info(self, n_plates):
-        """Return Eclipse-style forceplate info dict and a coded string.
 
-        Parameters
-        ----------
-        n_plates : int
-            Number of forceplates.
+def get_forceplate_info(gaitevents, n_plates):
+    """Given events, return Eclipse-style forceplate info dict and a coded string.
 
-        Returns
-        -------
-        tuple
-            A tuple of (fp_dict, fp_coded) where fp_dict contains Eclipse-style
-            forceplate contact info. Example for three forceplates:
-            {'FP1': 'Right', 'FP2': 'Invalid', 'FP3': 'Left'}
-            fp_coded is the same info coded into a string, used by CGM2. 'X'
-            marks invalid context. For the same data as the above dict it would
-            be 'RXL'.
-        """
-        fp_dict = dict()
-        coded = ''
-        for ind in range(n_plates):
-            strike_events = self.get_events(event_type='strike', forceplate=True)
-            plate_strikes = [ev for ev in strike_events if ev.forceplate_index == ind]
-            if plate_strikes:
-                strike = plate_strikes[0]
-                plate_context = 'Right' if strike.context == 'R' else 'Left'
-                coded += strike.context
-            else:
-                plate_context = 'Invalid'
-                coded += 'X'
-            plate_name = f'FP{ind + 1}'  # Eclipse uses 1-based index
-            fp_dict[plate_name] = plate_context
-        return fp_dict, coded
+    Parameters
+    ----------
+    gaitevents : GaitEvents
+        A GaitEvents instance containing the forceplate events.
+    n_plates : int
+        Number of forceplates. This determines how many keys will be returned.
+
+    Returns
+    -------
+    tuple
+        A tuple of (fp_dict, fp_coded) where fp_dict contains Eclipse-style
+        forceplate contact info. Example for three forceplates:
+        {'FP1': 'Right', 'FP2': 'Invalid', 'FP3': 'Left'}
+        fp_coded is the same info coded into a string, used by CGM2. 'X'
+        marks invalid context. For the same data as the above dict it would
+        be 'RXL'.
+    """
+    fp_dict = dict()
+    coded = ''
+    for ind in range(n_plates):
+        strike_events = gaitevents.get_events(event_type='strike', forceplate=True)
+        plate_strikes = [ev for ev in strike_events if ev.forceplate_index == ind]
+        if plate_strikes:
+            strike = plate_strikes[0]
+            plate_context = 'Right' if strike.context == 'R' else 'Left'
+            coded += strike.context
+        else:
+            plate_context = 'Invalid'
+            coded += 'X'
+        plate_name = f'FP{ind + 1}'  # Eclipse uses 1-based index
+        fp_dict[plate_name] = plate_context
+    return fp_dict, coded

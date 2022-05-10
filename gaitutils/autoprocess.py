@@ -15,7 +15,7 @@ import logging
 import itertools
 import shutil
 
-from . import nexus, eclipse, utils, sessionutils, read_data, videos
+from . import nexus, eclipse, utils, sessionutils, read_data, videos, events
 from .envutils import GaitDataError
 from .config import cfg
 from .gui.qt_widgets import ProgressSignals
@@ -280,7 +280,7 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
 
         # write Eclipse fp values according to our detection, or reset them
         # note that Eclipse fp data affects e.g. Plug-in Gait functioning
-        fp_info, _ = fpev.get_forceplate_info(n_plates)
+        fp_info, _ = events.get_forceplate_info(fpev, n_plates)
         # try to avoid a possible race condition where Nexus is still
         # holding the .enf file open
         time.sleep(0.1)

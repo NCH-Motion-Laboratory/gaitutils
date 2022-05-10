@@ -349,7 +349,7 @@ def _get_model_data(c3dfile, model):
 
 def _get_1_forceplate_data(plate):
     """Read data of a single forceplate from a c3d file.
-    
+
     plate is an instance of btk.btkForcePlatform.
     """
     READ_CHS = ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz']

@@ -53,6 +53,7 @@ def nexus_trial(from_c3d=False):
     if from_c3d:
         c3dfile = trname[0] / Path(trname[1]).with_suffix('.c3d')
         if c3dfile.is_file():
+            logger.debug('loading Nexus trial via C3D')
             return Trial(c3dfile)
         else:
             logger.info(

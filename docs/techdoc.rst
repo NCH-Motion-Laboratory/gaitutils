@@ -202,21 +202,21 @@ cycles, we will be able know the reaction force for the duration of the cycle.
 From this force, various kinetic values can be computed, such as the moment at
 the knee joint.
 
-Nexus stores forceplate contact information in the Eclipse database. However for
-each plate, only the context (right, left or invalid) is stored. Nexus does not
-e.g. store the frames where the contacts occur. Thus, we have to detect them
-ourselves.
+Nexus stores forceplate contact information in the Eclipse database (see below).
+However for each plate, only the context (Right, Left or Invalid) is stored.
+Nexus does not e.g. store the frames where the forceplate contacts occur. Thus,
+we have to detect them ourselves.
 
 “Valid” forceplate contact means that 1) the foot is completely inside the
 forceplate area and 2) the contralateral foot does not contact the same plate
-during the cycle (which would be a "double contact" and invalidate the force
-data). In gaitutils, the foot is modelled as a simple triangle. The vertices of
-the triangle are estimated from marker data. The position of the heel marker is
-used as the heel vertex. For the other two vertices ("big toe" and "little toe")
-there are no markers available. Thus, the code attempts to estimate their
-positions. If explicit information about foot length is available, the accuracy
-will be improved. Foot length can be supplied as an extra model parameter in
-Nexus (``RightFootLen`` and ``LeftFootLen``).
+during the gait cycle (which would be a "double contact" and invalidate the
+force data). In gaitutils, the foot is modelled as a simple triangle. The
+vertices of the triangle are estimated from marker data. The position of the
+heel marker is used as the heel vertex. For the other two vertices ("big toe"
+and "little toe") there are no markers available. Thus, the code attempts to
+estimate their positions. If explicit information about foot length is
+available, the accuracy will be improved. Foot length can be supplied as an
+extra model parameter in Nexus (``RightFootLen`` and ``LeftFootLen``).
 
 
 Creation of Trial objects
@@ -228,7 +228,8 @@ Creation of Trial() instances goes roughly as follows:
 
 - Forceplate contacts are detected automatically. This needs to be done at trial
   creation, since we need to know which gait cycles have valid forceplate
-  contact (see above).
+  contact (see above). By default, the detection of forceplate contacts is
+  affected by the Eclipse database (see next section).
 
 - Model, marker and EMG data is read, mostly lazily (not at trial creation, but
   later when the data is needed). For C3D-based trial objects, the laziness is
@@ -239,6 +240,53 @@ Creation of Trial() instances goes roughly as follows:
   to create trial objects from C3D files instead.
 
 - Finally, gait cycles are created based on the events.
+
+
+The Eclipse database
+====================
+
+Vicon includes a database component called ProEclipse (or simply Eclipse) with
+Nexus. It is used to store various trial- and session-related metadata. Eclipse
+stores the information in INI-style files with ``.enf`` extension, one file for
+each trial.
+
+gaitutils makes use of Eclipse in two ways: reading and writing
+forceplate-related metadata, and looking for tags in the Eclipse "notes" or
+"description" fields.
+
+Forceplate data
+---------------
+
+The Eclipse forceplate metadata simply indicates which forceplates have a valid
+foot contact. For example, "FP1=Right" means that valid right foot contact has
+occurred on the 1st forceplate. The values can be set manually, and they affect
+the calculations performed by Plug-in Gait. Apparently, "Auto" means that
+Plug-in Gait should try to perform autodetection of the foot contact, "Invalid"
+means that the contact will not be taken into account, and "Left" and "Right"
+can be used to force a valid contact. 
+
+By default, the autoprocessing operation in gaitutils does its own detection of
+forceplate contacts and writes the Eclipse forceplate keys as either "Right",
+"Left" or "Invalid", according to the detected contacts. The keys can also be
+reset by setting ``cfg.autoproc.write_eclipse_fp_info`` to ``reset``. This will
+set the keys to "Auto" so that autodetection occurs in Plug-in Gait.
+
+The Eclipse forceplate information is also used by default when loading trials.
+This can be used to force kinetics data to be available for given cycles. For
+example, if there is poor forceplate contact for plate 1 (e.g. partial contact)
+but you still want to see kinetics for that plate, you can set the Eclipse key
+for forceplate 1 to "Right" in Vicon Nexus. When the trial is loaded in
+gaitutils, the Eclipse info will be read and corresponding cycle will have
+kinetics available. This behavior can be disabled by setting the configuration
+item ``cfg.trial.use_eclipse_fp_info`` to ``False``.
+
+
+Tags
+----
+
+Tags are short strings in the Eclipse Notes or Description fields, used to mark
+trials for inclusion in reports etc. The tags can be defined by the user in
+``cfg.eclipse.tags`` config item.
 
 
 Contributing

@@ -297,7 +297,6 @@ def _get_metadata(c3dfile):
     except RuntimeError:
         logger.warning('Cannot get subject name')
         subj_name = 'Unknown'
-
     subj_params = defaultdict(lambda: None)
     try:
         par_names = _get_c3d_metadata_subfields(acq, 'PROCESSING')
@@ -349,7 +348,10 @@ def _get_model_data(c3dfile, model):
 
 
 def _get_1_forceplate_data(plate):
-    """Read data of a single forceplate from C3D"""
+    """Read data of a single forceplate from a c3d file.
+    
+    plate is an instance of btk.btkForcePlatform.
+    """
     READ_CHS = ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz']
     if plate.GetType() != 2:
         # Nexus should always write forceplates as type 2

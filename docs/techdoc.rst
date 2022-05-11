@@ -310,7 +310,8 @@ In addition to Nexus pipelines, autoprocessing relies on the two algorithms desc
 Reporting
 =========
 
-
+Gait reports can be generated from processed data. Interactive (web browser
+-based) and hardcopy (PDF) reports are supported.
 
 
 Contributing

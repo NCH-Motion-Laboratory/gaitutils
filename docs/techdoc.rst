@@ -38,15 +38,17 @@ still read data from C3D files, but obviously autoprocessing will not work. Even
 though ``btk`` is technically a soft dependency, the package cannot do very much
 without it.
 
-The Vicon Nexus Python API is currently (as of Nexus 2.12) provided as a ``pip``
-package in the Vicon Nexus installation. After creating the conda environment,
-the API package still needs to be installed as follows (edit the Nexus path as
-necessary).
+The Vicon Nexus Python API is currently (as of Nexus 2.12 and later) provided as
+a ``pip`` package in the Vicon Nexus installation. After creating the conda
+environment, the API package still needs to be installed as follows (edit the
+Nexus path as necessary).
 
 ::
 
-   C:\>cd "C:\Program Files (x86)\Vicon\Nexus2.12\SDK\Win64\Python"
+   C:\>cd "C:\Program Files\Vicon\Nexus2.13\SDK\Win64\Python"
    pip install ./viconnexusapi
+
+This may need superuser privileges.
 
 Misc dependencies
 -----------------

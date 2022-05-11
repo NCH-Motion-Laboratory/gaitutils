@@ -12,7 +12,6 @@ import pytest
 from numpy.testing import assert_allclose
 
 from gaitutils.utils import (
-    TrialEvents,
     is_plugingait_set,
     _point_in_poly,
     _pig_markerset,
@@ -26,24 +25,6 @@ logger = logging.getLogger(__name__)
 
 trial_enf = _file_path('anon.Trial.enf')
 trial_enf_write = _file_path('writetest.enf')
-
-
-def test_trialevents():
-    """Test TrialEvents class"""
-    with pytest.raises(AttributeError):
-        te = TrialEvents(rtoeoff=[])  # invalid attribute name
-    rstrikes, lstrikes, rtoeoffs, ltoeoffs = [5], [50], [25], [75]
-    te = TrialEvents(
-        rstrikes=rstrikes, lstrikes=lstrikes, rtoeoffs=rtoeoffs, ltoeoffs=ltoeoffs
-    )
-    te.subtract_offset(5)
-    assert te.rstrikes == [0]
-    with pytest.raises(RuntimeError):
-        te.subtract_offset(5)
-    with pytest.raises(AttributeError):
-        te.foo = None  # invalid attribute name
-    with pytest.raises(AttributeError):
-        te.rstrikes = 10  # invalid type
 
 
 def test_marker_gaps():

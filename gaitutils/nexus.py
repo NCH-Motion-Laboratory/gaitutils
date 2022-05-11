@@ -19,7 +19,7 @@ import multiprocessing
 import subprocess
 
 from .numutils import _change_coords, _isfloat, _rigid_body_extrapolate_markers
-from .utils import TrialEvents
+from .events import GaitEvent, GaitEvents
 from .envutils import GaitDataError
 from .config import cfg
 
@@ -41,8 +41,10 @@ def _find_nexus_path():
     # educated guess for Vicon software install path
     # from 2.13 onwards, Nexus will reside in the 64-bit dir
     # most preferable paths are last in the list
-    vicon_paths = [Path(r'C:\Program Files (x86)\Vicon'),
-                   Path(r'C:\Program Files\Vicon')]
+    vicon_paths = [
+        Path(r'C:\Program Files (x86)\Vicon'),
+        Path(r'C:\Program Files\Vicon'),
+    ]
     nexus_dirs_all = list()
     # get the latest version for each path
     for vicon_path in vicon_paths:
@@ -67,6 +69,7 @@ def _find_nexus_path():
         return nexus_dirs_all[-1]
     else:
         return None
+
 
 def _nexus_pid():
     """Try to return the PID of the currently running Nexus process"""
@@ -124,10 +127,11 @@ def viconnexus():
     ViconNexus
         The instance.
     """
+    # by default, just use the global instance
     global vicon_
-    # if SDK connection has not been established yet or server info looks
-    # invalid, we reestablish the connection; the latter condition occurs e.g.
-    # when Nexus has been restarted (SDK object becomes stale)
+    # however, if SDK connection has not been established yet or server info
+    # looks invalid, we reestablish the connection; the latter condition occurs
+    # e.g. when Nexus has been restarted (SDK object becomes stale)
     if vicon_ is None or vicon_.GetServerInfo()[0] != 'Nexus':
         _check_nexus()
         vicon_ = ViconNexus.ViconNexus()
@@ -203,7 +207,7 @@ def get_sessionpath():
         vicon = viconnexus()
         sessionpath = vicon.GetTrialName()[0]
     except IOError:  # may be raised if Nexus was just terminated
-        sessionpath = None
+        raise GaitDataError('Cannot communicate with Nexus')
     if not sessionpath:
         raise GaitDataError(
             'Cannot get Nexus session path, no session or maybe in Live mode?'
@@ -255,6 +259,17 @@ def _get_trialname():
     return vicon.GetTrialName()[1]
 
 
+def _check_nexus_trial_identity(sessionpath, trialname):
+    """Check if currently loaded trial matches the given sessionpath and trialname."""
+    try:
+        sp = get_sessionpath()
+        tr = _get_trialname()
+    except GaitDataError:
+        return False
+    if not (sp == sessionpath and tr == trialname):
+        raise GaitDataError('The underlying Nexus trial has changed.')
+
+
 def _is_vicon_instance(obj):
     """Check if obj is an instance of ViconNexus"""
     return obj.__class__.__name__ == 'ViconNexus'
@@ -303,20 +318,24 @@ def _get_metadata(vicon):
         raise GaitDataError('No trial loaded in Nexus')
     sessionpath = get_sessionpath()
     markers = _get_marker_names(vicon)
-    # Get foot strike and toeoff events.
-    # XXX: GetEvents() indices sometimes seem to often be 1 frame less than what
-    # is shown on Nexus display - only happens with ROI?
-    lstrikes = vicon.GetEvents(subj_name, "Left", "Foot Strike")[0]
-    rstrikes = vicon.GetEvents(subj_name, "Right", "Foot Strike")[0]
-    ltoeoffs = vicon.GetEvents(subj_name, "Left", "Foot Off")[0]
-    rtoeoffs = vicon.GetEvents(subj_name, "Right", "Foot Off")[0]
-    events = TrialEvents(
-        rstrikes=rstrikes, lstrikes=lstrikes, rtoeoffs=rtoeoffs, ltoeoffs=ltoeoffs
-    )
+
     # The offset will be subtracted from event frame numbers to get the correct
     # (0-based) indices for events. For Nexus, the offset is always 1 (Nexus
     # uses 1-based frame numbering).
     offset = 1
+    events = GaitEvents()
+    # Get the foot strike and toeoff events.
+    # XXX: GetEvents() indices sometimes seem to often be 1 frame less than what
+    # is shown on Nexus display - only happens with ROI?
+    for context in ['Left', 'Right']:
+        for ev_type in ['Foot Strike', 'Foot Off']:
+            ev_type_ours = 'strike' if ev_type == 'Foot Strike' else 'toeoff'
+            event_frames = vicon.GetEvents(subj_name, context, ev_type)[0]
+            for fr in event_frames:
+                fr_offset = fr - offset
+                ev = GaitEvent(fr_offset, ev_type_ours, context[0], None)
+                events.append(ev)
+
     length = vicon.GetFrameCount()
     framerate = vicon.GetFrameRate()
     # get analog rate. this may not be mandatory if analog devices
@@ -331,14 +350,8 @@ def _get_metadata(vicon):
     if analograte == 0.0:
         raise GaitDataError('Cannot determine analog rate')
     samplesperframe = analograte / framerate
-    logger.debug(
-        'offset @ %d, %d frames, framerate %d Hz, %d samples per '
-        'frame' % (offset, length, framerate, samplesperframe)
-    )
-    # get n of forceplates
-    fp_devids = [
-        id_ for id_ in devids if vicon.GetDeviceDetails(id_)[1].lower() == 'forceplate'
-    ]
+    logger.debug(f'{offset=}, {length} frames, {framerate=} {samplesperframe=}')
+    n_forceplates = len(_get_forceplate_ids(vicon))
 
     return {
         'trialname': trialname,
@@ -351,7 +364,7 @@ def _get_metadata(vicon):
         'events': events,
         'length': length,
         'samplesperframe': samplesperframe,
-        'n_forceplates': len(fp_devids),
+        'n_forceplates': n_forceplates,
         'markers': markers,
     }
 
@@ -431,28 +444,28 @@ def _get_analog_data(vicon, devname):
 
 
 def _get_forceplate_ids(vicon):
-    """Return Nexus forceplate device IDs"""
+    """Get device IDs of Nexus forceplate devices"""
     return [
-        id_
-        for id_ in vicon.GetDeviceIDs()
-        if vicon.GetDeviceDetails(id_)[1].lower() == 'forceplate'
+        id
+        for id in vicon.GetDeviceIDs()
+        if vicon.GetDeviceDetails(id)[1].lower() == 'forceplate'
     ]
 
 
 def set_forceplate_data(vicon, fp_index, data, kind='Force'):
     """Set forceplate data in Nexus.
 
-    This always sets the data in the device local frame. To set data in the
-    global frame, you need to get the local->global transformation from Nexus,
-    invert it, and apply the resulting global->local transformation to inputs.
+    Sets the data in the device local frame. To set data in the global frame,
+    you need to get the local->global transformation from Nexus, invert it, and
+    apply the resulting global->local transformation to inputs.
 
     Parameters
     ----------
     vicon : ViconNexus
         The SDK object.
     fp_index : int
-        The index of the forceplate (0...N). Note that this is not the same as
-        Nexus device ID.
+        The (zero-based) index of the forceplate. Note that this is not the same
+        as Nexus device ID.
     data : ndarray
         Tx3 array of data, where T is number of analog frames in current data. T
         needs to equal the number of analog samples in the current Nexus trial
@@ -472,8 +485,7 @@ def set_forceplate_data(vicon, fp_index, data, kind='Force'):
             fpid = fpids[fp_index]
         except IndexError:
             raise RuntimeError(
-                'Invalid plate index %d (detected %d forceplates)'
-                % (fp_index, len(fpids))
+                f'Invalid plate index {fp_index} (detected {len(fpids)} forceplates)'
             )
     outputid = vicon.GetDeviceOutputIDFromName(fpid, kind)
     for dim, data_dim in zip('xyz', data.T):
@@ -496,17 +508,18 @@ def _get_1_forceplate_data(vicon, devid, coords='global'):
 
     Returns
     -------
-    dict
-        Force dict with the following keys and values:
+    dict | None
+        If data can't be read (happens at least with paused plates), returns None.
+        Otherwise, returns a forceplace dict with the following keys and values:
 
         F : ndarray
-            Nx3 matrix of force.
+            Nx3 matrix of force data.
         Ftot : ndarray
             Nx1 matrix of force magnitude.
         M : ndarray
             Nx3 matrix of moment.
         CoP : ndarray
-            Nx3 matrix of center of pressure.
+            Nx3 matrix of center of pressure data.
         wR : ndarray
             3x3 rotation matrix for local -> global frame.
         wT : ndarray
@@ -534,6 +547,9 @@ def _get_1_forceplate_data(vicon, devid, coords='global'):
             chname = kind[0] + dim  # e.g. 'Fx'
             chid = vicon.GetDeviceChannelIDFromName(devid, outputid, chname)
             data, chready, chrate = getter_fun(devid, outputid, chid)
+            if not data:
+                logger.warning('could not read force data from {devid=} {outputid=}')
+                return None
             datalist.append(data)
         alldata[kind] = np.array(datalist).T
     Ftot = np.linalg.norm(alldata['Force'], axis=1)
@@ -579,20 +595,20 @@ def _get_forceplate_data(vicon):
     See read_data.get_forceplate_data() for details.
     """
     # get forceplate ids
+    fpdata = list()
     logger.debug('reading forceplate data from Vicon Nexus')
     devids = _get_forceplate_ids(vicon)
     if not devids:
-        logger.debug('no forceplates detected')
+        logger.info('no forceplates detected')
         return None
-    logger.debug('detected %d forceplate(s)' % len(devids))
-    # filter by device names, if they are configured
-    if cfg.autoproc.nexus_forceplate_devnames:
-        devids = [
-            id
-            for id in devids
-            if vicon.GetDeviceDetails(id)[0] in cfg.autoproc.nexus_forceplate_devnames
-        ]
-    return [_get_1_forceplate_data(vicon, devid) for devid in devids]
+    logger.debug(f'detected {len(devids)} forceplate(s)')
+    for eclipse_ind, devid in enumerate(devids, 1):
+        fpdata_1 = _get_1_forceplate_data(vicon, devid)
+        if fpdata_1 is not None:
+            # generate the Eclipse key
+            fpdata_1['eclipse_key'] = f'FP{eclipse_ind}'
+            fpdata.append(fpdata_1)
+    return fpdata
 
 
 def _swap_markers(vicon, marker1, marker2):
@@ -647,15 +663,15 @@ def _get_model_data(vicon, model):
     return modeldata
 
 
-def _create_events(vicon, context, strikes, toeoffs):
+def _create_events(vicon, gaitevents):
     """Create foot strike and toeoff events in Nexus"""
     logger.debug('marking events in Nexus')
-    context_str = 'Right' if context == 'R' else 'Left'
     subjectname = get_subjectnames()
-    for fr in strikes:
-        vicon.CreateAnEvent(subjectname, context_str, 'Foot Strike', int(fr + 1), 0)
-    for fr in toeoffs:
-        vicon.CreateAnEvent(subjectname, context_str, 'Foot Off', int(fr + 1), 0)
+    for ev in gaitevents.get_events():
+        context_str = 'Right' if ev.context == 'R' else 'Left'
+        frame = ev.frame + 1  # Nexus uses 1-based frame numbering
+        ev_type_nexus = 'Foot Strike' if ev.event_type == 'strike' else 'Foot Off'
+        vicon.CreateAnEvent(subjectname, context_str, ev_type_nexus, frame, 0.0)
 
 
 def rigid_body_extrapolate(

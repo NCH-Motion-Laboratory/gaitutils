@@ -11,7 +11,7 @@ import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 import logging
 
-from gaitutils import read_data, utils
+from gaitutils import read_data, utils, events
 from gaitutils.utils import detect_forceplate_events, marker_gaps
 from utils import _trial_path, _c3d_path, _file_path
 
@@ -82,45 +82,56 @@ def test_c3d_analysis_data():
 def test_c3d_fp_detection():
     """Test forceplate contact detection on c3d files"""
     c3dfile = _trial_path('adult_3fp', 'astrid_080515_02.c3d')
-    res = detect_forceplate_events(c3dfile)['coded']
-    assert res == 'LRL'
+    evs, nplates = detect_forceplate_events(c3dfile, return_nplates=True)
+    _, coded = events.get_forceplate_info(evs, nplates)
+    assert coded == 'LRL'
     c3dfile = _trial_path('runner', 'JL brooks 2,8 51.c3d')
-    res = detect_forceplate_events(c3dfile)['coded']
-    assert res == 'XRLXX'
+    evs, nplates = detect_forceplate_events(c3dfile, return_nplates=True)
+    _, coded = events.get_forceplate_info(evs, nplates)
+    assert coded == 'XRLXX'
     c3dfile = _trial_path('girl6v', '2015_10_22_girl6v_IN02.c3d')
-    res = detect_forceplate_events(c3dfile)['coded']
-    assert res == 'R'
+    evs, nplates = detect_forceplate_events(c3dfile, return_nplates=True)
+    _, coded = events.get_forceplate_info(evs, nplates)
+    assert coded == 'R'
     # detect slight overstep (toeoff not on plate)
     c3dfile = _c3d_path('slight_overstep.c3d')
-    res = detect_forceplate_events(c3dfile)['coded']
-    assert res == 'X'
+    evs, nplates = detect_forceplate_events(c3dfile, return_nplates=True)
+    _, coded = events.get_forceplate_info(evs, nplates)
+    assert coded == 'X'
     # detect double contact (both feet on plate)
     c3dfile = _c3d_path('double_contact.c3d')
-    res = detect_forceplate_events(c3dfile)['coded']
-    assert res == 'X'
+    evs, nplates = detect_forceplate_events(c3dfile, return_nplates=True)
+    _, coded = events.get_forceplate_info(evs, nplates)
+    assert coded == 'X'
     # almost overstepped but should be flagged as ok
     # too hard - disabled for now
     # c3d3 = 'testdata/test_c3ds/barely_ok.c3d'
     # res = detect_forceplate_events(c3d3)['coded']
-    # assert res == 'R'
+    # assert coded == 'R'
     # inside but on the edge
     c3dfile = _c3d_path('side_edge.c3d')
-    res = detect_forceplate_events(c3dfile)['coded']
-    assert res == 'L'
+    evs, nplates = detect_forceplate_events(c3dfile, return_nplates=True)
+    _, coded = events.get_forceplate_info(evs, nplates)
+    assert coded == 'L'
     c3dfile = _c3d_path('adult_barely_overstepped.c3d')
-    res = detect_forceplate_events(c3dfile)['coded']
-    assert res == 'X'
+    evs, nplates = detect_forceplate_events(c3dfile, return_nplates=True)
+    _, coded = events.get_forceplate_info(evs, nplates)
+    assert coded == 'X'
     c3dfile = _c3d_path('adult_almost_overstepped.c3d')
-    res = detect_forceplate_events(c3dfile)['coded']
-    assert res == 'L'
+    evs, nplates = detect_forceplate_events(c3dfile, return_nplates=True)
+    _, coded = events.get_forceplate_info(evs, nplates)
+    assert coded == 'L'
     c3dfile = _c3d_path('adult_overstep.c3d')
-    res = detect_forceplate_events(c3dfile)['coded']
-    assert res == 'X'
+    evs, nplates = detect_forceplate_events(c3dfile, return_nplates=True)
+    _, coded = events.get_forceplate_info(evs, nplates)
+    assert coded == 'X'
     c3dfile = _c3d_path('adult_ok.c3d')
-    res = detect_forceplate_events(c3dfile)['coded']
-    assert res == 'L'
+    evs, nplates = detect_forceplate_events(c3dfile, return_nplates=True)
+    _, coded = events.get_forceplate_info(evs, nplates)
+    assert coded == 'L'
     # walker device disturbs forceplate data, but we should
     # still be able to detect foot contacts
     c3dfile = _c3d_path('walker_on_forceplate.c3d')
-    res = detect_forceplate_events(c3dfile)['coded']
-    assert res == 'RLXX'
+    evs, nplates = detect_forceplate_events(c3dfile, return_nplates=True)
+    _, coded = events.get_forceplate_info(evs, nplates)
+    assert coded == 'RLXX'

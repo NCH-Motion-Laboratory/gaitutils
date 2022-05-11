@@ -13,10 +13,12 @@ import numpy as np
 import re
 import logging
 from pathlib import Path
+from copy import copy
 
 from .emg import EMG
 from .config import cfg
 from .envutils import GaitDataError
+from .events import GaitEvents
 from . import (
     read_data,
     nexus,
@@ -51,6 +53,7 @@ def nexus_trial(from_c3d=False):
     if from_c3d:
         c3dfile = trname[0] / Path(trname[1]).with_suffix('.c3d')
         if c3dfile.is_file():
+            logger.debug('loading Nexus trial via C3D')
             return Trial(c3dfile)
         else:
             logger.info(
@@ -203,6 +206,9 @@ class Gaitcycle:
 class Trial:
     """Gait trial class.
 
+    Represents a single gait trial (Nexus trial or C3D file).
+    Used as a container for gait data, gait cycles and related metadata.
+
     Parameters
     ----------
     source : str | Path | instance of ViconNexus
@@ -213,7 +219,7 @@ class Trial:
     trialname : str
         Name of trial.
     eclipse_data : dict
-        The Eclipse data for the trial. Keys are Eclipse fields and values are
+        Vicon Eclipse data for the trial. Keys are Eclipse fields and values are
         the corresponding data.
     sessionpath : Path
         Path to session directory.
@@ -224,9 +230,10 @@ class Trial:
         internally stores events as zero-based, i.e. event at 0 means an event
         at first frame. Thus, these events can be used directly to index e.g.
         marker and model data arrays. To recover the original indices of events,
-        you can add the offset. For example, the offset for Nexus is 1 (Nexus
-        uses 1-based index for the frames). Thus, a gaitutils event at frame 0
-        occurs in Nexus at frame 1. For C3D files, the offset is variable.
+        you can add the offset. For example, the offset for Nexus is always 1
+        (Nexus uses 1-based index for the frames). Thus, a gaitutils event at
+        frame 0 occurs in Nexus at frame 1. For C3D files, the offset is
+        variable.
     framerate : float
         Frame rate for capture (frames / sec).
     analograte : float
@@ -235,9 +242,8 @@ class Trial:
         Subject name.
     subj_params : dict
         Other subject parameters (bodymass etc.)
-    events : TrialEvents
-        Trial events (foot strikes, toeoffs etc.). These events are read from
-        the trial data (i.e. not autodetected).
+    events : GaitEvents
+        Trial events (foot strikes, toeoffs etc.).
     """
 
     def __repr__(self):
@@ -252,14 +258,15 @@ class Trial:
     def __init__(self, source):
         logger.debug(f'new trial instance from {source}')
         self.source = source
+        self._source_is_nexus = nexus._is_vicon_instance(source)
         meta = read_data.get_metadata(source)
-        # insert metadata dict directly as instance attributes (those are
-        # documented above)
+        # to avoid boilerplate, insert the metadata directly as instance
+        # attributes
         self.__dict__.update(meta)
+        # just in case, let's keep the original events (unmodified by forceplate data)
+        self._raw_events = copy(self.events)
         if self.length == 1:
             raise GaitDataError('Cannot deal with single-frame trials (yet)')
-        # match events with frame data
-        self.events.subtract_offset(self.offset)
         self.sessiondir = self.sessionpath.name
         # try to locate trial .enf (we do not require it)
         enfpath = self.sessionpath / Path(self.trialname).with_suffix('.Trial.enf')
@@ -279,6 +286,7 @@ class Trial:
         else:
             logger.debug('no .enf file found')
             self.eclipse_data = defaultdict(lambda: '', {})
+        # heuristic for static trials
         self.is_static = self.eclipse_data['TYPE'].upper() == 'STATIC'
         # handle session quirks
         self._handle_quirks()
@@ -290,10 +298,14 @@ class Trial:
         )
         self._forceplate_data = None
         self._marker_data = None
+        # read forceplate events and update the event data, since we need to
+        # know which gait cycles start on a forceplate
         if not self.is_static:
+            logger.debug('updating events with forceplate info')
             self.fp_events = self._get_fp_events()
+            self.events.merge_forceplate_events(self.fp_events)
         else:
-            self.fp_events = utils._empty_fp_events()
+            self.fp_events = GaitEvents()
         self._models_data = dict()
         self.stddev_data = None  # AvgTrial only
         # frames 0...length
@@ -305,10 +317,19 @@ class Trial:
         self.samplesperframe = self.analograte / self.framerate
         # create the gait cycles
         if not self.is_static:
-            self.cycles = list(self._scan_cycles())
+            self.cycles = self._scan_cycles()
         else:
             self.cycles = list()
         self.ncycles = len(self.cycles)
+
+    def _check_nexus_trial_still_valid(self):
+        """Check if Nexus still has the original trial loaded.
+
+        Lazy reads using Vicon Nexus are problematic, since the Nexus trial may
+        change at any time due to e.g. user actions. Thus we should try to
+        ensure that the original trial instance is still loaded in Nexus.
+        """
+        nexus._check_nexus_trial_identity(self.sessionpath, self.trialname)
 
     def _handle_quirks(self):
         """Handle session quirks"""
@@ -434,6 +455,8 @@ class Trial:
     def _full_marker_data(self):
         """Return the full marker data dict."""
         if self._marker_data is None:
+            if self._source_is_nexus:
+                self._check_nexus_trial_still_valid()
             self._marker_data = read_data.get_marker_data(self.source, self.markers)
         return self._marker_data
 
@@ -444,6 +467,8 @@ class Trial:
             raise ValueError(f'No model found for {var}')
         if model_.desc not in self._models_data:
             # read and cache model data
+            if self._source_is_nexus:
+                self._check_nexus_trial_still_valid()
             modeldata = read_data.get_model_data(self.source, model_)
             self._models_data[model_.desc] = modeldata
         return self._models_data[model_.desc][var]
@@ -529,6 +554,8 @@ class Trial:
             and data is the marker data as a (Nt, 3) ndarray.
         """
         if not self._forceplate_data:
+            if self._source_is_nexus:
+                self._check_nexus_trial_still_valid()
             self._forceplate_data = read_data.get_forceplate_data(self.source)
         if nplate < 0 or nplate >= len(self._forceplate_data):
             raise GaitDataError('Invalid plate index %d' % nplate)
@@ -549,16 +576,17 @@ class Trial:
     def _get_fp_events(self):
         """Read the forceplate events."""
         try:
-            fp_info = (
-                eclipse._eclipse_forceplate_keys(self.eclipse_data)
-                if cfg.trial.use_eclipse_fp_info and self.use_eclipse_fp_info
-                else None
+            if cfg.trial.use_eclipse_fp_info and self.use_eclipse_fp_info:
+                fp_info = eclipse._eclipse_forceplate_keys(self.eclipse_data)
+            else:
+                fp_info = None
+            marker_data = self._full_marker_data
+            return utils.detect_forceplate_events(
+                self.source, marker_data=marker_data, eclipse_fp_info=fp_info
             )
-            # FIXME: marker data already read?
-            return utils.detect_forceplate_events(self.source, fp_info=fp_info)
         except GaitDataError:
             logger.warning('Could not detect forceplate events')
-            return utils._empty_fp_events()
+            return GaitEvents()  # return empty events
 
     def get_cycles(self, cyclespec, max_cycles_per_context=None):
         """Get specified gait cycles from the trial.
@@ -646,45 +674,22 @@ class Trial:
         return sorted(cycs_ok, key=lambda cyc: cyc.start)
 
     def _scan_cycles(self):
-        """Create Gaitcycle instances for this trial.
+        """Make gait cycles based on foot strike and toeoff events"""
 
-        Cycle detection is based on trial strike/toeoff markers. To identify
-        cycles starting with forceplate contact, the foot strike markers need to
-        be matched with forceplate events. A tolerance of STRIKE_TOL is used for
-        the matching.
-        """
-        STRIKE_TOL = 7  # frames
-        contextstrs = {'R': 'right', 'L': 'left'}
-        for context, strikes, toeoffs in zip(
-            'LR',
-            [self.events.lstrikes, self.events.rstrikes],
-            [self.events.ltoeoffs, self.events.rtoeoffs],
-        ):
-            if len(strikes) < 2:
-                continue
-            for k in range(0, len(strikes) - 1):
-                start = strikes[k]
-                # see if cycle starts on forceplate strike
-                fp_strikes = np.array(self.fp_events[context + '_strikes'])
-                if fp_strikes.size == 0:
-                    on_forceplate = False
-                    plate_idx = None
-                else:
-                    diffs = np.abs(fp_strikes - start)
-                    on_forceplate = min(diffs) <= STRIKE_TOL
-                    if on_forceplate:
-                        strike_idx = np.argmin(diffs)
-                        plate_idx = self.fp_events[context + '_strikes_plate'][
-                            strike_idx
-                        ]
-                    else:
-                        plate_idx = None
-                    logger.debug(
-                        'context %s: cycle start: %d, '
-                        'detected fp events: %s' % (context, start, fp_strikes)
-                    )
-                end = strikes[k + 1]
-                toeoff = [x for x in toeoffs if x > start and x < end]
+        cycles = list()
+
+        for context, context_desc in utils.get_contexts():
+            strike_events = self.events.get_events('strike', context)
+            toeoff_events = self.events.get_events('toeoff', context)
+            toeoff_frames = [ev.frame for ev in toeoff_events]
+
+            # this relies on events being sorted by frame (but they should be)
+            for k, (ev0, ev1) in enumerate(zip(strike_events[:-1], strike_events[1:])):
+                on_forceplate = ev0.forceplate_index is not None
+                fp_str = ' (f)' if on_forceplate else ''
+                cyclename = f'{context_desc}{k+1}{fp_str}'
+                start, end = ev0.frame, ev1.frame
+                toeoff = [fr for fr in toeoff_frames if fr > start and fr < end]
                 if len(toeoff) == 0:
                     if cfg.trial.no_toeoff == 'error':
                         raise GaitDataError(
@@ -693,7 +698,8 @@ class Trial:
                         )
                     elif cfg.trial.no_toeoff == 'reject':
                         logger.warning(
-                            'no toeoff for cycle starting at %d, skipping cycle' % start
+                            'no toeoff for cycle starting at %d, rejecting cycle'
+                            % start
                         )
                         continue
                     else:
@@ -722,17 +728,19 @@ class Trial:
                         )
                 else:
                     toeoff = toeoff[0]
-                fp_str = ' (f)' if on_forceplate else ''
-                name = '%s%d%s' % (contextstrs[context], (k + 1), fp_str)
-                yield Gaitcycle(
+
+                cyc = Gaitcycle(
                     start,
                     end,
                     toeoff,
                     context,
                     on_forceplate,
-                    plate_idx,
+                    ev0.forceplate_index,
                     self.samplesperframe,
                     trial=self,
                     index=k + 1,
-                    name=name,
+                    name=cyclename,
                 )
+                cycles.append(cyc)
+
+        return cycles

@@ -10,7 +10,7 @@ Class for handling EMG data.
 import numpy as np
 import logging
 
-from . import read_data, numutils
+from . import read_data, numutils, nexus
 from .config import cfg
 
 logger = logging.getLogger(__name__)
@@ -30,6 +30,13 @@ class EMG:
     def __init__(self, source, correction_factor=1, chs_disabled=None):
         logger.debug(f'new EMG instance from {source}')
         self.source = source
+        self._source_is_nexus = nexus._is_vicon_instance(source)
+        if self._source_is_nexus:
+            self.sessionpath = nexus.get_sessionpath()
+            self.trialname = nexus._get_trialname()
+        else:
+            self.sessionpath = None
+            self.trialname = None
         self.passband = cfg.emg.passband
         self._data = None
         self.t = None
@@ -38,6 +45,15 @@ class EMG:
         self.chs_disabled = chs_disabled
         if self.chs_disabled is None:
             self.chs_disabled = list()
+
+    def _check_nexus_trial_still_valid(self):
+        """Check if Nexus still has the original trial loaded.
+
+        Lazy reads using Vicon Nexus are problematic, since the Nexus trial may
+        change at any time due to e.g. user actions. Thus we should try to
+        ensure that the original trial instance is still loaded in Nexus.
+        """
+        nexus._check_nexus_trial_identity(self.sessionpath, self.trialname)
 
     @property
     def data(self):
@@ -53,6 +69,8 @@ class EMG:
             of sample values.
         """
         if self._data is None:
+            if self._source_is_nexus:
+                self._check_nexus_trial_still_valid()
             self._read_data()
         return self._data
 

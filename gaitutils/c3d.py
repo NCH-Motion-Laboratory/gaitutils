@@ -11,13 +11,13 @@ called via the read_data module.
 from collections import defaultdict
 import logging
 import numpy as np
-import os
 from pathlib import Path
 import sys
 import shutil
 
 from .numutils import center_of_pressure, _change_coords, _is_ascii
-from .utils import TrialEvents, _step_width
+from .events import GaitEvents, GaitEvent
+from .utils import _step_width
 from .envutils import lru_cache_checkfile, _named_tempfile, GaitDataError
 
 
@@ -124,6 +124,7 @@ def get_analysis(c3dfile, condition='unknown'):
         A nested dict of the analysis values, keyed by variable name and
         context. The first key is the condition name.
     """
+    # used to change units; we currently change steps/min for brevity
     UNIT_CONVERSIONS = {'steps/min': '1/min'}
     logger.debug(f'getting analysis values from {c3dfile}')
     acq = _get_c3dacq(c3dfile)
@@ -275,25 +276,20 @@ def _get_metadata(c3dfile):
     markers = [m for m in markers if m[0] != '*']
 
     #  get events
-    rstrikes, lstrikes, rtoeoffs, ltoeoffs = [], [], [], []
+    events = GaitEvents()
     for i in btk.Iterate(acq.GetEvents()):
-        if i.GetLabel() == "Foot Strike":
-            if i.GetContext() == "Right":
-                rstrikes.append(i.GetFrame())
-            elif i.GetContext() == "Left":
-                lstrikes.append(i.GetFrame())
-            else:
-                raise GaitDataError("Unknown context on foot strike event")
-        elif i.GetLabel() == "Foot Off":
-            if i.GetContext() == "Right":
-                rtoeoffs.append(i.GetFrame())
-            elif i.GetContext() == "Left":
-                ltoeoffs.append(i.GetFrame())
-            else:
-                raise GaitDataError("Unknown context on foot strike event")
-    events = TrialEvents(
-        rstrikes=rstrikes, lstrikes=lstrikes, rtoeoffs=rtoeoffs, ltoeoffs=ltoeoffs
-    )
+        fr = i.GetFrame()
+        context = i.GetContext()[0]
+        ev_type = i.GetLabel()
+        if ev_type == 'Foot Strike':
+            ev_type_ours = 'strike'
+        elif ev_type == 'Foot Off':
+            ev_type_ours = 'toeoff'
+        else:
+            ev_type_ours = ev_type
+        fr_offset = fr - offset
+        ev = GaitEvent(fr_offset, ev_type_ours, context)
+        events.append(ev)
 
     # get subject info
     try:
@@ -301,7 +297,6 @@ def _get_metadata(c3dfile):
     except RuntimeError:
         logger.warning('Cannot get subject name')
         subj_name = 'Unknown'
-
     subj_params = defaultdict(lambda: None)
     try:
         par_names = _get_c3d_metadata_subfields(acq, 'PROCESSING')
@@ -352,71 +347,81 @@ def _get_model_data(c3dfile, model):
     return modeldata
 
 
+def _get_1_forceplate_data(plate):
+    """Read data of a single forceplate from a c3d file.
+
+    plate is an instance of btk.btkForcePlatform.
+    """
+    READ_CHS = ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz']
+    if plate.GetType() != 2:
+        # Nexus should always write forceplates as type 2
+        raise GaitDataError('Only type 2 forceplates are supported for now')
+    rawdata = dict()
+    data = dict()
+    for ch in btk.Iterate(plate.GetChannels()):
+        label = ch.GetLabel()[-3:-1]  # strip descriptor and plate number
+        rawdata[label] = np.squeeze(ch.GetData().GetValues())
+    if not all([ch in rawdata for ch in READ_CHS]):
+        logger.warning(f'could not read force/moment data for plate {plate}')
+        return None
+    F = np.stack([rawdata['Fx'], rawdata['Fy'], rawdata['Fz']], axis=1)
+    M = np.stack([rawdata['Mx'], rawdata['My'], rawdata['Mz']], axis=1)
+    # we need to calculate the center of pressure, since it's not in the C3D
+    # dz is the plate thickness (from moment origin to physical origin) needed
+    # for center of pressure calculations
+    dz = np.abs(plate.GetOrigin()[2])
+    cop = center_of_pressure(F, M, dz)  # in plate local coords
+    Ftot = np.linalg.norm(F, axis=1)
+    # locations of +x+y, -x+y, -x-y, +x-y plate corners in world coords
+    # (in that order)
+    cor = plate.GetCorners()
+    wT = np.mean(cor, axis=1)  # translation vector, plate -> world
+    # upper and lower bounds of forceplate
+    ub = np.max(cor, axis=1)
+    lb = np.min(cor, axis=1)
+    # plate unit vectors in world system
+    px = cor[:, 0] - cor[:, 1]
+    py = cor[:, 0] - cor[:, 3]
+    pz = np.array([0, 0, -1])
+    P = np.stack([px, py, pz], axis=1)
+    wR = P / np.linalg.norm(P, axis=0)  # rotation matrix, plate -> world
+    # check whether CoP stays inside forceplate area and clip if necessary
+    cop_w = _change_coords(cop, wR, wT)
+    cop_wx = np.clip(cop_w[:, 0], lb[0], ub[0])
+    cop_wy = np.clip(cop_w[:, 1], lb[1], ub[1])
+    if not (cop_wx == cop_w[:, 0]).all() and (cop_wy == cop_w[:, 1]).all():
+        logger.warning(
+            'center of pressure outside forceplate bounds, clipping to plate'
+        )
+        cop[:, 0] = cop_wx
+        cop[:, 1] = cop_wy
+    # XXX moment and force transformations may still be wrong
+    data['F'] = _change_coords(-F, wR, 0)  # not sure why sign flip needed
+    data['Ftot'] = Ftot
+    data['M'] = _change_coords(-M, wR, 0)  # not sure why sign flip needed
+    data['CoP'] = cop_w
+    data['wR'] = wR
+    data['wT'] = wT
+    data['plate_corners'] = cor.T
+    return data
+
+
 def _get_forceplate_data(c3dfile):
     """Read data of all forceplates from c3d file.
 
     See read_data.get_forceplate_data() for details.
     """
     logger.debug(f'reading forceplate data from {c3dfile}')
-    read_chs = ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz']
     acq = _get_c3dacq(c3dfile)
     fpe = btk.btkForcePlatformsExtractor()
     fpe.SetInput(acq)
     fpe.Update()
     fpdata = list()
-    nplate = 0
-    for plate in btk.Iterate(fpe.GetOutput()):
-        logger.debug('reading from plate %d' % nplate)
-        nplate += 1
-        if plate.GetType() != 2:
-            # Nexus should always write forceplates as type 2
-            raise GaitDataError('Only type 2 forceplates are supported for now')
-        rawdata = dict()
-        data = dict()
-        for ch in btk.Iterate(plate.GetChannels()):
-            label = ch.GetLabel()[-3:-1]  # strip descriptor and plate number
-            rawdata[label] = np.squeeze(ch.GetData().GetValues())
-        if not all([ch in rawdata for ch in read_chs]):
-            logger.warning('could not read force/moment data for plate %d' % nplate)
-            continue
-        F = np.stack([rawdata['Fx'], rawdata['Fy'], rawdata['Fz']], axis=1)
-        M = np.stack([rawdata['Mx'], rawdata['My'], rawdata['Mz']], axis=1)
-        # we need to calculate center of pressure, since it's not in the c3d
-        # this should be the plate thickness (from moment origin to physical
-        # origin) needed for center of pressure calculations
-        dz = np.abs(plate.GetOrigin()[2])
-        cop = center_of_pressure(F, M, dz)  # in plate local coords
-        Ftot = np.linalg.norm(F, axis=1)
-        # locations of +x+y, -x+y, -x-y, +x-y plate corners in world coords
-        # (in that order)
-        cor = plate.GetCorners()
-        wT = np.mean(cor, axis=1)  # translation vector, plate -> world
-        # upper and lower bounds of forceplate
-        ub = np.max(cor, axis=1)
-        lb = np.min(cor, axis=1)
-        # plate unit vectors in world system
-        px = cor[:, 0] - cor[:, 1]
-        py = cor[:, 0] - cor[:, 3]
-        pz = np.array([0, 0, -1])
-        P = np.stack([px, py, pz], axis=1)
-        wR = P / np.linalg.norm(P, axis=0)  # rotation matrix, plate -> world
-        # check whether CoP stays inside forceplate area and clip if necessary
-        cop_w = _change_coords(cop, wR, wT)
-        cop_wx = np.clip(cop_w[:, 0], lb[0], ub[0])
-        cop_wy = np.clip(cop_w[:, 1], lb[1], ub[1])
-        if not (cop_wx == cop_w[:, 0]).all() and (cop_wy == cop_w[:, 1]).all():
-            logger.warning(
-                'center of pressure outside forceplate bounds, clipping to plate'
-            )
-            cop[:, 0] = cop_wx
-            cop[:, 1] = cop_wy
-        # XXX moment and force transformations may still be wrong
-        data['F'] = _change_coords(-F, wR, 0)  # not sure why sign flip needed
-        data['Ftot'] = Ftot
-        data['M'] = _change_coords(-M, wR, 0)  # not sure why sign flip needed
-        data['CoP'] = cop_w
-        data['wR'] = wR
-        data['wT'] = wT
-        data['plate_corners'] = cor.T
-        fpdata.append(data)
+    for eclipse_ind, plate in enumerate(btk.Iterate(fpe.GetOutput()), 1):
+        logger.debug(f'reading from plate {eclipse_ind}')
+        data = _get_1_forceplate_data(plate)
+        if data is not None:
+            # generate the Eclipse key
+            data['eclipse_key'] = f'FP{eclipse_ind}'
+            fpdata.append(data)
     return fpdata

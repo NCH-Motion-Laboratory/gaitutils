@@ -195,11 +195,11 @@ def get_forceplate_info(gaitevents, n_plates):
     """
     fp_dict = dict()
     coded = ''
+    strike_events = gaitevents.get_events(event_type='strike', forceplate=True)
     for ind in range(n_plates):
-        strike_events = gaitevents.get_events(event_type='strike', forceplate=True)
-        plate_strikes = [ev for ev in strike_events if ev.forceplate_index == ind]
-        if plate_strikes:
-            strike = plate_strikes[0]
+        strike_events_this = [ev for ev in strike_events if ev.forceplate_index == ind]
+        if strike_events_this:
+            strike = strike_events_this[0]  # there should be only one
             plate_context = 'Right' if strike.context == 'R' else 'Left'
             coded += strike.context
         else:

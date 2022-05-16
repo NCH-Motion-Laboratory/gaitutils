@@ -167,7 +167,7 @@ class GaitEvents:
                     event_type=event_type, context=context
                 )
                 for ev, fp_ev in product(events_this, fp_events_this):
-                    if abs(ev.frame - fp_ev.frame) < FRAME_TOL:
+                    if abs(ev.frame - fp_ev.frame) <= FRAME_TOL:
                         ev.forceplate_index = fp_ev.forceplate_index
                         if adjust_frames:
                             ev.frame = fp_ev.frame

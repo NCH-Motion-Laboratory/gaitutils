@@ -338,17 +338,22 @@ def _get_metadata(vicon):
 
     length = vicon.GetFrameCount()
     framerate = vicon.GetFrameRate()
-    # get analog rate. this may not be mandatory if analog devices
-    # are not used, but currently it needs to succeed.
     devids = vicon.GetDeviceIDs()
     if not devids:
         raise GaitDataError('Cannot determine analog rate')
     else:
-        # rates may be 0 for some devices, we just pick the maximum as "the rate"
         analogrates = [vicon.GetDeviceDetails(id)[2] for id in devids]
-        analograte = max(rate for rate in analogrates if _isfloat(rate))
-    if analograte == 0.0:
-        raise GaitDataError('Cannot determine analog rate')
+        # some rates may be zero (unused devices?)
+        analogrates = [r for r in analogrates if r > 0]
+        analogrates = set(analogrates)
+        if len(analogrates) > 1:
+            raise GaitDataError('Nexus has multiple sampling rates in use. Device-specific sampling rates are not yet supported.')
+        elif analogrates:
+           analograte = analogrates.pop()
+        else:
+            # if data has no analog devices, the analog rate shouldn't matter
+            logger.warning(f'No analog devices detected - setting analog rate to default of 1000.0 Hz')
+            analograte = 1000
     samplesperframe = analograte / framerate
     logger.debug(f'{offset=}, {length} frames, {framerate=} {samplesperframe=}')
     n_forceplates = len(_get_forceplate_ids(vicon))

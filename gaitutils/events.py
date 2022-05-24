@@ -57,6 +57,15 @@ class GaitEvent:
             if not isinstance(self.forceplate_index, int) or self.forceplate_index < 0:
                 raise ValueError('forceplate index needs to be an integer > 0')
 
+    def __repr__(self) -> str:
+        s = ''
+        if self.context is not None:
+            s += f'{self.context} '
+        s += f'{self.event_type} at {self.frame}'
+        if self.forceplate_index is not None:
+            s += f' (on forceplate {self.forceplate_index + 1})'  # we use a 0-based index
+        return s
+
 
 class GaitEvents:
     """A collection of gait events (GaitEvent instances).

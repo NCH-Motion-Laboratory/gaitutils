@@ -556,15 +556,18 @@ def detect_forceplate_events(
     else:
         logger.debug('foot length parameter not set')
     bodymass = info['subj_params']['Bodymass']
+    req_markers = (
+        cfg.autoproc.right_foot_markers
+        + cfg.autoproc.left_foot_markers
+        + cfg.autoproc.track_markers
+    )
     if marker_data is None:  # not supplied as parameter
-        mkrs = (
-            cfg.autoproc.right_foot_markers
-            + cfg.autoproc.left_foot_markers
-            + cfg.autoproc.track_markers
-        )
-        marker_data = read_data.get_marker_data(source, mkrs)
+        marker_data = read_data.get_marker_data(source, req_markers)
+    if not all(mkr in marker_data for mkr in req_markers):
+        logger.warning('required markers missing, cannot detect forceplate contacts')
+        return results
 
-    datalen = marker_data[cfg.autoproc.track_markers[0]].shape[0]
+    datalen = info['length']
 
     logger.debug('acquiring marker-based gait events')
     events_marker = automark_events(source, mkrdata=marker_data, roi=roi)

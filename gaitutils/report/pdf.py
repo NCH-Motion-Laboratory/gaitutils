@@ -280,6 +280,21 @@ def create_report(
             legend=False,
             backend=pdf_backend,
         )
+    # EMG consistency, back muscles
+    fig_back_emg_cons = None
+    if pages['BackEMGCons']:
+        logger.debug('creating EMG consistency plot')
+        fig_back_emg_cons = _plot_sessions(
+            sessions=[sessionpath],
+            layout='back_emg',
+            color_by=color_by,
+            style_by=style_by,
+            figtitle=f'EMG back muscles consistency for {sessiondir}',
+            legend_type=legend_type,
+            legend=False,
+            backend=pdf_backend,
+        )
+
     # average plots, R/L
     fig_kin_avg = None
     if pages['KinAverage']:
@@ -322,6 +337,7 @@ def create_report(
         _savefig(pdf, fig_kinetics_cons, header)
         _savefig(pdf, fig_musclelen_cons, header, footer_musclelen)
         _savefig(pdf, fig_emg_cons, header)
+        _savefig(pdf, fig_back_emg_cons, header)        
         _savefig(pdf, fig_kin_avg, header)
         for fig in figs_extracted:
             _savefig(pdf, fig, header)

@@ -115,8 +115,10 @@ class PdfReportDialog(QtWidgets.QDialog):
         self.hetu = self.lnHetu.text()
         self.fullname = self.lnFullName.text()
         self.session_description = self.lnDescription.text()
-        # take the page selections and write them into a dict (keys are named after the
-        # selection widgets)
+        # take the page selections and write them into a dict
+        # any widget starting with 'cb' is taken as a page selection widget
+        # for example, 'cbKineticsCons' generates a page selection called
+        # 'KineticsCons' which has a value of True/False, according to the widget
         self.pages = dict()
         for w in self.findChildren(QtWidgets.QWidget):
             wname = w.objectName()

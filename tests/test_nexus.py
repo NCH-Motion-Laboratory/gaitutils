@@ -214,7 +214,9 @@ def test_compare_to_c3d():
     NDEC = 3
     # vars to test
     modelvars = models.pig_lowerbody.varlabels.keys()
-    emg_chs = cfg.emg.channel_labels.keys()
+    emg_chs = ['LGas', 'LGlut', 'LHam', 'LPer', 'LRec', 'LSol', 'LTibA',
+               'LVas', 'RGas', 'RGlut', 'RHam', 'RPer', 'RRec', 'RSol',
+               'RTibA', 'RVas']
     subj = 'girl6v'
     trialname = '2015_10_22_girl6v_IN03.c3d'
     trialpath = _trial_path(subj, trialname)

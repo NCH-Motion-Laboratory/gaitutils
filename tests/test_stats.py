@@ -54,7 +54,10 @@ def test_collect_trial_data():
     )
     assert 'model' not in data_all
     data_emg = data_all['emg']
-    assert set(data_emg.keys()) == set(cfg.emg.channel_labels.keys())
+    emg_chs = ['LGas', 'LGlut', 'LHam', 'LPer', 'LRec', 'LSol', 'LTibA',
+               'LVas', 'RGas', 'RGlut', 'RHam', 'RPer', 'RRec', 'RSol',
+               'RTibA', 'RVas']
+    assert set(data_emg.keys()) == set(emg_chs)
     assert all(data.shape[0] == 46 for ch, data in data_emg.items() if ch[0] == 'R')
     assert all(data.shape[0] == 42 for ch, data in data_emg.items() if ch[0] == 'L')
     assert all(data.shape[1] == 501 for data in data_emg.values())

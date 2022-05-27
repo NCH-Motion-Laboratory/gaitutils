@@ -11,7 +11,7 @@ import tempfile
 import tempfile
 from pathlib import Path
 
-from gaitutils import emg
+from gaitutils import emg, cfg
 from utils import _file_path
 
 logger = logging.getLogger(__name__)
@@ -28,6 +28,7 @@ sessiondir3_abs = _file_path(sessiondir3_)
 
 def test_emg_detect_bads():
     """Test bad channel detection"""
+    cfg.emg.autodetect_bads = True
     # this file is tricky; RVas is disconnected but shows some kind of artifact
     # instead of 50 Hz
     fn = r'2018_12_17_preOp_RR21.c3d'
@@ -59,6 +60,7 @@ def test_emg_detect_bads():
     e = emg.EMG(fpath)
     for chname, exp_ok in expected_ok.items():
         assert e.status_ok(chname) == True
+    cfg.emg.autodetect_bads = False
 
 
 def test_emg_write_edf():

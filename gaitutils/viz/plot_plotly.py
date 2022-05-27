@@ -872,6 +872,7 @@ def plot_trials(
 
                         # adjust subplot once
                         if not subplot_adjusted[(i, j)]:
+                            logger.debug(f'adjusting EMG subplot {i},{j}')
                             fig["layout"][yaxis].update(
                                 title={
                                     "text": cfg.plot.emg_ylabel,

@@ -11,7 +11,7 @@ import logging
 import tempfile
 
 from gaitutils.viz import plots, timedist, layouts
-from gaitutils import sessionutils, trial
+from gaitutils import sessionutils, trial, cfg
 from utils import _file_path
 
 logger = logging.getLogger(__name__)
@@ -42,6 +42,7 @@ def test_check_layout():
 
 def test_rm_dead_channels():
     """Test removing dead chs from EMG layout"""
+    cfg.emg.autodetect_bads = True    
     c3ds = sessionutils.get_c3ds(sessiondir2_abs, trial_type='dynamic')
     emgs = [trial.Trial(fn).emg for fn in c3ds]
     emg = emgs[0]
@@ -67,6 +68,7 @@ def test_rm_dead_channels():
     # instances
     assert layouts._rm_dead_channels(emg, lout) == lout_
     assert layouts._rm_dead_channels(emgs, lout) == lout_
+    cfg.emg.autodetect_bads = False
 
 
 def test_plot_trials():

@@ -7,7 +7,6 @@ Video file related code.
 
 import logging
 import os
-import os.path as op
 from pathlib import Path
 import glob
 import itertools

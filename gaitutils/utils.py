@@ -14,7 +14,7 @@ import logging
 
 from .envutils import GaitDataError
 from .config import cfg
-from .numutils import rising_zerocross, digitize_array, falling_zerocross, _baseline
+from .numutils import rising_zerocross, falling_zerocross, _baseline
 from .events import GaitEvent, GaitEvents
 
 
@@ -711,8 +711,6 @@ def automark_events(
 
     info = get_metadata(source)
     frate = info['framerate']
-    # some operations are Nexus specific and make no sense for c3d source
-    from . import nexus
 
     # TODO: move into config
     # marker data is assumed to be in mm
@@ -910,7 +908,7 @@ def automark_events(
         if plot:
             first_call = context == 'R'
             if first_call:
-                f, (ax1, ax2) = plt.subplots(2, 1)
+                _, (ax1, ax2) = plt.subplots(2, 1)
             ax = ax1 if first_call else ax2
             ax.plot(footctrv, 'g', label='foot center velocity ' + context)
             # algorithm, fixed thresholds

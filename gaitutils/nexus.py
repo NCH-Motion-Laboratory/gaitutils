@@ -18,7 +18,7 @@ import time
 import multiprocessing
 import subprocess
 
-from .numutils import _change_coords, _isfloat, _rigid_body_extrapolate_markers
+from .numutils import _change_coords, _rigid_body_extrapolate_markers
 from .events import GaitEvent, GaitEvents
 from .envutils import GaitDataError
 from .config import cfg
@@ -714,7 +714,7 @@ def rigid_body_extrapolate(
         A ViconNexus SDK object.
     ref_trial : str
         Filename of the reference trial. Give the filename without the
-        'Trial.enf' extension, e.g. 'my_session\my_trial01'. All markers must be
+        'Trial.enf' extension, e.g. 'my_session\\my_trial01'. All markers must be
         present in the reference trial, at least at the frame given by
         ref_frame.
     extrap_trials : list

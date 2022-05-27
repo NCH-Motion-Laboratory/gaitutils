@@ -33,8 +33,6 @@ git_mode = (pkg_parent / '.git').is_dir()
 class GaitDataError(Exception):
     """Custom exception class to indicate gait data related errors"""
 
-    pass
-
 
 def _ipython_setup():
     """Performs some IPython magic if we are running in IPython"""

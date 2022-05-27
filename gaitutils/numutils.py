@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 def kabsch_rotation(P, Q):
     """Calculate a rotation matrix P->Q using the Kabsch algorithm."""
     H = np.dot(P.T, Q)
-    U, S, V = np.linalg.svd(H)
+    U, _, V = np.linalg.svd(H)
     E = np.eye(3)
     E[2, 2] = np.sign(np.linalg.det(np.dot(V.T, U.T)))
     return np.dot(np.dot(V.T, E), U.T)

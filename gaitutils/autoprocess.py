@@ -46,13 +46,13 @@ def _do_autoproc(enffiles, signals=None, pipelines_in_proc=True):
         logger.debug('saving trial')
         vicon.SaveTrial(cfg.autoproc.nexus_timeout)
 
-    def _context_desc(events):
-        """Eclipse description string for a given events dict"""
+    def _context_desc(evs):
+        """Eclipse description string for a given events dict evs"""
         n_right = len(
-            events.get_events(context='R', event_type='strike', forceplate=True)
+            evs.get_events(context='R', event_type='strike', forceplate=True)
         )
         n_left = len(
-            events.get_events(context='L', event_type='strike', forceplate=True)
+            evs.get_events(context='L', event_type='strike', forceplate=True)
         )
         s = ""
         if n_right:

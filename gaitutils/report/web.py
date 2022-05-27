@@ -5,7 +5,6 @@ Create web-based gait report using dash.
 @author: Jussi (jnu@iki.fi)
 """
 
-from re import I
 import plotly.graph_objs as go
 import dash
 

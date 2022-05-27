@@ -347,12 +347,16 @@ def _get_metadata(vicon):
         analogrates = [r for r in analogrates if r > 0]
         analogrates = set(analogrates)
         if len(analogrates) > 1:
-            raise GaitDataError('Nexus has multiple sampling rates in use. Device-specific sampling rates are not yet supported.')
+            raise GaitDataError(
+                'Nexus has multiple sampling rates in use. Device-specific sampling rates are not yet supported.'
+            )
         elif analogrates:
-           analograte = analogrates.pop()
+            analograte = analogrates.pop()
         else:
             # if data has no analog devices, the analog rate shouldn't matter
-            logger.warning(f'No analog devices detected - setting analog rate to default of 1000.0 Hz')
+            logger.warning(
+                f'No analog devices detected - setting analog rate to default of 1000.0 Hz'
+            )
             analograte = 1000
     samplesperframe = analograte / framerate
     logger.debug(f'{offset=}, {length} frames, {framerate=} {samplesperframe=}')

@@ -557,7 +557,7 @@ def _get_1_forceplate_data(vicon, devid, coords='global'):
             chid = vicon.GetDeviceChannelIDFromName(devid, outputid, chname)
             data, chready, chrate = getter_fun(devid, outputid, chid)
             if not data:
-                logger.warning('could not read force data from {devid=} {outputid=}')
+                logger.warning(f'could not read force data from {devid=} {outputid=}')
                 return None
             datalist.append(data)
         alldata[kind] = np.array(datalist).T

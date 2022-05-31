@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 pkg_dir = Path(resource_filename('gaitutils', ''))  # package directory
 pkg_parent = pkg_dir.parent
+# True if package was imported from a git repository
 git_mode = (pkg_parent / '.git').is_dir()
 
 
@@ -121,7 +122,7 @@ def _register_gui_exception_handler(full_traceback=False):
 def lru_cache_checkfile(fun):
     """Cache function results, unless the argument file has changed.
 
-    A lru_cache type decorator for functions that take a file name argument.
+    A lru_cache -style decorator for functions that take a file name argument.
     Makes sense for functions that read a file and take a long time to process
     the data (anything that takes significantly longer than the md5 digest).
     Works by computing the md5 digest for the input file and passing that on to
@@ -153,8 +154,8 @@ def lru_cache_checkfile(fun):
 
 def _named_tempfile(suffix=None):
     """Return a name for a temporary file.
-    Does not open the file. Cross-platform. Replaces tempfile.NamedTemporaryFile
-    which behaves strangely on Windows.
+    Does not open the file. Cross-platform. Intended to replace
+    tempfile.NamedTemporaryFile which behaves strangely on Windows.
     """
     LEN = 12  # length of basename
     if suffix is None:

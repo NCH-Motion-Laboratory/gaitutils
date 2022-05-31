@@ -36,7 +36,7 @@ except ImportError:
 def _is_c3d_file(source):
     """Check if source is a valid c3d file.
 
-    XXX: Currently we just check existence.
+    XXX: Currently we just check existence. Would be good to check file header.
     """
     try:
         return Path(source).is_file()
@@ -45,7 +45,7 @@ def _is_c3d_file(source):
 
 
 def _get_c3d_metadata_subfields(acq, field):
-    """Return names of metadata subfields for a given field"""
+    """Return names of C3D metadata subfields for a given field"""
     meta = acq.GetMetaData()
     meta_s = meta.GetChild(field)
     return [f.GetLabel() for f in btk.Iterate(meta_s)]
@@ -109,20 +109,26 @@ def _get_c3dacq(c3dfile):
 
 
 def get_analysis(c3dfile, condition='unknown'):
-    """Get analysis values from c3d (e.g. gait parameters).
+    """Get ANALYSIS values from a c3d file.
+    
+    Usually these are the time-distance parameters, but other values may be
+    stored as well.
 
     Parameters
     ----------
     c3dfile : str | Path
         Path to the file.
     condition : str, optional
-        The condition name, by default 'unknown'.
+        The condition, by default 'unknown'. The condition is only used to
+        annotate the output dictionary.
 
     Returns
     -------
     dict
-        A nested dict of the analysis values, keyed by variable name and
-        context. The first key is the condition name.
+        A nested dict of the analysis values. Keys are condition, variable, and
+        context/unit. For example, di['unknown']['Step Width']['Right'] would contain
+        the step width for the right foot. 
+
     """
     # used to change units; we currently change steps/min for brevity
     UNIT_CONVERSIONS = {'steps/min': '1/min'}

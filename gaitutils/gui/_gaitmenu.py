@@ -56,10 +56,10 @@ logger = logging.getLogger(__name__)
 
 # setting this disables our internal handling of uncaught exceptions (so that the debugger
 # can catch them) and also enables VSCode debugging of PyQt threads that we launch
-# (ptvsd package is needed)
+# (debugpy package is needed)
 DEBUG_MODE = False
 if DEBUG_MODE:
-    import ptvsd
+    import debugpy
 
 
 def _get_nexus_sessionpath():
@@ -1179,9 +1179,9 @@ class Runner(QRunnable):
 
     def run(self):
         if DEBUG_MODE:  # do not handle exceptions, so that debugger can catch them
-            # the ptvsd call is currently needed to debug 'native threads'
+            # the debugpy call is currently needed to debug 'native threads'
             # (apparently PyQt threads are such)
-            ptvsd.debug_this_thread()
+            debugpy.debug_this_thread()
             retval = self.fun()
             self.signals.result.emit(retval)
             self.signals.finished.emit()

@@ -22,7 +22,7 @@ the environment specification by giving the command:
 
 ::
 
-   curl -O http://raw.githubusercontent.com/jjnurminen/gaitutils/master/environment.yml
+   curl -O https://raw.githubusercontent.com/jjnurminen/gaitutils/master/environment.yml
 
 Alternatively, if ``curl`` does not work, visit the link
 https://raw.githubusercontent.com/jjnurminen/gaitutils/master/environment.yml

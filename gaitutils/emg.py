@@ -9,6 +9,7 @@ Class for handling EMG data.
 
 import numpy as np
 import logging
+import pyedflib
 
 from . import read_data, numutils, nexus
 from .config import cfg
@@ -87,7 +88,7 @@ class EMG:
         """Export the EMG data to EDF format.
 
         Dumps raw (unfiltered) data from all physical channels to the given EDF
-        file. Format is currently set to EDF plus. Uses pyedflib as a soft dependency.
+        file. Format is currently set to EDF plus.
 
         Parameters
         ----------
@@ -95,12 +96,6 @@ class EMG:
             Name of EDF file to write.
 
         """
-        try:
-            import pyedflib
-        except ImportError:
-            raise RuntimeError(
-                'You need to install the pyedflib package to use this function'
-            )
         # default to EDF+ for the time being
         file_type = pyedflib.FILETYPE_EDFPLUS
         f = pyedflib.EdfWriter(

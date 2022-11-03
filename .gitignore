@@ -11,3 +11,4 @@ tests/.pytest_cache/v/cache/stepwise
 tests/.vscode/settings.json
 tests/gaitutils_testdata
 .idea/*
+gaitutils.egg-info/*

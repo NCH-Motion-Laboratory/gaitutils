@@ -104,7 +104,7 @@ class EMG:
         # default to EDF+ for the time being
         file_type = pyedflib.FILETYPE_EDFPLUS
         f = pyedflib.EdfWriter(
-            filename,
+            str(filename),
             len(self.data),
             file_type=file_type,
         )

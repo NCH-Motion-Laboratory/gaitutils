@@ -23,6 +23,7 @@ dependencies:
   - xlrd
   - xlsxwriter
   - xlutils
+  - pyedflib
   - pip:
     - dash
     - kaleido

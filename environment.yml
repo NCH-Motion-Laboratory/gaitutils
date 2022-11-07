@@ -24,6 +24,7 @@ dependencies:
   - xlsxwriter
   - xlutils
   - pyedflib
+  - pypdf2
   - pip:
     - dash
     - kaleido

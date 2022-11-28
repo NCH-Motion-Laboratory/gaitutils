@@ -31,7 +31,6 @@ dependencies:
   - dash-daq
   - pytest
   - pip:
-    - https://github.com/jjnurminen/gaitutils/archive/master.zip
-    - https://github.com/jjnurminen/ulstools/archive/master.zip
-    - https://github.com/jjnurminen/configdot/archive/master.zip
-
+    - https://github.com/NCH-Motion-Laboratory/gaitutils/archive/master.zip
+    - https://github.com/NCH-Motion-Laboratory/ulstools/archive/master.zip
+    - https://github.com/NCH-Motion-Laboratory/configdot/archive/master.zip

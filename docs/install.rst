@@ -22,10 +22,10 @@ the environment specification by giving the command:
 
 ::
 
-   curl -O https://raw.githubusercontent.com/jjnurminen/gaitutils/master/environment.yml
+   curl -O https://raw.githubusercontent.com/NCH-Motion-Laboratory/gaitutils/master/environment.yml
 
 Alternatively, if ``curl`` does not work, visit the link
-https://raw.githubusercontent.com/jjnurminen/gaitutils/master/environment.yml
+https://raw.githubusercontent.com/NCH-Motion-Laboratory/gaitutils/master/environment.yml
 and save the file. Make sure that it is saved with the ``.yml`` extension. Then
 create the environment by typing:
 
@@ -89,7 +89,7 @@ To update, give the command
 
 ::
 
-   pip install --upgrade https://github.com/jjnurminen/gaitutils/archive/master.zip
+   pip install --upgrade https://github.com/NCH-Motion-Laboratory/gaitutils/archive/master.zip
 
 Occassionally it may be beneficial or necessary to upgrade the dependencies as
 well. Unfortunately, there's currently no simple way to do this. The best way

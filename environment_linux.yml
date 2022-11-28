@@ -2,7 +2,6 @@ name: gaitutils
 channels:
   - conda-forge
 dependencies:
-  - btk
   - configobj
   - flake8
   - flask
@@ -25,6 +24,8 @@ dependencies:
   - xlutils
   - pyedflib
   - pypdf2
+  - cmake
+  - swig
   - dash
   - python-kaleido
   - dash-daq

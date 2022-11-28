@@ -356,12 +356,12 @@ Version control
 ---------------
 
 The code is stored at a public GitHub repository at
-https://github.com/jjnurminen/gaitutils. In the past, PyPi packages for
+https://github.com/NCH-Motion-Laboratory/gaitutils. In the past, PyPi packages for
 gaitutils were actively created for gaitutils, but currently the philosophy is
 to install directly from the latest GitHub master branch. Thus, the PyPi
 packages are likely to be out of date. ``pip`` can install directly from GitHub
 master using a URL specifier such as
-https://github.com/jjnurminen/gaitutils/archive/master.zip.
+https://github.com/NCH-Motion-Laboratory/gaitutils/archive/master.zip.
 
 
 

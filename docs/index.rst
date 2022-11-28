@@ -33,5 +33,5 @@ API reference
 Links
 =====
 
-   Gaitutils on GitHub <http://github.com/jjnurminen/gaitutils>
+   Gaitutils on GitHub <http://github.com/NCH-Motion-Laboratory/gaitutils>
 

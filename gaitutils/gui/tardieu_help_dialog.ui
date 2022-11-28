@@ -17,7 +17,7 @@
    <item>
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Tardieu analysis tool&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Version: very much work in progress :)&lt;/p&gt;&lt;p&gt;Part of the gaitutils python package&lt;/p&gt;&lt;p&gt;&lt;a href=&quot;github.com/jjnurminen/gaitutils&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;github.com/jjnurminen/gaitutils&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;p&gt;Contact: Jussi Nurminen (jnu@iki.fi)&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Keys:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Shift+left mouse: add marker&lt;/p&gt;&lt;p&gt;Shift+right mouse: remove marker&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Tardieu analysis tool&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Version: very much work in progress :)&lt;/p&gt;&lt;p&gt;Part of the gaitutils python package&lt;/p&gt;&lt;p&gt;&lt;a href=&quot;github.com/NCH-Motion-Laboratory/gaitutils&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;github.com/NCH-Motion-Laboratory/gaitutils&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;p&gt;Contact: Jussi Nurminen (jnu@iki.fi)&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Keys:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Shift+left mouse: add marker&lt;/p&gt;&lt;p&gt;Shift+right mouse: remove marker&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>

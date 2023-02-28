@@ -1254,6 +1254,3 @@ def main():
     nexus_status = f"Vicon Nexus is {'' if nexus._nexus_pid() else 'not '}running"
     logger.debug(nexus_status)
     app.exec_()
-
-if __name__ == "__main__":
-    main()

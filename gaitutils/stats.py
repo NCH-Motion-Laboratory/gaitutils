@@ -343,6 +343,7 @@ def collect_trial_data(
     trials,
     collect_types=None,
     fp_cycles_only=None,
+    force_collect_all_cycles=None,
     analog_len=None,
     analog_envelope=None,
 ):
@@ -358,7 +359,11 @@ def collect_trial_data(
         If None, collect all supported types.
     fp_cycles_only : bool
         If True, collect data from forceplate cycles only. Kinetics model vars
-        will always be collected from forceplate cycles only.
+        will always be collected from forceplate cycles only (unless
+        force_collect_all_cycles is True).
+    force_collect_all_cycles: bool
+        If True, return all the cycles, including kinetic non-forceplate. Overrides
+        fp_cycles_only.
     analog_len : int
         Analog data length varies by gait cycle, so it will be resampled into
         grid length specified by analog_len (default 1000 samples)
@@ -444,11 +449,14 @@ def collect_trial_data(
                         # (and a filter for context?)
                         if var[0] != cycle.context:
                             continue
-                        # don't collect kinetics if cycle is not on forceplate
-                        if (
-                            model.is_kinetic_var(var) or fp_cycles_only
-                        ) and not cycle.on_forceplate:
-                            continue
+
+                        if not force_collect_all_cycles:
+                            # don't collect kinetics if cycle is not on forceplate
+                            if (
+                                model.is_kinetic_var(var) or fp_cycles_only
+                            ) and not cycle.on_forceplate:
+                                continue
+
                     _, data = trial.get_model_data(var, cycle=cycle)
                     if np.all(np.isnan(data)):
                         logger.debug(f'no data for {trial.trialname}/{var}')
@@ -466,6 +474,11 @@ def collect_trial_data(
                 # check whether cycle matches channel context
                 if not trial.is_static and not trial.emg.context_ok(ch, cycle.context):
                     continue
+
+                if not force_collect_all_cycles:
+                    if fp_cycles_only and not cycle.on_forceplate:
+                        continue
+
                 # get data on analog sampling grid
                 try:
                     logger.debug(f'collecting EMG channel {ch} from {cycle}')

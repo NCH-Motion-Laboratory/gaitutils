@@ -10,6 +10,7 @@ Read gait trials.
 
 from collections import defaultdict
 import numpy as np
+from scipy.interpolate import interp1d
 import re
 import logging
 from pathlib import Path
@@ -186,7 +187,7 @@ class Gaitcycle:
         ncols = var.shape[1]
         idata = np.array(
             [
-                np.interp(self.tn, self.t, var[self.start : self.end, k])
+                interp1d(self.t, var[self.start : self.end, k], kind='quadratic')(self.tn)
                 for k in range(ncols)
             ]
         ).T

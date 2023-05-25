@@ -11,6 +11,7 @@ from pathlib import Path
 import glob
 import itertools
 import ctypes
+import platform
 import subprocess
 
 from .config import cfg
@@ -55,12 +56,39 @@ def convert_videos(vidfiles, check_only=False):
     vidconv_opts = cfg.general.videoconv_opts
     if not (vidconv_bin.is_file() and os.access(vidconv_bin, os.X_OK)):
         raise RuntimeError(f'Invalid configured video converter: {vidconv_bin}')
-    procs = []
+
+    procs = []    
+
     for vidfile in convfiles:
-        cmd = [vidconv_bin] + vidconv_opts.split() + [vidfile]
-        # supply NO_WINDOW flag to prevent opening of consoles
-        p = subprocess.Popen(cmd, stdout=None, creationflags=0x08000000)
+        if vidconv_opts == '':
+            """ For compatibility purposes, if no video converter options are
+            specified, pass to the converter just input file name.
+            """
+            cmd = [vidconv_bin] + [vidfile]
+        else:
+            """
+            Video converter parameters given as a list of two lists.
+            e.g. [['-i', '', '-o', ''], [1, 3]] means that the 1-st and 3-rd
+            elements of ['-i', '', '-o', ''] should be replaced with the input
+            and output filenames correspondingly, and the result should be
+            given to the video converter command as command-line parameters.
+            """
+            try:
+                vidconv_opts[0][vidconv_opts[1][0]] = vidfile
+                if len(vidconv_opts[1]) > 1:
+                    vidconv_opts[0][vidconv_opts[1][1]] = str(convfiles[vidfile])
+            except:
+                raise RuntimeError(f'Incorrect video converter parameters.')
+            
+            cmd = [vidconv_bin] + vidconv_opts[0]
+
+        if platform.system() == 'Windows':
+            # supply NO_WINDOW flag to prevent opening of consoles
+            p = subprocess.Popen(cmd, stdout=None, creationflags=0x08000000)
+        else:
+            p = subprocess.Popen(cmd, stdout=None)
         procs.append(p)
+        
     return procs
 
 

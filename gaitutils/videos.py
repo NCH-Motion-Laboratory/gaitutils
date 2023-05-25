@@ -47,10 +47,11 @@ def convert_videos(vidfiles, check_only=False):
         # return True if all conversion targets already exists
         return all(p.is_file() for p in convfiles.values())
 
-    # XXX: this disables Windows protection fault dialogs
-    # needed since ffmpeg2theora may crash after conversion is complete (?)
-    SEM_NOGPFAULTERRORBOX = 0x0002  # From MSDN
-    ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX)
+    if platform.system() == 'Windows':
+        # XXX: this disables Windows protection fault dialogs
+        # needed since ffmpeg2theora may crash after conversion is complete (?)
+        SEM_NOGPFAULTERRORBOX = 0x0002  # From MSDN
+        ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX)
 
     vidconv_bin = Path(cfg.general.videoconv_path)
     vidconv_opts = cfg.general.videoconv_opts

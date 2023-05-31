@@ -47,12 +47,6 @@ def convert_videos(vidfiles, check_only=False):
         # return True if all conversion targets already exists
         return all(p.is_file() for p in convfiles.values())
 
-    if platform.system() == 'Windows':
-        # XXX: this disables Windows protection fault dialogs
-        # needed since ffmpeg2theora may crash after conversion is complete (?)
-        SEM_NOGPFAULTERRORBOX = 0x0002  # From MSDN
-        ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX)
-
     vidconv_bin = Path(cfg.general.videoconv_path)
     vidconv_opts = cfg.general.videoconv_opts
     if not (vidconv_bin.is_file() and os.access(vidconv_bin, os.X_OK)):
@@ -62,18 +56,15 @@ def convert_videos(vidfiles, check_only=False):
 
     for vidfile in convfiles:
         if vidconv_opts == '':
-            """ For compatibility purposes, if no video converter options are
-            specified, pass to the converter just input file name.
-            """
+            # For compatibility purposes, if no video converter options are
+            # specified, pass to the converter just input file name.
             cmd = [vidconv_bin] + [vidfile]
         else:
-            """
-            Video converter parameters given as a list of two lists.
-            e.g. [['-i', '', '-o', ''], [1, 3]] means that the 1-st and 3-rd
-            elements of ['-i', '', '-o', ''] should be replaced with the input
-            and output filenames correspondingly, and the result should be
-            given to the video converter command as command-line parameters.
-            """
+            # Video converter parameters given as a list of two lists.
+            # e.g. [['-i', '', '-o', ''], [1, 3]] means that the 1-st and 3-rd
+            # elements of ['-i', '', '-o', ''] should be replaced with the input
+            # and output filenames correspondingly, and the result should be
+            # given to the video converter command as command-line parameters.
             try:
                 vidconv_opts[0][vidconv_opts[1][0]] = vidfile
                 if len(vidconv_opts[1]) > 1:

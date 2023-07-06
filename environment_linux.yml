@@ -14,7 +14,6 @@ dependencies:
   - pip
   - plotly
   - pyqt
-  - spyder
   - psutil
   - jupyter
   - urllib3
@@ -30,6 +29,8 @@ dependencies:
   - python-kaleido
   - dash-daq
   - pytest
+  - sphinx
+  - sphinx_rtd_theme
   - pip:
     - https://github.com/NCH-Motion-Laboratory/gaitutils/archive/master.zip
     - https://github.com/NCH-Motion-Laboratory/ulstools/archive/master.zip

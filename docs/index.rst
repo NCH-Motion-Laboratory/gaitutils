@@ -1,7 +1,5 @@
 .. gaitutils documentation master file
 
-.. include:: news.rst
-
 .. include:: readme.rst
 
 .. include:: install.rst
@@ -11,8 +9,6 @@
 .. include:: api.rst
 
 .. include:: config.rst
-
-.. include:: appendix.rst
 
 
 Technical documentation

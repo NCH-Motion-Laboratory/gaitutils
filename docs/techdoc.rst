@@ -524,7 +524,8 @@ This is a list of modules and other files included in the package. It is not
         GUI functionality specific to Microsoft Windows.
 
     ``gui/qt_dialogs.py``
-    ``gui/qt_widgets.py``    
+    
+    ``gui/qt_widgets.py``
         Various custom Qt components.
 
 ``report/``

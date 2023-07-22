@@ -2,35 +2,31 @@ name: gaitutils
 channels:
   - conda-forge
 dependencies:
-  - btk
-  - configobj
-  - flake8
-  - flask
-  - freetype
-  - matplotlib
-  - numpy
-  - scipy
-  - python
-  - openpyxl
-  - pip
-  - plotly
-  - pyqt
-  - psutil
-  - jupyter
-  - urllib3
-  - werkzeug
-  - xlrd
-  - xlsxwriter
-  - xlutils
-  - pyedflib
-  - pypdf2
-  - dash
-  - python-kaleido
-  - dash-daq
-  - pytest
-  - sphinx
-  - sphinx_rtd_theme
+  # Windows-specific
+  - pywin32=304
+  - btk=0.4
+  # general (shared between Windows and Linux)
+  - configobj=5.0.8
+  - flask=2.3.2
+  - matplotlib=3.7.2
+  - numpy=1.25.1
+  - scipy=1.11.1
+  - python=3.11.4
+  - openpyxl=3.1.2
+  - pip=23.2
+  - plotly=5.15.0
+  - pyqt=5.15.7
+  - psutil=5.9.5
+  - werkzeug=2.3.6
+  - pypdf2=2.11.1
+  - dash=2.11.1
+  - python-kaleido=0.2.1
+  - dash-daq=0.5.0
+  - pytest=7.4.0
+  - sphinx=6.2.1
+  - sphinx_rtd_theme=1.2.2
   - pip:
+    - pyedflib==0.1.33
     - https://github.com/NCH-Motion-Laboratory/gaitutils/archive/master.zip
     - https://github.com/NCH-Motion-Laboratory/ulstools/archive/master.zip
     - https://github.com/NCH-Motion-Laboratory/configdot/archive/master.zip

@@ -1,0 +1,32 @@
+name: gaitutils
+channels:
+  - conda-forge
+dependencies:
+  # Linux-specific
+  - cmake
+  - swig
+  # general (shared between Windows and Linux)
+  - configobj
+  - flask
+  - matplotlib
+  - numpy
+  - scipy
+  - python
+  - openpyxl
+  - pip
+  - plotly
+  - pyqt
+  - psutil
+  - werkzeug
+  - pypdf2
+  - dash
+  - python-kaleido
+  - dash-daq
+  - pytest
+  - sphinx
+  - sphinx_rtd_theme
+  - pip:
+    - pyedflib
+    - https://github.com/NCH-Motion-Laboratory/gaitutils/archive/master.zip
+    - https://github.com/NCH-Motion-Laboratory/ulstools/archive/master.zip
+    - https://github.com/NCH-Motion-Laboratory/configdot/archive/master.zip

@@ -67,12 +67,17 @@ latest GitHub master branch. It can then be updated with ``pip``. However,
 developers and advanced users will wish to install in "git mode" instead (i.e.
 run the package directly from a cloned repository). This can be done as follows:
 
-- clone the repository from GitHub
-- perform a normal install using the conda environment
-- activate the new environment
-- remove the pip install using ``pip uninstall gaitutils``
-- change directory to root of cloned repository
-- run ``pip install -e .`` (previously ``python setup.py develop`` which is now deprecated)
+- Clone the repository from GitHub
+- Perform a normal install using the conda environment. You may want to use the
+  development version of the conda environment specification -- ``environment_dev.yml``
+  for Windows or ``environment_linux_dev.yml`` for Linux. The development versions
+  of the specification do not specify package versions. This means that conda will try
+  to install the most recent versions of all the package requirements, potentially
+  leading to problems.
+- Activate the new environment
+- Remove the pip install using ``pip uninstall gaitutils``
+- Change directory to root of cloned repository
+- Run ``pip install -e .`` (previously ``python setup.py develop`` which is now deprecated)
 
 Desktop shortcuts
 -----------------
@@ -93,10 +98,10 @@ updated. Locally, the documentation can be recreated by running
 
 ::
 
-    ./make.bat html
+    sphinx-build -b html docs docs-html
 
-in the ``docs`` directory. The resulting html documentation will appear in
-``docs/_build/html``.
+in the project's root directory. The resulting html documentation will appear in
+``docs-html`` directory.
 
 To build the documentation, you need to have the ``sphinx_rtd_theme`` package
 installed. It can be installed using ``pip``.

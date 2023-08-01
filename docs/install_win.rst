@@ -82,17 +82,21 @@ In the activated environment, type
 An icon should appear on your desktop, which will activate the correct
 environment and start the GUI.
 
-Updating the package
---------------------
-
-To update, give the command
+If you get an error message running the above command (this might happen,
+for example, if your computer has restrictions set up by your organization's
+IT department), you can try running
 
 ::
 
-   pip install --upgrade https://github.com/NCH-Motion-Laboratory/gaitutils/archive/master.zip
+   python -c "from gaitutils.envutils import _make_gaitutils_shortcut; _make_gaitutils_shortcut()"
 
-Occassionally it may be beneficial or necessary to upgrade the dependencies as
-well. Unfortunately, there's currently no simple way to do this. The best way
+instead.
+
+Updating the package
+--------------------
+
+Unfortunately, there's currently no simple way to perform an upgrade
+in a safe and reliable fashion. The best way
 may be to simply delete the whole environment with
 
 ::

@@ -2,7 +2,9 @@
 
 .. include:: readme.rst
 
-.. include:: install.rst
+.. include:: install_win.rst
+
+.. include:: install_lin.rst
 
 .. include:: gui.rst
 

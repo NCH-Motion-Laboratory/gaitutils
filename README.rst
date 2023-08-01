@@ -7,6 +7,8 @@ provides higher-level interface, with abstractions such as 'trial' and
 'gait cycle'. Data can be read from Vicon Nexus or directly from c3d
 files.
 
+gaitutils is primarily developed for Windows, but there is also some support for Linux.
+
 Example: to read the current trial from Vicon Nexus and plot the Plug-in Gait
 lower body kinematics:
 

@@ -6,3 +6,5 @@ plotting of 3D gait analysis data. Compared to packages such as btk, it
 provides higher-level interface, with abstractions such as 'trial' and
 'gait cycle'. Data can be read from Vicon Nexus or directly from c3d
 files.
+
+gaitutils is primarily developed for Windows, but there is also some support for Linux.

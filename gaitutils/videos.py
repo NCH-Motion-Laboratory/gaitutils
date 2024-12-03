@@ -36,7 +36,7 @@ def convert_videos(vidfiles, check_only=False):
         Instead of converting, return True if all files are already converted
         (target exists).
     """
-    TARGET_SUFFIX = '.ogv'  # extension for converted files
+    TARGET_SUFFIX = '.webm'  # extension for converted files
     if not isinstance(vidfiles, list):
         vidfiles = [vidfiles]
     vidfiles = [Path(vidfile) for vidfile in vidfiles]
@@ -143,7 +143,7 @@ def get_trial_videos(
         The list of video filenames.
     """
     # XXX: should really be case insensitive, but it does not matter on Windows
-    vid_exts = ['.avi', '.ogv']
+    vid_exts = ['.avi', '.ogv', '.webm']
     if vid_ext is not None and vid_ext not in vid_exts:
         raise ValueError(f'unrecognized video extension {vid_ext}')
     trialbase = Path(trialfile).with_suffix('')

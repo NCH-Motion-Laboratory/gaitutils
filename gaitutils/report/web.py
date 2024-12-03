@@ -237,7 +237,7 @@ def dash_report(
                         vids_this = videos.get_trial_videos(
                             c3d,
                             camera_label=real_camera_label,
-                            vid_ext='.ogv',
+                            vid_ext='.webm',
                             overlay=overlay,
                         )
                         if vids_this:

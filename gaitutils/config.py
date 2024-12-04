@@ -33,7 +33,7 @@ def _handle_cfg_defaults(cfg):
         fn = resource_filename('gaitutils', 'data/emg_normaldata.json')
         cfg.emg.normaldata_file = fn
     if cfg.general.videoconv_path == 'default':
-        fn = resource_filename('gaitutils', 'thirdparty/ffmpeg2theora.exe')
+        fn = resource_filename('gaitutils', 'thirdparty/ffmpeg.exe')
         cfg.general.videoconv_path = fn
     if cfg.autoproc.write_eclipse_fp_info is True:
         cfg.autoproc.write_eclipse_fp_info = 'write'

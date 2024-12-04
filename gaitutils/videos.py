@@ -36,12 +36,11 @@ def convert_videos(vidfiles, check_only=False):
         Instead of converting, return True if all files are already converted
         (target exists).
     """
-    TARGET_SUFFIX = '.webm'  # extension for converted files
     if not isinstance(vidfiles, list):
         vidfiles = [vidfiles]
     vidfiles = [Path(vidfile) for vidfile in vidfiles]
     # result files
-    convfiles = {vidfile: vidfile.with_suffix(TARGET_SUFFIX) for vidfile in vidfiles}
+    convfiles = {vidfile: vidfile.with_suffix(cfg.general.video_converted_ext) for vidfile in vidfiles}
 
     if check_only:
         # return True if all conversion targets already exists
@@ -130,7 +129,7 @@ def get_trial_videos(
     camera_label : [type], optional
         If not None, return only videos corresponding to given camera label.
     vid_ext : str
-        If not None, return only video files with given extension, e.g. '.avi'
+        Return video files with given extension. Default is '.avi'
     overlay : bool
         If not None, return only overlay or non-overlay videos, for True and False
         respectively
@@ -143,16 +142,13 @@ def get_trial_videos(
         The list of video filenames.
     """
     # XXX: should really be case insensitive, but it does not matter on Windows
-    vid_exts = ['.avi', '.ogv', '.webm']
-    if vid_ext is not None and vid_ext not in vid_exts:
-        raise ValueError(f'unrecognized video extension {vid_ext}')
+    if vid_ext is None:
+        vid_ext = '.avi'
     trialbase = Path(trialfile).with_suffix('')
-    globs_ = (f'{trialbase}.*{vid_ext}' for vid_ext in vid_exts)
-    vids = itertools.chain.from_iterable(glob.iglob(glob_) for glob_ in globs_)
+    glob_ = f'{trialbase}.*{vid_ext}'
+    vids = glob.iglob(glob_)
     if camera_label is not None:
         vids = _filter_by_label(vids, camera_label)
-    if vid_ext is not None:
-        vids = _filter_by_extension(vids, vid_ext)
     if overlay is not None:
         vids = _filter_by_overlay(vids, overlay)
     vids = sorted(vids)[-1:] if single_file else sorted(vids)

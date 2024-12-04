@@ -356,17 +356,6 @@ class Trial:
             self.use_eclipse_fp_info = True
 
     @property
-    def videos(self):
-        """Returns names of trial video files.
-
-        Returns
-        -------
-        vidfiles : list
-            List of filenames.
-        """
-        return videos.get_trial_videos(self.sessionpath / self.trialname)
-
-    @property
     def eclipse_tag(self):
         """Return the first matching Eclipse tag for the trial.
 

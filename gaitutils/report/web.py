@@ -14,6 +14,7 @@ from flask import request
 import logging
 import base64
 import pickle
+import os
 from pathlib import Path
 
 from ulstools.num import age_from_hetu
@@ -122,6 +123,11 @@ def dash_report(
     dash.Dash | None
         The dash (flask) app, or None if report creation failed.
     """
+
+    # best to check early
+    if not os.access(cfg.general.browser_path, os.X_OK):
+        raise RuntimeError(f'Invalid configured web browser: {cfg.general.browser_path}')
+
     sessions = [Path(s) for s in sessions]
 
     if recreate_plots is None:

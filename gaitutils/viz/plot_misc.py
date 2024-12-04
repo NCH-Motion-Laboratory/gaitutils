@@ -10,6 +10,7 @@ import plotly
 from matplotlib.figure import Figure
 from PyQt5 import QtWidgets
 import subprocess
+import os
 import logging
 
 from . import plot_matplotlib, plot_plotly
@@ -29,6 +30,8 @@ def _show_plotly_fig(fig):
 
 def _browse_localhost(url=None, port=None):
     """Open configured browser on url or localhost:port"""
+    if not os.access(cfg.general.browser_path, os.X_OK):
+        raise RuntimeError(f'Invalid configured web browser: {cfg.general.browser_path}')
     if not url:
         if port:
             url = '127.0.0.1:%d' % port

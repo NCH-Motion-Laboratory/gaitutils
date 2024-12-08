@@ -28,7 +28,7 @@ def test_convert_videos():
     )[0]
     original_vids = videos.get_trial_videos(c3d_file, vid_ext='.avi', overlay=False)
     assert len(original_vids) == 3
-    target_vids = videos.get_trial_videos(c3d_file, vid_ext='.ogv', overlay=False)
+    target_vids = videos.get_trial_videos(c3d_file, vid_ext=cfg.general.video_converted_ext, overlay=False)
     # remove target videos if they exist
     for vidfile in target_vids:
         vidfile.unlink()
@@ -73,7 +73,7 @@ def test_get_trial_videos():
     assert (
         vids[0] == sessiondir_abs / '2018_12_17_preOp_RR07.2114551.20181317142825.avi'
     )
-    vids = videos.get_trial_videos(trialfile, vid_ext='.ogv')
+    vids = videos.get_trial_videos(trialfile, vid_ext=cfg.general.video_converted_ext)
     assert len(vids) == 3
     vids = videos.get_trial_videos(trialfile, vid_ext='.avi', overlay=True)
     assert not vids

@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 import glob
 import itertools
-import ctypes
+from copy import copy
 import platform
 import subprocess
 
@@ -43,35 +43,35 @@ def convert_videos(vidfiles, check_only=False):
     convfiles = {vidfile: vidfile.with_suffix(cfg.general.video_converted_ext) for vidfile in vidfiles}
 
     if check_only:
-        # return True if all conversion targets already exists
+        # return True if all conversion targets already exist
         return all(p.is_file() for p in convfiles.values())
 
     vidconv_bin = Path(cfg.general.videoconv_path)
-    vidconv_opts = cfg.general.videoconv_opts
-    if not (vidconv_bin.is_file() and os.access(vidconv_bin, os.X_OK)):
+    if not os.access(vidconv_bin, os.X_OK):
         raise RuntimeError(f'Invalid configured video converter: {vidconv_bin}')
 
     procs = []    
 
-    for vidfile in convfiles:
+    for infile, outfile in convfiles.items():
+        # do not manipulate the config item
+        vidconv_opts = copy(cfg.general.videoconv_opts)
         if vidconv_opts == '':
             # For compatibility purposes, if no video converter options are
             # specified, pass to the converter just input file name.
-            cmd = [vidconv_bin] + [vidfile]
+            cmd = [vidconv_bin] + [infile]
         else:
-            # Video converter parameters given as a list of two lists.
-            # e.g. [['-i', '', '-o', ''], [1, 3]] means that the 1-st and 3-rd
-            # elements of ['-i', '', '-o', ''] should be replaced with the input
-            # and output filenames correspondingly, and the result should be
-            # given to the video converter command as command-line parameters.
-            try:
-                vidconv_opts[0][vidconv_opts[1][0]] = vidfile
-                if len(vidconv_opts[1]) > 1:
-                    vidconv_opts[0][vidconv_opts[1][1]] = str(convfiles[vidfile])
-            except:
-                raise RuntimeError(f'Incorrect video converter parameters.')
-            
-            cmd = [vidconv_bin] + vidconv_opts[0]
+            ok = isinstance(vidconv_opts, list)
+            ok &= vidconv_opts.count('{INPUT}') == 1
+            ok &= vidconv_opts.count('{OUTPUT}') == 1
+            ok &= all(isinstance(item, str) for item in vidconv_opts)
+            if not ok:
+                raise RuntimeError(f'Incorrect video converter parameters')
+            for k, opt in enumerate(vidconv_opts):
+                if opt == '{INPUT}':
+                    vidconv_opts[k] = opt.format(INPUT=infile)
+                if opt == '{OUTPUT}':
+                    vidconv_opts[k] = opt.format(OUTPUT=outfile)
+            cmd = [vidconv_bin] + vidconv_opts
 
         if platform.system() == 'Windows':
             # supply NO_WINDOW flag to prevent opening of consoles

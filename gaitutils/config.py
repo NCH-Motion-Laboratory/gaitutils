@@ -37,6 +37,16 @@ def _handle_cfg_defaults(cfg):
         cfg.general.videoconv_path = fn
     if cfg.autoproc.write_eclipse_fp_info is True:
         cfg.autoproc.write_eclipse_fp_info = 'write'
+    # Deprecated video converter options were given as a list of two lists.
+    # For example [['-i', '', '-o', ''], [1, 3]] means that the 1-st and 3-rd
+    # elements of ['-i', '', '-o', ''] should be replaced with the input and output
+    # filenames correspondingly. It is here converted to the new format.
+    vidconv_opts = cfg.general.videoconv_opts
+    if isinstance(vidconv_opts, list) and isinstance(vidconv_opts[0], list):
+        vidconv_opts[0][vidconv_opts[1][0]] = '{INPUT}'
+        if len(vidconv_opts[1]) > 1:
+            vidconv_opts[0][vidconv_opts[1][1]] = '{OUTPUT}'
+        cfg.general.videoconv_opts = vidconv_opts[0]
 
 
 # location of the default config file

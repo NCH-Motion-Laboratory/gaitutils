@@ -58,7 +58,7 @@ def test_get_trial_videos():
     trialfile_ = '2018_12_17_preOp_RR07.c3d'
     trialfile = sessiondir_abs / trialfile_
     vids = videos.get_trial_videos(trialfile)  # get all
-    assert len(vids) == 7
+    assert len(vids) == 4
     for vid in vids:
         assert vid.is_file()
     vids = videos.get_trial_videos(

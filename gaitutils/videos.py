@@ -13,6 +13,7 @@ import itertools
 from copy import copy
 import platform
 import subprocess
+import time
 
 from .config import cfg
 from . import sessionutils, numutils
@@ -20,12 +21,10 @@ from . import sessionutils, numutils
 logger = logging.getLogger(__name__)
 
 
-def convert_videos(vidfiles, check_only=False):
+def convert_videos(vidfiles, check_only=False, signals=None):
     """Convert video files using an external command.
 
     Command and args are defined in cfg.
-    Returns an iterable of command lines in a list format that can be passed to
-    e.g. subprocess.Popen.
 
     Parameters
     ----------
@@ -34,7 +33,15 @@ def convert_videos(vidfiles, check_only=False):
     check_only : bool, optional
         Instead of converting, return True if all files are already converted
         (target exists).
+    signals : ProgressSignals, optional
+        ProgressSignals instance for GUI signaling. None for no signaling.
     """
+    MAX_NPROCS_PARALLEL = 4
+    POPEN_ARGS = {'stdout': None}
+    if platform.system() == 'Windows':
+        # prevent opening of consoles
+        POPEN_ARGS['creationflags'] = 0x08000000
+
     if not isinstance(vidfiles, list):
         vidfiles = [vidfiles]
     vidfiles = [Path(vidfile) for vidfile in vidfiles]
@@ -43,23 +50,24 @@ def convert_videos(vidfiles, check_only=False):
         vidfile: vidfile.with_suffix(cfg.general.video_converted_ext)
         for vidfile in vidfiles
     }
+    n_total = len(vidfiles)
 
     if check_only:
         # return True if all conversion targets already exist
         return all(p.is_file() for p in convfiles.values())
 
-    vidconv_bin = Path(cfg.general.videoconv_path)
-    if not os.access(vidconv_bin, os.X_OK):
-        raise RuntimeError(f'Invalid configured video converter: {vidconv_bin}')
+    VIDCONV_BIN = Path(cfg.general.videoconv_path)
+    if not os.access(VIDCONV_BIN, os.X_OK):
+        raise RuntimeError(f'Invalid configured video converter: {VIDCONV_BIN}')
 
-    cmds = []
+    proc_cmds = []
     for infile, outfile in convfiles.items():
         # do not manipulate the config item
         vidconv_opts = copy(cfg.general.videoconv_opts)
         if vidconv_opts == '':
             # For compatibility purposes, if no video converter options are
             # specified, pass to the converter just input file name.
-            cmd = [vidconv_bin] + [infile]
+            cmd = [VIDCONV_BIN] + [infile]
         else:
             ok = isinstance(vidconv_opts, list)
             ok &= vidconv_opts.count('{INPUT}') == 1
@@ -72,9 +80,37 @@ def convert_videos(vidfiles, check_only=False):
                     vidconv_opts[k] = opt.format(INPUT=infile)
                 if opt == '{OUTPUT}':
                     vidconv_opts[k] = opt.format(OUTPUT=outfile)
-            cmd = [vidconv_bin] + vidconv_opts
-        cmds.append(cmd)
-    return cmds
+            cmd = [VIDCONV_BIN] + vidconv_opts
+        proc_cmds.append(cmd)
+
+    # launch up to MAX_NPROCS_PARALLEL processes for starters
+    procs = []
+    for _ in range(MAX_NPROCS_PARALLEL):
+        if proc_cmds:
+            cmd = proc_cmds.pop()
+            procs.append(subprocess.Popen(cmd, **POPEN_ARGS))
+
+    # start new processes in a sleep loop as previous ones complete
+    while proc_cmds:
+
+        if signals is not None and signals.canceled:
+            logger.debug('canceled, killing video converter processes')
+            for p in procs:
+                p.kill()
+            break
+
+        n_active = len([p for p in procs if p.poll() is None])
+        n_complete = len(procs) - n_active
+        if n_active < MAX_NPROCS_PARALLEL:
+            cmd = proc_cmds.pop()
+            procs.append(subprocess.Popen(cmd, **POPEN_ARGS))
+
+        if signals is not None:
+            progress_txt = f'Converting videos: {n_complete} of {n_total} files done'
+            progress_p = 100 * n_complete / float(n_total)
+            signals.progress.emit(progress_txt, progress_p)
+
+        time.sleep(0.01)
 
 
 def _collect_session_videos(session, tags):

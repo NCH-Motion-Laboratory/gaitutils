@@ -44,7 +44,7 @@ def convert_videos(input_files, check_only=False, signals=None):
         # prevent opening of consoles
         POPEN_ARGS['creationflags'] = 0x08000000
 
-    def _emit_progress(n_complete, n_total):
+    def _emit_progress(n_complete):
         """Emit signal according to progress of conversion"""
         if signals is not None:
             progress_txt = f'Converting videos: {n_complete} of {n_total} files done'
@@ -114,11 +114,11 @@ def convert_videos(input_files, check_only=False, signals=None):
             cmd = proc_cmds.pop()
             procs.append(subprocess.Popen(cmd, **POPEN_ARGS))
 
-        _emit_progress(n_complete, n_total)
+        _emit_progress(n_complete)
         time.sleep(0.1)
 
     # finished, emit 100% progress
-    _emit_progress(n_total, n_total)
+    _emit_progress(n_total)
 
 def _collect_session_videos(session, tags):
     """Collect session .avi files (trial videos). This only collects

@@ -21,47 +21,56 @@ from . import sessionutils, numutils
 logger = logging.getLogger(__name__)
 
 
-def convert_videos(vidfiles, check_only=False, signals=None):
+def convert_videos(input_files, check_only=False, signals=None):
     """Convert video files using an external command.
 
     Command and args are defined in cfg.
 
     Parameters
     ----------
-    vidfiles : list | str | Path
-        List of video filenames, or a single filename
+    input_files : list | str | Path
+        List of video filenames to convert, or a single filename
     check_only : bool, optional
         Instead of converting, return True if all files are already converted
-        (target exists).
+        (all conversion target files exist).
     signals : ProgressSignals, optional
-        ProgressSignals instance for GUI signaling. None for no signaling.
+        ProgressSignals instance that will be used for signaling. A cancel flag
+        can be received and progress signals can be passed on to the caller.
+        If None, no signaling will be done.
     """
-    MAX_NPROCS_PARALLEL = 2
+    MAX_NPROCS_PARALLEL = 4  # limit n of simultaneous converter processes
     POPEN_ARGS = {'stdout': None}
     if platform.system() == 'Windows':
         # prevent opening of consoles
         POPEN_ARGS['creationflags'] = 0x08000000
 
-    if not isinstance(vidfiles, list):
-        vidfiles = [vidfiles]
-    vidfiles = [Path(vidfile) for vidfile in vidfiles]
+    def _emit_progress(n_complete, n_total):
+        """Emit signal according to progress of conversion"""
+        if signals is not None:
+            progress_txt = f'Converting videos: {n_complete} of {n_total} files done'
+            progress_p = 100 * n_complete / float(n_total)
+            signals.progress.emit(progress_txt, progress_p)
+
+    if not isinstance(input_files, list):
+        input_files = [input_files]
+    input_files = [Path(vidfile) for vidfile in input_files]
     # conversion target filenames
-    convfiles = {
+    conversion_targets = {
         vidfile: vidfile.with_suffix(cfg.general.video_converted_ext)
-        for vidfile in vidfiles
+        for vidfile in input_files
     }
-    n_total = len(vidfiles)
+    n_total = len(input_files)
 
     if check_only:
         # return True if all conversion targets already exist
-        return all(p.is_file() for p in convfiles.values())
+        return all(p.is_file() for p in conversion_targets.values())
 
     VIDCONV_BIN = Path(cfg.general.videoconv_path)
     if not os.access(VIDCONV_BIN, os.X_OK):
         raise RuntimeError(f'Invalid configured video converter: {VIDCONV_BIN}')
 
     proc_cmds = []
-    for infile, outfile in convfiles.items():
+    for infile, outfile in conversion_targets.items():
         # do not manipulate the config item
         vidconv_opts = copy(cfg.general.videoconv_opts)
         if vidconv_opts == '':
@@ -90,7 +99,7 @@ def convert_videos(vidfiles, check_only=False, signals=None):
             cmd = proc_cmds.pop()
             procs.append(subprocess.Popen(cmd, **POPEN_ARGS))
 
-    # start new processes in a sleep loop as previous ones complete
+    # if needed, start new processes in a sleep loop as previous ones complete
     while proc_cmds:
 
         if signals is not None and signals.canceled:
@@ -105,17 +114,11 @@ def convert_videos(vidfiles, check_only=False, signals=None):
             cmd = proc_cmds.pop()
             procs.append(subprocess.Popen(cmd, **POPEN_ARGS))
 
-        if signals is not None:
-            progress_txt = f'Converting videos: {n_complete} of {n_total} files done'
-            progress_p = 100 * n_complete / float(n_total)
-            signals.progress.emit(progress_txt, progress_p)
+        _emit_progress(n_complete, n_total)
+        time.sleep(0.1)
 
-        time.sleep(0.01)
-
-    # for completeness
-    progress_txt = f'Converting videos: {n_total} of {n_total} files done'
-    signals.progress.emit(progress_txt, 100)
-
+    # finished, emit 100% progress
+    _emit_progress(n_total, n_total)
 
 def _collect_session_videos(session, tags):
     """Collect session .avi files (trial videos). This only collects

@@ -36,7 +36,7 @@ def convert_videos(vidfiles, check_only=False, signals=None):
     signals : ProgressSignals, optional
         ProgressSignals instance for GUI signaling. None for no signaling.
     """
-    MAX_NPROCS_PARALLEL = 4
+    MAX_NPROCS_PARALLEL = 2
     POPEN_ARGS = {'stdout': None}
     if platform.system() == 'Windows':
         # prevent opening of consoles
@@ -111,6 +111,10 @@ def convert_videos(vidfiles, check_only=False, signals=None):
             signals.progress.emit(progress_txt, progress_p)
 
         time.sleep(0.01)
+
+    # for completeness
+    progress_txt = f'Converting videos: {n_total} of {n_total} files done'
+    signals.progress.emit(progress_txt, 100)
 
 
 def _collect_session_videos(session, tags):

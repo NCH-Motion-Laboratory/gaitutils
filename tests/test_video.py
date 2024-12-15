@@ -35,15 +35,8 @@ def test_convert_videos():
     # check should not find target videos any more
     assert not videos.convert_videos(original_vids, check_only=True)
     # start conversion process
-    procs = videos.convert_videos(original_vids)
-    assert procs
-    completed = False
-    # wait in a sleep loop until processes have finished
-    while not completed:
-        n_complete = len([p for p in procs if p.poll() is not None])
-        completed = n_complete == len(procs)
-        time.sleep(0.1)
-    # now conversion target videos should exist
+    videos.convert_videos(original_vids)
+    # check that conversion target videos exist now
     assert videos.convert_videos(original_vids, check_only=True)
 
 

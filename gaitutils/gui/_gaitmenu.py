@@ -16,6 +16,8 @@ import requests
 import logging
 import traceback
 import socket
+import platform
+import subprocess
 from pathlib import Path
 import ulstools
 import configdot
@@ -893,28 +895,45 @@ class Gaitmenu(QtWidgets.QMainWindow):
 
     def _convert_vidfiles(self, vidfiles, signals):
         """Convert given list of video files"""
-        # get the converter processes
-        procs = convert_videos(vidfiles=vidfiles)
-        if not procs:
-            logger.warning('video converter processes could not be started')
+
+        MAX_NPROCS_PARALLEL = 4
+        POPEN_ARGS = {'stdout': None}
+        if platform.system() == 'Windows':
+            # prevent opening of consoles
+            POPEN_ARGS['creationflags'] = 0x08000000
+
+        if not (proc_cmds := convert_videos(vidfiles=vidfiles)):
+            logger.warning('got no video converter commands')
             return
-        completed = False
-        # wait in sleep loop until all converter processes have finished
-        while not completed:
+        n_total = len(proc_cmds)
+
+        # launch up to MAX_NPROCS_PARALLEL processes for starters
+        procs = []
+        for _ in range(MAX_NPROCS_PARALLEL):
+            if proc_cmds:
+                cmd = proc_cmds.pop()
+                procs.append(subprocess.Popen(cmd, **POPEN_ARGS))
+
+        # start new processes in a sleep loop as previous ones complete
+        while proc_cmds:
+
             if signals.canceled:
                 logger.debug('canceled, killing video converter processes')
                 for p in procs:
                     p.kill()
                 break
-            n_complete = len([p for p in procs if p.poll() is not None])
-            prog_txt = 'Converting videos: %d of %d files done' % (
-                n_complete,
-                len(procs),
-            )
-            prog_p = 100 * n_complete / float(len(procs))
-            signals.progress.emit(prog_txt, prog_p)
-            time.sleep(0.1)
-            completed = n_complete == len(procs)
+
+            n_active = len([p for p in procs if p.poll() is None])
+            n_complete = len(procs) - n_active
+            if n_active < MAX_NPROCS_PARALLEL:
+                cmd = proc_cmds.pop()
+                procs.append(subprocess.Popen(cmd, **POPEN_ARGS))
+
+            progress_txt = f'Converting videos: {n_complete} of {n_total} files done'
+            progress_p = 100 * n_complete / float(n_total)
+            signals.progress.emit(progress_txt, progress_p)
+
+            time.sleep(0.01)
 
     def _convert_session_videos(self):
         """Convert Nexus session videos to web format"""

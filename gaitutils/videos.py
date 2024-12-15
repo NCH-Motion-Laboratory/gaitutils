@@ -24,9 +24,8 @@ def convert_videos(vidfiles, check_only=False):
     """Convert video files using an external command.
 
     Command and args are defined in cfg.
-    NB: Instantly starts as many converter processes as there are files and
-    returns. This has the disadvantage of potentially starting dozens of
-    processes, causing slowdown.
+    Returns an iterable of command lines in a list format that can be passed to
+    e.g. subprocess.Popen.
 
     Parameters
     ----------
@@ -39,8 +38,11 @@ def convert_videos(vidfiles, check_only=False):
     if not isinstance(vidfiles, list):
         vidfiles = [vidfiles]
     vidfiles = [Path(vidfile) for vidfile in vidfiles]
-    # result files
-    convfiles = {vidfile: vidfile.with_suffix(cfg.general.video_converted_ext) for vidfile in vidfiles}
+    # conversion target filenames
+    convfiles = {
+        vidfile: vidfile.with_suffix(cfg.general.video_converted_ext)
+        for vidfile in vidfiles
+    }
 
     if check_only:
         # return True if all conversion targets already exist
@@ -50,8 +52,7 @@ def convert_videos(vidfiles, check_only=False):
     if not os.access(vidconv_bin, os.X_OK):
         raise RuntimeError(f'Invalid configured video converter: {vidconv_bin}')
 
-    procs = []    
-
+    cmds = []
     for infile, outfile in convfiles.items():
         # do not manipulate the config item
         vidconv_opts = copy(cfg.general.videoconv_opts)
@@ -72,15 +73,8 @@ def convert_videos(vidfiles, check_only=False):
                 if opt == '{OUTPUT}':
                     vidconv_opts[k] = opt.format(OUTPUT=outfile)
             cmd = [vidconv_bin] + vidconv_opts
-
-        if platform.system() == 'Windows':
-            # supply NO_WINDOW flag to prevent opening of consoles
-            p = subprocess.Popen(cmd, stdout=None, creationflags=0x08000000)
-        else:
-            p = subprocess.Popen(cmd, stdout=None)
-        procs.append(p)
-        
-    return procs
+        cmds.append(cmd)
+    return cmds
 
 
 def _collect_session_videos(session, tags):

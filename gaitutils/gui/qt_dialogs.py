@@ -9,7 +9,7 @@ from PyQt5 import uic, QtWidgets
 from PyQt5.QtWidgets import QDialogButtonBox
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-from pkg_resources import resource_filename
+import importlib.resources
 from pathlib import Path
 import ast
 import io
@@ -374,8 +374,9 @@ class ChooseSessionsDialog(QtWidgets.QDialog):
     def __init__(self, min_sessions=1, max_sessions=3):
         QtWidgets.QDialog.__init__(self)
         # load user interface made with designer
-        uifile = resource_filename('gaitutils', 'gui/sessions.ui')
-        uic.loadUi(uifile, self)
+        ref = importlib.resources.files('gaitutils') / 'gui' / 'sessions.ui'
+        with importlib.resources.as_file(ref) as uifile:
+            uic.loadUi(uifile, self)
         # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.btnBrowseSession.clicked.connect(self.add_session)
         self.btnAddNexusSession.clicked.connect(

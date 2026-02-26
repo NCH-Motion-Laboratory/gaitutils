@@ -120,7 +120,7 @@ class EMG:
             ch_dict = {
                 'label': chname,
                 'dimension': 'mV',
-                'sample_rate': self.sfrate,
+                'sample_frequency': self.sfrate,
                 'physical_max': max(chdata_scaled),
                 'physical_min': min(chdata_scaled),
                 'digital_max': 2 ** (nbits - 1) - 1,

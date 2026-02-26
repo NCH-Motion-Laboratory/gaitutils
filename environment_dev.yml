@@ -22,12 +22,8 @@ dependencies:
   - dash
   - python-kaleido
   - dash-daq
-  - pytest
-  - sphinx
-  - sphinx_rtd_theme
+  - pyedflib
   - pip:
-    - pyedflib
     - https://github.com/NCH-Motion-Laboratory/gaitutils/archive/master.zip
     - https://github.com/NCH-Motion-Laboratory/ulstools/archive/master.zip
     - https://github.com/NCH-Motion-Laboratory/configdot/archive/master.zip
-

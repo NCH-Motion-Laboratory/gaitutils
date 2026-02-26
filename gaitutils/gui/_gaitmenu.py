@@ -8,7 +8,7 @@ PyQt graphical interface to gaitutils
 
 from PyQt5 import QtGui, QtCore, uic, QtWidgets
 from PyQt5.QtCore import QRunnable, QThreadPool, pyqtSignal, QObject
-from pkg_resources import resource_filename
+import importlib.resources
 from functools import partial
 import sys
 import time
@@ -100,8 +100,9 @@ class PdfReportDialog(QtWidgets.QDialog):
         ui_filename = (
             'pdf_report_dialog_comparison.ui' if comparison else 'pdf_report_dialog.ui'
         )
-        uifile = resource_filename('gaitutils', f'gui/{ui_filename}')
-        uic.loadUi(uifile, self)
+        ref = importlib.resources.files('gaitutils') / 'gui' / ui_filename
+        with importlib.resources.as_file(ref) as uifile:
+            uic.loadUi(uifile, self)
         # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         if info is not None:
             if info['fullname'] is not None:
@@ -143,8 +144,9 @@ class WebReportInfoDialog(QtWidgets.QDialog):
 
     def __init__(self, info, parent=None, check_info=True):
         super().__init__()
-        uifile = resource_filename('gaitutils', 'gui/web_report_info.ui')
-        uic.loadUi(uifile, self)
+        ref = importlib.resources.files('gaitutils') / 'gui' / 'web_report_info.ui'
+        with importlib.resources.as_file(ref) as uifile:
+            uic.loadUi(uifile, self)
         # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.check_info = check_info
         self.xbLimitCycles.stateChanged.connect(self._toggle_spinbox)
@@ -203,8 +205,9 @@ class WebReportDialog(QtWidgets.QDialog):
         super().__init__(parent)
         self.parent = parent
         # load user interface made with designer
-        uifile = resource_filename('gaitutils', 'gui/web_report_dialog.ui')
-        uic.loadUi(uifile, self)
+        ref = importlib.resources.files('gaitutils') / 'gui' / 'web_report_dialog.ui'
+        with importlib.resources.as_file(ref) as uifile:
+            uic.loadUi(uifile, self)
         self.btnCreateReport.clicked.connect(lambda ev: self._create_web_report())
         self.btnDeleteReport.clicked.connect(self._delete_current_report)
         self.btnDeleteAllReports.clicked.connect(self._delete_all_reports)
@@ -430,8 +433,10 @@ class AddSessionDialog(QtWidgets.QDialog):
 
     def __init__(self, parent):
         QtWidgets.QDialog.__init__(self)
-        uifile = resource_filename('gaitutils', 'gui/add_session_dialog.ui')
-        uic.loadUi(uifile, self)
+
+        ref = importlib.resources.files('gaitutils') / 'gui' / 'add_session_dialog.ui'
+        with importlib.resources.as_file(ref) as uifile:
+            uic.loadUi(uifile, self)
 
     def accept(self):
         self.c3ds = list()
@@ -456,8 +461,9 @@ class Gaitmenu(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         # load user interface made with designer
-        uifile = resource_filename('gaitutils', 'gui/gaitmenu.ui')
-        uic.loadUi(uifile, self)
+        ref = importlib.resources.files('gaitutils') / 'gui' / 'gaitmenu.ui'
+        with importlib.resources.as_file(ref) as uifile:
+            uic.loadUi(uifile, self)
 
         # disable editing of log widget text
         self.txtOutput.setReadOnly(True)
@@ -521,7 +527,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
             _copy_session_videos
         )
         self.actionAutomark_events.triggered.connect(self._automark_trial)
-        self.actionUpdate.triggered.connect(self._update_package)
         # trials table settings
         # force "item selected" style, otherwise it will depend on focus; set font size
         table_sheet = "QTableView{ selection-background-color: rgba(0, 0, 255, 50%); font-size: 8pt; }"
@@ -969,18 +974,6 @@ class Gaitmenu(QtWidgets.QMainWindow):
         elif not cfg.autoproc.postproc_pipelines:
             qt_message_dialog('No postprocessing pipelines defined')
 
-    def _update_package(self):
-        """Update the package from git repository."""
-        status, msg = envutils._git_update()
-        if status:
-            status_str = 'Update was successful. '
-            status_str += 'Please restart the application to use the new version. '
-            status_str += f'Details:\n\n{msg}'
-        else:
-            status_str = f'Package was not updated. Details:\n\n{msg}'
-        qt_message_dialog(status_str)
-        return
-
     def closeEvent(self, event):
         """Confirm and close application."""
 
@@ -1219,10 +1212,6 @@ def main():
     logger.debug(f'Python interpreter: {sys.executable}')
     logger.debug(f'Python version: {sys.version}')
     logger.debug(f'Package directory: {envutils.pkg_dir}')
-    if envutils.git_mode:
-        logger.debug('Running from a git repository')
-    else:
-        logger.debug('Running from a pip install')
     if not c3d.BTK_IMPORTED:
         logger.warning('cannot find btk module; unable to read .c3d files')
     if not nexus.NEXUS_IMPORTED:

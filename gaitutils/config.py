@@ -8,7 +8,7 @@ Handles gaitutils config files.
 from pathlib import Path
 import io
 import logging
-from pkg_resources import resource_filename
+import importlib.resources
 from configdot import parse_config, update_config, dump_config
 
 
@@ -24,16 +24,16 @@ def _handle_cfg_defaults(cfg):
         logger.warning(f'emg_yscale was changed to a float variable, using {ysc}')
         cfg.plot.emg_yscale = str(cfg.plot.emg_yscale[1])
     if cfg.general.normaldata_files == 'default':
-        fn = resource_filename('gaitutils', 'data/normal.gcd')
+        fn = str(importlib.resources.files('gaitutils') / 'data' / 'normal.gcd')
         cfg.general.normaldata_files = [fn]
     if cfg.general.timedist_normaldata == 'default':
-        fn = resource_filename('gaitutils', 'data/timedist_normaldata.json')
+        fn = str(importlib.resources.files('gaitutils') / 'data' / 'timedist_normaldata.json')
         cfg.general.timedist_normaldata = fn
     if cfg.emg.normaldata_file == 'default':
-        fn = resource_filename('gaitutils', 'data/emg_normaldata.json')
+        fn = str(importlib.resources.files('gaitutils') / 'data' / 'emg_normaldata.json')        
         cfg.emg.normaldata_file = fn
     if cfg.general.videoconv_path == 'default':
-        fn = resource_filename('gaitutils', 'thirdparty/ffmpeg.exe')
+        fn = str(importlib.resources.files('gaitutils') / 'thirdparty' / 'ffmpeg.exe')        
         cfg.general.videoconv_path = fn
     if cfg.autoproc.write_eclipse_fp_info is True:
         cfg.autoproc.write_eclipse_fp_info = 'write'
@@ -50,7 +50,7 @@ def _handle_cfg_defaults(cfg):
 
 
 # location of the default config file
-cfg_template_fn = resource_filename(__name__, 'data/default.cfg')
+cfg_template_fn = str(importlib.resources.files('gaitutils') / 'data' / 'default.cfg')        
 # Location of the user specific config file. On Windows, this typically puts the
 # config at C:\Users\Username, since the USERPROFILE environment variable points
 # there. Putting the config in a networked home dir requires some tinkering with

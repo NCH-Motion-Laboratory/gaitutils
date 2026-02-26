@@ -11,7 +11,7 @@ import sys
 import traceback
 import subprocess
 from ulstools import env
-from pkg_resources import resource_filename
+import importlib.resources
 import logging
 import hashlib
 import os
@@ -25,10 +25,7 @@ from .gui._windows import error_exit
 logger = logging.getLogger(__name__)
 
 
-pkg_dir = Path(resource_filename('gaitutils', ''))  # package directory
-pkg_parent = pkg_dir.parent
-# True if package was imported from a git repository
-git_mode = (pkg_parent / '.git').is_dir()
+pkg_dir = str(importlib.resources.files('gaitutils'))
 
 
 class GaitDataError(Exception):
@@ -55,46 +52,6 @@ def _ipython_setup():
 def _make_gaitutils_shortcut():
     """Makes a desktop shortcut to gaitmenu gui."""
     env.make_shortcut('gaitutils', 'gui/gaitmenu.py', 'gaitutils menu')
-
-
-def _git_update():
-    """Update the package git repository.
-
-    This works, if the package was installed into user directory by cloning the
-    git repository and running 'python setup.py develop'. In this case, updating
-    the cloned repository will effectively update the package.
-
-    The normal way to install the package is via pip install. In this case, the
-    package must be updated manually by pip.
-
-    Since this update mechanism is a bit fragile, it is not used by default.
-
-    Return True if update was ran, else False.
-    """
-
-    if git_mode:
-        logger.info('running git update')
-        try:
-            startupinfo = None
-            if os.name == 'nt':
-                # hides the console on Windows
-                startupinfo = subprocess.STARTUPINFO()
-                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-            o = subprocess.check_output(
-                ['git', 'pull'],
-                cwd=pkg_parent,
-                encoding='utf-8',
-                startupinfo=startupinfo,
-            )
-        except subprocess.CalledProcessError:
-            status = (False, 'cannot retrieve or merge update')
-        if 'lready' in o:
-            status = (False, 'package already up to date')
-        else:
-            status = (True, o)
-    else:  # not a git repo
-        status = (False, 'cannot update, gaitutils is not installed in git mode')
-    return status
 
 
 def _register_gui_exception_handler(full_traceback=False):

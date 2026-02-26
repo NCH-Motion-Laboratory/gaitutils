@@ -28,7 +28,7 @@ import logging
 import sys
 import numpy as np
 import copy
-from pkg_resources import resource_filename
+import importlib.resources
 from PyQt5 import QtGui, QtWidgets, uic, QtCore
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.backends.backend_pdf import PdfPages
@@ -59,8 +59,9 @@ class LoadDialog(QtWidgets.QDialog):
     def __init__(self):
 
         super().__init__()
-        uifile = resource_filename('gaitutils', 'gui/tardieu_load_dialog.ui')
-        uic.loadUi(uifile, self)
+        ref = importlib.resources.files('gaitutils') / 'gui' / 'tardieu_load_dialog.ui'
+        with importlib.resources.as_file(ref) as uifile:
+            uic.loadUi(uifile, self)
         try:
             ang0_nexus = read_nexus_starting_angle()
         except GaitDataError:
@@ -74,8 +75,9 @@ class EMGFilterDialog(QtWidgets.QDialog):
     def __init__(self, emg_passband):
 
         super().__init__()
-        uifile = resource_filename('gaitutils', 'gui/tardieu_filter_dialog.ui')
-        uic.loadUi(uifile, self)
+        ref = importlib.resources.files('gaitutils') / 'gui' / 'tardieu_filter_dialog.ui'
+        with importlib.resources.as_file(ref) as uifile:        
+            uic.loadUi(uifile, self)
         self.spEMGLow.setValue(emg_passband[0])
         self.spEMGHigh.setValue(emg_passband[1])
 
@@ -86,8 +88,9 @@ class HelpDialog(QtWidgets.QDialog):
     def __init__(self):
 
         super().__init__()
-        uifile = resource_filename('gaitutils', 'gui/tardieu_help_dialog.ui')
-        uic.loadUi(uifile, self)
+        ref = importlib.resources.files('gaitutils') / 'gui' / 'tardieu_help_dialog.ui'
+        with importlib.resources.as_file(ref) as uifile:
+            uic.loadUi(uifile, self)
 
 
 class SimpleToolbar(NavigationToolbar2QT):
@@ -106,8 +109,9 @@ class TardieuWindow(QtWidgets.QMainWindow):
 
         super().__init__(parent)
 
-        uifile = resource_filename('gaitutils', 'gui/tardieu.ui')
-        uic.loadUi(uifile, self)
+        ref = importlib.resources.files('gaitutils') / 'gui' / 'tardieu.ui'
+        with importlib.resources.as_file(ref) as uifile:
+            uic.loadUi(uifile, self)
 
         self._tardieu_plot = TardieuPlot()
         # set the internal callbacks to point to our methods

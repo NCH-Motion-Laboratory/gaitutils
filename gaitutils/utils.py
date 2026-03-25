@@ -543,12 +543,13 @@ def detect_forceplate_events(
     if not fpdata:
         logger.warning('no forceplates')
         return results
-    footlen = info['subj_params']['FootLen']
     rfootlen = info['subj_params']['RFootLen']
     lfootlen = info['subj_params']['LFootLen']
-    if footlen is not None:
-        logger.debug(f'(obsolete) single foot length parameter set to {footlen:.2f}')
-        rfootlen = lfootlen = footlen
+    if 'FootLen' in info['subj_params']:
+        footlen = info['subj_params']['FootLen']
+        if footlen is not None:
+            logger.debug(f'(obsolete) single foot length parameter set to {footlen:.2f}')
+            rfootlen = lfootlen = footlen
     elif rfootlen is not None and lfootlen is not None:
         logger.debug(
             f'foot length parameters set to r={rfootlen:.2f}, l={lfootlen:.2f}'

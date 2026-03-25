@@ -383,11 +383,6 @@ def _get_emg_data(vicon):
     return _get_analog_data(vicon, cfg.emg.devname)
 
 
-def _get_accelerometer_data(vicon):
-    """Read accelerometer data from Nexus. Uses the configured acc device name."""
-    return _get_analog_data(vicon, cfg.analog.accelerometer_devname)
-
-
 def _get_analog_data(vicon, devname):
     """Read analog data from Vicon Nexus.
 

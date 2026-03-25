@@ -1212,8 +1212,6 @@ def main():
     logger.debug(f'Python interpreter: {sys.executable}')
     logger.debug(f'Python version: {sys.version}')
     logger.debug(f'Package directory: {envutils.pkg_dir}')
-    if not c3d.BTK_IMPORTED:
-        logger.warning('cannot find btk module; unable to read .c3d files')
     if not nexus.NEXUS_IMPORTED:
         logger.warning(
             'could not import Vicon Nexus SDK; make sure the viconnexusapi package is installed'

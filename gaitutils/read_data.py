@@ -181,26 +181,6 @@ def get_analysis(source, condition='unknown'):
     return _reader_module(source).get_analysis(source, condition)
 
 
-def get_accelerometer_data(source):
-    """Read accelerometer data.
-
-    Parameters
-    ----------
-    source : ViconNexus | str
-        The data source. Can be a c3d filename or a ViconNexus instance.
-
-    Returns
-    -------
-    dict
-        Dict with following keys:
-        t : ndarray
-            Time axis in seconds.
-        data : dict
-            The data. Keys are channel names and values are ndarrays.
-    """
-    return _reader_module(source)._get_accelerometer_data(source)
-
-
 def get_model_data(source, model):
     """Read model data (e.g. Plug-in Gait).
 

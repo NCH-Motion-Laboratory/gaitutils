@@ -559,10 +559,6 @@ class Trial:
             raise ValueError('Invalid kind of forceplate data requested')
         return self.normalize_analog_to_cycle(data, cycle)
 
-    def get_accelerometer_data(self):
-        """Return accelerometer data."""
-        raise NotImplementedError
-
     def _get_fp_events(self):
         """Read the forceplate events."""
         try:

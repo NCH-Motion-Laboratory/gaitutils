@@ -9,12 +9,13 @@ called via the read_data module.
 from collections import defaultdict
 import logging
 from pathlib import Path
+import shutil
 
 import numpy as np
 import ezc3d
 
 from .utils import _step_width
-from .envutils import GaitDataError
+from .envutils import GaitDataError, _named_tempfile
 from .events import GaitEvents, GaitEvent
 from .envutils import GaitDataError
 from .numutils import center_of_pressure, _change_coords
@@ -22,6 +23,28 @@ from .numutils import center_of_pressure, _change_coords
 
 logger = logging.getLogger(__name__)
 
+def _robust_open_c3d(c3dfile):
+    """
+    Try to open a c3d file with ezc3d, and if it fails, try to work around a possible
+    bug in ezc3d that causes it to fail when the file path contains extended characters.
+    """
+
+    fname = str(c3dfile)  # accept Path objects too (ezc3d won't eat those)
+
+    try:
+        c3d = ezc3d.c3d(fname)
+        return c3d
+    
+    except RuntimeError as e:
+        logger.warning('trying to work around possible extended chars bug')
+
+        # just copy the file into another directory
+        temp_path = _named_tempfile(suffix='.c3d')
+        shutil.copy2(fname, temp_path)
+        logger.warning(f'using {temp_path}')
+        c3d = ezc3d.c3d(temp_path)
+        temp_path.unlink()  # delete the temp file
+        return c3d
 
 def _is_c3d_file(source):
     """Check if source is a valid c3d file.
@@ -63,8 +86,7 @@ def get_analysis(c3dfile, condition='unknown'):
     logger.debug(f'getting analysis values from {c3dfile}')
 
     try:
-        c3dfile = str(c3dfile)  # accept Path objects too (ezc3d won't eat those)
-        c3d = ezc3d.c3d(c3dfile)
+        c3d = _robust_open_c3d(c3dfile)
 
         names = c3d['parameters']['ANALYSIS']['NAMES']['value']
         units = c3d['parameters']['ANALYSIS']['UNITS']['value']
@@ -114,8 +136,7 @@ def get_analysis(c3dfile, condition='unknown'):
 
 
 def _get_emg_data(c3dfile):
-    c3dfile = str(c3dfile)  # accept Path objects too (ezc3d won't eat those)
-    c3d = ezc3d.c3d(c3dfile)
+    c3d = _robust_open_c3d(c3dfile)
     srates = c3d['parameters']['ANALOG']['RATE']['value']
     assert srates.shape == (1,), 'There should be only one sampling rate'
     sfreq = srates[0]
@@ -142,8 +163,7 @@ def _get_marker_data(c3dfile, markers, ignore_missing=False):
     if not isinstance(markers, list):  # listify if not already a list
         markers = [markers]
 
-    c3dfile = str(c3dfile)  # accept Path objects too (ezc3d won't eat those)
-    c3d = ezc3d.c3d(c3dfile)
+    c3d = _robust_open_c3d(c3dfile)
 
     res = {}
 
@@ -172,8 +192,7 @@ def _get_metadata(c3dfile):
     trialname = Path(c3dfile).stem
     sessionpath = Path(c3dfile).parent
 
-    c3dfile = str(c3dfile)  # accept Path objects too (ezc3d won't eat those)
-    c3d = ezc3d.c3d(c3dfile)
+    c3d = _robust_open_c3d(c3dfile)
 
     offset = c3d['header']['points']['first_frame'] + 1 
     length = c3d['header']['points']['last_frame'] - offset + 2
@@ -260,8 +279,7 @@ def _get_model_data(c3dfile, model):
 
     See read_data.get_model_data for details.
     """
-    c3dfile = str(c3dfile)  # accept Path objects too (ezc3d won't eat those)
-    c3d = ezc3d.c3d(c3dfile)
+    c3d = _robust_open_c3d(c3dfile)
 
     modeldata = {}
     var_dims = (3, c3d['header']['points']['last_frame'] - c3d['header']['points']['first_frame'] + 1)
@@ -361,8 +379,7 @@ def _get_forceplate_data(c3dfile):
     """
     logger.debug(f'reading forceplate data from {c3dfile}')
 
-    c3dfile = str(c3dfile)  # accept Path objects too (ezc3d won't eat those)
-    c3d = ezc3d.c3d(c3dfile)
+    c3d = _robust_open_c3d(c3dfile)
     fpdata = []
 
     for i in range(c3d['parameters']['FORCE_PLATFORM']['USED']['value'][0]):

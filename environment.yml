@@ -2,9 +2,6 @@ name: gaitutils
 channels:
   - conda-forge
 dependencies:
-  # Windows-specific
-  - pywin32=311
-  # general (shared between Windows and Linux)
   - configobj=5.0.9
   - flask=3.1.3
   - matplotlib=3.10.8

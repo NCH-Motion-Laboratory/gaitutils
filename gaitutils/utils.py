@@ -543,20 +543,29 @@ def detect_forceplate_events(
     if not fpdata:
         logger.warning('no forceplates')
         return results
-    rfootlen = info['subj_params']['RFootLen']
-    lfootlen = info['subj_params']['LFootLen']
+    
+    footlen = rfootlen = lfootlen = None
     if 'FootLen' in info['subj_params']:
         footlen = info['subj_params']['FootLen']
-        if footlen is not None:
-            logger.debug(f'(obsolete) single foot length parameter set to {footlen:.2f}')
-            rfootlen = lfootlen = footlen
+    if 'RFootLen' in info['subj_params']:
+        rfootlen = info['subj_params']['RFootLen']
+    if 'LFootLen' in info['subj_params']:
+        lfootlen = info['subj_params']['LFootLen']
+        
+    if footlen is not None:
+        logger.debug(f'(obsolete) single foot length parameter set to {footlen:.2f}')
+        rfootlen = lfootlen = footlen
     elif rfootlen is not None and lfootlen is not None:
         logger.debug(
             f'foot length parameters set to r={rfootlen:.2f}, l={lfootlen:.2f}'
         )
     else:
         logger.debug('foot length parameter not set')
-    bodymass = info['subj_params']['Bodymass']
+
+    bodymass = None
+    if 'Bodymass' in info['subj_params']:
+        bodymass = info['subj_params']['Bodymass']
+        
     req_markers = (
         cfg.autoproc.right_foot_markers
         + cfg.autoproc.left_foot_markers

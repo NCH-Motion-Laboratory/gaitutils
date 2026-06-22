@@ -7,7 +7,7 @@ dependencies:
   - matplotlib
   - numpy
   - scipy
-  - python
+  - python=3.11 # Required by viconnexusapi
   - openpyxl
   - pip
   - plotly

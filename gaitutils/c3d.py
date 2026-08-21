@@ -27,6 +27,11 @@ def _robust_open_c3d(c3dfile):
     """
     Try to open a c3d file with ezc3d, and if it fails, try to work around a possible
     bug in ezc3d that causes it to fail when the file path contains extended characters.
+
+    The workaround consists of creating a temporary copy of the file and opening it. 
+    Note that this will only work if the path to the folder where the temporary file is
+    created (e.g., C:/Users/<Username>/AppData/Local/Temp) does not contain extended
+    characters.
     """
 
     fname = str(c3dfile)  # accept Path objects too (ezc3d won't eat those)
@@ -35,14 +40,14 @@ def _robust_open_c3d(c3dfile):
         c3d = ezc3d.c3d(fname)
         return c3d
     
-    except RuntimeError as e:
+    except:
         logger.warning('trying to work around possible extended chars bug')
 
         # just copy the file into another directory
         temp_path = _named_tempfile(suffix='.c3d')
         shutil.copy2(fname, temp_path)
         logger.warning(f'using {temp_path}')
-        c3d = ezc3d.c3d(temp_path)
+        c3d = ezc3d.c3d(str(temp_path))
         temp_path.unlink()  # delete the temp file
         return c3d
 

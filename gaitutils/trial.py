@@ -270,23 +270,26 @@ class Trial:
             raise GaitDataError('Cannot deal with single-frame trials (yet)')
         self.sessiondir = self.sessionpath.name
         # try to locate trial .enf (we do not require it)
-        enfpath = self.sessionpath / Path(self.trialname).with_suffix('.Trial.enf')
-        # also look for alternative (older style?) enf name
-        if not enfpath.is_file():
-            trialn_re = re.search('\.*(\d*)$', self.trialname)
-            trialn = trialn_re.group(1)
-            if trialn:
-                trialname_ = f'{self.trialname}.Trial{trialn}.enf'
-                enfpath = self.sessionpath / trialname_
-        self.enfpath = enfpath
-        if self.enfpath.is_file():
+
+        enfpaths = sorted(
+            self.sessionpath.glob(f'{self.trialname}.Trial*.enf')
+        )
+
+        if enfpaths:
+            if len(enfpaths) > 1:
+                logger.warning(f'multiple .enf files found for {self.trialname}, using {enfpaths[0]}')
+
+            self.enfpath = enfpaths[0]
+
             logger.debug(f'reading Eclipse info from {self.enfpath}')
             edata = eclipse.get_eclipse_keys(self.enfpath)
             # for convenience, eclipse_data returns '' for nonexistent keys
             self.eclipse_data = defaultdict(lambda: '', edata)
         else:
+            self.enfpath = None
             logger.debug('no .enf file found')
             self.eclipse_data = defaultdict(lambda: '', {})
+
         # heuristic for static trials
         self.is_static = self.eclipse_data['TYPE'].upper() == 'STATIC'
         # handle session quirks

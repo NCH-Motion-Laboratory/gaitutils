@@ -175,7 +175,9 @@ def _get_marker_data(c3dfile, markers, ignore_missing=False):
     for marker in markers:
         if marker in c3d['parameters']['POINT']['LABELS']['value']:
             idx = c3d['parameters']['POINT']['LABELS']['value'].index(marker)
-            res[marker] = c3d['data']['points'][:3, idx, :].T
+            res[marker] = np.nan_to_num(c3d['data']['points'][:3, idx, :].T, nan=0.0)
+            # The client expects zeroes instead of nans for missing data (legacy of BTK?),
+            # otherwise things break. 
         else:
             if ignore_missing:
                 logger.warning(f'Cannot read trajectory {marker} from c3d file')
@@ -293,7 +295,9 @@ def _get_model_data(c3dfile, model):
         try:
             labels = c3d['parameters']['POINT']['LABELS']['value']
             idxs = [i for i, label in enumerate(labels) if label == var]
-            modeldata[var] = c3d['data']['points'][:3, idxs[0], :]
+            modeldata[var] = np.nan_to_num(c3d['data']['points'][:3, idxs[0], :], nan=0.0)
+            # The client expects zeroes instead of nans for missing data (legacy of BTK?),
+            # otherwise things break. 
         except IndexError:
             logger.info(f'cannot read model variable {var}, returning nans')
             data = np.empty(var_dims)

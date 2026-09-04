@@ -7,7 +7,7 @@ dependencies:
   - matplotlib
   - numpy
   - scipy
-  - python=3.11 # Required by viconnexusapi
+  - python=3.11.14  # Required to run on HUS computers, other (higher?) versions might cause problems. Also vrsion 3.11 is required by Nexus API.
   - openpyxl
   - pip
   - plotly

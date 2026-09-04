@@ -7,7 +7,7 @@ dependencies:
   - matplotlib=3.11.1
   - numpy=2.4.6
   - scipy=1.17.1
-  - python=3.11.16
+  - python=3.11.14  # Required to run on HUS computers, other (higher?) versions might cause problems. Also vrsion 3.11 is required by Nexus API.
   - openpyxl=3.1.5
   - pip=26.2.1
   - plotly=6.9.0

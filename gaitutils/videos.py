@@ -55,8 +55,11 @@ def convert_videos(input_files, check_only=False, signals=None):
         input_files = [input_files]
     input_files = [Path(vidfile) for vidfile in input_files]
     # conversion target filenames
+    # add a '-gaitutils' suffix before the extension, to avoid confusing Vicon Nexus
     conversion_targets = {
-        vidfile: vidfile.with_suffix(cfg.general.video_converted_ext)
+        vidfile: vidfile.with_name(
+            f'{vidfile.stem}-gaitutils{cfg.general.video_converted_ext}'
+        )
         for vidfile in input_files
     }
     n_total = len(input_files)
